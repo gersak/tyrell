@@ -12,23 +12,23 @@ const pkg = JSON.parse(
  * 
  * Creates UNMINIFIED bundle for development and debugging.
  * 
- * SAME OUTPUT FILENAME as production (dist/ty.js)
+ * SAME OUTPUT FILENAME as production (dist/tyrell.js)
  * - ClojureScript site always loads the same file
  * - Switch between dev/prod by running different build command
  * - Use with --watch for continuous rebuilds
- * 
+ *
  * Strategy:
  * 1. Keep ALL console.logs (debugging!)
  * 2. NO minification - readable code
  * 3. Source maps enabled
  * 4. Fast builds
  * 5. Same filename as production build
- * 
+ *
  * Usage:
  *   npm run build:dev              # Single build
  *   npm run build:dev:watch        # Watch mode (auto-rebuild)
- * 
- * Output: dist/ty.js (UNMINIFIED)
+ *
+ * Output: dist/tyrell.js (UNMINIFIED)
  */
 
 export default defineConfig({
@@ -46,16 +46,16 @@ export default defineConfig({
     // Single bundle library mode
     lib: {
       entry: resolve(__dirname, 'src/cdn.ts'),
-      name: 'Ty',
+      name: 'Tyrell',
       formats: ['umd'],
-      fileName: () => 'ty.js',  // Same filename as production!
+      fileName: () => 'tyrell.js',  // Same filename as production!
     },
-    
+
     rollupOptions: {
       external: [],
-      
+
       output: {
-        name: 'Ty',
+        name: 'Tyrell',
         exports: 'named',
         inlineDynamicImports: true,
         

@@ -10,6 +10,19 @@ import { inputStyles } from "./input.js";
 export const radioStyles = `
 ${inputStyles}
 
+/* Override input's :host. ty-radio is just the circle (inline);
+   ty-radio-group is a form-field block. */
+:host(ty-radio) {
+  display: inline-flex;
+  width: auto;
+  vertical-align: middle;
+}
+
+:host(ty-radio-group) {
+  display: block;
+  width: 100%;
+}
+
 /* ===== RADIO GROUP ===== */
 .radio-group-container {
   display: flex;
@@ -32,15 +45,18 @@ ${inputStyles}
 .radio-group-list {
   display: flex;
   gap: 0.6rem;
+  align-items: flex-start;
 }
 
 .radio-group-list.vertical {
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .radio-group-list.horizontal {
   flex-direction: row;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .radio-group-error {

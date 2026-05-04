@@ -7,6 +7,7 @@
    [tyrell.site.docs.calendar :as calendar-docs]
    [tyrell.site.docs.calendar-month :as calendar-month-docs]
    [tyrell.site.docs.checkbox :as checkbox-docs]
+   [tyrell.site.docs.clojurescript :as clojurescript-docs]
    [tyrell.site.docs.common :as common]
    [tyrell.site.docs.copy-field :as copy-field-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]
@@ -19,8 +20,6 @@
    [tyrell.site.docs.multiselect :as multiselect-docs]
    [tyrell.site.docs.popup :as popup-docs]
    [tyrell.site.docs.radio :as radio-docs]
-   [tyrell.site.docs.react :as react-docs]
-   [tyrell.site.docs.replicant :as replicant-docs]
    [tyrell.site.docs.resize-observer :as resize-observer-docs]
    [tyrell.site.docs.scroll-container :as scroll-container-docs]
    [tyrell.site.docs.switch :as switch-docs]
@@ -185,7 +184,7 @@
 (def ^:private copy-field-preview
   [:div.flex.flex-col.gap-2
    [:ty-copy {:label "Install"
-              :value "npm i @gersak/ty"
+              :value "npm i tyrell-components"
               :format "code"
               :style {:width "260px"}}]
    [:ty-copy {:label "API key"
@@ -678,34 +677,27 @@
     :description "Web components for every JS framework — install, bundlers, React wrappers"
     :tags ["javascript" "typescript" "react" "vue" "svelte" "astro" "jsx" "npm"]
     :view js-react-docs/view}
+   {:id :tyrell.site.docs/clojurescript
+    :segment "clojurescript"
+    :name "ClojureScript"
+    :icon "clojure"
+    :description "Web components and CLJS-native infrastructure for every CLJS framework"
+    :tags ["clojure" "clojurescript" "reagent" "re-frame" "uix" "helix" "replicant"]
+    :view clojurescript-docs/view}
+   {:id :tyrell.site.docs/htmx
+    :segment "htmx"
+    :name "HTMX"
+    :icon "server"
+    :description "Server-side rendering with HTMX (HTML page consolidation pending)"
+    :tags ["htmx" "server" "html" "ssr" "backend"]
+    :view htmx-docs/view}
    {:id :tyrell.site.docs/css
     :segment "css"
     :name "CSS System"
     :icon "palette"
     :description "Colors, surfaces, and design tokens"
     :tags ["theme" "colors" "dark mode" "styling" "tailwind"]
-    :view #(ty-styles/view)}
-   {:id :tyrell.site.docs/replicant
-    :segment "replicant"
-    :name "Replicant"
-    :icon "diamond"
-    :description "ClojureScript with Replicant rendering"
-    :tags ["clojure" "clojurescript" "replicant" "hiccup"]
-    :view replicant-docs/view}
-   {:id :tyrell.site.docs/clojurescript
-    :segment "clojurescript"
-    :name "CLJS React"
-    :icon "clojure"
-    :description "ClojureScript with React/Reagent"
-    :tags ["clojure" "clojurescript" "react" "reagent"]
-    :view react-docs/view}
-   {:id :tyrell.site.docs/htmx
-    :segment "htmx"
-    :name "HTMX"
-    :icon "server"
-    :description "Server-side rendering with HTMX"
-    :tags ["htmx" "server" "html" "ssr" "backend"]
-    :view htmx-docs/view}])
+    :view #(ty-styles/view)}])
 
 ;; Define routes with views from separate namespaces
 

@@ -48,6 +48,12 @@ button:not(.pill) {
   border-radius: var(--ty-radius-md);
 }
 
+button.xs:not(.pill) { border-radius: var(--ty-button-radius-xs, var(--ty-radius-md)); }
+button.sm:not(.pill) { border-radius: var(--ty-button-radius-sm, var(--ty-radius-md)); }
+button.md:not(.pill) { border-radius: var(--ty-button-radius-md, var(--ty-radius-md)); }
+button.lg:not(.pill) { border-radius: var(--ty-button-radius-lg, var(--ty-radius-md)); }
+button.xl:not(.pill) { border-radius: var(--ty-button-radius-xl, var(--ty-radius-md)); }
+
 button:focus-visible {
   outline: none;
 }

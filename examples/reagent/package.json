@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "tyrell-components": "1.0.0-TC7",
-    "tyrell-react": "1.0.0-TC10"
+    "tyrell-react": "1.0.0-TC11"
   }
 }

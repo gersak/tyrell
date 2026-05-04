@@ -73,18 +73,19 @@ export interface TyDropdownProps extends Omit<React.HTMLAttributes<HTMLElement>,
 
 // React wrapper for ty-dropdown web component
 export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
-  ({ 
-    options, 
-    children, 
-    onChange, 
-    onSearch, 
-    disabled, 
+  ({
+    options,
+    children,
+    onChange,
+    onSearch,
+    disabled,
     notSearchable,
     externalSearch,
     clearable,
     notClearable,
     debounce,
     name,
+    value,
     ...props
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -109,7 +110,7 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
       if (onChange) {
         element.addEventListener('change', handleChange as EventListener);
       }
-      
+
       if (onSearch) {
         element.addEventListener('search', handleSearch as EventListener);
       }
@@ -123,6 +124,18 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
         }
       };
     }, [handleChange, handleSearch, onChange, onSearch]);
+
+    // Imperatively sync `value` to the underlying element's property whenever
+    // it changes. React 18's prop-to-property bridging for custom elements is
+    // unreliable for empty strings (programmatic resets), so we set the
+    // property directly to guarantee the dropdown clears on `value=""`.
+    useEffect(() => {
+      const element = elementRef.current as any;
+      if (!element) return;
+      if (element.value !== value) {
+        element.value = value ?? '';
+      }
+    }, [value]);
 
     // Handle ref forwarding
     useEffect(() => {

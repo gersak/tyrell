@@ -1,7 +1,7 @@
 {
-  "name": "@gersak/ty-react",
-  "version": "1.0.0-TC6",
-  "description": "React wrappers for Ty Web Components",
+  "name": "tyrell-react",
+  "version": "1.0.0-TC11",
+  "description": "React wrappers for Tyrell Components",
   "type": "module",
   "main": "./dist/components/index.js",
   "types": "./dist/components/index.d.ts",
@@ -30,7 +30,7 @@
     "web-components",
     "typescript",
     "ui-components",
-    "ty",
+    "tyrell",
     "wrapper",
     "clojurescript",
     "reagent",
@@ -40,7 +40,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gersak/ty.git",
+    "url": "git+https://github.com/gersak/tyrell.git",
     "directory": "packages/react"
   }
 }

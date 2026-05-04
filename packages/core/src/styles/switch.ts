@@ -11,6 +11,13 @@ import { inputStyles } from "./input.js";
 export const switchStyles = `
 ${inputStyles}
 
+/* Override input's :host so the switch sizes to its visual */
+:host {
+  display: inline-flex;
+  width: auto;
+  vertical-align: middle;
+}
+
 /* ===== SWITCH CONTAINER (just the visual) ===== */
 .switch-container {
   display: inline-block;

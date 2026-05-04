@@ -93,6 +93,17 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       }
     }, [ref]);
 
+    // Imperatively sync `value` to the underlying property so resets
+    // (`value=""` or null) reliably clear the visible selection.
+    useEffect(() => {
+      const element = elementRef.current as any;
+      if (!element) return;
+      const next = (props as any).value ?? '';
+      if (element.value !== next) {
+        element.value = next;
+      }
+    }, [(props as any).value]);
+
     // Handle change events
     const handleChange = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyMultiselectEventDetail>;

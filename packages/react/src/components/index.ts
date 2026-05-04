@@ -1,5 +1,5 @@
 // ===================================================================
-// TY REACT WRAPPER EXPORTS
+// TYRELL REACT WRAPPER EXPORTS
 // ===================================================================
 // This file provides two export styles for maximum developer flexibility:
 // 1. Ty-prefixed exports (TyButton, TyInput) - explicit and backward compatible
@@ -53,6 +53,15 @@ export type { TyPopupProps, TyPopupElement } from './TyPopup';
 export { TyCheckbox } from './TyCheckbox';
 export type { TyCheckboxProps, TyCheckboxEventDetail } from './TyCheckbox';
 
+export { TySwitch } from './TySwitch';
+export type { TySwitchProps, TySwitchEventDetail } from './TySwitch';
+
+export { TyRadio } from './TyRadio';
+export type { TyRadioProps } from './TyRadio';
+
+export { TyRadioGroup } from './TyRadioGroup';
+export type { TyRadioGroupProps, TyRadioGroupEventDetail } from './TyRadioGroup';
+
 export { TyCopy } from './TyCopy';
 export type { TyCopyProps } from './TyCopy';
 
@@ -99,6 +108,9 @@ export { TyCalendar as Calendar } from './TyCalendar';
 export { TyDatePicker as DatePicker } from './TyDatePicker';
 export { TyPopup as Popup } from './TyPopup';
 export { TyCheckbox as Checkbox } from './TyCheckbox';
+export { TySwitch as Switch } from './TySwitch';
+export { TyRadio as Radio } from './TyRadio';
+export { TyRadioGroup as RadioGroup } from './TyRadioGroup';
 export { TyCopy as Copy } from './TyCopy';
 export { TyTabs as Tabs } from './TyTabs';
 export { TyTab as Tab } from './TyTab';
@@ -155,6 +167,15 @@ export type { TyPopupProps as PopupProps, TyPopupElement as PopupElement } from 
 // Checkbox types
 export type { TyCheckboxProps as CheckboxProps, TyCheckboxEventDetail as CheckboxEventDetail } from './TyCheckbox';
 
+// Switch types
+export type { TySwitchProps as SwitchProps, TySwitchEventDetail as SwitchEventDetail } from './TySwitch';
+
+// Radio types
+export type { TyRadioProps as RadioProps } from './TyRadio';
+
+// RadioGroup types
+export type { TyRadioGroupProps as RadioGroupProps, TyRadioGroupEventDetail as RadioGroupEventDetail } from './TyRadioGroup';
+
 // Copy types
 export type { TyCopyProps as CopyProps } from './TyCopy';
 
@@ -189,8 +210,8 @@ export type { TyScrollContainerProps as ScrollContainerProps, TyScrollContainerR
 /*
 
 // STYLE 1: Ty-prefixed (Explicit and backward compatible)
-import { TyButton, TyInput, TyModal } from 'ty-react';
-import type { TyButtonProps, TyInputProps } from 'ty-react';
+import { TyButton, TyInput, TyModal } from 'tyrell-react';
+import type { TyButtonProps, TyInputProps } from 'tyrell-react';
 
 function MyComponent() {
   return (
@@ -202,8 +223,8 @@ function MyComponent() {
 }
 
 // STYLE 2: Short names (Clean and familiar)
-import { Button, Input, Modal } from 'ty-react';
-import type { ButtonProps, InputProps } from 'ty-react';
+import { Button, Input, Modal } from 'tyrell-react';
+import type { ButtonProps, InputProps } from 'tyrell-react';
 
 function MyComponent() {
   return (
@@ -215,8 +236,8 @@ function MyComponent() {
 }
 
 // STYLE 3: Mixed (Team preferences)
-import { TyModal, Input, Button } from 'ty-react';
-import type { TyModalProps, InputProps } from 'ty-react';
+import { TyModal, Input, Button } from 'tyrell-react';
+import type { TyModalProps, InputProps } from 'tyrell-react';
 
 function MyComponent() {
   return (

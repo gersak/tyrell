@@ -203,27 +203,32 @@
     (nil? (:hash route))))
 
 (defn nav-item
-  "Render a single navigation item (can be parent or child)"
-  [{:keys [route-id label icon indented? section-key]}]
-  (let [active? (router/rendered? route-id true)]
-    [:button.w-full.text-left.px-3.py-2.transition-all.duration-150.cursor-pointer.flex.items-center.gap-3
+  "Render a single navigation item.
+   `:featured?` items (Components, CSS System) get bold weight, accent text,
+   and a slightly larger icon — that's the only differentiation. No surface
+   treatment, no border. Regular items stay quiet: lowercase + light weight."
+  [{:keys [route-id label icon indented? section-key featured?]}]
+  (let [active? (router/rendered? route-id true)
+        display-label (if featured? label (str/lower-case (str label)))]
+    [:button.w-full.text-left.rounded-md.transition-colors.duration-150.cursor-pointer.flex.items-center.gap-3.px-3.py-2
      {:class (concat
-              (if active?
-                ["ty-text++" "font-semibold"]
-                ["ty-text-" "hover:ty-text"])
+              (cond
+                ;; Featured + active: brightest accent text, bold
+                (and featured? active?) ["ty-text-accent+" "font-bold"]
+                ;; Featured + inactive: accent text, semibold
+                featured?               ["ty-text-accent" "font-semibold" "hover:ty-text-accent+"]
+                ;; Regular + active: brighter text, medium weight
+                active?                 ["ty-text++" "font-medium"]
+                ;; Regular + inactive: quiet — hover only changes text color
+                :else                   ["ty-text--" "font-light" "hover:ty-text"])
               (when indented? ["pl-7" "text-sm"]))
-      :style (cond->
-              {:border-bottom "2px solid"
-               :border-color "transparent"
-               :transition "border-bottom-color 250ms ease"}
-               active? (assoc :border-color "var(--ty-border-accent)"))
-      :on {;; :mouseenter (fn [e]
-           ;;               #_(when-not active?
-           ;;                   (set! (.. e -currentTarget -style -borderBottomColor) theme/accent-subtle)))
-           ;; :mouseleave (fn [e]
-           ;;               #_(when-not active?
-           ;;                   (set! (.. e -currentTarget -style -borderBottomColor) "transparent")))
-           :click (fn []
+      ;; Active items use the FLOATING surface (lighter than the sidebar's
+      ;; elevated surface in dark mode; same white in light mode but with a
+      ;; subtle drop shadow that reads as "lifted" rather than tinted).
+      :style (cond-> {:letter-spacing (if featured? "normal" "0.02em")}
+               active? (assoc :background "linear-gradient(to right, var(--ty-bg-accent), var(--ty-surface-floating))"
+                              :box-shadow "inset 2px 0 0 var(--ty-color-accent)"))
+      :on {:click (fn []
                     (when section-key
                       (set-last-visited-route! section-key route-id))
                     (router/navigate! route-id)
@@ -231,9 +236,12 @@
                       (js/setTimeout scroll-main-to-top! 100))
                     (swap! state assoc :mobile-menu-open false))}}
      [:ty-icon {:name icon
-                :size "sm"
-                :class (when active? "ty-text-accent")}]
-     [:span.text-sm label]]))
+                :size (if featured? "md" "sm")
+                :class (cond
+                         featured? "ty-text-accent"
+                         active?   "ty-text-accent"
+                         :else     nil)}]
+     [:span {:class (if featured? "text-sm font-semibold" "text-xs font-light")} display-label]]))
 
 (defn calculate-collapsible-height
   "Calculate available height for collapsible nav sections.
@@ -335,7 +343,7 @@
            ;; Scrollable content with scroll shadows
            [:ty-scroll-container.mt-2 {:max-height (str (- available-height 8) "px")
                                        :hide-scrollbar true}
-            [:div.space-y-0.5
+            [:div.space-y-1.5
              (for [item items]
                (let [has-children? (seq (:children item))]
                  ^{:key (:label item)}
@@ -344,12 +352,12 @@
                   (nav-item (assoc item :indented? false :section-key section-key))
                   ;; Children items (indented)
                   (when has-children?
-                    [:div.space-y-0.5
+                    [:div.space-y-1.5
                      (for [child (:children item)]
                        ^{:key (:label child)}
                        (nav-item (assoc child :indented? true :section-key section-key)))])]))]]]])
        ;; Non-collapsible children (always visible)
-       [:div.space-y-0.5
+       [:div.space-y-1.5
         (for [item items]
           (let [has-children? (seq (:children item))]
             ^{:key (:label item)}
@@ -358,7 +366,7 @@
              (nav-item (assoc item :indented? false))
              ;; Children items (indented)
              (when has-children?
-               [:div.space-y-0.5
+               [:div.space-y-1.5
                 (for [child (:children item)]
                   ^{:key (:label child)}
                   (nav-item (assoc child :indented? true)))])]))])]))
@@ -381,6 +389,8 @@
        (unsubscribe)
        (set! (.-_resizeUnsub el) nil)))})
 
+(def ^:private css-route-id :tyrell.site.docs/css)
+
 (defn nav-items []
   [:div.space-y-6
    ;; Fixed content (always visible) - track height
@@ -389,14 +399,19 @@
             :debounce 150}
            (resize-observer-hooks "tyrell.sidebar.nav-items" [:sidebar-sizes :fixed-content-height]))
     [:div.space-y-6
-     ;; Main Navigation — Welcome + Components index
+     ;; Main Navigation — Welcome (quiet) + the two featured destinations.
      (nav-section
       {:items [{:route-id ::landing
                 :label "Welcome"
                 :icon "home"}
                {:route-id ::components
                 :label "Components"
-                :icon "grid"}]})
+                :icon "grid"
+                :featured? true}
+               {:route-id css-route-id
+                :label "CSS System"
+                :icon "palette"
+                :featured? true}]})
 
      ;; Examples Section (unified router navigation) - Always visible
      (nav-section
@@ -411,10 +426,13 @@
                 :label "Contact Form"
                 :icon "mail"}]})]]
 
-   ;; Quickstart (route navigation) - Always visible
+   ;; Quickstart (route navigation) - Always visible.
+   ;; CSS System is shown in the top section as a featured item, so we
+   ;; filter it out here.
    (nav-section
     {:title "Quickstart"
-     :items (for [route guide-routes]
+     :items (for [route guide-routes
+                  :when (not= (:id route) css-route-id)]
               {:route-id (:id route)
                :label (:name route)
                :icon (:icon route)})})])
@@ -608,8 +626,8 @@
 (defn select-search-result!
   "Navigate to selected search result"
   [result]
-  (close-search!)
   (router/navigate! (:id result))
+  (close-search!)
   (js/setTimeout scroll-main-to-top! 100))
 
 (defn search-result-item
@@ -617,9 +635,10 @@
   [result idx selected-index query]
   [:li
    [:button.w-full.text-left.px-4.py-3.flex.items-center.gap-3.transition-colors
-    {:class (if (= idx selected-index)
-              ["ty-bg-accent-"]
-              ["hover:ty-bg-accent-"])
+    {:class (when-not (= idx selected-index) ["hover:ty-bg-accent-"])
+     :style (when (= idx selected-index)
+              {:background "linear-gradient(to right, var(--ty-bg-accent), transparent)"
+               :box-shadow "inset 2px 0 0 var(--ty-color-accent)"})
      :on {:click #(select-search-result! result)
           :mouseenter #(swap! state assoc-in [:search :selected-index] idx)}}
     ;; Icon
@@ -711,10 +730,14 @@
                 (for [[idx result] (map-indexed vector components)]
                   ^{:key (:id result)}
                   (search-result-item result (+ offset idx) selected-index query)))]])]
-         [:div.py-8.text-center.ty-text-
-          [:ty-icon.mb-2.opacity-50 {:name "search"
-                                     :size "lg"}]
-          [:p "No results found"]])]
+         [:div.flex.flex-col.items-center.justify-center.gap-3.h-full.ty-text-
+          [:ty-icon {:name "search"
+                     :size "xl"
+                     :class "opacity-20"}]
+          [:div.text-center
+           [:p.font-medium "No results found"]
+           [:p.text-sm.ty-text--.mt-1
+            "Try different keywords or browse the sidebar"]]])]
 
         ;; Footer with keyboard hints
       [:div.px-4.py-3.border-t.ty-border-.flex.items-center.gap-4.text-xs.ty-text--
@@ -733,12 +756,18 @@
 ;; Active component lookup (used by header to display the component name)
 ;; ============================================================================
 
-(defn current-component-route
-  "Return the docs-components entry matching the active route, including
-   children. Returns nil when not on a component page."
+(defn current-component-breadcrumb
+  "Returns {:parent parent :current entry} for the active route if on a component page.
+   :parent is nil for top-level components."
   []
-  (let [all (mapcat #(cons % (:children %)) docs/docs-components)]
-    (some #(when (router/rendered? (:id %) true) %) all)))
+  (some (fn [parent]
+          (cond
+            (router/rendered? (:id parent) true)
+            {:parent nil :current parent}
+            :else
+            (when-let [child (some #(when (router/rendered? (:id %) true) %) (:children parent))]
+              {:parent parent :current child})))
+        docs/docs-components))
 
 (defonce keyboard-shortcuts-initialized (atom false))
 
@@ -785,21 +814,36 @@
        (nav-items)]]]]])
 
 (defn page-title-text
-  "Plain page title used when not viewing a component."
+  "Plain page title used when not viewing a component. Returns nil for generic pages."
   []
   (cond
     (router/rendered? ::user-profile true) "User Profile"
     (router/rendered? ::event-booking true) "Event Booking"
     (router/rendered? ::contact-form true) "Contact Form"
     (router/rendered? ::components true) "Components"
-    (router/rendered? ::landing) "Welcome"
-    (router/rendered? ::ty-styles true) "Design System"
+    (router/rendered? ::ty-styles true) "CSS System"
     (router/rendered? ::getting-started true) "Getting Started"
-    :else "Documentation"))
+    :else nil))
+
+(defn header-title []
+  (if-let [{:keys [parent current]} (current-component-breadcrumb)]
+    [:div.flex.items-center.gap-1.text-sm
+     [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
+      {:on {:click #(router/navigate! ::components)}}
+      "Components"]
+     [:span.ty-text-- "›"]
+     (when parent
+       [:<>
+        [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
+         {:on {:click #(router/navigate! (:id parent))}}
+         (:name parent)]
+        [:span.ty-text-- "›"]])
+     [:span.ty-text.font-medium (:name current)]]
+    (when-let [title (page-title-text)]
+      [:h2.text-sm.font-medium.ty-text-.truncate title])))
 
 (defn header []
-  (let [show-sidebar? (layout/breakpoint>= :lg)
-        current-comp (current-component-route)]
+  (let [show-sidebar? (layout/breakpoint>= :lg)]
     [:ty-resize-observer
      (merge {:id "tyrell.header"}
             (resize-observer-hooks "tyrell.header" [:sidebar-sizes :header]))
@@ -814,7 +858,7 @@
                   :gap "40px"
                   :align-items "center"}}
          ;; Logo area (aligns with sidebar)
-         [:a.flex.items-center.gap-3.py-4.cursor-pointer
+         [:a.flex.items-center.gap-3.cursor-pointer
           {:on {:click (fn [e]
                          (.preventDefault e)
                          (router/navigate! ::landing))}}
@@ -824,22 +868,31 @@
                       :style {:height 40
                               :width 120}}]]]
          ;; Content header area (aligns with main content)
-         [:div.flex.items-center.justify-between.gap-3.py-4
-          ;; Page title — plain text (component name when on a component page)
-          [:h2.text-sm.font-medium.ty-text-.truncate
-           (if current-comp
-             (:name current-comp)
-             (page-title-text))]
+         [:div.flex.items-center.justify-between.gap-3.py-2
+          [:div.flex-1.min-w-0 (header-title)]
           ;; Actions
           [:div.flex.items-center.gap-2.flex-shrink-0
            ;; Search button
-           [:button.flex.items-center.gap-2.px-3.py-2.rounded-md.border.ty-border+.hover:ty-border-accent.transition-all.duration-150
-            {:on {:click open-search!}}
+           [:button.transition-all.duration-150.group
+            {:on {:click open-search!}
+             :style {:display "inline-flex"
+                     :align-items "center"
+                     :gap "8px"
+                     :padding "5px 10px"
+                     :border-radius "6px"
+                     :background "var(--ty-surface-elevated)"
+                     :border "1px solid var(--ty-border)"}}
             [:ty-icon {:name "search"
                        :size "sm"
-                       :class "ty-text--"}]
-            [:span.text-sm.ty-text- "Search"]
-            [:kbd.text-xs.ty-text--.ml-3
+                       :class ["ty-text--" "group-hover:ty-text-accent" "transition-colors"]}]
+            [:span.ty-text-.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
+            [:span.ty-text--.rounded
+             {:style {:font-size "8px"
+                      :line-height "1"
+                      :padding "3px 5px"
+                      :font-family "inherit"
+                      :background "var(--ty-surface-floating)"
+                      :border "1px solid var(--ty-border)"}}
              (if (.-userAgent js/navigator)
                (if (str/includes? (.-userAgent js/navigator) "Mac") "⌘K" "Ctrl+K")
                "⌘K")]]
@@ -876,11 +929,9 @@
                      :class "ty-text-accent"
                      :style {:height 28
                              :width 48}}]]
-         ;; Page title (grows to fill, truncates) — plain text
-         [:h2.flex-1.text-sm.font-medium.ty-text-.truncate.min-w-0
-          (if current-comp
-            (:name current-comp)
-            (page-title-text))]
+         ;; Page title / breadcrumb (grows to fill, truncates)
+         [:div.flex-1.min-w-0
+          (header-title)]
          ;; Search button (icon only)
          [:button.p-2.rounded-md.hover:ty-bg-accent-.transition-colors.flex-shrink-0
           {:on {:click open-search!}}

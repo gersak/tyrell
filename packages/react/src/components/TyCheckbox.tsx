@@ -109,6 +109,17 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
       }
     }, [ref]);
 
+    // Imperatively sync `checked` to the underlying property. React 18 sets
+    // boolean attributes as empty strings on first render but doesn't reliably
+    // remove them when the prop flips back to false on a custom element.
+    useEffect(() => {
+      const element = elementRef.current as any;
+      if (!element) return;
+      if (Boolean(element.checked) !== Boolean(checked)) {
+        element.checked = Boolean(checked);
+      }
+    }, [checked]);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,

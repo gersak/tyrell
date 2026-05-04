@@ -75,7 +75,7 @@ export const inputStyles = `
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--input-border, var(--ty-input-border));
-  border-radius: 6px;
+  border-radius: var(--ty-radius-base);
   background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
   transition: all 0.15s ease-in-out;
   
@@ -191,6 +191,7 @@ input::placeholder {
 .input-wrapper.xs {
   min-height: 32px;
   padding: 0 8px;
+  border-radius: var(--ty-input-radius-xs, var(--ty-radius-base));
 }
 
 .input-wrapper.xs input {
@@ -203,6 +204,7 @@ input::placeholder {
 .input-wrapper.sm {
   min-height: 36px;
   padding: 0 10px;
+  border-radius: var(--ty-input-radius-sm, var(--ty-radius-base));
 }
 
 .input-wrapper.sm input {
@@ -215,6 +217,7 @@ input::placeholder {
 .input-wrapper.md {
   min-height: 40px;
   padding: 0 12px;
+  border-radius: var(--ty-input-radius-md, var(--ty-radius-base));
 }
 
 .input-wrapper.md input {
@@ -227,6 +230,7 @@ input::placeholder {
 .input-wrapper.lg {
   min-height: 44px;
   padding: 0 14px;
+  border-radius: var(--ty-input-radius-lg, var(--ty-radius-base));
 }
 
 .input-wrapper.lg input {
@@ -239,6 +243,7 @@ input::placeholder {
 .input-wrapper.xl {
   min-height: 48px;
   padding: 0 16px;
+  border-radius: var(--ty-input-radius-xl, var(--ty-radius-base));
 }
 
 .input-wrapper.xl input {

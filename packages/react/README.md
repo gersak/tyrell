@@ -1,4 +1,4 @@
-# @gersak/ty-react
+# tyrell-react
 
 **React wrappers for Ty Web Components** - bringing framework-agnostic web components to React with full TypeScript support.
 
@@ -22,8 +22,8 @@ Add to your `index.html`:
 <html>
 <head>
   <!-- Ty Web Components & Styles via CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/ty.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css">
+  <script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
 </head>
 <body>
   <div id="root"></div>
@@ -34,7 +34,7 @@ Add to your `index.html`:
 ### Step 2: Install React Wrappers
 
 ```bash
-npm install @gersak/ty-react
+npm install tyrell-react
 ```
 
 That's it! No build complexity, no bundler configuration.
@@ -43,7 +43,7 @@ That's it! No build complexity, no bundler configuration.
 
 ```tsx
 import React, { useState } from 'react';
-import { TyButton, TyInput, TyModal } from '@gersak/ty-react';
+import { TyButton, TyInput, TyModal } from 'tyrell-react';
 
 function App() {
   const [value, setValue] = useState('');
@@ -88,8 +88,11 @@ All 18 components wrapped:
 | `TyDatePicker` | Date picker with calendar |
 | `TyTabs` | Tab container |
 | `TyTab` | Individual tab |
-| `TySurface` | Surface wrapper (`elevated` / `floating` / `canvas` / `content` / `input`) |
-| `TyElevated` / `TyFloating` / `TyCanvas` / `TyContent` | Named surface aliases |
+| `TyWizard` | Multi-step wizard/stepper |
+| `TyStep` | Individual wizard step |
+| `TyResizeObserver` | Element size observer |
+| `TyScrollContainer` | Scroll wrapper with edge shadows |
+| `TyCopy` | Copy-to-clipboard field |
 
 ## ⚡ Event Handling (React Convention)
 
@@ -98,7 +101,7 @@ Ty React wrappers follow React conventions for event handling:
 ### Input Components (Input, Textarea, Checkbox)
 
 ```tsx
-import { TyInput } from '@gersak/ty-react';
+import { TyInput } from 'tyrell-react';
 
 function SearchBox() {
   const [query, setQuery] = useState('');
@@ -124,7 +127,7 @@ function SearchBox() {
 ### Selection Components (Dropdown, Calendar, etc.)
 
 ```tsx
-import { TyDropdown, TyOption } from '@gersak/ty-react';
+import { TyDropdown, TyOption } from 'tyrell-react';
 
 function CountrySelector() {
   return (
@@ -146,7 +149,7 @@ For selection components, `onChange` fires when the selection changes (as expect
 ### Form with Validation
 
 ```tsx
-import { TyInput, TyDropdown, TyOption, TyButton } from '@gersak/ty-react';
+import { TyInput, TyDropdown, TyOption, TyButton } from 'tyrell-react';
 
 function ContactForm() {
   const handleSubmit = (e: React.FormEvent) => {
@@ -181,7 +184,7 @@ function ContactForm() {
 
 ```tsx
 import { useRef } from 'react';
-import { TyModal, TyButton, type TyModalRef } from '@gersak/ty-react';
+import { TyModal, TyButton, type TyModalRef } from 'tyrell-react';
 
 function ModalExample() {
   const modalRef = useRef<TyModalRef>(null);
@@ -210,7 +213,7 @@ function ModalExample() {
 
 ```tsx
 import { useState } from 'react';
-import { TyCalendar } from '@gersak/ty-react';
+import { TyCalendar } from 'tyrell-react';
 
 function CalendarExample() {
   const [selected, setSelected] = useState<Date | null>(null);
@@ -228,61 +231,68 @@ function CalendarExample() {
 
 ## 🪟 Surfaces
 
-The Ty design system has five surface levels (background + shadow). They ship as CSS
-utility classes (`ty-elevated`, `ty-floating`, …) and as React wrappers so you don't have
-to remember the class names:
+The Tyrell design system has five surface levels (background + shadow). They ship as
+CSS utility classes — apply them directly to any element. There is no wrapper component
+to learn:
 
 ```tsx
-import { TyElevated, TyFloating, TySurface } from '@gersak/ty-react';
-
 function Dashboard() {
   return (
-    <TyElevated as="section" className="p-6 rounded-lg">
+    <section className="ty-elevated p-6 rounded-lg">
       <h2>Card title</h2>
       <p>Sits above the page background.</p>
-    </TyElevated>
+    </section>
   );
 }
-
-// Equivalent — pick the API that fits your code:
-<TySurface variant="floating" className="p-4">…</TySurface>
-<div className="ty-floating p-4">…</div>
 ```
 
-| Variant     | Use for                              |
-|-------------|--------------------------------------|
-| `floating`  | modals, dropdowns, tooltips          |
-| `elevated`  | cards, panels, sidebars              |
-| `content`   | main content areas                   |
-| `canvas`    | app/page background                  |
-| `input`     | form control surface                 |
+| Class          | Use for                              |
+|----------------|--------------------------------------|
+| `ty-floating`  | modals, dropdowns, tooltips          |
+| `ty-elevated`  | cards, panels, sidebars              |
+| `ty-content`   | main content areas                   |
+| `ty-canvas`    | app/page background                  |
+| `ty-input`     | form control surface                 |
 
-**Golden rule:** use Ty surface/colour classes for colour, Tailwind (or your own utilities)
+**Golden rule:** use Tyrell surface/colour classes for colour, Tailwind (or your own utilities)
 for everything else (spacing, layout, typography). Don't mix `bg-blue-500` with surfaces.
 
 ## 🎨 Icons (3000+ Available)
 
-Register icons via CDN before use:
-
-```html
-<!-- In index.html -->
-<script type="module">
-  import { check, heart, star } from 'https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/icons/lucide.js';
-  
-  window.ty.icons.register({ check, heart, star });
-</script>
-```
-
-Then use in React:
+Import only the icons you need (tree-shaking) and register them once at app startup
+via the global `window.tyIcons` API exposed by `tyrell-components`:
 
 ```tsx
-import { TyIcon, TyButton } from '@gersak/ty-react';
+// app/icons.ts (or wherever your app boots)
+import { check, heart, star } from 'tyrell-components/icons/lucide';
+
+export function registerIcons() {
+  window.tyIcons.register({ check, heart, star });
+}
+```
+
+```tsx
+// app/layout.tsx (call once, e.g. in a top-level effect)
+'use client';
+import { useEffect } from 'react';
+import { registerIcons } from './icons';
+
+export default function RootLayout({ children }) {
+  useEffect(() => { registerIcons(); }, []);
+  return <>{children}</>;
+}
+```
+
+Then use icons anywhere in React:
+
+```tsx
+import { TyIcon, TyButton } from 'tyrell-react';
 
 function IconExample() {
   return (
     <>
       <TyIcon name="check" size="lg" />
-      
+
       <TyButton flavor="primary">
         <TyIcon name="heart" />
         Like
@@ -290,6 +300,17 @@ function IconExample() {
     </>
   );
 }
+```
+
+CDN alternative (vanilla HTML, no bundler):
+
+```html
+<script type="module">
+  import { check, heart, star }
+    from 'https://cdn.jsdelivr.net/npm/tyrell-components@latest/lib/icons/lucide.js';
+
+  window.tyIcons.register({ check, heart, star });
+</script>
 ```
 
 ## 📘 TypeScript Support
@@ -302,7 +323,7 @@ import type {
   TyInputEventDetail,
   TyModalRef,
   TyDropdownEventDetail 
-} from '@gersak/ty-react';
+} from 'tyrell-react';
 
 // Type-safe props
 const buttonProps: TyButtonProps = {
@@ -326,7 +347,7 @@ Works perfectly with Reagent and UIx:
 
 ```clojure
 (ns my-app.core
-  (:require ["@gersak/ty-react" :as ty]))
+  (:require ["tyrell-react" :as ty]))
 
 (defn my-component []
   [:div
@@ -339,7 +360,7 @@ Works perfectly with Reagent and UIx:
 ```clojure
 (ns my-app.core
   (:require [uix.core :as uix]
-            ["@gersak/ty-react" :refer [TyButton TyInput]]))
+            ["tyrell-react" :refer [TyButton TyInput]]))
 
 (defn my-component []
   (uix/view
@@ -354,7 +375,7 @@ Only React is required:
 - `react` >=18.0.0
 - `react-dom` >=18.0.0
 
-**Note:** The core `@gersak/ty` web components are loaded via CDN, not as an npm dependency!
+**Note:** The core `tyrell-components` web components are loaded via CDN, not as an npm dependency!
 
 ## 🌍 Browser Support
 
@@ -376,7 +397,7 @@ Modern browsers with Web Components support:
 
 ## 🤝 Contributing
 
-This package is part of the [Ty monorepo](https://github.com/gersak/ty).
+This package is part of the [Ty monorepo](https://github.com/gersak/tyrell).
 
 ## 📄 License
 
@@ -384,6 +405,6 @@ MIT License - see [LICENSE](./LICENSE)
 
 ## 🔗 Links
 
-- [Ty Core Package](https://www.npmjs.com/package/@gersak/ty)
-- [GitHub Repository](https://github.com/gersak/ty)
-- [Documentation](https://ty.gersak.dev) (Coming Soon)
+- [Ty Core Package](https://www.npmjs.com/package/tyrell-components)
+- [GitHub Repository](https://github.com/gersak/tyrell)
+- [Documentation](https://tyrell.gersak.dev) (Coming Soon)

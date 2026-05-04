@@ -95,7 +95,7 @@ export type {
 } from './utils/positioning.js'
 
 // Icons
-// Note: Icon libraries moved to separate @gersak/ty-icons package
+// Note: Icon libraries moved to separate tyrell-icons package
 // Icon registry utility remains in core for registering custom icons
 
 // Version (auto-generated from package.json)

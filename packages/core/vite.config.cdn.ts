@@ -25,7 +25,7 @@ const pkg = JSON.parse(
  * 5. Zero whitespace
  * 6. Drop all console statements
  * 
- * Output: ../../dist/cdn/ty.js (root dist/ folder)
+ * Output: dist/tyrell.js
  */
 
 export default defineConfig({
@@ -43,9 +43,9 @@ export default defineConfig({
     // Single bundle library mode
     lib: {
       entry: resolve(__dirname, 'src/cdn.ts'),  // ← CDN entry point (NO icons!)
-      name: 'Ty',
+      name: 'Tyrell',
       formats: ['umd'], // UMD for browser <script> tag
-      fileName: () => 'ty.js',
+      fileName: () => 'tyrell.js',
     },
 
     rollupOptions: {
@@ -64,7 +64,7 @@ export default defineConfig({
         },
 
         // For UMD: global name
-        name: 'Ty',
+        name: 'Tyrell',
 
         // Aggressive exports optimization
         exports: 'named',
@@ -213,7 +213,7 @@ export default defineConfig({
         wrap_iife: false,
 
         // Add banner for license/attribution
-        preamble: '/*! Ty Web Components | Components Only (NO Icons) | MIT License | https://github.com/gersak/ty */',
+        preamble: '/*! Tyrell Components | Components Only (NO Icons) | MIT License | https://github.com/gersak/tyrell */',
       },
     },
 

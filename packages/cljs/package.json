@@ -1,29 +1,30 @@
 {
-  "name": "@gersak/ty-cljs",
+  "name": "tyrell-cljs-dev",
+  "private": true,
   "version": "0.2.0",
-  "description": "Ty Web Components - ClojureScript Implementation & CLJS-only features",
-  "main": "dist/ty.js",
+  "description": "Tyrell Components - ClojureScript Implementation & CLJS-only features",
+  "main": "dist/tyrell.js",
   "exports": {
     ".": {
-      "import": "./dist/ty.js"
+      "import": "./dist/tyrell.js"
     },
     "./calendar": {
-      "import": "./dist/ty-calendar.js"
+      "import": "./dist/tyrell-calendar.js"
     },
     "./calendar-month": {
-      "import": "./dist/ty-calendar-month.js"
+      "import": "./dist/tyrell-calendar-month.js"
     },
     "./date-picker": {
-      "import": "./dist/ty-date-picker.js"
+      "import": "./dist/tyrell-date-picker.js"
     },
     "./dropdown": {
-      "import": "./dist/ty-dropdown.js"
+      "import": "./dist/tyrell-dropdown.js"
     },
     "./multiselect": {
-      "import": "./dist/ty-multiselect.js"
+      "import": "./dist/tyrell-multiselect.js"
     },
     "./lazy": {
-      "import": "./dist/ty-lazy.js"
+      "import": "./dist/tyrell-lazy.js"
     }
   },
   "files": [

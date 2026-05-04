@@ -219,4 +219,5 @@
   :wrench lucide/wrench
   :bug lucide/bug
   :git-branch lucide/git-branch
-  :users lucide/users})
+  :users lucide/users
+  :scissors lucide/scissors})

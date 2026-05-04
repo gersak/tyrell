@@ -217,8 +217,8 @@ The core package includes the **icon registry utility** but not the icon librari
 
 ```typescript
 // Option 1: Tree-shakeable imports (Recommended)
-import { check, heart, star } from '@gersak/ty/icons/lucide'
-import { registerIcons } from '@gersak/ty/icons/registry'
+import { check, heart, star } from 'tyrell-components/icons/lucide'
+import { registerIcons } from 'tyrell-components/icons/registry'
 
 registerIcons({ check, heart, star })  // ~0.5-1KB per icon
 

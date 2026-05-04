@@ -86,10 +86,32 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   onBlur?: (event: FocusEvent) => void;
 }
 
+// One-time global warning flags so we don't spam the console.
+let _warnedOnInputProp = false;
+
 // React wrapper for ty-input web component
 export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
   ({ onChange, onChangeCommit, onFocus, onBlur, disabled, name, checked, debounce, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+
+    // Catch the most common mistake: passing `onInput` (React's prop) instead
+    // of `onChange` (our wrapper's prop). React's synthetic-event system
+    // strips event.detail, so the user's handler crashes on `e.detail.value`.
+    // Forward to onChange and log a one-shot warning.
+    const onInputProp = (props as any).onInput as ((e: any) => void) | undefined;
+    if (onInputProp && !onChange) {
+      if (!_warnedOnInputProp) {
+        _warnedOnInputProp = true;
+        console.warn(
+          '[tyrell-react] <TyInput> received `onInput`. ' +
+          'React strips event.detail; use `onChange` instead — it receives the raw CustomEvent. ' +
+          'Forwarding for now, but please rename the prop.'
+        );
+      }
+      onChange = onInputProp;
+    }
+    // Either way, drop onInput from spread so React doesn't double-wire it.
+    delete (props as any).onInput;
 
     // Map onChange to input event (React convention)
     const handleInput = useCallback((event: CustomEvent<TyInputEventDetail>) => {
@@ -167,6 +189,19 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
         }
       }
     }, [ref]);
+
+    // Imperatively sync `value` to the underlying element's property whenever
+    // the React prop changes. React 18's prop-to-property bridging for custom
+    // elements is unreliable for empty strings, so we set the property directly
+    // to guarantee resets (`value=""`) clear the visible content.
+    useEffect(() => {
+      const element = elementRef.current as any;
+      if (!element) return;
+      const next = (props as any).value ?? '';
+      if (element.value !== next) {
+        element.value = next;
+      }
+    }, [(props as any).value]);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {

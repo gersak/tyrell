@@ -254,28 +254,18 @@
     (js-hero-card)]
 
    ;; Compact cards row
-   [:div.grid.grid-cols-1.md:grid-cols-3.gap-4
-    (compact-stack-card
-     {:route-id :tyrell.site.docs/replicant
-      :icon "lambda"
-      :flavor "neutral"
-      :eyebrow "CLJS"
-      :title "Replicant"
-      :tagline "Vanilla CLJS with hiccup. Includes router, i18n, and layout utilities."
-      :snippet "\n\n[:ty-button
- {:flavor \"primary\"}
- \"Save\"]"
-      :snippet-lang "clojure"})
+   [:div.grid.grid-cols-1.md:grid-cols-2.gap-4
     (compact-stack-card
      {:route-id :tyrell.site.docs/clojurescript
-      :icon "atom"
+      :icon "clojure"
       :flavor "neutral"
-      :eyebrow "CLJS · React"
-      :title "Reagent / UIx"
-      :tagline "ClojureScript with React. Full Tyrell infrastructure included."
-      :snippet "\n\n($ :ty-button
-   {:flavor \"primary\"}
-   \"Save\")"
+      :eyebrow "CLJS"
+      :title "ClojureScript"
+      :tagline [(fw "Reagent") " · " (fw "re-frame") " · " (fw "UIx") " · " (fw "Helix") " · " (fw "Replicant")
+                " — typed wrappers for React libs, raw " (fw "<ty-*>") " for the rest."]
+      :snippet "\n\n[:> ty/Button
+ {:flavor \"primary\"}
+ \"Save\"]"
       :snippet-lang "clojure"})
     (compact-stack-card
      {:route-id :tyrell.site.docs/htmx

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "dependencies": {
     "tyrell-components": "1.0.0-TC7",
-    "tyrell-react": "1.0.0-TC10",
+    "tyrell-react": "1.0.0-TC11",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

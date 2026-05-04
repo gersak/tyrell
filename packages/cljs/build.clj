@@ -5,31 +5,31 @@
    [clojure.string :as str]
    [clojure.tools.build.api :as b]
    [deps-deploy.deps-deploy :as deploy]
-   [ty.template :as template]))
+   [tyrell.template :as template]))
 
-;; Clojars versions — kept in sync with NPM @gersak/ty version
-(def ty-version "1.0.0-RC4")
-(def ty-icons-version "1.0.0-RC4")
+;; Clojars versions — kept in sync with NPM tyrell-components version
+(def ty-version "1.0.0-RC5")
+(def ty-icons-version "1.0.0-RC5")
 (def class-dir "target/classes")
 
 ;; Library configurations
 (def ty-lib
   {:group-id "dev.gersak"
-   :artifact-id "ty"
+   :artifact-id "tyrell"
    :version ty-version
-   :basis-alias :ty-lib
+   :basis-alias :tyrell-lib
    :src-dirs ["src"]
-   :resource-dirs ["resources/ty"]
-   :jar-file (format "target/ty-%s.jar" ty-version)})
+   :resource-dirs ["resources/tyrell"]
+   :jar-file (format "target/tyrell-%s.jar" ty-version)})
 
 (def ty-icons-lib
   {:group-id "dev.gersak"
-   :artifact-id "ty-icons"
+   :artifact-id "tyrell-icons"
    :version ty-icons-version
-   :basis-alias :ty-icons-lib
+   :basis-alias :tyrell-icons-lib
    :src-dirs ["icons"]
-   :resource-dirs ["resources/ty-icons"]
-   :jar-file (format "target/ty-icons-%s.jar" ty-icons-version)})
+   :resource-dirs ["resources/tyrell-icons"]
+   :jar-file (format "target/tyrell-icons-%s.jar" ty-icons-version)})
 
 (defn clean [_]
   (b/delete {:path "target"}))
@@ -41,9 +41,9 @@
   (let [{:keys [group-id artifact-id version basis-alias src-dirs]} lib-config
         basis (b/create-basis {:aliases [basis-alias]})
         lib-symbol (symbol (str group-id "/" artifact-id))
-        scm-info {:url "https://github.com/gersak/ty"
-                  :connection "scm:git:git://github.com/gersak/ty.git"
-                  :developer-connection "scm:git:ssh://git@github.com/gersak/ty.git"
+        scm-info {:url "https://github.com/gersak/tyrell"
+                  :connection "scm:git:git://github.com/gersak/tyrell.git"
+                  :developer-connection "scm:git:ssh://git@github.com/gersak/tyrell.git"
                   :tag (str "v" version)}]
     (b/write-pom {:class-dir class-dir
                   :lib lib-symbol
@@ -51,10 +51,10 @@
                   :basis basis
                   :src-dirs src-dirs
                   :scm scm-info
-                  :pom-data [[:description (if (= artifact-id "ty")
+                  :pom-data [[:description (if (= artifact-id "tyrell")
                                              "Modern web components library built with ClojureScript"
-                                             "Pre-generated icon components for Ty web components library")]
-                             [:url "https://github.com/gersak/ty"]
+                                             "Pre-generated icon components for Tyrell web components library")]
+                             [:url "https://github.com/gersak/tyrell"]
                              [:licenses
                               [:license
                                [:name "MIT License"]
@@ -76,7 +76,7 @@
 ;; ============================================================================
 
 (defn read-ty-version
-  "Read the current @gersak/ty version from packages/core/package.json"
+  "Read the current tyrell-components version from packages/core/package.json"
   []
   (let [pkg-json-path "../core/package.json"
         pkg-json-file (io/file pkg-json-path)]
@@ -92,16 +92,16 @@
 
 (defn github-pages
   "Build and deploy the documentation site to GitHub Pages.
-   Uses CDN with pinned version from @gersak/ty NPM package."
+   Uses CDN with pinned version from tyrell-components NPM package."
   [_]
   (let [salt (template/random-string)
         ty-version (read-ty-version)
-        github-root "/ty"] ; GitHub Pages will serve from gersak.github.io/ty
+        github-root "/tyrell"] ; GitHub Pages will serve from gersak.github.io/tyrell
 
     ;; 1. Clean the docs directory
-    (println "\n📦 Building Ty Documentation for GitHub Pages")
+    (println "\n📦 Building Tyrell Components Documentation for GitHub Pages")
     (println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-    (println (format "📦 Using Ty version: %s from NPM CDN" ty-version))
+    (println (format "📦 Using tyrell-components version: %s from NPM CDN" ty-version))
     (println "→ Cleaning docs directory...")
     (b/delete {:path "../../docs"})
 
@@ -182,17 +182,17 @@
     (println "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     (println "📁 Output directory: ../../docs/")
     (println (format "🔑 Cache-busting salt: %s" salt))
-    (println (format "📦 Ty Components: @gersak/ty@%s (CDN)" ty-version))
-    (println "🌐 Will be served at: https://gersak.github.io/ty/")
+    (println (format "📦 Tyrell Components: tyrell-components@%s (CDN)" ty-version))
+    (println "🌐 Will be served at: https://gersak.github.io/tyrell/")
     (println "\nGenerated files:")
     (println "  - docs/index.html (main page)")
     (println "  - docs/404.html (SPA fallback)")
     (println (format "  - docs/js/site.%s.js (ClojureScript app)" salt))
     (println "\nCDN Resources:")
-    (println (format "  - https://cdn.jsdelivr.net/npm/@gersak/ty@%s/css/ty.css" ty-version))
-    (println (format "  - https://cdn.jsdelivr.net/npm/@gersak/ty@%s/dist/ty.js" ty-version))
+    (println (format "  - https://cdn.jsdelivr.net/npm/tyrell-components@%s/css/tyrell.css" ty-version))
+    (println (format "  - https://cdn.jsdelivr.net/npm/tyrell-components@%s/dist/tyrell.js" ty-version))
     (println "\nNext steps:")
-    (println "  1. Ensure @gersak/ty is published to NPM:")
+    (println "  1. Ensure tyrell-components is published to NPM:")
     (println (format "     npm publish (current version: %s)" ty-version))
     (println "  2. Wait ~2 minutes for CDN propagation")
     (println "  3. Review the generated files in 'docs/'")
@@ -204,14 +204,14 @@
     (println "")))
 
 (defn build-ty [_]
-  (println "Building dev.gersak/ty...")
+  (println "Building dev.gersak/tyrell...")
   (clean nil)
   (create-pom ty-lib)
   (create-jar ty-lib)
   (println "Built:" (:jar-file ty-lib)))
 
 (defn build-ty-icons [_]
-  (println "Building dev.gersak/ty-icons...")
+  (println "Building dev.gersak/tyrell-icons...")
   (clean nil)
   (create-pom ty-icons-lib)
   (create-jar ty-icons-lib)
@@ -223,21 +223,21 @@
 
 (defn install-ty [_]
   (build-ty nil)
-  (b/install {:basis (b/create-basis {:aliases [:ty-lib]})
+  (b/install {:basis (b/create-basis {:aliases [:tyrell-lib]})
               :lib (symbol (str (:group-id ty-lib) "/" (:artifact-id ty-lib)))
               :version (:version ty-lib)
               :jar-file (:jar-file ty-lib)
               :class-dir class-dir})
-  (println "Installed dev.gersak/ty to local repo"))
+  (println "Installed dev.gersak/tyrell to local repo"))
 
 (defn install-ty-icons [_]
   (build-ty-icons nil)
-  (b/install {:basis (b/create-basis {:aliases [:ty-icons-lib]})
+  (b/install {:basis (b/create-basis {:aliases [:tyrell-icons-lib]})
               :lib (symbol (str (:group-id ty-icons-lib) "/" (:artifact-id ty-icons-lib)))
               :version (:version ty-icons-lib)
               :jar-file (:jar-file ty-icons-lib)
               :class-dir class-dir})
-  (println "Installed dev.gersak/ty-icons to local repo"))
+  (println "Installed dev.gersak/tyrell-icons to local repo"))
 
 (defn install-all [_]
   (install-ty nil)
@@ -249,7 +249,7 @@
     (deploy/deploy {:installer :remote
                     :artifact (:jar-file ty-lib)
                     :pom-file pom-path}))
-  (println "Deployed dev.gersak/ty to Clojars"))
+  (println "Deployed dev.gersak/tyrell to Clojars"))
 
 (defn deploy-ty-icons [_]
   (build-ty-icons nil)
@@ -257,7 +257,7 @@
     (deploy/deploy {:installer :remote
                     :artifact (:jar-file ty-icons-lib)
                     :pom-file pom-path}))
-  (println "Deployed dev.gersak/ty-icons to Clojars"))
+  (println "Deployed dev.gersak/tyrell-icons to Clojars"))
 
 (defn deploy-all [_]
   (deploy-ty nil)
