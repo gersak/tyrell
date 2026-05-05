@@ -1,32 +1,33 @@
 /**
  * TyButton Web Component
- * PORTED FROM: clj/ty/components/button.cljs
- * Maintains full compatibility with ClojureScript version
+ *
+ * Three appearance variants × six flavors × three tones (+/base/-).
+ *   appearance="solid"     saturated brand fill (default)
+ *   appearance="outlined"  transparent bg, text === border
+ *   appearance="ghost"     text only, hover bg
+ *
+ * Append `+` or `-` to a flavor for stronger/softer tone (e.g. "primary+").
  */
 
-import type { Flavor, Size, TyButtonElement } from '../types/common.js'
-import { TyComponent } from '../base/ty-component.js'
-import type { PropertyChange } from '../utils/property-manager.js'
-import { ensureStyles, buildClassList } from '../utils/styles.js'
-import { buttonStyles } from '../styles/button.js'
+import type { Flavor, Size, TyButtonElement } from "../types/common.js";
+import { TyComponent } from "../base/ty-component.js";
+import type { PropertyChange } from "../utils/property-manager.js";
+import { ensureStyles, buildClassList } from "../utils/styles.js";
+import { buttonStyles } from "../styles/button.js";
 
-/**
- * Component internal state (for typing TyComponent)
- */
+type Appearance = "solid" | "outlined" | "ghost";
+
 interface ButtonState {
-  flavor: Flavor
-  size: Size
-  disabled: boolean
-  type: 'button' | 'submit' | 'reset'
-  pill: boolean
-  outlined: boolean
-  filled: boolean
-  accent: boolean
-  plain: boolean
-  action: boolean
-  wide: boolean
-  name: string
-  value: string
+  flavor: Flavor;
+  size: Size;
+  appearance: Appearance;
+  disabled: boolean;
+  type: "button" | "submit" | "reset";
+  pill: boolean;
+  action: boolean;
+  wide: boolean;
+  name: string;
+  value: string;
 }
 
 /**
@@ -34,374 +35,271 @@ interface ButtonState {
  *
  * @example
  * ```html
- * <ty-button flavor="primary" size="md">Click Me</ty-button>
- * <ty-button flavor="danger" outlined disabled>Disabled</ty-button>
- * <ty-button flavor="success" pill>Pill Button</ty-button>
+ * <ty-button flavor="primary">Default solid</ty-button>
+ * <ty-button appearance="outlined" flavor="danger">Outlined</ty-button>
+ * <ty-button appearance="ghost" flavor="success+">Ghost stronger</ty-button>
  * ```
  */
-export class TyButton extends TyComponent<ButtonState> implements TyButtonElement {
-  static formAssociated = true
+export class TyButton
+  extends TyComponent<ButtonState>
+  implements TyButtonElement
+{
+  static formAssociated = true;
 
-  // ============================================================================
-  // PROPERTY CONFIGURATION - Declarative property lifecycle
-  // ============================================================================
   protected static properties = {
     flavor: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: true,
-      default: 'neutral',
-      validate: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        return valid.includes(v)
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        if (!valid.includes(v)) {
-          console.warn(`[ty-button] Invalid flavor '${v}'. Using 'neutral'. Valid flavors: ${valid.join(', ')}`)
-          return 'neutral'
-        }
-        return v
-      },
+      default: "neutral",
     },
     size: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: true,
-      default: 'md',
-      validate: (v: any) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
+      default: "md",
+      validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
-        if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(v)) {
-          console.warn(`[ty-button] Invalid size '${v}'. Using 'md'.`)
-          return 'md'
+        if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
+          console.warn(`[ty-button] Invalid size '${v}'. Using 'md'.`);
+          return "md";
         }
-        return v
+        return v;
+      },
+    },
+    appearance: {
+      type: "string" as const,
+      visual: true,
+      default: "solid",
+      validate: (v: any) => ["solid", "outlined", "ghost"].includes(v),
+      coerce: (v: any) => {
+        if (!["solid", "outlined", "ghost"].includes(v)) {
+          console.warn(`[ty-button] Invalid appearance '${v}'. Using 'solid'.`);
+          return "solid";
+        }
+        return v;
       },
     },
     disabled: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
       default: false,
     },
     type: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: false,
-      default: 'submit',
+      default: "submit",
     },
     pill: {
-      type: 'boolean' as const,
-      visual: true,
-      default: false,
-    },
-    outlined: {
-      type: 'boolean' as const,
-      visual: true,
-      default: false,
-    },
-    filled: {
-      type: 'boolean' as const,
-      visual: true,
-      default: false,
-    },
-    accent: {
-      type: 'boolean' as const,
-      visual: true,
-      default: false,
-    },
-    plain: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
       default: false,
     },
     action: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
       default: false,
     },
     wide: {
-      type: 'boolean' as const,
-      visual: false, // CSS attribute selector, no render needed
+      type: "boolean" as const,
+      visual: false,
       default: false,
     },
     name: {
-      type: 'string' as const,
-      default: '',
+      type: "string" as const,
+      default: "",
     },
     value: {
-      type: 'string' as const,
-      default: '',
+      type: "string" as const,
+      default: "",
     },
-  }
+  };
 
-  // Track whether button structure has been initialized
-  private _structureInitialized = false
+  private _structureInitialized = false;
 
   constructor() {
-    super() // TyComponent handles attachInternals() and attachShadow()
-
-    // Apply styles to shadow root
-    ensureStyles(this.shadowRoot!, { css: buttonStyles, id: 'ty-button' })
+    super();
+    ensureStyles(this.shadowRoot!, { css: buttonStyles, id: "ty-button" });
   }
 
-  // observedAttributes auto-generated by TyComponent from properties config
+  protected onConnect(): void {}
+  protected onDisconnect(): void {}
+  protected onPropertiesChanged(_changes: PropertyChange[]): void {}
 
   // ============================================================================
-  // TYCOMPONENT LIFECYCLE HOOKS
-  // ============================================================================
-
-  /**
-   * Called when component connects to DOM
-   * TyComponent will call render() automatically after this hook
-   */
-  protected onConnect(): void {
-    // No additional setup needed - render() handles structure creation
-  }
-
-  /**
-   * Called when component disconnects from DOM
-   */
-  protected onDisconnect(): void {
-    // Click handler is on the inner button in shadow DOM, cleaned up automatically
-  }
-
-  /**
-   * Handle property changes - called BEFORE render
-   */
-  protected onPropertiesChanged(_changes: PropertyChange[]): void {
-    // No special handling needed - TyComponent handles rendering automatically
-  }
-
-  // ============================================================================
-  // PROPERTY ACCESSORS - Simple wrappers via TyComponent
+  // PROPERTY ACCESSORS
   // ============================================================================
 
   get flavor(): Flavor {
-    return this.getProperty('flavor') as Flavor
+    return this.getProperty("flavor") as Flavor;
   }
-
   set flavor(value: Flavor) {
-    this.setProperty('flavor', value)
+    this.setProperty("flavor", value);
   }
 
   get size(): Size {
-    return this.getProperty('size') as Size
+    return this.getProperty("size") as Size;
+  }
+  set size(value: Size) {
+    this.setProperty("size", value);
   }
 
-  set size(value: Size) {
-    this.setProperty('size', value)
+  get appearance(): Appearance {
+    return this.getProperty("appearance") as Appearance;
+  }
+  set appearance(value: Appearance) {
+    this.setProperty("appearance", value);
   }
 
   get disabled(): boolean {
-    return this.getProperty('disabled')
+    return this.getProperty("disabled");
   }
-
   set disabled(value: boolean) {
-    this.setProperty('disabled', value)
+    this.setProperty("disabled", value);
   }
 
-  get type(): 'button' | 'submit' | 'reset' {
-    return this.getProperty('type')
+  get type(): "button" | "submit" | "reset" {
+    return this.getProperty("type");
   }
-
-  set type(value: 'button' | 'submit' | 'reset') {
-    this.setProperty('type', value)
+  set type(value: "button" | "submit" | "reset") {
+    this.setProperty("type", value);
   }
 
   get pill(): boolean {
-    return this.getProperty('pill')
+    return this.getProperty("pill");
   }
-
   set pill(value: boolean) {
-    this.setProperty('pill', value)
-  }
-
-  get outlined(): boolean {
-    return this.getProperty('outlined')
-  }
-
-  set outlined(value: boolean) {
-    this.setProperty('outlined', value)
-  }
-
-  get filled(): boolean {
-    return this.getProperty('filled')
-  }
-
-  set filled(value: boolean) {
-    this.setProperty('filled', value)
-  }
-
-  get accent(): boolean {
-    return this.getProperty('accent')
-  }
-
-  set accent(value: boolean) {
-    this.setProperty('accent', value)
-  }
-
-  get plain(): boolean {
-    return this.getProperty('plain')
-  }
-
-  set plain(value: boolean) {
-    this.setProperty('plain', value)
+    this.setProperty("pill", value);
   }
 
   get action(): boolean {
-    return this.getProperty('action')
+    return this.getProperty("action");
   }
-
   set action(value: boolean) {
-    this.setProperty('action', value)
+    this.setProperty("action", value);
   }
 
   get wide(): boolean {
-    return this.getProperty('wide')
+    return this.getProperty("wide");
   }
-
   set wide(value: boolean) {
-    this.setProperty('wide', value)
+    this.setProperty("wide", value);
   }
 
   get name(): string {
-    return this.getProperty('name')
+    return this.getProperty("name");
   }
-
   set name(value: string) {
-    this.setProperty('name', value)
+    this.setProperty("name", value);
   }
 
   get value(): string {
-    return this.getProperty('value')
+    return this.getProperty("value");
   }
-
   set value(value: string) {
-    this.setProperty('value', value)
+    this.setProperty("value", value);
   }
 
-  // Form association (form getter is provided by TyComponent base class)
-
   // ============================================================================
-  // INTERNAL METHODS
+  // INTERNAL
   // ============================================================================
 
-  // Build class list (matches ClojureScript logic exactly)
+  /** Parse the optional `+`/`-` shade suffix from a flavor string. */
+  private parseFlavor(): { base: string; tone: "" | "+" | "-" } {
+    const f = this.flavor || "";
+    if (f.length > 1 && f.endsWith("+"))
+      return { base: f.slice(0, -1), tone: "+" };
+    if (f.length > 1 && f.endsWith("-"))
+      return { base: f.slice(0, -1), tone: "-" };
+    return { base: f, tone: "" };
+  }
+
   private buildClasses(): string {
-    // Appearance logic (matches ClojureScript cond logic)
-    let appearance: string
-    if (this.plain) {
-      appearance = 'plain'
-    } else if (this.accent) {
-      appearance = 'accent'
-    } else if (this.filled && this.outlined) {
-      appearance = 'filled-outlined'
-    } else if (this.filled) {
-      appearance = 'filled'
-    } else if (this.outlined) {
-      appearance = 'outlined'
-    } else {
-      appearance = 'accent' // Default
-    }
-
+    const { base, tone } = this.parseFlavor();
     return buildClassList(
-      this.flavor,
+      base,
       this.size,
-      appearance,
-      this.pill && 'pill',
-      this.action && 'action'
-    )
+      this.appearance,
+      this.pill && "pill",
+      this.action && "action",
+      tone === "+" && "tone-plus",
+      tone === "-" && "tone-minus",
+    );
   }
 
-  // Handle form actions (matches ClojureScript logic)
   private handleFormAction(): void {
-    const form = this._internals.form
-    if (!form) return
+    const form = this._internals.form;
+    if (!form) return;
 
     switch (this.type) {
-      case 'submit':
-        // Set button's name/value as form data
+      case "submit":
         if (this.name && this.value) {
-          this._internals.setFormValue(this.value)
+          this._internals.setFormValue(this.value);
         }
-        form.requestSubmit()
-        break
-      case 'reset':
-        form.reset()
-        break
-      case 'button':
-        // Do nothing
-        break
+        form.requestSubmit();
+        break;
+      case "reset":
+        form.reset();
+        break;
+      case "button":
+        break;
     }
   }
 
-  /** Initialize button structure once */
   private initializeButtonStructure(): void {
-    const shadow = this.shadowRoot!
-    const classes = this.buildClasses()
+    const shadow = this.shadowRoot!;
+    const classes = this.buildClasses();
 
-    // Create button structure (matches ClojureScript structure)
-    const button = document.createElement('button')
-    button.disabled = this.disabled
-    button.className = classes
+    const button = document.createElement("button");
+    button.disabled = this.disabled;
+    button.className = classes;
 
-    const startSlot = document.createElement('slot')
-    startSlot.name = 'start'
-    startSlot.className = 'start'
+    const startSlot = document.createElement("slot");
+    startSlot.name = "start";
+    startSlot.className = "start";
 
-    const defaultSlot = document.createElement('slot')
+    const defaultSlot = document.createElement("slot");
 
-    const endSlot = document.createElement('slot')
-    endSlot.name = 'end'
-    endSlot.className = 'end'
+    const endSlot = document.createElement("slot");
+    endSlot.name = "end";
+    endSlot.className = "end";
 
-    button.appendChild(startSlot)
-    button.appendChild(defaultSlot)
-    button.appendChild(endSlot)
+    button.appendChild(startSlot);
+    button.appendChild(defaultSlot);
+    button.appendChild(endSlot);
 
-    // Attach click handler to inner button (matches ClojureScript pattern)
-    button.addEventListener('click', (e: Event) => {
-      if (this.disabled) return
+    button.addEventListener("click", (e: Event) => {
+      if (this.disabled) return;
+      e.stopPropagation();
+      this.handleFormAction();
+      this.dispatchEvent(
+        new CustomEvent("click", {
+          bubbles: true,
+          composed: true,
+          detail: { originalEvent: e },
+        }),
+      );
+    });
 
-      // CRITICAL: Stop propagation on inner button click (matches ClojureScript)
-      e.stopPropagation()
-
-      // Handle form action (submit/reset) first
-      this.handleFormAction()
-
-      // Dispatch NEW 'click' event on host element (not 'ty-click'!)
-      // This matches ClojureScript exactly
-      this.dispatchEvent(new CustomEvent('click', {
-        bubbles: true,
-        composed: true,
-        detail: { originalEvent: e }
-      }))
-    })
-
-    shadow.appendChild(button)
-    this._structureInitialized = true
+    shadow.appendChild(button);
+    this._structureInitialized = true;
   }
 
-  /**
-   * Render the button component
-   */
   protected render(): void {
-    const shadow = this.shadowRoot!
+    const shadow = this.shadowRoot!;
 
     if (!this._structureInitialized) {
-      // Create button structure on first render
-      this.initializeButtonStructure()
-      return
+      this.initializeButtonStructure();
+      return;
     }
 
-    // Button structure already exists, just update it
-    const classes = this.buildClasses()
-    const button = shadow.querySelector('button')
+    const classes = this.buildClasses();
+    const button = shadow.querySelector("button");
     if (button) {
-      button.disabled = this.disabled
-      button.className = classes
+      button.disabled = this.disabled;
+      button.className = classes;
     }
   }
 }
 
-// Register the custom element
-if (!customElements.get('ty-button')) {
-  customElements.define('ty-button', TyButton)
+if (!customElements.get("ty-button")) {
+  customElements.define("ty-button", TyButton);
 }

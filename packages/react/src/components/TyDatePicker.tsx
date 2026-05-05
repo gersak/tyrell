@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Type definitions for Ty DatePicker component
 export interface TyDatePickerEventDetail {
@@ -92,8 +93,11 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
       }
     }, [ref]);
 
-    // Sync value property with the web component
+    // Sync value property with the web component.
+    // React 18 workaround: prop-to-property bridging is unreliable for empty
+    // strings on custom elements. React 19+ handles this natively.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current;
       if (element && value !== undefined) {
         // Set the value property directly on the element

@@ -1,59 +1,50 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 
+// CSS custom properties that cascade into the shadow DOM for full color control
+export interface TyTagCSSProperties extends React.CSSProperties {
+  '--tag-bg'?: string;
+  '--tag-color'?: string;
+  '--tag-border-color'?: string;
+}
+
 // Type definitions for Ty Tag component
-export interface TyTagProps extends React.HTMLAttributes<HTMLElement> {
+export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'style' | 'onClick'> {
   flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  notPill?: boolean;  // Component uses not-pill attribute
+  notPill?: boolean;
   clickable?: boolean;
   dismissible?: boolean;
   disabled?: boolean;
   selected?: boolean;
   value?: string;
-  onTagClick?: (event: CustomEvent) => void;
+  style?: TyTagCSSProperties;
+  // click is a composed CustomEvent from the web component — React's onClick picks it up
+  onClick?: (event: CustomEvent) => void;
   onTagDismiss?: (event: CustomEvent) => void;
   children?: React.ReactNode;
 }
 
 // React wrapper for ty-tag web component
 export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
-  ({ children, onTagClick, onTagDismiss, notPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
+  ({ children, onClick, onTagDismiss, notPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    const handleTagClick = useCallback((event: CustomEvent) => {
-      if (onTagClick) {
-        onTagClick(event);
-      }
-    }, [onTagClick]);
-
-    const handleTagDismiss = useCallback((event: CustomEvent) => {
+    const handleDismiss = useCallback((event: CustomEvent) => {
       if (onTagDismiss) {
         onTagDismiss(event);
       }
     }, [onTagDismiss]);
 
+    // dismiss is a custom event — React doesn't know about it, so we need a manual listener
     useEffect(() => {
       const element = elementRef.current;
-      if (!element) return;
+      if (!element || !onTagDismiss) return;
 
-      // Listen for custom events from the tag
-      if (onTagClick) {
-        element.addEventListener('ty-tag-click', handleTagClick as EventListener);
-      }
-      
-      if (onTagDismiss) {
-        element.addEventListener('ty-tag-dismiss', handleTagDismiss as EventListener);
-      }
-
+      element.addEventListener('dismiss', handleDismiss as EventListener);
       return () => {
-        if (onTagClick) {
-          element.removeEventListener('ty-tag-click', handleTagClick as EventListener);
-        }
-        if (onTagDismiss) {
-          element.removeEventListener('ty-tag-dismiss', handleTagDismiss as EventListener);
-        }
+        element.removeEventListener('dismiss', handleDismiss as EventListener);
       };
-    }, [handleTagClick, handleTagDismiss, onTagClick, onTagDismiss]);
+    }, [handleDismiss, onTagDismiss]);
 
     // Handle ref forwarding
     useEffect(() => {
@@ -70,7 +61,10 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
       'ty-tag',
       {
         ...props,
-        ...(notPill && { 'not-pill': "" }),  // Convert camelCase to kebab-case
+        // click is dispatched as composed CustomEvent by the web component — React's
+        // synthetic onClick already catches it, so we just pass it through as onClick
+        ...(onClick && { onClick }),
+        ...(notPill && { 'not-pill': "" }),
         ...(clickable && { clickable: "" }),
         ...(dismissible && { dismissible: "" }),
         ...(disabled && { disabled: "" }),

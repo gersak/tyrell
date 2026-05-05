@@ -1,0 +1,4 @@
+.cpcache/
+.clojure-mcp/
+public/js/
+public/css/

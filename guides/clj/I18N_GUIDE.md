@@ -1,25 +1,25 @@
 # Ty i18n — Internationalization Guide
 
-The `ty.i18n` namespaces provide internationalization for any ClojureScript framework. Protocol-based, leveraging the browser's native `Intl` API for number/date formatting.
+The `tyrell.i18n` namespaces provide internationalization for any ClojureScript framework. Protocol-based, leveraging the browser's native `Intl` API for number/date formatting.
 
 ## Namespaces
 
 | Namespace | Purpose |
 |-----------|---------|
-| `ty.i18n` | Core protocols, `t` function, `*locale*` dynamic var |
-| `ty.i18n.keyword` | Keyword-based translations (primary) |
-| `ty.i18n.string` | String-as-key translations (for UI strings) |
-| `ty.i18n.number` | Number/currency/percent formatting via `Intl.NumberFormat` |
-| `ty.i18n.time` | Date/time formatting via `Intl.DateTimeFormat` |
+| `tyrell.i18n` | Core protocols, `t` function, `*locale*` dynamic var |
+| `tyrell.i18n.keyword` | Keyword-based translations (primary) |
+| `tyrell.i18n.string` | String-as-key translations (for UI strings) |
+| `tyrell.i18n.number` | Number/currency/percent formatting via `Intl.NumberFormat` |
+| `tyrell.i18n.time` | Date/time formatting via `Intl.DateTimeFormat` |
 
 ---
 
 ## Locale
 
-The current locale is held in the dynamic var `ty.i18n/*locale*`. It auto-detects from the browser on load:
+The current locale is held in the dynamic var `tyrell.i18n/*locale*`. It auto-detects from the browser on load:
 
 ```clojure
-(require '[ty.i18n :as i18n])
+(require '[tyrell.i18n :as i18n])
 
 i18n/*locale*        ; => :en_US (detected from navigator.languages)
 ```
@@ -43,7 +43,7 @@ i18n/*locale*        ; => :en_US (detected from navigator.languages)
 
 `:en`, `:en_US`, `:en_GB`, `:de`, `:de_AT`, `:de_CH`, `:fr`, `:fr_CA`, `:es`, `:es_MX`, `:hr`, `:ja`, `:zh`, `:zh_CN`, `:zh_TW`, `:ko`, `:ar`, `:hi`, `:ru`, `:pt`, `:pt_BR`, and many more.
 
-Full list in `ty.i18n/locales`.
+Full list in `tyrell.i18n/locales`.
 
 ---
 
@@ -52,7 +52,7 @@ Full list in `ty.i18n/locales`.
 The `t` function is the primary API. It dispatches via the `Translator` protocol — the behavior depends on the type of the first argument:
 
 ```clojure
-(require '[ty.i18n :refer [t]])
+(require '[tyrell.i18n :refer [t]])
 
 (t :save)              ; keyword → keyword translation
 (t "Select date...")   ; string → string translation
@@ -77,7 +77,7 @@ The primary translation approach. Uses qualified keywords for storage: `:key/loc
 ### Registering Translations
 
 ```clojure
-(require '[ty.i18n.keyword :as kw])
+(require '[tyrell.i18n.keyword :as kw])
 ```
 
 **With `add-translations`** — namespaced map syntax:
@@ -116,8 +116,8 @@ Both approaches store to the same atom and can be mixed.
 ### Using Translations
 
 ```clojure
-(require '[ty.i18n :refer [t]])
-(require '[ty.i18n.keyword])  ; extends Keyword with Translator protocol
+(require '[tyrell.i18n :refer [t]])
+(require '[tyrell.i18n.keyword])  ; extends Keyword with Translator protocol
 
 ;; Uses *locale*
 (t :save)           ; => "Spremi" (when *locale* is :hr)
@@ -190,7 +190,7 @@ The `:locale` option transforms `{:save "Spremi"}` into `{:save/hr "Spremi"}`.
 Uses English text as the key. Useful for translating UI strings that appear in component labels, tooltips, etc.
 
 ```clojure
-(require '[ty.i18n.string :as str-i18n])
+(require '[tyrell.i18n.string :as str-i18n])
 ```
 
 ### Registering
@@ -253,7 +253,7 @@ Covers: "Select date...", "Time:", "Today", "Clear", "Open calendar", "Close cal
 Locale-aware number formatting via `Intl.NumberFormat`. Requiring the namespace extends `number` with the `Translator` protocol.
 
 ```clojure
-(require '[ty.i18n.number :as num])
+(require '[tyrell.i18n.number :as num])
 ```
 
 ### Basic Formatting
@@ -316,7 +316,7 @@ Numbers are extended with `Translator`:
 Locale-aware date/time formatting via `Intl.DateTimeFormat`. Requiring the namespace extends `js/Date` with the `Translator` protocol.
 
 ```clojure
-(require '[ty.i18n.time :as time])
+(require '[tyrell.i18n.time :as time])
 ```
 
 ### Preset Formats
@@ -393,8 +393,8 @@ Dates are extended with `Translator`:
 The `Locale` protocol provides locale-specific calendar symbols:
 
 ```clojure
-(require '[ty.i18n :as i18n])
-(require '[ty.i18n.time])  ; extends Keyword with Locale protocol
+(require '[tyrell.i18n :as i18n])
+(require '[tyrell.i18n.time])  ; extends Keyword with Locale protocol
 
 (i18n/locale :en :months)           ; => ["January" "February" ... "December"]
 (i18n/locale :de :months)           ; => ["Januar" "Februar" ... "Dezember"]
@@ -414,11 +414,11 @@ Available keys: `:months`, `:months/short`, `:months/narrow`, `:weekdays`, `:wee
 
 ```clojure
 (ns my-app.core
-  (:require [ty.i18n :as i18n]
-            [ty.i18n.keyword :as kw]
-            [ty.i18n.string :as str-i18n]
-            [ty.i18n.number]   ; extends number with Translator
-            [ty.i18n.time]))   ; extends Date with Translator
+  (:require [tyrell.i18n :as i18n]
+            [tyrell.i18n.keyword :as kw]
+            [tyrell.i18n.string :as str-i18n]
+            [tyrell.i18n.number]   ; extends number with Translator
+            [tyrell.i18n.time]))   ; extends Date with Translator
 
 ;; 1. Register embedded translations
 (kw/add-locale

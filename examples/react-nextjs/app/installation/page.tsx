@@ -5,7 +5,7 @@ import { AppLayout } from '../../lib/app-layout'
 import {
   TyButton,
   TyIcon,
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 export default function InstallationPage() {
   const [mounted, setMounted] = useState(false)
@@ -36,7 +36,7 @@ export default function InstallationPage() {
     {
       icon: 'package',
       title: 'Install Packages',
-      description: 'Add Ty Components to your project via npm/yarn/pnpm',
+      description: 'Add Tyrell Components to your project via npm/yarn/pnpm',
       status: 'success',
       action: 'Required'
     },
@@ -68,31 +68,31 @@ export default function InstallationPage() {
       id: 'npm-core',
       title: 'Core Package',
       description: 'Web components library',
-      code: 'npm install @gersak/ty'
+      code: 'npm install tyrell-components'
     },
     {
       id: 'npm-react',
       title: 'React Wrapper',
       description: 'React integration package',
-      code: 'npm install @gersak/ty-react'
+      code: 'npm install tyrell-react'
     },
     {
       id: 'npm-both',
       title: 'Both Packages',
       description: 'Install everything at once',
-      code: 'npm install @gersak/ty @gersak/ty-react'
+      code: 'npm install tyrell-components tyrell-react'
     },
     {
       id: 'yarn',
       title: 'Using Yarn',
       description: 'Alternative package manager',
-      code: 'yarn add @gersak/ty @gersak/ty-react'
+      code: 'yarn add tyrell-components tyrell-react'
     },
     {
       id: 'pnpm',
       title: 'Using pnpm',
       description: 'Fast, disk efficient package manager',
-      code: 'pnpm add @gersak/ty @gersak/ty-react'
+      code: 'pnpm add tyrell-components tyrell-react'
     }
   ]
 
@@ -104,7 +104,7 @@ export default function InstallationPage() {
           Installation & Setup
         </h1>
         <p className="text-base leading-relaxed ty-text-">
-          Get started with Ty Components in your React or Next.js project in minutes.
+          Get started with Tyrell Components in your React or Next.js project in minutes.
           Follow this step-by-step guide to integrate powerful web components into your application.
         </p>
       </div>
@@ -116,7 +116,7 @@ export default function InstallationPage() {
             🚀 Quick Overview
           </h2>
           <p className="text-sm ty-text-">
-            What you'll get with Ty Components integration
+            What you'll get with Tyrell Components integration
           </p>
         </div>
 
@@ -164,7 +164,7 @@ export default function InstallationPage() {
             📦 Package Installation
           </h2>
           <p className="text-sm ty-text-">
-            Install the core packages to get started with Ty Components
+            Install the core packages to get started with Tyrell Components
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export default function InstallationPage() {
             🎯 Setup Checklist
           </h2>
           <p className="text-sm ty-text-">
-            Follow these steps to complete your Ty Components integration
+            Follow these steps to complete your Tyrell Components integration
           </p>
         </div>
 
@@ -270,7 +270,7 @@ export default function InstallationPage() {
                 <div className="ty-bg-primary++ ty-text-- p-4 rounded-lg overflow-x-auto">
                   <pre className="text-sm font-mono">
                     {`// app/layout.tsx or pages/_app.tsx
-import '@gersak/ty/dist/ty.css'
+import 'tyrell-components/dist/tyrell.css'
 
 export default function RootLayout({
   children,
@@ -301,7 +301,7 @@ export default function RootLayout({
                 <div className="ty-bg-primary++ ty-text-- p-4 rounded-lg overflow-x-auto">
                   <pre className="text-sm font-mono">
                     {`// src/index.tsx or src/App.tsx
-import '@gersak/ty/dist/ty.css'
+import 'tyrell-components/dist/tyrell.css'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 
@@ -323,7 +323,7 @@ root.render(<App />)`}
             💻 Component Usage
           </h2>
           <p className="text-sm ty-text-">
-            Start using Ty Components in your React application
+            Start using Tyrell Components in your React application
           </p>
         </div>
 
@@ -345,7 +345,7 @@ root.render(<App />)`}
   TyInput, 
   TyIcon,
   TyModal 
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 export function MyComponent() {
   return (
@@ -381,7 +381,7 @@ export function MyComponent() {
                         <TyButton
                           flavor="success"
                           size="sm"
-                          onClick={() => alert('Ty Components working!')}
+                          onClick={() => alert('Tyrell Components working!')}
                           className="flex items-center gap-2"
                         >
                           <TyIcon name="check" size="14" />
@@ -422,7 +422,7 @@ export function MyComponent() {
                 If components appear unstyled, ensure you've imported the CSS file correctly:
               </p>
               <div className="ty-bg-warning- p-3 rounded text-sm font-mono">
-                <code>import '@gersak/ty/dist/ty.css'</code>
+                <code>import 'tyrell-components/dist/tyrell.css'</code>
               </div>
             </div>
 
@@ -457,7 +457,7 @@ export function MyComponent() {
             🎉 You're All Set!
           </h2>
           <p className="ty-text- max-w-2xl mx-auto">
-            Ty Components are now installed and ready to use. Explore the component library
+            Tyrell Components are now installed and ready to use. Explore the component library
             to see what's available and start building amazing user interfaces.
           </p>
         </div>

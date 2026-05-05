@@ -6,7 +6,7 @@ import { useTheme } from '../../lib/theme-provider'
 import {
   TyButton,
   TyIcon,
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 export default function ThemePage() {
   const [mounted, setMounted] = useState(false)

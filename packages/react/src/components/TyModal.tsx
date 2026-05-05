@@ -87,19 +87,19 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
 
       // Listen for custom modal events
       if (onOpen) {
-        element.addEventListener('ty-modal-open', handleOpen as EventListener);
+        element.addEventListener('open', handleOpen as EventListener);
       }
-      
+
       if (onClose) {
-        element.addEventListener('ty-modal-close', handleClose as EventListener);
+        element.addEventListener('close', handleClose as EventListener);
       }
 
       return () => {
         if (onOpen) {
-          element.removeEventListener('ty-modal-open', handleOpen as EventListener);
+          element.removeEventListener('open', handleOpen as EventListener);
         }
         if (onClose) {
-          element.removeEventListener('ty-modal-close', handleClose as EventListener);
+          element.removeEventListener('close', handleClose as EventListener);
         }
       };
     }, [onOpen, onClose]);

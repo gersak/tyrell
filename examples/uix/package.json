@@ -1,8 +1,9 @@
 {
-  "name": "ty-uix-example",
+  "name": "tyrell-uix-example",
   "version": "1.0.0",
   "dependencies": {
-    "@gersak/ty-react": "^0.1.908",
+    "tyrell-components": "1.0.0-RC6",
+    "tyrell-react": "1.0.0-RC6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -15,6 +16,7 @@
     "tailwindcss": "4.1"
   },
   "scripts": {
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
     "css:build": "@tailwindcss/cli -i src/input.css -o public/css/app.css",
     "css:watch": "@tailwindcss/cli -i src/input.css -o public/css/app.css --watch",
     "dev": "shadow-cljs -A:dev watch dev"

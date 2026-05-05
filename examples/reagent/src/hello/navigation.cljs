@@ -1,6 +1,6 @@
 (ns hello.navigation
   (:require [hello.state :as state]
-            [ty.router :as router]))
+            [tyrell.router :as router]))
 
 (defn nav-item [{:keys [route-id label icon]}]
   (let [_router @router/*router*  ; Deref to trigger Reagent reactivity

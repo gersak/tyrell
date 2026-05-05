@@ -5,7 +5,7 @@ export interface TyResizeObserverProps extends React.HTMLAttributes<HTMLElement>
   /** Required unique identifier for size registry */
   id: string;
 
-  /** Debounce delay in milliseconds (default: 0 = no debounce) */
+  /** Debounce in milliseconds (default: 0 = no debounce) */
   debounce?: number;
 
   /** Content to observe */

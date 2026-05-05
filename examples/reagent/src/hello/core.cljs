@@ -1,14 +1,15 @@
 (ns hello.core
-  (:require ["@gersak/ty-react" :as ty]
+  (:require [tyrell.components]    ; side-effect: registers all <ty-*> custom elements
+            [tyrell.react :as ty]  ; React wrappers (re-exported from npm tyrell-react)
             [hello.navigation :as nav]
             [hello.state :as state]
             [hello.views :as views]
             [reagent.core :as r]
             [reagent.dom.client :as rdom]
-            [ty.icons :as icons]
-            [ty.lucide :as lucide]
-            [ty.material.filled :as mat-filled]
-            [ty.router :as router]))
+            [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]
+            [tyrell.material.filled :as mat-filled]
+            [tyrell.router :as router]))
 
 (defn register-icons! []
   (icons/register!

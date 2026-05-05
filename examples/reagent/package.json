@@ -1,9 +1,10 @@
 {
-  "name": "ty-reagent-example",
+  "name": "tyrell-reagent-example",
   "version": "0.1.0",
   "private": true,
-  "description": "Simple Reagent example with Ty Web Components",
+  "description": "Simple Reagent example with Tyrell Web Components",
   "scripts": {
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
     "dev": "shadow-cljs -A:dev watch app",
     "build": "shadow-cljs release app",
     "clean": "shadow-cljs clean",
@@ -15,6 +16,7 @@
     "shadow-cljs": "^2.28.10"
   },
   "dependencies": {
-    "@gersak/ty-react": "^0.1.905"
+    "tyrell-components": "1.0.0-RC6",
+    "tyrell-react": "1.0.0-RC6"
   }
 }

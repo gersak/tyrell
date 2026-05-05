@@ -1,30 +1,27 @@
 import React, { useEffect, useRef } from 'react';
 
 // Type definitions for Ty Popup component
-export interface TyPopupProps extends React.HTMLAttributes<HTMLElement> {
+export interface TyPopupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onClose'> {
   /** Preferred placement of the popup relative to anchor parent: "top" | "bottom" | "left" | "right" */
   placement?: 'top' | 'bottom' | 'left' | 'right';
-  
+
   /** Distance offset from the anchor in pixels (default: 8) */
   offset?: number;
-  
+
   /** Disable automatic click trigger - requires manual open/close via ref methods */
   manual?: boolean;
-  
+
   /** Disable automatic close on outside click and ESC key */
   disableClose?: boolean;
-  
+
+  /** Fired when the popup opens (after the open animation starts) */
+  onOpen?: (event: CustomEvent) => void;
+
+  /** Fired when the popup closes */
+  onClose?: (event: CustomEvent) => void;
+
   /** Popup content - popup should be a child of the anchor element */
   children?: React.ReactNode;
-}
-
-// Event detail types for popup events
-export interface TyPopupOpenEvent extends CustomEvent {
-  type: 'ty:popup-open';
-}
-
-export interface TyPopupCloseEvent extends CustomEvent {
-  type: 'ty:popup-close';
 }
 
 // Programmatic API for popup control
@@ -36,13 +33,15 @@ export interface TyPopupElement extends HTMLElement {
 
 // React wrapper for ty-popup web component
 export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
-  ({ 
-    placement, 
-    offset, 
-    manual, 
+  ({
+    placement,
+    offset,
+    manual,
     disableClose,
-    children, 
-    ...props 
+    onOpen,
+    onClose,
+    children,
+    ...props
   }, ref) => {
     const elementRef = useRef<TyPopupElement>(null);
 
@@ -56,6 +55,27 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
         }
       }
     }, [ref]);
+
+    // Listen for popup open/close events
+    useEffect(() => {
+      const element = elementRef.current;
+      if (!element) return;
+
+      const handleOpen = (event: Event) => {
+        if (onOpen) onOpen(event as CustomEvent);
+      };
+      const handleClose = (event: Event) => {
+        if (onClose) onClose(event as CustomEvent);
+      };
+
+      if (onOpen) element.addEventListener('open', handleOpen);
+      if (onClose) element.addEventListener('close', handleClose);
+
+      return () => {
+        if (onOpen) element.removeEventListener('open', handleOpen);
+        if (onClose) element.removeEventListener('close', handleClose);
+      };
+    }, [onOpen, onClose]);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {

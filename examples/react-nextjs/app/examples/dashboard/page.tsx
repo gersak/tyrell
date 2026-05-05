@@ -13,7 +13,7 @@ import {
   TyTooltip,
   TyModal,
   type TyModalRef
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 // Mock data types
 interface DashboardData {

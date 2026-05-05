@@ -1,12 +1,12 @@
 # Ty Router — ClojureScript Routing Guide
 
-The `ty.router` namespace provides client-side routing for any ClojureScript framework (Replicant, UIx, Reagent, etc.). It uses a zipper-based tree structure with browser history integration.
+The `tyrell.router` namespace provides client-side routing for any ClojureScript framework (Replicant, UIx, Reagent, etc.). It uses a zipper-based tree structure with browser history integration.
 
 ## Setup
 
 ```clojure
 (ns my-app.core
-  (:require [ty.router :as router]))
+  (:require [tyrell.router :as router]))
 ```
 
 ## Defining Routes
@@ -292,9 +292,9 @@ The router state lives in `router/*router*` (an atom). Watch it to trigger re-re
 ```clojure
 (ns my-app.core
   (:require [replicant.dom :as dom]
-            [ty.router :as router]
-            [ty.icons :as icons]
-            [ty.lucide :as lucide]))
+            [tyrell.router :as router]
+            [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]))
 
 (defonce state (atom {:counter 0}))
 

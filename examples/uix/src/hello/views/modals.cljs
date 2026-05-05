@@ -1,7 +1,7 @@
 (ns hello.views.modals
   "UIx modals & overlays demos - tooltips, popups, modals with forms"
   (:require
-    ["@gersak/ty-react" :as ty]
+    ["tyrell-react" :as ty]
     [uix.core :as uix :refer [defui $ use-state use-effect use-ref]]))
 
 ;; =============================================================================

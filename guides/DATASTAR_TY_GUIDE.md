@@ -8,8 +8,8 @@ Use Ty web components with Datastar for reactive server-driven UIs. No JavaScrip
 
 ```html
 <!-- Ty CSS and Components -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css">
-<script type="module" src="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/ty.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 
 <!-- Datastar -->
 <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-RC.8/bundles/datastar.js"></script>
@@ -247,7 +247,7 @@ Pre-read the body before Ring's `wrap-params` consumes it:
 ```clojure
 (ns myapp.icons
   (:require [clojure.data.json :as json]
-            [ty.lucide :as lucide]))
+            [tyrell.lucide :as lucide]))
 
 (def app-icons
   {"wallet"    lucide/wallet
@@ -277,7 +277,7 @@ Pre-read the body before Ring's `wrap-params` consumes it:
 
 ```javascript
 // icons.js — bundle with esbuild
-import { wallet, plus, settings, check, calendar } from '@gersak/ty/icons/lucide'
+import { wallet, plus, settings, check, calendar } from 'tyrell-components/icons/lucide'
 window.tyIcons.register({ wallet, plus, settings, check, calendar })
 ```
 

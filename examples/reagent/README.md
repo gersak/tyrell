@@ -62,8 +62,8 @@ Icons are registered using the new `window.tyIcons` API with ClojureScript icon 
 
 ```clojure
 ;; Import icon libraries
-[ty.lucide :as lucide]
-[ty.material.filled :as mat-filled]
+[tyrell.lucide :as lucide]
+[tyrell.material.filled :as mat-filled]
 
 ;; Register icons using window.tyIcons API
 (defn register-icons! []

@@ -1,0 +1,18 @@
+{
+  "name": "tyrell-helix-example",
+  "version": "1.0.0",
+  "description": "Helix + Tyrell — typed React wrappers in CLJS via the JSX-style ($ Component ...) macro.",
+  "dependencies": {
+    "tyrell-components": "1.0.0-RC6",
+    "tyrell-react": "1.0.0-RC6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "shadow-cljs": "^2.28.10"
+  },
+  "scripts": {
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
+    "dev": "shadow-cljs -A:dev watch dev"
+  }
+}

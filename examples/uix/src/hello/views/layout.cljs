@@ -1,7 +1,7 @@
 (ns hello.views.layout
   "UIx layout system demos - showing how Ty layout works with UIx"
   (:require
-    [ty.layout :as layout]
+    [tyrell.layout :as layout]
     [uix.core :as uix :refer [defui $ use-state use-effect]]))
 
 ;; =============================================================================

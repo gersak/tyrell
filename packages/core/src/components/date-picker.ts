@@ -1227,6 +1227,10 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       stub.setAttribute('disabled', 'true');
     }
 
+    // Start slot — leading icon (search, calendar variant, etc.)
+    const startSlot = document.createElement('slot');
+    startSlot.name = 'start';
+
     // Display text
     const displayText = document.createElement('span');
     displayText.className = 'stub-text';
@@ -1263,6 +1267,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     // Stub click handler
     stub.addEventListener('click', (e) => this.handleStubClick(e));
 
+    stub.appendChild(startSlot);
     stub.appendChild(displayText);
     stub.appendChild(iconContainer);
 
@@ -1411,6 +1416,11 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       }
     });
 
+    // Start slot — leading icon
+    const startSlot = document.createElement('slot');
+    startSlot.name = 'start';
+
+    stub.appendChild(startSlot);
     stub.appendChild(input);
     stub.appendChild(placeholderEl);
 
@@ -1851,6 +1861,11 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
         dialog.close();
       }
     }
+
+    this.dispatchEvent(new CustomEvent('close', {
+      bubbles: true,
+      composed: true
+    }));
 
     this.render();
   }

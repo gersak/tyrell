@@ -189,11 +189,11 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       visual: true,
       default: false
     },
-    searchable: {
+    externalSearch: {
       type: 'boolean' as const,
       visual: true,
-      default: true,
-      aliases: { 'not-searchable': false }
+      default: false,
+      aliases: { 'external-search': true }
     },
     size: {
       type: 'string' as const,
@@ -222,7 +222,7 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         return v
       }
     },
-    delay: {
+    debounce: {
       type: 'number' as const,
       default: 0,
       validate: (v: any) => v >= 0 && v <= 5000,
@@ -264,7 +264,8 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
   private _disabled = false
   private _readonly = false
   private _required = false
-  private _searchable = true
+  private _externalSearch = false
+  private _scrollLockId: string | null = null
   private _size: Size = 'md'
   private _flavor: Flavor = 'neutral'
   private _selectedLabel: string = 'Selected'
@@ -301,8 +302,8 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
   private _blockSearchClick: ((e: Event) => void) | null = null
   private _keyboardHandler: ((e: KeyboardEvent) => void) | null = null
 
-  // Delay/debounce properties for search event
-  private _delay: number = 0
+  // Debounce properties for search event
+  private _debounce: number = 0
   private _searchDebounceTimer: number | null = null
 
   // Custom scrollbar for options list
@@ -415,8 +416,8 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         case 'required':
           this._required = newValue
           break
-        case 'searchable':
-          this._searchable = newValue
+        case 'externalSearch':
+          this._externalSearch = newValue
           break
         case 'size':
           this._size = newValue
@@ -424,8 +425,8 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         case 'flavor':
           this._flavor = newValue
           break
-        case 'delay':
-          this._delay = newValue
+        case 'debounce':
+          this._debounce = newValue
           break
         case 'selected-label':
           this._selectedLabel = newValue || 'Selected'
@@ -753,14 +754,24 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
   /**
    * Open dropdown dialog (desktop mode)
-   * Using <dialog> element - scroll locking handled natively
+   *
+   * `<dialog>.showModal()` puts the dialog in the top layer with a backdrop, but
+   * does NOT prevent the page behind it from scrolling. We use the shared scroll
+   * lock utility (overflow:hidden on <html>) to keep wheel/touch scrolling from
+   * leaking through to the body — same behavior <ty-dropdown> and <ty-modal>
+   * implement.
    */
   private openDropdown(): void {
     const shadow = this.shadowRoot!
     const dialog = shadow.querySelector('.dropdown-dialog') as HTMLDialogElement
     if (!dialog) return
 
-    // Show modal (browser handles scroll locking automatically)
+    // Lock body scroll while dropdown is open
+    const lockId = `multiselect-${this.id || 'anon'}-${getElementHash(this)}`
+    this._scrollLockId = lockId
+    lockScroll(lockId)
+
+    // Show modal
     dialog.showModal()
     dialog.classList.add('open')
 
@@ -789,18 +800,15 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     // Setup custom scrollbar on options
     this._setupOptionsScrollbar()
 
-    // Focus search input if searchable
-    if (this._searchable) {
-      const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
-      if (searchInput) {
-        setTimeout(() => searchInput.focus(), 100)
-      }
+    // Focus search input
+    const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
+    if (searchInput) {
+      setTimeout(() => searchInput.focus(), 100)
     }
   }
 
   /**
    * Close dropdown dialog (desktop mode)
-   * Using <dialog> element - scroll unlocking handled natively
    */
   private closeDropdown(): void {
     const shadow = this.shadowRoot!
@@ -808,15 +816,20 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
     if (!dialog) return
 
-
     // Destroy custom scrollbar
     this._destroyOptionsScrollbar()
 
-    // Close dialog (browser handles scroll unlocking automatically)
+    // Close dialog
     dialog.classList.remove('open')
     dialog.classList.remove('position-above')
     dialog.classList.remove('position-below')
     dialog.close()
+
+    // Unlock body scroll (paired with the lock in openDropdown)
+    if (this._scrollLockId) {
+      unlockScroll(this._scrollLockId)
+      this._scrollLockId = null
+    }
 
     // Update state
     this._state.open = false
@@ -829,25 +842,32 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     const searchChevron = shadow.querySelector('.dropdown-search-chevron')
     if (searchChevron) searchChevron.classList.remove('open')
 
-    // Reset search if searchable
-    if (this._searchable) {
-      this._state.search = ''
-      const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
-      this._state.search = ''
+    // Reset search and restore all tags
+    const hadQuery = this._state.search !== ''
+    this._state.search = ''
+    const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
+    if (searchInput) {
+      searchInput.value = ''
+    }
 
-      if (searchInput) {
-        searchInput.value = ''
+    if (this._externalSearch) {
+      // External mode — notify consumer so it can reset its own filtered state.
+      // Bypass the debounce timer (which would delay the clear by `debounce` ms);
+      // close-time should be immediate so the consumer's filtered state syncs
+      // before the dropdown reopens. Only fire if there was actually a query.
+      if (hadQuery) {
+        if (this._searchDebounceTimer !== null) {
+          clearTimeout(this._searchDebounceTimer)
+          this._searchDebounceTimer = null
+        }
+        this.fireSearchEvent('')
       }
-
-      // Show all tags
+    } else {
+      // Internal mode — restore visibility of all tags ourselves
       const allTags = this.getTagElements().map(el => this.getTagData(el))
       this._state.filteredTags = allTags
       this.updateTagVisibility(allTags, allTags)
       this.clearHighlights(allTags)
-
-      if (searchInput) {
-        searchInput.value = ''
-      }
     }
   }
 
@@ -859,6 +879,11 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     const shadow = this.shadowRoot!
     const dialog = shadow.querySelector('.mobile-dialog') as HTMLDialogElement
     if (!dialog) return
+
+    // Lock body scroll while mobile modal is open
+    const lockId = `multiselect-${this.id || 'anon'}-${getElementHash(this)}`
+    this._scrollLockId = lockId
+    lockScroll(lockId)
 
     // Show dialog using native API (handles z-index automatically)
     dialog.showModal()
@@ -876,13 +901,11 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     const tags = this.getTagElements().map(el => this.getTagData(el))
     this._state.filteredTags = tags
 
-    // Focus search input if searchable
-    if (this._searchable) {
-      const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
-      if (searchInput) {
-        // Small delay to ensure dialog is ready
-        setTimeout(() => searchInput.focus(), 100)
-      }
+    // Focus search input
+    const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
+    if (searchInput) {
+      // Small delay to ensure dialog is ready
+      setTimeout(() => searchInput.focus(), 100)
     }
 
     // Initialize sections (available expanded by default)
@@ -908,6 +931,12 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     dialog.classList.remove('open')
     dialog.close()
 
+    // Unlock body scroll (paired with the lock in openMobileModal)
+    if (this._scrollLockId) {
+      unlockScroll(this._scrollLockId)
+      this._scrollLockId = null
+    }
+
     const stub_slot = shadow.querySelector('#stub-slot') as HTMLSlotElement
     const mobile_slot = shadow.querySelector('#mobile-slot') as HTMLSlotElement
     stub_slot.name = "selected";
@@ -917,14 +946,26 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     this._state.open = false
     this._state.highlightedIndex = -1
 
-    // Reset search and restore all tags
-    if (this._searchable) {
-      this._state.search = ''
-      const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
-      if (searchInput) {
-        searchInput.value = ''
+    // Reset search
+    const hadQuery = this._state.search !== ''
+    this._state.search = ''
+    const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
+    if (searchInput) {
+      searchInput.value = ''
+    }
+
+    if (this._externalSearch) {
+      // External mode — notify consumer that the search was cleared on close
+      // (bypass debounce, see desktop close path for rationale).
+      if (hadQuery) {
+        if (this._searchDebounceTimer !== null) {
+          clearTimeout(this._searchDebounceTimer)
+          this._searchDebounceTimer = null
+        }
+        this.fireSearchEvent('')
       }
-      // Unhide all tags
+    } else {
+      // Internal mode — unhide all tags ourselves
       const allTags = this.getTagElements()
       allTags.forEach(el => el.removeAttribute('hidden'))
     }
@@ -1024,29 +1065,31 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     // Update search state
     this._state.search = query
 
-    if (this._searchable) {
-      // Internal search: filter tags locally
-      const allTags = this.getTagElements().map(el => this.getTagData(el))
-      // Only filter from non-selected tags
-      const availableTags = allTags.filter(t => !t.element.hasAttribute('selected'))
-      const filtered = this.filterTags(availableTags, query)
-
-      // Update state
-      this._state.filteredTags = filtered
-      this._state.highlightedIndex = -1
-
-      // Update visibility
-      this.updateTagVisibility(filtered, allTags)
-
-      // Hide options area if no results
-      this.updateOptionsVisibility(filtered.length > 0)
-
-      // Clear highlights
-      this.clearHighlights(allTags)
-    } else {
-      // External search: dispatch event for external handling
+    if (this._externalSearch) {
+      // External (remote) search: parent owns filtering — delegate via event.
+      // Tag visibility is left untouched; consumer is expected to update children.
       this.dispatchSearchEvent(query)
+      return
     }
+
+    // Internal search: filter tags locally
+    const allTags = this.getTagElements().map(el => this.getTagData(el))
+    // Only filter from non-selected tags
+    const availableTags = allTags.filter(t => !t.element.hasAttribute('selected'))
+    const filtered = this.filterTags(availableTags, query)
+
+    // Update state
+    this._state.filteredTags = filtered
+    this._state.highlightedIndex = -1
+
+    // Update visibility
+    this.updateTagVisibility(filtered, allTags)
+
+    // Hide options area if no results
+    this.updateOptionsVisibility(filtered.length > 0)
+
+    // Clear highlights
+    this.clearHighlights(allTags)
   }
 
 
@@ -1207,7 +1250,7 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
   /**
    * Dispatch search event for external search handling
-   * With optional delay/debounce support
+   * With optional debounce support
    */
   private dispatchSearchEvent(query: string): void {
     // Clear existing timer
@@ -1216,14 +1259,14 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       this._searchDebounceTimer = null
     }
 
-    // If delay is set, debounce the event
-    if (this._delay > 0) {
+    // If debounce is set, debounce the event
+    if (this._debounce > 0) {
       this._searchDebounceTimer = window.setTimeout(() => {
         this.fireSearchEvent(query)
         this._searchDebounceTimer = null
-      }, this._delay)
+      }, this._debounce)
     } else {
-      // Fire immediately if no delay
+      // Fire immediately if no debounce
       this.fireSearchEvent(query)
     }
   }
@@ -1352,14 +1395,15 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         </label>
       ` : ''
 
-      const searchPlaceholder = this._searchable ? 'Search...' : this._placeholder
+      const searchPlaceholder = 'Search...'
 
       shadow.innerHTML = `
         <div class="multiselect-container dropdown-mode-mobile">
           ${labelHtml}
           <div class="dropdown-wrapper">
-            <div class="dropdown-stub multiselect-stub ${stubClasses}" 
+            <div class="dropdown-stub multiselect-stub ${stubClasses}"
                  ${this._disabled ? 'disabled' : ''}>
+              <slot name="start"></slot>
               <div class="multiselect-chips">
                 <slot name="selected"></slot>
               </div>
@@ -1428,8 +1472,8 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       // Search placeholder: "Search <label>..." or just "Search..."
       const searchPlaceholder = this._label ? `Search ${this._label}...` : 'Search...'
 
-      // Conditional search header - match dropdown.ts pattern
-      const searchHeaderHtml = this._searchable ? `
+      // Search is always available — only the mode (internal vs external) varies.
+      const searchHeaderHtml = `
         <div class="mobile-search-header">
           ${this._label ? `<span class="mobile-header-label">${this._label}</span>` : ''}
           <div class="mobile-header-content">
@@ -1444,21 +1488,15 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
             </button>
           </div>
         </div>
-      ` : `
-        <div class="mobile-header-nosearch">
-          ${this._label ? `<span class="mobile-header-label">${this._label}</span>` : ''}
-          <button class="mobile-close-button" type="button" aria-label="Close">
-            ${closeButtonSvg}
-          </button>
-        </div>
       `
 
       shadow.innerHTML = `
         <div class="multiselect-container dropdown-mode-mobile">
           ${labelHtml}
           <div class="dropdown-wrapper">
-            <div class="dropdown-stub multiselect-stub ${stubClasses}" 
+            <div class="dropdown-stub multiselect-stub ${stubClasses}"
                  ${this._disabled ? 'disabled' : ''}>
+              <slot name="start"></slot>
               <div class="multiselect-chips">
                 <slot id="stub-slot" name="selected"></slot>
               </div>
@@ -1467,7 +1505,7 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
                 ${CHEVRON_DOWN_SVG}
               </div>
             </div>
-            
+
             <dialog class="mobile-dialog">
               <div class="mobile-dialog-content">
                 
@@ -1770,21 +1808,21 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     this.setProperty('required', value)
   }
 
-  get searchable(): boolean {
-    return this.getProperty('searchable')
+  get externalSearch(): boolean {
+    return this.getProperty('externalSearch')
   }
 
-  set searchable(value: boolean) {
-    this.setProperty('searchable', value)
+  set externalSearch(value: boolean) {
+    this.setProperty('externalSearch', value)
   }
 
-  get delay(): number {
-    return this.getProperty('delay')
+  get debounce(): number {
+    return this.getProperty('debounce')
   }
 
-  set delay(value: number | string) {
+  set debounce(value: number | string) {
     const numValue = typeof value === 'string' ? parseInt(value, 10) : value
-    this.setProperty('delay', numValue)
+    this.setProperty('debounce', numValue)
   }
 
   get size(): Size {

@@ -52,10 +52,10 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
         }
       };
 
-      element.addEventListener('change', handleChange);
+      element.addEventListener('ty-tab-change', handleChange);
 
       return () => {
-        element.removeEventListener('change', handleChange);
+        element.removeEventListener('ty-tab-change', handleChange);
       };
     }, [onChange]);
 

@@ -1,6 +1,6 @@
 (ns hello.state
   (:require [reagent.core :as r]
-            [ty.router :as router]))
+            [tyrell.router :as router]))
 
 (defn get-initial-theme []
   (or (.getItem js/localStorage "ty-theme")

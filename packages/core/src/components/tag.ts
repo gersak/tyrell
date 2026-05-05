@@ -4,24 +4,29 @@
  * Tag component with slots and semantic flavors
  */
 
-import type { Flavor, Size, TyTagElement, TyTagEventDetail } from '../types/common.js'
-import { TyComponent } from '../base/ty-component.js'
-import type { PropertyChange } from '../utils/property-manager.js'
-import { ensureStyles } from '../utils/styles.js'
-import { tagStyles } from '../styles/tag.js'
+import type {
+  Flavor,
+  Size,
+  TyTagElement,
+  TyTagEventDetail,
+} from "../types/common.js";
+import { TyComponent } from "../base/ty-component.js";
+import type { PropertyChange } from "../utils/property-manager.js";
+import { ensureStyles } from "../utils/styles.js";
+import { tagStyles } from "../styles/tag.js";
 
 /**
  * Component internal state (for typing TyComponent)
  */
 interface TagState {
-  flavor: Flavor
-  size: Size
-  value: string
-  selected: boolean
-  pill: boolean
-  clickable: boolean
-  dismissible: boolean
-  disabled: boolean
+  flavor: Flavor;
+  size: Size;
+  value: string;
+  selected: boolean;
+  pill: boolean;
+  clickable: boolean;
+  dismissible: boolean;
+  disabled: boolean;
 }
 
 /**
@@ -36,90 +41,79 @@ interface TagState {
  * ```
  */
 export class TyTag extends TyComponent<TagState> implements TyTagElement {
-  static formAssociated = true
+  static formAssociated = true;
 
   // ============================================================================
   // PROPERTY CONFIGURATION - Declarative property lifecycle
   // ============================================================================
   protected static properties = {
     flavor: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: true,
-      default: 'neutral',
-      validate: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        return valid.includes(v)
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        if (!valid.includes(v)) {
-          console.warn(
-            `[ty-tag] Invalid flavor '${v}'. Using 'neutral'. ` +
-            `Valid flavors: ${valid.join(', ')}`
-          )
-          return 'neutral'
-        }
-        return v
-      }
+      default: "neutral",
+      // Built-in: primary | secondary | success | danger | warning | neutral.
+      // Append `+` for stronger or `-` for softer shade (e.g. "primary+",
+      // "danger-"). Any other string is passed through — theme custom flavors
+      // via :host([flavor="X"]) { --tag-bg: ...; --tag-color: ...; --tag-border-color: ...; }
     },
     size: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: true,
-      default: 'md',
-      validate: (v: any) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
+      default: "md",
+      validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
-        if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(v)) {
-          console.warn(`[ty-tag] Invalid size '${v}'. Using 'md'.`)
-          return 'md'
+        if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
+          console.warn(`[ty-tag] Invalid size '${v}'. Using 'md'.`);
+          return "md";
         }
-        return v
-      }
+        return v;
+      },
     },
     value: {
-      type: 'string' as const,
+      type: "string" as const,
       visual: true,
-      default: ''
+      default: "",
     },
     selected: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
-      default: false
+      default: false,
     },
     pill: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
       default: true,
-      aliases: { 'not-pill': false }
+      aliases: { "not-pill": false },
     },
     clickable: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
-      default: false
+      default: false,
     },
     dismissible: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
-      default: false
+      default: false,
     },
     disabled: {
-      type: 'boolean' as const,
+      type: "boolean" as const,
       visual: true,
-      default: false
-    }
-  }
+      default: false,
+    },
+  };
 
   // ============================================================================
   // INTERNAL STATE
   // ============================================================================
 
   // Event listener cleanup function
-  private _cleanup: (() => void) | null = null
+  private _cleanup: (() => void) | null = null;
 
   constructor() {
-    super() // TyComponent handles attachInternals() and attachShadow()
+    super(); // TyComponent handles attachInternals() and attachShadow()
 
     // Apply styles to shadow root
-    ensureStyles(this.shadowRoot!, { css: tagStyles, id: 'ty-tag' })
+    ensureStyles(this.shadowRoot!, { css: tagStyles, id: "ty-tag" });
   }
 
   // observedAttributes auto-generated by TyComponent from properties config
@@ -137,15 +131,15 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
     // Setup event listeners after initial render happens
     // Use queueMicrotask to ensure render() has been called by TyComponent
     queueMicrotask(() => {
-      this.setupEventListeners()
-    })
+      this.setupEventListeners();
+    });
   }
 
   /**
    * Called when component disconnects from DOM
    */
   protected onDisconnect(): void {
-    this.cleanupEventListeners()
+    this.cleanupEventListeners();
   }
 
   /**
@@ -164,53 +158,53 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    */
   private handleClick = (event: Event): void => {
     if (this.clickable && !this.disabled) {
-      event.preventDefault()
-      event.stopPropagation()
-      this.dispatchTagEvent('click', { target: this })
-      this.dispatchTagEvent('pointerdown', { target: this })
+      event.preventDefault();
+      event.stopPropagation();
+      this.dispatchTagEvent("click", { target: this });
+      this.dispatchTagEvent("pointerdown", { target: this });
     }
-  }
+  };
 
   /**
    * Handle tag dismiss events
    */
   private handleDismiss = (event: Event): void => {
     if (this.dismissible && !this.disabled) {
-      event.preventDefault()
-      event.stopPropagation()
-      this.dispatchTagEvent('dismiss', { target: this })
+      event.preventDefault();
+      event.stopPropagation();
+      this.dispatchTagEvent("dismiss", { target: this });
     }
-  }
+  };
 
   /**
    * Handle keyboard interactions
    */
   private handleKeydown = (event: Event): void => {
-    const keyboardEvent = event as KeyboardEvent
-    if (this.disabled) return
+    const keyboardEvent = event as KeyboardEvent;
+    if (this.disabled) return;
 
-    const keyCode = keyboardEvent.keyCode
+    const keyCode = keyboardEvent.keyCode;
 
     switch (keyCode) {
       // ENTER or SPACE - trigger click if clickable
       case 13: // Enter
       case 32: // Space
         if (this.clickable) {
-          keyboardEvent.preventDefault()
-          this.dispatchTagEvent('click', { target: this })
+          keyboardEvent.preventDefault();
+          this.dispatchTagEvent("click", { target: this });
         }
-        break
+        break;
 
       // DELETE or BACKSPACE - trigger dismiss if dismissible
-      case 8:  // Backspace
+      case 8: // Backspace
       case 46: // Delete
         if (this.dismissible) {
-          keyboardEvent.preventDefault()
-          this.dispatchTagEvent('dismiss', { target: this })
+          keyboardEvent.preventDefault();
+          this.dispatchTagEvent("dismiss", { target: this });
         }
-        break
+        break;
     }
-  }
+  };
 
   // ============================================================================
   // EVENT HELPERS
@@ -220,12 +214,14 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    * Dispatch custom tag events
    */
   private dispatchTagEvent(eventType: string, detail: TyTagEventDetail): void {
-    this.dispatchEvent(new CustomEvent(eventType, {
-      detail,
-      bubbles: true,
-      composed: true,
-      cancelable: true
-    }))
+    this.dispatchEvent(
+      new CustomEvent(eventType, {
+        detail,
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      }),
+    );
   }
 
   /**
@@ -233,8 +229,8 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    */
   private cleanupEventListeners(): void {
     if (this._cleanup) {
-      this._cleanup()
-      this._cleanup = null
+      this._cleanup();
+      this._cleanup = null;
     }
   }
 
@@ -243,31 +239,31 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    */
   private setupEventListeners(): void {
     // Clean up any existing listeners first
-    this.cleanupEventListeners()
+    this.cleanupEventListeners();
 
-    const shadow = this.shadowRoot!
-    const container = shadow.querySelector('.tag-container')
-    const dismissBtn = shadow.querySelector('.tag-dismiss')
+    const shadow = this.shadowRoot!;
+    const container = shadow.querySelector(".tag-container");
+    const dismissBtn = shadow.querySelector(".tag-dismiss");
 
-    if (!container) return
+    if (!container) return;
 
     // Click handler for main tag
-    container.addEventListener('click', this.handleClick)
-    container.addEventListener('keydown', this.handleKeydown)
+    container.addEventListener("click", this.handleClick);
+    container.addEventListener("keydown", this.handleKeydown);
 
     // Dismiss button handler
     if (dismissBtn) {
-      dismissBtn.addEventListener('click', this.handleDismiss)
+      dismissBtn.addEventListener("click", this.handleDismiss);
     }
 
     // Store cleanup function
     this._cleanup = () => {
-      container.removeEventListener('click', this.handleClick)
-      container.removeEventListener('keydown', this.handleKeydown)
+      container.removeEventListener("click", this.handleClick);
+      container.removeEventListener("keydown", this.handleKeydown);
       if (dismissBtn) {
-        dismissBtn.removeEventListener('click', this.handleDismiss)
+        dismissBtn.removeEventListener("click", this.handleDismiss);
       }
-    }
+    };
   }
 
   // ============================================================================
@@ -278,24 +274,26 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    * Render the tag component
    */
   protected render(): void {
-    const shadow = this.shadowRoot!
+    const shadow = this.shadowRoot!;
 
     // Build the tag container
-    const tabindex = this.clickable ? ' tabindex="0"' : ''
-    const ariaDisabled = this.disabled ? ' aria-disabled="true"' : ''
-    const dataValue = this.value ? ` data-value="${this.value}"` : ''
+    const tabindex = this.clickable ? ' tabindex="0"' : "";
+    const ariaDisabled = this.disabled ? ' aria-disabled="true"' : "";
+    const dataValue = this.value ? ` data-value="${this.value}"` : "";
 
     // Build dismiss button SVG
-    const dismissButton = this.dismissible ? `
+    const dismissButton = this.dismissible
+      ? `
       <button class="tag-dismiss" type="button" aria-label="Remove tag">
         <svg viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
       </button>
-    ` : ''
+    `
+      : "";
 
     shadow.innerHTML = `
-      <div class="tag-container"${tabindex}${ariaDisabled}${dataValue}>
+      <div class="tag-container" part="container"${tabindex}${ariaDisabled}${dataValue}>
         <div class="tag-start">
           <slot name="start" class="tag-start"></slot>
         </div>
@@ -307,11 +305,11 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
           ${dismissButton}
         </div>
       </div>
-    `
+    `;
 
     // Re-setup event listeners after innerHTML replace (destroys old elements)
     if (this._connected) {
-      this.setupEventListeners()
+      this.setupEventListeners();
     }
   }
 
@@ -320,71 +318,71 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
   // ============================================================================
 
   get flavor(): Flavor {
-    return this.getProperty('flavor')
+    return this.getProperty("flavor");
   }
 
   set flavor(value: Flavor) {
-    this.setProperty('flavor', value)
+    this.setProperty("flavor", value);
   }
 
   get size(): Size {
-    return this.getProperty('size') as Size
+    return this.getProperty("size") as Size;
   }
 
   set size(value: Size) {
-    this.setProperty('size', value)
+    this.setProperty("size", value);
   }
 
   get value(): string {
-    return this.getProperty('value')
+    return this.getProperty("value");
   }
 
   set value(val: string) {
-    this.setProperty('value', val)
+    this.setProperty("value", val);
   }
 
   get selected(): boolean {
-    return this.getProperty('selected')
+    return this.getProperty("selected");
   }
 
   set selected(value: boolean) {
-    this.setProperty('selected', value)
+    this.setProperty("selected", value);
   }
 
   get pill(): boolean {
-    return this.getProperty('pill')
+    return this.getProperty("pill");
   }
 
   set pill(value: boolean) {
-    this.setProperty('pill', value)
+    this.setProperty("pill", value);
   }
 
   get clickable(): boolean {
-    return this.getProperty('clickable')
+    return this.getProperty("clickable");
   }
 
   set clickable(value: boolean) {
-    this.setProperty('clickable', value)
+    this.setProperty("clickable", value);
   }
 
   get dismissible(): boolean {
-    return this.getProperty('dismissible')
+    return this.getProperty("dismissible");
   }
 
   set dismissible(value: boolean) {
-    this.setProperty('dismissible', value)
+    this.setProperty("dismissible", value);
   }
 
   get disabled(): boolean {
-    return this.getProperty('disabled')
+    return this.getProperty("disabled");
   }
 
   set disabled(value: boolean) {
-    this.setProperty('disabled', value)
+    this.setProperty("disabled", value);
   }
 }
 
 // Register the custom element
-if (!customElements.get('ty-tag')) {
-  customElements.define('ty-tag', TyTag)
+if (!customElements.get("ty-tag")) {
+  customElements.define("ty-tag", TyTag);
 }

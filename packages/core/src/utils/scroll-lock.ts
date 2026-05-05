@@ -77,73 +77,51 @@ function getScrollbarWidth(): number {
 // ============================================================================
 
 /**
- * Lock body scrolling using position: fixed technique
+ * Lock body scrolling using overflow: hidden on <html>.
+ *
+ * Avoids position: fixed on <body> which breaks centered/max-width body layouts
+ * by snapping the body to the left edge. Using <html> instead leaves body layout
+ * untouched while still preventing scroll.
  */
 function lockBodyFixed(): void {
   if (lockState.locked) return;
 
-  const y = getScrollY();
   const scrollbarWidth = getScrollbarWidth();
-  const body = getBodyEl();
+  const docEl = getDocEl();
 
-  // Debug logging if enabled
   if (window.tyScrollDebug) {
-    console.log('🔒 Locking body scroll:', {
-      scrollY: y,
-      scrollbarWidth,
-    });
+    console.log('🔒 Locking body scroll:', { scrollbarWidth });
   }
 
-  // Store current state
-  lockState.scrollY = y;
+  lockState.scrollY = getScrollY();
   lockState.locked = true;
 
-  // Apply fixed positioning
-  body.style.position = 'fixed';
-  body.style.top = `-${y}px`;
-  body.style.left = '0';
-  body.style.right = '0';
+  docEl.style.overflow = 'hidden';
 
-  // Prevent layout shift by adding padding to compensate for scrollbar
+  // Compensate for scrollbar disappearing to prevent layout shift
   if (scrollbarWidth > 0) {
-    body.style.paddingRight = `${scrollbarWidth}px`;
+    docEl.style.paddingRight = `${scrollbarWidth}px`;
   }
 
-  // Add CSS class for styling hooks
-  body.classList.add('ty-scroll-locked');
+  docEl.classList.add('ty-scroll-locked');
 }
 
 /**
- * Unlock body scrolling and restore scroll position
+ * Unlock body scrolling
  */
 function unlockBodyFixed(): void {
   if (!lockState.locked) return;
 
-  const y = lockState.scrollY;
-  const body = getBodyEl();
+  const docEl = getDocEl();
 
-  // Debug logging if enabled
   if (window.tyScrollDebug) {
-    console.log('🔓 Unlocking body scroll:', {
-      restoringScrollY: y,
-    });
+    console.log('🔓 Unlocking body scroll');
   }
 
-  // Remove CSS class
-  body.classList.remove('ty-scroll-locked');
+  docEl.classList.remove('ty-scroll-locked');
+  docEl.style.overflow = '';
+  docEl.style.paddingRight = '';
 
-  // Remove fixed positioning and padding
-  body.style.position = '';
-  body.style.top = '';
-  body.style.left = '';
-  body.style.right = '';
-  body.style.width = '';
-  body.style.paddingRight = '';
-
-  // Restore scroll position
-  window.scrollTo(0, y);
-
-  // Update state
   lockState.locked = false;
 }
 

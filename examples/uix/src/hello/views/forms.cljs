@@ -1,6 +1,6 @@
 (ns hello.views.forms
   (:require
-    ["@gersak/ty-react" :as ty]
+    ["tyrell-react" :as ty]
     [uix.core :as uix :refer [defui $ use-state use-effect]]))
 
 

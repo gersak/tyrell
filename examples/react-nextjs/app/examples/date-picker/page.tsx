@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
-import { TyButton, TyDatePicker, type TyDatePickerEventDetail } from '@gersak/ty-react'
+import { TyButton, TyDatePicker, type TyDatePickerEventDetail } from 'tyrell-react'
 
 export default function DatePickerExample() {
   const [mounted, setMounted] = useState(false)

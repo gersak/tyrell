@@ -16,13 +16,99 @@ For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Repl
 
 ---
 
+## Loading Tyrell CSS
+
+Component classes only work once `tyrell.css` is loaded. Easiest is a CDN `<link>`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+```
+
+For offline dev, fetch the file once and serve it from your `public/`:
+
+```bash
+# Pin a version
+curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css
+
+# Or copy from the version shadow-cljs already installed (after first build)
+cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+```
+
+Then `<link rel="stylesheet" href="/css/tyrell.css">`. See [`CLOJURESCRIPT_GUIDE.md`](CLOJURESCRIPT_GUIDE.md#css-handling) for the Tailwind/PostCSS pipeline variant.
+
+---
+
+## Replicant Attribute Conventions
+
+Replicant emits console warnings (and in some cases drops change detection) when `:class` and `:style` aren't shaped the way it expects. Three rules cover virtually every case:
+
+### 1. `:class` is always a vector of single-class tokens
+
+Multi-class strings like `"text-xs font-light"` warn *and* perform worse — Replicant has to parse them at every render. Use a vector of single-class strings (or keywords) instead, **including inside `(when …)`, `(if …)`, `(cond …)`, `(case …)` branches**. The string-with-spaces is still wrong even when it's deep inside a dynamic form.
+
+```clojure
+;; ❌ Multi-class string (warns)
+[:span {:class "text-xs font-light"} "welcome"]
+
+;; ❌ Multi-class string inside a dynamic form (still warns)
+[:div {:class (when on-click "cursor-pointer hover:shadow-lg")} ...]
+
+[:span {:class (cond
+                 (and featured? active?) "text-xs font-semibold"
+                 featured?               "text-xs font-medium"
+                 :else                   "text-xs font-light")}]
+
+;; ✅ Vectors everywhere
+[:span {:class ["text-xs" "font-light"]} "welcome"]
+
+[:div {:class (when on-click ["cursor-pointer" "hover:shadow-lg"])} ...]
+
+[:span {:class (cond
+                 (and featured? active?) ["text-xs" "font-semibold"]
+                 featured?               ["text-xs" "font-medium"]
+                 :else                   ["text-xs" "font-light"])}]
+```
+
+Single-class strings like `(when active? "ty-text-accent")` are fine — the rule only applies to strings that contain spaces.
+
+### 2. `:style` is always a map, never a string
+
+Style strings (`{:style "font-size: 0.875rem;"}`) warn — Replicant has to parse them on every render and they're harder to read. Use a map of CSS-property keywords:
+
+```clojure
+;; ❌ Style string
+[:p {:style "font-size: 0.875rem; line-height: 1.6;"} ...]
+
+;; ✅ Style map
+[:p {:style {:font-size "0.875rem"
+             :line-height "1.6"}} ...]
+```
+
+This rule applies only to the `:style` *attribute*. The `[:style "…"]` *element* (a `<style>` tag with CSS source as text content) is unaffected — it's a tag, not an attribute.
+
+### 3. `:style` map keys are keywords — including CSS custom properties
+
+Replicant warns when style keys are strings or symbols and refuses to recognize subsequent changes to them reliably. Clojure keywords accept the `--` prefix, so CSS custom properties become valid keywords:
+
+```clojure
+;; ❌ String keys for CSS variables
+[:ty-button {:style {"--ty-button-bg" "#ff6600"
+                     "--ty-button-color" "white"}}]
+
+;; ✅ Keyword keys (Clojure accepts the leading -- in keywords)
+[:ty-button {:style {:--ty-button-bg "#ff6600"
+                     :--ty-button-color "white"}}]
+```
+
+---
+
 ## Component Usage
 
 ### Basic View Structure
 
 ```clojure
 (ns my-app.views.user-profile
-  (:require [ty.router :as router]))
+  (:require [tyrell.router :as router]))
 
 (defn view []
   (when (router/rendered? ::user-profile)
@@ -147,7 +233,7 @@ For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Repl
    [:div.p-3.ty-elevated.rounded-lg (:name item)])]
 
 ;; Copy
-[:ty-copy {:value "npm install @gersak/ty" :format "code"}]
+[:ty-copy {:value "npm install tyrell-components" :format "code"}]
 ```
 
 ---
@@ -300,9 +386,9 @@ Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `
 
 ```clojure
 (ns my-app.icons
-  (:require [ty.icons :as icons]
-            [ty.lucide :as lucide]
-            [ty.fav6.brands :as fav6-brands]))
+  (:require [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]
+            [tyrell.fav6.brands :as fav6-brands]))
 
 (icons/register!
   {:home           lucide/home
@@ -313,7 +399,7 @@ Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `
    :alert-circle   lucide/alert-circle
    :github         fav6-brands/github})
 
-;; Or use register-async! if icons.cljs loads before ty.js
+;; Or use register-async! if icons.cljs loads before tyrell.js
 (icons/register-async!
   {:check lucide/check
    :home  lucide/home}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Event detail structure for ty-input events
 export interface TyInputEventDetail {
@@ -8,8 +9,22 @@ export interface TyInputEventDetail {
   originalEvent: Event; // original DOM event
 }
 
+export interface TyInputCSSProperties extends React.CSSProperties {
+  '--input-bg'?: string;
+  '--input-color'?: string;
+  '--input-border'?: string;
+  '--input-border-hover'?: string;
+  '--input-border-focus'?: string;
+  '--input-shadow-focus'?: string;
+  '--input-placeholder'?: string;
+  '--input-disabled-bg'?: string;
+  '--input-disabled-border'?: string;
+  '--input-disabled-color'?: string;
+}
+
 // Type definitions for Ty Input component
-export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onFocus' | 'onBlur'> {
+export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onFocus' | 'onBlur' | 'style'> {
+  style?: TyInputCSSProperties;
   /** Input type */
   type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'url' | 'search'
   | 'currency' | 'percent' | 'compact';
@@ -49,8 +64,8 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   locale?: string;
   precision?: string | number;
 
-  /** Debounce delay in milliseconds (0-5000) */
-  delay?: number;
+  /** Debounce in milliseconds (0-5000) */
+  debounce?: number;
 
   // React event handlers - override with our custom types
   /**
@@ -72,10 +87,32 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   onBlur?: (event: FocusEvent) => void;
 }
 
+// One-time global warning flags so we don't spam the console.
+let _warnedOnInputProp = false;
+
 // React wrapper for ty-input web component
 export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
-  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, name, checked, delay, ...props }, ref) => {
+  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, name, checked, debounce, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+
+    // Catch the most common mistake: passing `onInput` (React's prop) instead
+    // of `onChange` (our wrapper's prop). React's synthetic-event system
+    // strips event.detail, so the user's handler crashes on `e.detail.value`.
+    // Forward to onChange and log a one-shot warning.
+    const onInputProp = (props as any).onInput as ((e: any) => void) | undefined;
+    if (onInputProp && !onChange) {
+      if (!_warnedOnInputProp) {
+        _warnedOnInputProp = true;
+        console.warn(
+          '[tyrell-react] <TyInput> received `onInput`. ' +
+          'React strips event.detail; use `onChange` instead — it receives the raw CustomEvent. ' +
+          'Forwarding for now, but please rename the prop.'
+        );
+      }
+      onChange = onInputProp;
+    }
+    // Either way, drop onInput from spread so React doesn't double-wire it.
+    delete (props as any).onInput;
 
     // Map onChange to input event (React convention)
     const handleInput = useCallback((event: CustomEvent<TyInputEventDetail>) => {
@@ -154,6 +191,21 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
       }
     }, [ref]);
 
+    // Imperatively sync `value` to the underlying element's property whenever
+    // the React prop changes. React 18's prop-to-property bridging for custom
+    // elements is unreliable for empty strings, so we set the property directly
+    // to guarantee resets (`value=""`) clear the visible content. React 19+
+    // handles this natively, so the effect short-circuits there.
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      const element = elementRef.current as any;
+      if (!element) return;
+      const next = (props as any).value ?? '';
+      if (element.value !== next) {
+        element.value = next;
+      }
+    }, [(props as any).value]);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -167,8 +219,8 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
     // Add string attributes
     if (name) webComponentProps.name = name;
 
-    // Add delay attribute
-    if (delay !== undefined) webComponentProps.delay = delay;
+    // Add debounce attribute
+    if (debounce !== undefined) webComponentProps.debounce = debounce;
 
     return React.createElement(
       'ty-input',

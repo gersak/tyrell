@@ -25,5 +25,8 @@
     "ty"
   ],
   "author": "Gersak",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "tyrell-components": "1.0.0-RC6"
+  }
 }

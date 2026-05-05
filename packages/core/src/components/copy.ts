@@ -81,7 +81,7 @@ export interface TyCopyElement extends HTMLElement {
  * <!-- Code format -->
  * <ty-copy
  *   label="Install Command"
- *   value="npm install @gersak/ty"
+ *   value="npm install tyrell-components"
  *   format="code">
  * </ty-copy>
  *

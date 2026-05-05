@@ -9,12 +9,21 @@
         content="Explore professional, framework-agnostic web components through real-world scenarios. Ty Components provides a semantic design system with comprehensive theming and accessibility.">
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
     <!-- Ty Complete CSS System (Variables + Utilities) -->
-    <link rel="stylesheet" href="/css/ty.css">
-    <link rel="preloadmodule" href="/css/ty.css">
+    <link rel="stylesheet" href="/css/tyrell.css">
+    <link rel="preloadmodule" href="/css/tyrell.css">
+
+    <!-- Site-chrome styles (inline-code pills, etc.) are injected by
+         tyrell.site.styles/install! at runtime — see site/tyrell/site/styles.cljs -->
 
     <!-- Ty Web Components (TypeScript) -->
-    <script type="module" src="/ty/ty.js"></script>
+    <script type="module" src="/tyrell/tyrell.js"></script>
 
     <!-- Highlight.js for code syntax highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
@@ -26,6 +35,27 @@
 
     <!-- Mobile-specific CSS fixes -->
     <style>
+        /* Site typography — webfonts for cross-OS consistency */
+        html,
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        code,
+        pre,
+        kbd,
+        samp,
+        .hljs,
+        .ty-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                'Liberation Mono', 'Courier New', monospace;
+            font-variant-ligatures: contextual;
+        }
+
         /* iOS fix - prevents scroll bounce and keyboard layout breaking */
         html,
         body {
@@ -100,15 +130,8 @@
             color: var(--ty-color-info) !important;
         }
 
-        /* Inline code styling */
-        code:not(.hljs) {
-            background: var(--ty-surface-content);
-            color: var(--ty-text+);
-            padding: 0.125rem 0.375rem;
-            border-radius: 4px;
-            font-size: 0.875em;
-            border: 1px solid var(--ty-border-);
-        }
+        /* Inline code styling lives in /css/site.css now (site-only override
+           driven by --ty-inline-code-* variables). tyrell.css is untouched. */
 
         /* Pre blocks containing highlighted code */
         pre.hljs {

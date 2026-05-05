@@ -9,7 +9,7 @@
   {:target :browser
    :output-dir "public/js"
    :asset-path "/js"
-   :modules {:site {:init-fn ty.site.core/init}}
+   :modules {:site {:init-fn tyrell.site.core/init}}
    :compiler-options {:optimizations :none
                       :source-map true}}
 
@@ -18,9 +18,9 @@
   {:target :browser
    :output-dir "../../docs/js"
    :asset-path "js"
-   :modules {:site {:init-fn ty.site.core/init}}
-   :closure-defines {ty.site.core/ROUTER_BASE "ty"
-                     ty.site.core/PRODUCTION true}
+   :modules {:site {:init-fn tyrell.site.core/init}}
+   :closure-defines {tyrell.site.core/ROUTER_BASE "tyrell"
+                     tyrell.site.core/PRODUCTION true}
    :compiler-options {:optimizations :advanced
                       :source-map true
                       :pretty-print false

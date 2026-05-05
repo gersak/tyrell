@@ -10,7 +10,7 @@ import {
   TyDropdown,
   TyOption,
   type TyModalRef
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 import { useRef } from 'react'
 
 interface FormData {
@@ -168,7 +168,7 @@ export default function ContactFormExample() {
           Contact Form Example
         </h1>
         <p className="text-base leading-relaxed ty-text-">
-          A comprehensive contact form showcasing Ty Components with validation, different input types,
+          A comprehensive contact form showcasing Tyrell Components with validation, different input types,
           and professional styling using the TY + Tailwind design system.
         </p>
       </div>

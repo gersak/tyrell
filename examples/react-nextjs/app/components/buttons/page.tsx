@@ -5,7 +5,7 @@ import { AppLayout } from '../../../lib/app-layout'
 import {
   TyButton,
   TyIcon,
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 export default function ButtonsPage() {
   const [mounted, setMounted] = useState(false)
@@ -465,7 +465,7 @@ export default function ButtonsPage() {
             <div className="ty-floating p-4 rounded-lg">
               <h4 className="ty-text+ font-medium mb-3">Basic Button with Tailwind</h4>
               <div className="ty-bg-primary++ ty-text-- p-4 rounded-lg overflow-x-auto text-sm font-mono">
-                <pre>{`import { TyButton, TyIcon } from '@gersak/ty-react'
+                <pre>{`import { TyButton, TyIcon } from 'tyrell-react'
 
 <TyButton 
   flavor="primary" 

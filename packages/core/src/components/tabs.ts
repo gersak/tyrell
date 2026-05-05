@@ -422,19 +422,24 @@ function updateMarker(el: TyTabs, activeId: string): void {
 
 /**
  * Update only the active tab state without re-rendering DOM.
- * This is called when only the active attribute changes.
+ * Called from `attributeChangedCallback` when the `active` attribute changes.
+ *
+ * `previousId` MUST be the value the attribute held *before* it was changed —
+ * never call `getActiveTabId(el, ...)` here, because the attribute has already
+ * been updated to `tabId` by the time this runs. Reading it back would always
+ * yield the new value, making the change-detection guard below trip on every
+ * click and silently suppress `ty-tab-change` dispatch.
  */
-function updateActiveTabState(el: TyTabs, tabId: string): void {
+function updateActiveTabState(el: TyTabs, tabId: string, previousId: string | null): void {
   const tabs = getChildTabs(el);
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
-  
-  const currentActive = getActiveTabId(el, tabs);
-  const currentIndex = currentActive ? findTabIndex(tabs, currentActive) : undefined;
+
+  const currentIndex = previousId ? findTabIndex(tabs, previousId) : undefined;
   const newIndex = findTabIndex(tabs, tabId);
-  
+
   // Only update if different tab and valid
-  if (currentActive === tabId || newIndex === undefined) return;
+  if (previousId === tabId || newIndex === undefined) return;
   
   // Update CSS variable for transform
   el.style.setProperty('--active-index', String(newIndex));
@@ -462,7 +467,7 @@ function updateActiveTabState(el: TyTabs, tabId: string): void {
     el,
     tabId,
     newIndex,
-    currentActive,
+    previousId,
     currentIndex ?? null
   );
 }
@@ -780,7 +785,10 @@ export class TyTabs extends HTMLElement {
     if (name === 'active') {
       // Active tab changed - update state, then do smart render
       if (newValue) {
-        updateActiveTabState(this, newValue);
+        // Pass `oldValue` explicitly so the change-detection inside
+        // `updateActiveTabState` compares against the previous value
+        // rather than re-reading the (already updated) attribute.
+        updateActiveTabState(this, newValue, oldValue);
       }
       // Always call render after active change to update button states
       render(this);
