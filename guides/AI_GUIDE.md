@@ -10,8 +10,10 @@ Treasure map. Find your context, follow the link.
 | React | [js/REACT_TY_GUIDE.md](js/REACT_TY_GUIDE.md) |
 | Vue 3 / Nuxt | [js/VUE_TY_GUIDE.md](js/VUE_TY_GUIDE.md) |
 | Svelte 5 / SvelteKit | [js/SVELTE_TY_GUIDE.md](js/SVELTE_TY_GUIDE.md) |
-| ClojureScript (any framework) | [clj/CLOJURESCRIPT_GUIDE.md](clj/CLOJURESCRIPT_GUIDE.md) |
-| ClojureScript (Replicant) | [clj/REPLICANT_TY_GUIDE.md](clj/REPLICANT_TY_GUIDE.md) |
+| ClojureScript (Reagent / re-frame / UIx / Helix) | [clj/QUICKSTART.md](clj/QUICKSTART.md) → Track A |
+| ClojureScript (Replicant / vanilla) | [clj/QUICKSTART.md](clj/QUICKSTART.md) → Track B |
+| ClojureScript (substrate reference) | [clj/CLOJURESCRIPT_GUIDE.md](clj/CLOJURESCRIPT_GUIDE.md) |
+| ClojureScript (Replicant deep-dive) | [clj/REPLICANT_TY_GUIDE.md](clj/REPLICANT_TY_GUIDE.md) |
 | Datastar / SSE / HTMX-style | [DATASTAR_TY_GUIDE.md](DATASTAR_TY_GUIDE.md) |
 | Other framework | [TY_GUIDE.md](TY_GUIDE.md) (web components are universal) |
 
@@ -36,7 +38,7 @@ Treasure map. Find your context, follow the link.
 2. **Event payload lives on `event.detail`.** Always `event.detail.value`, never `event.value`.
 3. **Properties vs attributes.** Booleans, arrays, objects → JS property. Strings → attribute. In React: just props. In Vue: `:prop`. In Svelte: `prop:`.
 4. **Icons require explicit registration.** `<ty-icon name="check">` is a runtime lookup; the bundler can't connect the string to the export. Use `registerIcons({ check, ... })`.
-5. **`customElements.define` needs a browser.** In SSR frameworks (Next.js, Nuxt, SvelteKit, Astro), import `@gersak/ty` only in client boundaries.
+5. **`customElements.define` needs a browser.** In SSR frameworks (Next.js, Nuxt, SvelteKit, Astro), import `tyrell-components` only in client boundaries.
 
 ## For agents working in a *consumer* project
 
