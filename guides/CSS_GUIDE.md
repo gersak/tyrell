@@ -320,6 +320,112 @@ Per-flavor border overrides (apply when the `flavor` attribute is set):
 </ty-multiselect>
 ```
 
+### `<ty-calendar>`, `<ty-calendar-month>`, `<ty-date-picker>`
+
+These three share a `--ty-calendar-*` token family for the day grid, the popup surface, navigation, and the optional time section. The date-picker stub (the input-like trigger) has its own thin `--ty-date-picker-*` shim that sits on top of `--ty-input-*` — override it to style only the date-picker trigger without affecting other form fields.
+
+#### Quick retheming via accent aliases
+
+Three aliases drive the most-visible colors. Override any of these and selected/today/focus shift together:
+
+| Variable | Drives |
+|---|---|
+| `--ty-calendar-accent` | Selected day border + nav focus outline (default: `--ty-color-primary`) |
+| `--ty-calendar-today-accent` | Today's border (default: `--ty-color-secondary`) |
+| `--ty-calendar-muted` | Default day text (default: `--ty-color-neutral`) |
+
+```html
+<ty-calendar style="--ty-calendar-accent: hotpink;
+                    --ty-calendar-today-accent: gold;"></ty-calendar>
+```
+
+#### Day cell — fine-grained control
+
+| Variable | Purpose |
+|---|---|
+| `--ty-calendar-day-color` | Default day text |
+| `--ty-calendar-day-bg` | Default day background |
+| `--ty-calendar-day-border` | Default day border |
+| `--ty-calendar-day-radius` | Day cell border-radius |
+| `--ty-calendar-day-hover-color` | Hover text |
+| `--ty-calendar-day-hover-bg` | Hover background |
+| `--ty-calendar-day-hover-border` | Hover border |
+| `--ty-calendar-today-color` | Today text |
+| `--ty-calendar-today-bg` | Today background |
+| `--ty-calendar-today-border` | Today border |
+| `--ty-calendar-selected-color` | Selected text |
+| `--ty-calendar-selected-bg` | Selected background |
+| `--ty-calendar-selected-border` | Selected border |
+| `--ty-calendar-selected-hover-bg` | Selected + hover background |
+| `--ty-calendar-selected-hover-border` | Selected + hover border |
+| `--ty-calendar-weekend-color` | Saturday/Sunday text |
+| `--ty-calendar-other-month-color` | Days from prev/next month |
+| `--ty-calendar-other-month-opacity` | Other-month dimming (default `0.5`) |
+| `--ty-calendar-header-color` | Weekday name row |
+
+#### Navigation bar
+
+| Variable | Purpose |
+|---|---|
+| `--ty-calendar-nav-color` | Prev/next chevron color |
+| `--ty-calendar-nav-hover-color` | Chevron on hover |
+| `--ty-calendar-nav-hover-bg` | Chevron button hover background |
+| `--ty-calendar-nav-active-bg` | Chevron button pressed background |
+| `--ty-calendar-nav-focus-outline` | Focus-visible outline (defaults to `--ty-calendar-accent`) |
+| `--ty-calendar-nav-title-color` | Month/year display |
+
+#### Popup surface (date-picker dialog)
+
+| Variable | Purpose |
+|---|---|
+| `--ty-calendar-surface-bg` | Popup background |
+| `--ty-calendar-surface-border` | Popup border |
+| `--ty-calendar-surface-shadow` | Popup drop-shadow |
+| `--ty-calendar-surface-radius` | Popup border-radius |
+
+#### Time section (date-picker only)
+
+| Variable | Purpose |
+|---|---|
+| `--ty-calendar-time-bg` | Time row background |
+| `--ty-calendar-time-border` | Divider above time row |
+| `--ty-calendar-time-label-color` | "Time" label color |
+| `--ty-calendar-time-input-color` | HH/MM input text |
+| `--ty-calendar-time-placeholder-color` | HH/MM placeholder |
+| `--ty-calendar-time-icon-color` | Clock icon |
+
+#### Date-picker stub (input-like trigger)
+
+A thin shim over `--ty-input-*`. By default the stub looks identical to other inputs; override these to make it look distinct without affecting `<ty-input>`, `<ty-dropdown>`, etc.
+
+| Variable | Defaults to |
+|---|---|
+| `--ty-date-picker-bg` | `--ty-input-bg` |
+| `--ty-date-picker-color` | `--ty-input-color` |
+| `--ty-date-picker-placeholder` | `--ty-input-placeholder` |
+| `--ty-date-picker-border` | `--ty-input-border` |
+| `--ty-date-picker-border-hover` | `--ty-input-border-hover` |
+| `--ty-date-picker-border-focus` | `--ty-input-border-focus` |
+| `--ty-date-picker-shadow-focus` | `--ty-input-shadow-focus` |
+| `--ty-date-picker-disabled-bg` | `--ty-input-disabled-bg` |
+| `--ty-date-picker-disabled-color` | `--ty-input-disabled-color` |
+| `--ty-date-picker-radius` | `--ty-radius-md` |
+
+```html
+<!-- Make the date-picker trigger look like a "button" without affecting inputs -->
+<ty-date-picker style="--ty-date-picker-bg: #f0fdf4;
+                       --ty-date-picker-border: #16a34a;
+                       --ty-date-picker-border-hover: #15803d;
+                       --ty-date-picker-border-focus: #15803d;
+                       --ty-date-picker-shadow-focus: rgba(22, 163, 74, 0.15);"></ty-date-picker>
+
+<!-- Theme the popup body separately from the trigger -->
+<ty-date-picker style="--ty-calendar-surface-bg: #1a1a2e;
+                       --ty-calendar-surface-border: #2d2d44;
+                       --ty-calendar-selected-bg: #f72585;
+                       --ty-calendar-selected-color: white;"></ty-date-picker>
+```
+
 ### How it works
 
 CSS custom properties inherit through shadow DOM boundaries. When you set `--ty-button-bg` on a `<ty-button>` host, the inner `<button>` inside the shadow root resolves `var(--ty-button-bg, …flavor default…)` — finds the host's value, uses it. Unset → falls back to the flavor's design token. The same mechanism applies to inputs/dropdowns/multiselects, just via the shared `--ty-input-*` token family.

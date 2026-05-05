@@ -169,11 +169,11 @@
            [:p.text-sm [:span.font-medium "Priority: "]
             [:span.capitalize.px-2.py-1.rounded.text-xs
              {:class (case (:priority submitted-data)
-                       "low" "ty-bg-neutral- ty-text-neutral"
-                       "medium" "ty-bg-info- ty-text"
-                       "high" "ty-bg-warning- ty-text-warning"
-                       "critical" "ty-bg-danger- ty-text-danger"
-                       "ty-bg-neutral- ty-text-neutral")}
+                       "low" ["ty-bg-neutral-" "ty-text-neutral"]
+                       "medium" ["ty-bg-info-" "ty-text"]
+                       "high" ["ty-bg-warning-" "ty-text-warning"]
+                       "critical" ["ty-bg-danger-" "ty-text-danger"]
+                       ["ty-bg-neutral-" "ty-text-neutral"])}
              (:priority submitted-data)]]
            [:p.text-sm [:span.font-medium "Departments: "]
             (if (empty? (:department submitted-data))
@@ -214,19 +214,7 @@
                 success-modal-open submitted-data]}
         (:contact-form @state/state)]
     [:div
-     [:div.max-w-4xl.mx-auto.space-y-8
-      ;; Header
-      [:div.text-center.mb-12
-       [:h1.text-4xl.font-bold.ty-text.mb-4 "Contact Form Scenario"]
-       [:p.text-lg.ty-text-.max-w-3xl.mx-auto.leading-relaxed
-        "Experience professional form validation with real-time feedback, elegant error states, and comprehensive user experience patterns. This contact form demonstrates advanced form handling with loading states, success feedback, and graceful error recovery."]
-
-       [:div.flex.flex-wrap.gap-3.justify-center.mt-6
-        [:span.px-3.py-1.ty-bg-success-.ty-text-success.rounded-full.text-sm.font-medium "Real-time Validation"]
-        [:span.px-3.py-1.ty-bg-primary-.ty-text-primary.rounded-full.text-sm.font-medium "Professional Styling"]
-        [:span.px-3.py-1.ty-bg-warning-.ty-text-warning.rounded-full.text-sm.font-medium "Loading States"]
-        [:span.px-3.py-1.ty-bg-neutral-.ty-text-neutral.rounded-full.text-sm.font-medium "Success Feedback"]]]
-
+     [:div.space-y-6
       ;; Submission Status Messages
       (when submission-status
         [:div.ty-floating.p-6.rounded-lg
@@ -248,17 +236,8 @@
               "Try Again"]]])])
 
       ;; Main Form
-      [:div.p-4.sm:p-8.rounded-xl
-       [:div.flex.items-center.justify-between.mb-8
-        [:div.flex.items-center.gap-4
-         [:ty-icon {:name "mail"
-                    :size "xl"}]
-         [:div
-          [:h2.text-2xl.font-semibold.ty-text "Get in Touch"]
-          [:p.ty-text- "We'd love to hear from you. Send us a message and we'll respond as soon as possible."]]]]
-
-       [:form.space-y-6
-        {:on {:submit handle-form-submit}}
+      [:form.space-y-6
+       {:on {:submit handle-form-submit}}
 
         ;; Enhanced Four-Column Layout: Contact Info | Request Details | Tips/Newsletter | Message
         [:div.grid.grid-cols-1.lg:grid-cols-2.gap-8
@@ -492,13 +471,6 @@
                                  (> (count (:message form-data)) 1800) "ty-text-warning"
                                  :else "ty-text-success")}]]]]]]
         ;; Submit Section
-        [:div.grid.grid-cols-1.lg:grid-cols-3.gap-8.mt-8
-         ;; Empty left column for alignment
-         [:div]
-         ;; Empty right column for alignment
-         [:div]]
-
-        ;; Submit Section
         [:div.border-t.ty-border.pt-6.flex.flex-col.sm:flex-row.gap-4.justify-between.items-center
          [:div.text-sm.ty-text-.text-center.sm:text-left
           [:p "By submitting this form, you agree to our"]
@@ -534,7 +506,7 @@
              [:div.flex.items-center.gap-2
               [:ty-icon {:name "send"
                          :size "sm"}]
-              "Send Message"])]]]]]
+              "Send Message"])]]]]
 
       ;; Additional Information
       [:div.ty-floating.p-6.rounded-lg

@@ -4,6 +4,7 @@
    that drop into any host design system. Presentation here is intentionally
    light — components sit in flow, not framed in cards."
   (:require
+   [clojure.string :as str]
    [tyrell.router :as router]
    [tyrell.site.docs :as docs]))
 
@@ -53,7 +54,7 @@
   "A row inside a section panel: name + description on the left, live primitive
    on the right. Components flow inside the panel without their own chrome."
   [{:keys [id name description preview icon]}]
-  [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150
+  [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150.hover:ty-bg-accent-
    {:on {:click #(router/navigate! id)}}
    ;; Left: name + description + cta
    [:div.flex-shrink-0.w-full.md:w-64
@@ -61,7 +62,9 @@
      {:class "group-hover:ty-text-accent"}
      name]
     (when description
-      [:p.mt-1.text-sm.ty-text-.leading-relaxed description])
+      [:p.mt-1.text-sm.ty-text-.leading-relaxed.transition-colors
+       {:class "group-hover:ty-text"}
+       description])
     [:div.mt-2.flex.items-center.gap-1.text-xs.ty-text--.transition-colors
      {:class "group-hover:ty-text-accent"}
      [:span "Docs"]
@@ -77,11 +80,15 @@
                    :size "xl"
                    :class "ty-text-"}])]])
 
+(defn category-slug [title]
+  (-> title str/lower-case (str/replace #"\s+" "-")))
+
 (defn category-section
   "A group of related primitives on its own elevated panel — gives clear
    separation between interaction categories."
   [{:keys [title ids]} comp-map]
   [:section.ty-elevated.rounded-2xl.overflow-hidden
+   {:id (category-slug title)}
    ;; Section header — sits on the panel
    [:div.px-5.md:px-7.pt-5.pb-3
     [:h2.text-xs.font-semibold.uppercase.tracking-widest.ty-text-- title]]

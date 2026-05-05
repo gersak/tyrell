@@ -5,6 +5,50 @@
 
 export const calendarMonthStyles = `
 /* ============================================================================
+   Theming Tokens
+   Override these to retheme the calendar without touching the global palette.
+   Defaults chain back to the global --ty-color-* / --ty-bg-* / --ty-border tokens.
+   ============================================================================ */
+
+:host {
+  /* Accent aliases — override these three for thin retheming */
+  --ty-calendar-accent: var(--ty-color-primary);
+  --ty-calendar-today-accent: var(--ty-color-secondary);
+  --ty-calendar-muted: var(--ty-color-neutral);
+
+  /* Header (weekday names) */
+  --ty-calendar-header-color: var(--ty-color-neutral-strong);
+
+  /* Day cell — base */
+  --ty-calendar-day-color: var(--ty-calendar-muted);
+  --ty-calendar-day-bg: transparent;
+  --ty-calendar-day-border: var(--ty-border);
+  --ty-calendar-day-radius: 0.375rem;
+
+  /* Day cell — hover */
+  --ty-calendar-day-hover-color: var(--ty-color-neutral-strong);
+  --ty-calendar-day-hover-bg: var(--ty-bg-neutral-soft);
+  --ty-calendar-day-hover-border: var(--ty-border-mild);
+
+  /* Today */
+  --ty-calendar-today-color: var(--ty-color-secondary-strong);
+  --ty-calendar-today-bg: var(--ty-bg-secondary-soft);
+  --ty-calendar-today-border: var(--ty-calendar-today-accent);
+
+  /* Selected */
+  --ty-calendar-selected-color: var(--ty-color-primary-strong);
+  --ty-calendar-selected-bg: var(--ty-bg-primary);
+  --ty-calendar-selected-border: var(--ty-calendar-accent);
+  --ty-calendar-selected-hover-bg: var(--ty-bg-primary-mild);
+  --ty-calendar-selected-hover-border: var(--ty-color-primary-mild);
+
+  /* Modifier states */
+  --ty-calendar-weekend-color: var(--ty-color-danger-soft);
+  --ty-calendar-other-month-color: var(--ty-color-neutral-faint);
+  --ty-calendar-other-month-opacity: 0.5;
+}
+
+/* ============================================================================
    Base Calendar Container
    ============================================================================ */
 
@@ -34,7 +78,7 @@ export const calendarMonthStyles = `
 
 .calendar-header-row {
   flex: 0 0 auto;
-  color: var(--ty-color-neutral-strong);
+  color: var(--ty-calendar-header-color);
 }
 
 .calendar-day-row {
@@ -76,32 +120,33 @@ export const calendarMonthStyles = `
 .calendar-day-cell {
   /* Square cells */
   aspect-ratio: 1;
-  
+
   /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  
+
   /* Spacing */
   margin: 0.125rem;
-  
+
   /* Visual */
-  border-radius: 0.375rem;
-  border: 1px solid var(--ty-border);
-  color: var(--ty-color-neutral);
+  border-radius: var(--ty-calendar-day-radius);
+  border: 1px solid var(--ty-calendar-day-border);
+  background-color: var(--ty-calendar-day-bg);
+  color: var(--ty-calendar-day-color);
   cursor: pointer;
   transition: all 0.15s ease;
-  
+
   /* Typography */
   font-weight: 400;
 }
 
 /* Hover State - Stronger Feedback */
 .calendar-day-cell:hover {
-  color: var(--ty-color-neutral-strong);
-  background-color: var(--ty-bg-neutral-soft);
-  border-color: var(--ty-border-mild);
+  color: var(--ty-calendar-day-hover-color);
+  background-color: var(--ty-calendar-day-hover-bg);
+  border-color: var(--ty-calendar-day-hover-border);
 }
 
 /* ============================================================================
@@ -110,39 +155,40 @@ export const calendarMonthStyles = `
 
 /* Today - Strong Visual Indicator */
 .calendar-day-cell.today {
-  background-color: var(--ty-bg-secondary-soft);
-  color: var(--ty-color-secondary-strong);
-  border-color: var(--ty-color-secondary);
+  background-color: var(--ty-calendar-today-bg);
+  color: var(--ty-calendar-today-color);
+  border-color: var(--ty-calendar-today-border);
   font-weight: 600;
 }
 
 /* Weekend - Subtle Color Shift */
 .calendar-day-cell.weekend {
-  color: var(--ty-color-danger-soft);
+  color: var(--ty-calendar-weekend-color);
 }
 
 /* Other Month - Muted */
 .calendar-day-cell.other-month {
-  color: var(--ty-color-neutral-faint);
-  opacity: 0.5;
+  color: var(--ty-calendar-other-month-color);
+  opacity: var(--ty-calendar-other-month-opacity);
 }
 
-.calendar-day-cell.other-month:hover {
-  background-color: var(--ty-bg-neutral-soft);
+.calendar-day-cell.other-month:hover { 
+  color: var(--ty-calendar-day-hover-color);
+  background-color: var(--ty-calendar-day-hover-bg);
   opacity: 0.7;
 }
 
 /* Selected State (for custom usage) */
 .calendar-day-cell.selected {
-  background-color: var(--ty-bg-primary) !important;
-  color: var(--ty-color-primary-strong) !important;
-  border-color: var(--ty-color-primary) !important;
+  background-color: var(--ty-calendar-selected-bg);
+  color: var(--ty-calendar-selected-color);
+  border-color: var(--ty-calendar-selected-border);
   font-weight: 600;
 }
 
 .calendar-day-cell.selected:hover {
-  background-color: var(--ty-bg-primary-mild) !important;
-  border-color: var(--ty-color-primary-mild) !important;
+  background-color: var(--ty-calendar-selected-hover-bg);
+  border-color: var(--ty-calendar-selected-hover-border);
 }
 
 .calendar-day-cell.selected.other-month {

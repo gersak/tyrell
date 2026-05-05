@@ -16,6 +16,70 @@ For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Repl
 
 ---
 
+## Replicant Attribute Conventions
+
+Replicant emits console warnings (and in some cases drops change detection) when `:class` and `:style` aren't shaped the way it expects. Three rules cover virtually every case:
+
+### 1. `:class` is always a vector of single-class tokens
+
+Multi-class strings like `"text-xs font-light"` warn *and* perform worse — Replicant has to parse them at every render. Use a vector of single-class strings (or keywords) instead, **including inside `(when …)`, `(if …)`, `(cond …)`, `(case …)` branches**. The string-with-spaces is still wrong even when it's deep inside a dynamic form.
+
+```clojure
+;; ❌ Multi-class string (warns)
+[:span {:class "text-xs font-light"} "welcome"]
+
+;; ❌ Multi-class string inside a dynamic form (still warns)
+[:div {:class (when on-click "cursor-pointer hover:shadow-lg")} ...]
+
+[:span {:class (cond
+                 (and featured? active?) "text-xs font-semibold"
+                 featured?               "text-xs font-medium"
+                 :else                   "text-xs font-light")}]
+
+;; ✅ Vectors everywhere
+[:span {:class ["text-xs" "font-light"]} "welcome"]
+
+[:div {:class (when on-click ["cursor-pointer" "hover:shadow-lg"])} ...]
+
+[:span {:class (cond
+                 (and featured? active?) ["text-xs" "font-semibold"]
+                 featured?               ["text-xs" "font-medium"]
+                 :else                   ["text-xs" "font-light"])}]
+```
+
+Single-class strings like `(when active? "ty-text-accent")` are fine — the rule only applies to strings that contain spaces.
+
+### 2. `:style` is always a map, never a string
+
+Style strings (`{:style "font-size: 0.875rem;"}`) warn — Replicant has to parse them on every render and they're harder to read. Use a map of CSS-property keywords:
+
+```clojure
+;; ❌ Style string
+[:p {:style "font-size: 0.875rem; line-height: 1.6;"} ...]
+
+;; ✅ Style map
+[:p {:style {:font-size "0.875rem"
+             :line-height "1.6"}} ...]
+```
+
+This rule applies only to the `:style` *attribute*. The `[:style "…"]` *element* (a `<style>` tag with CSS source as text content) is unaffected — it's a tag, not an attribute.
+
+### 3. `:style` map keys are keywords — including CSS custom properties
+
+Replicant warns when style keys are strings or symbols and refuses to recognize subsequent changes to them reliably. Clojure keywords accept the `--` prefix, so CSS custom properties become valid keywords:
+
+```clojure
+;; ❌ String keys for CSS variables
+[:ty-button {:style {"--ty-button-bg" "#ff6600"
+                     "--ty-button-color" "white"}}]
+
+;; ✅ Keyword keys (Clojure accepts the leading -- in keywords)
+[:ty-button {:style {:--ty-button-bg "#ff6600"
+                     :--ty-button-color "white"}}]
+```
+
+---
+
 ## Component Usage
 
 ### Basic View Structure

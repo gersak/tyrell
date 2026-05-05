@@ -1,479 +1,177 @@
 (ns tyrell.site.docs.icon
-  "Documentation for ty-icon component - dynamic icon rendering with animations"
-  (:require
-    [tyrell.site.docs.common :refer [code-block attribute-table event-table doc-section example-section docs-page]]))
+  "Documentation for ty-icon component"
+  (:require [tyrell.site.docs.common :refer [code-block attribute-table
+                                             doc-section docs-page component-header section-label demo-area]]))
 
 (defn view []
   (docs-page
-   ;; Header
-    [:div.mb-8
-     [:h1.text-3xl.font-bold.ty-text++.mb-2 "ty-icon"]
-     [:p.text-lg.ty-text-
-      "Dynamic icon rendering with size variants and animation effects. Framework-agnostic icon system that works across ClojureScript, React, HTMX, and vanilla JavaScript."]]
+   (component-header "ty-icon"
+                     "SVG icon renderer with registry-based loading. Icons inherit the current text color automatically — color them with ty-text-* classes. Supports spin, pulse, and tempo animations.")
 
    ;; API Reference
-    [:div.ty-elevated.rounded-lg.p-6.mb-8
-     [:h2.text-2xl.font-semibold.ty-text++.mb-6 "API Reference"]
+   [:div.ty-elevated.rounded-lg.p-6
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+     [:h2.scroll-mt-6
+      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+      [:span.ty-text-- "API Reference"]]]
 
+    [:div
+     (section-label "Attributes")
+     (attribute-table
+      [{:name "name"
+        :type "string"
+        :required true
+        :default "-"
+        :description "Icon name from the registry (e.g. \"check\", \"plus\", \"trash\")"}
+       {:name "size"
+        :type "string"
+        :default "-"
+        :description "Icon size: xs (12px), sm (16px), md (20px), lg (24px), xl (32px)"}
+       {:name "spin"
+        :type "boolean"
+        :default "false"
+        :description "Continuous rotation animation — useful for loaders"}
+       {:name "pulse"
+        :type "boolean"
+        :default "false"
+        :description "Fade pulse animation — useful for status indicators"}
+       {:name "tempo"
+        :type "string"
+        :default "\"normal\""
+        :description "Animation speed: slow, normal, fast"}])]]
+
+   ;; Examples
+   (doc-section "Examples"
      [:div.space-y-6
-     ;; Attributes
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3 "Attributes"]
-       (attribute-table
-         [{:name "name"
-           :type "string"
-           :default "-"
-           :description "Icon name from the registry (e.g., 'check', 'plus', 'trash')"}
-          {:name "size"
-           :type "string"
-           :default "-"
-           :description "Icon size: xs, sm, md, lg, xl"}
-          {:name "spin"
-           :type "boolean"
-           :default "false"
-           :description "Apply continuous rotation animation"}
-          {:name "pulse"
-           :type "boolean"
-           :default "false"
-           :description "Apply pulsing animation"}
-          {:name "tempo"
-           :type "string"
-           :default "-"
-           :description "Animation speed: slow, normal, fast"}
-          {:name "class"
-           :type "string"
-           :default "-"
-           :description "Additional CSS classes (e.g., 'ty-text-success')"}])]]]
 
-   ;; Basic Usage
-    [:div.ty-content.rounded-lg.p-6.mb-8
-     [:h2.text-xl.font-semibold.ty-text++.mb-4 "Basic Usage"]
-     [:p.ty-text-.mb-4 "Icons automatically inherit text color from their container or can be styled directly."]
-
-     [:div.mb-6
-      [:div.flex.items-center.gap-4.mb-4
-       [:ty-icon {:name "check"
-                  :size "sm"}]
-       [:ty-icon {:name "plus"
-                  :size "md"}]
-       [:ty-icon {:name "trash"
-                  :size "lg"}]
-       [:ty-icon {:name "settings"
-                  :size "xl"}]]
-
-      (code-block
-        "<ty-icon name=\"check\" size=\"sm\"></ty-icon>
+      ;; Basic
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Basic")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Icons inherit the surrounding text color by default. Apply " [:code "ty-text-*"] " classes directly on the element to color them."]
+       (demo-area
+        [:div.flex.flex-wrap.items-center.gap-6
+         (for [icon-name ["check" "plus" "trash" "settings" "search" "bell"]]
+           [:div.flex.items-center.gap-2
+            [:ty-icon {:name icon-name :size "md"}]
+            [:span.ty-text-- {:style {:font-size "0.8125rem"}} icon-name]])])
+       (code-block "<ty-icon name=\"check\"></ty-icon>
 <ty-icon name=\"plus\" size=\"md\"></ty-icon>
-<ty-icon name=\"trash\" size=\"lg\"></ty-icon>
-<ty-icon name=\"settings\" size=\"xl\"></ty-icon>")]]
+<ty-icon name=\"trash\" size=\"lg\"></ty-icon>")]
 
-   ;; Examples Section
-    [:h2.text-2xl.font-bold.ty-text++.mb-6 "Examples"]
-    [:div.space-y-8
-
-    ;; Sizes
-     [:div.ty-content.rounded-lg.p-6
-      [:h3.text-lg.font-semibold.ty-text+.mb-4 "Icon Sizes"]
-      [:div.flex.items-center.gap-6.mb-4
-       [:div.text-center
-        [:ty-icon.ty-text {:name "star"
-                           :size "xs"}]
-        [:p.ty-text--.text-xs.mt-1 "xs"]]
-       [:div.text-center
-        [:ty-icon.ty-text {:name "star"
-                           :size "sm"}]
-        [:p.ty-text--.text-xs.mt-1 "sm"]]
-       [:div.text-center
-        [:ty-icon.ty-text {:name "star"
-                           :size "md"}]
-        [:p.ty-text--.text-xs.mt-1 "md"]]
-       [:div.text-center
-        [:ty-icon.ty-text {:name "star"
-                           :size "lg"}]
-        [:p.ty-text--.text-xs.mt-1 "lg"]]
-       [:div.text-center
-        [:ty-icon.ty-text {:name "star"
-                           :size "xl"}]
-        [:p.ty-text--.text-xs.mt-1 "xl"]]]
-
-      (code-block
-        "<ty-icon name=\"star\" size=\"xs\"></ty-icon>
+      ;; Sizes
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Sizes")
+       (demo-area
+        [:div.flex.flex-wrap.items-end.gap-6
+         (for [[size px] [["xs" "12px"] ["sm" "16px"] ["md" "20px"] ["lg" "24px"] ["xl" "32px"]]]
+           [:div.flex.flex-col.items-center.gap-2
+            [:ty-icon {:name "star" :size size}]
+            [:span.ty-text-- {:style {:font-size "0.6875rem"}} (str size " · " px)]])])
+       (code-block "<ty-icon name=\"star\" size=\"xs\"></ty-icon>
 <ty-icon name=\"star\" size=\"sm\"></ty-icon>
 <ty-icon name=\"star\" size=\"md\"></ty-icon>
 <ty-icon name=\"star\" size=\"lg\"></ty-icon>
 <ty-icon name=\"star\" size=\"xl\"></ty-icon>")]
 
-    ;; Semantic Colors
-     [:div.ty-content.rounded-lg.p-6
-      [:h3.text-lg.font-semibold.ty-text+.mb-4 "Semantic Colors"]
-      [:div.flex.items-center.gap-4.mb-4
-       [:ty-icon.ty-text-primary {:name "info"
-                                  :size "md"}]
-       [:ty-icon.ty-text-success {:name "check-circle"
-                                  :size "md"}]
-       [:ty-icon.ty-text-warning {:name "alert-triangle"
-                                  :size "md"}]
-       [:ty-icon.ty-text-danger {:name "x-circle"
-                                 :size "md"}]
-       [:ty-icon.ty-text-secondary {:name "settings"
-                                    :size "md"}]]
+      ;; Semantic Colors
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Semantic Colors")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Apply any " [:code "ty-text-*"] " class to color an icon. Icons also work inline with text and automatically match the surrounding color context."]
+       (demo-area
+        [:div.flex.flex-wrap.items-center.gap-5
+         [:ty-icon.ty-text-primary {:name "check-circle" :size "lg"}]
+         [:ty-icon.ty-text-success {:name "check-circle" :size "lg"}]
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "lg"}]
+         [:ty-icon.ty-text-warning {:name "alert-triangle" :size "lg"}]
+         [:ty-icon.ty-text-secondary {:name "info" :size "lg"}]
+         [:ty-icon.ty-text-- {:name "circle" :size "lg"}]])
+       (code-block "<ty-icon class=\"ty-text-primary\" name=\"check-circle\" size=\"lg\"></ty-icon>
+<ty-icon class=\"ty-text-success\" name=\"check-circle\" size=\"lg\"></ty-icon>
+<ty-icon class=\"ty-text-danger\" name=\"x-circle\" size=\"lg\"></ty-icon>
+<ty-icon class=\"ty-text-warning\" name=\"alert-triangle\" size=\"lg\"></ty-icon>")]
 
-      (code-block
-        "<ty-icon class=\"ty-text-primary\" name=\"info\" size=\"md\"></ty-icon>
-<ty-icon class=\"ty-text-success\" name=\"check-circle\" size=\"md\"></ty-icon>
-<ty-icon class=\"ty-text-warning\" name=\"alert-triangle\" size=\"md\"></ty-icon>
-<ty-icon class=\"ty-text-danger\" name=\"x-circle\" size=\"md\"></ty-icon>
-<ty-icon class=\"ty-text-secondary\" name=\"settings\" size=\"md\"></ty-icon>")]
+      ;; Inline with text
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Inline with Text")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Icons sit on the text baseline. Use " [:code "gap"] " on the container for spacing — not margins on the icon."]
+       (demo-area
+        [:div.flex.flex-col.gap-3
+         [:div.flex.items-center.gap-2.ty-text-success
+          [:ty-icon {:name "check-circle" :size "16"}]
+          [:span {:style {:font-size "0.875rem" :font-weight "500"}} "Payment confirmed"]]
+         [:div.flex.items-center.gap-2.ty-text-danger
+          [:ty-icon {:name "x-circle" :size "16"}]
+          [:span {:style {:font-size "0.875rem" :font-weight "500"}} "Authentication failed"]]
+         [:div.flex.items-center.gap-2.ty-text-warning
+          [:ty-icon {:name "alert-triangle" :size "16"}]
+          [:span {:style {:font-size "0.875rem" :font-weight "500"}} "Storage almost full"]]])
+       (code-block "<div class=\"flex items-center gap-2 ty-text-success\">
+  <ty-icon name=\"check-circle\" size=\"16\"></ty-icon>
+  <span>Payment confirmed</span>
+</div>")]
 
-    ;; Animations
-     [:div.ty-content.rounded-lg.p-6
-      [:h3.text-lg.font-semibold.ty-text+.mb-4 "Animations"]
-      [:div.flex.items-center.gap-6.mb-4
-       [:div.text-center
-        [:ty-icon.ty-text-primary {:name "loader"
-                                   :size "md"
-                                   :spin true}]
-        [:p.ty-text--.text-xs.mt-2 "Spin"]]
-       [:div.text-center
-        [:ty-icon.ty-text-success {:name "heart"
-                                   :size "md"
-                                   :pulse true}]
-        [:p.ty-text--.text-xs.mt-2 "Pulse"]]
-       [:div.text-center
-        [:ty-icon.ty-text-warning {:name "refresh-cw"
-                                   :size "md"
-                                   :spin true
-                                   :tempo "slow"}]
-        [:p.ty-text--.text-xs.mt-2 "Slow Spin"]]
-       [:div.text-center
-        [:ty-icon.ty-text-danger {:name "zap"
-                                  :size "md"
-                                  :pulse true
-                                  :tempo "fast"}]
-        [:p.ty-text--.text-xs.mt-2 "Fast Pulse"]]]
+      ;; Animations
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Animations")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Use " [:code "spin"] " for loaders and " [:code "pulse"] " for status indicators. Control speed with " [:code "tempo"] "."]
+       (demo-area
+        [:div.flex.flex-wrap.items-center.gap-8
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-icon.ty-text-primary {:name "loader" :size "lg" :spin ""}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "spin"]]
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-icon.ty-text-primary {:name "loader" :size "lg" :spin "" :tempo "slow"}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "spin slow"]]
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-icon.ty-text-primary {:name "loader" :size "lg" :spin "" :tempo "fast"}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "spin fast"]]
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-icon.ty-text-success {:name "circle" :size "lg" :pulse ""}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "pulse"]]
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-icon.ty-text-danger {:name "circle" :size "lg" :pulse "" :tempo "slow"}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "pulse slow"]]])
+       (code-block "<ty-icon name=\"loader\" spin></ty-icon>
+<ty-icon name=\"loader\" spin tempo=\"slow\"></ty-icon>
+<ty-icon name=\"loader\" spin tempo=\"fast\"></ty-icon>
 
-      (code-block
-        "<ty-icon name=\"loader\" spin=\"true\"></ty-icon>
-<ty-icon name=\"heart\" pulse=\"true\"></ty-icon>
-<ty-icon name=\"refresh-cw\" spin=\"true\" tempo=\"slow\"></ty-icon>
-<ty-icon name=\"zap\" pulse=\"true\" tempo=\"fast\"></ty-icon>")]
-
-    ;; In Buttons
-     [:div.ty-content.rounded-lg.p-6
-      [:h3.text-lg.font-semibold.ty-text+.mb-4 "Icons in Buttons"]
-      [:div.flex.items-center.gap-3.mb-4
-       [:ty-button {:flavor "primary"
-                    :size "sm"}
-        [:ty-icon {:slot "start"
-                   :name "save"
-                   :size "sm"}]
-        "Save"]
-       [:ty-button {:flavor "secondary"
-                    :size "sm"}
-        [:ty-icon {:slot "start"
-                   :name "download"
-                   :size "sm"}]
-        "Export"]
-       [:ty-button {:flavor "danger"
-                    :size "sm"}
-        [:ty-icon {:slot "start"
-                   :name "trash"
-                   :size "sm"}]
-        "Delete"]
-       [:ty-button {:flavor "neutral"
-                    :size "sm"}
-        "Next"
-        [:ty-icon {:slot "end"
-                   :name "arrow-right"
-                   :size "sm"}]]]
-
-      (code-block
-        "<ty-button flavor=\"primary\">
-  <ty-icon slot=\"start\" name=\"save\" size=\"sm\"></ty-icon>
-  Save
-</ty-button>
-
-<ty-button flavor=\"neutral\">
-  Next
-  <ty-icon slot=\"end\" name=\"arrow-right\" size=\"sm\"></ty-icon>
-</ty-button>")]]
-
-   ;; Icon Registration Section
-    [:div.ty-elevated.rounded-lg.p-6.mb-8
-     [:h2.text-2xl.font-semibold.ty-text++.mb-6 "Icon Registration"]
-     [:p.ty-text-.mb-4
-      "Icons must be registered before use. The system uses a unified window.tyIcons API across all technology stacks for consistency."]
-
-     [:div.ty-content.rounded-lg.p-4.mb-6
-      [:p.ty-text-.text-sm.mb-2
-       [:strong "ClojureScript users:"] " The tyrell.icons namespace provides helper functions with automatic retry logic."]
-      [:p.ty-text-.text-sm.font-mono
-       "deps.edn: " [:span.ty-text-primary "dev.gersak/tyrell {:mvn/version \"x.y.z\"}"]]
-      [:p.ty-text-.text-sm.font-mono
-       "Icon sets: " [:span.ty-text-primary "dev.gersak/tyrell-icons {:mvn/version \"x.y.z\"}"]]]
-
-     [:div.space-y-8
-     ;; ClojureScript/Reagent
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3.flex.items-center.gap-2
-        [:ty-icon {:name "code"
-                   :size "sm"}]
-        "ClojureScript / Reagent / Replicant / UIx"]
-       [:p.ty-text-.text-sm.mb-4
-        "Use the tyrell.icons namespace for idiomatic ClojureScript icon registration with automatic retry logic."]
-
-       (code-block
-         "(ns my.app.icons
-  (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.heroicons.outline :as heroicons]
-            [tyrell.fav6.brands :as brands]))
-
-;; Recommended: Register icons with automatic retry
-;; Handles cases where tyrell.js hasn't loaded yet
-(icons/register-async!
-  {:home lucide/home
-   :user lucide/user
-   :check lucide/check
-   :plus lucide/plus
-   :settings lucide/settings
-   :arrow-left heroicons/arrow-left
-   :arrow-right heroicons/arrow-right
-   :react brands/react
-   :python brands/python})
-
-;; Or with custom retry options
-(icons/register-async!
-  {:check lucide/check}
-  {:max-retries 20
-   :delay-ms 100
-   :on-success #(println \"Icons loaded!\")
-   :on-failure #(println \"Failed to load icons\")})
-
-;; Synchronous registration (only if tyrell.js is already loaded)
-(icons/register! {:home lucide/home
-                  :user lucide/user})
-
-;; Check if icon is registered
-(icons/registered? :home) ;; => true
-
-;; Usage in components
-[:ty-icon {:name \"home\"}]
-[:ty-icon {:name \"check\" :class \"ty-text-success\"}]
-
-;; Advanced: Direct JavaScript interop (if needed)
-(js/window.tyIcons.register
-  (clj->js {:home lucide/home
-            :user lucide/user}))
-
-;; Check via JavaScript API
-(js/window.tyIcons.has \"home\") ;; => true
-(js/window.tyIcons.list) ;; => #js [\"home\" \"user\" ...]"
-         "clojure")]
-
-     ;; React/Next.js
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3.flex.items-center.gap-2
-        [:ty-icon {:name "code"
-                   :size "sm"}]
-        "React / Next.js / TypeScript"]
-       [:p.ty-text-.text-sm.mb-4
-        "Create a separate icons.js file for centralized registration using the window.tyIcons API."]
-
-       (code-block
-         "// public/icons.js - Icon registration script
-(function() {
-  'use strict';
-  
-  const ICON_DEFINITIONS = {
-    'home': '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-    'user': '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-    'check': '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-    'plus': '<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-    // ... more icons
-  };
-  
-  function initializeIcons() {
-    if (window.tyIcons) {
-      window.tyIcons.register(ICON_DEFINITIONS);
-      console.log('✅ Icons registered:', window.tyIcons.list().length);
-    } else {
-      setTimeout(initializeIcons, 50); // Retry
-    }
-  }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeIcons);
-  } else {
-    initializeIcons();
-  }
-})();
-
-// In your HTML
-<script src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>
-<script src=\"/icons.js\"></script>
-
-// Usage in JSX
-<ty-icon name=\"home\"></ty-icon>
-<ty-icon name=\"user\" size=\"md\"></ty-icon>"
-         "javascript")]
-
-     ;; HTMX/Flask/Django  
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3.flex.items-center.gap-2
-        [:ty-icon {:name "code"
-                   :size "sm"}]
-        "HTMX / Flask / Django / Server-Side"]
-       [:p.ty-text-.text-sm.mb-4
-        "Use window.tyIcons API for optimal performance with server-rendered content."]
-
-       (code-block
-         "<!DOCTYPE html>
-<html>
-<head>
-  <script src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>
-  <script src=\"/static/js/icons.js\"></script>
-</head>
-<body>
-  <!-- /static/js/icons.js -->
-  <script>
-    window.tyIcons.register({
-      'check': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\"><path d=\"M20 6 9 17l-5-5\"/></svg>',
-      'home': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\"><path d=\"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/></svg>',
-      'user': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/></svg>'
-    });
-  </script>
-
-  <!-- Clean usage -->
-  <ty-icon name=\"check\"></ty-icon>
-  <ty-icon name=\"home\" size=\"lg\"></ty-icon>
-  
-  <!-- In HTMX responses -->
-  <div hx-get=\"/status\" hx-target=\"#status\">
-    <ty-icon name=\"user\"></ty-icon> Check Status
-  </div>
-  
-  <!-- Flask template example -->
-  {% for user in users %}
-  <div hx-get=\"/user/{{ user.id }}\" hx-target=\"#details\">
-    <ty-icon name=\"user\"></ty-icon> {{ user.name }}
-  </div>
-  {% endfor %}
-</body>
-</html>")]
-
-     ;; Vanilla JavaScript
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3.flex.items-center.gap-2
-        [:ty-icon {:name "code"
-                   :size "sm"}]
-        "Vanilla JavaScript / Static Sites"]
-       [:p.ty-text-.text-sm.mb-4
-        "Direct registration using window.tyIcons API for maximum flexibility."]
-
-       (code-block
-         "// Direct Registration with window.tyIcons
-window.tyIcons.register({
-  'home': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-  'user': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>',
-  'settings': '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\">...</svg>'
-});
-
-// Usage in HTML
-document.body.innerHTML = `
-  <ty-icon name=\"home\"></ty-icon>
-  <ty-icon name=\"user\" size=\"lg\"></ty-icon>
-  <ty-icon name=\"settings\" class=\"ty-text-primary\"></ty-icon>
-`;
-
-// Check if icons are registered
-console.log(window.tyIcons.has('home')); // true
-console.log(window.tyIcons.list()); // ['home', 'user', 'settings']
-
-// Get SVG string
-const homeSvg = window.tyIcons.get('home');"
-         "javascript")]]]
-
-   ;; JavaScript API Reference
-    [:div.ty-elevated.rounded-lg.p-6.mb-8
-     [:h2.text-2xl.font-semibold.ty-text++.mb-6 "JavaScript API"]
-     [:div.space-y-4
-      [:div
-       [:h3.text-lg.font-medium.ty-text+.mb-3 "window.tyIcons Methods"]
-       (code-block
-         "// Register icons (accepts plain object)
-window.tyIcons.register({
-  'home': '<svg>...</svg>',
-  'user': '<svg>...</svg>',
-  'check': '<svg>...</svg>'
-})
-
-// Check if icon exists
-window.tyIcons.has('home') // true
-
-// Get icon SVG string
-window.tyIcons.get('home') // '<svg>...</svg>'
-
-// List all registered icons
-window.tyIcons.list() // ['home', 'user', 'check']"
-         "javascript")]]]
+<ty-icon name=\"circle\" pulse></ty-icon>
+<ty-icon name=\"circle\" pulse tempo=\"slow\"></ty-icon>")]])
 
    ;; Best Practices
-    [:div.ty-elevated.rounded-lg.p-6
-     [:h2.text-2xl.font-semibold.ty-text++.mb-4 "Best Practices"]
-     [:div.space-y-4
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Use tyrell.icons in ClojureScript"]
-        [:p.ty-text-.text-sm "Use register-async! for automatic retry logic and idiomatic ClojureScript"]]]
+   (doc-section "Best Practices"
+     [:div.ty-elevated.rounded-lg.p-5
+      [:div.grid.gap-6
+       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
 
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
        [:div
-        [:p.ty-text+.font-medium "Use consistent API across platforms"]
-        [:p.ty-text-.text-sm "window.tyIcons works the same in ClojureScript, React, HTMX, and vanilla JS"]]]
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+        [:div.space-y-2
+         (for [text ["Color with ty-text-* classes, not fill or stroke CSS properties"
+                     "Use gap on the parent container for spacing, not margins on the icon"
+                     "Pair icons with visible labels — icons alone are often ambiguous"
+                     "Use spin for loading states and pulse for live status indicators"
+                     "Match icon size to adjacent text (size ≈ font-size)"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
 
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
        [:div
-        [:p.ty-text+.font-medium "Register icons early"]
-        [:p.ty-text-.text-sm "Load icons before your components render to avoid flickering"]]]
-
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Use semantic colors for meaning"]
-        [:p.ty-text-.text-sm "Apply ty-text-success, ty-text-danger, etc. to convey status"]]]
-
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Match icon size to context"]
-        [:p.ty-text-.text-sm "Use sm/xs for inline text, md/lg for headers, xl for hero sections"]]]
-
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                         :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Use animations purposefully"]
-        [:p.ty-text-.text-sm "Spin for loading states, pulse for attention, avoid overuse"]]]
-
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                        :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Don't add margins to icons in buttons"]
-        [:p.ty-text-.text-sm "Buttons handle icon spacing automatically with slots"]]]
-
-      [:div.flex.gap-3
-       [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                        :size "sm"}]
-       [:div
-        [:p.ty-text+.font-medium "Avoid mixing animation types"]
-        [:p.ty-text-.text-sm "Don't use both spin and pulse on the same icon"]]]]]))
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+        [:div.space-y-2
+         (for [text ["Add margin to the icon itself — use gap on the container instead"
+                     "Override fill or stroke directly — ty-text-* handles color correctly"
+                     "Use icons without accessible text in interactive elements (buttons, links)"
+                     "Combine spin and pulse on the same icon — pick one"
+                     "Use pixel values for size when named variants (xs–xl) exist"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))

@@ -310,7 +310,7 @@
     "Menu"
     [:ty-icon {:name "chevron-down"
                :size "xs"
-               :class "ty-text-- ml-1"}]]
+               :class ["ty-text--" "ml-1"]}]]
    [:div.ty-floating.rounded-md.flex.flex-col.text-xs.py-1
     {:style {:min-width "140px"
              :box-shadow "0 8px 20px rgba(0,0,0,0.12)"}}
@@ -686,10 +686,10 @@
     :view clojurescript-docs/view}
    {:id :tyrell.site.docs/htmx
     :segment "htmx"
-    :name "HTMX"
+    :name "HTML / Server-side"
     :icon "server"
-    :description "Server-side rendering with HTMX (HTML page consolidation pending)"
-    :tags ["htmx" "server" "html" "ssr" "backend"]
+    :description "HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP — render HTML on the server, hydrate as web components"
+    :tags ["htmx" "datastar" "server" "html" "ssr" "backend" "flask" "django" "rails" "phoenix" "php" "laravel"]
     :view htmx-docs/view}
    {:id :tyrell.site.docs/css
     :segment "css"

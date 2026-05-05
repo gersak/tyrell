@@ -9,6 +9,41 @@ export const datePickerStyles = `
   display: block;
   width: auto;
   min-width: 200px;
+
+  /* ==========================================================================
+     Theming Tokens — Date Picker Stub
+     Thin shim over --ty-input-*. Override these to retheme just the date-picker
+     trigger without affecting other inputs.
+     ========================================================================== */
+  --ty-date-picker-bg: var(--ty-input-bg);
+  --ty-date-picker-color: var(--ty-input-color);
+  --ty-date-picker-placeholder: var(--ty-input-placeholder);
+  --ty-date-picker-border: var(--ty-input-border);
+  --ty-date-picker-border-hover: var(--ty-input-border-hover);
+  --ty-date-picker-border-focus: var(--ty-input-border-focus);
+  --ty-date-picker-shadow-focus: var(--ty-input-shadow-focus);
+  --ty-date-picker-disabled-bg: var(--ty-input-disabled-bg);
+  --ty-date-picker-disabled-color: var(--ty-input-disabled-color);
+  --ty-date-picker-radius: var(--ty-radius-md);
+
+  /* ==========================================================================
+     Theming Tokens — Calendar Popup Surface
+     Shared with ty-calendar / ty-calendar-month theming.
+     ========================================================================== */
+  --ty-calendar-surface-bg: var(--ty-surface-floating);
+  --ty-calendar-surface-border: var(--ty-input-border);
+  --ty-calendar-surface-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --ty-calendar-surface-radius: var(--ty-radius-lg);
+
+  /* ==========================================================================
+     Theming Tokens — Time Section
+     ========================================================================== */
+  --ty-calendar-time-bg: var(--ty-bg-neutral-faint);
+  --ty-calendar-time-border: var(--ty-input-border);
+  --ty-calendar-time-label-color: var(--ty-color-neutral);
+  --ty-calendar-time-input-color: var(--ty-input-color);
+  --ty-calendar-time-placeholder-color: var(--ty-input-placeholder);
+  --ty-calendar-time-icon-color: var(--ty-color-neutral-soft);
 }
 
 /* Container structure (reuses dropdown patterns) */
@@ -67,10 +102,10 @@ export const datePickerStyles = `
   position: relative;
   display: flex;
   align-items: center;
-  background: var(--ty-input-bg);
-  color: var(--ty-input-color);
-  border: 1px solid var(--ty-input-border);
-  border-radius: var(--ty-radius-md);
+  background: var(--ty-date-picker-bg);
+  color: var(--ty-date-picker-color);
+  border: 1px solid var(--ty-date-picker-border);
+  border-radius: var(--ty-date-picker-radius);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
   font-weight: var(--ty-font-normal);
@@ -83,20 +118,20 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub:hover:not([disabled]):not(.open) {
-  border-color: var(--ty-input-border-hover);
+  border-color: var(--ty-date-picker-border-hover);
 }
 
 .date-picker-stub[disabled] {
-  background-color: var(--ty-input-disabled-bg);
-  color: var(--ty-input-disabled-color);
+  background-color: var(--ty-date-picker-disabled-bg);
+  color: var(--ty-date-picker-disabled-color);
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .date-picker-stub:focus,
 .date-picker-stub.open {
-  border-color: var(--ty-input-border-focus);
-  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
+  border-color: var(--ty-date-picker-border-focus);
+  box-shadow: 0 0 0 3px var(--ty-date-picker-shadow-focus);
 }
 
 /* Size variants */
@@ -216,7 +251,7 @@ export const datePickerStyles = `
 }
 
 .stub-text.placeholder {
-  color: var(--ty-input-placeholder);
+  color: var(--ty-date-picker-placeholder);
 }
 
 /* Icons */
@@ -269,7 +304,7 @@ export const datePickerStyles = `
 
 .date-picker-stub:focus .stub-arrow,
 .date-picker-stub.open .stub-arrow {
-  color: var(--ty-input-border-focus);
+  color: var(--ty-date-picker-border-focus);
 }
 
 /* Calendar dialog (showModal positioning system) */
@@ -316,10 +351,10 @@ export const datePickerStyles = `
 
 /* Calendar content container */
 .calendar-content {
-  background-color: var(--ty-surface-floating);
-  border: 1px solid var(--ty-color-neutral-soft);
-  border-radius: var(--ty-radius-lg);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: var(--ty-calendar-surface-bg);
+  border: 1px solid var(--ty-calendar-surface-border);
+  border-radius: var(--ty-calendar-surface-radius);
+  box-shadow: var(--ty-calendar-surface-shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -359,8 +394,8 @@ export const datePickerStyles = `
   justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  border-top: 1px solid var(--ty-color-neutral-faint);
-  background-color: var(--ty-bg-neutral-faint);
+  border-top: 1px solid var(--ty-calendar-time-border);
+  background-color: var(--ty-calendar-time-bg);
   width: 100%;
   box-sizing: border-box;
   position: relative;
@@ -369,7 +404,7 @@ export const datePickerStyles = `
 .time-label {
   font-size: var(--ty-font-sm);
   font-weight: 500;
-  color: var(--ty-color-neutral);
+  color: var(--ty-calendar-time-label-color);
   flex-shrink: 0;
 }
 
@@ -378,7 +413,7 @@ export const datePickerStyles = `
   border: none;
   border-radius: var(--ty-radius-sm);
   background: transparent;
-  color: var(--ty-input-color);
+  color: var(--ty-calendar-time-input-color);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
   text-align: center;
@@ -386,13 +421,13 @@ export const datePickerStyles = `
 }
 
 .time-input::placeholder {
-  color: var(--ty-input-placeholder);
+  color: var(--ty-calendar-time-placeholder-color);
 }
 
 .time-icon {
   display: flex;
   align-items: center;
-  color: var(--ty-color-neutral-soft);
+  color: var(--ty-calendar-time-icon-color);
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;

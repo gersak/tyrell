@@ -21,7 +21,6 @@ export const tagStyles = `
   gap: var(--ty-spacing-1);
   /* Default pill shape - can be overridden */
   border-radius: var(--ty-radius-full);
-  font-family: var(--ty-font-sans);
   font-weight: var(--ty-font-medium);
   text-align: center;
   white-space: nowrap;
@@ -30,9 +29,9 @@ export const tagStyles = `
 
   /* Default MD size — anchor at 28px, even +4 steps for other sizes */
   padding: 0 0.625rem;                            /* 0 10px */
-  font-size: var(--ty-font-sm);                   /* 14px */
-  line-height: var(--ty-leading-sm);              /* 21px */
-  letter-spacing: var(--ty-tracking-sm);          /* -0.013em */
+  font-size: var(--ty-font-xs);                   /* 14px */
+  line-height: var(--ty-leading-xs);              /* 21px */
+  letter-spacing: var(--ty-tracking-xs);          /* -0.013em */
   min-height: 28px;
 
   /* Transitions using centralized values */
@@ -41,8 +40,8 @@ export const tagStyles = `
   /* Colors via custom properties — override on :host for full control */
   background: var(--tag-bg, transparent);
   color: var(--tag-color, var(--ty-text));
-  border: 1.5px solid;
-  border-color: var(--tag-border-color, var(--ty-text-soft));
+  border: 1px solid;jk
+  border-color: var(--tag-border-color, var(--ty-border));
 }
 
 /* Non-pill variant - rectangular with rounded corners */
@@ -344,15 +343,21 @@ export const tagStyles = `
 }
 
 /* ----- NEUTRAL ----- */
+:host([flavor="neutral"]) {
+  --tag-color: var(--ty-text-mild);
+  --tag-bg: var(--ty-bg-neutral-soft);
+  --tag-border-color: var(--ty-border-mild);
+}
+
 :host([flavor="neutral+"]) {
   --tag-bg: var(--ty-bg-neutral-mild);
-  --tag-color: var(--ty-text-strong);
+  --tag-color: var(--ty-text-mild);
   --tag-border-color: var(--ty-border-strong);
 }
 :host([flavor="neutral-"]) {
   --tag-bg: var(--ty-bg-neutral-soft);
   --tag-color: var(--ty-text-soft);
-  --tag-border-color: var(--ty-border-soft);
+  --tag-border-color: var(--ty-border-mildstrong);
 }
 :host([flavor="neutral"]) .tag-container[tabindex]:hover,
 :host([flavor="neutral+"]) .tag-container[tabindex]:hover,

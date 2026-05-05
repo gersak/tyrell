@@ -1,345 +1,248 @@
 (ns tyrell.site.docs.popup
-  "ty-popup component documentation"
-  (:require [tyrell.site.docs.common
-             :refer [code-block
-                     attribute-table
-                     event-table
-                     doc-section
-                     example-section
-                     docs-page]]))
-
-(defn header-section []
-  [:div.mb-8
-   [:h1.text-3xl.font-bold.ty-text.mb-2 "ty-popup"]
-   [:p.text-lg.ty-text-.mb-4
-    "Interactive popup component with built-in behaviors like click-outside-to-close and keyboard support. "
-    "Uses a clean parent-child relationship and provides automatic positioning with viewport edge detection."]
-
-   [:div.ty-bg-success-.ty-border-success.border.rounded-lg.p-4.mb-4
-    [:h3.ty-text-success++.font-semibold.mb-2.flex.items-center.gap-2 [:ty-icon.ty-text-success++ {:name "sparkles" :size "sm"}] "Shadow Infrastructure Built-in"]
-    [:p.ty-text-success.text-sm
-     "ty-popup provides proper shadow space infrastructure - shadows from " [:code.ty-bg-success.ty-text-success++.px-1.rounded "ty-elevated"]
-     " and custom shadow classes render without clipping, even near viewport edges."]]])
-
-(defn api-reference-section []
-  [:div.ty-elevated.rounded-lg.p-6.mb-8
-   [:h2.text-xl.font-semibold.ty-text++.mb-4 "API Reference"]
-
-   ;; Attributes
-   [:h3.text-lg.font-semibold.ty-text+.mb-3 "Attributes"]
-   (attribute-table
-    [{:name "manual"
-      :type "boolean"
-      :default "false"
-      :description "Override click trigger - popup opens only via JavaScript"}
-     {:name "disable-close"
-      :type "boolean"
-      :default "false"
-      :description "Disable auto-close - popup closes only via JavaScript"}
-     {:name "placement"
-      :type "string"
-      :default "\"bottom\""
-      :description "Preferred placement position: \"top\", \"bottom\", \"left\", \"right\""}
-     {:name "offset"
-      :type "number"
-      :default "8"
-      :description "Distance in pixels between the popup and anchor element"}])
-
-   ;; Events
-   [:div.mt-6
-    [:h3.text-lg.font-semibold.ty-text+.mb-3 "Events"]
-    (event-table
-     [{:name "open"
-       :when-fired "Fired when popup opens"
-       :payload "None (bubbles: true)"}
-      {:name "close"
-       :when-fired "Fired when popup closes"
-       :payload "None (bubbles: true)"}
-      {:name "ty:close-popup"
-       :when-fired "Custom event to request popup closure from inside content"
-       :payload "None"}])]
-
-   ;; Methods
-   [:div.mt-6
-    [:h3.text-lg.font-semibold.ty-text+.mb-3 "Methods"]
-    [:div.overflow-x-auto
-     [:table.w-full.text-sm
-      [:thead.ty-border-b.ty-border
-       [:tr
-        [:th.text-left.py-2.px-4.ty-text+ "Method"]
-        [:th.text-left.py-2.px-4.ty-text+ "Description"]]]
-      [:tbody.ty-divide-y
-       [:tr
-        [:td.py-2.px-4.font-mono.text-xs "openPopup()"]
-        [:td.py-2.px-4.ty-text- "Programmatically open the popup"]]
-       [:tr
-        [:td.py-2.px-4.font-mono.text-xs "closePopup()"]
-        [:td.py-2.px-4.ty-text- "Programmatically close the popup"]]
-       [:tr
-        [:td.py-2.px-4.font-mono.text-xs "togglePopup()"]
-        [:td.py-2.px-4.ty-text- "Toggle popup open/close state"]]]]]]
-
-   ;; Structure
-   [:div.mt-6
-    [:h3.text-lg.font-semibold.ty-text+.mb-3 "Structure"]
-    (code-block
-     "<!-- Parent-child relationship with defaults: click to open, ESC/outside to close -->
-<ty-button>
-  Click me
-  <ty-popup>
-    <div>Popup content</div>
-  </ty-popup>
-</ty-button>
-
-<!-- Programmatic control -->
-<script>
-const popup = document.querySelector('ty-popup');
-
-// Open
-popup.openPopup();
-
-// Close
-popup.closePopup();
-
-// Toggle
-popup.togglePopup();
-
-// Listen for events
-popup.addEventListener('open', () => {
-  console.log('Popup opened!');
-});
-
-popup.addEventListener('close', () => {
-  console.log('Popup closed!');
-});
-</script>")]])
-
-(defn basic-usage-section []
-  [:div.ty-content.rounded-lg.p-6.mb-8
-   [:h2.text-xl.font-semibold.ty-text++.mb-4 "Basic Usage"]
-   [:p.ty-text-.mb-4
-    "ty-popup uses smart defaults: click the parent element to open, ESC key or click outside to close. "
-    "The popup automatically detects its parent as the anchor and positions relative to it."]
-
-   [:div.mb-4
-    [:ty-button {:flavor "primary"}
-     "Click to Open Popup"
-     [:ty-popup {:placement "bottom"}
-      [:div.p-4.ty-elevated.rounded-lg.shadow-lg
-       [:h4.font-bold.mb-2 "Popup Content"]
-       [:p.ty-text-.mb-3 "This popup opens on click and closes when you click outside or press ESC."]
-       [:div.flex.gap-2
-        [:ty-button {:flavor "success"
-                     :size "sm"}
-         "Action"]
-        [:ty-button {:size "sm"}
-         "Cancel"]]]]]]
-
-   (code-block
-    "<!-- Basic popup with smart defaults -->
-<ty-button flavor=\"primary\">
-  Click to Open Popup
-  <ty-popup placement=\"bottom\">
-    <div class=\"p-4 ty-elevated rounded-lg shadow-lg\">
-      <h4>Popup Content</h4>
-      <p>Opens on click, closes with ESC or click outside</p>
-    </div>
-  </ty-popup>
-</ty-button>")])
-
-(defn current-best-practices-section []
-  [:div
-   [:h2.text-xl.font-semibold.ty-text++.mb-4.mt-8 "Current Best Practices"]
-
-   [:div.space-y-6
-    ;; ClojureScript Best Practice
-    [:div.ty-content.rounded-lg.p-6
-     [:h3.text-lg.font-semibold.ty-text+.mb-3 "ClojureScript/Reagent Pattern"]
-     [:p.ty-text-.mb-4 "Modern approach using event handlers and .closest() to find and close popups."]
-
-     [:div.mb-4
-      [:ty-button {:flavor "primary"}
-       "Delete Confirmation"
-       [:ty-popup {:placement "bottom"
-                   :disable-close true}
-        [:div.p-6.ty-elevated.rounded-lg.shadow-lg.w-96
-         [:h4.ty-text++.font-bold.mb-3 "Delete Item?"]
-         [:p.ty-text-.mb-6 "This action cannot be undone. The item will be permanently deleted."]
-         [:div.flex.gap-3.justify-end
-          [:ty-button {:flavor "danger"
-                       :size "sm"
-                       :on {:click (fn [^js e]
-                                     (js/alert "Item deleted!")
-                                     (.closePopup (.closest (.-target e) "ty-popup")))}}
-           "Delete"]
-          [:ty-button {:flavor "ghost"
-                       :size "sm"
-                       :on {:click (fn [^js e]
-                                     (.closePopup (.closest (.-target e) "ty-popup")))}}
-           "Cancel"]]]]]]
-
-     (code-block
-      ";; ClojureScript - Current Best Practice\n[:ty-button {:flavor \"primary\"}\n \"Delete Item\"\n [:ty-popup {:placement \"bottom\" :disable-close true}\n  [:div.p-6.ty-elevated.rounded-lg.w-96\n   [:h4 \"Delete Item?\"]\n   [:p \"This action cannot be undone.\"]\n   [:div.flex.gap-3.justify-end\n    [:ty-button {:flavor \"danger\" :size \"sm\"\n                 :on {:click (fn [^js e]\n                               (delete-item! item-id)\n                               ;; Close using closest - CURRENT BEST PRACTICE\n                               (.closePopup (.closest (.-target e) \"ty-popup\")))}}]\n     \"Delete\"]\n    [:ty-button {:flavor \"ghost\" :size \"sm\"\n                 :on {:click (fn [^js e]\n                               (.closePopup (.closest (.-target e) \"ty-popup\")))}}]\n     \"Cancel\"]]]]]" "clojure")]
-
-    ;; JavaScript Best Practice
-    [:div.ty-content.rounded-lg.p-6
-     [:h3.text-lg.font-semibold.ty-text+.mb-3 "JavaScript Pattern"]
-     [:p.ty-text-.mb-4 "Clean pattern for closing popups from within their content."]
-
-     (code-block
-      "// JavaScript - Current Best Practice\n\n// Generic close function for any button inside popup\nfunction closePopup(buttonElement) {\n  const popup = buttonElement.closest('ty-popup');\n  if (popup) {\n    popup.closePopup();\n  }\n}\n\n// React example\nfunction ConfirmDialog({ onConfirm }) {\n  const handleConfirm = (e) => {\n    onConfirm();\n    // Close popup using closest - CURRENT BEST PRACTICE\n    const popup = e.target.closest('ty-popup');\n    popup?.closePopup();\n  };\n\n  return (\n    <div className=\"p-6 ty-elevated rounded-lg w-96\">\n      <h4>Confirm Action</h4>\n      <button onClick={handleConfirm}>\n        Confirm\n      </button>\n      <button onClick={(e) => {\n        const popup = e.target.closest('ty-popup');\n        popup?.closePopup();\n      }}>\n        Cancel\n      </button>\n    </div>\n  );\n}" "javascript")]]])
-
-(defn examples-section []
-  [:div
-   [:h2.text-xl.font-semibold.ty-text++.mb-4 "Examples"]
-
-   [:div.space-y-8
-    ;; Contact Form Example
-    (example-section
-     "Interactive Contact Form"
-     [:ty-button {:flavor "primary"}
-      "Contact Form"
-      [:ty-popup {:placement "bottom"
-                  :offset "8"}
-       [:div.p-6.ty-elevated.rounded-lg.w-80.border.ty-border+
-        [:h4.font-bold.mb-4 "Contact Us"]
-        [:div.space-y-4
-         [:ty-input
-          {:label "Name"
-           :placeholder "Your name"
-           :required true}]
-         [:ty-input
-          {:label "Email"
-           :type "email"
-           :placeholder "your@email.com"
-           :required true}]
-         [:ty-textarea
-          {:label "Message"
-           :placeholder "Your message..."
-           :rows 3
-           :required true}]
-         [:div.flex.gap-2.pt-2
-          [:ty-button {:flavor "success"
-                       :size "sm"
-                       :on {:click (fn [^js e]
-                                     (js/alert "Form submitted!")
-                                     (.closePopup (.closest (.-target e) "ty-popup")))}}
-           "Submit"]
-          [:ty-button {:size "sm"
-                       :on {:click (fn [^js e]
-                                     (.closePopup (.closest (.-target e) "ty-popup")))}}
-           "Cancel"]]]]]]
-     "<!-- Interactive popup with form controls -->
-<ty-button flavor=\"primary\">
-  Contact Form
-  <ty-popup placement=\"bottom\">
-    <div class=\"p-6 ty-elevated rounded-lg shadow-lg w-80\">
-      <h4 class=\"font-bold mb-4\">Contact Us</h4>
-      <div class=\"space-y-4\">
-        <ty-input label=\"Name\" placeholder=\"Your name\" required></ty-input>
-        <ty-input label=\"Email\" type=\"email\" placeholder=\"your@email.com\" required></ty-input>
-        <ty-textarea label=\"Message\" placeholder=\"Your message...\" rows=\"3\" required></ty-textarea>
-        
-        <div class=\"flex gap-2 pt-2\">
-          <ty-button flavor=\"success\" size=\"sm\" onclick=\"submitAndClose(this)\">
-            Submit
-          </ty-button>
-          <ty-button size=\"sm\" onclick=\"closePopup(this)\">
-            Cancel
-          </ty-button>
-        </div>
-      </div>
-    </div>
-  </ty-popup>
-</ty-button>")
-
-    ;; Protected Dialog Example
-    (example-section
-     "Protected Dialog (disable-close)"
-     [:ty-button {:flavor "warning"}
-      "Protected Dialog"
-      [:ty-popup {:placement "bottom"
-                  :disable-close true}
-       [:div.p-6.ty-elevated.rounded-lg.w-80
-        [:h4.ty-text++.font-bold.mb-4 "Are you sure?"]
-        [:p.ty-text-.mb-6 "This popup won't close when clicking outside or pressing ESC. You must choose an action."]
-        [:div.flex.gap-2.justify-end
-         [:ty-button {:flavor "danger"
-                      :size "sm"
-                      :on {:click (fn [^js e]
-                                    (js/alert "Deleted!")
-                                    (.closePopup (.closest (.-target e) "ty-popup")))}}
-          "Delete"]
-         [:ty-button {:size "sm"
-                      :on {:click (fn [^js e]
-                                    (.closePopup (.closest (.-target e) "ty-popup")))}}
-          "Cancel"]]]]]
-     "<!-- Popup that ignores outside clicks and ESC key -->
-<ty-button flavor=\"warning\">
-  Protected Dialog
-  <ty-popup placement=\"bottom\" disable-close=\"true\">
-    <div class=\"p-6 ty-elevated rounded-lg w-80\">
-      <h4>Are you sure?</h4>
-      <p>This popup won't close when clicking outside or pressing ESC.</p>
-      <div class=\"flex gap-2 justify-end\">
-        <ty-button flavor=\"danger\" size=\"sm\" onclick=\"confirmAndClose(this)\">
-          Delete
-        </ty-button>
-        <ty-button size=\"sm\" onclick=\"closePopup(this)\">
-          Cancel
-        </ty-button>
-      </div>
-    </div>
-  </ty-popup>
-</ty-button>")
-
-    ;; Placement Options Example
-    (example-section
-     "Placement Options"
-     [:div.grid.grid-cols-2.gap-4.items-center
-      [:div
-       [:ty-button {:flavor "primary"}
-        "Top Popup"
-        [:ty-popup {:placement "top"}
-         [:div.p-3.ty-bg-primary+.rounded.ty-text++ "Appears above"]]]]
-
-      [:div
-       [:ty-button {:flavor "success"}
-        "Bottom Popup"
-        [:ty-popup {:placement "bottom"}
-         [:div.p-3.ty-bg-success+.rounded.ty-text++ "Appears below"]]]]
-
-      [:div
-       [:ty-button {:flavor "warning"}
-        "Left Popup"
-        [:ty-popup {:placement "left"}
-         [:div.p-3.ty-bg-warning+.rounded.ty-text++ "Appears to the left"]]]]
-
-      [:div
-       [:ty-button
-        {:flavor "danger"}
-        "Right Popup"
-        [:ty-popup {:placement "right"}
-         [:div.p-3.ty-bg-danger+.rounded.ty-text++ "Appears to the right"]]]]]
-     "<!-- Different placement options -->
-<ty-button flavor=\"primary\">
-  Top Popup
-  <ty-popup placement=\"top\">
-    <div>Content appears above</div>
-  </ty-popup>
-</ty-button>
-
-<ty-button flavor=\"success\">
-  Right Popup  
-  <ty-popup placement=\"right\">
-    <div>Content appears to the right</div>
-  </ty-popup>
-</ty-button>")]])
+  "Documentation for ty-popup component"
+  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
+                                             doc-section docs-page component-header section-label demo-area]]))
 
 (defn view []
   (docs-page
-   (header-section)
-   (api-reference-section)
-   (basic-usage-section)
-   (examples-section)
-   (current-best-practices-section)))
+   (component-header "ty-popup"
+                     "Click-triggered popup with smart edge-aware positioning, scroll locking, ESC/backdrop close, and manual control mode. Nest ty-popup inside any trigger element — clicking the trigger opens the popup.")
+
+   ;; API Reference
+   [:div.ty-elevated.rounded-lg.p-6
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+     [:h2.scroll-mt-6
+      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+      [:span.ty-text-- "API Reference"]]]
+
+    [:div.mb-6
+     (section-label "Attributes")
+     (attribute-table
+      [{:name "placement"
+        :type "string"
+        :default "\"bottom\""
+        :description "Preferred placement: top, bottom, left, right. Auto-flips if it would overflow the viewport"}
+       {:name "offset"
+        :type "number"
+        :default "8"
+        :description "Distance in pixels between the popup and its trigger element"}
+       {:name "manual"
+        :type "boolean"
+        :default "false"
+        :description "Disable the click trigger — popup opens only via openPopup() / togglePopup()"}
+       {:name "disable-close"
+        :type "boolean"
+        :default "false"
+        :description "Disable ESC and backdrop-click close — popup closes only via closePopup()"}])]
+
+    [:div.mb-6
+     (section-label "Methods")
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
+      [:div.flex.items-center.gap-3
+       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "openPopup()"]
+       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Open the popup programmatically"]]]
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
+      [:div.flex.items-center.gap-3
+       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "closePopup()"]
+       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Close the popup programmatically"]]]
+     [:div {:style {:padding "0.5rem 0"}}
+      [:div.flex.items-center.gap-3
+       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "togglePopup()"]
+       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Toggle open/closed"]]]]
+
+    [:div
+     (section-label "Events")
+     (event-table
+      [{:name "open"
+        :payload "{}"
+        :when-fired "Fires when the popup opens"}
+       {:name "close"
+        :payload "{}"
+        :when-fired "Fires when the popup closes"}])]]
+
+   ;; Examples
+   (doc-section "Examples"
+     [:div.space-y-6
+
+      ;; Basic
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Basic")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Nest " [:code "ty-popup"] " inside any trigger element. Click to open; ESC or click outside to close. Content inside ty-popup renders in the popup panel."]
+       (demo-area
+        [:ty-button
+         "Open popup"
+         [:ty-popup {:placement "bottom"}
+          [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "200px"}}
+           [:p.ty-text- {:style {:font-size "0.875rem"}} "Popup content goes here."]]]])
+       (code-block "<ty-button>
+  Open popup
+  <ty-popup placement=\"bottom\">
+    <div class=\"ty-elevated rounded-lg p-4\" style=\"min-width: 200px\">
+      Popup content goes here.
+    </div>
+  </ty-popup>
+</ty-button>")]
+
+      ;; Placement
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Placement")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Four positions. The popup auto-flips when it would overflow the viewport."]
+       (demo-area
+        [:div.flex.flex-wrap.items-center.gap-3
+         [:ty-button "Bottom"
+          [:ty-popup {:placement "bottom"}
+           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned below"]]]]
+         [:ty-button "Top"
+          [:ty-popup {:placement "top"}
+           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned above"]]]]
+         [:ty-button "Right"
+          [:ty-popup {:placement "right"}
+           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned right"]]]]
+         [:ty-button "Left"
+          [:ty-popup {:placement "left"}
+           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned left"]]]]])
+       (code-block "<ty-popup placement=\"top\">...</ty-popup>
+<ty-popup placement=\"bottom\">...</ty-popup>
+<ty-popup placement=\"left\">...</ty-popup>
+<ty-popup placement=\"right\">...</ty-popup>")]
+
+      ;; Action menu
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Action Menu")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Common pattern — actions inside the popup close it via " [:code ".closePopup()"] " on the nearest " [:code "ty-popup"] " ancestor."]
+       (demo-area
+        [:ty-button {:action ""}
+         [:ty-icon {:name "more-horizontal" :size "16"}]
+         [:ty-popup {:placement "bottom"}
+          [:div.ty-elevated.rounded-lg.py-1 {:style {:min-width "160px"}}
+           [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
+                                    :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
+            [:ty-icon {:name "edit-2" :size "14"}] "Edit"]
+           [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
+                                    :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
+            [:ty-icon {:name "copy" :size "14"}] "Duplicate"]
+           [:div {:style {:height "1px" :background "var(--ty-border-soft)" :margin "0.25rem 0"}}]
+           [:button.w-full.ty-text-danger {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
+                                           :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
+            [:ty-icon {:name "trash-2" :size "14"}] "Delete"]]]])
+       (code-block "<ty-button action>
+  <ty-icon name=\"more-horizontal\" size=\"16\"></ty-icon>
+  <ty-popup placement=\"bottom\">
+    <div class=\"ty-elevated rounded-lg py-1\" style=\"min-width: 160px\">
+      <button onclick=\"this.closest('ty-popup').closePopup()\">Edit</button>
+      <button onclick=\"this.closest('ty-popup').closePopup()\">Duplicate</button>
+      <button onclick=\"this.closest('ty-popup').closePopup()\">Delete</button>
+    </div>
+  </ty-popup>
+</ty-button>")]
+
+      ;; Confirm dialog
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Confirm Dialog")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Use " [:code "disable-close"] " to prevent accidental dismissal — the user must make an explicit choice."]
+       (demo-area
+        [:ty-button {:flavor "danger"}
+         "Delete item"
+         [:ty-popup {:placement "bottom" :disable-close ""}
+          [:div.ty-elevated.rounded-lg.p-5 {:style {:max-width "280px"}}
+           [:p.ty-text+ {:style {:font-weight "600" :margin-bottom "0.5rem"}} "Delete this item?"]
+           [:p.ty-text- {:style {:font-size "0.8125rem" :margin-bottom "1rem"}} "This action cannot be undone."]
+           [:div.flex.justify-end.gap-2
+            [:ty-button {:flavor "neutral" :size "sm"
+                         :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
+             "Cancel"]
+            [:ty-button {:flavor "danger" :size "sm"
+                         :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
+             "Delete"]]]]])
+       (code-block "<ty-button flavor=\"danger\">
+  Delete item
+  <ty-popup placement=\"bottom\" disable-close>
+    <div class=\"ty-elevated rounded-lg p-5\" style=\"max-width: 280px\">
+      <p>Delete this item?</p>
+      <p>This action cannot be undone.</p>
+      <div class=\"flex justify-end gap-2\">
+        <ty-button flavor=\"neutral\" size=\"sm\"
+                   onclick=\"this.closest('ty-popup').closePopup()\">Cancel</ty-button>
+        <ty-button flavor=\"danger\" size=\"sm\"
+                   onclick=\"this.closest('ty-popup').closePopup()\">Delete</ty-button>
+      </div>
+    </div>
+  </ty-popup>
+</ty-button>")]])
+
+   ;; Advanced Examples
+   (doc-section "Advanced Examples"
+     [:div.space-y-6
+
+      ;; Manual control
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Manual Control")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Set " [:code "manual"] " to take full control of open/close via the JS API. Useful when the trigger lives outside the popup's DOM subtree."]
+       (code-block "const popup = document.querySelector('ty-popup');
+
+// Open / close / toggle
+popup.openPopup();
+popup.closePopup();
+popup.togglePopup();
+
+// Listen for lifecycle events
+popup.addEventListener('open', () => console.log('opened'));
+popup.addEventListener('close', () => console.log('closed'));" "javascript")]
+
+      ;; Framework binding
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Framework Binding")
+       (code-block ";; ClojureScript / Replicant
+[:ty-button {:on {:click #(.openPopup (.getElementById js/document \"my-popup\"))}}
+ \"Open\"]
+[:ty-popup {:id \"my-popup\" :manual \"\" :disable-close \"\"}
+ [:div.ty-elevated.rounded-lg.p-5 ...]]
+
+<!-- React -->
+<button onClick={() => popupRef.current.openPopup()}>Open</button>
+<TyPopup ref={popupRef} manual disable-close>
+  <div class=\"ty-elevated rounded-lg p-5\">...</div>
+</TyPopup>")]])
+
+   ;; Best Practices
+   (doc-section "Best Practices"
+     [:div.ty-elevated.rounded-lg.p-5
+      [:div.grid.gap-6
+       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+        [:div.space-y-2
+         (for [text ["Nest ty-popup directly inside the trigger element for automatic wiring"
+                     "Use disable-close for confirm dialogs — force an explicit cancel/confirm"
+                     "Close the popup in action handlers with .closePopup() on the ancestor"
+                     "Use ty-elevated or ty-floating as the content surface for correct layering"
+                     "Set min-width on the content div to avoid cramped narrow popups"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+        [:div.space-y-2
+         (for [text ["Nest popups — one level only, or use a modal for layered interactions"
+                     "Apply visual styles to the ty-popup element — it's invisible by design"
+                     "Forget to close the popup after an action fires inside it"
+                     "Use disable-close without providing an explicit cancel path"
+                     "Use for long-form content — a modal is better for complex dialogs"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))

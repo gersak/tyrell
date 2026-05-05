@@ -1,637 +1,228 @@
 (ns tyrell.site.docs.modal
-  (:require [tyrell.site.docs.common
-             :refer [code-block
-                     attribute-table
-                     event-table
-                     doc-section
-                     example-section
-                     docs-page]]
-            [tyrell.site.state :as state]))
-
-(defn key-characteristics-section []
-  [:div.ty-content.rounded-lg.p-6.mb-8
-   [:h2.text-xl.font-semibold.ty-text.mb-4 "Key Characteristics"]
-   [:ul.space-y-2.ty-text-
-    [:li "• " [:span.ty-text "Pure wrapper"] " - No styling imposed on content"]
-    [:li "• " [:span.ty-text "Native dialog"] " - Built on browser's " [:code "dialog"] " element"]
-    [:li "• " [:span.ty-text "Dual API"] " - Declarative (" [:code "open"] ") and imperative (" [:code "modal.show()"] ")"]
-    [:li "• " [:span.ty-text "Protected mode"] " - Confirmation required for closing"]
-    [:li "• " [:span.ty-text "Scroll locking"] " - Automatic body scroll management"]
-    [:li "• " [:span.ty-text "Flexible backdrop"] " - Customizable or disabled"]
-    [:li "• " [:span.ty-text "Focus trapping"] " - Keyboard navigation contained"]
-    [:li "• " [:span.ty-text "Auto-hiding close button"] " - Shows on hover outside content area"]]])
-
-(defn api-reference-section []
-  [:div.ty-elevated.rounded-lg.p-6.mb-8
-   [:h2.text-xl.font-semibold.ty-text.mb-6 "API Reference"]
-
-   ;; Attributes
-   [:div.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Attributes"]
-    (attribute-table
-     [{:name "open"
-       :type "boolean"
-       :default "false"
-       :description "Controls modal visibility. When true, modal is shown."}
-      {:name "backdrop"
-       :type "boolean"
-       :default "true"
-       :description "Whether to show a backdrop behind the modal."}
-      {:name "close-on-outside-click"
-       :type "boolean"
-       :default "true"
-       :description "Whether clicking the backdrop closes the modal."}
-      {:name "close-on-escape"
-       :type "boolean"
-       :default "true"
-       :description "Whether pressing ESC key closes the modal."}
-      {:name "protected"
-       :type "boolean"
-       :default "false"
-       :description "When true, requires confirmation before closing (shows browser confirm dialog)."}])]
-
-   ;; Methods
-   [:div.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Methods"]
-    [:div.overflow-x-auto
-     [:table.w-full
-      [:thead
-       [:tr.border-b.ty-border-
-        [:th.text-left.py-2.px-3.ty-text.font-medium "Method"]
-        [:th.text-left.py-2.px-3.ty-text.font-medium "Description"]]]
-      [:tbody
-       [:tr.border-b.ty-border--
-        [:td.py-2.px-3 [:code.ty-bg-neutral-.px-2.py-1.rounded.text-sm "show()"]]
-        [:td.py-2.px-3.ty-text- "Opens the modal programmatically"]]
-       [:tr.border-b.ty-border--
-        [:td.py-2.px-3 [:code.ty-bg-neutral-.px-2.py-1.rounded.text-sm "hide()"]]
-        [:td.py-2.px-3.ty-text- "Closes the modal programmatically"]]]]]]
-
-   ;; Events
-   [:div.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Events"]
-    (event-table
-     [{:name "open"
-       :payload "{}"
-       :when-fired "Fired when the modal opens"}
-      {:name "close"
-       :payload "{reason: 'programmatic'|'native', returnValue?: string}"
-       :when-fired "Fired when the modal closes, includes reason and optional return value"}])]
-
-   ;; Slots
-   [:div
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Slots"]
-    [:div.overflow-x-auto
-     [:table.w-full
-      [:thead
-       [:tr.border-b.ty-border-
-        [:th.text-left.py-2.px-3.ty-text.font-medium "Slot"]
-        [:th.text-left.py-2.px-3.ty-text.font-medium "Description"]]]
-      [:tbody
-       [:tr.border-b.ty-border--
-        [:td.py-2.px-3 [:code.ty-bg-neutral-.px-2.py-1.rounded.text-sm "(default)"]]
-        [:td.py-2.px-3.ty-text- "Modal content - any HTML, styled however you want"]]]]]]])
-
-(defn basic-usage-section []
-  [:div.ty-content.rounded-lg.p-6.mb-8
-   [:h2.text-xl.font-semibold.ty-text.mb-4 "Basic Usage"]
-   [:p.ty-text-.mb-4
-    "The modal is a pure wrapper - all styling (size, background, borders, padding) is applied by your content."]
-
-   (code-block
-    "<!-- Button to open modal -->
-<ty-button onclick=\"document.getElementById('my-modal').show()\">
-  Open Modal
-</ty-button>
-
-<!-- Modal with styled content -->
-<ty-modal id=\"my-modal\">
-  <div class=\"p-6 max-w-md ty-elevated rounded-lg\">
-    <h3 class=\"text-lg font-semibold mb-4\">Modal Title</h3>
-    <p class=\"ty-text- mb-4\">This is your modal content.</p>
-    <ty-button onclick=\"this.closest('ty-modal').hide()\">
-      Close
-    </ty-button>
-  </div>
-</ty-modal>")
-
-   [:div.mt-4
-    [:ty-button {:on {:click #(swap! state/state assoc :docs-modal-basic true)}}
-     "Try Basic Example"]
-
-    [:ty-modal {:id "docs-modal-basic"
-                :open (get @state/state :docs-modal-basic false)
-                :on {:close #(swap! state/state assoc :docs-modal-basic false)}}
-     [:div.p-6.max-w-md.ty-elevated.rounded-lg
-      [:h3.text-lg.font-semibold.mb-4 "Modal Title"]
-      [:p.ty-text-.mb-4 "This is your modal content."]
-      [:ty-button {:on {:click #(swap! state/state assoc :docs-modal-basic false)}}
-       "Close"]]]]])
-
-(defn declarative-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "Declarative Control"]
-   [:p.ty-text-.mb-4 "Control modal visibility using the " [:code "open"] " attribute."]
-
-   (code-block
-    "<!-- Using a checkbox to control modal -->
-<input type=\"checkbox\" id=\"modal-toggle\" 
-       onchange=\"document.getElementById('declarative-modal').open = this.checked\">
-<label for=\"modal-toggle\">Toggle Modal</label>
-
-<ty-modal id=\"declarative-modal\" open>
-  <div class=\"p-6 ty-elevated rounded-lg\">
-    <p>Modal controlled by checkbox</p>
-  </div>
-</ty-modal>")
-
-   [:div.mt-4.flex.items-center.gap-3
-    [:input {:type "checkbox"
-             :id "modal-declarative-toggle"
-             :on {:change #(swap! state/state assoc :docs-modal-declarative (.. % -target -checked))}}]
-    [:label {:for "modal-declarative-toggle"} "Toggle Modal"]
-
-    [:ty-modal {:open (get @state/state :docs-modal-declarative false)
-                :on {:close #(swap! state/state assoc :docs-modal-declarative false)}}
-     [:div.p-6.ty-elevated.rounded-lg
-      [:p.ty-text "Modal controlled by checkbox"]
-      [:ty-button.mt-3 {:on {:click #(swap! state/state assoc :docs-modal-declarative false)}}
-       "Close"]]]]])
-
-(defn protected-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "Protected Mode"]
-   [:p.ty-text-.mb-4
-    "Use " [:code "protected=\"true\""] " to require confirmation before closing. Useful for forms with unsaved changes."]
-
-   (code-block
-    "<ty-modal id=\"protected-modal\" protected=\"true\">
-  <div class=\"p-6 max-w-md ty-elevated rounded-lg\">
-    <h3 class=\"text-lg font-semibold mb-4\">Unsaved Changes</h3>
-    <form>
-      <input type=\"text\" placeholder=\"Make some changes...\">
-      <p class=\"ty-text- mt-2\">
-        Try closing this modal - you'll be asked to confirm.
-      </p>
-    </form>
-  </div>
-</ty-modal>")
-
-   [:div.mt-4
-    [:ty-button {:on {:click #(swap! state/state assoc :docs-modal-protected true)}}
-     "Open Protected Modal"]
-
-    [:ty-modal {:open (get @state/state :docs-modal-protected false)
-                :protected true
-                :on {:close #(swap! state/state assoc :docs-modal-protected false)}}
-     [:div.p-6.max-w-md.ty-elevated.rounded-lg
-      [:h3.text-lg.font-semibold.mb-4 "Unsaved Changes"]
-      [:form
-       [:ty-input.w-full {:type "text"
-                          :placeholder "Make some changes..."}]
-       [:p.ty-text-.mt-3.text-sm
-        "Try closing this modal - you'll be asked to confirm."]]]]]])
-
-
-(defn form-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "Modal with Form"]
-   [:p.ty-text-.mb-4 "Common pattern for form dialogs with actions."]
-
-   (code-block
-    "<ty-modal id=\"form-modal\">
-  <div class=\"p-6 max-w-lg ty-elevated rounded-lg\">
-    <h3 class=\"text-xl font-semibold mb-4\">Create New Item</h3>
-    
-    <form onsubmit=\"handleSubmit(event)\">
-      <div class=\"space-y-4\">
-        <div>
-          <label class=\"block text-sm font-medium mb-1\">Name</label>
-          <ty-input type=\"text\" required></ty-input>
-        </div>
-        
-        <div>
-          <label class=\"block text-sm font-medium mb-1\">Category</label>
-          <ty-dropdown placeholder=\"Choose category...\">
-            <ty-option value=\"work\">Work</ty-option>
-            <ty-option value=\"personal\">Personal</ty-option>
-          </ty-dropdown>
-        </div>
-        
-        <div>
-          <label class=\"block text-sm font-medium mb-1\">Description</label>
-          <ty-textarea rows=\"3\"></ty-textarea>
-        </div>
-      </div>
-      
-      <div class=\"flex justify-end gap-2 mt-6\">
-        <ty-button type=\"button\" flavor=\"neutral\" 
-                   onclick=\"this.closest('ty-modal').hide()\">
-          Cancel
-        </ty-button>
-        <ty-button type=\"submit\" flavor=\"primary\">
-          Create
-        </ty-button>
-      </div>
-    </form>
-  </div>
-</ty-modal>")
-
-   [:div.mt-4
-    [:ty-button {:on {:click #(swap! state/state assoc :docs-modal-form true)}}
-     "Open Form Modal"]
-
-    [:ty-modal {:open (get @state/state :docs-modal-form false)
-                :on {:close #(swap! state/state assoc :docs-modal-form false)}}
-     [:div.p-6.max-w-lg.ty-elevated.rounded-lg
-      [:h3.text-xl.font-semibold.mb-4 "Create New Item"]
-
-      [:form {:on {:submit (fn [e]
-                             (.preventDefault e)
-                             (js/alert "Form submitted!")
-                             (swap! state/state assoc :docs-modal-form false))}}
-       [:div.space-y-4
-        [:div
-         [:label.block.text-sm.font-medium.mb-1 "Name"]
-         [:ty-input.w-full {:type "text"
-                            :required true}]]
-
-        [:div
-         [:label.block.text-sm.font-medium.mb-1 "Category"]
-         [:ty-dropdown.w-full {:placeholder "Choose category..."}
-          [:ty-option {:value "work"} "Work"]
-          [:ty-option {:value "personal"} "Personal"]]]
-
-        [:div
-         [:label.block.text-sm.font-medium.mb-1 "Description"]
-         [:ty-textarea.w-full {:rows "3"}]]]
-
-       [:div.flex.justify-end.gap-2.mt-6
-        [:ty-button {:type "button"
-                     :flavor "neutral"
-                     :on {:click #(swap! state/state assoc :docs-modal-form false)}}
-         "Cancel"]
-        [:ty-button {:type "submit"
-                     :flavor "primary"}
-         "Create"]]]]]]])
-
-(defn programmatic-control-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "Programmatic Control"]
-   [:p.ty-text-.mb-4 "Control modals programmatically using JavaScript methods."]
-
-   (code-block
-    "// Get modal element
-const modal = document.getElementById('my-modal');
-
-// Open modal
-modal.show();
-
-// Close modal
-modal.hide();
-
-// Listen for events
-modal.addEventListener('open', (e) => {
-  console.log('Modal opened');
-});
-
-modal.addEventListener('close', (e) => {
-  console.log('Modal closed:', e.detail.reason);
-  // e.detail.reason can be 'programmatic' or 'native'
-});
-
-// Control attributes
-modal.setAttribute('protected', 'true');
-modal.backdrop = false;"
-    "javascript")
-
-   [:div.mt-4.space-y-3
-    [:ty-button {:on {:click #(.show (.getElementById js/document "docs-modal-programmatic"))}}
-     "Open with .show()"]
-
-    [:ty-modal {:id "docs-modal-programmatic"}
-     [:div.p-6.ty-elevated.rounded-lg.max-w-sm
-      [:p.ty-text "This modal is controlled programmatically."]
-      [:ty-button.mt-4 {:on {:click #(.hide (.getElementById js/document "docs-modal-programmatic"))}}
-       "Close with .hide()"]]]]])
-
-(defn event-handling-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "Event Handling"]
-   [:p.ty-text-.mb-4 "React to modal lifecycle events for analytics, cleanup, or state management."]
-
-   (code-block
-    "const modal = document.getElementById('analytics-modal');
-
-modal.addEventListener('open', () => {
-  // Track modal open
-  analytics.track('Modal Opened', {
-    modalId: 'user-profile',
-    timestamp: new Date()
-  });
-  
-  // Start a timer
-  modal.openTime = Date.now();
-});
-
-modal.addEventListener('close', (e) => {
-  // Calculate time spent
-  const timeSpent = Date.now() - modal.openTime;
-  
-  // Track modal close
-  analytics.track('Modal Closed', {
-    modalId: 'user-profile',
-    closeReason: e.detail.reason,
-    timeSpent: timeSpent
-  });
-  
-  // Cleanup
-  delete modal.openTime;
-});"
-    "javascript")])
-
-(defn css-customization-example []
-  [:div.ty-content.rounded-lg.p-6.mb-6
-   [:h3.text-lg.font-medium.ty-text.mb-3 "CSS Customization"]
-   [:p.ty-text-.mb-4 "Customize modal backdrop using CSS variables."]
-
-   (code-block
-    "/* Custom backdrop styles */
-ty-modal {
-  --ty-modal-backdrop: rgba(0, 50, 100, 0.8);
-  --ty-modal-backdrop-blur: blur(8px);
-  --ty-modal-duration: 300ms;
-}
-
-/* Different backdrop for specific modal */
-#special-modal {
-  --ty-modal-backdrop: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.9),
-    rgba(0, 0, 50, 0.7)
-  );
-  --ty-modal-backdrop-blur: blur(20px);
-}"
-    "css")
-
-   [:div.mt-4
-    [:ty-button {:on {:click #(swap! state/state assoc :docs-modal-custom-css true)}}
-     "Open Custom Styled Modal"]
-
-    [:ty-modal {:id "docs-modal-custom-css"
-                :open (get @state/state :docs-modal-custom-css false)
-                :style {:--ty-modal-backdrop "linear-gradient(to bottom, rgba(59, 130, 246, 0.8), rgba(147, 51, 234, 0.8))"
-                        :--ty-modal-backdrop-blur "blur(12px)"
-                        :--ty-modal-duration "400ms"}
-                :on {:close #(swap! state/state assoc :docs-modal-custom-css false)}}
-     [:div.p-8.max-w-md.ty-floating.rounded-xl.shadow-2xl
-      [:h3.text-xl.font-semibold.mb-4.ty-text "Custom Backdrop"]
-      [:p.ty-text- "This modal has a gradient backdrop with increased blur."]
-      [:ty-button.mt-4 {:flavor "primary"
-                        :on {:click #(swap! state/state assoc :docs-modal-custom-css false)}}
-       "Beautiful!"]]]]])
-
-(defn examples-section []
-  [:div
-   [:h2.text-2xl.font-semibold.ty-text.mb-6 "Examples"]
-   (declarative-example)
-   (protected-example)
-   (form-example)
-   (programmatic-control-example)
-   (event-handling-example)
-   (css-customization-example)])
-
-(defn common-use-cases-section []
-  [:div
-   [:h2.text-2xl.font-semibold.ty-text.mb-6 "Common Use Cases"]
-   [:div.ty-content.rounded-lg.p-6.mb-8
-    [:div.grid.grid-cols-1.md:grid-cols-2.gap-6
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Confirmation Dialogs"]
-      [:p.ty-text-.text-sm "Delete confirmations, logout warnings, discard changes prompts"]]
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Form Dialogs"]
-      [:p.ty-text-.text-sm "Create/edit forms, settings panels, data entry"]]
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Content Display"]
-      [:p.ty-text-.text-sm "Image galleries, video players, article previews"]]
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Wizards & Flows"]
-      [:p.ty-text-.text-sm "Multi-step processes, onboarding, guided tours"]]
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Notifications"]
-      [:p.ty-text-.text-sm "Important alerts, system messages, updates"]]
-     [:div
-      [:h4.font-medium.ty-text.mb-2 "Contextual Help"]
-      [:p.ty-text-.text-sm "Tooltips, help panels, documentation viewers"]]]]])
-
-(defn advanced-patterns-section []
-  [:div
-   [:h2.text-2xl.font-semibold.ty-text.mb-6 "Advanced Patterns"]
-
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Modal Manager Pattern"]
-    [:p.ty-text-.mb-4 "Manage multiple modals with a simple JavaScript controller."]
-
-    (code-block
-     "// Modal manager for handling multiple modals
-class ModalManager {
-  constructor() {
-    this.activeModals = new Set();
-  }
-  
-  open(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.show();
-      this.activeModals.add(modalId);
-      
-      // Track modal state
-      modal.addEventListener('close', () => {
-        this.activeModals.delete(modalId);
-      }, { once: true });
-    }
-  }
-  
-  close(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.hide();
-      this.activeModals.delete(modalId);
-    }
-  }
-  
-  closeAll() {
-    this.activeModals.forEach(id => this.close(id));
-  }
-  
-  isOpen(modalId) {
-    return this.activeModals.has(modalId);
-  }
-}
-
-// Usage
-const modals = new ModalManager();
-modals.open('user-settings');
-modals.open('confirm-dialog');
-modals.closeAll(); // Close all open modals"
-     "javascript")]
-
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Dynamic Content Loading"]
-    [:p.ty-text-.mb-4 "Load modal content dynamically from server or templates."]
-
-    (code-block
-     "// Dynamic modal content loading
-async function openUserProfile(userId) {
-  const modal = document.getElementById('profile-modal');
-  const content = modal.querySelector('.modal-body');
-  
-  // Show loading state
-  content.innerHTML = '<div class=\"loading\">Loading...</div>';
-  modal.show();
-  
-  try {
-    // Fetch user data
-    const response = await fetch(`/api/users/${userId}`);
-    const user = await response.json();
-    
-    // Update modal content
-    content.innerHTML = `
-      <div class=\"user-profile\">
-        <img src=\"${user.avatar}\" alt=\"${user.name}\">
-        <h3>${user.name}</h3>
-        <p>${user.bio}</p>
-        <div class=\"stats\">
-          <span>Posts: ${user.posts}</span>
-          <span>Followers: ${user.followers}</span>
-        </div>
-      </div>
-    `;
-  } catch (error) {
-    content.innerHTML = '<div class=\"error\">Failed to load profile</div>';
-  }
-}
-
-// HTML
-// <ty-modal id=\"profile-modal\">
-//   <div class=\"ty-elevated rounded-lg p-6\">
-//     <div class=\"modal-body\"></div>
-//     <ty-button onclick=\"this.closest('ty-modal').hide()\">Close</ty-button>
-//   </div>
-// </ty-modal>"
-     "javascript")]
-
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text.mb-3 "Confirmation Dialog Pattern"]
-    [:p.ty-text-.mb-4 "Create reusable confirmation dialogs with promises."]
-
-    (code-block
-     "// Reusable confirmation dialog
-function confirm(message, options = {}) {
-  return new Promise((resolve) => {
-    const modal = document.getElementById('confirm-modal');
-    const messageEl = modal.querySelector('.message');
-    const confirmBtn = modal.querySelector('.confirm-btn');
-    const cancelBtn = modal.querySelector('.cancel-btn');
-    
-    // Set message and options
-    messageEl.textContent = message;
-    confirmBtn.textContent = options.confirmText || 'Confirm';
-    cancelBtn.textContent = options.cancelText || 'Cancel';
-    
-    // Set button colors based on action type
-    if (options.danger) {
-      confirmBtn.setAttribute('flavor', 'danger');
-    } else {
-      confirmBtn.setAttribute('flavor', 'primary');
-    }
-    
-    // Handle user response
-    const handleConfirm = () => {
-      cleanup();
-      resolve(true);
-    };
-    
-    const handleCancel = () => {
-      cleanup();
-      resolve(false);
-    };
-    
-    const cleanup = () => {
-      modal.hide();
-      confirmBtn.removeEventListener('click', handleConfirm);
-      cancelBtn.removeEventListener('click', handleCancel);
-    };
-    
-    // Attach listeners
-    confirmBtn.addEventListener('click', handleConfirm);
-    cancelBtn.addEventListener('click', handleCancel);
-    
-    // Show modal
-    modal.show();
-  });
-}
-
-// Usage
-async function deleteItem(itemId) {
-  const confirmed = await confirm(
-    'Are you sure you want to delete this item?',
-    { danger: true, confirmText: 'Delete', cancelText: 'Keep' }
-  );
-  
-  if (confirmed) {
-    await fetch(`/api/items/${itemId}`, { method: 'DELETE' });
-    console.log('Item deleted');
-  }
-}"
-     "javascript")]])
-
-(defn best-practices-section []
-  [:div.ty-elevated.rounded-lg.p-6
-   [:h2.text-xl.font-semibold.ty-text.mb-4 "Best Practices"]
-   [:div.grid.grid-cols-1.md:grid-cols-2.gap-6
-    [:div
-     [:h4.font-medium.ty-text-success.flex.items-center.gap-2.mb-3
-      [:ty-icon {:name "check-circle"}]
-      "Do's"]
-     [:ul.space-y-2.text-sm.ty-text-
-      [:li "• Apply all styling to your content, not the modal"]
-      [:li "• Use " [:code.ty-bg-neutral-.px-1.rounded "ty-elevated"] " or " [:code.ty-bg-neutral-.px-1.rounded "ty-floating"] " for modal content"]
-      [:li "• Include a clear close action (button or X)"]
-      [:li "• Use " [:code.ty-bg-neutral-.px-1.rounded "protected"] " mode for forms with unsaved changes"]
-      [:li "• Handle the " [:code.ty-bg-neutral-.px-1.rounded "ty-modal-close"] " event for cleanup"]
-      [:li "• Set appropriate " [:code.ty-bg-neutral-.px-1.rounded "max-width"] " on content"]
-      [:li "• Use semantic HTML in modal content"]
-      [:li "• Test keyboard navigation (Tab, Esc)"]]]
-
-    [:div
-     [:h4.font-medium.ty-text-danger.flex.items-center.gap-2.mb-3
-      [:ty-icon {:name "x-circle"}]
-      "Don'ts"]
-     [:ul.space-y-2.text-sm.ty-text-
-      [:li "• Don't style the " [:code.ty-bg-neutral-.px-1.rounded "ty-modal"] " element directly"]
-      [:li "• Don't forget focus management for keyboard users"]
-      [:li "• Don't nest modals unless absolutely necessary"]
-      [:li "• Don't use modals for trivial confirmations"]
-      [:li "• Don't make modals too large or complex"]
-      [:li "• Don't auto-open modals without user action"]
-      [:li "• Don't forget to handle cleanup on close"]
-      [:li "• Don't ignore mobile responsiveness"]]]]])
+  "Documentation for ty-modal component"
+  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
+                                             doc-section docs-page component-header section-label demo-area]]))
 
 (defn view []
   (docs-page
-   ;; Title and Description
-   [:div.mb-8
-    [:h1.text-3xl.font-bold.ty-text.mb-2 "ty-modal"]
-    [:p.text-lg.ty-text-
-     "A pure wrapper component for modal dialogs that provides backdrop, focus management, and keyboard interaction without imposing any styling on your content."]]
+   (component-header "ty-modal"
+                     "Native <dialog> wrapper with backdrop, scroll locking, focus trapping, and ESC/click-outside close. A pure wrapper — all visual styling lives in your content, not the modal element.")
 
-   ;; Compose sections
-   (key-characteristics-section)
-   (api-reference-section)
-   (basic-usage-section)
-   (examples-section)
-   (common-use-cases-section)
-   (advanced-patterns-section)
-   (best-practices-section)))
+   ;; API Reference
+   [:div.ty-elevated.rounded-lg.p-6
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+     [:h2.scroll-mt-6
+      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+      [:span.ty-text-- "API Reference"]]]
+
+    [:div.mb-6
+     (section-label "Attributes")
+     (attribute-table
+      [{:name "open"
+        :type "boolean"
+        :default "false"
+        :description "Controls modal visibility declaratively — set to show, remove to hide"}
+       {:name "backdrop"
+        :type "boolean"
+        :default "true"
+        :description "Show a backdrop behind the modal content"}
+       {:name "close-on-outside-click"
+        :type "boolean"
+        :default "true"
+        :description "Clicking the backdrop closes the modal"}
+       {:name "close-on-escape"
+        :type "boolean"
+        :default "true"
+        :description "Pressing ESC closes the modal"}
+       {:name "protected"
+        :type "boolean"
+        :default "false"
+        :description "Require browser confirmation before closing — use for forms with unsaved changes"}])]
+
+    [:div.mb-6
+     (section-label "Methods")
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
+      [:div.flex.items-center.gap-3
+       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "show()"]
+       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Open the modal programmatically"]]
+     ]
+     [:div {:style {:padding "0.5rem 0"}}
+      [:div.flex.items-center.gap-3
+       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "hide()"]
+       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Close the modal programmatically"]]]]
+
+    [:div
+     (section-label "Events")
+     (event-table
+      [{:name "open"
+        :payload "{}"
+        :when-fired "Fires when the modal opens"}
+       {:name "close"
+        :payload "{reason: 'programmatic'|'native'}"
+        :when-fired "Fires when the modal closes"}])]]
+
+   ;; Examples
+   (doc-section "Examples"
+     [:div.space-y-6
+
+      ;; Basic
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Basic")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Use " [:code ".show()"] " and " [:code ".hide()"] " to control the modal. All visual styling goes inside — the modal element itself is invisible."]
+       (demo-area
+        [:div
+         [:ty-button {:on {:click #(.show (.getElementById js/document "demo-modal-basic"))}}
+          "Open modal"]
+         [:ty-modal {:id "demo-modal-basic"}
+          [:div.ty-elevated.rounded-lg.p-6 {:style {:max-width "28rem"}}
+           [:h3 {:style {:font-size "1.125rem" :font-weight "600" :margin-bottom "0.75rem"}} "Modal Title"]
+           [:p.ty-text- {:style {:font-size "0.875rem" :line-height "1.6" :margin-bottom "1rem"}}
+            "This is your modal content. Style it however you need — the modal element itself is invisible."]
+           [:div.flex.justify-end.gap-2
+            [:ty-button {:flavor "neutral"
+                         :on {:click #(.hide (.getElementById js/document "demo-modal-basic"))}}
+             "Cancel"]
+            [:ty-button {:flavor "primary"
+                         :on {:click #(.hide (.getElementById js/document "demo-modal-basic"))}}
+             "Confirm"]]]]])
+       (code-block "<ty-button onclick=\"document.getElementById('my-modal').show()\">
+  Open modal
+</ty-button>
+
+<ty-modal id=\"my-modal\">
+  <div class=\"ty-elevated rounded-lg p-6\" style=\"max-width: 28rem\">
+    <h3>Modal Title</h3>
+    <p class=\"ty-text-\">Your content here.</p>
+    <ty-button onclick=\"this.closest('ty-modal').hide()\">Close</ty-button>
+  </div>
+</ty-modal>")]
+
+      ;; Protected mode
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Protected Mode")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Set " [:code "protected"] " to require browser confirmation before closing — ideal for forms with unsaved changes. ESC, backdrop click, and " [:code ".hide()"] " all trigger the confirmation."]
+       (demo-area
+        [:div
+         [:ty-button {:on {:click #(.show (.getElementById js/document "demo-modal-protected"))}}
+          "Open protected modal"]
+         [:ty-modal {:id "demo-modal-protected" :protected ""}
+          [:div.ty-elevated.rounded-lg.p-6 {:style {:max-width "28rem"}}
+           [:h3 {:style {:font-size "1.125rem" :font-weight "600" :margin-bottom "0.75rem"}} "Unsaved Changes"]
+           [:ty-input {:label "Title" :placeholder "Type something..."}]
+           [:p.ty-text-- {:style {:font-size "0.8125rem" :margin-top "0.75rem"}}
+            "Try pressing ESC or clicking outside — you'll be asked to confirm."]
+           [:div.flex.justify-end.gap-2 {:style {:margin-top "1rem"}}
+            [:ty-button {:flavor "neutral"
+                         :on {:click #(.hide (.getElementById js/document "demo-modal-protected"))}}
+             "Discard"]
+            [:ty-button {:flavor "primary"}
+             "Save"]]]]])
+       (code-block "<ty-modal id=\"my-modal\" protected>
+  <div class=\"ty-elevated rounded-lg p-6\">
+    <form>...</form>
+    <ty-button onclick=\"this.closest('ty-modal').hide()\">
+      Discard changes
+    </ty-button>
+  </div>
+</ty-modal>")]
+
+      ;; Declarative control
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Declarative Control")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Control visibility with the " [:code "open"] " attribute — useful in reactive frameworks where you manage state externally."]
+       (code-block "<!-- React / framework binding -->
+<TyModal open={isOpen} onClose={() => setIsOpen(false)}>
+  <div class=\"ty-elevated rounded-lg p-6\">...</div>
+</TyModal>
+
+<!-- ClojureScript / Replicant -->
+[:ty-modal {:open (when @modal-open? \"\")
+            :on {:close #(reset! modal-open? false)}}
+ [:div.ty-elevated.rounded-lg.p-6 ...]]")]])
+
+   ;; Advanced Examples
+   (doc-section "Advanced Examples"
+     [:div.space-y-6
+
+      ;; Form dialog
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Form Dialog")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Common pattern — full form inside a modal with cancel/submit actions. Use " [:code "protected"] " if the form has meaningful input."]
+       (code-block "<ty-modal id=\"create-modal\">
+  <div class=\"ty-elevated rounded-lg p-6\" style=\"max-width: 32rem; width: 100%\">
+    <h3 class=\"font-semibold mb-4\">Create Item</h3>
+    <form onsubmit=\"handleSubmit(event)\">
+      <div class=\"space-y-4\">
+        <ty-input name=\"title\" label=\"Title\" required></ty-input>
+        <ty-dropdown name=\"category\" label=\"Category\">
+          <ty-option value=\"work\">Work</ty-option>
+          <ty-option value=\"personal\">Personal</ty-option>
+        </ty-dropdown>
+        <ty-textarea name=\"notes\" label=\"Notes\"></ty-textarea>
+      </div>
+      <div class=\"flex justify-end gap-2 mt-6\">
+        <ty-button type=\"button\" flavor=\"neutral\"
+                   onclick=\"this.closest('ty-modal').hide()\">Cancel</ty-button>
+        <ty-button type=\"submit\" flavor=\"primary\">Create</ty-button>
+      </div>
+    </form>
+  </div>
+</ty-modal>")]
+
+      ;; JavaScript API
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "JavaScript API")
+       (code-block "const modal = document.getElementById('my-modal');
+
+// Open / close
+modal.show();
+modal.hide();
+
+// Listen for lifecycle events
+modal.addEventListener('open', () => {
+  console.log('opened');
+});
+
+modal.addEventListener('close', (e) => {
+  console.log('closed, reason:', e.detail.reason);
+  // reason: 'programmatic' | 'native'
+});" "javascript")]])
+
+   ;; Best Practices
+   (doc-section "Best Practices"
+     [:div.ty-elevated.rounded-lg.p-5
+      [:div.grid.gap-6
+       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+        [:div.space-y-2
+         (for [text ["Style your content div, not the ty-modal element itself"
+                     "Use ty-elevated or ty-floating as the content wrapper surface"
+                     "Always include a clear close action (button or cancel link)"
+                     "Use protected for forms with fields the user has filled in"
+                     "Set max-width on the content div to keep the modal readable"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+        [:div.space-y-2
+         (for [text ["Apply visual styles to the ty-modal tag — it's transparent by design"
+                     "Nest modals unless absolutely necessary"
+                     "Auto-open a modal on page load without a clear user trigger"
+                     "Use modals for trivial confirmations — inline UI is often better"
+                     "Forget to handle the close event for state cleanup"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+

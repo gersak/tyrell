@@ -50,19 +50,7 @@
   (let [{:keys [selected-services booking-data]
          {:keys [year month day]} :selected-date
          :as booking-state} (get @state :event-booking)]
-    [:div.max-w-6xl.mx-auto.space-y-8
-     ;; Hero Section
-     [:div.text-center.mb-12
-      [:h1.text-4xl.font-bold.ty-text.mb-4 "Event Booking Scenario"]
-      [:p.text-lg.ty-text-.max-w-3xl.mx-auto.leading-relaxed
-       "Discover how calendar components orchestrate with complex forms to create seamless booking experiences. This scenario showcases date selection, time slot management, service customization, and confirmation workflows in a professional event booking interface."]
-
-      [:div.flex.flex-wrap.gap-3.justify-center.mt-6
-       [:span.px-3.py-1.ty-bg-success-.ty-text-success.rounded-full.text-sm.font-medium "Calendar Integration"]
-       [:span.px-3.py-1.ty-bg-primary-.ty-text-primary.rounded-full.text-sm.font-medium "Time Slot Selection"]
-       [:span.px-3.py-1.ty-bg-warning-.ty-text-warning.rounded-full.text-sm.font-medium "Service Options"]
-       [:span.px-3.py-1.ty-bg-info-.ty-text.rounded-full.text-sm.font-medium "Confirmation Flow"]]]
-
+    [:div.space-y-6
      ;; Main Booking Interface
      [:div.grid.grid-cols-1.lg:grid-cols-2.gap-8
       ;; Left Column - Calendar and Date Selection
@@ -184,7 +172,7 @@
                            :note "1 spot left"}
                           {:time "4:00 PM"
                            :status "available"}]]
-          [:div.grid.grid-cols-2.md:grid-cols-4.gap-3
+          [:div.grid.grid-cols-2.gap-3
            (for [{:keys [time status note]} time-slots]
              ^{:key time}
              (if (= status "booked")
@@ -505,7 +493,7 @@
               [:div.text-xs.opacity-70 "+$100/language"]]]]]]]]]]
 
      ;; Feature Showcase
-     [:div.grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-4.gap-6.mt-12
+     [:div.grid.grid-cols-2.gap-4.mt-4
       ;; Calendar Integration
       [:div.ty-elevated.p-6.rounded-lg
        [:div.w-12.h-12.ty-bg-success.rounded-lg.flex.items-center.justify-center.mb-4

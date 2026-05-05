@@ -9,23 +9,18 @@
   "Add copy button and language label to a highlighted code element"
   [^js code-el lang]
   (when-let [container (.-parentElement code-el)]
-    ;; Set container positioning
     (set! (.. container -style -position) "relative")
 
-    ;; Add language label (if meaningful)
-    (when (and lang
-               (not= lang "hljs")
-               (not= lang "code"))
+    (when (and lang (not= lang "hljs") (not= lang "code"))
       (let [label (.createElement js/document "div")]
         (set! (.-textContent label) lang)
         (set! (.-cssText (.-style label))
               "position: absolute; top: 0.5rem; right: 3rem; font-size: 0.75rem;
                color: var(--ty-text--); background: var(--ty-surface-content);
                padding: 0.25rem 0.5rem; border-radius: 4px;
-               border: 1px solid var(--ty-border-); pointer-events: none; z-index: 10;")
+               border: 1px solid var(--ty-border-soft); pointer-events: none; z-index: 10;")
         (.appendChild container label)))
 
-    ;; Add copy button
     (let [copy-btn (.createElement js/document "button")]
       (set! (.-innerHTML copy-btn) "<ty-icon name=\"copy\" size=\"sm\"></ty-icon>")
       (set! (.-title copy-btn) "Copy to clipboard")
@@ -36,7 +31,6 @@
              transition: opacity 0.2s, background-color 0.2s;
              display: flex; align-items: center; justify-content: center; padding: 0; z-index: 10;")
 
-      ;; Copy functionality
       (.addEventListener copy-btn "click"
                          (fn [e]
                            (.preventDefault e)
@@ -57,99 +51,98 @@
                                                                (set! (.. copy-btn -style -backgroundColor) "var(--ty-surface-elevated)"))
                                                           2000)))))))
 
-      ;; Hover effects
       (.addEventListener copy-btn "mouseenter"
                          #(do (set! (.. copy-btn -style -opacity) "1")
                               (set! (.. copy-btn -style -backgroundColor) "var(--ty-surface-floating)")))
-
       (.addEventListener copy-btn "mouseleave"
                          #(do (set! (.. copy-btn -style -opacity) "0.7")
                               (set! (.. copy-btn -style -backgroundColor) "var(--ty-surface-elevated)")))
-
       (.appendChild container copy-btn))))
 
 (defn code-block
-  "Display a code block with syntax highlighting"
   ([code] (code-block code "html"))
   ([code lang]
    [:div.rounded-md.overflow-x-auto.my-4
     [:pre
      [:code.text-xs
       {:replicant/on-render (fn [{^js el :replicant/node}]
-                              (when (and el
-                                         js/window.hljs
-                                         (.-highlightElement js/window.hljs))
-                                ;; Check if already highlighted by hljs
-                                (let [already-highlighted? (and (.-dataset el)
-                                                                (.-highlighted (.-dataset el)))]
+                              (when (and el js/window.hljs (.-highlightElement js/window.hljs))
+                                (let [already-highlighted? (and (.-dataset el) (.-highlighted (.-dataset el)))]
                                   (when-not already-highlighted?
-                                    ;; Set the code content
                                     (set! (.-textContent el) code)
                                     (js/setTimeout
                                      (fn []
                                        (try
-                                         ;; Double-check not highlighted (race condition protection)
-                                         (when-not (and (.-dataset el)
-                                                        (.-highlighted (.-dataset el)))
-                                           ;; Highlight the element
+                                         (when-not (and (.-dataset el) (.-highlighted (.-dataset el)))
                                            (js/window.hljs.highlightElement el)
-                                           ;; Add copy button and language label
                                            (add-code-enhancements! el lang))
                                          (catch js/Error e
                                            (js/console.warn "Failed to highlight code block:" e))))
                                      50)))))}]]]))
 
-(defn attribute-table
-  "Display component attributes in a table format"
-  [attributes]
-  [:div.overflow-x-auto
-   [:table.w-full
-    [:thead
-     [:tr.border-b.ty-border
-      [:th.text-left.px-4.py-2.ty-text+ "Name"]
-      [:th.text-left.px-4.py-2.ty-text+ "Type"]
-      [:th.text-left.px-4.py-2.ty-text+ "Default"]
-      [:th.text-left.px-4.py-2.ty-text+ "Description"]]]
-    [:tbody
-     (for [{:keys [name type default description required]} attributes]
-       [:tr.border-b.ty-border-
-        [:td.px-4.py-2.ty-text.font-mono.text-sm name]
-        [:td.px-4.py-2.ty-text-.text-sm type]
-        [:td.px-4.py-2.ty-text-.text-sm.font-mono (or default "-")]
-        [:td.px-4.py-2.ty-text-.text-sm
-         description
-         (when required
-           [:span.ml-2.ty-bg-danger.ty-text-danger++.px-2.py-1.rounded.text-xs "required"])]])]]])
+(defn- type-badge [t]
+  (let [[bg fg] (case t
+                  "boolean"  ["ty-bg-accent-"    "ty-text-accent+"]
+                  "number"   ["ty-bg-primary-"   "ty-text-primary+"]
+                  "function" ["ty-bg-secondary-" "ty-text-secondary+"]
+                  nil)]
+    (if bg
+      [:span {:class [bg fg "text-xs" "font-mono" "rounded" "px-1" "py-px"]} t]
+      [:span.text-xs.font-mono.ty-text-- t])))
 
-(defn event-table
-  "Display component events in a table format"
-  [events]
-  [:div.overflow-x-auto
-   [:table.w-full
-    [:thead
-     [:tr.border-b.ty-border
-      [:th.text-left.px-4.py-2.ty-text+ "Event"]
-      [:th.text-left.px-4.py-2.ty-text+ "Payload"]
-      [:th.text-left.px-4.py-2.ty-text+ "When Fired"]]]
-    [:tbody
-     (for [{:keys [name payload when-fired]} events]
-       [:tr.border-b.ty-border-
-        [:td.px-4.py-2.ty-text.font-mono.text-sm name]
-        [:td.px-4.py-2.ty-text-.text-xs.font-mono payload]
-        [:td.px-4.py-2.ty-text-.text-xs when-fired]])]]])
+(defn attribute-table [attributes]
+  [:div
+   (for [{:keys [name type default description required]} attributes]
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.625rem 0"}}
+      [:div.flex.flex-wrap.items-center.gap-2 {:style {:margin-bottom "0.25rem"}}
+       [:code.font-mono.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} name]
+       (type-badge type)
+       (when (and default (not= default "-"))
+         [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} (str "= " default)])
+       (when required
+         [:span.ty-bg-danger.ty-text-danger++.rounded {:style {:font-size "0.6875rem" :padding "1px 5px"}} "req"])]
+      [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} description]])])
+
+(defn event-table [events]
+  [:div
+   (for [{:keys [name payload when-fired]} events]
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.625rem 0"}}
+      [:div.flex.flex-wrap.items-center.gap-2 {:style {:margin-bottom "0.25rem"}}
+       [:code.font-mono.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} name]
+       (when payload
+         [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} payload])]
+      [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} when-fired]])])
+
+(defn slot-table [slots]
+  [:div
+   (for [{:keys [name description]} slots]
+     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.625rem 0"}}
+      [:code.font-mono.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :display "block" :margin-bottom "0.25rem"}} name]
+      [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} description]])])
+
+(defn section-label [text]
+  [:div {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em"
+                 :text-transform "uppercase" :margin-bottom "0.625rem"}}
+   [:span.ty-text-- text]])
+
+(defn demo-area [& children]
+  (into [:div.rounded-lg
+         {:style {:background-image "radial-gradient(circle, var(--ty-border-soft) 1px, transparent 1px)"
+                  :background-size "20px 20px"
+                  :background-color "var(--ty-surface-elevated)"
+                  :padding "1rem"
+                  :margin-bottom "0.75rem"}}]
+        children))
 
 (defn example-section
-  "Create an example section with live demo and code"
   ([title demo code] (example-section title demo code "html"))
   ([title demo code language]
-   [:div.mt-4
-    [:h3.text-lg.font-medium.ty-text.mb-2 title]
-    [:div.mb-4 demo]
+   [:div
+    (section-label title)
+    (demo-area demo)
     (code-block code language)]))
 
-(defn slugify
-  "Convert text to URL-friendly slug"
-  [text]
+(defn slugify [text]
   (-> text
       str
       str/lower-case
@@ -159,31 +152,48 @@
       str/trim))
 
 (defn doc-section
-  "Create a documentation section with title and content.
-   Auto-generates ID from title if not provided."
-  ([title content]
-   (doc-section title nil content))
+  ([title content] (doc-section title nil content))
   ([title id content]
    (let [section-id (or id (slugify title))]
-     [:section.mb-12 {:id section-id}
-      [:h2.text-2xl.font-semibold.ty-text.mb-4.scroll-mt-6 title]
+     [:section.mb-10 {:id section-id}
+      [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+       [:h2.scroll-mt-6
+        {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+        [:span.ty-text-- title]]]
       content])))
 
-(defn docs-page
-  "Wrapper for documentation pages with responsive padding.
-   Uses layout breakpoints to adjust padding for mobile vs desktop."
-  [& children]
+(defonce page-sections (atom []))
+
+(defn docs-page [& children]
   (let [is-desktop? (layout/breakpoint>= :lg)]
     (into [:div.max-w-4xl.mx-auto.space-y-8
-           {:style {:padding (if is-desktop? "24px" "8px 12px")}}]
+           {:style {:padding (if is-desktop? "24px" "8px 12px")}
+            :replicant/on-render
+            (fn [{^js node :replicant/node}]
+              (when node
+                (let [sections (->> (array-seq (.querySelectorAll node "h2"))
+                                    (keep (fn [^js h]
+                                            (let [text (str/trim (.-textContent h))
+                                                  id   (or (not-empty (.-id h)) (slugify text))]
+                                              (set! (.-id h) id)
+                                              (when (not-empty text)
+                                                {:anchor id :label text}))))
+                                    vec)]
+                  (reset! page-sections sections))))}]
           children)))
 
-(defn placeholder-view
-  "Placeholder view for components with minimal documentation"
-  [component-name]
+(defn component-header [tag-name description]
+  [:div
+   [:div.font-mono
+    {:style {:font-size "1.125rem" :font-weight "600" :letter-spacing "-0.02em" :margin-bottom "0.375rem"}}
+    [:span.ty-text-- "<"]
+    [:span.ty-text+ tag-name]
+    [:span.ty-text-- " />"]]
+   [:p.ty-text- {:style {:font-size "0.875rem" :line-height "1.6" :max-width "36rem"}} description]])
+
+(defn placeholder-view [component-name]
   (docs-page
-   [:h1.text-3xl.font-bold.ty-text.mb-4 (str "ty-" component-name)]
-   [:p.text-lg.ty-text-.mb-8 "Documentation for this component is being expanded."]
+   (component-header (str "ty-" component-name) "Documentation for this component is being expanded.")
    [:div.ty-elevated.rounded-lg.p-6
     [:p.ty-text- "In the meantime, try the component in the live examples or check the source on GitHub."]
     [:div.mt-4.flex.gap-3
@@ -191,19 +201,15 @@
       {:on {:click #(js/window.open "https://github.com/gersak/tyrell" "_blank")}}
       "View Source"]]]))
 
-(defn guide-placeholder-view
-  "Placeholder view for guide pages with minimal documentation"
-  [guide-name guide-description]
+(defn guide-placeholder-view [guide-name guide-description]
   (docs-page
-   [:h1.text-3xl.font-bold.ty-text.mb-4 guide-name]
-   [:p.text-lg.ty-text-.mb-8 guide-description]
+   (component-header guide-name guide-description)
    [:div.ty-elevated.rounded-lg.p-6
     [:p.ty-text-.mb-4 "This guide is being expanded. In the meantime:"]
     [:ul.text-left.space-y-2.ml-4
      [:li.ty-text- "• Explore the component documentation for available features"]
      [:li.ty-text- "• Check out the CSS System guide for styling best practices"]
      [:li.ty-text- "• Review examples in the repository"]]
-
     [:div.flex.gap-4.justify-center.mt-6
      [:button.ty-bg-primary.ty-text++.px-4.py-2.rounded.hover:opacity-90
       {:on {:click #(js/window.open "https://github.com/gersak/tyrell" "_blank")}}

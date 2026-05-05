@@ -272,11 +272,14 @@
       :icon "server"
       :flavor "neutral"
       :eyebrow "Server"
-      :title "HTML"
-      :tagline [(fw "Flask") " · " (fw "Django") " · " (fw "Rails") " · " (fw "PHP") " · "
-                (fw "HTMX") " · " (fw "Datastar")
-                " — render HTML on the server. No build tools."]
-      :snippet "\n\n<ty-button hx-post=\"/save\">
+      :title "HTML / Server-side"
+      :tagline [(fw "HTMX") " · " (fw "Datastar") " · " (fw "Flask") " · " (fw "Django") " · "
+                (fw "Rails") " · " (fw "PHP") " — form-associated, paste-your-SVG, no build."]
+      :snippet "\n\n<ty-button hx-post=\"/save\"
+           flavor=\"primary\">
+  <ty-icon slot=\"start\">
+    {% include 'icons/save.svg' %}
+  </ty-icon>
   Save
 </ty-button>"
       :snippet-lang "html"})]])
@@ -300,7 +303,7 @@
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1 "Or skip the build entirely"]
      [:p.text-sm.ty-text-.mb-3.leading-relaxed
       "Paste these two tags into "
-      [:code.font-mono.text-xs.ty-bg-neutral-.px-1.rounded "<head>"]
+      [:code "<head>"]
       " — works in any HTML page, server template, or HTMX project."]
      (common/code-block
       "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
@@ -390,35 +393,32 @@ registerIcons({ check, heart, save })"
                   :save  lucide/save})"
       "clojure")]
 
-    ;; Pattern 3 — No bundler (HTMX / Flask / Django / Rails / PHP / Datastar)
+    ;; Pattern 3 — No bundler (HTMX / Datastar / Flask / Django / Rails / PHP)
     [:div.ty-elevated.rounded-xl.p-5.lg:p-6
      {:style {:border "1px solid var(--ty-border-)"}}
      (icon-pattern-header
       {:icon "server"
        :flavor "primary"
-       :eyebrow "HTMX · Flask · Django · Rails · PHP · Datastar"
-       :title "No bundler? Use esbuild as a CLI"
-       :tagline "You don't need a build pipeline. esbuild compiles a static icons.js once — re-run when you add an icon."})
+       :eyebrow "HTMX · Datastar · Flask · Django · Rails · PHP"
+       :title "Slot mode — paste your SVG between the tags"
+       :tagline "Your server already produces HTML, including SVG. Drop it inside <ty-icon> — no registration, no fetch, no build chain."})
 
-     (step-label 1 "Install")
+     (step-label 1 "Inside a tyrell slot — wrap for size contract")
      (common/code-block
-      "npm install --save-dev esbuild tyrell-components"
-      "bash")
+      "<ty-button flavor=\"primary\" size=\"lg\">
+  <ty-icon slot=\"start\">
+    {% include 'icons/save.svg' %}
+  </ty-icon>
+  Save
+</ty-button>"
+      "html")
 
-     (step-label 2 "Pick your icons (icons.js)")
+     (step-label 2 "Outside any slot — raw SVG is fine")
      (common/code-block
-      "import { check, heart, save, x, menu } from 'tyrell-components/icons/lucide'
-window.tyIcons.register({ check, heart, save, x, menu })"
-      "javascript")
-
-     (step-label 3 "Bundle once")
-     (common/code-block
-      "esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js"
-      "bash")
-
-     (step-label 4 "Load with defer in your template")
-     (common/code-block
-      "<script defer src=\"/static/icons.js\"></script>"
+      "<a href=\"/help\" class=\"flex items-center gap-2\">
+  {% include 'icons/help.svg' %}
+  Help
+</a>"
       "html")
 
      ;; Outcome callout
@@ -427,8 +427,35 @@ window.tyIcons.register({ check, heart, save, x, menu })"
       [:ty-icon.ty-text-success.flex-shrink-0 {:name "zap"
                                                :size "sm"}]
       [:p.text-sm.ty-text-success.font-medium.leading-snug
-       [:span.font-bold "~6 KB"]
-       " icons.js · vs ~897 KB if you ship every icon. No webpack config, no dev server. Re-run when you add an icon."]]]]
+       [:strong.font-bold "Zero ceremony."]
+       " No npm, no build, no JS registry. Same pattern across Jinja, ERB, EEx, Twig, "
+       [:code.font-mono.text-xs.ty-bg-success.px-1.rounded "echo include"] " — anything that emits HTML."]]
+
+     ;; Sub-callout — graduate to bundling
+     [:div.mt-4.flex.items-start.gap-3.p-4.rounded-lg.ty-bg-info-
+      {:style {:border "1px solid var(--ty-border-info)"}}
+      [:ty-icon.ty-text-info.flex-shrink-0.mt-0.5 {:name "package"
+                                                   :size "sm"}]
+      [:div.flex-1
+       [:p.text-sm.ty-text-info++.font-bold.mb-1 "Many uses across many templates? Graduate to the registry."]
+       [:p.text-sm.ty-text-info.font-normal.leading-relaxed.mb-3
+        "When the same icon shows up in dozens of templates, register once via "
+        [:code.font-mono.text-xs.ty-bg-info.px-1.rounded "window.tyIcons.register({...})"]
+        " and reference by " [:code.font-mono.text-xs.ty-bg-info.px-1.rounded "name="]
+        " everywhere. Production-bundled via esbuild as a CLI:"]
+       (common/code-block
+        "# 1. Pick your icons (icons.js)
+import { check, save, x, menu } from 'tyrell-components/icons/lucide'
+window.tyIcons.register({ check, save, x, menu })
+
+# 2. Bundle once with esbuild
+esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
+
+# 3. Load with defer in your template
+<script defer src=\"/static/icons.js\"></script>"
+        "bash")
+       [:p.text-xs.ty-text-info.font-normal.mt-2.leading-relaxed
+        "~6 KB icons.js · vs ~897 KB if you ship every Lucide icon. Slot mode covers the rest."]]]]]
 
 ;; Footnote — sandbox / CodePen path
    [:div.mt-4.ty-bg-info-.rounded-xl.p-4.flex.items-start.gap-3
@@ -438,11 +465,9 @@ window.tyIcons.register({ check, heart, save, x, menu })"
     [:div.flex-1
      [:p.text-sm.ty-text-info++.font-bold.mb-1 "Just exploring? (CodePen, sandbox, dev console)"]
      [:p.text-sm.ty-text-info.font-normal.leading-relaxed
-      "The CDN bundle ("
-      [:code.font-mono.text-xs.ty-bg-info.px-1.rounded "tyrell.js"]
-      ") ships the web components and an "
-      [:strong "empty"]
-      " icon registry — you populate it inline:"]
+      "Slot mode works in any sandbox — paste SVG between the "
+      [:code.font-mono.text-xs.ty-bg-info.px-1.rounded "<ty-icon>"]
+      " tags, no setup. Or populate the registry inline if you want named references:"]
      [:div.mt-3
       (common/code-block
        "<script src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>
@@ -452,9 +477,7 @@ window.tyIcons.register({ check, heart, save, x, menu })"
     save:  '<svg viewBox=\"0 0 24 24\">...</svg>'
   })
 </script>"
-       "html")]
-     [:p.text-xs.ty-text-info.font-normal.mt-2.leading-relaxed
-      "No build, no npm. Pattern 2 above is the production-grade version once you outgrow this."]]]])
+       "html")]]]])
 
 ;; =============================================================================
 ;; Next steps

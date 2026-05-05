@@ -273,7 +273,7 @@ SURFACE SYSTEM
 ================================================================= */
 
   --ty-surface-canvas: #fcfcfc;
-  --ty-surface-content: #fcfcfc;
+  --ty-surface-content: #ffffff;
   --ty-surface-elevated: #ffffff;
   --ty-surface-floating: #ffffff;
   --ty-surface-input: #ffffff;
@@ -1389,92 +1389,92 @@ INTERACTIVE STATES
 ================================================================= */
 
 .hover\:ty-bg-neutral--:hover {
-  background-color: var(--ty-bg-neutral-faint);
+  background-color: var(--ty-bg-neutral-faint) !important;
 }
 
 .hover\:ty-bg-neutral-:hover {
-  background-color: var(--ty-bg-neutral-soft);
+  background-color: var(--ty-bg-neutral-soft) !important;
 }
 
 .hover\:ty-bg-neutral:hover {
-  background-color: var(--ty-bg-neutral);
+  background-color: var(--ty-bg-neutral) !important;
 }
 
 .hover\:ty-bg-neutral\+:hover {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-mild) !important;
 }
 
 .hover\:ty-bg-neutral\+\+:hover {
-  background-color: var(--ty-bg-neutral-strong);
+  background-color: var(--ty-bg-neutral-strong) !important;
 }
 
 .hover\:ty-bg-primary:hover {
-  background-color: var(--ty-bg-primary);
+  background-color: var(--ty-bg-primary) !important;
 }
 
 .hover\:ty-bg-primary\+:hover {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-mild) !important;
 }
 
 .hover\:ty-bg-secondary:hover {
-  background-color: var(--ty-bg-secondary);
+  background-color: var(--ty-bg-secondary) !important;
 }
 
 .hover\:ty-bg-secondary\+:hover {
-  background-color: var(--ty-bg-secondary-mild);
+  background-color: var(--ty-bg-secondary-mild) !important;
 }
 
 .hover\:ty-bg-success:hover {
-  background-color: var(--ty-bg-success);
+  background-color: var(--ty-bg-success) !important;
 }
 
 .hover\:ty-bg-success\+:hover {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-mild) !important;
 }
 
 .hover\:ty-bg-danger:hover {
-  background-color: var(--ty-bg-danger);
+  background-color: var(--ty-bg-danger) !important;
 }
 
 .hover\:ty-bg-danger\+:hover {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-mild) !important;
 }
 
 .hover\:ty-bg-danger-:hover {
-  background-color: var(--ty-bg-danger-soft);
+  background-color: var(--ty-bg-danger-soft) !important;
 }
 
 .hover\:ty-bg-accent:hover {
-  background-color: var(--ty-bg-accent);
+  background-color: var(--ty-bg-accent) !important;
 }
 
 .hover\:ty-bg-accent\+:hover {
-  background-color: var(--ty-bg-accent-mild);
+  background-color: var(--ty-bg-accent-mild) !important;
 }
 
 .hover\:ty-bg-accent-:hover {
-  background-color: var(--ty-bg-accent-soft);
+  background-color: var(--ty-bg-accent-soft) !important;
 }
 
 /* Hover states for text colors */
 .hover\:ty-text:hover {
-  color: var(--ty-text);
+  color: var(--ty-text) !important;
 }
 
 .hover\:ty-text\+:hover {
-  color: var(--ty-text-mild);
+  color: var(--ty-text-mild) !important;
 }
 
 .hover\:ty-text\+\+:hover {
-  color: var(--ty-text-strong);
+  color: var(--ty-text-strong) !important;
 }
 
 .hover\:ty-text-:hover {
-  color: var(--ty-text-soft);
+  color: var(--ty-text-soft) !important;
 }
 
 .hover\:ty-text--:hover {
-  color: var(--ty-text-faint);
+  color: var(--ty-text-faint) !important;
 }
 
 /* Hover states for semantic text colors */

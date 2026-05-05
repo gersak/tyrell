@@ -7,6 +7,7 @@
    [tyrell.site.docs :as docs]
    [tyrell.site.icons :as icons]
    [tyrell.site.state :refer [state]]
+   [tyrell.site.styles :as styles]
    [tyrell.site.views.components-index :as components-index]
    [tyrell.site.views.landing :as landing]))
 
@@ -120,6 +121,37 @@
     (.scrollTo scroll-container #js {:top 0
                                      :behavior "smooth"})))
 
+(defn scroll-to-anchor! [anchor]
+  (when-let [el (.getElementById js/document anchor)]
+    (.scrollIntoView el #js {:behavior "smooth" :block "start"})))
+
+
+(defn toc-item [{:keys [anchor label route-id category?]}]
+  (if category?
+    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-accent-.transition-colors.cursor-pointer.hover:ty-text-accent
+     {:on {:click #(scroll-to-anchor! anchor)}}
+     label]
+    (let [active? (when route-id (router/rendered? route-id true))]
+      [:button.block.w-full.text-left.text-xs.py-1.pl-8.pr-2.transition-colors.cursor-pointer
+       {:class (if active?
+                 ["ty-text-accent" "font-medium"]
+                 ["ty-text--" "hover:ty-text+"])
+        :on {:click (fn []
+                      (if route-id
+                        (router/navigate! route-id)
+                        (scroll-to-anchor! anchor)))}}
+       label])))
+
+(defn right-sidebar [{:keys [title items]}]
+  [:div.border-l.ty-border.pt-8.pb-8
+   (when title
+     [:p.text-xs.uppercase.tracking-widest.ty-text--.pl-4.mb-3
+      title])
+   [:div
+    (for [item items]
+      ^{:key (or (:anchor item) (:label item))}
+      (toc-item item))]])
+
 (defn toggle-nav-section!
   "Toggle a navigation section open/closed and navigate to first/last item"
   [section-key items]
@@ -138,8 +170,7 @@
                            ;; Otherwise navigate to first item
                            (:route-id (first items)))]
         (when target-route
-          (router/navigate! target-route)
-          (js/setTimeout scroll-main-to-top! 100))))))
+          (router/navigate! target-route))))))
 
 (defn route-in-list?
   "Check if a route-id exists in a flat list of routes"
@@ -177,6 +208,41 @@
               [route]))
           routes))
 
+(defn- component-toc-items []
+  (let [comp-map (components-index/by-id-map)]
+    (mapcat (fn [{:keys [title ids]}]
+              (cons {:anchor (-> title str/lower-case (str/replace #"\s+" "-"))
+                     :label title
+                     :category? true}
+                    (for [id ids
+                          :let [comp (get comp-map id)]
+                          :when comp]
+                      {:label (:name comp)
+                       :route-id id})))
+            components-index/category-groups)))
+
+(defn current-toc
+  "Returns {:title optional-string :items [...]} for the current route, or nil."
+  []
+  (cond
+    (or (router/rendered? ::landing true)
+        (router/rendered? ::landing-user-profile true)
+        (router/rendered? ::landing-event-booking true)
+        (router/rendered? ::landing-contact-form true))
+    {:title "Check out examples"
+     :items [{:anchor "top" :label "Overview" :route-id ::landing}
+             {:anchor "user-profile" :label "User Profile" :route-id ::landing-user-profile}
+             {:anchor "event-booking" :label "Event Booking" :route-id ::landing-event-booking}
+             {:anchor "contact-form" :label "Contact Form" :route-id ::landing-contact-form}]}
+
+    (or (router/rendered? ::components true)
+        (route-in-tree? (some #(when (router/rendered? (:id %) true) (:id %))
+                              (flatten-routes component-routes))
+                        component-routes))
+    {:title nil :items (component-toc-items)}
+
+    :else nil))
+
 (defn auto-expand-section!
   "Automatically expand section based on current route"
   []
@@ -203,45 +269,34 @@
     (nil? (:hash route))))
 
 (defn nav-item
-  "Render a single navigation item.
-   `:featured?` items (Components, CSS System) get bold weight, accent text,
-   and a slightly larger icon — that's the only differentiation. No surface
-   treatment, no border. Regular items stay quiet: lowercase + light weight."
-  [{:keys [route-id label icon indented? section-key featured?]}]
-  (let [active? (router/rendered? route-id true)
-        display-label (if featured? label (str/lower-case (str label)))]
+  [{:keys [route-id label icon indented? section-key featured? also-active-for]}]
+  (let [active? (or (router/rendered? route-id true)
+                    (some #(router/rendered? % true) also-active-for))
+        display-label (str/lower-case (str label))]
     [:button.w-full.text-left.rounded-md.transition-colors.duration-150.cursor-pointer.flex.items-center.gap-3.px-3.py-2
      {:class (concat
               (cond
-                ;; Featured + active: brightest accent text, bold
-                (and featured? active?) ["ty-text-accent+" "font-bold"]
-                ;; Featured + inactive: accent text, semibold
-                featured?               ["ty-text-accent" "font-semibold" "hover:ty-text-accent+"]
-                ;; Regular + active: brighter text, medium weight
-                active?                 ["ty-text++" "font-medium"]
-                ;; Regular + inactive: quiet — hover only changes text color
-                :else                   ["ty-text--" "font-light" "hover:ty-text"])
+                (and featured? active?) ["ty-text-accent+" "font-semibold"]
+                featured?               ["ty-text" "hover:ty-text-accent"]
+                active?                 ["ty-text+" "font-medium"]
+                :else                   ["ty-text--" "font-light" "hover:ty-text+"])
               (when indented? ["pl-7" "text-sm"]))
-      ;; Active items use the FLOATING surface (lighter than the sidebar's
-      ;; elevated surface in dark mode; same white in light mode but with a
-      ;; subtle drop shadow that reads as "lifted" rather than tinted).
       :style (cond-> {:letter-spacing (if featured? "normal" "0.02em")}
-               active? (assoc :background "linear-gradient(to right, var(--ty-bg-accent), var(--ty-surface-floating))"
+               active? (assoc :background "linear-gradient(to right, var(--ty-bg-accent) 2px, transparent 40px)"
                               :box-shadow "inset 2px 0 0 var(--ty-color-accent)"))
       :on {:click (fn []
                     (when section-key
                       (set-last-visited-route! section-key route-id))
                     (router/navigate! route-id)
-                    (when (should-scroll-for-route? route-id)
-                      (js/setTimeout scroll-main-to-top! 100))
                     (swap! state assoc :mobile-menu-open false))}}
      [:ty-icon {:name icon
-                :size (if featured? "md" "sm")
-                :class (cond
-                         featured? "ty-text-accent"
-                         active?   "ty-text-accent"
-                         :else     nil)}]
-     [:span {:class (if featured? "text-sm font-semibold" "text-xs font-light")} display-label]]))
+                :size "sm"
+                :class (when active? "ty-text-accent")}]
+     [:span {:class (cond
+                      (and featured? active?) ["text-xs" "font-semibold"]
+                      featured?               ["text-xs" "font-medium"]
+                      :else                   ["text-xs" "font-light"])}
+      display-label]]))
 
 (defn calculate-collapsible-height
   "Calculate available height for collapsible nav sections.
@@ -321,12 +376,12 @@
                       :size "xs"
                       :class ["transition-transform" "duration-150"
                               (if is-open? "ty-text-accent" "ty-text--")]}]
-           [:h3.text-xs.font-medium.uppercase.tracking-wide
+           [:h3.text-xs.font-medium.tracking-wide
             {:class (if is-open? "ty-text" "ty-text-")}
-            title]]]
+            (str/lower-case title)]]]
          ;; Non-collapsible section header (static)
          [:div.px-3.py-2
-          [:h3.text-xs.font-medium.ty-text-.uppercase.tracking-wide title]]))
+          [:h3.text-xs.font-medium.ty-text-.tracking-wide (str/lower-case title)]]))
 
      ;; Children container with collapse animation
      (if collapsible?
@@ -403,28 +458,21 @@
      (nav-section
       {:items [{:route-id ::landing
                 :label "Welcome"
-                :icon "home"}
+                :icon "home"
+                :also-active-for [::landing-user-profile
+                                  ::landing-event-booking
+                                  ::landing-contact-form]}
                {:route-id ::components
                 :label "Components"
                 :icon "grid"
-                :featured? true}
+                :featured? true
+                ;; Keep "Components" highlighted whenever the user is on any
+                ;; specific component's documentation page, not just the index.
+                :also-active-for (mapv :id (flatten-routes component-routes))}
                {:route-id css-route-id
                 :label "CSS System"
                 :icon "palette"
-                :featured? true}]})
-
-     ;; Examples Section (unified router navigation) - Always visible
-     (nav-section
-      {:title "Live Examples"
-       :items [{:route-id ::landing-user-profile
-                :label "User Profile"
-                :icon "user"}
-               {:route-id ::landing-event-booking
-                :label "Event Booking"
-                :icon "calendar"}
-               {:route-id ::landing-contact-form
-                :label "Contact Form"
-                :icon "mail"}]})]]
+                :featured? true}]})]]
 
    ;; Quickstart (route navigation) - Always visible.
    ;; CSS System is shown in the top section as a featured item, so we
@@ -445,17 +493,9 @@
         view (:view current-route)]
     (when (ifn? view) (view))))
 
-(defn sidebar-content
-  "Sidebar navigation content (used in both desktop sidebar and mobile menu)"
-  []
-  [:aside.h-full.flex.flex-col
-   ;; Scrollable nav with hidden scrollbar
-   [:div.flex-1.overflow-hidden.pt-2
-    [:nav.px-2.lg:px-3.pb-4.h-full.overflow-y-scroll
-     {:style {:scrollbar-width "none"
-              :margin-right "-20px"
-              :padding-right "20px"}}
-     (nav-items)]]])
+(defn sidebar-content []
+  [:nav.px-3.pt-8.pb-8
+   (nav-items)])
 
 (defn slugify
   "Convert text to URL-friendly slug"
@@ -627,8 +667,7 @@
   "Navigate to selected search result"
   [result]
   (router/navigate! (:id result))
-  (close-search!)
-  (js/setTimeout scroll-main-to-top! 100))
+  (close-search!))
 
 (defn search-result-item
   "Render a single search result item"
@@ -833,17 +872,55 @@
       "Components"]
      [:span.ty-text-- "›"]
      (when parent
-       [:<>
-        [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
-         {:on {:click #(router/navigate! (:id parent))}}
-         (:name parent)]
-        [:span.ty-text-- "›"]])
+       [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
+        {:on {:click #(router/navigate! (:id parent))}}
+        (:name parent)])
+     (when parent
+       [:span.ty-text-- "›"])
      [:span.ty-text.font-medium (:name current)]]
     (when-let [title (page-title-text)]
       [:h2.text-sm.font-medium.ty-text-.truncate title])))
 
+(defn header-actions []
+  [:div.flex.items-center.gap-2.flex-shrink-0
+   [:button.transition-all.duration-150.group
+    {:on {:click open-search!}
+     :style {:display "inline-flex"
+             :align-items "center"
+             :gap "8px"
+             :padding "5px 10px"
+             :border-radius "6px"
+             :background "var(--ty-surface-elevated)"
+             :border "1px solid var(--ty-border)"}}
+    [:ty-icon {:name "search"
+               :size "sm"
+               :class ["ty-text--" "group-hover:ty-text-accent" "transition-colors"]}]
+    [:span.ty-text-.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
+    [:span.ty-text--.rounded
+     {:style {:font-size "8px"
+              :line-height "1"
+              :padding "3px 5px"
+              :font-family "inherit"
+              :background "var(--ty-surface-floating)"
+              :border "1px solid var(--ty-border)"}}
+     (if (.-userAgent js/navigator)
+       (if (str/includes? (.-userAgent js/navigator) "Mac") "⌘K" "Ctrl+K")
+       "⌘K")]]
+   [:a.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
+    {:href "https://github.com/gersak/tyrell"
+     :target "_blank"
+     :rel "noopener noreferrer"
+     :title "View on GitHub"}
+    [:ty-icon {:name "github"
+               :size "sm"}]]
+   [:button.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
+    {:on {:click toggle-theme!}}
+    [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
+               :size "sm"}]]])
+
 (defn header []
-  (let [show-sidebar? (layout/breakpoint>= :lg)]
+  (let [show-sidebar? (layout/breakpoint>= :lg)
+        has-toc? (and (layout/breakpoint>= :xl) (seq (:items (current-toc))))]
     [:ty-resize-observer
      (merge {:id "tyrell.header"}
             (resize-observer-hooks "tyrell.header" [:sidebar-sizes :header]))
@@ -854,7 +931,9 @@
         [:div.mx-auto.px-5.lg:px-8
          {:style {:max-width "1200px"
                   :display "grid"
-                  :grid-template-columns "220px minmax(0, 1fr)"
+                  :grid-template-columns (if has-toc?
+                                           "220px minmax(0, 1fr) 180px"
+                                           "220px minmax(0, 1fr)")
                   :gap "40px"
                   :align-items "center"}}
          ;; Logo area (aligns with sidebar)
@@ -867,48 +946,17 @@
                       :class "ty-text-accent"
                       :style {:height 40
                               :width 120}}]]]
-         ;; Content header area (aligns with main content)
-         [:div.flex.items-center.justify-between.gap-3.py-2
-          [:div.flex-1.min-w-0 (header-title)]
-          ;; Actions
-          [:div.flex.items-center.gap-2.flex-shrink-0
-           ;; Search button
-           [:button.transition-all.duration-150.group
-            {:on {:click open-search!}
-             :style {:display "inline-flex"
-                     :align-items "center"
-                     :gap "8px"
-                     :padding "5px 10px"
-                     :border-radius "6px"
-                     :background "var(--ty-surface-elevated)"
-                     :border "1px solid var(--ty-border)"}}
-            [:ty-icon {:name "search"
-                       :size "sm"
-                       :class ["ty-text--" "group-hover:ty-text-accent" "transition-colors"]}]
-            [:span.ty-text-.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
-            [:span.ty-text--.rounded
-             {:style {:font-size "8px"
-                      :line-height "1"
-                      :padding "3px 5px"
-                      :font-family "inherit"
-                      :background "var(--ty-surface-floating)"
-                      :border "1px solid var(--ty-border)"}}
-             (if (.-userAgent js/navigator)
-               (if (str/includes? (.-userAgent js/navigator) "Mac") "⌘K" "Ctrl+K")
-               "⌘K")]]
-           ;; GitHub link
-           [:a.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
-            {:href "https://github.com/gersak/tyrell"
-             :target "_blank"
-             :rel "noopener noreferrer"
-             :title "View on GitHub"}
-            [:ty-icon {:name "github"
-                       :size "sm"}]]
-           ;; Theme toggle
-           [:button.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
-            {:on {:click toggle-theme!}}
-            [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
-                       :size "sm"}]]]]]
+         ;; Content header area — title only when right sidebar present
+         (if has-toc?
+           [:div.flex.items-center.py-2
+            [:div.flex-1.min-w-0 (header-title)]]
+           [:div.flex.items-center.justify-between.gap-3.py-2
+            [:div.flex-1.min-w-0 (header-title)]
+            (header-actions)])
+         ;; When right sidebar is visible, actions move here to align with it
+         (when has-toc?
+           [:div.flex.items-center.justify-end.py-2
+            (header-actions)])]
 
         ;; Mobile: Single row flex layout
         [:div.mx-auto.px-4.py-3.flex.items-center.gap-3
@@ -956,48 +1004,61 @@
 (defn app []
   (layout/with-window
     (let [show-sidebar? (layout/breakpoint>= :lg)
+          toc (current-toc)
+          has-toc? (and (layout/breakpoint>= :xl) (seq (:items toc)))
           header-height (if (layout/breakpoint>= :lg) 60 52)
-          content-padding (if (layout/breakpoint>= :lg) 48 24)]
+          content-padding (if (layout/breakpoint>= :lg) 48 24)
+          sidebar-max-h (str "calc(100vh - " header-height "px)")]
       [:div.flex.flex-col.ty-canvas.ty-text
-       {:style {:height "100%"}}  ; Height from fixed parent (#app)
+       {:style {:height "100%"}}
        (mobile-menu)
        (search-modal)
        (header)
-       ;; Main scrollable area (CSS handles iOS Safari fixes in index.html)
        [:div.flex-1.overflow-y-auto.overflow-x-hidden.ty-canvas
         {:id "main-scroll-container"
          :style {:-webkit-overflow-scrolling "touch"}}
-        ;; Centered container with CSS Grid - min-height ensures no whitespace
         [:div.mx-auto
          {:style {:display "grid"
-                  :grid-template-columns (if show-sidebar?
-                                           "220px minmax(0, 1fr)"
-                                           "1fr")
+                  :grid-template-columns (cond
+                                           (and show-sidebar? has-toc?) "220px minmax(0, 1fr) 180px"
+                                           show-sidebar? "220px minmax(0, 1fr)"
+                                           :else "1fr")
                   :max-width "1200px"
                   :min-height "100%"
                   :gap (if show-sidebar? "40px" "0px")
-                  :padding (if show-sidebar?
-                             "32px 32px"
-                             "8px 4px")}}
-         ;; Left sidebar (navigation)
+                  ;; No vertical padding — sidebars start at top-0 and stick immediately
+                  :padding (if show-sidebar? "0 32px" "8px 4px")}}
          (when show-sidebar?
-           [:div.sticky.top-0.self-start.h-fit
-            {:style {:max-height "calc(100vh - 100px)"}}
+           [:div.sticky.top-0.self-start
+            {:style {:max-height sidebar-max-h
+                     :overflow-y "auto"
+                     :scrollbar-width "none"}}
             (sidebar-content)])
-         ;; Main content
          [:main.min-w-0
+          {:style {:padding "32px 0"}}
           (layout/with-container
-            {:width (if show-sidebar?
-                      (- (layout/container-width) 220 content-padding)
-                      (- (layout/container-width) content-padding))
+            {:width (cond
+                      (and show-sidebar? has-toc?) (- (layout/container-width) 220 180 content-padding)
+                      show-sidebar? (- (layout/container-width) 220 content-padding)
+                      :else (- (layout/container-width) content-padding))
              :height (- (layout/container-height) header-height content-padding)}
-            (render))]]]])))
+            (render))]
+         (when has-toc?
+           [:div.sticky.top-0.self-start
+            {:style {:max-height sidebar-max-h
+                     :overflow-y "auto"
+                     :scrollbar-width "none"}}
+            (right-sidebar toc)])]]])))
 
 (defn render-app! []
   (binding [router/*roles* (:user/roles @state)]
     (rdom/render (.getElementById js/document "app") (app))))
 
 (defn ^:dev/after-load init []
+  ;; Inject site-chrome styles (inline-code pills, etc.) into <head>.
+  ;; Idempotent + hot-reloadable via tyrell.css/ensure-document-styles!
+  (styles/install!)
+
   ;; Initialize theme from localStorage or system preference (default: dark)
   (let [stored-theme (.getItem js/localStorage "theme")
         system-theme (if (and (.-matchMedia js/window)
@@ -1018,15 +1079,21 @@
   ;; Setup global keyboard shortcuts (Cmd+K for search)
   (setup-keyboard-shortcuts!)
 
-  ;; Watch router changes for auto-expand and re-render
+  ;; Watch router changes for auto-expand, scroll-to-top, and re-render
   (add-watch router/*router* ::render
-             (fn [_ _ _ _]
+             (fn [_ _ old-state new-state]
+               (when (not= (:current old-state) (:current new-state))
+                 (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
+                       current-route (some #(when (router/rendered? (:id %) true) %) all-routes)]
+                   (when (should-scroll-for-route? (:id current-route))
+                     (js/setTimeout scroll-main-to-top! 100))))
                (auto-expand-section!)
                (render-app!)))
 
   ;; Watch state changes and re-render
   (add-watch state ::render
              (fn [_ _ _ _] (render-app!)))
+
 
   ;; Watch window size changes for responsive layout (fixes sidebar toggle)
   (add-watch layout/window-size ::window-resize

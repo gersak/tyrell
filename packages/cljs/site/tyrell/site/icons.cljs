@@ -189,6 +189,8 @@
   :python fav6-brands/python
   :node-js fav6-brands/node-js
   :github fav6-brands/github
+  :php fav6-brands/php
+  :laravel fav6-brands/laravel
 
      ;; Brand silhouettes (custom SVGs, currentColor)
   :typescript typescript

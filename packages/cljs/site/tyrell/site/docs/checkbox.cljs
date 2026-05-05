@@ -1,29 +1,82 @@
 (ns tyrell.site.docs.checkbox
-  (:require [tyrell.site.docs.common :as common]))
+  "Documentation for ty-checkbox component"
+  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
+                                             doc-section docs-page component-header section-label demo-area]]))
 
 (defn view []
-  [:div.max-w-4xl.mx-auto.px-4.md:px-6.py-8
-   [:h1.text-3xl.md:text-4xl.font-bold.ty-text++.mb-3 "Checkbox"]
-   [:p.text-base.ty-text-.mb-6.leading-relaxed
-    [:strong "Just the box."]
-    " Renders only the checkbox visual + boolean state. Wrap in a "
-    [:code.ty-bg-neutral-.px-1.rounded "<label>"]
-    " for click-on-text behavior; the browser delegates clicks to the form-associated child. Required indicator and error display are the consumer's responsibility."]
+  (docs-page
+   (component-header "ty-checkbox"
+                     "Just the box. Boolean state primitive with check/dash SVG icons, semantic flavors, and form association. Wrap in a <label> for click-on-text behavior.")
 
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Basic"]
-    [:div.ty-content.rounded-lg.p-6.mb-4.flex.flex-col.items-start.gap-3
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-      [:ty-checkbox]
-      [:span.whitespace-nowrap "Subscribe to newsletter"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-      [:ty-checkbox {:checked ""}]
-      [:span.whitespace-nowrap "Pre-checked option"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-60
-      [:ty-checkbox {:disabled ""}]
-      [:span.whitespace-nowrap "Disabled"]]]
-    (common/code-block
-      "<label>
+   ;; API Reference
+   [:div.ty-elevated.rounded-lg.p-6
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+     [:h2.scroll-mt-6
+      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+      [:span.ty-text-- "API Reference"]]]
+
+    [:div.mb-6
+     (section-label "Attributes")
+     (attribute-table
+      [{:name "checked"
+        :type "boolean"
+        :default "false"
+        :description "Current checked state"}
+       {:name "value"
+        :type "string"
+        :default "\"on\""
+        :description "Value submitted with the form when checked"}
+       {:name "name"
+        :type "string"
+        :default "-"
+        :description "Form field name"}
+       {:name "disabled"
+        :type "boolean"
+        :default "false"
+        :description "Disable interaction"}
+       {:name "required"
+        :type "boolean"
+        :default "false"
+        :description "Sets aria-required and participates in form validation"}
+       {:name "size"
+        :type "string"
+        :default "\"md\""
+        :description "Size variant: xs, sm, md, lg, xl"}
+       {:name "flavor"
+        :type "string"
+        :default "\"primary\""
+        :description "Semantic color: primary, secondary, success, danger, warning, neutral"}])]
+
+    [:div
+     (section-label "Events")
+     (event-table
+      [{:name "change"
+        :payload "{value: boolean, checked: boolean, formValue: string | null}"
+        :when-fired "Fires when checked state changes"}
+       {:name "input"
+        :payload "{value: boolean, checked: boolean, formValue: string | null}"
+        :when-fired "Fires on every interaction (same as change for checkboxes)"}])]]
+
+   ;; Examples
+   (doc-section "Examples"
+     [:div.space-y-6
+
+      ;; Basic
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Basic")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Wrap in a " [:code "<label>"] " — the browser delegates label clicks to the form-associated child."]
+       (demo-area
+        [:div.flex.flex-col.items-start.gap-3
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox] [:span.whitespace-nowrap "Subscribe to newsletter"]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:checked ""}] [:span.whitespace-nowrap "Pre-checked option"]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:indeterminate ""}] [:span.whitespace-nowrap "Indeterminate state"]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-60
+          [:ty-checkbox {:disabled ""}] [:span.whitespace-nowrap "Disabled"]]])
+       (code-block "<label>
   <ty-checkbox></ty-checkbox>
   Subscribe to newsletter
 </label>
@@ -31,107 +84,178 @@
 <label>
   <ty-checkbox checked></ty-checkbox>
   Pre-checked option
-</label>"
-      "html")]
+</label>
 
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Rich label content"]
-    [:p.ty-text-.mb-3
-     "Because the checkbox doesn't own the text, you can put any markup next to it — links, icons, formatting — and clicks on those interactive children "
-     [:strong "do not"]
-     " toggle the checkbox."]
-    [:div.ty-content.rounded-lg.p-6.mb-4
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-      [:ty-checkbox {:required ""
-                     :flavor "primary"}]
-      [:span.whitespace-nowrap
-       "I agree to the "
-       [:a.ty-text-primary.underline {:href "#"
-                                      :on {:click (fn [e] (.preventDefault e))}}
-        "Terms of Service"]
-       " and "
-       [:a.ty-text-primary.underline {:href "#"
-                                      :on {:click (fn [e] (.preventDefault e))}}
-        "Privacy Policy"]
-       "."]]]
-    (common/code-block
-      "<label>
+<label>
+  <ty-checkbox indeterminate></ty-checkbox>
+  Indeterminate state
+</label>")]
+
+      ;; Rich Labels
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Rich Labels")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Interactive descendants inside the label (links, buttons) do not toggle the checkbox — they handle their own clicks normally."]
+       (demo-area
+        [:div.flex.flex-col.items-start.gap-3
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:required "" :flavor "primary"}]
+          [:span.whitespace-nowrap
+           "I agree to the "
+           [:a.ty-text-primary.underline {:href "#" :on {:click #(.preventDefault %)}} "Terms of Service"]
+           " and "
+           [:a.ty-text-primary.underline {:href "#" :on {:click #(.preventDefault %)}} "Privacy Policy"]
+           "."]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:flavor "success"}]
+          [:span.whitespace-nowrap
+           [:ty-icon.ty-text-success {:name "shield-check" :size "14"}]
+           " Enable two-factor authentication"]]])
+       (code-block "<label>
   <ty-checkbox required></ty-checkbox>
   I agree to the <a href=\"/terms\">Terms</a> and <a href=\"/privacy\">Privacy</a>.
-</label>"
-      "html")]
-
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Sizes"]
-    [:div.ty-content.rounded-lg.p-6.mb-4.flex.flex-col.items-start.gap-3
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-xs
-      [:ty-checkbox {:size "xs" :checked ""}] [:span.whitespace-nowrap "Extra small"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm
-      [:ty-checkbox {:size "sm" :checked ""}] [:span.whitespace-nowrap "Small"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer
-      [:ty-checkbox {:size "md" :checked ""}] [:span.whitespace-nowrap "Medium (default)"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-lg
-      [:ty-checkbox {:size "lg" :checked ""}] [:span.whitespace-nowrap "Large"]]
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-xl
-      [:ty-checkbox {:size "xl" :checked ""}] [:span.whitespace-nowrap "Extra large"]]]]
-
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Flavors"]
-    [:div.ty-content.rounded-lg.p-6.mb-4.flex.flex-col.items-start.gap-2
-     (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
-       ^{:key flavor}
-       [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-        [:ty-checkbox {:flavor flavor :checked ""}]
-        [:span.whitespace-nowrap (str (clojure.string/capitalize flavor))]])]]
-
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Validation"]
-    [:p.ty-text-.mb-3
-     "Validation UI is the consumer's job. The "
-     [:code.ty-bg-neutral-.px-1.rounded "required"]
-     " attribute participates in form validation and sets "
-     [:code.ty-bg-neutral-.px-1.rounded "aria-required"]
-     "; render the error message and required asterisk yourself."]
-    [:div.ty-content.rounded-lg.p-6.mb-4
-     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-      [:ty-checkbox {:required ""
-                     :flavor "danger"}]
-      [:span.whitespace-nowrap
-       "Accept terms"
-       [:span.ty-text-danger.ml-1 "*"]]]
-     [:p.text-xs.ty-text-danger.mt-2 "You must accept the terms to continue."]]
-    (common/code-block
-      "<label>
-  <ty-checkbox required flavor=\"danger\"></ty-checkbox>
-  Accept terms <span class=\"required-indicator\">*</span>
 </label>
-<p class=\"error\">You must accept the terms to continue.</p>"
-      "html")]
 
-   [:section.mb-10
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Attributes"]
-    [:div.ty-content.rounded-lg.p-4.text-sm.ty-text-
-     [:ul.list-disc.pl-6.space-y-1
-      [:li [:code.ty-bg-neutral-.px-1.rounded "checked"] " — boolean state"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "value"] " — form-submission value when checked (default \"on\")"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "name"] " — form field name"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "disabled"] " — disable interaction"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "required"] " — sets aria-required and triggers form validation"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "size"] " — xs/sm/md/lg/xl"]
-      [:li [:code.ty-bg-neutral-.px-1.rounded "flavor"] " — primary/secondary/success/danger/warning/neutral"]]]]
+<label>
+  <ty-checkbox flavor=\"success\"></ty-checkbox>
+  <ty-icon name=\"shield-check\"></ty-icon> Enable two-factor authentication
+</label>")]
 
-   [:section
-    [:h2.text-xl.font-semibold.ty-text++.mb-3 "Events"]
-    [:p.ty-text-.mb-3
-     "Emits both "
-     [:code.ty-bg-neutral-.px-1.rounded "input"]
-     " and "
-     [:code.ty-bg-neutral-.px-1.rounded "change"]
-     " events with detail object:"]
-    (common/code-block
-      "checkboxEl.addEventListener('change', (e) => {
+      ;; Flavors
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Semantic Flavors")
+       (demo-area
+        [:div.flex.flex-wrap.gap-4
+         (for [[flavor label] [["primary" "Primary"] ["secondary" "Secondary"] ["success" "Success"]
+                               ["danger" "Danger"] ["warning" "Warning"] ["neutral" "Neutral"]]]
+           [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+            [:ty-checkbox {:flavor flavor :checked ""}]
+            [:span.whitespace-nowrap label]])])
+       (code-block "<ty-checkbox flavor=\"primary\" checked></ty-checkbox>
+<ty-checkbox flavor=\"success\" checked></ty-checkbox>
+<ty-checkbox flavor=\"danger\" checked></ty-checkbox>")]
+
+      ;; Sizes
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Sizes")
+       (demo-area
+        [:div.flex.flex-col.items-start.gap-3
+         (for [[size label] [["xs" "Extra small"] ["sm" "Small"] ["md" "Medium (default)"]
+                             ["lg" "Large"] ["xl" "Extra large"]]]
+           [:label.inline-flex.items-center.gap-2.cursor-pointer.font-medium
+            {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}
+            [:ty-checkbox {:size size :checked ""}]
+            [:span.whitespace-nowrap label]])])
+       (code-block "<ty-checkbox size=\"xs\"></ty-checkbox>
+<ty-checkbox size=\"sm\"></ty-checkbox>
+<ty-checkbox size=\"md\"></ty-checkbox>
+<ty-checkbox size=\"lg\"></ty-checkbox>
+<ty-checkbox size=\"xl\"></ty-checkbox>")]
+
+      ;; Validation
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Validation States")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Validation UI is the consumer's responsibility — render the asterisk, error, and required indicator yourself."]
+       (demo-area
+        [:div.flex.flex-col.items-start.gap-4
+         [:div
+          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+           [:ty-checkbox {:required "" :flavor "primary"}]
+           [:span.whitespace-nowrap "Accept terms "
+            [:span.ty-text-danger "*"]]]
+          [:p.ty-text-danger {:style {:font-size "0.75rem" :margin-top "0.25rem"}} "You must accept the terms to continue."]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-50
+          [:ty-checkbox {:disabled "" :checked ""}]
+          [:span.whitespace-nowrap "Locked setting (admin only)"]]])
+       (code-block "<label>
+  <ty-checkbox required flavor=\"danger\"></ty-checkbox>
+  Accept terms <span class=\"required\">*</span>
+</label>
+<p class=\"ty-text-danger\">You must accept the terms to continue.</p>")]])
+
+   ;; Form Integration
+   (doc-section "Form Integration"
+     [:div.space-y-5
+
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "With HTML Form")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Fully form-associated — participates in FormData, submit, reset, and constraint validation like a native checkbox."]
+       (demo-area
+        [:form.space-y-3
+         {:on {:submit (fn [e]
+                         (.preventDefault e)
+                         (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
+                           (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:name "newsletter" :value "yes"}]
+          [:span "Subscribe to newsletter"]]
+         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
+          [:ty-checkbox {:name "terms" :required ""}]
+          [:span "I accept the terms "
+           [:span.ty-text-danger "*"]]]
+         [:button.ty-bg-primary.ty-text++.rounded {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+       (code-block "<form>
+  <label>
+    <ty-checkbox name=\"newsletter\" value=\"yes\"></ty-checkbox>
+    Subscribe to newsletter
+  </label>
+  <label>
+    <ty-checkbox name=\"terms\" required></ty-checkbox>
+    I accept the terms
+  </label>
+  <button type=\"submit\">Submit</button>
+</form>")]
+
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "JavaScript API")
+       (code-block "const checkbox = document.querySelector('ty-checkbox');
+
+// Read state
+console.log(checkbox.checked);   // true | false
+console.log(checkbox.value);     // form value when checked
+
+// Set state
+checkbox.checked = true;
+
+// Listen for changes
+checkbox.addEventListener('change', (e) => {
   console.log(e.detail.value);     // true | false
   console.log(e.detail.checked);   // true | false
   console.log(e.detail.formValue); // 'on' | null
-});"
-      "javascript")]])
+});" "javascript")]])
+
+   ;; Best Practices
+   (doc-section "Best Practices"
+     [:div.ty-elevated.rounded-lg.p-5
+      [:div.grid.gap-6
+       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+        [:div.space-y-2
+         (for [text ["Wrap in <label> — the browser handles the click delegation"
+                     "Use required and render error message + asterisk yourself"
+                     "Use for independent binary choices that don't affect each other"
+                     "Use flavor to reinforce meaning — danger for destructive, success for opt-ins"
+                     "Use indeterminate for parent checkboxes in a tree"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
+
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+        [:div.space-y-2
+         (for [text ["Use checkbox for mutually exclusive options — use ty-radio-group instead"
+                     "Put all your label text inside the checkbox itself"
+                     "Rely on color alone for error state — show an error message too"
+                     "Use for immediate-effect toggles — ty-switch is better for settings"
+                     "Skip the label — checkboxes without labels are inaccessible"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))

@@ -107,22 +107,6 @@
   (swap! state/state assoc-in [:user-profile :validation-errors] {}))
 
 ;; ============================================================================
-;; Hero Section
-;; ============================================================================
-
-(defn hero-section []
-  [:div.text-center.mb-12
-   [:h1.text-4xl.font-bold.ty-text.mb-4 "User Profile Scenario"]
-   [:p.text-lg.ty-text-.max-w-3xl.mx-auto.leading-relaxed
-    "Experience the power of rich, interactive web components through a professional user profile interface. See how dropdowns can contain beautiful HTML content with flags, icons, and contextual information, while multiselects showcase colorful skill tags with semantic meanings."]
-
-   [:div.flex.flex-wrap.gap-3.justify-center.mt-6
-    [:span.px-3.py-1.ty-bg-primary-.ty-text-primary.rounded-full.text-sm.font-medium "Rich Dropdowns"]
-    [:span.px-3.py-1.ty-bg-success-.ty-text-success.rounded-full.text-sm.font-medium "Visual Multiselects"]
-    [:span.px-3.py-1.ty-bg-warning-.ty-text-warning.rounded-full.text-sm.font-medium "Modal Integration"]
-    [:span.px-3.py-1.ty-bg-neutral-.ty-text.rounded-full.text-sm.font-medium "Form Validation"]]])
-
-;; ============================================================================
 ;; Avatar Section
 ;; ============================================================================
 
@@ -326,7 +310,7 @@
   [:div
    [:h3.text-xl.font-semibold.ty-text.mb-6.pb-2.border-b.ty-border "Location & Preferences"]
 
-   [:div.grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-6
+   [:div.grid.grid-cols-1.sm:grid-cols-2.gap-4
     ;; Country Dropdown with flags and details
     [:div
      [:label.block.text-sm.font-medium.ty-text.mb-2 "Country"]
@@ -767,53 +751,37 @@
               :exported-data nil})
         ;; Check if there are any validation errors
         has-errors (not (empty? validation-errors))]
-    [:div.max-w-4xl.mx-auto.space-y-8
-     ;; Hero Section
-     (hero-section)
+    [:div.space-y-6
+     (avatar-section {:on-avatar-click #(swap! state/state assoc-in [:user-profile :avatar-modal-open] true)})
 
-     ;; Interactive Demo
-     [:div.ty-elevated.p-4.sm:p-8.rounded-xl
-      (avatar-section {:on-avatar-click #(swap! state/state assoc-in [:user-profile :avatar-modal-open] true)})
+     [:form.space-y-6
+      {:on {:submit handle-form-submit}}
 
-      [:form.space-y-8
-       {:on {:submit handle-form-submit}}
+      (personal-info-section {:form-data form-data
+                              :errors validation-errors
+                              :touched touched-fields
+                              :on-change handle-field-change})
 
-       ;; Personal & Professional Information - Two Column Layout
-       [:div.grid.grid-cols-1.lg:grid-cols-2.gap-8
-        ;; Left Column - Personal Information
-        (personal-info-section {:form-data form-data
-                                :errors validation-errors
-                                :touched touched-fields
-                                :on-change handle-field-change})
+      (professional-info-section {:form-data form-data
+                                  :errors validation-errors
+                                  :touched touched-fields
+                                  :on-change handle-field-change})
 
-        ;; Right Column - Professional Information
-        (professional-info-section {:form-data form-data
-                                    :errors validation-errors
-                                    :touched touched-fields
-                                    :on-change handle-field-change})]
+      (location-preferences-section)
+      (security-section)
 
-       ;; Location & Preferences Section
-       (location-preferences-section)
+      (form-actions {:is-submitting is-submitting
+                     :has-errors has-errors
+                     :on-export handle-export-click
+                     :on-cancel handle-cancel})]
 
-       ;; Account Security Section
-       (security-section)
-
-       ;; Form Actions
-       (form-actions {:is-submitting is-submitting
-                      :has-errors has-errors
-                      :on-export handle-export-click
-                      :on-cancel handle-cancel})]]
-
-     ;; Avatar Upload Modal
      (avatar-upload-modal {:open avatar-modal-open
                            :on-close #(swap! state/state assoc-in [:user-profile :avatar-modal-open] false)})
 
-     ;; Success Modal
      (success-modal {:open success-modal-open
                      :on-close #(swap! state/state assoc-in [:user-profile :success-modal-open] false)
                      :saved-data saved-data})
 
-     ;; Export Modal
      (export-modal {:open export-modal-open
                     :on-close #(swap! state/state assoc-in [:user-profile :export-modal-open] false)
                     :exported-data exported-data})]))

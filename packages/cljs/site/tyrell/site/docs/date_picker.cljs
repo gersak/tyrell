@@ -1,533 +1,280 @@
 (ns tyrell.site.docs.date-picker
   "Documentation for ty-date-picker component"
-  (:require
-    [tyrell.site.docs.common
-     :refer [code-block
-             attribute-table
-             event-table
-             doc-section
-             example-section
-             docs-page]]))
+  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
+                                             doc-section docs-page component-header section-label demo-area]]))
 
 (defn view []
   (docs-page
-   ;; Title and Description
-   [:div.mb-8
-    [:h1.text-3xl.font-bold.ty-text.mb-2 "ty-date-picker"]
-    [:p.text-lg.ty-text- "A comprehensive date picker component with optional time selection, internationalization support, and a beautiful calendar dropdown."]]
+   (component-header "ty-date-picker"
+                     "Date input with integrated calendar popup, ISO date string value, form participation, and optional time selection. The input shows a formatted display; the value is always ISO (YYYY-MM-DD or YYYY-MM-DDTHH:mm).")
 
-   ;; API Reference Card
-   [:div.ty-elevated.rounded-lg.p-6.mb-8
-    [:h2.text-2xl.font-semibold.ty-text++.mb-6 "API Reference"]
+   ;; API Reference
+   [:div.ty-elevated.rounded-lg.p-6
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+     [:h2.scroll-mt-6
+      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
+      [:span.ty-text-- "API Reference"]]]
 
-    ;; Attributes Table
-    [:div.mb-8
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "Attributes"]
+    [:div.mb-6
+     (section-label "Attributes")
      (attribute-table
-       [{:name "value"
-         :type "string"
-         :default "null"
-         :description "Initial date value (ISO format: YYYY-MM-DD or YYYY-MM-DDTHH:mm)"}
-        {:name "size"
-         :type "string"
-         :default "\"md\""
-         :description "Size variant: xs, sm, md, lg, xl"}
-        {:name "flavor"
-         :type "string"
-         :default "null"
-         :description "Color flavor: primary, secondary, success, danger, warning"}
-        {:name "label"
-         :type "string"
-         :default "null"
-         :description "Label text displayed above the input"}
-        {:name "placeholder"
-         :type "string"
-         :default "\"Select date...\""
-         :description "Placeholder text when no date is selected"}
-        {:name "required"
-         :type "boolean"
-         :default "false"
-         :description "Whether the field is required"}
-        {:name "disabled"
-         :type "boolean"
-         :default "false"
-         :description "Disable the date picker"}
-        {:name "clearable"
-         :type "boolean"
-         :default "true"
-         :description "Show clear button when value is present"}
-        {:name "with-time"
-         :type "boolean"
-         :default "false"
-         :description "Enable time selection alongside date"}
-        {:name "format"
-         :type "string"
-         :default "\"long\""
-         :description "Date format style: short, medium, long, full"}
-        {:name "locale"
-         :type "string"
-         :default "\"en-US\""
-         :description "Locale for formatting (e.g., 'de-DE', 'fr-FR')"}
-        {:name "name"
-         :type "string"
-         :default "null"
-         :description "Form field name for submission"}])]
+      [{:name "value"
+        :type "string"
+        :default "\"\""
+        :description "Selected date as ISO string: YYYY-MM-DD (or YYYY-MM-DDTHH:mm with with-time)"}
+       {:name "label"
+        :type "string"
+        :default "-"
+        :description "Label displayed above the input"}
+       {:name "placeholder"
+        :type "string"
+        :default "\"Select date...\""
+        :description "Placeholder text when no date is selected"}
+       {:name "name"
+        :type "string"
+        :default "-"
+        :description "Form field name — submits selected date in FormData as ISO string"}
+       {:name "size"
+        :type "string"
+        :default "\"md\""
+        :description "Size variant: xs, sm, md, lg, xl"}
+       {:name "flavor"
+        :type "string"
+        :default "-"
+        :description "Semantic color: primary, secondary, success, danger, warning"}
+       {:name "locale"
+        :type "string"
+        :default "\"en-US\""
+        :description "Locale for the formatted display label (e.g. \"de-DE\", \"fr-FR\")"}
+       {:name "format"
+        :type "string"
+        :default "\"long\""
+        :description "Display format style: short, medium, long, full"}
+       {:name "clearable"
+        :type "boolean"
+        :default "true"
+        :description "Show a clear button when a date is selected"}
+       {:name "with-time"
+        :type "boolean"
+        :default "false"
+        :description "Enable time selection alongside the date"}
+       {:name "required"
+        :type "boolean"
+        :default "false"
+        :description "Mark as required — participates in form validation"}
+       {:name "disabled"
+        :type "boolean"
+        :default "false"
+        :description "Disable the picker entirely"}])]
 
-    ;; Events Table
-    [:div.mb-8
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "Events"]
+    [:div
+     (section-label "Events")
      (event-table
-       [{:name "change"
-         :payload "{value: string, milliseconds: number, source: string, formatted: string}"
-         :when-fired "Fired when date/time value changes. Source can be 'selection', 'time-change', 'clear', or 'external'"}
-        {:name "open"
-         :payload "null"
-         :when-fired "Fired when the calendar dropdown opens"}])]
+      [{:name "change"
+        :payload "{value: string, milliseconds: number, source: string, formatted: string}"
+        :when-fired "Fires when the date changes — source is 'selection', 'time-change', 'clear', or 'external'"}
+       {:name "open"
+        :payload "{}"
+        :when-fired "Fires when the calendar popup opens"}])]]
 
-    ;; Properties Table
-    [:div
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "Properties"]
-     [:div.ty-bg-neutral-.rounded.p-4.overflow-x-auto
-      (code-block
-        "// JavaScript access
-const picker = document.querySelector('ty-date-picker');
-picker.value = '2024-09-21';  // Set date
-picker.value = '2024-09-21T14:30';  // Set date and time
-const currentValue = picker.value;  // Get current value"
-        "javascript")]]]
+   ;; Examples
+   (doc-section "Examples"
+     [:div.space-y-6
 
-   ;; Basic Usage
-   [:div.ty-content.rounded-lg.p-6.mb-8
-    [:h2.text-2xl.font-semibold.ty-text++.mb-6 "Basic Usage"]
+      ;; Basic
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Basic")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Clicking the input opens a calendar popup. The selected date is stored as ISO and displayed in the formatted locale label."]
+       (demo-area
+        [:div.flex.flex-wrap.gap-4
+         [:ty-date-picker {:label "Appointment date"}]
+         [:ty-date-picker {:label "Pre-selected" :value "2025-06-15"}]])
+       (code-block "<ty-date-picker label=\"Appointment date\"></ty-date-picker>
+<ty-date-picker label=\"Pre-selected\" value=\"2025-06-15\"></ty-date-picker>")]
 
-    [:div.mb-6
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "Simple Date Picker"]
-     [:div.mb-4
-      [:ty-date-picker {:label "Select Date"}]]
-     (code-block
-       "<ty-date-picker label=\"Select Date\"></ty-date-picker>")]
+      ;; With time
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "With Time")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Set " [:code "with-time"] " to add a time selector below the calendar. Value becomes " [:code "YYYY-MM-DDTHH:mm"] "."]
+       (demo-area
+        [:ty-date-picker {:label "Meeting time" :with-time ""}])
+       (code-block "<ty-date-picker label=\"Meeting time\" with-time></ty-date-picker>")]
 
-    [:div.mb-6
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "With Initial Value"]
-     [:div.mb-4
-      [:ty-date-picker {:label "Event Date"
-                        :value "2024-09-21"}]]
-     (code-block
-       "<ty-date-picker 
-  label=\"Event Date\" 
-  value=\"2024-09-21\">
-</ty-date-picker>")]
+      ;; Sizes
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Sizes")
+       (demo-area
+        [:div.flex.flex-col.gap-3
+         [:ty-date-picker {:label "Extra small" :size "xs"}]
+         [:ty-date-picker {:label "Small" :size "sm"}]
+         [:ty-date-picker {:label "Medium (default)" :size "md"}]
+         [:ty-date-picker {:label "Large" :size "lg"}]])
+       (code-block "<ty-date-picker size=\"xs\"></ty-date-picker>
+<ty-date-picker size=\"sm\"></ty-date-picker>
+<ty-date-picker size=\"md\"></ty-date-picker>
+<ty-date-picker size=\"lg\"></ty-date-picker>")]
 
-    [:div
-     [:h3.text-lg.font-medium.ty-text+.mb-3 "With Time Selection"]
-     [:div.mb-4
-      [:ty-date-picker {:label "Appointment"
-                        :with-time "true"
-                        :value "2024-09-21T14:30"}]]
-     (code-block
-       "<ty-date-picker 
-  label=\"Appointment\" 
-  with-time=\"true\"
-  value=\"2024-09-21T14:30\">
-</ty-date-picker>")]]
+      ;; Locale and format
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Locale and Format")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "The " [:code "locale"] " and " [:code "format"] " attributes control the display label only — the " [:code "value"] " is always ISO."]
+       (demo-area
+        [:div.flex.flex-col.gap-3
+         [:ty-date-picker {:label "German (long)" :locale "de-DE" :value "2025-06-15"}]
+         [:ty-date-picker {:label "French (short)" :locale "fr-FR" :format "short" :value "2025-06-15"}]
+         [:ty-date-picker {:label "Japanese (medium)" :locale "ja-JP" :format "medium" :value "2025-06-15"}]])
+       (code-block "<ty-date-picker locale=\"de-DE\" value=\"2025-06-15\"></ty-date-picker>
+<ty-date-picker locale=\"fr-FR\" format=\"short\"></ty-date-picker>")]
 
-   ;; Examples Section
-   [:h2.text-2xl.font-semibold.ty-text++.mb-6 "Examples"]
+      ;; States
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "States")
+       (demo-area
+        [:div.flex.flex-col.gap-3
+         [:ty-date-picker {:label "Required" :required ""}]
+         [:ty-date-picker {:label "Disabled" :disabled "" :value "2025-06-15"}]
+         [:ty-date-picker {:label "No clear button" :clearable "false" :value "2025-06-15"}]])
+       (code-block "<ty-date-picker label=\"Required\" required></ty-date-picker>
+<ty-date-picker label=\"Disabled\" disabled value=\"2025-06-15\"></ty-date-picker>
+<ty-date-picker label=\"No clear button\" clearable=\"false\"></ty-date-picker>")]])
 
-   ;; Sizes Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Sizes"]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:size "xs"
-                       :placeholder "Extra Small"}]
-     [:ty-date-picker {:size "sm"
-                       :placeholder "Small"}]
-     [:ty-date-picker {:size "md"
-                       :placeholder "Medium (default)"}]
-     [:ty-date-picker {:size "lg"
-                       :placeholder "Large"}]
-     [:ty-date-picker {:size "xl"
-                       :placeholder "Extra Large"}]]
-    (code-block
-      "<ty-date-picker size=\"xs\" placeholder=\"Extra Small\"></ty-date-picker>
-<ty-date-picker size=\"sm\" placeholder=\"Small\"></ty-date-picker>
-<ty-date-picker size=\"md\" placeholder=\"Medium (default)\"></ty-date-picker>
-<ty-date-picker size=\"lg\" placeholder=\"Large\"></ty-date-picker>
-<ty-date-picker size=\"xl\" placeholder=\"Extra Large\"></ty-date-picker>")]
+   ;; Form Integration
+   (doc-section "Form Integration"
+     [:div.space-y-5
 
-   ;; Flavors Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Flavors"]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:flavor "primary"
-                       :label "Primary"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:flavor "secondary"
-                       :label "Secondary"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:flavor "success"
-                       :label "Success"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:flavor "danger"
-                       :label "Danger"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:flavor "warning"
-                       :label "Warning"
-                       :value "2024-09-21"}]]
-    (code-block
-      "<ty-date-picker flavor=\"primary\" label=\"Primary\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker flavor=\"secondary\" label=\"Secondary\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker flavor=\"success\" label=\"Success\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker flavor=\"danger\" label=\"Danger\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker flavor=\"warning\" label=\"Warning\" value=\"2024-09-21\"></ty-date-picker>")]
-
-   ;; Date Formats Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Date Formats"]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:format "short"
-                       :label "Short format"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:format "medium"
-                       :label "Medium format"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:format "long"
-                       :label "Long format (default)"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:format "full"
-                       :label "Full format"
-                       :value "2024-09-21"}]]
-    (code-block
-      "<ty-date-picker format=\"short\" label=\"Short format\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker format=\"medium\" label=\"Medium format\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker format=\"long\" label=\"Long format (default)\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker format=\"full\" label=\"Full format\" value=\"2024-09-21\"></ty-date-picker>")]
-
-   ;; Localization Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Internationalization"]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:locale "en-US"
-                       :label "English (US)"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:locale "de-DE"
-                       :label "German"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:locale "fr-FR"
-                       :label "French"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:locale "ja-JP"
-                       :label "Japanese"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:locale "es-ES"
-                       :label "Spanish"
-                       :value "2024-09-21"}]]
-    (code-block
-      "<ty-date-picker locale=\"en-US\" label=\"English (US)\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker locale=\"de-DE\" label=\"German\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker locale=\"fr-FR\" label=\"French\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker locale=\"ja-JP\" label=\"Japanese\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker locale=\"es-ES\" label=\"Spanish\" value=\"2024-09-21\"></ty-date-picker>")]
-
-   ;; Interactive Features Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Interactive Features"]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:label "Required field"
-                       :required "true"}]
-     [:ty-date-picker {:label "With clear button (default)"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:label "Without clear button"
-                       :clearable "false"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:label "Disabled"
-                       :disabled "true"
-                       :value "2024-09-21"}]
-     [:ty-date-picker {:label "With placeholder"
-                       :placeholder "Pick a date..."}]]
-    (code-block
-      "<ty-date-picker label=\"Required field\" required=\"true\"></ty-date-picker>
-<ty-date-picker label=\"With clear button (default)\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker label=\"Without clear button\" clearable=\"false\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker label=\"Disabled\" disabled=\"true\" value=\"2024-09-21\"></ty-date-picker>
-<ty-date-picker label=\"With placeholder\" placeholder=\"Pick a date...\"></ty-date-picker>")]
-
-   ;; Time Input Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Date and Time Selection"]
-    [:p.ty-text-.mb-4 "When 'with-time' is enabled, users can select both date and time. The time input uses a special keyboard navigation:"]
-    [:ul.list-disc.list-inside.ty-text-.mb-4
-     [:li "Type digits directly to replace values"]
-     [:li "Use arrow keys to navigate between hour and minute"]
-     [:li "Backspace/Delete to clear individual digits"]
-     [:li "Home/End to jump to start/end"]]
-    [:div.space-y-4.mb-4
-     [:ty-date-picker {:label "Meeting time"
-                       :with-time "true"}]
-     [:ty-date-picker {:label "Appointment"
-                       :with-time "true"
-                       :value "2024-09-21T14:30"}]
-     [:ty-date-picker {:label "Deadline"
-                       :with-time "true"
-                       :format "short"
-                       :value "2024-09-21T23:59"}]]
-    (code-block
-      "<ty-date-picker label=\"Meeting time\" with-time=\"true\"></ty-date-picker>
-<ty-date-picker label=\"Appointment\" with-time=\"true\" value=\"2024-09-21T14:30\"></ty-date-picker>
-<ty-date-picker label=\"Deadline\" with-time=\"true\" format=\"short\" value=\"2024-09-21T23:59\"></ty-date-picker>")]
-
-   ;; Form Integration Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Form Integration"]
-    [:div.mb-4
-     [:form {:id "date-form"
-             :on {:submit (fn [e]
-                            (.preventDefault e)
-                            (let [form-data (js/FormData. (.-target e))
-                                  event-date (.get form-data "event-date")
-                                  result-el (.getElementById js/document "date-result")]
-                              (when result-el
-                                (set! (.-textContent result-el) (str "Selected: " event-date)))))}}
-      [:div.space-y-4
-       [:ty-date-picker {:label "Event Date"
-                         :name "event-date"
-                         :required "true"}]
-       [:button.ty-button.primary {:type "submit"} "Submit"]]
-      [:div#date-result.ty-text-.mt-4]]]
-    (code-block
-      "<form id=\"date-form\">
-  <ty-date-picker 
-    label=\"Event Date\" 
-    name=\"event-date\" 
-    required=\"true\">
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "With HTML Form")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Fully form-associated — set " [:code "name"] " and the ISO date string appears in FormData on submit."]
+       (demo-area
+        [:form.space-y-4
+         {:on {:submit (fn [e]
+                         (.preventDefault e)
+                         (let [data (js/FormData. (.-target e))]
+                           (js/alert (str "Date: " (.get data "start-date")))))}}
+         [:ty-date-picker {:name "start-date" :label "Start date" :required ""}]
+         [:button.ty-bg-primary.ty-text++.rounded
+          {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+       (code-block "<form>
+  <ty-date-picker name=\"start-date\" label=\"Start date\" required>
   </ty-date-picker>
-  <button type=\"submit\" class=\"ty-button primary\">Submit</button>
+  <button type=\"submit\">Submit</button>
 </form>
+<!-- FormData: start-date=2025-06-15 -->")]
 
-<script>
-document.getElementById('date-form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  console.log('Date:', formData.get('event-date'));
-});
-</script>")]
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "JavaScript API")
+       (code-block "const picker = document.querySelector('ty-date-picker');
 
-   ;; Programmatic Control Example
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Programmatic Control"]
-    [:div.mb-4
-     [:ty-date-picker {:id "prog-picker"
-                       :label "Controlled Date"
-                       :on {:change (fn [e] (.log js/console "EVENT: " e))}}]
-     [:div.flex.gap-2.mt-4
-      [:ty-button
-       {:on {:click (fn [_]
-                      (when-let [el (.getElementById js/document "prog-picker")]
-                        (let [now (js/Date.)
-                              date (str (.getFullYear now) "-"
-                                        (.getMonth now) "-"
-                                        (.getDate now))]
-                          (set! (.-value el) date))))}}
-       "Set Today"]
-      [:ty-button
-       {:on {:click (fn [_]
-                      (when-let [el (.getElementById js/document "prog-picker")]
-                        (set! (.-value el)
-                              (str
-                                (.getFullYear (js/Date.))
-                                "-12-25"))))}}
-       "Set Christmas"]
-      [:ty-button
-       {:flavor "danger"
-        :on {:click (fn [_]
-                      (when-let [el (.getElementById js/document "prog-picker")]
-                        (set! (.-value el) "")))}}
-       "Clear"]
-      [:ty-button
-       {:on {:click (fn [_]
-                      (when-let [el (.getElementById js/document "prog-picker")]
-                        (.log js/console (.-value el))))}}
-       "Get Value"]]]
-    (code-block
-      "<ty-date-picker id=\"date-picker\" label=\"Controlled Date\"></ty-date-picker>
-
-<script>
-const picker = document.getElementById('date-picker');
-
-// Set value
-picker.value = '2024-09-21';
-picker.value = '2024-09-21T14:30'; // With time
-
-// Get value
-console.log(picker.value);
+// Read / write value
+console.log(picker.value);        // '2025-06-15'
+picker.value = '2025-12-25';       // Set programmatically
 
 // Listen for changes
 picker.addEventListener('change', (e) => {
-  console.log('New date:', e.detail.value);
-  console.log('Formatted:', e.detail.formatted);
-  console.log('Source:', e.detail.source);
-  console.log('Milliseconds:', e.detail.milliseconds);
-});
+  const { value, milliseconds, formatted, source } = e.detail;
+  console.log(value);      // '2025-06-15'
+  console.log(formatted);  // 'June 15, 2025'
+  console.log(source);     // 'selection' | 'clear' | 'external'
+});" "javascript")]])
 
-// Listen for open event
-picker.addEventListener('open', () => {
-  console.log('Calendar opened');
-});
-</script>")]
+   ;; Theming
+   (doc-section "Theming"
+     [:div.space-y-6
 
-   ;; Common Use Cases
-   [:h2.text-2xl.font-semibold.ty-text++.mb-6 "Common Use Cases"]
-
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Booking System"]
-    [:div.mb-4
-     [:div.space-y-4
-      [:ty-date-picker {:label "Check-in Date"
-                        :name "checkin"}]
-      [:ty-date-picker {:label "Check-out Date"
-                        :name "checkout"}]
-      [:ty-date-picker {:label "Preferred Appointment Time"
-                        :name "appointment"
-                        :with-time "true"}]]]
-    (code-block
-      "<!-- Date range selection -->
-<ty-date-picker 
-  label=\"Check-in Date\" 
-  name=\"checkin\">
-</ty-date-picker>
-
-<ty-date-picker 
-  label=\"Check-out Date\" 
-  name=\"checkout\">
-</ty-date-picker>
-
-<!-- Appointment scheduling -->
-<ty-date-picker 
-  label=\"Preferred Appointment Time\" 
-  name=\"appointment\" 
-  with-time=\"true\">
+      ;; Accent retheming
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Accent retheming")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Override " [:code "--ty-calendar-accent"] " and " [:code "--ty-calendar-today-accent"] " for a quick recolor of selected day and today indicator. Defaults chain back to the global palette, so unset tokens keep matching the rest of the app."]
+       (demo-area
+        [:div.flex.flex-wrap.gap-6.justify-center
+         [:ty-date-picker {:style {"--ty-calendar-accent" "hotpink"
+                                   "--ty-calendar-today-accent" "gold"}
+                           :value "2025-06-15"}]])
+       (code-block "<ty-date-picker
+  style=\"--ty-calendar-accent: hotpink;
+         --ty-calendar-today-accent: gold;\"
+  value=\"2025-06-15\">
 </ty-date-picker>")]
 
-   [:div.ty-content.rounded-lg.p-6.mb-6
-    [:h3.text-lg.font-medium.ty-text+.mb-4 "Event Planning"]
-    [:div.mb-4
-     [:div.space-y-4
-      [:ty-date-picker {:label "Event Start"
-                        :name "event-start"
-                        :with-time "true"
-                        :required "true"}]
-      [:ty-date-picker {:label "Event End"
-                        :name "event-end"
-                        :with-time "true"
-                        :required "true"}]
-      [:ty-date-picker {:label "Registration Deadline"
-                        :name "deadline"
-                        :clearable "true"}]]]
-    (code-block
-      "<!-- Event scheduling with time -->
-<ty-date-picker 
-  label=\"Event Start\" 
-  name=\"event-start\" 
-  with-time=\"true\"
-  required=\"true\">
-</ty-date-picker>
-
-<ty-date-picker 
-  label=\"Event End\" 
-  name=\"event-end\" 
-  with-time=\"true\"
-  required=\"true\">
-</ty-date-picker>
-
-<!-- Optional deadline -->
-<ty-date-picker 
-  label=\"Registration Deadline\" 
-  name=\"deadline\" 
-  clearable=\"true\">
+      ;; Distinct stub
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Distinct trigger styling")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "The trigger uses " [:code "--ty-date-picker-*"] " — a thin shim over " [:code "--ty-input-*"] ". Override these to make the date-picker look distinct from other form fields without affecting " [:code "<ty-input>"] " or " [:code "<ty-dropdown>"] "."]
+       (demo-area
+        [:div.flex.justify-center
+         [:ty-date-picker {:style {"--ty-date-picker-bg" "#f0fdf4"
+                                   "--ty-date-picker-border" "#16a34a"
+                                   "--ty-date-picker-border-hover" "#15803d"
+                                   "--ty-date-picker-border-focus" "#15803d"
+                                   "--ty-date-picker-shadow-focus" "rgba(22, 163, 74, 0.15)"}
+                           :placeholder "Pick a date"}]])
+       (code-block "<ty-date-picker
+  style=\"--ty-date-picker-bg: #f0fdf4;
+         --ty-date-picker-border: #16a34a;
+         --ty-date-picker-border-hover: #15803d;
+         --ty-date-picker-border-focus: #15803d;
+         --ty-date-picker-shadow-focus: rgba(22, 163, 74, 0.15);\"
+  placeholder=\"Pick a date\">
 </ty-date-picker>")]
+
+      ;; Surface theming
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Custom popup surface")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "The popup body uses " [:code "--ty-calendar-surface-*"] " (shared with " [:code "<ty-calendar>"] "). Combine with selected-day tokens to fully retheme the dialog."]
+       (code-block "<ty-date-picker
+  style=\"--ty-calendar-surface-bg: #1a1a2e;
+         --ty-calendar-surface-border: #2d2d44;
+         --ty-calendar-day-color: #c4b5fd;
+         --ty-calendar-day-hover-bg: #2d2d44;
+         --ty-calendar-selected-bg: #f72585;
+         --ty-calendar-selected-color: white;
+         --ty-calendar-today-color: #fde68a;
+         --ty-calendar-today-bg: #2d2d44;\">
+</ty-date-picker>")]
+
+      [:div.ty-elevated.rounded-lg.p-5
+       [:p.ty-text-.mb-2 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Full token reference is in the " [:strong "CSS Design System"] " guide under " [:em "Per-Component Color Overrides → ty-calendar, ty-calendar-month, ty-date-picker"] "."]
+       [:p.ty-text--.mb-0 {:style {:font-size "0.75rem" :line-height "1.5"}}
+        "Tokens for the day grid (" [:code "--ty-calendar-*"] ") are shared across " [:code "<ty-calendar>"] ", " [:code "<ty-calendar-month>"] ", and the popup inside " [:code "<ty-date-picker>"] " — set them on a parent element to theme all three at once."]]])
 
    ;; Best Practices
-   [:div.ty-elevated.rounded-lg.p-6
-    [:h2.text-2xl.font-semibold.ty-text++.mb-6 "Best Practices"]
+   (doc-section "Best Practices"
+     [:div.ty-elevated.rounded-lg.p-5
+      [:div.grid.gap-6
+       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
 
-    [:div.grid.gap-6.md:grid-cols-2
-     ;; Do's
-     [:div
-      [:h3.flex.items-center.gap-2.text-lg.font-medium.ty-text-success.mb-3
-       [:ty-icon {:name "check-circle"
-                  :size "20"}]
-       "Do's"]
-      [:ul.space-y-2.ty-text-
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Use appropriate date formats for your locale"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Provide clear labels for date fields"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Use 'with-time' for appointments and deadlines"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Keep default clear button for better UX (enabled by default)"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Validate dates programmatically in your application"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Use 'clearable' for optional date fields"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-success.mt-1 {:name "check"
-                                        :size "16"}]
-        [:span "Handle the change event for validation"]]]]
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+        [:div.space-y-2
+         (for [text ["Use value in ISO format (YYYY-MM-DD) — the picker handles display formatting"
+                     "Set locale and format to match the user's region and preference"
+                     "Set name when inside a form — it's required for FormData submission"
+                     "Use with-time only when precise time entry is genuinely needed"
+                     "Use clearable=\"false\" when the date is required and shouldn't be cleared"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
 
-     ;; Don'ts
-     [:div
-      [:h3.flex.items-center.gap-2.text-lg.font-medium.ty-text-danger.mb-3
-       [:ty-icon {:name "x-circle"
-                  :size "20"}]
-       "Don'ts"]
-      [:ul.space-y-2.ty-text-
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't use ambiguous date formats"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't forget to set locale for non-English users"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't disable without explaining why"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't mix date-only and datetime values in the same form section"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't ignore timezone considerations for datetime values"]]
-       [:li.flex.items-start.gap-2
-        [:ty-icon.ty-text-danger.mt-1 {:name "x"
-                                       :size "16"}]
-        [:span "Don't disable clearable unless required by your use case"]]]]]]
-
-   ;; Notes
-   [:div.ty-bg-warning-.ty-border-warning.border.rounded-lg.p-4.mt-8
-    [:h3.flex.items-center.gap-2.ty-text-warning++.font-semibold
-     [:ty-icon {:name "alert-triangle"
-                :size "20"}]
-     "Important Notes"]
-    [:ul.list-disc.list-inside.ty-text-warning.mt-2.space-y-1
-     [:li "Date values are always in ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm)"]
-     [:li "Time values are in 24-hour format when 'with-time' is enabled"]
-     [:li "The component handles timezone conversion internally"]
-     [:li "Form submission uses the 'name' attribute for field identification"]
-     [:li "The calendar dropdown automatically positions itself to avoid viewport edges"]]]))
+       [:div
+        [:div.flex.items-center.gap-2.mb-3
+         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+        [:div.space-y-2
+         (for [text ["Pass a non-ISO string to value — the picker won't recognize it"
+                     "Use ty-date-picker when a bare ty-calendar grid is all you need"
+                     "Rely on the formatted display string for date logic — use value or milliseconds"
+                     "Forget required when the date is mandatory in a form"
+                     "Use with-time and then ignore the time component in your backend"]]
+           [:div.flex.items-start.gap-2
+            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))

@@ -19,6 +19,9 @@
     <link rel="stylesheet" href="/css/tyrell.css">
     <link rel="preloadmodule" href="/css/tyrell.css">
 
+    <!-- Site-chrome styles (inline-code pills, etc.) are injected by
+         tyrell.site.styles/install! at runtime — see site/tyrell/site/styles.cljs -->
+
     <!-- Ty Web Components (TypeScript) -->
     <script type="module" src="/tyrell/tyrell.js"></script>
 
@@ -127,15 +130,8 @@
             color: var(--ty-color-info) !important;
         }
 
-        /* Inline code styling */
-        code:not(.hljs) {
-            background: var(--ty-surface-content);
-            color: var(--ty-text+);
-            padding: 0.125rem 0.375rem;
-            border-radius: 4px;
-            font-size: 0.875em;
-            border: 1px solid var(--ty-border-);
-        }
+        /* Inline code styling lives in /css/site.css now (site-only override
+           driven by --ty-inline-code-* variables). tyrell.css is untouched. */
 
         /* Pre blocks containing highlighted code */
         pre.hljs {
