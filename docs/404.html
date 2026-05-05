@@ -9,6 +9,12 @@
         content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility.">
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+
     <!-- Tyrell Complete CSS System (Variables + Utilities) from CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css">
 
@@ -25,6 +31,27 @@
 
     <!-- Mobile-specific CSS fixes -->
     <style>
+        /* Site typography — webfonts for cross-OS consistency */
+        html,
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+                'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        code,
+        pre,
+        kbd,
+        samp,
+        .hljs,
+        .ty-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                'Liberation Mono', 'Courier New', monospace;
+            font-variant-ligatures: contextual;
+        }
+
         /* iOS fix - prevents scroll bounce and keyboard layout breaking */
         html,
         body {
@@ -227,7 +254,7 @@
     <div id="app"></div>
 
     <!-- Load site app after DOM is ready -->
-    <script defer src="/tyrell/js/site.49h7m.js"></script>
+    <script defer src="/tyrell/js/site.zYoPo.js"></script>
 </body>
 
 </html>
