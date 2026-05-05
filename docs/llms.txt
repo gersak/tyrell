@@ -20,7 +20,8 @@ The single best entry point for AI agents is the treasure-map index at `guides/A
 
 ## ClojureScript
 
-- [ClojureScript substrate](https://github.com/gersak/tyrell/blob/master/guides/clj/CLOJURESCRIPT_GUIDE.md): Distribution, shadow-cljs setup, raw interop, icon tree-shaking — for any CLJS framework or vanilla CLJS
+- [Quickstart](https://github.com/gersak/tyrell/blob/master/guides/clj/QUICKSTART.md): Two-track quickstart — Track A (Reagent / re-frame / UIx / Helix via `tyrell-react`), Track B (Replicant / vanilla via raw `<ty-*>`)
+- [ClojureScript substrate](https://github.com/gersak/tyrell/blob/master/guides/clj/CLOJURESCRIPT_GUIDE.md): Distribution, shadow-cljs setup, raw interop, icon tree-shaking — substrate reference for any CLJS framework
 - [Replicant](https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md): Replicant + Ty integration
 - [Routing](https://github.com/gersak/tyrell/blob/master/guides/clj/ROUTING_GUIDE.md): `tyrell.router` client-side routing
 - [i18n](https://github.com/gersak/tyrell/blob/master/guides/clj/I18N_GUIDE.md): `tyrell.i18n` translations and locale-aware formatting

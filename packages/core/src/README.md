@@ -127,7 +127,7 @@ See [BUILDING_WITH_TYCOMPONENT.md](../../../BUILDING_WITH_TYCOMPONENT.md) for de
 The `PropertyManager` class handles:
 - Type coercion (string/boolean/number/object/array)
 - Validation and constraints
-- Property aliases (e.g., `not-searchable` → `searchable: false`)
+- Property aliases (e.g., `not-clearable` → `clearable: false`)
 - Change tracking and events
 
 ```typescript

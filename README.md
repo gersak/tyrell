@@ -11,13 +11,11 @@
 </blockquote>
 
 <blockquote style="color: #414863">
-<p><em>Six months later…</em></p>
+<p><em>Nine months later…</em></p>
 
-<p><em>"Right. So everyone keeps reading <strong>ty</strong> as <strong>'thank you'</strong>. Naming is hard."</em></p>
+<p><em>"Nine months in, <strong>ty</strong> still reads as <strong>'thank you'</strong> — Just had to cut that and call it properly."</em></p>
 
-<p><em>"The library was always <strong>Tyrell</strong> — Blade Runner, the replicant builders. I shortened it to <code>ty-button</code> for ergonomics and accidentally shortened the whole name with it. That was the wrong call."</em></p>
-
-<p><em>"So: the library is <strong>Tyrell</strong>. Components stay <code>ty-*</code> — short for Tyrell, not for gratitude. CSS classes stay <code>ty-*</code>. CLJS namespaces stay <code>ty.*</code>. The prefix earned its keep; the brand didn't."</em></p>
+<p><em>"The library is <strong>Tyrell</strong>. CLJS namespaces are <code>tyrell.*</code> now (<code>tyrell.router</code>, <code>tyrell.components</code>, <code>tyrell.lucide</code>). Component tags stay <code>ty-*</code> — web custom elements need the dash anyway, and two letters earn their keep. CSS classes stay <code>ty-*</code> for the same reason. The prefix earned the shortcut; the brand didn't."</em></p>
 
 <p><strong><em>"No thanks involved. Just replicants."</em></strong></p>
 </blockquote>
@@ -57,8 +55,8 @@ Always loads the latest version:
 Pin to a specific version (recommended for production):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.4/css/tyrell.css">
-<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.4/dist/tyrell.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css">
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/dist/tyrell.js"></script>
 ```
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
@@ -80,8 +78,8 @@ Then use components anywhere:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC4"}        ;; Router, i18n, layout
-        dev.gersak/tyrell-icons {:mvn/version "1.0.0-RC4"}}} ;; Tree-shakeable icons
+{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC6"}        ;; Router, i18n, layout
+        dev.gersak/tyrell-icons {:mvn/version "1.0.0-RC6"}}} ;; Tree-shakeable icons
 ```
 
 ### UIx
@@ -342,7 +340,7 @@ Semantic CSS classes that flip correctly for dark mode:
 - [Documentation & Examples](https://gersak.github.io/tyrell)
 - [GitHub](https://github.com/gersak/tyrell)
 - [NPM tyrell-components](https://www.npmjs.com/package/tyrell-components)
-- [NPM tyrell-react](https://www.npmjs.com/package/tyrell-components-react)
+- [NPM tyrell-react](https://www.npmjs.com/package/tyrell-react)
 - [Clojars dev.gersak/tyrell](https://clojars.org/dev.gersak/tyrell)
 - [Clojars dev.gersak/tyrell-icons](https://clojars.org/dev.gersak/tyrell-icons)
 

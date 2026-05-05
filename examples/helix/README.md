@@ -65,7 +65,7 @@ The same Tyrell wrapper, three render shapes:
 - `tyrell-components` (web components + CSS) is loaded via CDN in `index.html` — no npm install for the base.
 - `tyrell-react` is npm-installed because it's the React wrapper layer (separate package).
 - `dev.gersak/tyrell` (CLJS-side icon registry, router, i18n, layout) is referenced from the local source via
-  `deps.edn` paths — replace those with a Maven coord (`{:mvn/version "1.0.0-RC5"}`) once the artifact ships
+  `deps.edn` paths — replace those with a Maven coord (`{:mvn/version "1.0.0-RC6"}`) once the artifact ships
   to Clojars.
 
 ## Where this fits
