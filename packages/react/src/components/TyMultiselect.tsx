@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Type definitions for Ty Multiselect component
 export interface TyMultiselectEventDetail {
@@ -95,7 +96,9 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
 
     // Imperatively sync `value` to the underlying property so resets
     // (`value=""` or null) reliably clear the visible selection.
+    // React 18 workaround; React 19+ handles this natively.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current as any;
       if (!element) return;
       const next = (props as any).value ?? '';

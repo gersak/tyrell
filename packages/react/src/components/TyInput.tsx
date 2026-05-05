@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Event detail structure for ty-input events
 export interface TyInputEventDetail {
@@ -193,8 +194,10 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
     // Imperatively sync `value` to the underlying element's property whenever
     // the React prop changes. React 18's prop-to-property bridging for custom
     // elements is unreliable for empty strings, so we set the property directly
-    // to guarantee resets (`value=""`) clear the visible content.
+    // to guarantee resets (`value=""`) clear the visible content. React 19+
+    // handles this natively, so the effect short-circuits there.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current as any;
       if (!element) return;
       const next = (props as any).value ?? '';

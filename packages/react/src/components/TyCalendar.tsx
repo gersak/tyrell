@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Type definitions for Ty Calendar component
 export interface TyCalendarChangeEventDetail {
@@ -155,8 +156,11 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       };
     }, [handleChange, handleNavigate, onChange, onNavigate]);
 
-    // Set function properties directly on the element (preferred over attributes)
+    // Set function/object properties directly on the element. Required on
+    // React 18, which can't bridge non-string props onto custom elements.
+    // React 19+ handles function/object prop-to-property bridging natively.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current;
       if (!element) return;
 

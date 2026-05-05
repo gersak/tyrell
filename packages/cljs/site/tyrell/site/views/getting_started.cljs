@@ -262,8 +262,12 @@
       :eyebrow "CLJS"
       :title "ClojureScript"
       :tagline [(fw "Reagent") " · " (fw "re-frame") " · " (fw "UIx") " · " (fw "Helix") " · " (fw "Replicant")
-                " — typed wrappers for React libs, raw " (fw "<ty-*>") " for the rest."]
-      :snippet "\n\n[:> ty/Button
+                " — one Clojars dep, typed wrappers for React libs, raw " (fw "<ty-*>") " for the rest."]
+      :snippet "(:require
+  [tyrell.components]
+  [tyrell.react :as ty])
+
+[:> ty/Button
  {:flavor \"primary\"}
  \"Save\"]"
       :snippet-lang "clojure"})
@@ -455,7 +459,7 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
 <script defer src=\"/static/icons.js\"></script>"
         "bash")
        [:p.text-xs.ty-text-info.font-normal.mt-2.leading-relaxed
-        "~6 KB icons.js · vs ~897 KB if you ship every Lucide icon. Slot mode covers the rest."]]]]]
+        "~6 KB icons.js · vs ~820 KB minified / ~125 KB gzipped if you ship every Lucide icon. Slot mode covers the rest."]]]]]
 
 ;; Footnote — sandbox / CodePen path
    [:div.mt-4.ty-bg-info-.rounded-xl.p-4.flex.items-start.gap-3
@@ -480,33 +484,6 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
        "html")]]]])
 
 ;; =============================================================================
-;; Next steps
-;; =============================================================================
-
-(defn next-step
-  [icon text]
-  [:div.flex.items-center.gap-3
-   [:div.flex.items-center.justify-center.rounded-md.ty-bg-accent-.flex-shrink-0
-    {:style {:width "28px"
-             :height "28px"}}
-    [:ty-icon.ty-text-accent+ {:name icon
-                               :size "xs"}]]
-   [:span.ty-text.font-medium text]])
-
-(defn next-steps []
-  [:div.ty-bg-accent-.rounded-xl.p-6
-   {:style {:border "1px solid var(--ty-border-neutral-mild)"}}
-   [:div.flex.items-center.gap-3.mb-5
-    [:ty-icon.ty-text-accent+.flex-shrink-0 {:name "check-circle"
-                                             :size "lg"}]
-    [:h2.text-xl.font-bold.ty-text++.tracking-tight "Then what?"]]
-   [:div.space-y-3
-    (next-step "book-open" "Read your stack's integration guide")
-    (next-step "palette" "Browse the CSS system for semantic colors and surfaces")
-    (next-step "grid" "Skim the components index to see what's available")
-    (next-step "rocket" "Check the live examples — User Profile, Event Booking, Contact Form")]])
-
-;; =============================================================================
 ;; Main view
 ;; =============================================================================
 
@@ -515,5 +492,4 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
    (hero)
    (choose-your-stack)
    (cdn-callout)
-   (icon-system)
-   (next-steps)))
+   (icon-system)))

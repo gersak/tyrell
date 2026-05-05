@@ -13,7 +13,7 @@
 ✅ **Framework Agnostic** - Works with React, Vue, Reagent, vanilla JS
 ✅ **Form Integration** - Built-in ElementInternals support
 ✅ **Property Validation** - Automatic type coercion and validation
-✅ **Attribute Aliases** - Support for negative attributes (e.g., `not-searchable`)
+✅ **Attribute Aliases** - Support for negative attributes (e.g., `not-clearable`)
 ✅ **Dual Event System** - Separate 'prop:change' and 'change' events for clarity
 
 ---
@@ -161,12 +161,12 @@ export class TyDropdown extends TyComponent<DropdownState> {
     },
     
     // Boolean property with alias support
-    searchable: {
+    clearable: {
       type: 'boolean' as const,
       visual: true,
       default: true,
-      aliases: { 
-        'not-searchable': false  // <ty-dropdown not-searchable>
+      aliases: {
+        'not-clearable': false  // <ty-dropdown not-clearable>
       }
     },
     
@@ -246,11 +246,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
     this.setProperty('disabled', v) 
   }
   
-  get searchable(): boolean { 
-    return this.getProperty('searchable') 
+  get clearable(): boolean {
+    return this.getProperty('clearable')
   }
-  set searchable(v: boolean) { 
-    this.setProperty('searchable', v) 
+  set clearable(v: boolean) {
+    this.setProperty('clearable', v)
   }
   
   get size(): Size { 
@@ -466,12 +466,6 @@ private renderDesktop(): void {
 
 ```typescript
 protected static properties = {
-  searchable: {
-    type: 'boolean' as const,
-    visual: true,
-    default: true,
-    aliases: { 'not-searchable': false }
-  },
   clearable: {
     type: 'boolean' as const,
     visual: true,
@@ -484,12 +478,12 @@ protected static properties = {
 **Usage**:
 ```html
 <!-- Both are equivalent -->
-<ty-dropdown searchable></ty-dropdown>
+<ty-dropdown clearable></ty-dropdown>
 <ty-dropdown></ty-dropdown> <!-- default is true -->
 
-<!-- Both disable search -->
-<ty-dropdown searchable="false"></ty-dropdown>
-<ty-dropdown not-searchable></ty-dropdown>
+<!-- Both hide the clear button -->
+<ty-dropdown clearable="false"></ty-dropdown>
+<ty-dropdown not-clearable></ty-dropdown>
 ```
 
 ### Pattern 2: Validated String Properties
@@ -618,11 +612,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
       visual: true,
       default: 'Select an option...'
     },
-    searchable: {
+    clearable: {
       type: 'boolean' as const,
       visual: true,
       default: true,
-      aliases: { 'not-searchable': false }
+      aliases: { 'not-clearable': false }
     },
     size: {
       type: 'string' as const,
@@ -661,8 +655,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
   get placeholder(): string { return this.getProperty('placeholder') }
   set placeholder(v: string) { this.setProperty('placeholder', v) }
   
-  get searchable(): boolean { return this.getProperty('searchable') }
-  set searchable(v: boolean) { this.setProperty('searchable', v) }
+  get clearable(): boolean { return this.getProperty('clearable') }
+  set clearable(v: boolean) { this.setProperty('clearable', v) }
   
   get size(): Size { return this.getProperty('size') as Size }
   set size(v: Size) { this.setProperty('size', v) }
@@ -790,8 +784,8 @@ dropdown.removeAttribute('disabled')
 console.assert(dropdown.disabled === false)
 
 // Alias
-dropdown.setAttribute('not-searchable', '')
-console.assert(dropdown.searchable === false)
+dropdown.setAttribute('not-clearable', '')
+console.assert(dropdown.clearable === false)
 ```
 
 ### Form Integration
@@ -910,7 +904,7 @@ protected static properties = {
 ```typescript
 protected render(): void {
   // Don't update properties inside render!
-  if (this._state.open && this.searchable) {
+  if (this._state.open && this.clearable) {
     this.placeholder = 'Search...'  // ← Triggers another render!
   }
 }
@@ -921,7 +915,7 @@ protected render(): void {
 protected onPropertiesChanged(changes: PropertyChange[]): void {
   // Update before render
   if (changes.some(c => c.name === 'open')) {
-    if (this._state.open && this.searchable) {
+    if (this._state.open && this.clearable) {
       // Update internal state, not properties
       this._effectivePlaceholder = 'Search...'
     }
@@ -945,7 +939,7 @@ protected render(): void {
 4. ✅ Predictable lifecycle (State → Render → Events)
 5. ✅ Form association support
 6. ✅ Framework compatibility (React, Vue, Reagent)
-7. ✅ Property aliases (not-searchable, not-clearable)
+7. ✅ Property aliases (e.g., not-clearable → clearable: false)
 
 **You implement**:
 1. Property configuration object

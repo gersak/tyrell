@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 export interface TyRadioProps extends React.HTMLAttributes<HTMLElement> {
   /** Form field value (selected by parent ty-radio-group when matches its `value`) */
@@ -36,6 +37,19 @@ export const TyRadio = React.forwardRef<HTMLElement, TyRadioProps>(
         }
       }
     }, [ref]);
+
+    // Imperatively sync `checked` to the underlying property. React 18 sets
+    // boolean attributes as empty strings on first render but doesn't reliably
+    // remove them when the prop flips back to false on a custom element.
+    // React 19+ handles boolean prop-to-property bridging natively.
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      const element = elementRef.current as any;
+      if (!element) return;
+      if (Boolean(element.checked) !== Boolean(checked)) {
+        element.checked = Boolean(checked);
+      }
+    }, [checked]);
 
     const webComponentProps: Record<string, any> = {
       ...props,

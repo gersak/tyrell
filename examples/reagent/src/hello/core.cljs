@@ -1,6 +1,6 @@
 (ns hello.core
-  (:require ["tyrell-components"]   ; side-effect import: registers all <ty-*> custom elements
-            ["tyrell-react" :as ty]
+  (:require [tyrell.components]    ; side-effect: registers all <ty-*> custom elements
+            [tyrell.react :as ty]  ; React wrappers (re-exported from npm tyrell-react)
             [hello.navigation :as nav]
             [hello.state :as state]
             [hello.views :as views]

@@ -1,7 +1,8 @@
 (ns tyrell.site.docs.clojurescript
   "ClojureScript guide — substrate for every CLJS framework, deep-dive on React libs."
   (:require [tyrell.router :as router]
-            [tyrell.site.docs.common :as common]))
+            [tyrell.site.docs.common :as common]
+            [tyrell.site.versions :as v]))
 
 ;; =============================================================================
 ;; Local layout helpers — parallel to docs/js_react.cljs.
@@ -42,16 +43,6 @@
 (defn- fw
   [name]
   [:span.font-semibold.ty-text name])
-
-(defn- next-step
-  [icon text]
-  [:div.flex.items-center.gap-3
-   [:div.flex.items-center.justify-center.rounded-md.ty-bg-accent-.flex-shrink-0
-    {:style {:width "28px"
-             :height "28px"}}
-    [:ty-icon.ty-text-accent+ {:name icon
-                               :size "xs"}]]
-   [:span.ty-text.font-medium text]])
 
 (defn- copy-to-clipboard!
   [text]
@@ -102,10 +93,11 @@
   [{:keys [icon title tagline snippet snippet-lang
            eyebrow eyebrow-flavor cta on-click]
     :or {eyebrow-flavor "accent"}}]
-  [:div.ty-elevated.rounded-xl.p-5.cursor-pointer.hover:shadow-lg.flex.flex-col
-   {:style (lift-card-style)
-    :on (merge {:click on-click}
-               (lift-card-handlers))}
+  [:div.ty-elevated.rounded-xl.p-5.flex.flex-col
+   (cond-> {:style (lift-card-style)}
+     on-click (assoc :class "cursor-pointer hover:shadow-lg"
+                     :on (merge {:click on-click}
+                                (lift-card-handlers))))
 
    [:div.flex.items-start.justify-between.mb-4
     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0.ty-bg-neutral-
@@ -124,12 +116,12 @@
 
    (common/code-block snippet snippet-lang)
 
-   [:div.flex-1]
-
-   [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-primary
-    [:span cta]
-    [:ty-icon {:name "arrow-right"
-               :size "xs"}]]])
+   (when cta [:div.flex-1])
+   (when cta
+     [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-primary
+      [:span cta]
+      [:ty-icon {:name "arrow-right"
+                 :size "xs"}]])])
 
 ;; =============================================================================
 ;; Section 1 — Hero
@@ -204,7 +196,7 @@
       [:div.flex.items-center.gap-2.mb-5
        [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "Install"]
        [:span.h-1.w-1.rounded-full.ty-bg-neutral]
-       [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "Two ecosystems, one role each"]]
+       [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "One Clojars dep, npm pulled implicitly"]]
 
       [:div.flex.items-start.gap-4.mb-5
        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
@@ -216,9 +208,14 @@
         [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
          "What you install"]
         [:p.text-base.ty-text.font-normal.leading-relaxed
-         "NPM gives you the components and (optional) React wrappers. "
-         "Clojars gives you the CLJS-native infrastructure: " (fw "router") ", "
-         (fw "i18n") ", " (fw "layout") ", and tree-shakeable " (fw "icons") "."]]]
+         "Add " (fw "dev.gersak/tyrell") " to " (fw "deps.edn") " — that's it. "
+         "Router, i18n, layout, and icons all come along in the same jar."]
+        [:p.text-sm.ty-text-.font-normal.leading-relaxed.mt-3
+         "On " [:strong.ty-text "shadow-cljs"] ", the npm " (fw "tyrell-components") " package auto-installs. "
+         "On other CLJS tooling, run "
+         [:code.font-mono.text-xs.ty-bg-neutral-.px-1.rounded "npm install tyrell-components"] " yourself. "
+         "Using React from CLJS? Also "
+         [:code.font-mono.text-xs.ty-bg-neutral-.px-1.rounded "npm install tyrell-react"] "."]]]
 
       [:div.flex.flex-wrap.gap-2.mb-6
        (feature-pill {:icon "layers"  :label "Closure tree-shaking"})
@@ -240,77 +237,79 @@
        {:style {:border "1px solid var(--ty-border-)"}}
        [:div.flex.items-center.justify-between.mb-4
         [:span.text-xs.font-bold.ty-text--.tracking-widest.uppercase "Packages"]
-        [:span.text-xs.ty-text--.font-medium.tracking-widest.uppercase "npm + Clojars"]]
+        [:span.text-xs.ty-text--.font-medium.tracking-widest.uppercase "Clojars + npm"]]
        [:div.flex.flex-col.gap-2
+        (pkg-row {:pkg "dev.gersak/tyrell"
+                  :ecosystem "Clojars · Add this"
+                  :ecosystem-flavor "accent"
+                  :subtitle "Router · i18n · layout · icons · components shim"
+                  :install-cmd (str "dev.gersak/tyrell {:mvn/version \"" v/TYRELL_VERSION "\"}")
+                  :link "https://clojars.org/dev.gersak/tyrell"})
         (pkg-row {:pkg "tyrell-components"
-                  :ecosystem "NPM · Always"
+                  :ecosystem "npm · Auto via shadow-cljs"
                   :ecosystem-flavor "success"
-                  :subtitle "Web components, CSS, icons"
-                  :install-cmd "npm install tyrell-components"
+                  :subtitle "Web components — install manually on other tooling"
+                  :install-cmd (str "tyrell-components@" v/TYRELL_COMPONENTS_VERSION)
                   :link "https://www.npmjs.com/package/tyrell-components"})
         (pkg-row {:pkg "tyrell-react"
-                  :ecosystem "NPM · React libs only"
-                  :ecosystem-flavor "neutral"
-                  :subtitle "Reagent · re-frame · UIx · Helix"
+                  :ecosystem "npm · React only"
+                  :ecosystem-flavor "warning"
+                  :subtitle "Reagent · re-frame · UIx · Helix wrappers"
                   :install-cmd "npm install tyrell-react"
-                  :link "https://www.npmjs.com/package/tyrell-react"})
-        (pkg-row {:pkg "dev.gersak/tyrell"
-                  :ecosystem "Clojars · Recommended"
-                  :ecosystem-flavor "accent"
-                  :subtitle "Router · i18n · layout · shim"
-                  :install-cmd "dev.gersak/tyrell {:mvn/version \"1.0.0-RC5\"}"
-                  :link "https://clojars.org/dev.gersak/tyrell"})
-        (pkg-row {:pkg "dev.gersak/tyrell-icons"
-                  :ecosystem "Clojars · If you use icons"
-                  :ecosystem-flavor "accent"
-                  :subtitle "Tree-shakeable icon defs"
-                  :install-cmd "dev.gersak/tyrell-icons {:mvn/version \"1.0.0-RC5\"}"
-                  :link "https://clojars.org/dev.gersak/tyrell-icons"})]]
+                  :link "https://www.npmjs.com/package/tyrell-react"})]]
 
       [:div
        (common/code-block
-        ";; deps.edn or shadow-cljs.edn
-{:deps {dev.gersak/tyrell       {:mvn/version \"1.0.0-RC5\"}
-        dev.gersak/tyrell-icons {:mvn/version \"1.0.0-RC5\"}}}
-
-# package.json
-npm install tyrell-components
-# Plus, only if you use a React lib:
-npm install tyrell-react"
-        "bash")]]]]])
+        (str ";; deps.edn — one Clojars dep, that's it
+{:deps {dev.gersak/tyrell {:mvn/version \"" v/TYRELL_VERSION "\"}}}")
+        "clojure")]]]]])
 
 ;; =============================================================================
 ;; Section 3 — Two ways to load
 ;; =============================================================================
 
-(defn- subpath-callout []
+(defn- css-callout []
   [:div.ty-elevated.rounded-xl.p-5
    {:style {:border "1px solid var(--ty-border-)"
-            :border-left "3px solid var(--ty-color-accent)"}}
+            :border-left "3px solid var(--ty-color-warning)"}}
    [:div.flex.items-start.gap-4
-    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-accent-.flex-shrink-0
+    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-warning-.flex-shrink-0
      {:style {:width "40px"
               :height "40px"}}
-     [:ty-icon.ty-text-accent+ {:name "layers"
-                                :size "md"}]]
+     [:ty-icon.ty-text-warning+ {:name "palette"
+                                 :size "md"}]]
     [:div.flex-1.min-w-0
-     [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1 "Subpath imports — register only what you use"]
+     [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1 "Don't forget the CSS"]
      [:p.text-sm.ty-text-.mb-3.leading-relaxed
-      "Skip the all-in-one " [:code.font-mono.text-xs "[\"tyrell-components\"]"]
-      " require; pull in just the elements your app renders."]
+      "Component classes only work once " [:code.font-mono.text-xs "tyrell.css"]
+      " is loaded. shadow-cljs doesn't process CSS imports from CLJS — you load it separately. Pick one:"]
+
+     [:div.text-xs.font-bold.ty-text--.tracking-widest.uppercase.mb-2 "A · CDN <link>"]
      (common/code-block
-      "(ns my-app.core
-  (:require [\"tyrell-components/css/tyrell.css\"]
-            [\"tyrell-components/button\"]
-            [\"tyrell-components/input\"]
-            [\"tyrell-components/dropdown\"]
-            [\"tyrell-components/option\"]      ; dropdown children
-            [\"tyrell-components/modal\"]))"
-      "clojure")
-     [:p.text-xs.ty-text--.font-mono.mt-3.leading-relaxed
-      "button · input · textarea · checkbox · dropdown · option · multiselect · tag · "
-      "modal · popup · tooltip · calendar · calendar-month · calendar-navigation · "
-      "date-picker · tabs · tab · icon · copy"]]]])
+      (str "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css\">")
+      "html")
+
+     [:div.text-xs.font-bold.ty-text--.tracking-widest.uppercase.mb-2.mt-3 "B · Fetch into your public/ once"]
+     (common/code-block
+      (str "# Pin a version, no install needed
+curl -o public/css/tyrell.css \\
+  https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css
+
+# Or copy from the version shadow-cljs already installed
+cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
+      "bash")
+     [:p.text-xs.ty-text--.mt-2.leading-relaxed
+      "Then " [:code.font-mono.text-xs "<link rel=\"stylesheet\" href=\"/css/tyrell.css\">"]
+      " in your HTML. Wire as a " [:code.font-mono.text-xs "postinstall"]
+      " hook in " [:code.font-mono.text-xs "package.json"]
+      " to keep it in sync with installed versions automatically."]
+
+     [:div.text-xs.font-bold.ty-text--.tracking-widest.uppercase.mb-2.mt-3 "C · Tailwind / PostCSS pipeline"]
+     (common/code-block
+      "/* in your input.css */
+@import \"../node_modules/tyrell-components/css/tyrell.css\";
+@import \"tailwindcss\";"
+      "css")]]])
 
 (defn- load-options []
   [:div
@@ -319,41 +318,36 @@ npm install tyrell-react"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Two ways to load"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
-    "Pick one — they're mutually exclusive. shadow-cljs npm interop gives Closure tree-shaking and synchronous icon registration. CDN gives zero build for prototypes or static-host deployments."]
+    "Pick one. The shim path is the recommended default — one require, npm pulled implicitly. CDN gives zero build for prototypes or static-host deployments."]
 
    [:div.grid.grid-cols-1.md:grid-cols-2.gap-4.mb-4
     (compact-stack-card
      {:eyebrow "Recommended"
       :eyebrow-flavor "success"
       :icon "package"
-      :title "shadow-cljs npm interop"
-      :tagline [(fw "shadow-cljs") " resolves the npm package and bundles components into your "
-                [:code.font-mono.text-xs "main.js"] ". One side-effecting require registers all "
+      :title "tyrell.components shim"
+      :tagline ["One CLJS require, npm package auto-pulled via " [:code.font-mono.text-xs "deps.cljs"]
+                ". Side-effect import registers all "
                 (fw "<ty-*>") " elements."]
       :snippet "(ns my-app.core
-  (:require [\"tyrell-components\"]))"
-      :snippet-lang "clojure"
-      :cta "Skim subpath imports"
-      :on-click (fn [^js _]
-                  (when-let [el (js/document.getElementById "subpath")]
-                    (.scrollIntoView el #js {:behavior "smooth"
-                                             :block "start"})))})
+  (:require [tyrell.components]
+            [tyrell.router :as r]
+            [tyrell.lucide :as lucide]))"
+      :snippet-lang "clojure"})
     (compact-stack-card
      {:eyebrow "Zero build"
       :icon "zap"
       :title "CDN script tag"
       :tagline ["Paste two tags into " [:code.font-mono.text-xs "<head>"]
                 " — works for prototypes, static hosting, or any non-shadow build."]
-      :snippet "<link rel=\"stylesheet\"
-      href=\"…/tyrell.css\">
+      :snippet (str "<link rel=\"stylesheet\"
+      href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css\">
 <script type=\"module\"
-        src=\"…/tyrell.js\"></script>"
-      :snippet-lang "html"
-      :cta "Self-hostable too"
-      :on-click #(router/navigate! :tyrell.site.docs/htmx)})]
+        src=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/dist/tyrell.js\"></script>")
+      :snippet-lang "html"})]
 
-   [:div {:id "subpath"}
-    (subpath-callout)]])
+   [:div.mb-4
+    (css-callout)]])
 
 ;; =============================================================================
 ;; Section 4 — Your framework
@@ -381,6 +375,27 @@ npm install tyrell-react"
     "React-based libraries get typed wrappers via " (fw "tyrell-react") ". "
     "Replicant and vanilla CLJS use the " (fw "<ty-*>") " elements directly — events flow naturally without a wrapper."]
 
+   ;; Shared icon registration — identical across all four frameworks
+   [:div.ty-elevated.rounded-xl.p-5.mb-4
+    {:style {:border "1px solid var(--ty-border-)"}}
+    [:div.flex.items-start.gap-3
+     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0.ty-bg-accent-
+      {:style {:width "36px"
+               :height "36px"}}
+      [:ty-icon.ty-text-accent++ {:name "sparkles"
+                                  :size "sm"}]]
+     [:div.flex-1.min-w-0
+      [:p.text-sm.ty-text.font-semibold.mb-1.leading-snug
+       "Icon registration is identical across all four frameworks"]
+      [:p.text-xs.ty-text--.font-normal.leading-relaxed.mb-3
+       "Register the icons you use once at app init. Cards below show framework-specific component composition only."]
+      (common/code-block
+       "(:require [tyrell.icons  :as icons]
+          [tyrell.lucide :as lucide])
+
+(icons/register! {:save lucide/save})"
+       "clojure")]]]
+
    [:div.grid.grid-cols-1.md:grid-cols-2.gap-4
     (framework-card
      {:eyebrow "Typed wrappers"
@@ -388,13 +403,15 @@ npm install tyrell-react"
       :title "Reagent · re-frame"
       :tagline ["Most-used CLJS-React combo. " (fw "[:> ty/Button ...]") " interop with hiccup; re-frame's "
                 (fw "subscribe") " / " (fw "dispatch") " plug in unchanged."]
-      :snippet "(:require [\"tyrell-react\" :as ty])
+      :snippet "(:require [tyrell.react :as ty])
 
-[:> ty/Input
- {:value @email
-  :on-change #(reset! email
-                (.. % -detail -value))}]
-[:> ty/Button {:flavor \"primary\"} \"Save\"]"
+(defn form []
+  [:<>
+   [:> ty/Input
+    {:value @email
+     :on-change #(reset! email
+                   (.. % -detail -value))}]
+   [:> ty/Button {:flavor \"primary\"} \"Save\"]])"
       :snippet-lang "clojure"
       :cta "Read patterns"
       :on-click scroll-to-deep-dive!})
@@ -404,13 +421,14 @@ npm install tyrell-react"
       :icon "react"
       :title "UIx"
       :tagline ["Modern hooks-style with " (fw "($ ty/Component …)") " macro form. Same wrapper, different surface syntax."]
-      :snippet "(:require [\"tyrell-react\" :as ty]
+      :snippet "(:require [tyrell.react :as ty]
           [uix.core :refer [defui $]])
 
 (defui form []
-  ($ ty/Input {:value @email
-               :on-change on-email})
-  ($ ty/Button {:flavor \"primary\"} \"Save\"))"
+  ($ :div
+     ($ ty/Input {:value @email
+                  :on-change on-email})
+     ($ ty/Button {:flavor \"primary\"} \"Save\")))"
       :snippet-lang "clojure"
       :cta "Read patterns"
       :on-click scroll-to-deep-dive!})
@@ -421,13 +439,14 @@ npm install tyrell-react"
       :title "Helix"
       :tagline ["JSX-style macros over the same React wrappers. Idiomatic " (fw "($ ty/Button …)") " inside "
                 (fw "defnc") " components."]
-      :snippet "(:require [\"tyrell-react\" :as ty]
-          [helix.core :refer [defnc $]])
+      :snippet "(:require [tyrell.react :as ty]
+          [helix.core :refer [defnc $ <>]])
 
 (defnc form []
-  ($ ty/Input {:value @email
-               :on-change on-email})
-  ($ ty/Button {:flavor \"primary\"} \"Save\"))"
+  (<>
+   ($ ty/Input {:value @email
+                :on-change on-email})
+   ($ ty/Button {:flavor \"primary\"} \"Save\")))"
       :snippet-lang "clojure"
       :cta "Read patterns"
       :on-click scroll-to-deep-dive!})
@@ -438,13 +457,15 @@ npm install tyrell-react"
       :title "Replicant · Vanilla CLJS"
       :tagline ["Raw " (fw "<ty-*>") " elements, no wrapper. Replicant's "
                 (fw ":on {:change …}") " receives " [:code.font-mono.text-xs "event.detail"] " directly."]
-      :snippet "[:ty-input
- {:label \"Email\"
-  :on {:change
-       (fn [^js e]
-         (swap! state assoc :email
-           (.. e -detail -value)))}}]
-[:ty-button {:flavor \"primary\"} \"Save\"]"
+      :snippet "(defn form []
+  [:div
+   [:ty-input
+    {:label \"Email\"
+     :on {:change
+          (fn [^js e]
+            (swap! state assoc :email
+              (.. e -detail -value)))}}]
+   [:ty-button {:flavor \"primary\"} \"Save\"]])"
       :snippet-lang "clojure"
       :cta "Read Replicant guide"
       :on-click #(js/window.open "https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md" "_blank")})]])
@@ -537,8 +558,8 @@ npm install tyrell-react"
        [:div
         (common/code-block
          "(ns my-app.core
-  (:require [\"tyrell-components\"]
-            [\"tyrell-react\" :as ty]
+  (:require [tyrell.components]
+            [tyrell.react :as ty]
             [reagent.core :as r]))
 
 (defn signup-form []
@@ -681,12 +702,15 @@ npm install tyrell-react"
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "Components are bounded. Icons are not."]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components ship at " [:strong.ty-text "~200 KB minified"] ". "
+      "All 21 components ship at " [:strong.ty-text "~344 KB minified · ~69 KB gzipped"]
+      " (CDN bundle, what users actually pay over the wire). "
       "The icon registry starts empty — you only pay for icons you reference. "
       "For CLJS, " (fw "dev.gersak/tyrell-icons") " is the cleanest path because Closure "
       (fw ":advanced") " removes unused defs natively. "
       "The npm leaf-module path (" (fw "tyrell-components/icons/lucide") ") works too, "
-      "tree-shaken via shadow-cljs's " [:code.font-mono.text-xs "sideEffects"] " awareness."]
+      "tree-shaken via shadow-cljs's " [:code.font-mono.text-xs "sideEffects"] " awareness. "
+      "Importing the entire Lucide family is " [:strong.ty-text "~820 KB minified · ~125 KB gzipped"]
+      " — most apps need under fifty icons (~10-30 KB gzipped)."]
      [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-accent
       [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
        {:style {:border "none"}
@@ -694,23 +718,6 @@ npm install tyrell-react"
        "See the three icon-registration patterns on Getting Started"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Section 8 — Next steps
-;; =============================================================================
-
-(defn- next-steps []
-  [:div.ty-bg-accent-.rounded-xl.p-6
-   {:style {:border "1px solid var(--ty-border-neutral-mild)"}}
-   [:div.flex.items-center.gap-3.mb-5
-    [:ty-icon.ty-text-accent+.flex-shrink-0 {:name "check-circle"
-                                             :size "lg"}]
-    [:h2.text-xl.font-bold.ty-text++.tracking-tight "Then what?"]]
-   [:div.space-y-3
-    (next-step "grid"      "Browse the components index for APIs and live demos")
-    (next-step "palette"   "Read the CSS system — semantic colors, surfaces, text hierarchy")
-    (next-step "rocket"    "Skim the live examples — User Profile, Event Booking, Contact Form")
-    (next-step "book-open" "Router, i18n, and layout deep-dives live in the GitHub guides folder")]])
 
 ;; =============================================================================
 ;; Main view
@@ -726,5 +733,4 @@ npm install tyrell-react"
    (frameworks)
    (react-libs-deep-dive)
    (gotchas)
-   (bundle-size-callout)
-   (next-steps)))
+   (bundle-size-callout)))

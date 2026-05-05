@@ -16,6 +16,28 @@ For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Repl
 
 ---
 
+## Loading Tyrell CSS
+
+Component classes only work once `tyrell.css` is loaded. Easiest is a CDN `<link>`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+```
+
+For offline dev, fetch the file once and serve it from your `public/`:
+
+```bash
+# Pin a version
+curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC5/css/tyrell.css
+
+# Or copy from the version shadow-cljs already installed (after first build)
+cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+```
+
+Then `<link rel="stylesheet" href="/css/tyrell.css">`. See [`CLOJURESCRIPT_GUIDE.md`](CLOJURESCRIPT_GUIDE.md#css-handling) for the Tailwind/PostCSS pipeline variant.
+
+---
+
 ## Replicant Attribute Conventions
 
 Replicant emits console warnings (and in some cases drops change detection) when `:class` and `:style` aren't shaped the way it expects. Three rules cover virtually every case:

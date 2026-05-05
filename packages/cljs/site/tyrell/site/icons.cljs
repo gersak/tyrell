@@ -222,4 +222,8 @@
   :bug lucide/bug
   :git-branch lucide/git-branch
   :users lucide/users
-  :scissors lucide/scissors})
+  :scissors lucide/scissors
+
+     ;; Export/data icons
+  :file-json lucide/file-json-2
+  :table lucide/table})

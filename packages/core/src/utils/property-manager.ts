@@ -30,7 +30,7 @@ export interface PropertyConfig {
   // Custom coercion function
   coerce?: (value: any) => any
   
-  // Property aliases (e.g., 'not-searchable' → 'searchable': false)
+  // Property aliases (e.g., 'not-clearable' → 'clearable': false)
   aliases?: Record<string, any>
 }
 
@@ -251,7 +251,7 @@ export class PropertyManager<T = any> {
   }
   
   /**
-   * Handle property aliases (e.g., not-searchable → searchable: false)
+   * Handle property aliases (e.g., not-clearable → clearable: false)
    */
   handleAlias(aliasName: string, value: any): PropertyChange | null {
     // Find property with this alias

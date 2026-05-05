@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Option data structure for data-driven approach
 export interface OptionData {
@@ -39,23 +40,28 @@ export interface TyDropdownProps extends Omit<React.HTMLAttributes<HTMLElement>,
   /** Required field */
   required?: boolean;
   
-  /** Enable search functionality */
-  searchable?: boolean;
-  
   /** Show clear button */
   clearable?: boolean;
-  
+
   /** Disable clear button (alias for clearable={false}) */
   notClearable?: boolean;
-  
+
   /** Debounce in milliseconds (0-5000) */
   debounce?: number;
-  
-  /** Disable search functionality (ClojureScript: not-searchable) */
-  notSearchable?: boolean;
-  
-  /** @deprecated Use notSearchable instead. External search handling */
+
+  /**
+   * Switch to external (remote) search mode. Default is `false` — the dropdown
+   * filters its options locally. When `true`, the dropdown stops filtering and
+   * dispatches `search` events on each keystroke; the parent owns filtering
+   * and updates the children.
+   */
   externalSearch?: boolean;
+
+  /** @deprecated Use `externalSearch` instead. */
+  notSearchable?: boolean;
+
+  /** @deprecated Use `externalSearch` instead. Pass `searchable={false}` was equivalent to `externalSearch={true}`. */
+  searchable?: boolean;
   
   /** Form field name for form submission */
   name?: string;
@@ -79,8 +85,9 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
     onChange,
     onSearch,
     disabled,
-    notSearchable,
     externalSearch,
+    notSearchable,
+    searchable,
     clearable,
     notClearable,
     debounce,
@@ -129,7 +136,9 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
     // it changes. React 18's prop-to-property bridging for custom elements is
     // unreliable for empty strings (programmatic resets), so we set the
     // property directly to guarantee the dropdown clears on `value=""`.
+    // React 19+ handles this natively, so the effect short-circuits there.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current as any;
       if (!element) return;
       if (element.value !== value) {
@@ -178,12 +187,10 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
     // Add conditional attributes
     if (disabled) webComponentProps.disabled = '';
     
-    // Handle search functionality (prefer not-searchable over deprecated externalSearch)
-    if (notSearchable) {
-      webComponentProps['not-searchable'] = '';
-    } else if (externalSearch) {
-      // Support deprecated externalSearch for backward compatibility
-      webComponentProps['not-searchable'] = '';
+    // External search mode: parent owns filtering, dropdown dispatches search events.
+    // `notSearchable` and `searchable={false}` are deprecated aliases for `externalSearch`.
+    if (externalSearch || notSearchable || searchable === false) {
+      webComponentProps['external-search'] = '';
     }
     
     // Handle clearable functionality

@@ -58,7 +58,6 @@
     (let [value (-> event .-detail .-value)]
       (swap! state/state update-in [:user-profile :form-data] assoc field-key value)
       (swap! state/state update-in [:user-profile :touched-fields] conj field-key)
-      ;; Real-time validation
       (let [error (validate-field field-key value)]
         (if error
           (swap! state/state assoc-in [:user-profile :validation-errors field-key] error)
@@ -68,24 +67,17 @@
   (.preventDefault event)
   (let [form-data (get-in @state/state [:user-profile :form-data])
         errors (validate-form form-data)]
-
-    ;; Mark all fields as touched
     (swap! state/state assoc-in [:user-profile :touched-fields]
            #{:first-name :last-name :email :phone :job-title :company :bio})
-
     (if (empty? errors)
       (do
-        ;; Start submission
         (swap! state/state assoc-in [:user-profile :is-submitting] true)
-
-        ;; Simulate API call
         (js/setTimeout
          (fn []
            (swap! state/state assoc-in [:user-profile :is-submitting] false)
            (swap! state/state assoc-in [:user-profile :success-modal-open] true)
            (swap! state/state assoc-in [:user-profile :saved-data] form-data))
          1000))
-      ;; Set validation errors
       (swap! state/state assoc-in [:user-profile :validation-errors] errors))))
 
 (defn handle-export-click []
@@ -94,7 +86,6 @@
     (swap! state/state assoc-in [:user-profile :exported-data] form-data)))
 
 (defn handle-cancel []
-  ;; Reset form to initial values
   (swap! state/state assoc-in [:user-profile :form-data]
          {:first-name "John"
           :last-name "Doe"
@@ -107,535 +98,274 @@
   (swap! state/state assoc-in [:user-profile :validation-errors] {}))
 
 ;; ============================================================================
-;; Avatar Section
+;; UI Helpers
 ;; ============================================================================
 
-(defn avatar-section [{:keys [on-avatar-click]}]
-  [:div.flex.items-center.gap-4.mb-8
-   [:div.relative
-    ;; Profile Avatar - Click to change
-    [:div.w-20.h-20.ty-surface-content.rounded-full.flex.items-center.justify-center.cursor-pointer.hover:ty-surface-elevated.transition-colors.border-2.border-dashed.ty-border.hover:ty-border-primary
-     {:on {:click on-avatar-click}}
-     [:ty-icon.ty-text- {:name "user"
-                         :size "2xl"}]]
-
-    ;; Upload badge
-    [:div.absolute.-bottom-1.-right-1.w-8.h-8.ty-bg-primary.rounded-full.flex.items-center.justify-center.cursor-pointer.hover:opacity-80.transition-opacity.shadow-lg
-     {:on {:click on-avatar-click}}
-     [:ty-icon.ty-text++ {:name "plus"
-                          :size "sm"}]]]
-
+(defn- section-divider [label]
+  [:div.flex.items-center.gap-3.mb-3
+   {:style {:margin-top "1.25rem"}}
+   [:span.text-xs.font-semibold.tracking-widest.uppercase.ty-text-- label]
    [:div.flex-1
-    [:h2.text-2xl.font-semibold.ty-text "John Doe"]
-    [:p.ty-text- "Software Developer"]
-    [:p.text-sm.ty-text-- "Click avatar to upload new photo"]]])
+    {:style {:height "1px"
+             :background "var(--ty-border)"}}]])
 
 ;; ============================================================================
-;; Personal Information Section
+;; Personal Information
 ;; ============================================================================
 
 (defn personal-info-section [{:keys [form-data errors touched on-change]}]
-  [:div.ty-floating.p-6.rounded-lg
-   [:h3.text-xl.font-semibold.ty-text.mb-6.pb-2.border-b.ty-border "Personal Information"]
-
-   [:div.space-y-6
-    ;; First Name - Basic input
-    [:div
-     [:ty-input {:type "text"
-                 :label "First Name"
-                 :value (:first-name form-data)
-                 :placeholder "Enter your first name"
-                 :required true
-                 :error (when (contains? touched :first-name)
-                          (:first-name errors))
-                 :on {:input (on-change :first-name)}}]]
-
-    ;; Last Name - Basic input
-    [:div
-     [:ty-input {:type "text"
-                 :label "Last Name"
-                 :value (:last-name form-data)
-                 :placeholder "Enter your last name"
-                 :required true
-                 :error (when (contains? touched :last-name)
-                          (:last-name errors))
-                 :on {:input (on-change :last-name)}}]]
-
-    ;; Email - Input with validation
-    [:div
-     [:ty-input {:type "email"
-                 :label "Email Address"
-                 :value (:email form-data)
-                 :placeholder "your@email.com"
-                 :required true
-                 :error (when (contains? touched :email)
-                          (:email errors))
-                 :on {:input (on-change :email)}}]]
-
-    ;; Phone - Formatted input
-    [:div
-     [:ty-input {:type "tel"
-                 :label "Phone Number"
-                 :value (:phone form-data)
-                 :placeholder "+1 (555) 123-4567"
-                 :required true
-                 :error (when (contains? touched :phone)
-                          (:phone errors))
-                 :on {:input (on-change :phone)}}]]]])
+  [:div
+   (section-divider "Personal")
+   [:div.grid.grid-cols-2.gap-3
+    [:ty-input {:type "text"
+                :label "First Name"
+                :value (:first-name form-data)
+                :placeholder "First"
+                :required true
+                :error (when (contains? touched :first-name) (:first-name errors))
+                :on {:input (on-change :first-name)}}]
+    [:ty-input {:type "text"
+                :label "Last Name"
+                :value (:last-name form-data)
+                :placeholder "Last"
+                :required true
+                :error (when (contains? touched :last-name) (:last-name errors))
+                :on {:input (on-change :last-name)}}]
+    [:ty-input {:type "email"
+                :label "Email"
+                :value (:email form-data)
+                :placeholder "you@example.com"
+                :required true
+                :error (when (contains? touched :email) (:email errors))
+                :on {:input (on-change :email)}}]
+    [:ty-input {:type "tel"
+                :label "Phone"
+                :value (:phone form-data)
+                :placeholder "+1 (555) 123-4567"
+                :required true
+                :error (when (contains? touched :phone) (:phone errors))
+                :on {:input (on-change :phone)}}]]])
 
 ;; ============================================================================
-;; Professional Information Section
+;; Professional Information
 ;; ============================================================================
 
 (defn professional-info-section [{:keys [form-data errors touched on-change]}]
-  [:div.ty-floating.p-6.rounded-lg
-   [:h3.text-xl.font-semibold.ty-text.mb-6.pb-2.border-b.ty-border "Professional Information"]
+  [:div
+   (section-divider "Professional")
+   [:div.grid.grid-cols-2.gap-3.mb-3
+    [:ty-input {:type "text"
+                :label "Job Title"
+                :value (:job-title form-data)
+                :placeholder "Your title"
+                :error (when (contains? touched :job-title) (:job-title errors))
+                :on {:input (on-change :job-title)}}]
+    [:ty-input {:type "text"
+                :label "Company"
+                :value (:company form-data)
+                :placeholder "Company name"
+                :error (when (contains? touched :company) (:company errors))
+                :on {:input (on-change :company)}}]]
 
-   [:div.space-y-6
-    ;; Job Title
-    [:div
-     [:ty-input {:type "text"
-                 :label "Job Title"
-                 :value (:job-title form-data)
-                 :placeholder "Your job title"
-                 :error (when (contains? touched :job-title)
-                          (:job-title errors))
-                 :on {:input (on-change :job-title)}}]]
+   [:ty-textarea {:label "Bio"
+                  :max-height "110px"
+                  :value (:bio form-data)
+                  :placeholder "Professional background..."
+                  :error (when (contains? touched :bio) (:bio errors))
+                  :on {:change (on-change :bio)}}]
+   [:div.flex.justify-end.mt-1
+    [:span.text-xs
+     {:class (if (> (count (:bio form-data "")) 450) "ty-text-warning" "ty-text--")}
+     (str (count (:bio form-data "")) "/500")]]
 
-    ;; Company
-    [:div
-     [:ty-input {:type "text"
-                 :label "Company"
-                 :value (:company form-data)
-                 :placeholder "Company name"
-                 :error (when (contains? touched :company)
-                          (:company errors))
-                 :on {:input (on-change :company)}}]]
-
-    ;; Bio - Textarea
-    [:div
-     [:ty-textarea {:type "textarea"
-                    :label "Professional Bio"
-                    :max-height "200px"
-                    :value (:bio form-data)
-                    :placeholder "Tell us about your professional background..."
-                    :rows "4"
-                    :error (when (contains? touched :bio)
-                             (:bio errors))
-                    :on {:change (on-change :bio)}}]
-     ;; Character counter
-     [:div.flex.justify-between.items-center.mt-2
-      (when (and (contains? touched :bio) (:bio errors))
-        [:p.text-sm.ty-text-danger.flex.items-center.gap-2
-         [:ty-icon {:name "alert-circle"
-                    :size "xs"}]
-         (:bio errors)])
-      [:span.text-xs.ty-text-
-       {:class (cond
-                 (> (count (:bio form-data "")) 450) "ty-text-warning"
-                 (> (count (:bio form-data "")) 250) "ty-text-success"
-                 :else "ty-text-")}
-       (str (count (:bio form-data "")) "/500")]]]
-
-    ;; Skills - Multiselect with unified simple tags
-    [:div
-     [:label.block.text-sm.font-medium.ty-text.mb-2 "Skills & Technologies"]
-     [:ty-multiselect {:placeholder "Select your skills and technologies..."}
-      ;; Pre-selected skills
-      [:ty-tag {:value "clojurescript"
-                :flavor "primary"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "λ"]
-        [:span "ClojureScript"]]]
-      [:ty-tag {:value "react"
-                :flavor "neutral"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "⚛"]
-        [:span "React"]]]
-      [:ty-tag {:value "typescript"
-                :flavor "secondary"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "TS"]
-        [:span "TypeScript"]]]
-      [:ty-tag {:value "nodejs"
-                :flavor "success"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "JS"]
-        [:span "Node.js"]]]
-      [:ty-tag {:value "postgresql"
-                :flavor "neutral"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "🐘"]
-        [:span "PostgreSQL"]]]
-
-      ;; Available options to select - simplified to match selected style
-      [:ty-tag {:value "python"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "🐍"]
-        [:span "Python"]]]
-      [:ty-tag {:value "rust"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "🦀"]
-        [:span "Rust"]]]
-      [:ty-tag {:value "go"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "Go"]
-        [:span "Go"]]]
-      [:ty-tag {:value "docker"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "🐳"]
-        [:span "Docker"]]]
-      [:ty-tag {:value "kubernetes"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "☸"]
-        [:span "Kubernetes"]]]
-      [:ty-tag {:value "aws"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "☁"]
-        [:span "AWS"]]]
-      [:ty-tag {:value "graphql"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "QL"]
-        [:span "GraphQL"]]]
-      [:ty-tag {:value "mongodb"}
-       [:div.flex.items-center.gap-2
-        [:span.ty-text++.text-xs.font-bold "🍃"]
-        [:span "MongoDB"]]]]]]])
+   [:div.mt-3
+    [:ty-multiselect {:placeholder "Skills & technologies..."}
+     [:ty-tag {:value "clojurescript" :flavor "primary"}
+      [:div.flex.items-center.gap-1.5
+       [:span.font-bold.text-xs "λ"] [:span "ClojureScript"]]]
+     [:ty-tag {:value "react" :flavor "neutral"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "⚛"] [:span "React"]]]
+     [:ty-tag {:value "typescript" :flavor "secondary"}
+      [:div.flex.items-center.gap-1.5
+       [:span.font-bold.text-xs "TS"] [:span "TypeScript"]]]
+     [:ty-tag {:value "nodejs" :flavor "success"}
+      [:div.flex.items-center.gap-1.5
+       [:span.font-bold.text-xs "JS"] [:span "Node.js"]]]
+     [:ty-tag {:value "postgresql" :flavor "neutral"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "🐘"] [:span "PostgreSQL"]]]
+     [:ty-tag {:value "python"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "🐍"] [:span "Python"]]]
+     [:ty-tag {:value "rust"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "🦀"] [:span "Rust"]]]
+     [:ty-tag {:value "docker"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "🐳"] [:span "Docker"]]]
+     [:ty-tag {:value "graphql"}
+      [:div.flex.items-center.gap-1.5
+       [:span.font-bold.text-xs "QL"] [:span "GraphQL"]]]
+     [:ty-tag {:value "aws"}
+      [:div.flex.items-center.gap-1.5
+       [:span.text-xs "☁"] [:span "AWS"]]]]]])
 
 ;; ============================================================================
-;; Location & Preferences Section
+;; Location & Preferences
 ;; ============================================================================
 
 (defn location-preferences-section []
   [:div
-   [:h3.text-xl.font-semibold.ty-text.mb-6.pb-2.border-b.ty-border "Location & Preferences"]
-
-   [:div.grid.grid-cols-1.sm:grid-cols-2.gap-4
-    ;; Country Dropdown with flags and details
+   (section-divider "Location & Language")
+   [:div.grid.grid-cols-2.gap-3
     [:div
-     [:label.block.text-sm.font-medium.ty-text.mb-2 "Country"]
-     [:ty-dropdown {:value "us"
-                    :placeholder "Select your country"
-                    :required true}
+     [:ty-dropdown {:value "us" :placeholder "Country"}
       [:ty-option {:value "us"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇺🇸"]
-        [:div.flex-1
-         [:div.font-medium "United States"]
-         [:div.text-xs.ty-text- "North America • USD"]]]]
+       [:div.flex.items-center.gap-2 [:span "🇺🇸"] [:span "United States"]]]
       [:ty-option {:value "ca"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇨🇦"]
-        [:div.flex-1
-         [:div.font-medium "Canada"]
-         [:div.text-xs.ty-text- "North America • CAD"]]]]
+       [:div.flex.items-center.gap-2 [:span "🇨🇦"] [:span "Canada"]]]
       [:ty-option {:value "uk"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇬🇧"]
-        [:div.flex-1
-         [:div.font-medium "United Kingdom"]
-         [:div.text-xs.ty-text- "Europe • GBP"]]]]
+       [:div.flex.items-center.gap-2 [:span "🇬🇧"] [:span "United Kingdom"]]]
       [:ty-option {:value "de"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇩🇪"]
-        [:div.flex-1
-         [:div.font-medium "Germany"]
-         [:div.text-xs.ty-text- "Europe • EUR"]]]]
+       [:div.flex.items-center.gap-2 [:span "🇩🇪"] [:span "Germany"]]]
       [:ty-option {:value "fr"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇫🇷"]
-        [:div.flex-1
-         [:div.font-medium "France"]
-         [:div.text-xs.ty-text- "Europe • EUR"]]]]
+       [:div.flex.items-center.gap-2 [:span "🇫🇷"] [:span "France"]]]
       [:ty-option {:value "jp"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇯🇵"]
-        [:div.flex-1
-         [:div.font-medium "Japan"]
-         [:div.text-xs.ty-text- "Asia • JPY"]]]]
-      [:ty-option {:value "au"}
-       [:div.flex.items-center.gap-3
-        [:span.text-lg "🇦🇺"]
-        [:div.flex-1
-         [:div.font-medium "Australia"]
-         [:div.text-xs.ty-text- "Oceania • AUD"]]]]]]
-
-    ;; Timezone Dropdown with UTC offsets
+       [:div.flex.items-center.gap-2 [:span "🇯🇵"] [:span "Japan"]]]]]
     [:div
-     [:label.block.text-sm.font-medium.ty-text.mb-2 "Timezone"]
-     [:ty-dropdown {:value "pst"
-                    :placeholder "Select timezone"}
+     [:ty-dropdown {:value "est" :placeholder "Timezone"}
       [:ty-option {:value "pst"}
        [:div.flex.items-center.justify-between
-        [:div.flex.items-center.gap-2
-         [:ty-icon.ty-text-warning {:name "sun"
-                                    :size "sm"}]
-         [:span.font-medium "Pacific Standard"]]
-        [:span.text-xs.ty-text-.font-mono "UTC-8"]]]
+        [:span "Pacific"] [:span.font-mono.text-xs.ty-text-- "UTC−8"]]]
       [:ty-option {:value "mst"}
        [:div.flex.items-center.justify-between
-        [:div.flex.items-center.gap-2
-         [:ty-icon.ty-text-warning {:name "sun"
-                                    :size "sm"}]
-         [:span.font-medium "Mountain Standard"]]
-        [:span.text-xs.ty-text-.font-mono "UTC-7"]]]
+        [:span "Mountain"] [:span.font-mono.text-xs.ty-text-- "UTC−7"]]]
       [:ty-option {:value "cst"}
        [:div.flex.items-center.justify-between
-        [:div.flex.items-center.gap-2
-         [:ty-icon.ty-text-warning {:name "sun"
-                                    :size "sm"}]
-         [:span.font-medium "Central Standard"]]
-        [:span.text-xs.ty-text-.font-mono "UTC-6"]]]
+        [:span "Central"] [:span.font-mono.text-xs.ty-text-- "UTC−6"]]]
       [:ty-option {:value "est"}
        [:div.flex.items-center.justify-between
-        [:div.flex.items-center.gap-2
-         [:ty-icon.ty-text-warning {:name "sun"
-                                    :size "sm"}]
-         [:span.font-medium "Eastern Standard"]]
-        [:span.text-xs.ty-text-.font-mono "UTC-5"]]]
+        [:span "Eastern"] [:span.font-mono.text-xs.ty-text-- "UTC−5"]]]
       [:ty-option {:value "utc"}
        [:div.flex.items-center.justify-between
-        [:div.flex.items-center.gap-2
-         [:ty-icon.ty-text {:name "globe"
-                                 :size "sm"}]
-         [:span.font-medium "Coordinated Universal"]]
-        [:span.text-xs.ty-text-.font-mono "UTC+0"]]]]]
-
-    ;; Language Preference with native names
+        [:span "UTC"] [:span.font-mono.text-xs.ty-text-- "UTC+0"]]]]]
     [:div
-     [:label.block.text-sm.font-medium.ty-text.mb-2 "Preferred Language"]
-     [:ty-dropdown {:value "en"
-                    :placeholder "Select language"}
+     [:ty-dropdown {:value "en" :placeholder "Language"}
       [:ty-option {:value "en"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-6.ty-surface-content.rounded.flex.items-center.justify-center.text-xs.font-bold "EN"]
-        [:div.flex-1
-         [:div.font-medium "English"]
-         [:div.text-xs.ty-text- "English"]]]]
+       [:div.flex.items-center.gap-2
+        [:span.font-mono.text-xs.ty-text-- "EN"] [:span "English"]]]
       [:ty-option {:value "es"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-6.ty-surface-content.rounded.flex.items-center.justify-center.text-xs.font-bold "ES"]
-        [:div.flex-1
-         [:div.font-medium "Español"]
-         [:div.text-xs.ty-text- "Spanish"]]]]
+       [:div.flex.items-center.gap-2
+        [:span.font-mono.text-xs.ty-text-- "ES"] [:span "Español"]]]
       [:ty-option {:value "fr"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-6.ty-surface-content.rounded.flex.items-center.justify-center.text-xs.font-bold "FR"]
-        [:div.flex-1
-         [:div.font-medium "Français"]
-         [:div.text-xs.ty-text- "French"]]]]
+       [:div.flex.items-center.gap-2
+        [:span.font-mono.text-xs.ty-text-- "FR"] [:span "Français"]]]
       [:ty-option {:value "de"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-6.ty-surface-content.rounded.flex.items-center.justify-center.text-xs.font-bold "DE"]
-        [:div.flex-1
-         [:div.font-medium "Deutsch"]
-         [:div.text-xs.ty-text- "German"]]]]
-      [:ty-option {:value "ja"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-6.ty-surface-content.rounded.flex.items-center.justify-center.text-xs.font-bold "JA"]
-        [:div.flex-1
-         [:div.font-medium "日本語"]
-         [:div.text-xs.ty-text- "Japanese"]]]]]]
-
-    ;; Theme Preference with visual indicators
+       [:div.flex.items-center.gap-2
+        [:span.font-mono.text-xs.ty-text-- "DE"] [:span "Deutsch"]]]]]
     [:div
-     [:label.block.text-sm.font-medium.ty-text.mb-2 "Theme Preference"]
-     [:ty-dropdown {:value "auto"
-                    :placeholder "Select theme"}
+     [:ty-dropdown {:value "auto" :placeholder "Theme"}
       [:ty-option {:value "light"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-8.bg-white.border.ty-border.rounded-full.flex.items-center.justify-center.shadow-sm
-         [:ty-icon.text-yellow-500 {:name "sun"
-                                    :size "sm"}]]
-        [:div.flex-1
-         [:div.font-medium "Light Mode"]
-         [:div.text-xs.ty-text- "Bright and clean"]]]]
+       [:div.flex.items-center.gap-2
+        [:ty-icon {:name "sun" :size "xs"}] [:span "Light"]]]
       [:ty-option {:value "dark"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-8.bg-gray-900.border.border-gray-700.rounded-full.flex.items-center.justify-center.shadow-sm
-         [:ty-icon.text-blue-400 {:name "moon"
-                                  :size "sm"}]]
-        [:div.flex-1
-         [:div.font-medium "Dark Mode"]
-         [:div.text-xs.ty-text- "Easy on the eyes"]]]]
+       [:div.flex.items-center.gap-2
+        [:ty-icon {:name "moon" :size "xs"}] [:span "Dark"]]]
       [:ty-option {:value "auto"}
-       [:div.flex.items-center.gap-3
-        [:div.w-8.h-8.ty-surface-elevated.border.ty-border.rounded-full.flex.items-center.justify-center.shadow-sm
-         [:ty-icon.ty-text- {:name "settings"
-                             :size "sm"}]]
-        [:div.flex-1
-         [:div.font-medium "Auto (System)"]
-         [:div.text-xs.ty-text- "Follow device setting"]]]]]]]])
+       [:div.flex.items-center.gap-2
+        [:ty-icon {:name "settings" :size "xs"}] [:span "System"]]]]]]])
 
 ;; ============================================================================
-;; Account Security Section
+;; Security & Preferences
 ;; ============================================================================
 
 (defn security-section []
   [:div
-   [:h3.text-xl.font-semibold.ty-text.mb-6.pb-2.border-b.ty-border "Account & Security"]
+   (section-divider "Security & Preferences")
+   [:div.grid.grid-cols-2.gap-3.mb-4
+    [:ty-input {:type "password"
+                :label "Current Password"
+                :placeholder "••••••••"
+                :autocomplete "current-password"}]
+    [:ty-input {:type "password"
+                :label "New Password"
+                :placeholder "••••••••"
+                :autocomplete "new-password"}]]
 
-   [:div.space-y-6
-    ;; Password Fields Row
-    [:div.grid.grid-cols-1.md:grid-cols-2.gap-6
-     [:div
-      [:ty-input {:type "password"
-                  :label "Current Password"
-                  :placeholder "Enter current password"
-                  :autocomplete "current-password"}]]
-     [:div
-      [:ty-input {:type "password"
-                  :label "New Password"
-                  :placeholder "Enter new password"
-                  :autocomplete "new-password"}]]]
-
-    ;; Email Notifications - Using ty-input checkboxes
-    [:div.flex.flex-col.sm:flex-row.flex-wrap.gap-6
-     [:div.min-w-0
-      [:h4.text-sm.font-medium.ty-text.mb-4 "Email Notifications"]
-      [:div.space-y-3
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "notifications-updates"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Product updates and announcements"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "notifications-newsletter"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Weekly newsletter"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "notifications-marketing"
-                       :value "enabled"}]
-        [:span "Marketing promotions and offers"]]]]
-
-     ;; Privacy & Security Preferences
-     [:div.min-w-0
-      [:h4.text-sm.font-medium.ty-text.mb-4 "Privacy & Security"]
-      [:div.space-y-3
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "privacy-2fa"
-                       :value "enabled"}]
-        [:span "Enable two-factor authentication"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "privacy-profile-public"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Make profile public"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "privacy-allow-contact"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Allow contact from other users"]]]]
-
-     ;; Account Preferences
-     [:div.min-w-0
-      [:h4.text-sm.font-medium.ty-text.mb-4 "Account Preferences"]
-      [:div.space-y-3
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "account-autosave"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Auto-save drafts"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "account-online-status"
-                       :value "enabled"
-                       :checked ""}]
-        [:span "Show online status"]]
-       [:label.inline-flex.items-center.gap-2.cursor-pointer
-        [:ty-checkbox {:name "account-remember-login"
-                       :value "enabled"}]
-        [:span "Remember login for 30 days"]]]]]]])
+   [:div.grid.grid-cols-2.gap-x-6.gap-y-2
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "notif-updates" :checked ""}]
+     [:span "Product updates"]]
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "privacy-2fa"}]
+     [:span "Two-factor auth"]]
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "notif-newsletter" :checked ""}]
+     [:span "Newsletter"]]
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "privacy-public" :checked ""}]
+     [:span "Public profile"]]
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "notif-marketing"}]
+     [:span "Promotions"]]
+    [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text
+     [:ty-checkbox {:name "account-autosave" :checked ""}]
+     [:span "Auto-save drafts"]]]])
 
 ;; ============================================================================
 ;; Form Actions
 ;; ============================================================================
 
 (defn form-actions [{:keys [is-submitting has-errors on-export on-cancel]}]
-  [:div.flex.flex-col.sm:flex-row.gap-4.justify-between.items-center.pt-8.border-t.ty-border
-   ;; Status indicator
-   [:div.flex.items-center.gap-2
-    (if has-errors
-      [:div
-       [:ty-icon.ty-text-danger {:name "alert-circle"}]
-       [:span.text-sm.ty-text-danger "Please fix validation errors before saving"]]
-      [:div
-       [:ty-icon.ty-text-success {:name "check-circle"}]
-       [:span.text-sm.ty-text-success "Form is valid and ready to save"]])]
-
-   ;; Action buttons
-   [:div.flex.flex-col.sm:flex-row.gap-3
-    [:ty-button {:type "button"
-                 :flavor "neutral"
-                 :wide true
+  [:div.flex.items-center.justify-between.pt-4.border-t.ty-border
+   {:style {:margin-top "1.25rem"}}
+   [:div.flex.items-center.gap-1.5
+    [:ty-icon {:name (if has-errors "alert-circle" "check-circle")
+               :size "xs"
+               :class (if has-errors "ty-text-danger" "ty-text-success")}]
+    [:span.text-xs
+     {:class (if has-errors "ty-text-danger" "ty-text-success")}
+     (if has-errors "Fix errors before saving" "Ready to save")]]
+   [:div.flex.gap-2
+    [:ty-button {:type "button" :flavor "neutral" :size "sm"
                  :on {:click on-cancel}}
-     "Cancel Changes"]
-    [:ty-button {:type "button"
-                 :flavor "secondary"
-                 :wide true
+     "Cancel"]
+    [:ty-button {:type "button" :flavor "secondary" :size "sm"
                  :on {:click on-export}}
-     [:ty-icon.mr-2 {:name "download"}]
-     "Export Profile"]
-    [:ty-button {:type "submit"
-                 :flavor "primary"
-                 :wide true
+     [:ty-icon {:name "download" :size "xs" :class "mr-1"}]
+     "Export"]
+    [:ty-button {:type "submit" :flavor "primary" :size "sm"
                  :disabled (or is-submitting has-errors)}
      (if is-submitting
-       [:div.flex.items-center.gap-2
-        [:ty-icon {:name "loader-2"
-                   :spin true
-                   :size "sm"}]
-        "Saving..."]
-       [:div.flex.items-center.gap-2
-        [:ty-icon {:name "save"
-                   :size "sm"}]
-        "Save Profile"])]]])
+       [:div.flex.items-center.gap-1
+        [:ty-icon {:name "loader-2" :spin true :size "xs"}]
+        "Saving…"]
+       [:div.flex.items-center.gap-1
+        [:ty-icon {:name "save" :size "xs"}]
+        "Save"])]]])
 
 ;; ============================================================================
 ;; Avatar Upload Modal
 ;; ============================================================================
 
 (defn avatar-upload-modal [{:keys [open on-close]}]
-  [:ty-modal {:open open
-              :on {:close on-close}}
-   [:div.p-4.sm:p-8.max-w-lg.ty-elevated.rounded-lg.shadow-xl
-    [:h3.text-xl.font-semibold.ty-text.mb-6 "Upload Profile Photo"]
-    [:p.ty-text-.text-sm.mb-6 "Choose a new profile photo. For best results, upload an image that's at least 400x400 pixels."]
-
-    ;; Upload Area
-    [:div.border-2.border-dashed.ty-border.rounded-lg.p-8.text-center.hover:ty-border-primary.transition-colors.cursor-pointer.mb-6
-     [:ty-icon.ty-text-.mb-4 {:name "upload"
-                              :size "3xl"}]
-     [:p.ty-text.font-medium.mb-2 "Drag and drop your photo here"]
-     [:p.ty-text-.text-sm.mb-4 "or click to browse files"]
-
-     ;; Supported formats showcase
-     [:div.flex.flex-wrap.justify-center.gap-2.mt-4
-      [:span.px-2.py-1.ty-bg-success-.ty-text-success.rounded.text-xs.font-medium "JPG"]
-      [:span.px-2.py-1.ty-bg-success-.ty-text-success.rounded.text-xs.font-medium "PNG"]
-      [:span.px-2.py-1.ty-bg-success-.ty-text-success.rounded.text-xs.font-medium "WebP"]
-      [:span.px-2.py-1.ty-bg-info-.ty-text.rounded.text-xs.font-medium "Max 5MB"]]
-
-     [:input.hidden {:type "file"
-                     :accept "image/*"
-                     :id "avatar-upload"}]]
-
-    ;; Current Avatar Preview
-    [:div.flex.items-center.gap-4.mb-6
-     [:div.w-16.h-16.ty-surface-content.rounded-full.flex.items-center.justify-center
-      [:ty-icon.ty-text- {:name "user"
-                          :size "xl"}]]
-     [:div.flex-1
-      [:p.text-sm.font-medium.ty-text "Current Photo"]
-      [:p.text-xs.ty-text- "No photo uploaded"]]]
-
-    ;; Modal Actions
-    [:div.flex.gap-3.justify-end
-     [:ty-button {:flavor "neutral"
-                  :on {:click on-close}}
-      "Cancel"]
-     [:ty-button {:flavor "primary"}
-      [:ty-icon.mr-2 {:name "save"}]
+  [:ty-modal {:open open :on {:close on-close}}
+   [:div.p-6.max-w-md.ty-elevated.rounded-lg
+    [:h3.text-lg.font-semibold.ty-text.mb-4 "Upload Profile Photo"]
+    [:div.border-2.border-dashed.ty-border.rounded-lg.p-8.text-center.hover:ty-border-primary.transition-colors.cursor-pointer.mb-4
+     [:ty-icon.ty-text-.mb-3 {:name "upload" :size "2xl"}]
+     [:p.ty-text.text-sm.font-medium.mb-1 "Drag and drop or click to browse"]
+     [:div.flex.justify-center.gap-2.mt-3
+      [:span.px-2.py-0.5.ty-bg-success-.ty-text-success.rounded.text-xs "JPG"]
+      [:span.px-2.py-0.5.ty-bg-success-.ty-text-success.rounded.text-xs "PNG"]
+      [:span.px-2.py-0.5.ty-bg-success-.ty-text-success.rounded.text-xs "WebP"]
+      [:span.px-2.py-0.5.ty-bg-info-.ty-text.rounded.text-xs "Max 5MB"]]
+     [:input.hidden {:type "file" :accept "image/*"}]]
+    [:div.flex.gap-2.justify-end
+     [:ty-button {:flavor "neutral" :size "sm" :on {:click on-close}} "Cancel"]
+     [:ty-button {:flavor "primary" :size "sm"}
+      [:ty-icon {:name "save" :size "xs" :class "mr-1"}]
       "Save Photo"]]]])
 
 ;; ============================================================================
@@ -643,86 +373,54 @@
 ;; ============================================================================
 
 (defn success-modal [{:keys [open on-close saved-data]}]
-  [:ty-modal {:open open
-              :on {:close on-close}}
-   [:div.p-4.sm:p-8.max-w-2xl.ty-elevated.rounded-lg.shadow-xl
-    [:div.flex.items-center.gap-4.mb-6
-     [:div.w-16.h-16.ty-bg-success.rounded-full.flex.items-center.justify-center
-      [:ty-icon.ty-text++ {:name "check"
-                           :size "2xl"}]]
+  [:ty-modal {:open open :on {:close on-close}}
+   [:div.p-6.max-w-lg.ty-elevated.rounded-lg
+    [:div.flex.items-center.gap-3.mb-5
+     [:div.w-10.h-10.ty-bg-success.rounded-full.flex.items-center.justify-center
+      [:ty-icon {:name "check" :size "lg" :class "ty-text++"}]]
      [:div
-      [:h3.text-2xl.font-semibold.ty-text "Profile Saved Successfully!"]
-      [:p.ty-text- "Your profile has been updated with the following information:"]]]
-
-    ;; Display saved data
-    [:div.ty-floating.p-6.rounded-lg.space-y-4.mb-6
-     [:div.grid.grid-cols-2.gap-4
-      [:div
-       [:p.text-sm.font-medium.ty-text+ "Name"]
-       [:p.ty-text (str (:first-name saved-data) " " (:last-name saved-data))]]
-      [:div
-       [:p.text-sm.font-medium.ty-text+ "Email"]
-       [:p.ty-text (:email saved-data)]]
-      [:div
-       [:p.text-sm.font-medium.ty-text+ "Phone"]
-       [:p.ty-text (:phone saved-data)]]
-      [:div
-       [:p.text-sm.font-medium.ty-text+ "Company"]
-       [:p.ty-text (:company saved-data)]]]
-     [:div
-      [:p.text-sm.font-medium.ty-text+.mb-2 "Job Title"]
-      [:p.ty-text (:job-title saved-data)]]]
-
-    [:div.flex.gap-3.justify-end
-     [:ty-button {:flavor "primary"
-                  :on {:click on-close}}
-      "Close"]]]])
+      [:h3.text-lg.font-semibold.ty-text "Profile saved"]
+      [:p.text-sm.ty-text- "All changes have been applied"]]]
+    [:div.ty-content.p-4.rounded-lg.grid.grid-cols-2.gap-3.text-sm.mb-5
+     [:div [:p.ty-text--.text-xs.mb-0.5 "Name"]
+      [:p.ty-text.font-medium (str (:first-name saved-data) " " (:last-name saved-data))]]
+     [:div [:p.ty-text--.text-xs.mb-0.5 "Email"]
+      [:p.ty-text (:email saved-data)]]
+     [:div [:p.ty-text--.text-xs.mb-0.5 "Phone"]
+      [:p.ty-text (:phone saved-data)]]
+     [:div [:p.ty-text--.text-xs.mb-0.5 "Company"]
+      [:p.ty-text (:company saved-data)]]]
+    [:div.flex.justify-end
+     [:ty-button {:flavor "primary" :size "sm" :on {:click on-close}} "Done"]]]])
 
 ;; ============================================================================
 ;; Export Modal
 ;; ============================================================================
 
 (defn export-modal [{:keys [open on-close exported-data]}]
-  [:ty-modal {:open open
-              :on {:close on-close}}
-   [:div.p-4.sm:p-8.max-w-2xl.ty-elevated.rounded-lg.shadow-xl
-    [:div.flex.items-center.gap-4.mb-6
-     [:div.w-16.h-16.ty-bg-info.rounded-full.flex.items-center.justify-center
-      [:ty-icon.ty-text++ {:name "download"
-                           :size "2xl"}]]
+  [:ty-modal {:open open :on {:close on-close}}
+   [:div.p-6.max-w-sm.ty-elevated.rounded-lg
+    [:div.flex.items-center.gap-3.mb-5
+     [:div.w-10.h-10.ty-bg-info.rounded-full.flex.items-center.justify-center
+      [:ty-icon {:name "download" :size "lg" :class "ty-text++"}]]
      [:div
-      [:h3.text-2xl.font-semibold.ty-text "Export Profile Data"]
-      [:p.ty-text- "Your profile data is ready for export."]]]
-
-    ;; Export format options
-    [:div.ty-floating.p-6.rounded-lg.mb-6
-     [:h4.font-medium.ty-text.mb-4 "Select Export Format"]
-     [:div.space-y-3
-      [:div.p-4.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
-       [:div.flex.items-center.justify-between
+      [:h3.text-lg.font-semibold.ty-text "Export Profile"]
+      [:p.text-sm.ty-text- "Choose a format"]]]
+    [:div.space-y-2.mb-5
+     (for [[format icon label hint color]
+           [["json" "file-json" "JSON" "Machine-readable" "ty-text-primary"]
+            ["csv"  "table"     "CSV"  "Spreadsheet"       "ty-text-success"]
+            ["pdf"  "file-text" "PDF"  "Printable"         "ty-text-danger"]]]
+       ^{:key format}
+       [:div.flex.items-center.justify-between.p-3.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
         [:div
-         [:p.font-medium.ty-text "JSON"]
-         [:p.text-sm.ty-text- "Machine-readable format"]]
-        [:ty-icon.ty-text-primary {:name "file-json"}]]]
-      [:div.p-4.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
-       [:div.flex.items-center.justify-between
-        [:div
-         [:p.font-medium.ty-text "CSV"]
-         [:p.text-sm.ty-text- "Spreadsheet format"]]
-        [:ty-icon.ty-text-success {:name "table"}]]]
-      [:div.p-4.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
-       [:div.flex.items-center.justify-between
-        [:div
-         [:p.font-medium.ty-text "PDF"]
-         [:p.text-sm.ty-text- "Printable document"]]
-        [:ty-icon.ty-text-danger {:name "file-text"}]]]]]
-
-    [:div.flex.gap-3.justify-end
-     [:ty-button {:flavor "neutral"
-                  :on {:click on-close}}
-      "Cancel"]
-     [:ty-button {:flavor "primary"}
-      [:ty-icon.mr-2 {:name "download"}]
+         [:p.font-medium.ty-text.text-sm label]
+         [:p.text-xs.ty-text- hint]]
+        [:ty-icon {:name icon :class color}]])]
+    [:div.flex.gap-2.justify-end
+     [:ty-button {:flavor "neutral" :size "sm" :on {:click on-close}} "Cancel"]
+     [:ty-button {:flavor "primary" :size "sm"}
+      [:ty-icon {:name "download" :size "xs" :class "mr-1"}]
       "Download"]]]])
 
 ;; ============================================================================
@@ -733,7 +431,6 @@
   (let [{:keys [avatar-modal-open success-modal-open export-modal-open
                 form-data validation-errors touched-fields is-submitting saved-data exported-data]}
         (get @state/state :user-profile
-             ;; Default initial state
              {:avatar-modal-open false
               :success-modal-open false
               :export-modal-open false
@@ -749,12 +446,23 @@
               :is-submitting false
               :saved-data nil
               :exported-data nil})
-        ;; Check if there are any validation errors
         has-errors (not (empty? validation-errors))]
-    [:div.space-y-6
-     (avatar-section {:on-avatar-click #(swap! state/state assoc-in [:user-profile :avatar-modal-open] true)})
+    [:div
+     ;; Compact profile header
+     [:div.flex.items-center.gap-3.pb-4.border-b.ty-border
+      [:div.relative.cursor-pointer
+       {:on {:click #(swap! state/state assoc-in [:user-profile :avatar-modal-open] true)}}
+       [:div.w-10.h-10.ty-surface-content.rounded-full.flex.items-center.justify-center.border-2.border-dashed.ty-border.hover:ty-border-primary.transition-colors
+        [:ty-icon.ty-text- {:name "user" :size "lg"}]]
+       [:div.absolute.-bottom-1.-right-1.w-4.h-4.ty-bg-primary.rounded-full.flex.items-center.justify-center
+        [:ty-icon {:name "plus" :size "xs" :class "ty-text++"}]]]
+      [:div.min-w-0
+       [:p.text-sm.font-semibold.ty-text.truncate
+        (str (:first-name form-data "John") " " (:last-name form-data "Doe"))]
+       [:p.text-xs.ty-text--.truncate
+        (str (:job-title form-data "") " · " (:company form-data ""))]]]
 
-     [:form.space-y-6
+     [:form
       {:on {:submit handle-form-submit}}
 
       (personal-info-section {:form-data form-data

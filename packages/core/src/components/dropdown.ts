@@ -20,7 +20,7 @@
  * </ty-dropdown>
  * 
  * <!-- With rich options -->
- * <ty-dropdown label="User" searchable>
+ * <ty-dropdown label="User">
  *   <ty-option value="1">
  *     <div class="flex items-center gap-2">
  *       <img src="avatar1.jpg" class="w-8 h-8 rounded-full" />
@@ -28,9 +28,9 @@
  *     </div>
  *   </ty-option>
  * </ty-dropdown>
- * 
- * <!-- Not searchable (external search) -->
- * <ty-dropdown label="Search API" not-searchable>
+ *
+ * <!-- External search (parent owns filtering, dropdown emits `search` events) -->
+ * <ty-dropdown label="Search API" external-search debounce="300">
  *   <option value="1">Result 1</option>
  * </ty-dropdown>
  * ```
@@ -164,11 +164,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
       visual: true,
       default: false
     },
-    searchable: {
+    externalSearch: {
       type: 'boolean' as const,
       visual: true,
-      default: true,
-      aliases: { 'not-searchable': false }
+      default: false,
+      aliases: { 'external-search': true }
     },
     clearable: {
       type: 'boolean' as const,
@@ -180,9 +180,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
       type: 'string' as const,
       visual: true,
       default: 'md',
-      validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
+      validate: (v: any) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
       coerce: (v: any) => {
-        if (!['sm', 'md', 'lg'].includes(v)) {
+        if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(v)) {
           console.warn(`[ty-dropdown] Invalid size. Using md.`)
           return 'md'
         }
@@ -225,7 +225,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
   private _disabled = false
   private _readonly = false
   private _required = false
-  private _searchable = true
+  private _externalSearch = false
   private _clearable = true
   private _size: Size = 'md'
   private _flavor: Flavor = 'neutral'
@@ -356,8 +356,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
           this._required = newValue
           break
 
-        case 'searchable':
-          this._searchable = newValue
+        case 'externalSearch':
+          this._externalSearch = newValue
           break
 
         case 'clearable':
@@ -1094,12 +1094,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
     // Initialize options state and highlight selected option
     this.initializeOptionsState(true)
 
-    // Focus search input if searchable
-    if (this._searchable) {
-      const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
-      if (searchInput) {
-        setTimeout(() => searchInput.focus(), 100)
-      }
+    // Focus search input
+    const searchInput = shadow.querySelector('.dropdown-search-input') as HTMLInputElement
+    if (searchInput) {
+      setTimeout(() => searchInput.focus(), 100)
     }
 
     // Setup custom scrollbar on options
@@ -1140,8 +1138,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
     const searchChevron = shadow.querySelector('.dropdown-search-chevron')
     if (searchChevron) searchChevron.classList.remove('open')
 
-    // Reset search if not searchable
-    if (!this._searchable) {
+    // Reset search query when in external mode (parent owns the options)
+    if (this._externalSearch) {
       this._state.search = ''
     }
 
@@ -1181,7 +1179,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
     // Update search state
     this._state.search = query
 
-    if (this._searchable) {
+    if (this._externalSearch) {
+      // External search: dispatch event for external handling
+      this.dispatchSearchEvent(query, e)
+    } else {
       // Internal search: filter options locally
       const allOptions = this.getOptions().map(el => this.getOptionData(el))
       const filtered = this.filterOptions(allOptions, query)
@@ -1195,9 +1196,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
       // Clear highlights
       this.clearHighlights(allOptions)
-    } else {
-      // External search: dispatch event for external handling
-      this.dispatchSearchEvent(query, e)
     }
   }
 
@@ -1565,8 +1563,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
       // Search placeholder: "Search <label>..." or just "Search..."
       const searchPlaceholder = this._label ? `Search ${this._label}...` : 'Search...'
 
-      // Conditional search header - only show when searchable
-      const searchHeaderHtml = this._searchable ? `
+      // Search header — always present; externalSearch only changes who handles input
+      const searchHeaderHtml = `
         <div class="mobile-search-header">
           ${this._label ? `<span class="mobile-header-label">${this._label}</span>` : ''}
           <div class="mobile-header-content">
@@ -1580,13 +1578,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
               ${closeButtonSvg}
             </button>
           </div>
-        </div>
-      ` : `
-        <div class="mobile-header-nosearch">
-          ${this._label ? `<span class="mobile-header-label">${this._label}</span>` : ''}
-          <button class="mobile-close-button" type="button" aria-label="Close">
-            ${closeButtonSvg}
-          </button>
         </div>
       `
 
@@ -1643,7 +1634,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       optionsSlot.addEventListener('click', (e) => this.handleMobileOptionClick(e))
     }
 
-    // Add search input handlers (if searchable)
+    // Add search input handlers
     if (searchInput) {
       searchInput.addEventListener('input', (e) => this.handleSearchInput(e))
     }
@@ -1725,13 +1716,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
     // Initialize options state (no highlight on mobile)
     this.initializeOptionsState(false)
 
-    // Focus search input if searchable
-    if (this._searchable) {
-      const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
-      if (searchInput) {
-        // Small delay to ensure dialog is visible and keyboard doesn't glitch
-        setTimeout(() => searchInput.focus(), 300)
-      }
+    // Focus search input
+    const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
+    if (searchInput) {
+      // Small delay to ensure dialog is visible and keyboard doesn't glitch
+      setTimeout(() => searchInput.focus(), 300)
     }
     // Hide clear button when modal is open (stub clear button - desktop only)
     this.updateClearButton()
@@ -1756,15 +1745,14 @@ export class TyDropdown extends TyComponent<DropdownState> {
     this._state.open = false
     this._state.highlightedIndex = -1
 
-    // Reset search and restore all options
-    if (this._searchable) {
-      this._state.search = ''
-      this._state.filteredOptions = []
-      const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
-      if (searchInput) {
-        searchInput.value = ''
-      }
-      // Unhide all options
+    // Reset search and restore all options (internal mode only — parent owns options in external mode)
+    this._state.search = ''
+    this._state.filteredOptions = []
+    const searchInput = shadow.querySelector('.mobile-search-input') as HTMLInputElement
+    if (searchInput) {
+      searchInput.value = ''
+    }
+    if (!this._externalSearch) {
       const allOptions = this.getOptions().map(el => this.getOptionData(el))
       allOptions.forEach(({ element }) => element.removeAttribute('hidden'))
     }
@@ -1802,8 +1790,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
   get required(): boolean { return this.getProperty('required') }
   set required(v: boolean) { this.setProperty('required', v) }
 
-  get searchable(): boolean { return this.getProperty('searchable') }
-  set searchable(v: boolean) { this.setProperty('searchable', v) }
+  get externalSearch(): boolean { return this.getProperty('externalSearch') }
+  set externalSearch(v: boolean) { this.setProperty('externalSearch', v) }
 
   get clearable(): boolean { return this.getProperty('clearable') }
   set clearable(v: boolean) { this.setProperty('clearable', v) }

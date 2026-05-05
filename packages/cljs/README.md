@@ -105,7 +105,7 @@ Smart select with search, keyboard navigation, and mobile-optimized modal.
 </ty-dropdown>
 ```
 
-**Attributes:** `label`, `placeholder`, `value`, `searchable`, `not-searchable`, `required`, `disabled`, `name`
+**Attributes:** `label`, `placeholder`, `value`, `external-search`, `required`, `disabled`, `name`
 
 ---
 
@@ -114,14 +114,14 @@ Smart select with search, keyboard navigation, and mobile-optimized modal.
 Multiple selection with tags and search.
 
 ```html
-<ty-multiselect label="Skills" placeholder="Add skills..." searchable>
-  <option value="clojure">Clojure</option>
-  <option value="javascript">JavaScript</option>
-  <option value="rust">Rust</option>
+<ty-multiselect label="Skills" placeholder="Add skills...">
+  <ty-tag value="clojure">Clojure</ty-tag>
+  <ty-tag value="javascript">JavaScript</ty-tag>
+  <ty-tag value="rust">Rust</ty-tag>
 </ty-multiselect>
 ```
 
-**Attributes:** `label`, `placeholder`, `value` (comma-separated), `searchable`, `required`, `disabled`, `name`
+**Attributes:** `label`, `placeholder`, `value` (comma-separated), `external-search`, `required`, `disabled`, `name`
 
 ---
 

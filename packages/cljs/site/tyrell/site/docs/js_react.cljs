@@ -48,15 +48,6 @@
   [name]
   [:span.font-semibold.ty-text name])
 
-(defn- next-step
-  [icon text]
-  [:div.flex.items-center.gap-3
-   [:div.flex.items-center.justify-center.rounded-md.ty-bg-accent-.flex-shrink-0
-    {:style {:width "28px"
-             :height "28px"}}
-    [:ty-icon.ty-text-accent+ {:name icon
-                               :size "xs"}]]
-   [:span.ty-text.font-medium text]])
 
 (defn- copy-to-clipboard!
   "Copy `text` to the system clipboard. Prefers the async Clipboard API; falls
@@ -621,8 +612,8 @@ import 'tyrell-components'
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "Components are bounded. Icons are not."]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components ship at " [:strong.ty-text "~200 KB minified"] ". "
-      "Importing the entire Lucide family pulls in " [:strong.ty-text "~600 KB"] " — most apps need under fifty icons. "
+      "All 21 components ship at " [:strong.ty-text "~344 KB minified · ~69 KB gzipped"] ". "
+      "Importing the entire Lucide family pulls in " [:strong.ty-text "~820 KB minified · ~125 KB gzipped"] " — most apps need under fifty icons (~10-30 KB gzipped). "
       "Use " (fw "named imports") " for icons, never " (fw "import * as") "; subpath imports for components if your app only renders a handful."]
      [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-accent
       [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
@@ -631,23 +622,6 @@ import 'tyrell-components'
        "See the three icon-registration patterns on Getting Started"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Section 8 — Next steps
-;; =============================================================================
-
-(defn- next-steps []
-  [:div.ty-bg-accent-.rounded-xl.p-6
-   {:style {:border "1px solid var(--ty-border-neutral-mild)"}}
-   [:div.flex.items-center.gap-3.mb-5
-    [:ty-icon.ty-text-accent+.flex-shrink-0 {:name "check-circle"
-                                             :size "lg"}]
-    [:h2.text-xl.font-bold.ty-text++.tracking-tight "Then what?"]]
-   [:div.space-y-3
-    (next-step "grid"      "Browse the components index for APIs and live demos")
-    (next-step "palette"   "Read the CSS system — semantic colors, surfaces, text hierarchy")
-    (next-step "rocket"    "Skim the live examples — User Profile, Event Booking, Contact Form")
-    (next-step "book-open" "Vue and Svelte deep-dives live in the GitHub guides folder")]])
 
 ;; =============================================================================
 ;; Main view
@@ -663,5 +637,4 @@ import 'tyrell-components'
    (frameworks)
    (react-deep-dive)
    (gotchas)
-   (bundle-size-callout)
-   (next-steps)))
+   (bundle-size-callout)))

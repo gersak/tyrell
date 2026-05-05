@@ -54,15 +54,6 @@
   [text]
   [:code text])
 
-(defn- next-step
-  [icon text]
-  [:div.flex.items-center.gap-3
-   [:div.flex.items-center.justify-center.rounded-md.ty-bg-accent-.flex-shrink-0
-    {:style {:width "28px"
-             :height "28px"}}
-    [:ty-icon.ty-text-accent+ {:name icon
-                               :size "xs"}]]
-   [:span.ty-text.font-medium text]])
 
 (defn- compact-stack-card
   "Compact card with eyebrow, title, multi-line tagline, code-chip, bottom CTA.
@@ -658,7 +649,7 @@ def inline_svg(path):
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "What you ship"]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components: " [:strong.ty-text "~70 KB gzipped"] " from CDN — cached across "
+      "All 21 components: " [:strong.ty-text "~69 KB gzipped"] " from CDN — cached across "
       "every page load and shared with anyone else using the same CDN URL. "
       "Icons aren't bundled in — you bring your own via slot mode (each SVG ~200–800 bytes inline) "
       "or via the runtime registry. Either way, you only pay for icons you actually render."]
@@ -669,23 +660,6 @@ def inline_svg(path):
        "See Getting Started for the full picture"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Section 8 — Next steps
-;; =============================================================================
-
-(defn- next-steps []
-  [:div.ty-bg-accent-.rounded-xl.p-6
-   {:style {:border "1px solid var(--ty-border-neutral-mild)"}}
-   [:div.flex.items-center.gap-3.mb-5
-    [:ty-icon.ty-text-accent+.flex-shrink-0 {:name "check-circle"
-                                             :size "lg"}]
-    [:h2.text-xl.font-bold.ty-text++.tracking-tight "Then what?"]]
-   [:div.space-y-3
-    (next-step "grid"      "Browse the components index for APIs and live demos")
-    (next-step "palette"   "Read the CSS system — semantic colors, surfaces, text hierarchy")
-    (next-step "rocket"    "Skim the live examples — User Profile, Event Booking, Contact Form")
-    (next-step "book-open" "HTMX and Datastar deep-dives live in the GitHub guides folder")]])
 
 ;; =============================================================================
 ;; Main view
@@ -701,5 +675,4 @@ def inline_svg(path):
    (frameworks)
    (slot-mode-deep-dive)
    (gotchas)
-   (bundle-size-callout)
-   (next-steps)))
+   (bundle-size-callout)))

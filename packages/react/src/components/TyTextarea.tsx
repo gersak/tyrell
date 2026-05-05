@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Event detail structure for ty-textarea events
 export interface TyTextareaEventDetail {
@@ -147,7 +148,10 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
     }, [ref]);
 
     // Imperatively sync `value` to the underlying element's property.
+    // React 18 workaround: prop-to-property bridging is unreliable for empty
+    // strings on custom elements. React 19+ handles this natively.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current as any;
       if (!element) return;
       const next = (props as any).value ?? '';

@@ -245,8 +245,7 @@ FormData: submits raw number, not formatted string.
 | `disabled` | boolean | `false` | |
 | `readonly` | boolean | `false` | |
 | `required` | boolean | `false` | |
-| `searchable` | boolean | `true` | |
-| `not-searchable` | boolean | - | Disable search |
+| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
 | `clearable` | boolean | `true` | |
 | `not-clearable` | boolean | - | Disable clear |
 | `size` | string | `'md'` | |
@@ -272,7 +271,7 @@ FormData: submits raw number, not formatted string.
 | `disabled` | boolean | `false` | |
 | `readonly` | boolean | `false` | |
 | `required` | boolean | `false` | |
-| `searchable` | boolean | `true` | |
+| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
 | `size` | string | `'md'` | |
 | `flavor` | string | `'neutral'` | |
 | `debounce` | number | `0` | Search debounce |

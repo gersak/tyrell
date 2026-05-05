@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Type definitions for Ty Checkbox component
 export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
@@ -112,7 +113,9 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
     // Imperatively sync `checked` to the underlying property. React 18 sets
     // boolean attributes as empty strings on first render but doesn't reliably
     // remove them when the prop flips back to false on a custom element.
+    // React 19+ handles boolean prop-to-property bridging natively.
     useEffect(() => {
+      if (!needsPropertyBridge) return;
       const element = elementRef.current as any;
       if (!element) return;
       if (Boolean(element.checked) !== Boolean(checked)) {

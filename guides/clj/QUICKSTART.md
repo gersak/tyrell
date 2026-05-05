@@ -4,7 +4,7 @@ Get Tyrell running in your CLJS app in under five minutes. Pick the track that m
 
 | You're using                              | Track | Component access |
 |-------------------------------------------|-------|------------------|
-| Reagent, re-frame, UIx, Helix             | **A** | `tyrell-react` wrappers — clean event handling for `event.detail.value` |
+| Reagent, re-frame, UIx, Helix             | **A** | `tyrell.react` — React wrappers that bridge `event.detail.value` |
 | Replicant, vanilla CLJS, server-rendered  | **B** | Raw `<ty-*>` web components — no wrapper needed |
 
 The infrastructure — routing, i18n, layout, icons — comes from `dev.gersak/tyrell` (Clojars) and works **on both tracks**.
@@ -13,42 +13,69 @@ The infrastructure — routing, i18n, layout, icons — comes from `dev.gersak/t
 
 ## Common setup (both tracks)
 
-### 1. Add Clojars deps (optional but recommended)
+[![Clojars Project](https://img.shields.io/clojars/v/dev.gersak/tyrell.svg)](https://clojars.org/dev.gersak/tyrell)
 
-`deps.edn` or `shadow-cljs.edn`:
+### 1. Add one Clojars dep
+
+`deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell       {:mvn/version "1.0.0-RC5"}
-        dev.gersak/tyrell-icons {:mvn/version "1.0.0-RC5"}}}
+{:deps {dev.gersak/tyrell {:mvn/version "..."}}}   ; latest from Clojars badge above
 ```
 
-`tyrell` gives you router, i18n, and layout. `tyrell-icons` gives you 12,000+ tree-shakeable icon defs. Skip these if you only need components.
+That single dep brings the CLJS side:
+- `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.components`, `tyrell.react` — infrastructure + shims
+- `tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*` — 12,000+ tree-shakeable icon defs (transitive via `dev.gersak/tyrell-icons`)
+- npm `tyrell-components` — declared in `deps.cljs`, shadow-cljs auto-installs it into your `package.json` on first build. No manual `npm install` for components.
 
-### 2. Install npm packages
+Don't want the icons artifact? Exclude it:
+```clojure
+{:deps {dev.gersak/tyrell {:mvn/version "..."
+                           :exclusions [dev.gersak/tyrell-icons]}}}
+```
+
+**Track A only** — React-based CLJS (Reagent, re-frame, UIx, Helix) needs `tyrell-react` installed explicitly, same way you install React itself:
 
 ```bash
-npm install tyrell-components       # web components — both tracks
-npm install tyrell-react            # Track A only
+npm install tyrell-react
 ```
 
-### 3. Load the CSS
+### 2. Load the CSS
 
-In your HTML `<head>`:
+`tyrell.css` lives outside the JS module graph and must be loaded separately. Pick one:
 
 ```html
-<link rel="stylesheet" href="/css/tyrell.css">
+<!-- A. CDN <link> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
 ```
 
-Self-host: copy `node_modules/tyrell-components/css/tyrell.css` to `resources/public/css/`. Or use the CDN: `https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css`.
+```bash
+# B. Fetch into your public/ once (offline-friendly)
+curl -o public/css/tyrell.css \
+  https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css
 
-### 4. Register web components
+# Or copy from the version shadow-cljs already installed
+cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+```
+
+```css
+/* C. Tailwind / PostCSS — add to your input.css */
+@import "../node_modules/tyrell-components/css/tyrell.css";
+@import "tailwindcss";
+```
+
+Wire (B) as a `postinstall` script in `package.json` to keep it in sync with installed versions automatically.
+
+### 3. Register web components
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]))   ; side-effect import: registers all <ty-*> elements
+  (:require [tyrell.components]))   ; side-effect: registers all <ty-*> elements
 ```
 
-That single require is enough. Components are marked side-effectful in `package.json`; icons are not — they only enter your bundle when you reference them.
+That single require is enough. Components are marked side-effectful in npm's `package.json`; icons are not — they only enter your bundle when you reference them.
+
+> **How does the npm package get there?** `dev.gersak/tyrell` ships with a `deps.cljs` declaring `{:npm-deps {"tyrell-components" "<pinned>"}}`. shadow-cljs reads it on first build and runs `npm install --save --save-exact`, so the entry lands in your `package.json` automatically. You'll see it there after the first build — that's expected, it's the standard shadow-cljs contract for library-declared npm deps.
 
 ---
 
@@ -58,8 +85,8 @@ That single require is enough. Components are marked side-effectful in `package.
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]
-            ["tyrell-react" :refer [Button Input]]
+  (:require [tyrell.components]
+            [tyrell.react :refer [Button Input]]
             [reagent.core :as r]))
 
 (defn login-form []
@@ -84,8 +111,8 @@ re-frame is identical — swap `r/atom` and `reset!` for `subscribe`/`dispatch`:
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]
-            ["tyrell-react" :refer [Button Input]]
+  (:require [tyrell.components]
+            [tyrell.react :refer [Button Input]]
             [uix.core :refer [defui $ use-state]]))
 
 (defui login-form []
@@ -102,8 +129,8 @@ re-frame is identical — swap `r/atom` and `reset!` for `subscribe`/`dispatch`:
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]
-            ["tyrell-react" :refer [Button Input]]
+  (:require [tyrell.components]
+            [tyrell.react :refer [Button Input]]
             [helix.core :refer [defnc $]]
             [helix.dom :as d]
             [helix.hooks :refer [use-state]]))
@@ -118,9 +145,11 @@ re-frame is identical — swap `r/atom` and `reset!` for `subscribe`/`dispatch`:
       ($ Button {:flavor "primary" :type "submit"} "Sign in"))))
 ```
 
-### Why `tyrell-react` here
+### Why `tyrell.react` here
 
 Web components dispatch custom events with `event.detail`. React's synthetic event system doesn't bridge those — `[:> :ty-input {:on-change ...}]` would only catch native bubbling events, not `<ty-input>`'s `change` with `event.detail.value`. The wrappers add the listener on the underlying element so `:on-change` works the way you'd expect.
+
+`tyrell.react` is a thin CLJS namespace inside `dev.gersak/tyrell` that re-exports the wrappers from the npm `tyrell-react` package — so you `:require [tyrell.react :as ty]` instead of `["tyrell-react" :as ty]`. The npm package is **not** auto-installed (Track B users wouldn't need it), so make sure you ran `npm install tyrell-react` from step 1 — it's a peer of `react` and `react-dom`.
 
 Each wrapper exports under two names: `TyButton` (explicit) and `Button` (short). Use whichever fits your style — the short names tend to read better in CLJS.
 
@@ -134,7 +163,7 @@ No wrapper package. Web components emit normal DOM events; non-React renderers h
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]
+  (:require [tyrell.components]
             [replicant.dom :as r.dom]))
 
 (defonce !state (atom {:email ""}))
@@ -160,7 +189,7 @@ For action-dispatch idioms (`:on {:change [:set-email]}` + `replicant.dom/set-di
 
 ```clojure
 (ns my-app.core
-  (:require ["tyrell-components"]))
+  (:require [tyrell.components]))
 
 (defn render! []
   (let [root  (js/document.getElementById "app")

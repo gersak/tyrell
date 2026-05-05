@@ -9,5 +9,8 @@
    :devtools {:http-root "public"
               :http-port 8080
               :preloads []}
-   :compiler-options {:optimizations :none
-                      :source-map true}}}}
+   :dev {:compiler-options {:optimizations :none
+                            :source-map true}}
+   :release {:compiler-options {:optimizations :advanced
+                                :source-map true
+                                :infer-externs :auto}}}}}

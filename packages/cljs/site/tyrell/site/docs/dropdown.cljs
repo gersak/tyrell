@@ -34,10 +34,10 @@
         :type "string"
         :default "-"
         :description "Form field name — required for FormData submission"}
-       {:name "not-searchable"
+       {:name "external-search"
         :type "boolean"
         :default "false"
-        :description "Disables built-in search; fires search events for external filtering instead"}
+        :description "Switch to external (remote) search mode. Dropdown stops filtering locally and fires search events on each keystroke — parent owns filtering"}
        {:name "not-clearable"
         :type "boolean"
         :default "false"
@@ -57,7 +57,7 @@
        {:name "debounce"
         :type "number"
         :default "0"
-        :description "Milliseconds to debounce search events — useful with not-searchable + API calls"}
+        :description "Milliseconds to debounce search events — useful with external-search + API calls"}
        {:name "size"
         :type "string"
         :default "\"md\""
@@ -75,7 +75,7 @@
         :when-fired "Fires when the selected option changes"}
        {:name "search"
         :payload "{query: string}"
-        :when-fired "Fires when user types — only when not-searchable is set"}
+        :when-fired "Fires when user types — only when external-search is set"}
        {:name "focus"
         :payload "FocusEvent"
         :when-fired "Fires when the dropdown gains focus"}
@@ -256,8 +256,8 @@
       [:div.ty-content.rounded-lg.p-5
        (section-label "External Search")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "not-searchable"] " to own the filtering. The dropdown fires " [:code "search"] " events instead of filtering internally. Use " [:code "debounce"] " to throttle API calls."]
-       (code-block "<ty-dropdown id=\"dd\" not-searchable debounce=\"300\" placeholder=\"Search...\">
+        "Set " [:code "external-search"] " to own the filtering. The dropdown fires " [:code "search"] " events instead of filtering internally. Use " [:code "debounce"] " to throttle API calls."]
+       (code-block "<ty-dropdown id=\"dd\" external-search debounce=\"300\" placeholder=\"Search...\">
   <!-- your code updates children based on the search event -->
 </ty-dropdown>
 
@@ -320,7 +320,7 @@ dropdown.addEventListener('change', (e) => {
   console.log(e.detail.option);  // the ty-option element
 });
 
-// External search (requires not-searchable attribute)
+// External search (requires external-search attribute)
 dropdown.addEventListener('search', (e) => {
   fetchOptions(e.detail.query).then(updateOptions);
 });" "javascript")]])
@@ -339,7 +339,7 @@ dropdown.addEventListener('search', (e) => {
          (for [text ["Use ty-option children — they support rich HTML unlike native <option>"
                      "Always set a label — placeholder alone is not accessible enough"
                      "Use not-clearable only when the value truly must not be reset"
-                     "Set debounce=\"300\" with not-searchable to throttle API calls"
+                     "Set debounce=\"300\" with external-search to throttle API calls"
                      "Use flavor to signal context — danger for destructive, success for confirmed"]]
            [:div.flex.items-start.gap-2
             [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
