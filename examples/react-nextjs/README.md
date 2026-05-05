@@ -4,11 +4,11 @@ Demo application showcasing **Ty web components** with **React 18+** and **Next.
 
 ## 🎯 What This Example Demonstrates
 
-This is a testing ground for `@gersak/ty` web components in a modern React + Next.js environment:
+This is a testing ground for `tyrell-components` web components in a modern React + Next.js environment:
 
 - ✅ **Web Components in React** - Direct usage of custom elements
 - ✅ **TypeScript Integration** - Type-safe component props
-- ✅ **Next.js App Router** - Server-side rendering compatibility
+- ✅ **Next.js App Router** - Works inside the App Router via client-side registration (`'use client'` + `useEffect` import)
 - ✅ **Event Handling** - React synthetic events with custom elements
 - ✅ **Refs** - Accessing component imperative APIs
 - ✅ **Icon System** - Icon registry initialization
@@ -21,7 +21,7 @@ This is a testing ground for `@gersak/ty` web components in a modern React + Nex
 
 ```bash
 # Install Ty components
-npm install @gersak/ty
+npm install tyrell-components
 ```
 
 ### Installation
@@ -94,7 +94,7 @@ import { useEffect } from 'react'
 export default function Page() {
   useEffect(() => {
     // Components are registered globally after import
-    import('@gersak/ty')
+    import('tyrell-components')
   }, [])
 
   return (
@@ -199,8 +199,8 @@ export default function ModalExample() {
 
 ```typescript
 // lib/icons.ts
-import { registerIcons } from '@gersak/ty/icons/registry'
-import { check, heart, star, x, menu } from '@gersak/ty/icons/lucide'
+import { registerIcons } from 'tyrell-components/icons/registry'
+import { check, heart, star, x, menu } from 'tyrell-components/icons/lucide'
 
 // Register only icons you need (tree-shaking)
 registerIcons({ check, heart, star, x, menu })
@@ -222,7 +222,7 @@ registerIcons({ check, heart, star, x, menu })
 
 ### React Wrapper Package
 
-**`@gersak/ty-react` is coming soon!** It will provide:
+**`tyrell-react` is coming soon!** It will provide:
 - Better TypeScript integration
 - React-friendly prop names
 - Automatic event handling
@@ -236,7 +236,7 @@ Make sure to import Ty CSS in your global styles:
 
 ```css
 /* app/globals.css */
-@import '@gersak/ty/css/ty.css';
+@import 'tyrell-components/css/tyrell.css';
 
 /* Your custom styles */
 ```
@@ -251,7 +251,7 @@ export default function RootLayout({ children }) {
       <head>
         <link 
           rel="stylesheet" 
-          href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css"
+          href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css"
         />
       </head>
       <body>{children}</body>
@@ -267,8 +267,8 @@ export default function RootLayout({ children }) {
 When working correctly, you should see:
 
 ### Package Status
-- ✅ `@gersak/ty` - Loaded successfully
-- ⏳ `@gersak/ty-react` - Coming soon
+- ✅ `tyrell-components` - Loaded successfully
+- ⏳ `tyrell-react` - Coming soon
 
 ### Component Tests
 - ✅ All components render and respond to interactions
@@ -278,8 +278,8 @@ When working correctly, you should see:
 
 ### Integration Status
 - ✅ Web Components API available
-- ✅ Custom Elements registered
-- ✅ Next.js SSR compatibility
+- ✅ Custom Elements registered (client-side)
+- ✅ Coexists with Next.js SSR — components render as inert markup on the server, activate after client-side registration
 - ✅ Client-side hydration works
 
 ### Debug Information
@@ -307,7 +307,7 @@ console.log(window.tyIcons?.has('check'))  // Check specific icon
 ### Components Not Rendering
 
 **Check:**
-1. `@gersak/ty` is installed
+1. `tyrell-components` is installed
 2. CSS is imported (global or CDN)
 3. Components load on client-side (`'use client'`)
 4. Browser console for errors
@@ -316,7 +316,7 @@ console.log(window.tyIcons?.has('check'))  // Check specific icon
 
 **Solutions:**
 1. Declare custom element types (see examples above)
-2. Use `any` type temporarily while `@gersak/ty-react` is in development
+2. Use `any` type temporarily while `tyrell-react` is in development
 3. Create local type definitions
 
 ```typescript
@@ -333,18 +333,18 @@ declare namespace JSX {
 
 ### Hydration Warnings
 
-Web components may cause hydration warnings in Next.js. This is normal and doesn't affect functionality. The `@gersak/ty-react` wrapper package will handle this better.
+Web components may cause hydration warnings in Next.js. This is normal and doesn't affect functionality. The `tyrell-react` wrapper package will handle this better.
 
 ---
 
 ## 🚧 Future Improvements
 
-### `@gersak/ty-react` Package (Coming Soon)
+### `tyrell-react` Package (Coming Soon)
 
 Will provide:
 
 ```tsx
-import { TyButton, TyInput, TyModal } from '@gersak/ty-react'
+import { TyButton, TyInput, TyModal } from 'tyrell-react'
 
 function App() {
   const [value, setValue] = useState('')
@@ -378,7 +378,7 @@ function App() {
 ## 📚 Additional Resources
 
 ### Ty Components
-- 📦 [NPM Package](https://www.npmjs.com/package/@gersak/ty)
+- 📦 [NPM Package](https://www.npmjs.com/package/tyrell-components)
 - 📖 [Documentation](https://gersak.github.io/ty)
 - 💻 [GitHub](https://github.com/gersak/ty)
 - 🎨 [Icon System](https://gersak.github.io/ty/#/icons)
@@ -397,7 +397,7 @@ function App() {
 - All components are tested with **basic functionality**
 - Icons require **initialization** after Ty loads
 - Modal uses **React refs** for imperative control
-- Current implementation uses **direct custom elements** until `@gersak/ty-react` is ready
+- Current implementation uses **direct custom elements** until `tyrell-react` is ready
 
 ---
 

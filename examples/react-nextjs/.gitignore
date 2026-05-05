@@ -34,6 +34,4 @@ next-env.d.ts
 
 app/globals.css
 public/cljs-runtime/
-public/ty.js
 public/manifest.edn
-public/ty.css

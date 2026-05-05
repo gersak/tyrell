@@ -1,37 +1,69 @@
 (ns hello.views
-  (:require ["@gersak/ty-react" :as ty]
+  (:require [tyrell.react :as ty]
             [hello.state :as state]
             [reagent.core :as r]
-            [ty.router :as router]))
+            [tyrell.router :as router]))
+
+(defn- icon-list-item [icon-name text]
+  [:li.flex.items-center.gap-2
+   [:> ty/TyIcon {:name icon-name :size "sm" :className "ty-text-primary"}]
+   text])
+
+(defn- icon-tile [icon-name]
+  [:div.flex.flex-col.items-center.gap-2.p-3.rounded-lg.ty-content
+   {:style {:border "1px solid var(--ty-border-)"}}
+   [:> ty/TyIcon {:name icon-name :size "lg" :className "ty-text-primary"}]
+   [:span.text-xs.ty-text--.font-mono icon-name]])
 
 (defn home-view []
   (let [_ @router/*router*]  ; Deref to trigger Reagent reactivity
     (when (router/rendered? state/home-id)
       [:div.max-w-4xl.mx-auto
      [:header.ty-elevated.p-6.rounded-lg.mb-8
-      [:h1.text-3xl.font-bold.ty-text++.mb-2
-       "Welcome to Reagent + Ty Demo"]
+      [:div.flex.items-center.gap-3.mb-2
+       [:> ty/TyIcon {:name "code" :size "lg" :className "ty-text-primary"}]
+       [:h1.text-3xl.font-bold.ty-text++
+        "Welcome to Reagent + Ty Demo"]]
       [:p.ty-text.text-lg
        "This demo showcases Reagent with Ty React wrappers for proper event handling."]]
 
-     [:div.grid.md:grid-cols-2.gap-6
+     [:div.grid.md:grid-cols-2.gap-6.mb-8
       [:section.ty-elevated.p-6.rounded-lg
-       [:h2.text-xl.font-semibold.mb-4.ty-text++
+       [:h2.text-xl.font-semibold.mb-4.ty-text++.flex.items-center.gap-2
+        [:> ty/TyIcon {:name "menu" :size "sm" :className "ty-text-primary"}]
         "Navigation Features"]
        [:ul.space-y-2.ty-text
-        [:li "• Responsive sidebar navigation"]
-        [:li "• Mobile overlay menu"]
-        [:li "• Theme toggle (light/dark)"]
-        [:li "• ty.router with browser history"]]]
+        (icon-list-item "grid" "Responsive sidebar navigation")
+        (icon-list-item "menu" "Mobile overlay menu")
+        (icon-list-item "moon" "Theme toggle (light/dark)")
+        (icon-list-item "click" "tyrell.router with browser history")]]
 
       [:section.ty-elevated.p-6.rounded-lg
-       [:h2.text-xl.font-semibold.mb-4.ty-text++
+       [:h2.text-xl.font-semibold.mb-4.ty-text++.flex.items-center.gap-2
+        [:> ty/TyIcon {:name "code" :size "sm" :className "ty-text-primary"}]
         "React Wrappers"]
        [:ul.space-y-2.ty-text
-        [:li "• Full event handling support"]
-        [:li "• TypeScript type definitions"]
-        [:li "• Reagent-friendly API"]
-        [:li "• All 18 components available"]]]]])))
+        (icon-list-item "send" "Full event handling support")
+        (icon-list-item "code" "TypeScript type definitions")
+        (icon-list-item "check" "Reagent-friendly API")
+        (icon-list-item "users" "All 18 components available")]]]
+
+     ;; Icon showcase — proves icons are registered and rendering
+     [:section.ty-elevated.p-6.rounded-lg
+      [:h2.text-xl.font-semibold.mb-2.ty-text++.flex.items-center.gap-2
+       [:> ty/TyIcon {:name "palette" :size "sm" :className "ty-text-primary"}]
+       "Registered Icons"]
+      [:p.ty-text-.text-sm.mb-4
+       "Mixed Lucide + Material Filled, registered in "
+       [:code.font-mono.text-xs.ty-bg-neutral-.px-1.rounded "hello.core/register-icons!"]
+       " — referenced by name in Hiccup."]
+      [:div.grid.grid-cols-4.md:grid-cols-6.gap-3
+       (for [n ["home" "edit" "menu" "user" "settings"
+                "save" "trash" "download" "send" "check"
+                "code" "palette" "users" "bar-chart" "briefcase"
+                "sun" "moon" "click" "refresh-cw" "loader"
+                "alert-circle" "x" "grid"]]
+         ^{:key n} (icon-tile n))]]])))
 
 ;; Form validation functions
 (defn validate-field [field value]
@@ -105,7 +137,7 @@
                            :placeholder "Enter your full name"
                            :className (str "w-full " (when (:name errors) "error"))
                            :value (:name form-data)
-                           :onInput #(do
+                           :onChange #(do
                                        (swap! state/app-state assoc-in [:form :name] (.. % -detail -value))
                                        (swap! state/app-state assoc-in [:form-errors :name]
                                               (validate-field :name (.. % -detail -value))))}]
@@ -121,7 +153,7 @@
                            :placeholder "you@company.com"
                            :className (str "w-full " (when (:email errors) "error"))
                            :value (:email form-data)
-                           :onInput #(do
+                           :onChange #(do
                                        (swap! state/app-state assoc-in [:form :email] (.. % -detail -value))
                                        (swap! state/app-state assoc-in [:form-errors :email]
                                               (validate-field :email (.. % -detail -value))))}]
@@ -137,7 +169,7 @@
                            :placeholder "+1 (555) 123-4567"
                            :className (str "w-full " (when (:phone errors) "error"))
                            :value (:phone form-data)
-                           :onInput #(do
+                           :onChange #(do
                                        (swap! state/app-state assoc-in [:form :phone] (.. % -detail -value))
                                        (swap! state/app-state assoc-in [:form-errors :phone]
                                               (validate-field :phone (.. % -detail -value))))}]
@@ -176,6 +208,7 @@
            [:label.block.text-sm.font-medium.ty-text+.mb-2 "Professional Role"]
            [:> ty/TyDropdown {:className "w-full"
                               :placeholder "Select your role"
+                              :value (:role form-data)
                               :onChange #(swap! state/app-state assoc-in [:form :role]
                                                 (.. ^js % -detail -option -value))}
             [:> ty/TyOption {:value "developer"}
@@ -230,7 +263,7 @@
                               :placeholder "Tell us about yourself..."
                               :className (str "w-full resize-none " (when (:bio errors) "error"))
                               :value (:bio form-data)
-                              :onInput #(do
+                              :onChange #(do
                                           (swap! state/app-state assoc-in [:form :bio] (.. % -detail -value))
                                           (swap! state/app-state assoc-in [:form-errors :bio]
                                                  (validate-field :bio (.. % -detail -value))))}]
@@ -259,16 +292,19 @@
          [:div.flex.gap-3.w-full.sm:w-auto
           [:> ty/TyButton {:flavor "secondary"
                            :className "flex-1 sm:flex-none"
-                           :onClick #(do
-                                       (swap! state/app-state assoc :form {:name ""
-                                                                           :email ""
-                                                                           :phone ""
-                                                                           :role ""
-                                                                           :skills []
-                                                                           :bio ""
-                                                                           :birthdate ""
-                                                                           :newsletter false})
-                                       (swap! state/app-state assoc :form-errors {}))}
+                           :onClick (fn [e]
+                                      (js/console.log "[RESET] onClick fired" e)
+                                      (swap! state/app-state assoc :form {:name ""
+                                                                          :email ""
+                                                                          :phone ""
+                                                                          :role ""
+                                                                          :skills []
+                                                                          :bio ""
+                                                                          :birthdate ""
+                                                                          :newsletter false})
+                                      (swap! state/app-state assoc :form-errors {})
+                                      (js/console.log "[RESET] state after swap:"
+                                                      (clj->js @state/app-state)))}
            [:> ty/TyIcon {:name "refresh-cw" :size "xs"}]
            "Reset Form"]
 
@@ -343,7 +379,7 @@
      [:section.ty-elevated.p-6.rounded-lg
       [:h2.text-xl.font-semibold.mb-4.ty-text++ "Implementation Notes"]
       [:div.space-y-4.ty-text
-       [:p "All components use React wrappers from " [:code "@gersak/ty-react"] " for proper event handling."]
+       [:p "All components use React wrappers from " [:code "tyrell-react"] " for proper event handling."]
        [:pre.ty-bg-neutral-.p-4.rounded.text-sm.overflow-auto
         "[:> ty/TyButton {:onClick #(js/alert \"Clicked!\")} \"Click Me\"]"]
        [:p "Web components are automatically registered via " [:code "ty.js"] " loaded in index.html."]]]])))

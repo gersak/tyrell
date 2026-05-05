@@ -1,0 +1,1783 @@
+/* =================================================================
+Ty Component Library - Complete CSS System
+Industry-Standard Semantic Design System
+
+This file contains:
+- CSS Variables (Design Tokens)
+- Utility Classes
+- Theme Support (Light/Dark)
+- Surface System
+- 5-Variant Color System
+================================================================= */
+
+/* =================================================================
+PRE-DEFINITION STYLES - PREVENT LAYOUT SHIFTS
+These styles apply BEFORE custom elements are registered via JavaScript.
+They reserve space to prevent FOUC (Flash of Unstyled Content) and layout shifts.
+================================================================= */
+
+/* Icon component - reserve space before registration */
+ty-icon:not(:defined) {
+  display: inline-block;
+  aspect-ratio: 1 / 1;
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+
+/* Default size (no attribute or size="md") */
+ty-icon:not(:defined),
+ty-icon:not(:defined)[size="md"] {
+  width: 1em;
+  height: 1em;
+}
+
+/* Em-based sizes */
+ty-icon:not(:defined)[size="xs"] {
+  width: 0.75em;
+  height: 0.75em;
+}
+
+ty-icon:not(:defined)[size="sm"] {
+  width: 0.875em;
+  height: 0.875em;
+}
+
+ty-icon:not(:defined)[size="lg"] {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+ty-icon:not(:defined)[size="xl"] {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+ty-icon:not(:defined)[size="2xl"] {
+  width: 2em;
+  height: 2em;
+}
+
+/* Pixel-based sizes */
+ty-icon:not(:defined)[size="12"] {
+  width: 12px;
+  height: 12px;
+}
+
+ty-icon:not(:defined)[size="14"] {
+  width: 14px;
+  height: 14px;
+}
+
+ty-icon:not(:defined)[size="16"] {
+  width: 16px;
+  height: 16px;
+}
+
+ty-icon:not(:defined)[size="18"] {
+  width: 18px;
+  height: 18px;
+}
+
+ty-icon:not(:defined)[size="20"] {
+  width: 20px;
+  height: 20px;
+}
+
+ty-icon:not(:defined)[size="24"] {
+  width: 24px;
+  height: 24px;
+}
+
+ty-icon:not(:defined)[size="32"] {
+  width: 32px;
+  height: 32px;
+}
+
+ty-icon:not(:defined)[size="48"] {
+  width: 48px;
+  height: 48px;
+}
+
+ty-icon:not(:defined)[size="64"] {
+  width: 64px;
+  height: 64px;
+}
+
+ty-icon:not(:defined)[size="80"] {
+  width: 80px;
+  height: 80px;
+}
+
+ty-icon:not(:defined)[size="96"] {
+  width: 96px;
+  height: 96px;
+}
+
+/* Once defined, fade in smoothly */
+ty-icon {
+  opacity: 1;
+}
+
+/* =================================================================
+CSS VARIABLES - DESIGN TOKENS
+================================================================= */
+
+/* Default theme (light) */
+html {
+  /* =================================================================
+5-VARIANT COLOR SYSTEM
+Simplified from 7 variants to 5 practical variants:
+-strong = Strong emphasis - active states, strong borders
+-mild = Moderate emphasis - hover states, focus rings  
+= Base color - default appearance
+-soft = Reduced emphasis - muted backgrounds, secondary
+-faint = Minimal emphasis - subtle hints, disabled states
+================================================================= */
+
+  /* Primary */
+  --ty-color-primary-strong: #163793;
+  --ty-color-primary-mild: #304c9f;
+  --ty-color-primary: #466bce;
+  --ty-color-primary-soft: #60a5fa;
+  --ty-color-primary-faint: #93c5fd;
+
+  /* Secondary */
+  --ty-color-secondary-strong: #7442c2;
+  --ty-color-secondary-mild: #8153cf;
+  --ty-color-secondary: #9774e7;
+  --ty-color-secondary-soft: #a78bfa;
+  --ty-color-secondary-faint: #c4b5fd;
+
+  /* Success */
+  --ty-color-success-strong: #177858;
+  --ty-color-success-mild: #3e9779;
+  --ty-color-success: #3eaa86;
+  --ty-color-success-soft: #64b399;
+  --ty-color-success-faint: #7fd4b2;
+
+  /* Danger */
+  --ty-color-danger-strong: #b91c1c;
+  --ty-color-danger-mild: #dc2626;
+  --ty-color-danger: #ef4444;
+  --ty-color-danger-soft: #f87171;
+  --ty-color-danger-faint: #fca5a5;
+
+  /* Warning */
+  --ty-color-warning-strong: #e86400;
+  --ty-color-warning-mild: #ee7f00;
+  --ty-color-warning: #f59e0b;
+  --ty-color-warning-soft: #fbbf24;
+  --ty-color-warning-faint: #fcd34d;
+
+  /* Neutral */
+  --ty-color-neutral-strong: #000000;
+  --ty-color-neutral-mild: #000000;
+  --ty-color-neutral: #111827;
+  --ty-color-neutral-soft: #374151;
+  --ty-color-neutral-faint: #9ca3af;
+
+  /* Accent - brand highlights, focus rings, selection states */
+  --ty-color-accent-mild: #ff8800; /* darker - hover/active */
+  --ty-color-accent: #e67b00; /* base */
+  --ty-color-accent-soft: #f59e42; /* lighter - subtle */
+
+  /* =================================================================
+BACKGROUND COLORS
+================================================================= */
+
+  --ty-bg-faint: #f8fafc;
+  /* Very light canvas - for minimal backgrounds */
+  --ty-bg-soft: #f1f5f9;
+  /* Light canvas - app backgrounds */
+  --ty-bg: #ffffff;
+  /* WHITE - primary content baseline */
+  --ty-bg-mild: #f8fafc;
+  /* Subtle elevation - cards with light tint */
+  --ty-bg-strong: #e2e8f0;
+  /* Maximum elevation - clear distinction */
+
+  /* Focus ring gap - matches page background for button focus ring effect */
+  --ty-focus-ring-gap: #ffffff;
+
+  /* Primary backgrounds */
+  --ty-bg-primary: #e3eefc;
+  --ty-bg-primary-mild: #d5e4f8;
+  --ty-bg-primary-soft: #eff6ff;
+
+  /* Secondary backgrounds */
+  --ty-bg-secondary: #e9d5ff;
+  --ty-bg-secondary-mild: #ddd6fe;
+  --ty-bg-secondary-soft: #f3e8ff;
+
+  /* Success backgrounds */
+  --ty-bg-success: #d1fae5;
+  --ty-bg-success-mild: #a7f3d0;
+  --ty-bg-success-soft: #ecfdf5;
+
+  /* Danger backgrounds */
+  --ty-bg-danger: #fee2e2;
+  --ty-bg-danger-mild: #fecaca;
+  --ty-bg-danger-soft: #fef2f2;
+
+  /* Warning backgrounds */
+  --ty-bg-warning: #fef3c7;
+  --ty-bg-warning-mild: #fde68a;
+  --ty-bg-warning-soft: #fffbeb;
+
+  /* Neutral backgrounds */
+  --ty-bg-neutral: #e0e0e0;
+  --ty-bg-neutral-mild: #cecece;
+  --ty-bg-neutral-soft: #ededed;
+
+  /* Accent backgrounds */
+  --ty-bg-accent: #ffedd5; /* light orange tint */
+  --ty-bg-accent-mild: #fed7aa; /* slightly stronger */
+  --ty-bg-accent-soft: #fff7ed; /* very subtle */
+
+  /* =================================================================
+BORDER COLORS
+================================================================= */
+
+  --ty-border: #e5e7eb;
+  --ty-border-mild: #d1d5db;
+  --ty-border-strong: #6b7280;
+  --ty-border-soft: #f3f4f6;
+  --ty-border-faint: #fafafa;
+
+  /* Border width — used as fallback by surface utilities (--ty-{surface}-border-width) */
+  --ty-border-width: 1px;
+
+  /* Semantic borders */
+  --ty-border-primary: var(--ty-color-primary);
+  --ty-border-secondary: var(--ty-color-secondary);
+  --ty-border-success: var(--ty-color-success);
+  --ty-border-danger: var(--ty-color-danger);
+  --ty-border-warning: var(--ty-color-warning);
+  --ty-border-neutral: var(--ty-color-neutral);
+  --ty-border-accent-mild: var(--ty-color-accent-mild);
+  --ty-border-accent: var(--ty-color-accent);
+  --ty-border-accent-soft: var(--ty-color-accent-soft);
+
+  /* =================================================================
+SCROLLBAR
+================================================================= */
+
+  --ty-scrollbar-thumb: rgba(0, 0, 0, 0.35);
+  --ty-scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+  --ty-scrollbar-thumb-active: rgba(0, 0, 0, 0.6);
+  --ty-scrollbar-track: transparent;
+  --ty-scrollbar-track-hover: rgba(0, 0, 0, 0.06);
+
+  /* =================================================================
+SURFACE SYSTEM
+================================================================= */
+
+  --ty-surface-canvas: #fcfcfc;
+  --ty-surface-content: #fcfcfc;
+  --ty-surface-elevated: #ffffff;
+  --ty-surface-floating: #ffffff;
+  --ty-surface-input: #ffffff;
+
+  /* Surface borders — opt-in. Set color to make a surface's border visible.
+     Width and style fall back to --ty-border-width and `solid` if unset. */
+  --ty-elevated-border: #e5e7eb;
+  --ty-elevated-border-width: var(--ty-border-width);
+  --ty-elevated-border-style: solid;
+
+  --ty-floating-border: #e5e7eb;
+  --ty-floating-border-width: var(--ty-border-width);
+  --ty-floating-border-style: solid;
+
+  --ty-canvas-border: transparent;
+  --ty-canvas-border-width: var(--ty-border-width);
+  --ty-canvas-border-style: solid;
+
+  --ty-content-border: #e5e7eb;
+  --ty-content-border-width: var(--ty-border-width);
+  --ty-content-border-style: solid;
+
+  /* --ty-input-border is already declared above as a color token used by
+     <ty-input> shadow DOM; .ty-input utility reuses it. Width/style still here. */
+  --ty-input-border-width: var(--ty-border-width);
+  --ty-input-border-style: solid;
+
+  /* Divider context — consumed by .ty-divide-x / .ty-divide-y utilities.
+     Each surface re-points --ty-divide-color to its own --ty-{surface}-border
+     token, so the same knob controls both the surface's chrome AND any
+     dividers inside it. Inherits down the tree via CSS variable inheritance. */
+  --ty-divide-color: var(--ty-border);
+  --ty-divide-width: var(--ty-border-width);
+
+  /* =================================================================
+TEXT HIERARCHY
+================================================================= */
+
+  /* Text hierarchy - emphasis based, not semantic */
+  --ty-text: #111827;
+  --ty-text-mild: #000000;
+  --ty-text-strong: #000000;
+  --ty-text-soft: #374151;
+  --ty-text-faint: #9ca3af;
+
+  /* =================================================================
+COMPONENT TOKENS
+================================================================= */
+
+  /* Modal tokens */
+  --ty-modal-bg: #ffffff;
+  --ty-modal-color: #111827;
+  --ty-modal-border: #e5e7eb;
+  --ty-modal-backdrop: rgba(0, 0, 0, 0.5);
+  --ty-modal-backdrop-blur: blur(2px);
+  --ty-modal-border-radius: 16px;
+  --ty-modal-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --ty-modal-duration: 200ms;
+
+  /* Modal sizing */
+  --ty-modal-sm-width: 300px;
+  --ty-modal-md-width: 500px;
+  --ty-modal-lg-width: 700px;
+  --ty-modal-xl-width: 900px;
+  --ty-modal-full-width: 95vw;
+  --ty-modal-full-height: 95vh;
+
+  /* Input component tokens */
+  --ty-input-bg: #ffffff;
+  --ty-input-color: #111827;
+  --ty-input-border: #d1d5db;
+  --ty-input-border-hover: #9ca3af;
+  --ty-input-border-focus: var(--ty-color-primary);
+  --ty-input-shadow-focus: rgba(59, 130, 246, 0.1);
+  --ty-input-placeholder: #9ca3af;
+  --ty-input-disabled-bg: #f9fafb;
+  --ty-input-disabled-border: #e5e7eb;
+  --ty-input-disabled-color: #9ca3af;
+  --ty-label-color: #374151;
+
+  /* Input semantic states */
+  --ty-input-success-border: var(--ty-color-success);
+  --ty-input-danger-border: var(--ty-color-danger);
+  --ty-input-warning-border: var(--ty-color-warning);
+
+  /* =================================================================
+  SOLID BUTTON FILLS — saturated brand backgrounds for appearance="solid"
+  Each flavor defines:
+    --ty-solid-{flavor}        base saturated fill
+    --ty-solid-{flavor}-strong stronger fill (for solid+ tone)
+    --ty-solid-{flavor}-soft   softer fill   (for solid- tone)
+    --ty-solid-{flavor}-fg     paired text color (default white)
+  Strong/soft default to var(--ty-color-{flavor}-strong/-soft) so they
+  inherit from the existing color hierarchy. Override per flavor if needed.
+  ================================================================= */
+
+  /* Primary */
+  --ty-solid-primary: #4076b9;
+  --ty-solid-primary-strong: var(--ty-color-primary-mild);
+  --ty-solid-primary-soft: #7ea7d9;
+  --ty-solid-primary-fg: white;
+
+  /* Secondary */
+  --ty-solid-secondary: #7e67b4;
+  --ty-solid-secondary-strong: #7d58d1;
+  --ty-solid-secondary-soft: #9f8ec5;
+  --ty-solid-secondary-fg: white;
+
+  /* Success */
+  --ty-solid-success: #3bb68d;
+  --ty-solid-success-strong: #27956e;
+  --ty-solid-success-soft: #69b99e;
+  --ty-solid-success-fg: white;
+
+  /* Danger */
+  --ty-solid-danger: #df5b5b;
+  --ty-solid-danger-strong: #cc3e3e;
+  --ty-solid-danger-soft: #d57a7a;
+  --ty-solid-danger-fg: white;
+
+  /* Warning */
+  --ty-solid-warning: #e1a644;
+  --ty-solid-warning-strong: #f59e0b;
+  --ty-solid-warning-soft: #fbc56d;
+  --ty-solid-warning-fg: white;
+
+  /* Neutral */
+  --ty-solid-neutral: #414141;
+  --ty-solid-neutral-strong: #000000;
+  --ty-solid-neutral-soft: #6e6e6e;
+  --ty-solid-neutral-fg: white;
+
+  /* Brand-highlight pseudo-flavor (orange) — kept under ty-accent-* namespace */
+  --ty-accent-accent: #cc6d00;
+
+  /* =================================================================
+DESIGN SYSTEM TOKENS
+================================================================= */
+
+  /* Spacing Scale */
+  --ty-spacing-0: 0;
+  --ty-spacing-px: 1px;
+  --ty-spacing-mini: 0.125rem;
+  --ty-spacing-1: 0.25rem;
+  --ty-spacing-2: 0.5rem;
+  --ty-spacing-3: 0.75rem;
+  --ty-spacing-4: 1rem;
+  --ty-spacing-5: 1.25rem;
+  --ty-spacing-6: 1.5rem;
+  --ty-spacing-7: 1.75rem;
+  --ty-spacing-8: 2rem;
+  --ty-spacing-9: 2.25rem;
+  --ty-spacing-10: 2.5rem;
+  --ty-spacing-12: 3rem;
+  --ty-spacing-16: 4rem;
+  --ty-spacing-20: 5rem;
+  --ty-spacing-24: 6rem;
+
+  /* Border Radius */
+  --ty-radius-none: 0;
+  --ty-radius-sm: 0.25rem; /*  4px */
+  --ty-radius-base: 0.375rem; /*  6px */
+  --ty-radius-md: 0.5rem; /*  8px (anchor) */
+  --ty-radius-lg: 0.75rem; /* 12px */
+  --ty-radius-xl: 1rem; /* 16px */
+  --ty-radius-2xl: 1.5rem; /* 24px */
+  --ty-radius-3xl: 2rem; /* 32px */
+  --ty-radius-full: 9999px;
+
+  /* Shadows */
+  --ty-shadow-none: none;
+  --ty-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ty-shadow-base:
+    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --ty-shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --ty-shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --ty-shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --ty-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Typography */
+  --ty-font-sans:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --ty-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas, monospace;
+
+  --ty-font-xxs: 0.625rem;
+  --ty-font-xs: 0.75rem;
+  --ty-font-sm: 0.875rem;
+  --ty-font-base: 1rem;
+  --ty-font-lg: 1.125rem;
+  --ty-font-xl: 1.25rem;
+  --ty-font-2xl: 1.5rem;
+  --ty-font-3xl: 1.875rem;
+  --ty-font-4xl: 2.25rem;
+  --ty-font-5xl: 3rem;
+
+  /* Paired line-heights — values follow Linear's text-* tokens (text-small
+     uses 21px not 20px; text-regular uses 1.6 ratio for breathable body text).
+     Paired with --ty-font-* so that `font-size: var(--ty-font-sm)` should also
+     use `line-height: var(--ty-leading-sm)`. */
+  --ty-leading-xxs: 0.9375rem; /* 15px paired with 10px text (Linear text-tiny 1.5) */
+  --ty-leading-xs: 1.05rem; /* ≈16.8px paired with 12px text (Linear text-micro 1.4) */
+  --ty-leading-sm: 1.3125rem; /* 21px paired with 14px text (Linear text-small) */
+  --ty-leading-base: 1.5rem; /* 24px paired with 16px text (Linear text-regular 1.6 ≈) */
+  --ty-leading-lg: 1.6875rem; /* 27px paired with 18px text (Linear text-large) */
+  --ty-leading-xl: 1.75rem; /* 28px paired with 20px text */
+  --ty-leading-2xl: 2rem; /* 32px paired with 24px text */
+  --ty-leading-3xl: 2.25rem; /* 36px paired with 30px text */
+  --ty-leading-4xl: 2.5rem; /* 40px paired with 36px text */
+  --ty-leading-5xl: 1; /* paired with 48px+ display text */
+
+  /* Letter-spacing (tracking) tokens — pulled from Linear's per-size values.
+     Linear uses slightly negative tracking on most text to tighten Inter. */
+  --ty-tracking-xxs: -0.015em; /* paired with text-tiny */
+  --ty-tracking-xs: 0; /* paired with text-micro */
+  --ty-tracking-sm: -0.013em; /* paired with text-small */
+  --ty-tracking-base: -0.011em; /* paired with text-regular */
+  --ty-tracking-lg: 0; /* paired with text-large */
+  --ty-tracking-tight: -0.022em; /* for titles (Linear title-4 and up) */
+  --ty-tracking-title: -0.012em; /* for titles (Linear title-1..3) */
+
+  /* Weights tuned to Linear (Inter Variable). With the system font stack
+     these round to the nearest available (500/600/700); load Inter Variable
+     for the exact rendering. */
+  --ty-font-thin: 100;
+  --ty-font-light: 300;
+  --ty-font-normal: 400;
+  --ty-font-medium: 510;
+  --ty-font-semibold: 590;
+  --ty-font-bold: 680;
+  --ty-font-extrabold: 800;
+
+  --ty-line-height-none: 1;
+  --ty-line-height-tight: 1.25;
+  --ty-line-height-snug: 1.375;
+  --ty-line-height-normal: 1.5;
+  --ty-line-height-relaxed: 1.625;
+  --ty-line-height-loose: 2;
+
+  /* Transitions */
+  --ty-transition-none: none;
+  --ty-transition-all: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ty-transition-colors:
+    bg-color, border-color, color, fill,
+    stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ty-transition-shadow: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ty-transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Component Sizes */
+  --ty-size-xs: 1.5rem;
+  /* 24px */
+  --ty-size-sm: 2rem;
+  /* 32px */
+  --ty-size-md: 2.5rem;
+  /* 40px */
+  --ty-size-lg: 3rem;
+  /* 48px */
+  --ty-size-xl: 3.5rem;
+  /* 56px */
+
+  /* Z-Index Scale */
+  --ty-z-auto: auto;
+  --ty-z-0: 0;
+  --ty-z-10: 10;
+  --ty-z-20: 20;
+  --ty-z-30: 30;
+  --ty-z-40: 40;
+  --ty-z-50: 50;
+  --ty-z-sticky: 1020;
+  --ty-z-fixed: 1030;
+  --ty-z-modal-backdrop: 1040;
+  --ty-z-modal: 1050;
+  --ty-z-popover: 1060;
+  --ty-z-tooltip: 1070;
+  --ty-z-dropdown: 1080;
+
+  /* =================================================================
+  SCROLL SHADOW SYSTEM
+  Uses clip-path technique for smooth corner fade
+  ================================================================= */
+  --ty-scroll-shadow-top: radial-gradient(
+    ellipse 100% 30% at center,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0),
+    transparent
+  );
+  --ty-scroll-shadow-bottom: radial-gradient(
+    ellipse 100% 20% at center,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0),
+    transparent
+  );
+  --ty-scroll-shadow-transition: opacity 0.2s ease-out;
+}
+
+/* =================================================================
+DARK THEME OVERRIDES
+================================================================= */
+
+html.dark,
+html[data-theme="dark"] {
+  /* =================================================================
+5-VARIANT COLOR SYSTEM - DARK THEME
+Emphasis logic inverts: lighter = more emphasis
+================================================================= */
+
+  /* Primary */
+  --ty-color-primary-strong: #9cbde5;
+  --ty-color-primary-mild: #6c9bd5;
+  --ty-color-primary: #4976ae;
+  --ty-color-primary-soft: #4b698b;
+  --ty-color-primary-faint: #445b77;
+
+  /* Secondary */
+  --ty-color-secondary-strong: #ddd6fe;
+  --ty-color-secondary-mild: #c4b5fd;
+  --ty-color-secondary: #a78bfa;
+  --ty-color-secondary-soft: #8269bc;
+  --ty-color-secondary-faint: #76619f;
+
+  /* Success */
+  --ty-color-success-strong: #c2f0df;
+  --ty-color-success-mild: #6ee7b7;
+  --ty-color-success: #3aba8b;
+  --ty-color-success-soft: #459679;
+  --ty-color-success-faint: #1b795c;
+
+  /* Danger */
+  --ty-color-danger-strong: #ffabab;
+  --ty-color-danger-mild: #e58787;
+  --ty-color-danger: #d06f6f;
+  --ty-color-danger-soft: #b06666;
+  --ty-color-danger-faint: #aa6e6e;
+
+  /* Warning */
+  --ty-color-warning-strong: #fde68a;
+  --ty-color-warning-mild: #fcd34d;
+  --ty-color-warning: #fbbf24;
+  --ty-color-warning-soft: #f59e0b;
+  --ty-color-warning-faint: #a06726;
+
+  /* Neutral */
+  --ty-color-neutral-strong: #ffffff;
+  --ty-color-neutral-mild: #f9fafb;
+  --ty-color-neutral: #d6d6d6;
+  --ty-color-neutral-soft: #696969;
+  --ty-color-neutral-faint: #474747;
+
+  /* Accent - dark mode (emphasis inverted) */
+  --ty-color-accent-mild: #ffb366; /* lighter = more emphasis */
+  --ty-color-accent: #e67b00; /* base */
+  --ty-color-accent-soft: #ac5f00; /* darker = less emphasis */
+
+  /* Backgrounds for dark mode */
+  --ty-bg-faint: #0f1419;
+  --ty-bg-soft: #111827;
+  --ty-bg: #1f2937;
+  --ty-bg-mild: #374151;
+  --ty-bg-strong: #6b7280;
+
+  /* Focus ring gap */
+  --ty-focus-ring-gap: #1f2937;
+
+  /* Semantic backgrounds - much darker in dark mode */
+  --ty-bg-primary-mild: #43517a;
+  --ty-bg-primary: #394159;
+  --ty-bg-primary-soft: #323a4f;
+
+  --ty-bg-secondary-mild: #58368e;
+  --ty-bg-secondary: #4a3c65;
+  --ty-bg-secondary-soft: #3b3645;
+
+  --ty-bg-success: #3a4442;
+  --ty-bg-success-mild: #405752;
+  --ty-bg-success-soft: #2f3b38;
+
+  --ty-bg-danger-mild: #853535;
+  --ty-bg-danger: #522828;
+  --ty-bg-danger-soft: #483c3c;
+
+  --ty-bg-warning-mild: #743953;
+  --ty-bg-warning: #694555;
+  --ty-bg-warning-soft: #45333b;
+
+  --ty-bg-neutral-mild: #414141;
+  --ty-bg-neutral: #323232;
+  --ty-bg-neutral-soft: #242424;
+
+  /* Accent backgrounds - dark mode */
+  --ty-bg-accent: #996432;
+  --ty-bg-accent-mild: #da7d25;
+  --ty-bg-accent-soft: #5c3d1a;
+
+  /* Borders for dark mode */
+  --ty-border-strong: #8c8c8c;
+  --ty-border-mild: #666666;
+  --ty-border: #535353;
+  --ty-border-soft: #1f2937;
+  --ty-border-faint: #030712;
+
+  /* Scrollbar - dark mode */
+  --ty-scrollbar-thumb: rgba(255, 255, 255, 0.22);
+  --ty-scrollbar-thumb-hover: rgba(255, 255, 255, 0.38);
+  --ty-scrollbar-thumb-active: rgba(255, 255, 255, 0.48);
+  --ty-scrollbar-track: transparent;
+  --ty-scrollbar-track-hover: rgba(255, 255, 255, 0.06);
+
+  --ty-surface-canvas: black;
+  --ty-surface-content: #1a1a1a;
+  --ty-surface-elevated: #282828;
+  --ty-surface-floating: #343434;
+  --ty-surface-input: #1f2937;
+
+  --ty-content-border: #030712;
+  --ty-elevated-border: #414141;
+  --ty-border: #3e3e3e;
+  --ty-floating-border: #494949;
+
+  --ty-text-mild: #f9fafb;
+  --ty-text-strong: #ffffff;
+  --ty-text: #d6d6d6;
+  --ty-text-soft: #7f8590;
+  --ty-text-faint: #555a63;
+
+  /* Shadows need to be darker/more prominent in dark mode */
+  --ty-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --ty-shadow-base:
+    0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --ty-shadow-md:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --ty-shadow-lg:
+    0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --ty-shadow-xl:
+    0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  --ty-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+
+  /* Solid button fills for dark mode — strong/soft/fg chain through automatically.
+     Note: --ty-color-{flavor}-strong is light-toned in dark mode (emphasis
+     inverts), so solid+ buttons will have a light bg with white text — low
+     contrast for some flavors. Override per flavor via --ty-solid-{flavor}-fg
+     if a specific brand needs darker text. */
+  --ty-solid-primary: #3e536c;
+  --ty-solid-primary-strong: #426084;
+  --ty-solid-primary-soft: #343f4c;
+  --ty-solid-primary-fg: white;
+
+  --ty-solid-secondary: #7e67b4;
+  --ty-solid-secondary-strong: #8269bc;
+  --ty-solid-secondary-soft: #52466a;
+  --ty-solid-secondary-fg: white;
+
+  /* Success */
+  --ty-solid-success: #3bb68d;
+  --ty-solid-success-strong: #459679;
+  --ty-solid-success-soft: #285748;
+  --ty-solid-success-fg: white;
+
+  /* Danger */
+  --ty-solid-danger: #df5b5b;
+  --ty-solid-danger-strong: #cc3e3e;
+  --ty-solid-danger-soft: #875656;
+  --ty-solid-danger-fg: white;
+
+  /* Warning */
+  --ty-solid-warning: #e1a644;
+  --ty-solid-warning-strong: #f59e0b;
+  --ty-solid-warning-soft: #8b6334;
+  --ty-solid-warning-fg: white;
+
+  --ty-solid-neutral: #414141;
+  --ty-solid-neutral-strong: #4c4c4c;
+  --ty-solid-neutral-soft: #2a2a2a;
+  --ty-solid-neutral-fg: white;
+
+  --ty-accent-accent: #cc6d00;
+
+  /* Input component tokens - dark mode */
+  --ty-input-bg: #1b1b1b;
+  --ty-input-color: #f9fafb;
+  --ty-input-border: #505050;
+  --ty-input-border-hover: #7f7f7f;
+  --ty-input-border-focus: var(--ty-color-primary);
+  --ty-input-shadow-focus: rgba(96, 165, 250, 0.1);
+  --ty-input-placeholder: #717171;
+  --ty-input-disabled-bg: #282828;
+  --ty-input-disabled-border: #2e2e2e;
+  --ty-input-disabled-color: #717171;
+  --ty-label-color: #d1d5db;
+
+  /* Modal - dark mode */
+  --ty-modal-bg: var(--ty-bg-mild);
+  --ty-modal-color: var(--ty-color-neutral-mild);
+  --ty-modal-border: var(--ty-border);
+  --ty-modal-backdrop: rgba(0, 0, 0, 0.7);
+  --ty-modal-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+
+  /* Scroll shadows - lighter tint for dark mode */
+  --ty-scroll-shadow-top: radial-gradient(
+    ellipse 100% 30% at center,
+    rgba(172, 172, 172, 0.2),
+    rgba(0, 0, 0, 0),
+    transparent
+  );
+  --ty-scroll-shadow-bottom: radial-gradient(
+    ellipse 100% 20% at center,
+    rgba(172, 172, 172, 0.3),
+    rgba(0, 0, 0, 0),
+    transparent
+  );
+}
+
+/* =================================================================
+TEXT SELECTION STYLING
+Global and semantic text selection colors
+================================================================= */
+
+/* Global text selection - uses primary colors by default */
+::selection {
+  background-color: var(--ty-selection-bg, var(--ty-bg-primary-mild));
+  color: var(--ty-selection-color, var(--ty-text-strong));
+}
+
+::-moz-selection {
+  background-color: var(--ty-selection-bg, var(--ty-color-primary));
+  color: var(--ty-selection-color, var(--ty-text-strong));
+}
+
+/* Code block selection - special handling for better readability */
+pre ::selection,
+code ::selection,
+pre::-moz-selection,
+code::-moz-selection {
+  background-color: var(--ty-color-warning-soft);
+  color: var(--ty-color-neutral-strong);
+}
+
+html.dark pre ::selection,
+html.dark code ::selection,
+html.dark pre::-moz-selection,
+html.dark code::-moz-selection {
+  background-color: var(--ty-color-warning);
+  color: var(--ty-bg-strong);
+}
+
+/* Input and textarea selection - higher contrast */
+input::selection,
+textarea::selection,
+input::-moz-selection,
+textarea::-moz-selection {
+  background-color: var(--ty-color-primary);
+  color: white;
+}
+
+html.dark input::selection,
+html.dark textarea::selection,
+html.dark input::-moz-selection,
+html.dark textarea::-moz-selection {
+  background-color: var(--ty-color-primary-soft);
+  color: var(--ty-color-primary-strong);
+}
+
+/* Semantic selection utility classes */
+.ty-selection-primary ::selection,
+.ty-selection-primary::-moz-selection {
+  background-color: var(--ty-color-primary-soft);
+  color: var(--ty-color-primary-strong);
+}
+
+.ty-selection-secondary ::selection,
+.ty-selection-secondary::-moz-selection {
+  background-color: var(--ty-color-secondary-soft);
+  color: var(--ty-color-secondary-strong);
+}
+
+.ty-selection-success ::selection,
+.ty-selection-success::-moz-selection {
+  background-color: var(--ty-color-success-soft);
+  color: var(--ty-color-success-strong);
+}
+
+.ty-selection-warning ::selection,
+.ty-selection-warning::-moz-selection {
+  background-color: var(--ty-color-warning-soft);
+  color: var(--ty-color-warning-strong);
+}
+
+.ty-selection-danger ::selection,
+.ty-selection-danger::-moz-selection {
+  background-color: var(--ty-color-danger-soft);
+  color: var(--ty-color-danger-strong);
+}
+
+.ty-selection-neutral ::selection,
+.ty-selection-neutral::-moz-selection {
+  background-color: var(--ty-color-neutral-soft);
+  color: var(--ty-color-neutral-strong);
+}
+
+/* Dark mode semantic selections */
+html.dark .ty-selection-primary ::selection,
+html.dark .ty-selection-primary::-moz-selection {
+  background-color: var(--ty-color-primary);
+  color: white;
+}
+
+html.dark .ty-selection-secondary ::selection,
+html.dark .ty-selection-secondary::-moz-selection {
+  background-color: var(--ty-color-secondary);
+  color: white;
+}
+
+html.dark .ty-selection-success ::selection,
+html.dark .ty-selection-success::-moz-selection {
+  background-color: var(--ty-color-success);
+  color: white;
+}
+
+html.dark .ty-selection-warning ::selection,
+html.dark .ty-selection-warning::-moz-selection {
+  background-color: var(--ty-color-warning);
+  color: var(--ty-bg-strong);
+}
+
+html.dark .ty-selection-danger ::selection,
+html.dark .ty-selection-danger::-moz-selection {
+  background-color: var(--ty-color-danger);
+  color: white;
+}
+
+html.dark .ty-selection-neutral ::selection,
+html.dark .ty-selection-neutral::-moz-selection {
+  background-color: var(--ty-color-neutral);
+  color: white;
+}
+
+/* =================================================================
+UTILITY CLASSES
+================================================================= */
+
+/* Sensible default for any border that doesn't set its own color —
+   Tailwind's `border` / `border-t`, plain CSS `border: 1px solid`, etc.
+   Scoped to `html` to win specificity over Tailwind's (0,0,0) preflight
+   regardless of injection order. Class-based overrides (`border-red-500`,
+   `ty-border-primary`, etc.) still win their cascade. Theme-aware:
+   `--ty-border` switches in dark mode automatically. */
+html *,
+html ::before,
+html ::after {
+  border-color: var(--ty-border);
+}
+
+/* =================================================================
+SURFACE UTILITIES
+================================================================= */
+
+/* Elevated surfaces - cards, panels, components */
+.ty-elevated {
+  box-sizing: border-box !important;
+  background-color: var(--ty-surface-elevated) !important;
+  border: var(--ty-elevated-border-width, var(--ty-border-width, 1px))
+    var(--ty-elevated-border-style, solid)
+    var(--ty-elevated-border, transparent) !important;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  --ty-divide-color: var(--ty-elevated-border);
+}
+
+/* Floating surfaces - modals, dropdowns, tooltips */
+.ty-floating {
+  box-sizing: border-box !important;
+  background-color: var(--ty-surface-floating) !important;
+  border: var(--ty-floating-border-width, var(--ty-border-width, 1px))
+    var(--ty-floating-border-style, solid)
+    var(--ty-floating-border, transparent) !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  --ty-divide-color: var(--ty-floating-border);
+}
+
+/* App and page backgrounds - the canvas for content */
+.ty-canvas {
+  box-sizing: border-box !important;
+  background-color: var(--ty-surface-canvas) !important;
+  border: var(--ty-canvas-border-width, var(--ty-border-width, 1px))
+    var(--ty-canvas-border-style, solid) var(--ty-canvas-border, transparent) !important;
+  --ty-divide-color: var(--ty-canvas-border);
+}
+
+/* Main content areas - primary content background */
+.ty-content {
+  box-sizing: border-box !important;
+  background-color: var(--ty-surface-content) !important;
+  border: var(--ty-content-border-width, var(--ty-border-width, 1px))
+    var(--ty-content-border-style, solid) var(--ty-content-border, transparent) !important;
+  --ty-divide-color: var(--ty-content-border);
+}
+
+/* Input surfaces - form controls, text areas, inputs */
+.ty-input {
+  box-sizing: border-box !important;
+  background-color: var(--ty-input-bg) !important;
+  border: var(--ty-input-border-width, var(--ty-border-width, 1px))
+    var(--ty-input-border-style, solid) var(--ty-input-border, transparent) !important;
+  --ty-divide-color: var(--ty-input-border);
+}
+
+/* Divider utilities — consume --ty-divide-color from the nearest surface
+   context (set on .ty-elevated/.ty-floating/.ty-canvas/.ty-content/.ty-input)
+   via CSS variable inheritance. Override per-instance:
+     style="--ty-divide-color: var(--ty-border-strong);" */
+.ty-divide-y > * + * {
+  border-top: var(--ty-divide-width, var(--ty-border-width, 1px)) solid
+    var(--ty-divide-color, var(--ty-border));
+}
+
+.ty-divide-x > * + * {
+  border-left: var(--ty-divide-width, var(--ty-border-width, 1px)) solid
+    var(--ty-divide-color, var(--ty-border));
+}
+
+/* Dark theme adjustments for shadows */
+html.dark .ty-elevated {
+  background-color: var(--ty-surface-elevated) !important;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.2),
+    0 1px 2px -1px rgb(0 0 0 / 0.2) !important;
+}
+
+html.dark .ty-floating {
+  background-color: var(--ty-surface-floating) !important;
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.3),
+    0 2px 4px -2px rgb(0 0 0 / 0.3) !important;
+}
+
+html.dark .ty-high-elevation {
+  background-color: var(--ty-surface-floating) !important;
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.4),
+    0 4px 6px -4px rgb(0 0 0 / 0.4) !important;
+}
+
+html.dark .ty-sunken {
+  background-color: var(--ty-surface-input) !important;
+  box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.1) !important;
+}
+
+/* =================================================================
+SEMANTIC BACKGROUND UTILITIES
+================================================================= */
+
+/* Semantic backgrounds - these are the key theme utilities */
+.ty-bg-primary {
+  background-color: var(--ty-bg-primary);
+}
+
+.ty-bg-primary\+ {
+  background-color: var(--ty-bg-primary-mild);
+}
+
+.ty-bg-primary- {
+  background-color: var(--ty-bg-primary-soft);
+}
+
+.ty-bg-secondary {
+  background-color: var(--ty-bg-secondary);
+}
+
+.ty-bg-secondary\+ {
+  background-color: var(--ty-bg-secondary-mild);
+}
+
+.ty-bg-secondary- {
+  background-color: var(--ty-bg-secondary-soft);
+}
+
+.ty-bg-success {
+  background-color: var(--ty-bg-success);
+}
+
+.ty-bg-success\+ {
+  background-color: var(--ty-bg-success-mild);
+}
+
+.ty-bg-success- {
+  background-color: var(--ty-bg-success-soft);
+}
+
+.ty-bg-danger {
+  background-color: var(--ty-bg-danger);
+}
+
+.ty-bg-danger\+ {
+  background-color: var(--ty-bg-danger-mild);
+}
+
+.ty-bg-danger- {
+  background-color: var(--ty-bg-danger-soft);
+}
+
+.ty-bg-warning {
+  background-color: var(--ty-bg-warning);
+}
+
+.ty-bg-warning\+ {
+  background-color: var(--ty-bg-warning-mild);
+}
+
+.ty-bg-warning- {
+  background-color: var(--ty-bg-warning-soft);
+}
+
+.ty-bg-neutral {
+  background-color: var(--ty-bg-neutral);
+}
+
+.ty-bg-neutral\+ {
+  background-color: var(--ty-bg-neutral-mild);
+}
+
+.ty-bg-neutral- {
+  background-color: var(--ty-bg-neutral-soft);
+}
+
+/* Accent backgrounds */
+.ty-bg-accent {
+  background-color: var(--ty-bg-accent);
+}
+
+.ty-bg-accent\+ {
+  background-color: var(--ty-bg-accent-mild);
+}
+
+.ty-bg-accent- {
+  background-color: var(--ty-bg-accent-soft);
+}
+
+/* =================================================================
+TEXT HIERARCHY UTILITIES
+================================================================= */
+
+/* Base text hierarchy - emphasis based, not semantic */
+.ty-text {
+  color: var(--ty-text) !important;
+}
+
+.ty-text\+ {
+  color: var(--ty-text-mild) !important;
+}
+
+.ty-text\+\+ {
+  color: var(--ty-text-strong) !important;
+}
+
+.ty-text- {
+  color: var(--ty-text-soft) !important;
+}
+
+.ty-text-- {
+  color: var(--ty-text-faint) !important;
+}
+
+/* =================================================================
+SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
+================================================================= */
+
+/* Primary text colors with full 5-variant system */
+.ty-text-primary\+\+ {
+  color: var(--ty-color-primary-strong) !important;
+}
+
+.ty-text-primary\+ {
+  color: var(--ty-color-primary-mild) !important;
+}
+
+.ty-text-primary {
+  color: var(--ty-color-primary) !important;
+}
+
+.ty-text-primary- {
+  color: var(--ty-color-primary-soft) !important;
+}
+
+.ty-text-primary-- {
+  color: var(--ty-color-primary-faint) !important;
+}
+
+/* Secondary text colors */
+.ty-text-secondary\+\+ {
+  color: var(--ty-color-secondary-strong) !important;
+}
+
+.ty-text-secondary\+ {
+  color: var(--ty-color-secondary-mild) !important;
+}
+
+.ty-text-secondary {
+  color: var(--ty-color-secondary) !important;
+}
+
+.ty-text-secondary- {
+  color: var(--ty-color-secondary-soft) !important;
+}
+
+.ty-text-secondary-- {
+  color: var(--ty-color-secondary-faint) !important;
+}
+
+/* Success text colors */
+.ty-text-success\+\+ {
+  color: var(--ty-color-success-strong) !important;
+}
+
+.ty-text-success\+ {
+  color: var(--ty-color-success-mild) !important;
+}
+
+.ty-text-success {
+  color: var(--ty-color-success) !important;
+}
+
+.ty-text-success- {
+  color: var(--ty-color-success-soft) !important;
+}
+
+.ty-text-success-- {
+  color: var(--ty-color-success-faint) !important;
+}
+
+/* Danger text colors */
+.ty-text-danger\+\+ {
+  color: var(--ty-color-danger-strong) !important;
+}
+
+.ty-text-danger\+ {
+  color: var(--ty-color-danger-mild) !important;
+}
+
+.ty-text-danger {
+  color: var(--ty-color-danger) !important;
+}
+
+.ty-text-danger- {
+  color: var(--ty-color-danger-soft) !important;
+}
+
+.ty-text-danger-- {
+  color: var(--ty-color-danger-faint) !important;
+}
+
+/* Warning text colors */
+.ty-text-warning\+\+ {
+  color: var(--ty-color-warning-strong) !important;
+}
+
+.ty-text-warning\+ {
+  color: var(--ty-color-warning-mild) !important;
+}
+
+.ty-text-warning {
+  color: var(--ty-color-warning) !important;
+}
+
+.ty-text-warning- {
+  color: var(--ty-color-warning-soft) !important;
+}
+
+.ty-text-warning-- {
+  color: var(--ty-color-warning-faint) !important;
+}
+
+/* Neutral text colors */
+.ty-text-neutral\+\+ {
+  color: var(--ty-color-neutral-strong) !important;
+}
+
+.ty-text-neutral\+ {
+  color: var(--ty-color-neutral-mild) !important;
+}
+
+.ty-text-neutral {
+  color: var(--ty-color-neutral) !important;
+}
+
+.ty-text-neutral- {
+  color: var(--ty-color-neutral-soft) !important;
+}
+
+.ty-text-neutral-- {
+  color: var(--ty-color-neutral-faint) !important;
+}
+
+/* Accent text colors */
+.ty-text-accent\+ {
+  color: var(--ty-color-accent-mild) !important;
+}
+
+.ty-text-accent {
+  color: var(--ty-color-accent) !important;
+}
+
+.ty-text-accent- {
+  color: var(--ty-color-accent-soft) !important;
+}
+
+/* =================================================================
+BORDER UTILITIES
+================================================================= */
+
+/* Base border colors with emphasis */
+.ty-border {
+  border-color: var(--ty-border) !important;
+}
+
+.ty-border\+ {
+  border-color: var(--ty-border-mild) !important;
+}
+
+.ty-border\+\+ {
+  border-color: var(--ty-border-strong) !important;
+}
+
+.ty-border- {
+  border-color: var(--ty-border-soft);
+}
+
+.ty-border-- {
+  border-color: var(--ty-border-faint);
+}
+
+/* Semantic border colors */
+.ty-border-primary {
+  border-color: var(--ty-border-primary);
+}
+
+.ty-border-secondary {
+  border-color: var(--ty-border-secondary);
+}
+
+.ty-border-success {
+  border-color: var(--ty-border-success);
+}
+
+.ty-border-danger {
+  border-color: var(--ty-border-danger);
+}
+
+.ty-border-warning {
+  border-color: var(--ty-border-warning);
+}
+
+.ty-border-neutral {
+  border-color: var(--ty-border-neutral);
+}
+
+.ty-border-accent\+ {
+  border-color: var(--ty-border-accent-mild);
+}
+
+.ty-border-accent {
+  border-color: var(--ty-border-accent);
+}
+
+.ty-border-accent- {
+  border-color: var(--ty-border-accent-soft);
+}
+
+/* =================================================================
+COMPONENT UTILITIES
+================================================================= */
+
+/* Card/Panel utilities */
+.ty-card {
+  background-color: var(--ty-surface-elevated);
+  color: var(--ty-color-neutral-mild);
+}
+
+.ty-card-elevated {
+  background-color: var(--ty-surface-floating);
+  box-shadow: var(--ty-shadow-md);
+}
+
+/* Input-like utilities for custom form elements */
+.ty-input-bg {
+  background-color: var(--ty-input-bg);
+}
+
+.ty-input-border {
+  border-color: var(--ty-input-border);
+}
+
+.ty-input-focus {
+  border-color: var(--ty-input-border-focus);
+}
+
+/* Modal/overlay utilities */
+.ty-modal-bg {
+  background-color: var(--ty-modal-bg);
+}
+
+.ty-modal-backdrop {
+  background-color: var(--ty-modal-backdrop);
+}
+
+/* =================================================================
+INTERACTIVE STATES
+================================================================= */
+
+.hover\:ty-bg-neutral--:hover {
+  background-color: var(--ty-bg-neutral-faint);
+}
+
+.hover\:ty-bg-neutral-:hover {
+  background-color: var(--ty-bg-neutral-soft);
+}
+
+.hover\:ty-bg-neutral:hover {
+  background-color: var(--ty-bg-neutral);
+}
+
+.hover\:ty-bg-neutral\+:hover {
+  background-color: var(--ty-bg-neutral-mild);
+}
+
+.hover\:ty-bg-neutral\+\+:hover {
+  background-color: var(--ty-bg-neutral-strong);
+}
+
+.hover\:ty-bg-primary:hover {
+  background-color: var(--ty-bg-primary);
+}
+
+.hover\:ty-bg-primary\+:hover {
+  background-color: var(--ty-bg-primary-mild);
+}
+
+.hover\:ty-bg-secondary:hover {
+  background-color: var(--ty-bg-secondary);
+}
+
+.hover\:ty-bg-secondary\+:hover {
+  background-color: var(--ty-bg-secondary-mild);
+}
+
+.hover\:ty-bg-success:hover {
+  background-color: var(--ty-bg-success);
+}
+
+.hover\:ty-bg-success\+:hover {
+  background-color: var(--ty-bg-success-mild);
+}
+
+.hover\:ty-bg-danger:hover {
+  background-color: var(--ty-bg-danger);
+}
+
+.hover\:ty-bg-danger\+:hover {
+  background-color: var(--ty-bg-danger-mild);
+}
+
+.hover\:ty-bg-danger-:hover {
+  background-color: var(--ty-bg-danger-soft);
+}
+
+.hover\:ty-bg-accent:hover {
+  background-color: var(--ty-bg-accent);
+}
+
+.hover\:ty-bg-accent\+:hover {
+  background-color: var(--ty-bg-accent-mild);
+}
+
+.hover\:ty-bg-accent-:hover {
+  background-color: var(--ty-bg-accent-soft);
+}
+
+/* Hover states for text colors */
+.hover\:ty-text:hover {
+  color: var(--ty-text);
+}
+
+.hover\:ty-text\+:hover {
+  color: var(--ty-text-mild);
+}
+
+.hover\:ty-text\+\+:hover {
+  color: var(--ty-text-strong);
+}
+
+.hover\:ty-text-:hover {
+  color: var(--ty-text-soft);
+}
+
+.hover\:ty-text--:hover {
+  color: var(--ty-text-faint);
+}
+
+/* Hover states for semantic text colors */
+/* Primary text hover states */
+.hover\:ty-text-primary\+\+:hover {
+  color: var(--ty-color-primary-strong) !important;
+}
+
+.hover\:ty-text-primary\+:hover {
+  color: var(--ty-color-primary-mild) !important;
+}
+
+.hover\:ty-text-primary:hover {
+  color: var(--ty-color-primary) !important;
+}
+
+.hover\:ty-text-primary-:hover {
+  color: var(--ty-color-primary-soft) !important;
+}
+
+.hover\:ty-text-primary--:hover {
+  color: var(--ty-color-primary-faint) !important;
+}
+
+/* Secondary text hover states */
+.hover\:ty-text-secondary\+\+:hover {
+  color: var(--ty-color-secondary-strong) !important;
+}
+
+.hover\:ty-text-secondary\+:hover {
+  color: var(--ty-color-secondary-mild) !important;
+}
+
+.hover\:ty-text-secondary:hover {
+  color: var(--ty-color-secondary) !important;
+}
+
+.hover\:ty-text-secondary-:hover {
+  color: var(--ty-color-secondary-soft) !important;
+}
+
+.hover\:ty-text-secondary--:hover {
+  color: var(--ty-color-secondary-faint) !important;
+}
+
+/* Success text hover states */
+.hover\:ty-text-success\+\+:hover {
+  color: var(--ty-color-success-strong) !important;
+}
+
+.hover\:ty-text-success\+:hover {
+  color: var(--ty-color-success-mild) !important;
+}
+
+.hover\:ty-text-success:hover {
+  color: var(--ty-color-success) !important;
+}
+
+.hover\:ty-text-success-:hover {
+  color: var(--ty-color-success-soft) !important;
+}
+
+.hover\:ty-text-success--:hover {
+  color: var(--ty-color-success-faint) !important;
+}
+
+/* Danger text hover states */
+.hover\:ty-text-danger\+\+:hover {
+  color: var(--ty-color-danger-strong) !important;
+}
+
+.hover\:ty-text-danger\+:hover {
+  color: var(--ty-color-danger-mild) !important;
+}
+
+.hover\:ty-text-danger:hover {
+  color: var(--ty-color-danger) !important;
+}
+
+.hover\:ty-text-danger-:hover {
+  color: var(--ty-color-danger-soft) !important;
+}
+
+.hover\:ty-text-danger--:hover {
+  color: var(--ty-color-danger-faint) !important;
+}
+
+/* Warning text hover states */
+.hover\:ty-text-warning\+\+:hover {
+  color: var(--ty-color-warning-strong) !important;
+}
+
+.hover\:ty-text-warning\+:hover {
+  color: var(--ty-color-warning-mild) !important;
+}
+
+.hover\:ty-text-warning:hover {
+  color: var(--ty-color-warning) !important;
+}
+
+.hover\:ty-text-warning-:hover {
+  color: var(--ty-color-warning-soft) !important;
+}
+
+.hover\:ty-text-warning--:hover {
+  color: var(--ty-color-warning-faint) !important;
+}
+
+/* Neutral text hover states */
+.hover\:ty-text-neutral\+\+:hover {
+  color: var(--ty-color-neutral-strong) !important;
+}
+
+.hover\:ty-text-neutral + :hover {
+  color: var(--ty-color-neutral-mild) !important;
+}
+
+.hover\:ty-text-neutral:hover {
+  color: var(--ty-color-neutral) !important;
+}
+
+.hover\:ty-text-neutral-:hover {
+  color: var(--ty-color-neutral-soft) !important;
+}
+
+.hover\:ty-text-neutral--:hover {
+  color: var(--ty-color-neutral-faint) !important;
+}
+
+/* Accent text hover states */
+.hover\:ty-text-accent\+:hover {
+  color: var(--ty-color-accent-mild) !important;
+}
+
+.hover\:ty-text-accent:hover {
+  color: var(--ty-color-accent) !important;
+}
+
+.hover\:ty-text-accent-:hover {
+  color: var(--ty-color-accent-soft) !important;
+}
+
+/* Hover states for borders */
+/* Base border hover states */
+.hover\:ty-border\+\+:hover {
+  border-color: var(--ty-border-strong) !important;
+}
+
+.hover\:ty-border\+:hover {
+  border-color: var(--ty-border-mild) !important;
+}
+
+.hover\:ty-border:hover {
+  border-color: var(--ty-border) !important;
+}
+
+.hover\:ty-border-:hover {
+  border-color: var(--ty-border-soft) !important;
+}
+
+.hover\:ty-border--:hover {
+  border-color: var(--ty-border-faint) !important;
+}
+
+/* Semantic border hover states */
+.hover\:ty-border-primary:hover {
+  border-color: var(--ty-border-primary) !important;
+}
+
+.hover\:ty-border-secondary:hover {
+  border-color: var(--ty-border-secondary) !important;
+}
+
+.hover\:ty-border-success:hover {
+  border-color: var(--ty-border-success) !important;
+}
+
+.hover\:ty-border-danger:hover {
+  border-color: var(--ty-border-danger) !important;
+}
+
+.hover\:ty-border-warning:hover {
+  border-color: var(--ty-border-warning) !important;
+}
+
+.hover\:ty-border-neutral:hover {
+  border-color: var(--ty-border-neutral) !important;
+}
+
+.hover\:ty-border-accent\+:hover {
+  border-color: var(--ty-border-accent-mild) !important;
+}
+
+.hover\:ty-border-accent:hover {
+  border-color: var(--ty-border-accent) !important;
+}
+
+.hover\:ty-border-accent-:hover {
+  border-color: var(--ty-border-accent-soft) !important;
+}
+
+.focus\:ty-border\+\+:focus {
+  border-color: var(--ty-border-strong) !important;
+}
+
+.focus\:ty-border + :focus {
+  border-color: var(--ty-border-mild) !important;
+}
+
+.focus\:ty-border:focus {
+  border-color: var(--ty-border) !important;
+}
+
+.focus\:ty-border-:focus {
+  border-color: var(--ty-border-soft) !important;
+}
+
+.focus\:ty-border--:focus {
+  border-color: var(--ty-border-faint) !important;
+}
+
+/* Semantic border focus states */
+.focus\:ty-border-primary:focus {
+  border-color: var(--ty-border-primary) !important;
+}
+
+.focus\:ty-border-secondary:focus {
+  border-color: var(--ty-border-secondary) !important;
+}
+
+.focus\:ty-border-success:focus {
+  border-color: var(--ty-border-success) !important;
+}
+
+.focus\:ty-border-danger:focus {
+  border-color: var(--ty-border-danger) !important;
+}
+
+.focus\:ty-border-warning:focus {
+  border-color: var(--ty-border-warning) !important;
+}
+
+.focus\:ty-border-neutral:focus {
+  border-color: var(--ty-border-neutral) !important;
+}
+
+.focus\:ty-border-accent\+:focus {
+  border-color: var(--ty-border-accent-mild) !important;
+}
+
+.focus\:ty-border-accent:focus {
+  border-color: var(--ty-border-accent) !important;
+}
+
+.focus\:ty-border-accent-:focus {
+  border-color: var(--ty-border-accent-soft) !important;
+}
+
+/* =================================================================
+RESPONSIVE VARIANTS
+================================================================= */
+
+/* Small screens and up */
+@media (min-width: 640px) {
+  .sm\:ty-bg-primary {
+    background-color: var(--ty-bg-primary);
+  }
+
+  .sm\:ty-text-primary {
+    color: var(--ty-color-primary);
+  }
+}
+
+/* Medium screens and up */
+@media (min-width: 768px) {
+  .md\:ty-bg-primary {
+    background-color: var(--ty-bg-primary);
+  }
+
+  .md\:ty-text-primary {
+    color: var(--ty-color-primary);
+  }
+}
+
+/* Large screens and up */
+@media (min-width: 1024px) {
+  .lg\:ty-bg-primary {
+    background-color: var(--ty-bg-primary);
+  }
+
+  .lg\:ty-text-primary {
+    color: var(--ty-color-primary);
+  }
+}
+
+/* =================================================================
+   MOBILE FONT SIZE
+   Prevents iOS Safari auto-zoom on input focus (requires >= 16px)
+   and improves readability on small screens.
+================================================================= */
+
+@media (max-width: 768px) {
+  :root {
+    --ty-font-sm: 1rem;
+  }
+}

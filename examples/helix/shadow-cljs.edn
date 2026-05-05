@@ -1,0 +1,7 @@
+{:deps true
+ :nrepl {:port 7890}
+ :dev-http {3003 "public"}
+ :builds {:dev {:target :browser
+                :output-dir "public/js"
+                :asset-path "/js"
+                :modules {:main {:init-fn hello.core/init}}}}}

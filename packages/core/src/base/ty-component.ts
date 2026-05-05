@@ -139,7 +139,7 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return
 
-    // Check if this is an alias (e.g., not-searchable)
+    // Check if this is an alias (e.g., not-clearable)
     let change = this.props.handleAlias(name, newValue)
 
     if (!change) {

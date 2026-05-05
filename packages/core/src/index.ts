@@ -7,6 +7,8 @@ export { TyTag } from './components/tag.js'
 export { TyOption } from './components/option.js'
 export { TyInput } from './components/input.js'
 export { TyCheckbox } from './components/checkbox.js'
+export { TySwitch } from './components/switch.js'
+export { TyRadio, TyRadioGroup } from './components/radio.js'
 export { TyCopy } from './components/copy.js'
 export { TyTextarea } from './components/textarea.js'
 export { TyTooltip } from './components/tooltip.js'
@@ -43,6 +45,8 @@ export type {
 } from './types/common.js'
 
 export type { TyCheckboxElement } from './components/checkbox.js'
+export type { TySwitchElement } from './components/switch.js'
+export type { TyRadioElement, TyRadioGroupElement } from './components/radio.js'
 export type { TyCopyElement } from './components/copy.js'
 export type { TyTextareaElement } from './components/textarea.js'
 export type { TooltipFlavor, TooltipAttributes } from './components/tooltip.js'
@@ -91,7 +95,7 @@ export type {
 } from './utils/positioning.js'
 
 // Icons
-// Note: Icon libraries moved to separate @gersak/ty-icons package
+// Note: Icon libraries moved to separate tyrell-icons package
 // Icon registry utility remains in core for registering custom icons
 
 // Version (auto-generated from package.json)

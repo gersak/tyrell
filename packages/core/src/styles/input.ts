@@ -39,11 +39,12 @@ export const inputStyles = `
 /* ===== LABEL STYLING ===== */
 
 .input-label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+  font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
   margin-bottom: 6px;
-  line-height: 1.25;
   padding-left: 12px;
   display: flex;
   align-items: center;
@@ -73,9 +74,9 @@ export const inputStyles = `
   gap: 0.5rem; /* No gap by default */
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--ty-input-border);
-  border-radius: 6px;
-  background: var(--ty-input-bg);
+  border: 1px solid var(--input-border, var(--ty-input-border));
+  border-radius: var(--ty-radius-base);
+  background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
   transition: all 0.15s ease-in-out;
   
   /* Default size (md) */
@@ -85,19 +86,19 @@ export const inputStyles = `
 
 /* Wrapper states */
 .input-wrapper:hover:not(.disabled) {
-  border-color: var(--ty-input-border-hover);
+  border-color: var(--input-border-hover, var(--ty-input-border-hover));
 }
 
 .input-wrapper.focused {
-  border-color: var(--ty-input-border-focus);
-  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
+  border-color: var(--input-border-focus, var(--ty-input-border-focus));
+  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
 .input-wrapper.disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  background: var(--ty-input-disabled-bg);
-  border-color: var(--ty-input-disabled-border);
+  background: var(--input-disabled-bg, var(--ty-input-disabled-bg));
+  border-color: var(--input-disabled-border, var(--ty-input-disabled-border));
 }
 
 /* ===== SLOT STYLING ===== */
@@ -122,11 +123,12 @@ export const inputStyles = `
 /* ===== ERROR MESSAGE STYLING ===== */
 
 .error-message {
-  font-size: 12px;
+  font-size: var(--ty-font-xs);
+  line-height: var(--ty-leading-xs);
+  letter-spacing: var(--ty-tracking-xs);
   color: var(--ty-color-danger);
   margin-top: 4px;
   padding-left: 12px;
-  line-height: 1.4;
 }
 
 /* Error state for wrapper */
@@ -137,24 +139,25 @@ export const inputStyles = `
 
 .input-wrapper.error.focused {
   border-color: var(--ty-color-danger-mild);
-  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
+  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
 /* ===== INPUT BASE STYLING ===== */
 
 input {
-  /* Reset and base styles */
+  /* Reset and base styles — Linear-paired typography */
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
   border: none;
   outline: none;
   background: transparent;
-  color: var(--ty-input-color);
+  color: var(--input-color, var(--ty-input-color));
   font-family: inherit;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.5;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+  font-weight: var(--ty-font-normal);
   padding: 0;
   margin: 0;
 }
@@ -173,12 +176,12 @@ input[type="number"] {
 /* Disabled state */
 input:disabled {
   cursor: not-allowed;
-  color: var(--ty-input-disabled-color);
+  color: var(--input-disabled-color, var(--ty-input-disabled-color));
 }
 
 /* Placeholder styling */
 input::placeholder {
-  color: var(--ty-input-placeholder);
+  color: var(--input-placeholder, var(--ty-input-placeholder));
   font-weight: 400;
 }
 
@@ -188,50 +191,65 @@ input::placeholder {
 .input-wrapper.xs {
   min-height: 32px;
   padding: 0 8px;
+  border-radius: var(--ty-input-radius-xs, var(--ty-radius-base));
 }
 
 .input-wrapper.xs input {
-  font-size: 12px;
+  font-size: var(--ty-font-xs);
+  line-height: var(--ty-leading-xs);
+  letter-spacing: var(--ty-tracking-xs);
 }
 
 /* Small */
 .input-wrapper.sm {
   min-height: 36px;
   padding: 0 10px;
+  border-radius: var(--ty-input-radius-sm, var(--ty-radius-base));
 }
 
 .input-wrapper.sm input {
-  font-size: 13px;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
 }
 
 /* Medium (default) */
 .input-wrapper.md {
   min-height: 40px;
   padding: 0 12px;
+  border-radius: var(--ty-input-radius-md, var(--ty-radius-base));
 }
 
 .input-wrapper.md input {
-  font-size: 14px;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
 }
 
 /* Large */
 .input-wrapper.lg {
   min-height: 44px;
   padding: 0 14px;
+  border-radius: var(--ty-input-radius-lg, var(--ty-radius-base));
 }
 
 .input-wrapper.lg input {
-  font-size: 16px;
+  font-size: var(--ty-font-base);
+  line-height: var(--ty-leading-base);
+  letter-spacing: var(--ty-tracking-base);
 }
 
 /* Extra Large */
 .input-wrapper.xl {
   min-height: 48px;
   padding: 0 16px;
+  border-radius: var(--ty-input-radius-xl, var(--ty-radius-base));
 }
 
 .input-wrapper.xl input {
-  font-size: 18px;
+  font-size: var(--ty-font-lg);
+  line-height: var(--ty-leading-lg);
+  letter-spacing: var(--ty-tracking-lg);
 }
 
 /* ===== SEMANTIC FLAVOR MODIFIERS ===== */
@@ -304,8 +322,8 @@ input::placeholder {
 
 /* Neutral (default) */
 .input-wrapper.neutral.focused {
-  border-color: var(--ty-input-border-focus);
-  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
+  border-color: var(--input-border-focus, var(--ty-input-border-focus));
+  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
 /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
@@ -337,7 +355,9 @@ input:focus-visible {
   }
 
   .input-wrapper.lg input {
-    font-size: 14px;
+    font-size: var(--ty-font-sm);
+    line-height: var(--ty-leading-sm);
+    letter-spacing: var(--ty-tracking-sm);
   }
 
   .input-wrapper.xl {
@@ -346,7 +366,9 @@ input:focus-visible {
   }
 
   .input-wrapper.xl input {
-    font-size: 16px;
+    font-size: var(--ty-font-base);
+    line-height: var(--ty-leading-base);
+    letter-spacing: var(--ty-tracking-base);
   }
 }
 
@@ -357,7 +379,9 @@ input:focus-visible {
   }
 
   .input-wrapper.xl input {
-    font-size: 14px;
+    font-size: var(--ty-font-sm);
+    line-height: var(--ty-leading-sm);
+    letter-spacing: var(--ty-tracking-sm);
   }
 }
 

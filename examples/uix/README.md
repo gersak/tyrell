@@ -2,7 +2,7 @@
 
 A comprehensive example showcasing the integration of:
 - **UIx** - Modern React-like ClojureScript framework
-- **@gersak/ty-react** - Clean React component wrappers (`ty/Button`, `ty/Input`, etc.)
+- **tyrell-react** - Clean React component wrappers (`ty/Button`, `ty/Input`, etc.)
 - **dev.gersak/ty** - ClojureScript utilities and icon system
 - **Tailwind CSS** - Utility-first styling (following TY color guidelines)
 

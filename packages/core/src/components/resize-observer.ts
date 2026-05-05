@@ -34,7 +34,7 @@ export class TyResizeObserver extends HTMLElement {
   }
 
   /**
-   * Debounce delay in milliseconds (default: 0 = no debounce)
+   * Debounce in milliseconds (default: 0 = no debounce)
    */
   get debounce(): number {
     return parseInt(this.getAttribute('debounce') || '0')

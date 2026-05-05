@@ -1,6 +1,6 @@
 'use client'
 
-import { TyIcon } from '@gersak/ty-react'
+import { TyIcon } from 'tyrell-react'
 
 /**
  * Example: Using Ty Icons
@@ -10,7 +10,7 @@ import { TyIcon } from '@gersak/ty-react'
  * 
  * Benefits:
  * - Tree-shaking: Only icons imported in lib/icons.ts are bundled
- * - No duplicate dependencies: @gersak/ty provides everything
+ * - No duplicate dependencies: tyrell-components provides everything
  * - Type-safe: Full TypeScript support
  */
 export default function IconsExample() {
@@ -99,7 +99,7 @@ export default function IconsExample() {
 
           <pre className="ty-bg-neutral- ty-text- p-4 rounded text-sm overflow-x-auto">
             {`// lib/icons.ts
-import { check, heart, star } from '@gersak/ty/icons/lucide'
+import { check, heart, star } from 'tyrell-components/icons/lucide'
 
 export function initializeIcons() {
   window.tyIcons.register({
@@ -116,7 +116,7 @@ export function initializeIcons() {
           </p>
 
           <pre className="ty-bg-neutral- ty-text- p-4 rounded text-sm overflow-x-auto">
-            {`import { TyIcon } from '@gersak/ty-react'
+            {`import { TyIcon } from 'tyrell-react'
 
 <TyIcon name="check" />
 <TyIcon name="heart" pulse />
@@ -127,7 +127,7 @@ export function initializeIcons() {
             <h3 className="ty-text-success++ font-semibold mb-2">✨ Benefits</h3>
             <ul className="ty-text-success space-y-1 text-sm list-disc list-inside">
               <li>Perfect tree-shaking - only bundle icons you use</li>
-              <li>No duplicate dependencies - @gersak/ty includes 1600+ icons</li>
+              <li>No duplicate dependencies - tyrell-components includes 1600+ icons</li>
               <li>Type-safe with full TypeScript support</li>
               <li>Works across React, Vue, vanilla JS, any framework</li>
             </ul>

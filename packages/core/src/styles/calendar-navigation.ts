@@ -15,6 +15,24 @@ export const calendarNavigationStyles = `
   --nav-font-size: 1rem;
   --nav-padding: 0.5rem 0.75rem;
   --nav-default-width: 280px;
+
+  /* ==========================================================================
+     Theming Tokens
+     Override these to retheme navigation without touching the global palette.
+     ========================================================================== */
+
+  /* Accent alias — drives focus outline, mirrors --ty-calendar-accent */
+  --ty-calendar-accent: var(--ty-color-primary);
+
+  /* Nav button (prev/next chevrons) */
+  --ty-calendar-nav-color: var(--ty-color-neutral);
+  --ty-calendar-nav-hover-color: var(--ty-color-neutral-strong);
+  --ty-calendar-nav-hover-bg: var(--ty-bg-neutral-soft);
+  --ty-calendar-nav-active-bg: var(--ty-bg-neutral);
+  --ty-calendar-nav-focus-outline: var(--ty-calendar-accent);
+
+  /* Title (month/year display) */
+  --ty-calendar-nav-title-color: var(--ty-color-neutral-strong);
 }
 
 :host([data-size="sm"]) {
@@ -82,24 +100,24 @@ export const calendarNavigationStyles = `
   border: none;
   border-radius: 0.375rem;
   background-color: transparent;
-  color: var(--ty-color-neutral);
+  color: var(--ty-calendar-nav-color);
   cursor: pointer;
   transition: all 0.15s ease;
   outline: none;
 }
 
 .nav-btn:hover {
-  background-color: var(--ty-bg-neutral-soft);
-  color: var(--ty-color-neutral-strong);
+  background-color: var(--ty-calendar-nav-hover-bg);
+  color: var(--ty-calendar-nav-hover-color);
 }
 
 .nav-btn:active {
-  background-color: var(--ty-bg-neutral);
+  background-color: var(--ty-calendar-nav-active-bg);
   transform: scale(0.95);
 }
 
 .nav-btn:focus-visible {
-  outline: 2px solid var(--ty-color-primary);
+  outline: 2px solid var(--ty-calendar-nav-focus-outline);
   outline-offset: 2px;
 }
 
@@ -117,7 +135,7 @@ export const calendarNavigationStyles = `
 .month-year-display {
   font-size: var(--nav-font-size);
   font-weight: 600;
-  color: var(--ty-color-neutral-strong);
+  color: var(--ty-calendar-nav-title-color);
   text-align: center;
   white-space: nowrap;
   letter-spacing: -0.01em;

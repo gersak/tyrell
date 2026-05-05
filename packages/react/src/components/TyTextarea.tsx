@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Event detail structure for ty-textarea events
 export interface TyTextareaEventDetail {
@@ -7,7 +8,8 @@ export interface TyTextareaEventDetail {
 }
 
 // Type definitions for Ty Textarea component
-export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput' | 'onFocus' | 'onBlur'> {
+export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput' | 'onFocus' | 'onBlur' | 'style'> {
+  style?: import('./TyInput').TyInputCSSProperties;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   value?: string;
   placeholder?: string;
@@ -44,10 +46,29 @@ export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>,
   onBlur?: (event: FocusEvent) => void;
 }
 
+// One-time warning flag.
+let _warnedOnInputProp = false;
+
 // React wrapper for ty-textarea web component
 export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
   ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, minHeight, maxHeight, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+
+    // Same `onInput` → `onChange` redirect as TyInput. React's synthetic-event
+    // system strips event.detail; users hitting e.detail.value will crash.
+    const onInputProp = (props as any).onInput as ((e: any) => void) | undefined;
+    if (onInputProp && !onChange) {
+      if (!_warnedOnInputProp) {
+        _warnedOnInputProp = true;
+        console.warn(
+          '[tyrell-react] <TyTextarea> received `onInput`. ' +
+          'React strips event.detail; use `onChange` instead — it receives the raw CustomEvent. ' +
+          'Forwarding for now, but please rename the prop.'
+        );
+      }
+      onChange = onInputProp;
+    }
+    delete (props as any).onInput;
 
     // Map onChange to input event (React convention)
     const handleInput = useCallback((event: CustomEvent<TyTextareaEventDetail>) => {
@@ -125,6 +146,19 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
         }
       }
     }, [ref]);
+
+    // Imperatively sync `value` to the underlying element's property.
+    // React 18 workaround: prop-to-property bridging is unreliable for empty
+    // strings on custom elements. React 19+ handles this natively.
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      const element = elementRef.current as any;
+      if (!element) return;
+      const next = (props as any).value ?? '';
+      if (element.value !== next) {
+        element.value = next;
+      }
+    }, [(props as any).value]);
 
     return React.createElement(
       'ty-textarea',

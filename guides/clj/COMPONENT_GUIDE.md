@@ -1,4 +1,4 @@
-# Building Web Components with ty.shim
+# Building Web Components with tyrell.shim
 
 Turn any ClojureScript render function into a standards-compliant Web Component.
 
@@ -6,7 +6,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
 
 ```clojure
 (ns app.components
-  (:require [ty.shim :as shim]))
+  (:require [tyrell.shim :as shim]))
 
 (defn render! [^js el]
   (let [root (shim/ensure-shadow el)]
@@ -61,7 +61,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
 ```clojure
 (ns app.components
   (:require [replicant.dom :as d]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 (defn counter-view [count on-click]
   [:div.ty-elevated.p-6.rounded-lg.space-y-4
@@ -101,7 +101,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
 (ns app.components
   (:require [uix.core :as uix :refer [defui $]]
             [uix.dom]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 (defui counter [{:keys [initial]}]
   (let [[count set-count] (uix/use-state (or initial 0))]
@@ -136,7 +136,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
 (ns app.components
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 (defn counter [initial-count]
   (let [count (r/atom (or initial-count 0))]
@@ -167,8 +167,8 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
 
 ```clojure
 (ns app.components
-  (:require [ty.shim :as shim]
-            [ty.css :refer [ensure-styles!]]))
+  (:require [tyrell.shim :as shim]
+            [tyrell.css :refer [ensure-styles!]]))
 
 (def my-styles
   ".container { padding: 1rem; }
@@ -193,9 +193,9 @@ Load CSS files at compile time for better organization:
 
 ```clojure
 (ns app.components.card
-  (:require [ty.shim :as shim]
-            [ty.css :refer [ensure-styles!]])
-  (:require-macros [ty.css :refer [defstyles]]))
+  (:require [tyrell.shim :as shim]
+            [tyrell.css :refer [ensure-styles!]])
+  (:require-macros [tyrell.css :refer [defstyles]]))
 
 ;; Loads app/components/card.css at compile time
 ;; Creates a CSSStyleSheet for efficient shadow DOM adoption
@@ -285,7 +285,7 @@ The shim supports shadow-cljs hot reload automatically:
 
 ```clojure
 (ns app.components
-  (:require [ty.shim :as shim]))
+  (:require [tyrell.shim :as shim]))
 
 ;; Re-defining a component in dev mode refreshes all instances
 (shim/define! "my-component" {...})
@@ -324,8 +324,8 @@ For one-time initialization attributes that shouldn't override user state:
 ```clojure
 (ns app.date-input
   (:require [replicant.dom :as d]
-            [ty.shim :as shim]
-            [ty.css :refer [ensure-styles!]]))
+            [tyrell.shim :as shim]
+            [tyrell.css :refer [ensure-styles!]]))
 
 (def styles
   ".wrapper { position: relative; }
@@ -387,5 +387,5 @@ For one-time initialization attributes that shouldn't override user state:
 
 - [Code Splitting Guide](CODE_SPLITTING.md) - Lazy loading and bundle optimization (in guides/)
 - [Ty Components Source](components/ty/components/) - Reference implementations
-- [ty.shim Source](src/ty/shim.cljs) - Full API
-- [ty.css](src/ty/css.cljs) - Style injection utilities
+- [tyrell.shim Source](src/ty/shim.cljs) - Full API
+- [tyrell.css](src/ty/css.cljs) - Style injection utilities

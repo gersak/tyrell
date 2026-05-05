@@ -1,8 +1,8 @@
 {
-  "name": "ty-react-nextjs-example",
+  "name": "tyrell-react-nextjs-example",
   "version": "0.1.0",
   "private": true,
-  "description": "Simple Next.js example testing @gersak/ty and @gersak/ty-react packages with Tailwind CSS integration",
+  "description": "Simple Next.js example testing tyrell-components and tyrell-react packages with Tailwind CSS integration",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,9 +14,9 @@
     "dev:full": "concurrently \"npm run build:css:watch\" \"npm run dev\""
   },
   "dependencies": {
-    "@gersak/ty": "^0.1.905",
-    "@gersak/ty-react": "^0.1.904",
-    "next": "^14.0.0",
+    "tyrell-components": "1.0.0-RC6",
+    "tyrell-react": "1.0.0-RC6",
+    "next": "^16.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

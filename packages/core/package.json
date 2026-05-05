@@ -1,9 +1,13 @@
 {
-  "name": "@gersak/ty",
-  "version": "1.0.0-TC5",
-  "description": "Ty Web Components - Framework-agnostic UI components with semantic design system",
+  "name": "tyrell-components",
+  "version": "1.0.0-RC6",
+  "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./lib/index.js",
+    "./lib/components/**/*.js",
+    "./dist/*.js"
+  ],
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -100,7 +104,7 @@
     "./icons/heroicons/*": "./lib/icons/heroicons/*",
     "./icons/material/*": "./lib/icons/material/*",
     "./icons/fontawesome/*": "./lib/icons/fontawesome/*",
-    "./cdn": "./dist/ty.js"
+    "./cdn": "./dist/tyrell.js"
   },
   "files": [
     "lib/**/*",
@@ -127,8 +131,8 @@
     "dev": "vite",
     "generate:version": "node scripts/generate-version.js",
     "build:lib": "npm run generate:version && tsc --project tsconfig.lib.json",
-    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && cp css/ty.css dist/ty.css",
-    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && cp css/ty.css dist/ty.css",
+    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && cp css/tyrell.css dist/tyrell.css",
+    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && cp css/tyrell.css dist/tyrell.css",
     "build:dev:watch": "vite build --config vite.config.dev.ts --watch",
     "build": "npm run build:lib && npm run build:cdn",
     "prepublishOnly": "npm run build",
@@ -143,12 +147,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gersak/ty.git",
+    "url": "https://github.com/gersak/tyrell.git",
     "directory": "packages/core"
   },
-  "homepage": "https://gersak.github.io/ty/",
+  "homepage": "https://gersak.github.io/tyrell/",
   "bugs": {
-    "url": "https://github.com/gersak/ty/issues"
+    "url": "https://github.com/gersak/tyrell/issues"
   },
   "author": "Gersak <dev@gersak.io>",
   "license": "MIT"

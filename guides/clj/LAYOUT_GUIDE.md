@@ -1,10 +1,10 @@
 # Ty Layout — Responsive Layout System
 
-The `ty.layout` namespace provides container-aware responsive layout for ClojureScript. It uses dynamic vars to propagate container dimensions down the render tree, with Tailwind-matching breakpoints.
+The `tyrell.layout` namespace provides container-aware responsive layout for ClojureScript. It uses dynamic vars to propagate container dimensions down the render tree, with Tailwind-matching breakpoints.
 
 ## Core Concept
 
-Instead of CSS media queries (which respond to the **window**), `ty.layout` responds to the **container** — the actual available space for your content. This enables nested responsive layouts where a sidebar panel can respond to its own width, not the window width.
+Instead of CSS media queries (which respond to the **window**), `tyrell.layout` responds to the **container** — the actual available space for your content. This enables nested responsive layouts where a sidebar panel can respond to its own width, not the window width.
 
 The `*container*` dynamic var holds the current dimensions. Macros like `with-window`, `with-container`, and `with-resize-observer` bind it for their body.
 
@@ -14,7 +14,7 @@ The `*container*` dynamic var holds the current dimensions. Macros like `with-wi
 
 ```clojure
 (ns my-app.core
-  (:require [ty.layout :as layout]))
+  (:require [tyrell.layout :as layout]))
 ```
 
 ---
@@ -229,8 +229,8 @@ Read dimensions from the TypeScript `ty-resize-observer` registry directly:
 
 ```clojure
 (ns my-app.core
-  (:require [ty.layout :as layout]
-            [ty.router :as router]))
+  (:require [tyrell.layout :as layout]
+            [tyrell.router :as router]))
 
 (defn sidebar []
   (when (layout/breakpoint>= :lg)

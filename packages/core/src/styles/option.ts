@@ -21,11 +21,12 @@ export const optionStyles = `
   /* Smooth transitions */
   transition: var(--ty-transition-all);
 
-  /* Text styling */
+  /* Text styling — Linear-paired typography */
   color: var(--ty-text);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
-  line-height: var(--ty-line-height-normal);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   padding: var(--ty-spacing-2) var(--ty-spacing-3);
 }
 

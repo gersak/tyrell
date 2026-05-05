@@ -2,11 +2,11 @@
  * Test Example: React Event Convention
  * 
  * This file demonstrates the new event handling convention
- * for ty-react components.
- * 
+ * for tyrell-react components.
+ *
  * To test:
  * 1. Create a new React project or use existing
- * 2. npm install @gersak/ty-react
+ * 2. npm install tyrell-react
  * 3. Add this component to your app
  * 4. Observe console logs and state updates
  */

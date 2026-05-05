@@ -28,26 +28,26 @@ ty-multiselect.js (loaded when <ty-multiselect> is used)
    :modules
    {;; Core module - always loaded
     :ty-core
-    {:entries [ty.core]
-     :init-fn ty.core/init}
+    {:entries [tyrell.core]
+     :init-fn tyrell.core/init}
 
     ;; Lazy modules - loaded on demand
     :ty-dropdown
-    {:entries [ty.components.dropdown]
+    {:entries [tyrell.components.dropdown]
      :depends-on #{:ty-core}}
 
     :ty-calendar
-    {:entries [ty.components.calendar
-               ty.components.calendar-navigation
-               ty.components.calendar-month]
+    {:entries [tyrell.components.calendar
+               tyrell.components.calendar-navigation
+               tyrell.components.calendar-month]
      :depends-on #{:ty-core}}
 
     :ty-date-picker
-    {:entries [ty.components.date-picker]
+    {:entries [tyrell.components.date-picker]
      :depends-on #{:ty-calendar}}
 
     :ty-multiselect
-    {:entries [ty.components.multiselect]
+    {:entries [tyrell.components.multiselect]
      :depends-on #{:ty-dropdown}}}}}}
 ```
 
@@ -60,7 +60,7 @@ ty-multiselect.js (loaded when <ty-multiselect> is used)
 ```clojure
 ;; src/app/components/heavy_chart.cljs
 (ns app.components.heavy-chart
-  (:require [ty.shim :as shim]
+  (:require [tyrell.shim :as shim]
             ["chart.js" :as Chart]))  ;; Heavy dependency
 
 (defn render! [^js el]
@@ -79,7 +79,7 @@ ty-multiselect.js (loaded when <ty-multiselect> is used)
 ;; src/app/components/lazy/heavy_chart.cljs
 (ns app.components.lazy.heavy-chart
   (:require [shadow.lazy :as lazy]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 ;; Mark the config as loadable
 (def config (lazy/loadable app.components.heavy-chart/configuration))
@@ -157,7 +157,7 @@ Then your lazy wrapper becomes:
 (ns app.components.lazy.heavy-chart
   (:require [shadow.lazy :as lazy]
             [app.lazy-util :as lazy-util]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 (def config (lazy/loadable app.components.heavy-chart/configuration))
 
@@ -276,4 +276,4 @@ src/
 ## See Also
 
 - [shadow-cljs Code Splitting](https://shadow-cljs.github.io/docs/UsersGuide.html#CodeSplitting)
-- [Component Building Guide](COMPONENT_GUIDE.md) - ty.shim API for defining web components
+- [Component Building Guide](COMPONENT_GUIDE.md) - tyrell.shim API for defining web components

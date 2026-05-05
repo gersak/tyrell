@@ -1,6 +1,6 @@
 # Ty Component Library — Guide
 
-**Ty** is a framework-agnostic web component library. TypeScript core (`@gersak/ty`), React wrappers (`@gersak/ty-react`), ClojureScript infra (`dev.gersak/ty`).
+**Ty** is a framework-agnostic web component library. TypeScript core (`tyrell-components`), React wrappers (`tyrell-react`), ClojureScript infra (`dev.gersak/tyrell`).
 
 ---
 
@@ -32,7 +32,7 @@ When a Ty component exists, use it. Do not improvise HTML.
 | Scrollable area | `<ty-scroll-container>` | `overflow-auto` + manual indicators |
 | Field label | `label` attribute on component | `<label>` element |
 | Error message | `error` attribute on component | `<span class="text-red-500">` |
-| Debounced input | `delay` attribute | Manual `setTimeout`/debounce |
+| Debounced input | `debounce` attribute | Manual `setTimeout`/debounce |
 
 Plain HTML is OK for: layout (`<div>`, `<section>`), text (`<h1>`-`<h6>`, `<p>`, `<span>` with Ty classes), lists, links, images.
 
@@ -145,19 +145,18 @@ FormData: submits raw number, not formatted string.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `flavor` | string | `'neutral'` | `primary` \| `secondary` \| `success` \| `danger` \| `warning` \| `neutral` |
+| `flavor` | string | `'neutral'` | Built-in: `primary` \| `secondary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is accepted — theme custom flavors via `--ty-button-*` variables. |
+| `appearance` | string | `'solid'` | `solid` (saturated brand fill) \| `outlined` (transparent bg, text === border) \| `ghost` (text only with hover bg) |
 | `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
 | `type` | string | `'submit'` | `button` \| `submit` \| `reset` |
 | `disabled` | boolean | `false` | |
 | `pill` | boolean | `false` | Rounded shape |
-| `outlined` | boolean | `false` | |
-| `filled` | boolean | `false` | Solid variant |
-| `plain` | boolean | `false` | Minimal variant |
-| `action` | boolean | `false` | Action style |
-| `accent` | boolean | `false` | Accent color |
+| `action` | boolean | `false` | Square icon-only button |
 | `wide` | boolean | `false` | Full width |
 
 **Slots:** `start`, (default), `end` | **Events:** `click` -> `{ originalEvent }`
+
+**Custom colors:** override per button with `--ty-button-bg`, `--ty-button-bg-hover`, `--ty-button-color`, `--ty-button-border`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
 
@@ -178,9 +177,11 @@ FormData: submits raw number, not formatted string.
 | `currency` | string | `'USD'` | ISO 4217 code (for `type="currency"`) |
 | `locale` | string | `'en-US'` | Locale for numeric formatting |
 | `precision` | number | - | Decimal places |
-| `delay` | number | `0` | Debounce ms (0-5000) |
+| `debounce` | number | `0` | Debounce ms (0-5000) |
 
 **Slots:** `start`, `end` | **Events:** `input`, `change` -> `{ value, formattedValue, rawValue, originalEvent }` | `focus`, `blur`
+
+**Custom colors:** override per input with `--ty-input-bg`, `--ty-input-color`, `--ty-input-border`, `--ty-input-border-hover`, `--ty-input-border-focus`, `--ty-input-shadow-focus`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
 
@@ -244,17 +245,18 @@ FormData: submits raw number, not formatted string.
 | `disabled` | boolean | `false` | |
 | `readonly` | boolean | `false` | |
 | `required` | boolean | `false` | |
-| `searchable` | boolean | `true` | |
-| `not-searchable` | boolean | - | Disable search |
+| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
 | `clearable` | boolean | `true` | |
 | `not-clearable` | boolean | - | Disable clear |
 | `size` | string | `'md'` | |
 | `flavor` | string | `'neutral'` | |
-| `delay` | number | `0` | Search debounce |
+| `debounce` | number | `0` | Search debounce |
 
 **Children:** `<option>` or `<ty-option>` (for rich HTML) | **Slots:** `selected`
 
 **Events:** `change` -> `{ value, text, option, originalEvent }` | `search` -> `{ query, originalEvent }`
+
+**Custom colors:** uses the shared `--ty-input-*` variable family — override per dropdown with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
 
@@ -269,16 +271,18 @@ FormData: submits raw number, not formatted string.
 | `disabled` | boolean | `false` | |
 | `readonly` | boolean | `false` | |
 | `required` | boolean | `false` | |
-| `searchable` | boolean | `true` | |
+| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
 | `size` | string | `'md'` | |
 | `flavor` | string | `'neutral'` | |
-| `delay` | number | `0` | |
+| `debounce` | number | `0` | Search debounce |
 | `selected-label` | string | `'Selected'` | |
 | `available-label` | string | `'Available'` | |
 
 **Children:** `<ty-tag>` only | **Slots:** `selected`
 
 **Events:** `change` -> `{ values: string[], action: 'add'|'remove'|'clear'|'set', item }` | `search` -> `{ query, element }`
+
+**Custom colors:** uses the shared `--ty-input-*` variable family — override per multiselect with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
 
@@ -445,17 +449,17 @@ Register icons before components render:
 window.tyIcons.register({ 'heart': '<svg>...</svg>', 'star': '<svg>...</svg>' });
 
 // ES Modules
-import { registerIcons } from '@gersak/ty';
+import { registerIcons } from 'tyrell-components';
 registerIcons({ 'heart': '<svg>...</svg>' });
 ```
 
 ```clojure
-;; ClojureScript (recommended — auto-retries until ty.js loads)
-(require '[ty.icons :as icons] '[ty.lucide :as lucide])
+;; ClojureScript (recommended — auto-retries until tyrell.js loads)
+(require '[tyrell.icons :as icons] '[tyrell.lucide :as lucide])
 (icons/register-async! {:check lucide/check :heart lucide/heart})
 ```
 
-**Icon sets (ClojureScript, tree-shakeable):** `ty.lucide`, `ty.heroicons.outline`, `ty.heroicons.solid`, `ty.material.*`, `ty.fav6.brands`, `ty.fav6.regular`, `ty.fav6.solid`
+**Icon sets (ClojureScript, tree-shakeable):** `tyrell.lucide`, `tyrell.heroicons.outline`, `tyrell.heroicons.solid`, `tyrell.material.*`, `tyrell.fav6.brands`, `tyrell.fav6.regular`, `tyrell.fav6.solid`
 
 **JS libraries:** `lucide-static`, `@fortawesome/free-solid-svg-icons`, `heroicons`, `@mdi/svg`
 
@@ -467,21 +471,21 @@ registerIcons({ 'heart': '<svg>...</svg>' });
 
 ```bash
 # NPM
-npm install @gersak/ty
+npm install tyrell-components
 
 # React
-npm install @gersak/ty-react
+npm install tyrell-react
 ```
 
 ```html
 <!-- CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/ty.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css">
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
 ```
 
 ```clojure
 ;; ClojureScript (Clojars)
-[dev.gersak/ty "0.4.0"]
+[dev.gersak/tyrell "0.4.0"]
 ```
 
 ---
@@ -491,7 +495,7 @@ npm install @gersak/ty-react
 Smart positioning for floating elements.
 
 ```javascript
-import { findBestPosition, autoUpdate, placementPreferences } from '@gersak/ty';
+import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-components';
 
 const result = findBestPosition({
   targetEl: button,
@@ -522,9 +526,9 @@ cleanup(); // Stop auto-updating
 ### React
 
 ```typescript
-import { TyButton, TyInput, TyModal } from '@gersak/ty-react';
+import { TyButton, TyInput, TyModal } from 'tyrell-react';
 // or short names:
-import { Button, Input, Modal } from '@gersak/ty-react';
+import { Button, Input, Modal } from 'tyrell-react';
 ```
 
 | React Prop | Web Component Event | When |
@@ -557,10 +561,10 @@ window.tyResizeObserver.getSize('element-id')  // { width, height }
 window.tyResizeObserver.onResize('id', ({ width, height }) => { ... })
 
 // Scroll lock (used by modals)
-import { lockScroll, unlockScroll, isLocked, forceUnlockAll } from '@gersak/ty';
+import { lockScroll, unlockScroll, isLocked, forceUnlockAll } from 'tyrell-components';
 
 // Positioning for floating elements
-import { findBestPosition, autoUpdate, placementPreferences } from '@gersak/ty';
+import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-components';
 ```
 
 ---

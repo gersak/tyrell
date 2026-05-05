@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AppLayout } from '../lib/app-layout'
 
-// Import Ty React components
+// Import Tyrell React components
 import {
   TyButton,
   TyInput,
@@ -12,7 +12,7 @@ import {
   TyDropdown,
   TyOption,
   type TyModalRef
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 import { useRef } from 'react'
 
 export default function Home() {
@@ -60,10 +60,10 @@ export default function Home() {
       {/* Page Header - Using Tailwind + Ty */}
       <div className="mb-8 pb-4 border-b ty-border+">
         <h1 className="text-3xl font-bold mb-2 ty-text++">
-          Ty Components + React + Next.js Examples
+          Tyrell Components + React + Next.js Examples
         </h1>
         <p className="text-base leading-relaxed ty-text-">
-          Explore comprehensive examples demonstrating Ty Components working seamlessly with React,
+          Explore comprehensive examples demonstrating Tyrell Components working seamlessly with React,
           Next.js, and Tailwind CSS. Each example showcases real-world patterns, proper integration
           techniques, and the power of modern web component architecture.
         </p>
@@ -85,7 +85,7 @@ export default function Home() {
             <div className="space-y-2">
               <h3 className="flex items-center text-success-ty-strong font-medium">
                 <TyIcon name="check-circle" size="20" className="mr-2" />
-                @gersak/ty Package
+                tyrell-components Package
               </h3>
               <p className="text-sm text-neutral-ty-base">
                 Core web components library loaded from CDN
@@ -95,7 +95,7 @@ export default function Home() {
             <div className="space-y-2">
               <h3 className="flex items-center text-success-ty-strong font-medium">
                 <TyIcon name="check-circle" size="20" className="mr-2" />
-                @gersak/ty-react Package
+                tyrell-react Package
               </h3>
               <p className="text-sm text-neutral-ty-base">
                 React wrapper components with TypeScript support
@@ -334,7 +334,7 @@ export default function Home() {
             🎯 Interactive Examples
           </h2>
           <p className="text-sm text-neutral-ty-base">
-            Complete, real-world examples demonstrating Ty Components in production-ready applications
+            Complete, real-world examples demonstrating Tyrell Components in production-ready applications
           </p>
         </div>
 

@@ -2,7 +2,7 @@
  * Icon Registry Initialization
  * 
  * This demonstrates the recommended pattern for using Ty icons:
- * 1. Import only the icons you need from @gersak/ty (tree-shaking!)
+ * 1. Import only the icons you need from tyrell-components (tree-shaking!)
  * 2. Register them using window.tyIcons.register() global API
  * 3. Use them throughout your app with <ty-icon name="..." />
  * 
@@ -82,11 +82,11 @@ import {
   zap,
   copy,
   packageIcon,
-} from '@gersak/ty/icons/lucide'
+} from 'tyrell-components/icons/lucide'
 
 /**
  * Register icons at app startup
- * Uses the global window.tyIcons.register API from @gersak/ty
+ * Uses the global window.tyIcons.register API from tyrell-components
  * 
  * Returns a promise that resolves when registration is complete,
  * or rejects if window.tyIcons is not available after timeout.

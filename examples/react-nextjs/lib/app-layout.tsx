@@ -7,7 +7,7 @@ import { useTheme } from './theme-provider'
 import {
   TyButton,
   TyIcon,
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 interface NavigationItem {
   name: string
@@ -35,6 +35,8 @@ const navigation: NavigationSection[] = [
       { name: 'Contact Form', href: '/examples/contact-form', icon: 'mail' },
       { name: 'Data Dashboard', href: '/examples/dashboard', icon: 'monitor' },
       { name: 'Settings Panel', href: '/examples/settings', icon: 'settings' },
+      { name: 'Tabs', href: '/examples/tabs', icon: 'layout' },
+      { name: 'Multiselect', href: '/examples/multiselect', icon: 'layers' },
     ]
   }
 ]

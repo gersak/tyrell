@@ -1,9 +1,10 @@
 (ns replicant-example.core
-  "Replicant + Ty Components Example with Routing"
+  "Replicant + Tyrell Components Example with Routing"
   (:require [replicant.dom :as dom]
-            [ty.router :as router]
-            [ty.icons :as icons]
-            [ty.lucide :as lucide]))
+            [tyrell.components]
+            [tyrell.router :as router]
+            [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]))
 
 ;; =============================================================================
 ;; State

@@ -1,4 +1,4 @@
-# dev.gersak/ty
+# dev.gersak/tyrell
 
 **Framework-agnostic web components for ClojureScript applications.**
 
@@ -8,13 +8,13 @@ Ty provides a complete set of UI components that work seamlessly with Reagent, U
 
 ```clojure
 ;; deps.edn - for router, i18n, layout infrastructure
-{:deps {dev.gersak/ty {:mvn/version "LATEST"}}}
+{:deps {dev.gersak/tyrell {:mvn/version "LATEST"}}}
 ```
 
 ```html
 <!-- Load components via CDN -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css">
-<script type="module" src="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/ty.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 
 ## Components
@@ -25,14 +25,14 @@ Semantic buttons with multiple flavors and styles.
 
 ```html
 <ty-button flavor="primary">Primary Action</ty-button>
-<ty-button flavor="danger" outlined>Delete</ty-button>
+<ty-button flavor="danger" appearance="outlined">Delete</ty-button>
 <ty-button flavor="success" pill>
   <ty-icon name="check" slot="start"></ty-icon>
   Confirm
 </ty-button>
 ```
 
-**Attributes:** `flavor` (primary|secondary|success|danger|warning|info|neutral), `size` (sm|md|lg), `disabled`, `outlined`, `filled`, `pill`, `plain`, `action`, `wide`
+**Attributes:** `flavor` (primary|secondary|success|danger|warning|neutral, with optional `+`/`-` suffix), `appearance` (solid|outlined|ghost), `size` (xs|sm|md|lg|xl), `disabled`, `pill`, `action`, `wide`
 
 ---
 
@@ -105,7 +105,7 @@ Smart select with search, keyboard navigation, and mobile-optimized modal.
 </ty-dropdown>
 ```
 
-**Attributes:** `label`, `placeholder`, `value`, `searchable`, `not-searchable`, `required`, `disabled`, `name`
+**Attributes:** `label`, `placeholder`, `value`, `external-search`, `required`, `disabled`, `name`
 
 ---
 
@@ -114,14 +114,14 @@ Smart select with search, keyboard navigation, and mobile-optimized modal.
 Multiple selection with tags and search.
 
 ```html
-<ty-multiselect label="Skills" placeholder="Add skills..." searchable>
-  <option value="clojure">Clojure</option>
-  <option value="javascript">JavaScript</option>
-  <option value="rust">Rust</option>
+<ty-multiselect label="Skills" placeholder="Add skills...">
+  <ty-tag value="clojure">Clojure</ty-tag>
+  <ty-tag value="javascript">JavaScript</ty-tag>
+  <ty-tag value="rust">Rust</ty-tag>
 </ty-multiselect>
 ```
 
-**Attributes:** `label`, `placeholder`, `value` (comma-separated), `searchable`, `required`, `disabled`, `name`
+**Attributes:** `label`, `placeholder`, `value` (comma-separated), `external-search`, `required`, `disabled`, `name`
 
 ---
 
@@ -311,8 +311,8 @@ Removable tags for selections and labels.
 Click-to-copy with visual feedback.
 
 ```html
-<ty-copy value="npm install @gersak/ty">
-  <code>npm install @gersak/ty</code>
+<ty-copy value="npm install tyrell-components">
+  <code>npm install tyrell-components</code>
 </ty-copy>
 ```
 
@@ -356,7 +356,7 @@ Tree-based routing with authorization and path parameters.
 
 ```clojure
 (ns app.core
-  (:require [ty.router :as router]))
+  (:require [tyrell.router :as router]))
 
 (def routes
   [:root
@@ -381,7 +381,7 @@ Protocol-based translations with Intl API.
 
 ```clojure
 (ns app.i18n
-  (:require [ty.i18n :as i18n]))
+  (:require [tyrell.i18n :as i18n]))
 
 (i18n/t :welcome)
 (i18n/format-number 1234.56 {:style "currency" :currency "EUR"})
@@ -394,7 +394,7 @@ Container-query responsive layouts.
 
 ```clojure
 (ns app.layout
-  (:require [ty.layout :as layout]))
+  (:require [tyrell.layout :as layout]))
 
 (layout/container {:breakpoints {:sm 640 :md 768 :lg 1024}}
   (fn [{:keys [width breakpoint]}]
@@ -449,12 +449,12 @@ Container-query responsive layouts.
 
 ## Build Your Own Components
 
-Use `ty.shim` to create custom Web Components from ClojureScript with any rendering library.
+Use `tyrell.shim` to create custom Web Components from ClojureScript with any rendering library.
 
 ```clojure
 (ns app.components
   (:require [replicant.dom :as d]
-            [ty.shim :as shim]))
+            [tyrell.shim :as shim]))
 
 (defn render! [^js el]
   (d/render (shim/ensure-shadow el)
@@ -473,9 +473,9 @@ Use `ty.shim` to create custom Web Components from ClojureScript with any render
 
 ## Resources
 
-- [Documentation](https://gersak.github.io/ty)
-- [GitHub](https://github.com/gersak/ty)
-- [NPM Package](https://www.npmjs.com/package/@gersak/ty)
+- [Documentation](https://gersak.github.io/tyrell)
+- [GitHub](https://github.com/gersak/tyrell)
+- [NPM Package](https://www.npmjs.com/package/tyrell-components)
 
 ## License
 

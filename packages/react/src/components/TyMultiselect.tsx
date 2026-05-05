@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
 
 // Type definitions for Ty Multiselect component
 export interface TyMultiselectEventDetail {
@@ -10,7 +11,8 @@ export interface TyMultiselectEventDetail {
   item: string;
 }
 
-export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
+export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'style'> {
+  style?: import('./TyInput').TyInputCSSProperties;
   /** Current selected values as comma-separated string or array */
   value?: string | string[];
   
@@ -31,15 +33,18 @@ export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElemen
   
   /** Mark the field as required */
   required?: boolean;
-  
-  /** Enable search functionality */
-  searchable?: boolean;
-  
-  /** Disable search (alias for searchable={false}) */
-  notSearchable?: boolean;
-  
-  /** Debounce delay in milliseconds (0-5000) */
-  delay?: number;
+
+  /**
+   * Switch to external (remote) search mode. Default is `false` — the
+   * multiselect filters its own children client-side. Set to `true` when you
+   * want to handle filtering yourself (e.g. server-side): the component will
+   * dispatch `search` events on each keystroke, and you must update the children
+   * in response. The `onSearch` prop receives those events.
+   */
+  externalSearch?: boolean;
+
+  /** Debounce in milliseconds (0-5000) */
+  debounce?: number;
   
   /** Mobile section label for selected items */
   selectedLabel?: string;
@@ -49,14 +54,17 @@ export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElemen
   
   /** Callback when selection changes */
   onChange?: (event: CustomEvent<TyMultiselectEventDetail>) => void;
-  
+
+  /** Callback fired on each search input change (debounced by `debounce`). Use for external/server-side filtering. */
+  onSearch?: (event: CustomEvent<{ query: string; element: HTMLElement }>) => void;
+
   /** Children should be TyTag components, not TyOption */
   children?: React.ReactNode;
 }
 
 // React wrapper for ty-multiselect web component
 export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
-  ({ 
+  ({
     value,
     placeholder,
     disabled,
@@ -64,12 +72,12 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
     flavor,
     label,
     required,
-    searchable,
-    notSearchable,
-    delay,
+    externalSearch,
+    debounce,
     selectedLabel,
     name,
     onChange,
+    onSearch,
     children,
     ...props
   }, ref) => {
@@ -86,6 +94,19 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       }
     }, [ref]);
 
+    // Imperatively sync `value` to the underlying property so resets
+    // (`value=""` or null) reliably clear the visible selection.
+    // React 18 workaround; React 19+ handles this natively.
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      const element = elementRef.current as any;
+      if (!element) return;
+      const next = (props as any).value ?? '';
+      if (element.value !== next) {
+        element.value = next;
+      }
+    }, [(props as any).value]);
+
     // Handle change events
     const handleChange = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyMultiselectEventDetail>;
@@ -94,16 +115,26 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       }
     }, [onChange]);
 
+    const handleSearch = useCallback((event: Event) => {
+      const customEvent = event as CustomEvent<{ query: string; element: HTMLElement }>;
+      if (onSearch) {
+        onSearch(customEvent);
+      }
+    }, [onSearch]);
+
     // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
-      if (element && onChange) {
-        element.addEventListener('change', handleChange);
-        return () => {
-          element.removeEventListener('change', handleChange);
-        };
-      }
-    }, [handleChange, onChange]);
+      if (!element) return;
+
+      if (onChange) element.addEventListener('change', handleChange);
+      if (onSearch) element.addEventListener('search', handleSearch);
+
+      return () => {
+        if (onChange) element.removeEventListener('change', handleChange);
+        if (onSearch) element.removeEventListener('search', handleSearch);
+      };
+    }, [handleChange, handleSearch, onChange, onSearch]);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
@@ -146,22 +177,14 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       webComponentProps.name = name;
     }
     
-    // Handle searchable functionality
-    if (searchable !== undefined) {
-      if (searchable) {
-        webComponentProps.searchable = '';
-      } else {
-        webComponentProps['not-searchable'] = '';
-      }
+    // External (remote) search mode: parent owns filtering, multiselect dispatches search events
+    if (externalSearch) {
+      webComponentProps['external-search'] = '';
     }
-    
-    if (notSearchable) {
-      webComponentProps['not-searchable'] = '';
-    }
-    
-    // Add delay attribute
-    if (delay !== undefined) {
-      webComponentProps.delay = delay;
+
+    // Add debounce attribute
+    if (debounce !== undefined) {
+      webComponentProps.debounce = debounce;
     }
     
     // Add selectedLabel attribute

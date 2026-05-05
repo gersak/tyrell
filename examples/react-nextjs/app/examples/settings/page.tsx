@@ -13,7 +13,7 @@ import {
   TyTooltip,
   TyTag,
   type TyModalRef
-} from '@gersak/ty-react'
+} from 'tyrell-react'
 
 interface SettingsState {
   // Appearance

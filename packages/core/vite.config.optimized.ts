@@ -123,7 +123,7 @@ export default defineConfig({
         ascii_only: false,
         beautify: false,
         braces: false,
-        preamble: '/* Ty Core Components - https://github.com/gersak/ty */',
+        preamble: '/* Tyrell Components - https://github.com/gersak/tyrell */',
       },
     },
     

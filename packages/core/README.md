@@ -1,4 +1,4 @@
-# @gersak/ty
+# tyrell-components
 
 TypeScript web components for universal UI development.
 
@@ -7,7 +7,7 @@ TypeScript web components for universal UI development.
 ## Installation
 
 ```bash
-npm install @gersak/ty
+npm install tyrell-components
 ```
 
 ## Usage
@@ -15,18 +15,18 @@ npm install @gersak/ty
 ### Import All Components
 
 ```javascript
-import '@gersak/ty'
+import 'tyrell-components'
 
 // Or with React
-import { TyButton, TyModal, TyInput } from '@gersak/ty'
+import { TyButton, TyModal, TyInput } from 'tyrell-components'
 ```
 
 ### Import Individual Components (Tree-Shaking)
 
 ```javascript
-import '@gersak/ty/button'
-import '@gersak/ty/modal'
-import '@gersak/ty/input'
+import 'tyrell-components/button'
+import 'tyrell-components/modal'
+import 'tyrell-components/input'
 ```
 
 ### Use in HTML
@@ -35,7 +35,7 @@ import '@gersak/ty/input'
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" href="path/to/ty.css">
+  <link rel="stylesheet" href="path/to/tyrell.css">
 </head>
 <body class="ty-canvas">
   
@@ -50,7 +50,7 @@ import '@gersak/ty/input'
   </ty-modal>
 
   <script type="module">
-    import '@gersak/ty'
+    import 'tyrell-components'
     
     const modal = document.getElementById('my-modal')
     modal.show()
@@ -128,7 +128,7 @@ packages/core/
 │   └── index.ts         # Main entry point
 ├── dev/
 │   ├── index.html       # Development test page
-│   └── ty.css          # Symlink to resources/ty.css
+│   └── tyrell.css          # Symlink to resources/tyrell.css
 ├── dist/                # Build output
 ├── vite.config.ts       # Vite configuration
 ├── tsconfig.json        # TypeScript configuration
@@ -140,12 +140,12 @@ packages/core/
 Full TypeScript support with type declarations:
 
 ```typescript
-import { TyButton, TyModal, type TyButtonElement } from '@gersak/ty'
-import { registerIcons } from '@gersak/ty/icons/registry'
+import { TyButton, TyModal, type TyButtonElement } from 'tyrell-components'
+import { registerIcons } from 'tyrell-components/icons/registry'
 
-// Icons are in separate @gersak/ty-icons package (optional)
-// npm install @gersak/ty-icons
-// import { check, heart } from '@gersak/ty-icons/lucide'
+// Icons are in separate tyrell-components/icons package (optional)
+// npm install tyrell-components/icons
+// import { check, heart } from 'tyrell-components/icons/lucide'
 // registerIcons({ check, heart })
 
 // Or register your own SVG icons:
@@ -166,19 +166,19 @@ The core package includes the icon registry utility but **not the icon libraries
 
 **Option 1: Use the separate icon package** (coming soon):
 ```bash
-npm install @gersak/ty-icons
+npm install tyrell-components/icons
 ```
 
 ```typescript
-import { check, heart, star } from '@gersak/ty-icons/lucide'
-import { registerIcons } from '@gersak/ty/icons/registry'
+import { check, heart, star } from 'tyrell-components/icons/lucide'
+import { registerIcons } from 'tyrell-components/icons/registry'
 
 registerIcons({ check, heart, star })
 ```
 
 **Option 2: Bring your own SVG icons**:
 ```typescript
-import { registerIcons } from '@gersak/ty/icons/registry'
+import { registerIcons } from 'tyrell-components/icons/registry'
 
 registerIcons({
   'check': '<svg xmlns="http://www.w3.org/2000/svg">...</svg>',
@@ -188,7 +188,7 @@ registerIcons({
 
 **Option 3: Use the global API**:
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@gersak/ty/dist/ty.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js"></script>
 <script>
   window.tyIcons.register({
     'check': '<svg>...</svg>',

@@ -1,7 +1,7 @@
 /**
  * TyInput Web Component
  * PORTED FROM: clj/ty/components/input.cljs
- * Phase D: Complete with delay/debounce feature for input and change events
+ * Phase D: Complete with debounce feature for input and change events
  * 
  * Enhanced input component with:
  * - Label, error messages, semantic styling
@@ -9,7 +9,7 @@
  * - Numeric formatting with shadow values
  * - Currency, percent, compact notation
  * - Format-on-blur / raw-on-focus behavior
- * - Debounce delay (0-5000ms) for input/change events
+ * - Debounce (0-5000ms) for input/change events
  * - Immediate event firing on blur (cancels pending debounce)
  * 
  * NOTE: Checkbox functionality is in separate ty-checkbox component
@@ -34,7 +34,7 @@ import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js'
 const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-asterisk-icon lucide-asterisk"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`
 
 /**
- * Ty Input Component (Phase D - Complete with Delay/Debounce)
+ * Ty Input Component (Phase D - Complete with Debounce)
  * 
  * @example
  * ```html
@@ -46,10 +46,10 @@ const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" he
  *   <ty-icon slot="start" name="search"></ty-icon>
  * </ty-input>
  * 
- * <!-- With debounce delay (500ms) -->
- * <ty-input 
- *   label="Search" 
- *   delay="500" 
+ * <!-- With debounce (500ms) -->
+ * <ty-input
+ *   label="Search"
+ *   debounce="500"
  *   placeholder="Type to search...">
  * </ty-input>
  * 
@@ -223,7 +223,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       }
     },
     // Debounce property
-    delay: {
+    debounce: {
       type: 'number' as const,
       default: 0,
       validate: (v: any) => {
@@ -507,8 +507,8 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   set precision(v: number | string | undefined) { this.setProperty('precision', v) }
 
   // Debounce property
-  get delay(): number { return this.getProperty('delay') }
-  set delay(v: number | string) { this.setProperty('delay', v) }
+  get debounce(): number { return this.getProperty('debounce') }
+  set debounce(v: number | string) { this.setProperty('debounce', v) }
 
   // Form property
   get form(): HTMLFormElement | null {
@@ -640,15 +640,15 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         clearTimeout(this._inputDebounceTimer)
       }
 
-      // If delay is set, debounce the event
-      if (this.delay > 0) {
+      // If debounce is set, debounce the event
+      if (this.debounce > 0) {
         this._inputDebounceTimer = window.setTimeout(() => {
           // Use current value, not the captured rawValue
           this.dispatchInputEvent(inputEl.value, e)
           this._inputDebounceTimer = null
-        }, this.delay)
+        }, this.debounce)
       } else {
-        // Fire immediately if no delay
+        // Fire immediately if no debounce
         this.dispatchInputEvent(rawValue, e)
       }
     }
@@ -675,15 +675,15 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         clearTimeout(this._changeDebounceTimer)
       }
 
-      // If delay is set, debounce the event
-      if (this.delay > 0) {
+      // If debounce is set, debounce the event
+      if (this.debounce > 0) {
         this._changeDebounceTimer = window.setTimeout(() => {
           // Use current value, not the captured rawValue
           this.dispatchChangeEvent(inputEl.value, e)
           this._changeDebounceTimer = null
-        }, this.delay)
+        }, this.debounce)
       } else {
-        // Fire immediately if no delay
+        // Fire immediately if no debounce
         this.dispatchChangeEvent(rawValue, e)
       }
     }

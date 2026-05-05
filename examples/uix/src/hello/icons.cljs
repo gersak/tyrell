@@ -1,11 +1,14 @@
 (ns hello.icons
   (:require
-   [ty.icons :as icons]
-   [ty.lucide :as lucide]))
+   [tyrell.icons :as icons]
+   [tyrell.lucide :as lucide]))
 
-;; Register icons using ty.icons helper (keyword keys, idiomatic ClojureScript)
-(icons/register!
- {;; Form icons
+;; Wrap in a function so we can call it explicitly from `init` AFTER
+;; `tyrell-components` (the npm side-effect that sets `window.tyIcons`) has
+;; finished loading. Calling at top-level can race with module load order.
+(defn register! []
+  (icons/register!
+   {;; Form icons
   :user           lucide/user
   :mail           lucide/mail
   :phone          lucide/phone
@@ -53,4 +56,4 @@
   :plus           lucide/plus
   :minus          lucide/minus
   :more-horizontal lucide/more-horizontal
-  :external-link  lucide/external-link})
+  :external-link  lucide/external-link}))

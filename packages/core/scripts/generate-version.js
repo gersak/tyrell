@@ -26,7 +26,7 @@ const content = `// AUTO-GENERATED FILE - DO NOT EDIT
 // Run 'npm run generate:version' to regenerate
 
 /**
- * Current version of @gersak/ty
+ * Current version of tyrell-components
  * 
  * This is automatically synced with package.json during build.
  * Use \`npm version\` to bump versions.

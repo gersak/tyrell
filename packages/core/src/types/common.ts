@@ -2,14 +2,34 @@
  * Ty Component Common Types
  */
 
-/** Semantic color flavors used throughout Ty components */
-export type Flavor =
+/**
+ * Built-in semantic color flavor names. Append `+` for a stronger shade or `-`
+ * for a softer shade — e.g. `primary`, `primary+`, `primary-`. Matches the
+ * design system's `ty-bg-primary+` / `ty-text-primary-` class convention.
+ */
+export type FlavorBase =
   | 'primary'
   | 'secondary'
   | 'success'
   | 'danger'
   | 'warning'
   | 'neutral'
+
+/**
+ * A flavor with optional shade suffix: `primary | primary+ | primary-`.
+ */
+export type FlavorShaded<F extends string = FlavorBase> = F | `${F}+` | `${F}-`
+
+/**
+ * Semantic color flavors used throughout Ty components.
+ *
+ * Built-in flavors get themed styles. Add `+` / `-` for a stronger / softer
+ * shade. Any other string is also accepted — pass a custom flavor name and
+ * theme it via `--ty-button-*` (or component-specific) CSS variables on the
+ * host. The `(string & {})` keeps editor autocomplete on the literals while
+ * leaving the type open.
+ */
+export type Flavor = FlavorShaded | (string & {})
 
 /** Component size variants */
 export type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -36,22 +56,23 @@ export interface TyBaseElement extends HTMLElement {
   flavor?: Flavor
 }
 
+/** Button appearance variant */
+export type ButtonAppearance = 'solid' | 'outlined' | 'ghost'
+
 /** Button component interface */
 export interface TyButtonElement extends TyBaseElement {
   /** Button size */
   size?: Size
+  /** Visual appearance: solid (filled, default), outlined (border only), ghost (text only) */
+  appearance?: ButtonAppearance
   /** Disabled state */
   disabled?: boolean
   /** Pill shape (fully rounded) */
   pill?: boolean
-  /** Outlined appearance */
-  outlined?: boolean
-  /** Filled appearance */
-  filled?: boolean
-  /** Accent appearance (default) */
-  accent?: boolean
-  /** Plain appearance (no background) */
-  plain?: boolean
+  /** Action (icon-only square) */
+  action?: boolean
+  /** Full-width */
+  wide?: boolean
   /** Button type for forms */
   type?: 'button' | 'submit' | 'reset'
 }
@@ -148,9 +169,9 @@ export interface TyInputElement extends TyBaseElement {
   /** Number of decimal places */
   precision?: number | string
 
-  // Debounce/delay property (Phase D)
-  /** Delay in milliseconds before firing input/change events (0-5000ms) */
-  delay?: number | string
+  // Debounce property (Phase D)
+  /** Debounce in milliseconds before firing input/change events (0-5000ms) */
+  debounce?: number | string
 }
 
 /** CSS style content */

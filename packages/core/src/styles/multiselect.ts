@@ -94,14 +94,15 @@ export const multiselectStyles = `
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  background: var(--ty-input-bg);
-  color: var(--ty-input-color);
-  border: 1px solid var(--ty-input-border);
+  background: var(--input-bg, var(--ty-input-bg));
+  color: var(--input-color, var(--ty-input-color));
+  border: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: var(--ty-radius-md);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-normal);
-  line-height: var(--ty-line-height-tight);
   min-height: var(--ty-size-md);
   padding: var(--ty-spacing-2) var(--ty-spacing-3);
   padding-right: calc(var(--ty-spacing-3) + 1rem + var(--ty-spacing-2));
@@ -110,19 +111,19 @@ export const multiselectStyles = `
 }
 
 .dropdown-search-input:focus {
-  border-color: var(--ty-input-border-focus);
-  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
+  border-color: var(--input-border-focus, var(--ty-input-border-focus));
+  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
 .dropdown-search-input:disabled {
-  background-color: var(--ty-input-disabled-bg);
-  color: var(--ty-input-disabled-color);
+  background-color: var(--input-disabled-bg, var(--ty-input-disabled-bg));
+  color: var(--input-disabled-color, var(--ty-input-disabled-color));
   cursor: not-allowed;
   opacity: 0.6;
 }
 
 .dropdown-search-input::placeholder {
-  color: var(--ty-input-placeholder);
+  color: var(--input-placeholder, var(--ty-input-placeholder));
 }
 
 .dropdown-search-chevron {
@@ -132,7 +133,7 @@ export const multiselectStyles = `
   transform: translateY(-50%);
   width: 1rem;
   height: 1rem;
-  color: var(--ty-input-placeholder);
+  color: var(--input-placeholder, var(--ty-input-placeholder));
   transition: var(--ty-transition-transform);
   pointer-events: none;
 }
@@ -159,12 +160,14 @@ export const multiselectStyles = `
   /* Transitions - includes opacity for open state */
   transition: var(--ty-transition-all), opacity 0.2s ease;
   outline: none;
-  background: var(--ty-input-bg);
-  color: var(--ty-input-color);
-  border: 1px solid var(--ty-input-border);
+  background: var(--input-bg, var(--ty-input-bg));
+  color: var(--input-color, var(--ty-input-color));
+  border: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: var(--ty-radius-md);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   cursor: pointer;
   position: relative;
   width: 100%;
@@ -172,12 +175,12 @@ export const multiselectStyles = `
 }
 
 .multiselect-stub:hover {
-  border-color: var(--ty-input-border-hover);
+  border-color: var(--input-border-hover, var(--ty-input-border-hover));
 }
 
 .multiselect-stub[disabled] {
-  background-color: var(--ty-input-disabled-bg);
-  color: var(--ty-input-disabled-color);
+  background-color: var(--input-disabled-bg, var(--ty-input-disabled-bg));
+  color: var(--input-disabled-color, var(--ty-input-disabled-color));
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -214,7 +217,7 @@ export const multiselectStyles = `
   transform: translateY(-50%);
   width: 1rem;
   height: 1rem;
-  color: var(--ty-input-placeholder);
+  color: var(--input-placeholder, var(--ty-input-placeholder));
   transition: var(--ty-transition-transform);
   pointer-events: none;
 }
@@ -240,11 +243,12 @@ export const multiselectStyles = `
 
 .dropdown-placeholder {
   flex-grow: 1;
-  color: var(--ty-input-placeholder, #9ca3af);
+  color: var(--input-placeholder, var(--ty-input-placeholder, #9ca3af));
   font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-light);
   font-style: italic;
-  line-height: 1.5;
 }
 
 /* Placeholder styling when tags are present */
@@ -255,8 +259,8 @@ export const multiselectStyles = `
 /* Options area styling - Override for multiselect */
 .dropdown-options {
   opacity: 0;
-  background: var(--ty-input-bg);
-  border: 1px solid var(--ty-input-border);
+  background: var(--input-bg, var(--ty-input-bg));
+  border: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: var(--ty-radius-lg);
   max-height: 16rem;
   width: 100%;
@@ -352,11 +356,12 @@ export const multiselectStyles = `
 }
 
 .dropdown-label {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+  font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
   margin-bottom: 6px;
-  line-height: 1.25;
   padding-left: 12px;
   display: flex;
   align-items: center;
@@ -485,6 +490,8 @@ export const multiselectStyles = `
   left: 6px;
   margin-bottom: 4px;
   font-size: var(--ty-font-lg);
+  line-height: var(--ty-leading-lg);
+  letter-spacing: var(--ty-tracking-lg);
   font-weight: 700;
   color: var(--ty-color-neutral);
   pointer-events: none;
@@ -534,8 +541,9 @@ export const multiselectStyles = `
   border-radius: var(--ty-radius-md);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-normal);
-  line-height: var(--ty-line-height-tight);
   padding: var(--ty-spacing-2) var(--ty-spacing-3);
   height: 40px;
   transition: var(--ty-transition-all);
@@ -722,7 +730,9 @@ export const multiselectStyles = `
   padding: 2rem 1rem;
   text-align: center;
   color: var(--ty-text-faint);
-  font-size: 0.875rem;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
   font-style: italic;
 }
 

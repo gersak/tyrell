@@ -18,9 +18,6 @@ export const iconStyles = `
   /* Enforce square aspect ratio */
   aspect-ratio: 1 / 1;
   
-  /* Ensure minimum size when in slots */
-  min-width: 1em;
-  min-height: 1em;
   
   /* Color & Transitions */
   color: inherit;
@@ -41,15 +38,25 @@ export const iconStyles = `
   -webkit-font-smoothing: antialiased;
 }
 
-/* The SVG element inside shadow DOM */
+/* The SVG element inside shadow DOM (registry / fallback path) */
 :host svg {
   width: 100%;
   height: 100%;
   display: block;
-  
+
   /* Force immediate SVG rendering */
   will-change: auto;
   transform: translateZ(0);
+}
+
+/* Slotted SVG (server-side path: <ty-icon><svg>...</svg></ty-icon>).
+   ::slotted() targets light-DOM children so they fill the host the same way
+   shadow-DOM SVG does. Color is inherited from :host via currentColor. */
+::slotted(svg),
+::slotted(img) {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* When used in slots, ensure proper display */
@@ -231,4 +238,5 @@ export const iconStyles = `
 :host(.icon-block) {
   display: block;
 }
-`
+`;
+

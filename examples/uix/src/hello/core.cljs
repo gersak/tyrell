@@ -1,7 +1,9 @@
 (ns hello.core
   (:require
+   ;; Tyrell web components — side-effect import registers all <ty-*> custom elements
+    ["tyrell-components"]
    ;; Clean React wrappers
-    ["@gersak/ty-react" :as ty]
+    ["tyrell-react" :as ty]
     [hello.icons]
     ;; Views
     [hello.views.forms :as forms]
@@ -9,7 +11,7 @@
     [hello.views.modals :as modals-views]
     ;; All component configurations
    ;; TY Router
-    [ty.router :as router]
+    [tyrell.router :as router]
    ;; UIx for React-like development
     [uix.core :as uix :refer [defui $]]
     [uix.dom]))
@@ -292,6 +294,9 @@
 (defn ^:after-load init []
   "Initialize the application"
 
+  ;; Register icons AFTER tyrell-components has set up window.tyIcons.
+  (hello.icons/register!)
+
   ;; Initialize ty router with base path and landing URL
   (router/init! "")
 
@@ -305,7 +310,7 @@
              (fn [_ _ _ _]
                (render-app)))
 
-  (add-watch ty.layout/window-size ::window-resize
+  (add-watch tyrell.layout/window-size ::window-resize
              (fn [_ _ _ _]
                (render-app)))
 

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@source "../src/**/*.cljs";
+@source "../public/index.html";
+
+/* Custom utilities combining ty + tailwind patterns */
+@layer utilities {
+  .ty-card {
+    /* ✅ GOOD: TY for colors, Tailwind for layout */
+    @apply ty-elevated p-6 rounded-lg;
+  }
+  
+  .ty-button-primary {
+    /* ✅ GOOD: TY for colors, Tailwind for spacing/typography */
+    @apply ty-bg-primary ty-text++ px-4 py-2 rounded-md font-medium;
+  }
+}
