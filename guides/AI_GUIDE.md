@@ -10,11 +10,14 @@ Treasure map. Find your context, follow the link.
 | React | [js/REACT_TY_GUIDE.md](js/REACT_TY_GUIDE.md) |
 | Vue 3 / Nuxt | [js/VUE_TY_GUIDE.md](js/VUE_TY_GUIDE.md) |
 | Svelte 5 / SvelteKit | [js/SVELTE_TY_GUIDE.md](js/SVELTE_TY_GUIDE.md) |
-| ClojureScript (Reagent / re-frame / UIx / Helix) | [clj/QUICKSTART.md](clj/QUICKSTART.md) → Track A |
-| ClojureScript (Replicant / vanilla) | [clj/QUICKSTART.md](clj/QUICKSTART.md) → Track B |
+| ClojureScript (UIx) | [clj/UIX_TY_GUIDE.md](clj/UIX_TY_GUIDE.md) |
+| ClojureScript (Reagent / re-frame) | [clj/REAGENT_TY_GUIDE.md](clj/REAGENT_TY_GUIDE.md) |
+| ClojureScript (Helix) | [clj/HELIX_TY_GUIDE.md](clj/HELIX_TY_GUIDE.md) |
+| ClojureScript (Replicant / vanilla) | [clj/REPLICANT_TY_GUIDE.md](clj/REPLICANT_TY_GUIDE.md) |
+| ClojureScript (quickstart, two tracks) | [clj/QUICKSTART.md](clj/QUICKSTART.md) |
 | ClojureScript (substrate reference) | [clj/CLOJURESCRIPT_GUIDE.md](clj/CLOJURESCRIPT_GUIDE.md) |
-| ClojureScript (Replicant deep-dive) | [clj/REPLICANT_TY_GUIDE.md](clj/REPLICANT_TY_GUIDE.md) |
-| Datastar / SSE / HTMX-style | [DATASTAR_TY_GUIDE.md](DATASTAR_TY_GUIDE.md) |
+| HTMX | [js/HTMX_TY_GUIDE.md](js/HTMX_TY_GUIDE.md) |
+| Datastar / SSE | [DATASTAR_TY_GUIDE.md](DATASTAR_TY_GUIDE.md) |
 | Other framework | [TY_GUIDE.md](TY_GUIDE.md) (web components are universal) |
 
 ## I need to know…

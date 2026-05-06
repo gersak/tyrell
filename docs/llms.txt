@@ -1,6 +1,6 @@
 # Tyrell Components
 
-> Framework-agnostic Web Components library. 21 primitives + tree-shakeable icons. Works in HTML, React, Vue, Svelte, ClojureScript.
+> Framework-agnostic Web Components library. 21 primitives + tree-shakeable icons. Works in HTML, React, Vue, Svelte, HTMX, ClojureScript.
 
 The single best entry point for AI agents is the treasure-map index at `guides/AI_GUIDE.md` — it routes to the right guide based on framework and topic.
 
@@ -16,24 +16,25 @@ The single best entry point for AI agents is the treasure-map index at `guides/A
 - [React](https://github.com/gersak/tyrell/blob/master/guides/js/REACT_TY_GUIDE.md): `tyrell-react` typed wrappers, Next.js App Router, controlled components
 - [Vue 3 / Nuxt](https://github.com/gersak/tyrell/blob/master/guides/js/VUE_TY_GUIDE.md): Native usage, `isCustomElement`, `v-model` patterns, SSR
 - [Svelte 5 / SvelteKit](https://github.com/gersak/tyrell/blob/master/guides/js/SVELTE_TY_GUIDE.md): Native usage, `bind:value`, `prop:`, SSR
-- [Datastar / SSE](https://github.com/gersak/tyrell/blob/master/guides/DATASTAR_TY_GUIDE.md): Server-driven UIs
+- [HTMX](https://github.com/gersak/tyrell/blob/master/guides/js/HTMX_TY_GUIDE.md): Form-associated submission, swap upgrades, modals, OOB validation
+- [Datastar / SSE](https://github.com/gersak/tyrell/blob/master/guides/DATASTAR_TY_GUIDE.md): Signal-driven server-rendered UIs
 
 ## ClojureScript
 
 - [Quickstart](https://github.com/gersak/tyrell/blob/master/guides/clj/QUICKSTART.md): Two-track quickstart — Track A (Reagent / re-frame / UIx / Helix via `tyrell-react`), Track B (Replicant / vanilla via raw `<ty-*>`)
 - [ClojureScript substrate](https://github.com/gersak/tyrell/blob/master/guides/clj/CLOJURESCRIPT_GUIDE.md): Distribution, shadow-cljs setup, raw interop, icon tree-shaking — substrate reference for any CLJS framework
-- [Replicant](https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md): Replicant + Ty integration
+- [UIx](https://github.com/gersak/tyrell/blob/master/guides/clj/UIX_TY_GUIDE.md): UIx + `tyrell.react` — `defui`, `$`, hooks-only, auto-camelCase props
+- [Reagent / re-frame](https://github.com/gersak/tyrell/blob/master/guides/clj/REAGENT_TY_GUIDE.md): Reagent + `tyrell.react` — hiccup, `r/atom`, `:>` interop with camelCase props
+- [Helix](https://github.com/gersak/tyrell/blob/master/guides/clj/HELIX_TY_GUIDE.md): Helix + `tyrell.react` — `defnc`, `$`, `helix.dom`, `helix.hooks`
+- [Replicant](https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md): Replicant + Ty integration deep-dive (non-React)
 - [Routing](https://github.com/gersak/tyrell/blob/master/guides/clj/ROUTING_GUIDE.md): `tyrell.router` client-side routing
 - [i18n](https://github.com/gersak/tyrell/blob/master/guides/clj/I18N_GUIDE.md): `tyrell.i18n` translations and locale-aware formatting
-- [Layout](https://github.com/gersak/tyrell/blob/master/guides/clj/LAYOUT_GUIDE.md): `tyrell.layout` container-aware breakpoints
-- [Building components](https://github.com/gersak/tyrell/blob/master/guides/clj/COMPONENT_GUIDE.md): `tyrell.shim` web component scaffolding
-- [Code splitting](https://github.com/gersak/tyrell/blob/master/guides/clj/CODE_SPLITTING.md): shadow-cljs lazy loading
 
-## Building on Ty
+## Optional / advanced
 
-- [TyComponent base class](https://github.com/gersak/tyrell/blob/master/guides/js/TYCOMPONENT_GUIDE.md): Architecture for new web components
-
-## Optional
-
+- [Layout (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/LAYOUT_GUIDE.md): `tyrell.layout` container-aware breakpoints
+- [Building components (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/COMPONENT_GUIDE.md): `tyrell.shim` web component scaffolding
+- [Code splitting (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/CODE_SPLITTING.md): shadow-cljs lazy loading
+- [TyComponent base class](https://github.com/gersak/tyrell/blob/master/guides/js/TYCOMPONENT_GUIDE.md): Architecture for building new web components on Ty's base
 - [Consumer CLAUDE.md snippet](https://github.com/gersak/tyrell/blob/master/guides/CONSUMER_CLAUDE_SNIPPET.md): Drop-in instructions for AI agents in projects that *use* Ty
 - [Publishing](https://github.com/gersak/tyrell/blob/master/PUBLISHING.md): Release workflow (only relevant when working on Ty itself)

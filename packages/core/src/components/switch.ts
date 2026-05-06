@@ -229,9 +229,9 @@ export class TySwitch
       switchEl.className = "switch-container " + classes;
       switchEl.tabIndex = this.disabled ? -1 : 0;
       switchEl.setAttribute("role", "switch");
-      switchEl.setAttribute("aria-checked", String(this.checked));
-      switchEl.setAttribute("aria-disabled", String(this.disabled));
-      switchEl.setAttribute("aria-required", String(this.required));
+      switchEl.setAttribute("aria-checked", this.checked ? "true" : "false");
+      switchEl.setAttribute("aria-disabled", this.disabled ? "true" : "false");
+      switchEl.setAttribute("aria-required", this.required ? "true" : "false");
 
       const track = document.createElement("div");
       track.className = "switch-track";
@@ -245,9 +245,9 @@ export class TySwitch
     } else {
       switchEl.className = "switch-container " + classes;
       switchEl.tabIndex = this.disabled ? -1 : 0;
-      switchEl.setAttribute("aria-checked", String(this.checked));
-      switchEl.setAttribute("aria-disabled", String(this.disabled));
-      switchEl.setAttribute("aria-required", String(this.required));
+      switchEl.setAttribute("aria-checked", this.checked ? "true" : "false");
+      switchEl.setAttribute("aria-disabled", this.disabled ? "true" : "false");
+      switchEl.setAttribute("aria-required", this.required ? "true" : "false");
     }
   }
 

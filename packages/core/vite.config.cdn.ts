@@ -116,8 +116,10 @@ export default defineConfig({
         reduce_funcs: true,
         collapse_vars: true,
 
-        // Boolean optimizations (true -> !0, false -> !1)
-        booleans_as_integers: true,
+        // NOTE: booleans_as_integers is intentionally disabled.
+        // Terser converts true→1/false→0 which breaks String(boolProp) producing
+        // "1"/"0" instead of "true"/"false" — aria-checked CSS selectors then fail.
+        booleans_as_integers: false,
 
         // Remove pure function calls
         pure_funcs: [

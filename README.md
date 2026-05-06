@@ -30,9 +30,6 @@
 
 **[Live Demo & Docs →](https://gersak.github.io/tyrell)**
 
-| [Vanilla JS Guide](packages/core/src/README.md) | [React Guide](packages/react/README.md) |
-|---|---|
-
 ## Why Tyrell?
 
 Tyrell is a **framework-agnostic evolution of [Toddler](https://github.com/gersak/toddler)**, a ClojureScript UI library built on Helix (React).
@@ -66,10 +63,40 @@ Then use components anywhere:
 ```html
 <ty-button flavor="primary">Click me</ty-button>
 <ty-dropdown label="Country" placeholder="Select...">
-  <option value="us">United States</option>
-  <option value="de">Germany</option>
+  <ty-option value="us">United States</ty-option>
+  <ty-option value="de">Germany</ty-option>
 </ty-dropdown>
 ```
+
+---
+
+## Guides
+
+Pick the entry point for your stack:
+
+### JavaScript / TypeScript
+- **[Vanilla JS Guide](guides/js/JAVASCRIPT_GUIDE.md)** — bundlers, subpath imports, icon tree-shaking, code splitting, SSR
+- **[React Guide](guides/js/REACT_TY_GUIDE.md)** — `tyrell-react` wrappers
+- **[Vue Guide](guides/js/VUE_TY_GUIDE.md)** — Vue 3 / Nuxt native usage (no wrapper package)
+- **[Svelte Guide](guides/js/SVELTE_TY_GUIDE.md)** — Svelte 5 / SvelteKit native usage (no wrapper package)
+- **[TyComponent Guide](guides/js/TYCOMPONENT_GUIDE.md)** — base class for building custom components
+
+### ClojureScript
+- **[Quickstart](guides/clj/QUICKSTART.md)** — five-minute setup for any CLJS view layer
+- **[CLJS Substrate Reference](guides/clj/CLOJURESCRIPT_GUIDE.md)** — distribution, shadow-cljs, raw interop, icon tree-shaking
+- **[UIx Guide](guides/clj/UIX_TY_GUIDE.md)** — `defui` + `$`, hooks-only, auto-camelCase props
+- **[Reagent Guide](guides/clj/REAGENT_TY_GUIDE.md)** — hiccup + `r/atom`, `:>` interop with camelCase props
+- **[Helix Guide](guides/clj/HELIX_TY_GUIDE.md)** — `defnc` + `$`, `helix.dom/hooks`, JSX-feeling
+- **[Replicant Guide](guides/clj/REPLICANT_TY_GUIDE.md)** — non-React, raw `<ty-*>` elements
+- **[Component Guide](guides/clj/COMPONENT_GUIDE.md)** — `tyrell.shim` for building Web Components in CLJS
+- **[Code Splitting](guides/clj/CODE_SPLITTING.md)** — shadow-cljs lazy loading
+- **[Routing](guides/clj/ROUTING_GUIDE.md)** — `tyrell.router`
+- **[i18n](guides/clj/I18N_GUIDE.md)** — `tyrell.i18n`
+- **[Layout](guides/clj/LAYOUT_GUIDE.md)** — `tyrell.layout` container-aware breakpoints
+
+### Server-driven UIs
+- **[HTMX Guide](guides/js/HTMX_TY_GUIDE.md)** — `hx-*` attributes + form-associated `<ty-*>`
+- **[Datastar Guide](guides/DATASTAR_TY_GUIDE.md)** — Datastar + SSE patterns
 
 ---
 
@@ -78,177 +105,42 @@ Then use components anywhere:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC6"}        ;; Router, i18n, layout
-        dev.gersak/tyrell-icons {:mvn/version "1.0.0-RC6"}}} ;; Tree-shakeable icons
+{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC6"}}}   ; icons come transitively
 ```
 
-### UIx
+That single dep brings:
+- Routing, i18n, layout, icon registry, shim — `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`
+- The `tyrell.components` shim that side-effect-imports the npm package
+- 12,000+ tree-shakeable icons (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*`)
+
+The npm `tyrell-components` package is declared in this artifact's `deps.cljs`, so shadow-cljs auto-installs it on first build.
+
+### Pick your view layer
+
+| You're using                              | Guide |
+|-------------------------------------------|-------|
+| Reagent, re-frame, UIx, Helix             | [QUICKSTART → Track A](guides/clj/QUICKSTART.md) — `tyrell.react` wrappers |
+| Replicant, vanilla CLJS, server-rendered  | [REPLICANT_TY_GUIDE](guides/clj/REPLICANT_TY_GUIDE.md) — raw `<ty-*>` elements |
+
+### Icon registration
+
+`<ty-icon name="check">` is a runtime registry lookup. Register the icons you reference at app startup:
 
 ```clojure
-(ns app.core
-  (:require [uix.core :refer [defui $]]
-            [tyrell.lucide :as lucide]))
+(ns my-app.core
+  (:require [tyrell.components]            ; side-effect: registers all <ty-*> elements
+            [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]
+            [tyrell.heroicons.outline :as ho]))
 
-;; Register only icons you use - Closure Compiler removes the rest
-(defonce _ (js/window.tyIcons.register
-             #js {:check lucide/check
-                  :calendar lucide/calendar
-                  :globe lucide/globe}))
-
-(defui app []
-  (let [[selected set-selected] (uix.core/use-state nil)]
-    ($ :div.ty-canvas.min-h-screen.p-8
-      ($ :div.ty-elevated.p-6.rounded-lg.max-w-md.space-y-4
-
-        ($ :h1.ty-text++.text-2xl.font-bold "Book a Demo")
-
-        ($ :ty-date-picker
-          {:label "Select Date"
-           :placeholder "Pick a date..."
-           :value selected
-           :on-change #(set-selected (.. % -detail -value))})
-
-        ($ :ty-dropdown
-          {:label "Timezone"
-           :placeholder "Select timezone..."}
-          ($ :option {:value "utc"} "UTC")
-          ($ :option {:value "cet"} "Central European")
-          ($ :option {:value "pst"} "Pacific Standard"))
-
-        ($ :ty-button
-          {:flavor "primary"
-           :disabled (nil? selected)}
-          ($ :ty-icon {:name "check" :slot "start"})
-          "Confirm Booking")))))
+(defn register-icons! []
+  (icons/register!
+    {:check  lucide/check
+     :search lucide/search
+     :user   ho/user-circle}))
 ```
 
-### Replicant
-
-```clojure
-(ns app.core
-  (:require [replicant.dom :as d]
-            [tyrell.lucide :as lucide]))
-
-(defonce _ (js/window.tyIcons.register
-             #js {:user lucide/user
-                  :mail lucide/mail
-                  :send lucide/send}))
-
-(defn contact-form [state]
-  [:div.ty-canvas.min-h-screen.p-8
-   [:div.ty-elevated.p-6.rounded-lg.max-w-md.space-y-4
-
-    [:h1.ty-text++.text-2xl.font-bold "Contact Us"]
-
-    [:ty-input
-     {:label "Name"
-      :placeholder "Your name"
-      :value (:name @state)
-      :on {:input #(swap! state assoc :name (.. % -target -value))}}
-     [:ty-icon {:name "user" :slot "start"}]]
-
-    [:ty-input
-     {:label "Email"
-      :type "email"
-      :placeholder "you@example.com"
-      :value (:email @state)
-      :on {:input #(swap! state assoc :email (.. % -target -value))}}
-     [:ty-icon {:name "mail" :slot "start"}]]
-
-    [:ty-textarea
-     {:label "Message"
-      :placeholder "How can we help?"
-      :rows 4
-      :value (:message @state)
-      :on {:input #(swap! state assoc :message (.. % -target -value))}}]
-
-    [:ty-button
-     {:flavor "primary"
-      :on {:click #(js/alert "Sent!")}}
-     [:ty-icon {:name "send" :slot "start"}]
-     "Send Message"]]])
-
-(defonce state (atom {:name "" :email "" :message ""}))
-
-(d/render (js/document.getElementById "app")
-  (contact-form state))
-```
-
-### Router
-
-Component-based routing with segments and authorization:
-
-```clojure
-(ns app.routes
-  (:require [tyrell.router :as router]))
-
-;; Initialize router with base path
-(router/init! "")  ;; or "my-app" for /my-app/... URLs
-
-;; Define routes by linking to parent
-(router/link ::router/root
-  [{:id :app/home
-    :segment "home"
-    :landing 100}  ;; Landing priority (highest wins)
-   {:id :app/users
-    :segment "users"}
-   {:id :app/admin
-    :segment "admin"
-    :roles #{:admin}}])  ;; Authorization
-
-;; Nested routes
-(router/link :app/users
-  [{:id :app/user-detail
-    :segment "detail"}])  ;; /users/detail
-
-;; Navigate
-(router/navigate! :app/home)
-(router/navigate! :app/user-detail {:tab "profile"})  ;; with query params
-
-;; Check if route is active
-(router/rendered? :app/users)        ;; true if on /users or /users/detail
-(router/rendered? :app/users true)   ;; true only if exactly on /users
-
-;; Query params
-(router/query-params)     ;; => {:tab "profile"}
-(router/set-query! {:page 2})
-```
-
-### i18n
-
-Protocol-based formatting with Intl API:
-
-```clojure
-(ns app.i18n
-  (:require [tyrell.i18n :as i18n]
-            [tyrell.i18n.number :as num]
-            [tyrell.i18n.time :as time]))
-
-;; Current locale (auto-detected from browser)
-i18n/*locale*  ;; => :en_US
-
-;; Number formatting
-(num/format-number 1234567.89)                    ;; "1,234,567.89"
-(num/format-currency 99.99 "EUR")                 ;; "€99.99"
-(num/format-percent 0.156)                        ;; "16%"
-(num/format-compact 1500000)                      ;; "1.5M"
-
-;; Date formatting
-(time/format-date (js/Date.))                     ;; "2/19/2026"
-(time/format-date-full (js/Date.))                ;; "Wednesday, February 19, 2026"
-(time/format-relative -3 "day")                   ;; "3 days ago"
-
-;; With explicit locale
-(num/format-currency 1234.50 "EUR" :de_DE)        ;; "1.234,50 €"
-(time/format-date-full (js/Date.) :hr)            ;; "srijeda, 19. veljače 2026."
-
-;; Protocol-based translation (i18n/t)
-;; Numbers are extended to support direct translation
-(i18n/t 1234.56)                                  ;; "1,234.56" (current locale)
-(i18n/t 1234.56 "EUR")                            ;; "€1,234.56" (as currency)
-(i18n/t 1234.56 :de_DE)                           ;; "1.234,56" (German locale)
-(i18n/t 1234.56 :de_DE {:style "currency" :currency "EUR"})  ;; "1.234,56 €"
-```
+Shadow-cljs `:advanced` removes unused icons automatically — you only pay for what you reference. See [CLOJURESCRIPT_GUIDE → Icon registration](guides/clj/CLOJURESCRIPT_GUIDE.md#icon-registration-in-cljs).
 
 ### Build Your Own Components
 
@@ -278,7 +170,7 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 <my-greeting name="Clojure"></my-greeting>
 ```
 
-**[Component Building Guide →](packages/cljs/COMPONENT_GUIDE.md)** | **[Code Splitting →](packages/cljs/CODE_SPLITTING.md)**
+**[Component Building Guide →](guides/clj/COMPONENT_GUIDE.md)** | **[Code Splitting →](guides/clj/CODE_SPLITTING.md)**
 
 ---
 
@@ -290,6 +182,8 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 | `ty-input` | Text input with labels, validation, numeric formatting, debounce |
 | `ty-textarea` | Multi-line text with auto-resize and character count |
 | `ty-checkbox` | Styled checkbox with indeterminate state |
+| `ty-switch` | Toggle switch primitive |
+| `ty-radio-group` / `ty-radio` | Exclusive single-choice selection |
 | `ty-dropdown` | Searchable select with keyboard nav and mobile modal |
 | `ty-multiselect` | Multi-select with tags and search |
 | `ty-calendar` | Full calendar with date selection and form integration |
@@ -303,35 +197,9 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 | `ty-tag` | Removable tags for selections |
 | `ty-copy` | Click-to-copy with visual feedback |
 | `ty-scroll-container` | Scrollable area with fade indicators |
+| `ty-resize-observer` | Self-observing element with debounce |
 
 **[See all components in action →](https://gersak.github.io/tyrell)**
-
----
-
-## Design System
-
-Semantic CSS classes that flip correctly for dark mode:
-
-```html
-<!-- Surfaces -->
-<div class="ty-canvas">...</div>      <!-- App background -->
-<div class="ty-content">...</div>     <!-- Main content -->
-<div class="ty-elevated">...</div>    <!-- Cards, panels -->
-<div class="ty-floating">...</div>    <!-- Modals, dropdowns -->
-
-<!-- Text emphasis -->
-<h1 class="ty-text++">Maximum</h1>    <!-- Strongest -->
-<h2 class="ty-text+">High</h2>
-<p class="ty-text">Normal</p>
-<span class="ty-text-">Muted</span>
-<small class="ty-text--">Faint</small> <!-- Weakest -->
-
-<!-- Semantic colors -->
-<span class="ty-text-primary">Primary</span>
-<span class="ty-text-success">Success</span>
-<span class="ty-text-danger">Danger</span>
-<div class="ty-bg-warning- p-2">Warning background</div>
-```
 
 ---
 
