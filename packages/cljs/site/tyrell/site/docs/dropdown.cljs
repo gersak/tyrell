@@ -46,6 +46,10 @@
         :type "boolean"
         :default "false"
         :description "Disable the dropdown entirely"}
+       {:name "loading"
+        :type "boolean"
+        :default "false"
+        :description "Replace the open popup options list with a centered spinner. Search input stays usable. Pair with external-search while fetching results — see Loading State below. Customize the spinner globally via setLoaderSvg() / window.tyLoader.set()."}
        {:name "readonly"
         :type "boolean"
         :default "false"
@@ -85,26 +89,26 @@
 
    ;; Examples
    (doc-section "Examples"
-     [:div.space-y-6
+                [:div.space-y-6
 
       ;; Basic
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Pass " [:code "ty-option"] " children. Search is enabled by default — it filters options by their text content."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-4.items-end
-         [:ty-dropdown {:placeholder "Select a color..."}
-          [:ty-option {:value "red"} "Red"]
-          [:ty-option {:value "blue"} "Blue"]
-          [:ty-option {:value "green"} "Green"]
-          [:ty-option {:value "yellow"} "Yellow"]]
-         [:ty-dropdown {:label "Size" :value "medium"}
-          [:ty-option {:value "small"} "Small"]
-          [:ty-option {:value "medium"} "Medium"]
-          [:ty-option {:value "large"} "Large"]
-          [:ty-option {:value "xl"} "Extra Large"]]])
-       (code-block "<ty-dropdown placeholder=\"Select a color...\">
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Basic")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "Pass " [:code "ty-option"] " children. Search is enabled by default — it filters options by their text content."]
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-4.items-end
+                    [:ty-dropdown {:placeholder "Select a color..."}
+                     [:ty-option {:value "red"} "Red"]
+                     [:ty-option {:value "blue"} "Blue"]
+                     [:ty-option {:value "green"} "Green"]
+                     [:ty-option {:value "yellow"} "Yellow"]]
+                    [:ty-dropdown {:label "Size" :value "medium"}
+                     [:ty-option {:value "small"} "Small"]
+                     [:ty-option {:value "medium"} "Medium"]
+                     [:ty-option {:value "large"} "Large"]
+                     [:ty-option {:value "xl"} "Extra Large"]]])
+                  (code-block "<ty-dropdown placeholder=\"Select a color...\">
   <ty-option value=\"red\">Red</ty-option>
   <ty-option value=\"blue\">Blue</ty-option>
   <ty-option value=\"green\">Green</ty-option>
@@ -117,71 +121,71 @@
 </ty-dropdown>")]
 
       ;; Sizes
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         (for [[size label] [["xs" "Extra small"] ["sm" "Small"] ["md" "Medium (default)"]
-                             ["lg" "Large"] ["xl" "Extra large"]]]
-           [:ty-dropdown {:size size :placeholder label}
-            [:ty-option {:value "a"} "Option A"]
-            [:ty-option {:value "b"} "Option B"]
-            [:ty-option {:value "c"} "Option C"]])])
-       (code-block "<ty-dropdown size=\"xs\">...</ty-dropdown>
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Sizes")
+                  (demo-area
+                   [:div.flex.flex-col.items-start.gap-3
+                    (for [[size label] [["xs" "Extra small"] ["sm" "Small"] ["md" "Medium (default)"]
+                                        ["lg" "Large"] ["xl" "Extra large"]]]
+                      [:ty-dropdown {:size size :placeholder label}
+                       [:ty-option {:value "a"} "Option A"]
+                       [:ty-option {:value "b"} "Option B"]
+                       [:ty-option {:value "c"} "Option C"]])])
+                  (code-block "<ty-dropdown size=\"xs\">...</ty-dropdown>
 <ty-dropdown size=\"sm\">...</ty-dropdown>
 <ty-dropdown size=\"md\">...</ty-dropdown>
 <ty-dropdown size=\"lg\">...</ty-dropdown>
 <ty-dropdown size=\"xl\">...</ty-dropdown>")]
 
       ;; Flavors
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Semantic Flavors")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Flavor signals context — use danger for destructive choices, success for confirmed selections."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-4.items-end
-         (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
-           [:ty-dropdown {:flavor flavor :value "selected"}
-            [:ty-option {:value "selected"} (clojure.string/capitalize flavor)]])])
-       (code-block "<ty-dropdown flavor=\"primary\" value=\"selected\">...</ty-dropdown>
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Semantic Flavors")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "Flavor signals context — use danger for destructive choices, success for confirmed selections."]
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-4.items-end
+                    (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+                      [:ty-dropdown {:flavor flavor :value "selected"}
+                       [:ty-option {:value "selected"} (clojure.string/capitalize flavor)]])])
+                  (code-block "<ty-dropdown flavor=\"primary\" value=\"selected\">...</ty-dropdown>
 <ty-dropdown flavor=\"success\" value=\"selected\">...</ty-dropdown>
 <ty-dropdown flavor=\"danger\" value=\"selected\">...</ty-dropdown>
 <ty-dropdown flavor=\"warning\" value=\"selected\">...</ty-dropdown>")]
 
       ;; States
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "States")
-       (demo-area
-        [:div.flex.flex-wrap.gap-4.items-end
-         [:ty-dropdown {:label "Required" :required "" :placeholder "Required field"}
-          [:ty-option {:value "a"} "Option A"]
-          [:ty-option {:value "b"} "Option B"]]
-         [:ty-dropdown {:label "Disabled" :disabled "" :value "locked"}
-          [:ty-option {:value "locked"} "Locked value"]
-          [:ty-option {:value "other"} "Other"]]
-         [:ty-dropdown {:label "Read-only" :readonly "" :value "readonly-val"}
-          [:ty-option {:value "readonly-val"} "Read-only value"]
-          [:ty-option {:value "other"} "Other"]]])
-       (code-block "<ty-dropdown label=\"Required\" required placeholder=\"Required field\">...</ty-dropdown>
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "States")
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-4.items-end
+                    [:ty-dropdown {:label "Required" :required "" :placeholder "Required field"}
+                     [:ty-option {:value "a"} "Option A"]
+                     [:ty-option {:value "b"} "Option B"]]
+                    [:ty-dropdown {:label "Disabled" :disabled "" :value "locked"}
+                     [:ty-option {:value "locked"} "Locked value"]
+                     [:ty-option {:value "other"} "Other"]]
+                    [:ty-dropdown {:label "Read-only" :readonly "" :value "readonly-val"}
+                     [:ty-option {:value "readonly-val"} "Read-only value"]
+                     [:ty-option {:value "other"} "Other"]]])
+                  (code-block "<ty-dropdown label=\"Required\" required placeholder=\"Required field\">...</ty-dropdown>
 <ty-dropdown label=\"Disabled\" disabled value=\"locked\">...</ty-dropdown>
 <ty-dropdown label=\"Read-only\" readonly value=\"readonly-val\">...</ty-dropdown>")]
 
       ;; Clearable
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Clear Button")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "The clear (×) button appears whenever a value is selected. Use " [:code "not-clearable"] " to lock the selection — never use " [:code "clearable=\"false\""] " (boolean attribute pitfall)."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-4.items-end
-         [:ty-dropdown {:label "Clearable (default)" :value "admin"}
-          [:ty-option {:value "admin"} "Administrator"]
-          [:ty-option {:value "editor"} "Editor"]
-          [:ty-option {:value "viewer"} "Viewer"]]
-         [:ty-dropdown {:label "Not clearable" :not-clearable "" :value "admin"}
-          [:ty-option {:value "admin"} "Administrator"]
-          [:ty-option {:value "editor"} "Editor"]
-          [:ty-option {:value "viewer"} "Viewer"]]])
-       (code-block "<!-- Clear button shown by default when a value is selected -->
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Clear Button")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "The clear (×) button appears whenever a value is selected. Use " [:code "not-clearable"] " to lock the selection — never use " [:code "clearable=\"false\""] " (boolean attribute pitfall)."]
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-4.items-end
+                    [:ty-dropdown {:label "Clearable (default)" :value "admin"}
+                     [:ty-option {:value "admin"} "Administrator"]
+                     [:ty-option {:value "editor"} "Editor"]
+                     [:ty-option {:value "viewer"} "Viewer"]]
+                    [:ty-dropdown {:label "Not clearable" :not-clearable "" :value "admin"}
+                     [:ty-option {:value "admin"} "Administrator"]
+                     [:ty-option {:value "editor"} "Editor"]
+                     [:ty-option {:value "viewer"} "Viewer"]]])
+                  (code-block "<!-- Clear button shown by default when a value is selected -->
 <ty-dropdown value=\"admin\">...</ty-dropdown>
 
 <!-- Lock the selection — no clear button -->
@@ -189,58 +193,58 @@
 
    ;; Advanced Examples
    (doc-section "Advanced Examples"
-     [:div.space-y-6
+                [:div.space-y-6
 
       ;; Rich Content
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Rich Content Options")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        [:code "ty-option"] " accepts arbitrary HTML — icons, avatars, two-line descriptions. Search still filters by the option's text content."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-4.items-end
-         [:ty-dropdown {:value "clojure" :placeholder "Choose language..."}
-          [:ty-option {:value "javascript"}
-           [:div.flex.items-center.gap-3
-            [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
-                           :background "#f7df1e" :display "flex" :align-items "center"
-                           :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#000"}} "JS"]
-            [:div
-             [:div {:style {:font-weight "500"}} "JavaScript"]
-             [:div.ty-text-- {:style {:font-size "0.75rem"}} "Dynamic scripting"]]]]
-          [:ty-option {:value "typescript"}
-           [:div.flex.items-center.gap-3
-            [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
-                           :background "#3178c6" :display "flex" :align-items "center"
-                           :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#fff"}} "TS"]
-            [:div
-             [:div {:style {:font-weight "500"}} "TypeScript"]
-             [:div.ty-text-- {:style {:font-size "0.75rem"}} "JS with static typing"]]]]
-          [:ty-option {:value "clojure"}
-           [:div.flex.items-center.gap-3
-            [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
-                           :background "#5881d8" :display "flex" :align-items "center"
-                           :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#fff"}} "λ"]
-            [:div
-             [:div {:style {:font-weight "500"}} "Clojure"]
-             [:div.ty-text-- {:style {:font-size "0.75rem"}} "Functional Lisp for the JVM"]]]]]
-         [:ty-dropdown {:value "alice" :placeholder "Assign to..."}
-          [:ty-option {:value "alice"}
-           [:div.flex.items-center.gap-3
-            [:div {:style {:width "2rem" :height "2rem" :border-radius "9999px"
-                           :background "#3b82f6" :display "flex" :align-items "center"
-                           :justify-content "center" :color "#fff" :font-weight "500"}} "A"]
-            [:div
-             [:div {:style {:font-weight "500"}} "Alice Johnson"]
-             [:div.ty-text-- {:style {:font-size "0.75rem"}} "Senior Developer"]]]]
-          [:ty-option {:value "bob"}
-           [:div.flex.items-center.gap-3
-            [:div {:style {:width "2rem" :height "2rem" :border-radius "9999px"
-                           :background "#a855f7" :display "flex" :align-items "center"
-                           :justify-content "center" :color "#fff" :font-weight "500"}} "B"]
-            [:div
-             [:div {:style {:font-weight "500"}} "Bob Smith"]
-             [:div.ty-text-- {:style {:font-size "0.75rem"}} "Product Manager"]]]]]])
-       (code-block "<ty-dropdown value=\"clojure\">
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Rich Content Options")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   [:code "ty-option"] " accepts arbitrary HTML — icons, avatars, two-line descriptions. Search still filters by the option's text content."]
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-4.items-end
+                    [:ty-dropdown {:value "clojure" :placeholder "Choose language..."}
+                     [:ty-option {:value "javascript"}
+                      [:div.flex.items-center.gap-3
+                       [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
+                                      :background "#f7df1e" :display "flex" :align-items "center"
+                                      :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#000"}} "JS"]
+                       [:div
+                        [:div {:style {:font-weight "500"}} "JavaScript"]
+                        [:div.ty-text-- {:style {:font-size "0.75rem"}} "Dynamic scripting"]]]]
+                     [:ty-option {:value "typescript"}
+                      [:div.flex.items-center.gap-3
+                       [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
+                                      :background "#3178c6" :display "flex" :align-items "center"
+                                      :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#fff"}} "TS"]
+                       [:div
+                        [:div {:style {:font-weight "500"}} "TypeScript"]
+                        [:div.ty-text-- {:style {:font-size "0.75rem"}} "JS with static typing"]]]]
+                     [:ty-option {:value "clojure"}
+                      [:div.flex.items-center.gap-3
+                       [:div {:style {:width "1.5rem" :height "1.5rem" :border-radius "0.25rem"
+                                      :background "#5881d8" :display "flex" :align-items "center"
+                                      :justify-content "center" :font-size "0.625rem" :font-weight "700" :color "#fff"}} "λ"]
+                       [:div
+                        [:div {:style {:font-weight "500"}} "Clojure"]
+                        [:div.ty-text-- {:style {:font-size "0.75rem"}} "Functional Lisp for the JVM"]]]]]
+                    [:ty-dropdown {:value "alice" :placeholder "Assign to..."}
+                     [:ty-option {:value "alice"}
+                      [:div.flex.items-center.gap-3
+                       [:div {:style {:width "2rem" :height "2rem" :border-radius "9999px"
+                                      :background "#3b82f6" :display "flex" :align-items "center"
+                                      :justify-content "center" :color "#fff" :font-weight "500"}} "A"]
+                       [:div
+                        [:div {:style {:font-weight "500"}} "Alice Johnson"]
+                        [:div.ty-text-- {:style {:font-size "0.75rem"}} "Senior Developer"]]]]
+                     [:ty-option {:value "bob"}
+                      [:div.flex.items-center.gap-3
+                       [:div {:style {:width "2rem" :height "2rem" :border-radius "9999px"
+                                      :background "#a855f7" :display "flex" :align-items "center"
+                                      :justify-content "center" :color "#fff" :font-weight "500"}} "B"]
+                       [:div
+                        [:div {:style {:font-weight "500"}} "Bob Smith"]
+                        [:div.ty-text-- {:style {:font-size "0.75rem"}} "Product Manager"]]]]]])
+                  (code-block "<ty-dropdown value=\"clojure\">
   <ty-option value=\"clojure\">
     <div class=\"flex items-center gap-3\">
       <div class=\"lang-badge\">λ</div>
@@ -253,11 +257,11 @@
 </ty-dropdown>")]
 
       ;; External Search
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "External Search")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "external-search"] " to own the filtering. The dropdown fires " [:code "search"] " events instead of filtering internally. Use " [:code "debounce"] " to throttle API calls."]
-       (code-block "<ty-dropdown id=\"dd\" external-search debounce=\"300\" placeholder=\"Search...\">
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "External Search")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "Set " [:code "external-search"] " to own the filtering. The dropdown fires " [:code "search"] " events instead of filtering internally. Use " [:code "debounce"] " to throttle API calls."]
+                  (code-block "<ty-dropdown id=\"dd\" external-search debounce=\"300\" placeholder=\"Search...\">
   <!-- your code updates children based on the search event -->
 </ty-dropdown>
 
@@ -266,33 +270,95 @@ document.getElementById('dd').addEventListener('search', async (e) => {
   const results = await fetch(`/api/search?q=${e.detail.query}`).then(r => r.json());
   updateDropdownOptions(results);
 });
-</script>" "javascript")]])
+</script>" "javascript")]
+
+      ;; Loading State
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Loading State")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "Add the " [:code "loading"] " attribute while you're fetching results — the popup replaces its options list with a centered spinner. The search input stays usable, so the user can keep refining the query. Pair with " [:code "external-search"] " for the typical remote-search flow."]
+
+                  [:div.space-y-5
+
+        ;; Static demo
+                   [:div
+                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem" :font-weight "500"}} "Static (loading attribute set, click to open)"]
+                    (demo-area
+                     [:ty-dropdown {:label "Search users" :placeholder "Type to search…" :external-search "" :loading ""
+                                    :style {:max-width "320px"}}])
+                    (code-block "<ty-dropdown label=\"Search users\" external-search loading
+             placeholder=\"Type to search…\">
+</ty-dropdown>")]
+
+        ;; Interactive demo
+                   [:div
+                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem" :font-weight "500"}} "Interactive — type to simulate a debounced fetch"]
+                    (demo-area
+                     [:ty-dropdown {:label "Pick a fruit"
+                                    :placeholder "Type to search…"
+                                    :external-search ""
+                                    :debounce 300
+                                    :style {:max-width "320px"}
+                                    :on {:search (fn [^js e]
+                                                   (when-let [dd (.closest (.-target e) "ty-dropdown")]
+                                                     (set! (.-loading dd) true)
+                                                     (js/setTimeout
+                                                      #(do
+                                                         (set! (.-innerHTML dd)
+                                                               (let [q (.. e -detail -query)]
+                                                                 (->> ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
+                                                                      (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
+                                                                      (map (fn [n] (str "<ty-option value=\"" n "\">" n "</ty-option>")))
+                                                                      (apply str))))
+                                                         (set! (.-loading dd) false))
+                                                      600)))}}
+                      [:ty-option {:value "apple"} "Apple"]
+                      [:ty-option {:value "banana"} "Banana"]
+                      [:ty-option {:value "cherry"} "Cherry"]])
+                    (code-block "// Vanilla JS — toggle around your async fetch
+const dd = document.querySelector('ty-dropdown');
+dd.addEventListener('search', async (e) => {
+  dd.loading = true;
+  const results = await fetch(`/api/search?q=${e.detail.query}`).then(r => r.json());
+  dd.innerHTML = results.map(r =>
+    `<ty-option value=\"${r.id}\">${r.name}</ty-option>`
+  ).join('');
+  dd.loading = false;
+});" "javascript")]
+
+        ;; Notes
+                   [:div.ty-elevated.rounded.p-3 {:style {:font-size "0.8125rem"}}
+                    [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
+                    [:ul.list-disc.list-inside.ty-text-.space-y-1
+                     [:li "Search input stays editable while loading — users can keep typing."]
+                     [:li "The spinner overlay sits inside the popup; the dropdown stub itself is unaffected."]
+                     [:li "Same global registry as " [:code "ty-button"] " — set the spinner SVG once with " [:code "setLoaderSvg(...)"] " or " [:code "window.tyLoader.set(...)"] " to theme every loader in the app."]]]]]])
 
    ;; Form Integration
    (doc-section "Form Integration"
-     [:div.space-y-5
+                [:div.space-y-5
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "With HTML Form")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Fully form-associated — the selected value appears in FormData under the " [:code "name"] " attribute."]
-       (demo-area
-        [:form.space-y-4
-         {:on {:submit (fn [e]
-                         (.preventDefault e)
-                         (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
-                           (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
-         [:ty-dropdown {:name "priority" :label "Priority" :required "" :placeholder "Select priority"}
-          [:ty-option {:value "low"} "Low"]
-          [:ty-option {:value "medium"} "Medium"]
-          [:ty-option {:value "high"} "High"]]
-         [:ty-dropdown {:name "category" :label "Category" :placeholder "Select category"}
-          [:ty-option {:value "bug"} "Bug"]
-          [:ty-option {:value "feature"} "Feature"]
-          [:ty-option {:value "docs"} "Documentation"]]
-         [:button.ty-bg-primary.ty-text++.rounded
-          {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
-       (code-block "<form>
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "With HTML Form")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                   "Fully form-associated — the selected value appears in FormData under the " [:code "name"] " attribute."]
+                  (demo-area
+                   [:form.space-y-4
+                    {:on {:submit (fn [e]
+                                    (.preventDefault e)
+                                    (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
+                                      (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
+                    [:ty-dropdown {:name "priority" :label "Priority" :required "" :placeholder "Select priority"}
+                     [:ty-option {:value "low"} "Low"]
+                     [:ty-option {:value "medium"} "Medium"]
+                     [:ty-option {:value "high"} "High"]]
+                    [:ty-dropdown {:name "category" :label "Category" :placeholder "Select category"}
+                     [:ty-option {:value "bug"} "Bug"]
+                     [:ty-option {:value "feature"} "Feature"]
+                     [:ty-option {:value "docs"} "Documentation"]]
+                    [:button.ty-bg-primary.ty-text++.rounded
+                     {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+                  (code-block "<form>
   <ty-dropdown name=\"priority\" label=\"Priority\" required>
     <ty-option value=\"low\">Low</ty-option>
     <ty-option value=\"medium\">Medium</ty-option>
@@ -305,9 +371,9 @@ document.getElementById('dd').addEventListener('search', async (e) => {
   <button type=\"submit\">Submit</button>
 </form>")]
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "JavaScript API")
-       (code-block "const dropdown = document.querySelector('ty-dropdown');
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "JavaScript API")
+                  (code-block "const dropdown = document.querySelector('ty-dropdown');
 
 // Read / set value
 console.log(dropdown.value);
@@ -327,34 +393,34 @@ dropdown.addEventListener('search', (e) => {
 
    ;; Best Practices
    (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
+                [:div.ty-elevated.rounded-lg.p-5
+                 [:div.grid.gap-6
+                  {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
 
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use ty-option children — they support rich HTML unlike native <option>"
-                     "Always set a label — placeholder alone is not accessible enough"
-                     "Use not-clearable only when the value truly must not be reset"
-                     "Set debounce=\"300\" with external-search to throttle API calls"
-                     "Use flavor to signal context — danger for destructive, success for confirmed"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
+                  [:div
+                   [:div.flex.items-center.gap-2.mb-3
+                    [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
+                    [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
+                   [:div.space-y-2
+                    (for [text ["Use ty-option children — they support rich HTML unlike native <option>"
+                                "Always set a label — placeholder alone is not accessible enough"
+                                "Use not-clearable only when the value truly must not be reset"
+                                "Set debounce=\"300\" with external-search to throttle API calls"
+                                "Use flavor to signal context — danger for destructive, success for confirmed"]]
+                      [:div.flex.items-start.gap-2
+                       [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
+                       [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
 
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use clearable=\"false\" — use not-clearable attribute instead"
-                     "Skip the name attribute when you need FormData submission"
-                     "Disable search for long lists — built-in search scales well"
-                     "Use for multi-value selection — ty-multiselect handles that"
-                     "Use placeholder as a substitute for the label"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+                  [:div
+                   [:div.flex.items-center.gap-2.mb-3
+                    [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
+                    [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
+                   [:div.space-y-2
+                    (for [text ["Use clearable=\"false\" — use not-clearable attribute instead"
+                                "Skip the name attribute when you need FormData submission"
+                                "Disable search for long lists — built-in search scales well"
+                                "Use for multi-value selection — ty-multiselect handles that"
+                                "Use placeholder as a substitute for the label"]]
+                      [:div.flex.items-start.gap-2
+                       [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
+                       [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))

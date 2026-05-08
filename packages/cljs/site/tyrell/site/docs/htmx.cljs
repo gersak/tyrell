@@ -112,7 +112,7 @@
     "Render HTML on the server. Hydrate as web components. No bundler, no JS framework, no JSON-over-the-wire."]
 
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold.mb-6
-    "21 components · CDN · form-associated · framework-agnostic"]
+    "22 components · CDN · form-associated · framework-agnostic"]
 
    [:div.flex.flex-wrap.items-center.justify-center.gap-4.max-w-xl.mx-auto
     (brand-glyph {:icon "server"   :title "HTMX · vanilla HTML"})
@@ -649,7 +649,7 @@ def inline_svg(path):
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "What you ship"]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components: " [:strong.ty-text "~69 KB gzipped"] " from CDN — cached across "
+      "All 22 components: " [:strong.ty-text "~76 KB gzipped"] " from CDN — cached across "
       "every page load and shared with anyone else using the same CDN URL. "
       "Icons aren't bundled in — you bring your own via slot mode (each SVG ~200–800 bytes inline) "
       "or via the runtime registry. Either way, you only pay for icons you actually render."]

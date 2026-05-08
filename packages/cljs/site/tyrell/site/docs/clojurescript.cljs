@@ -142,7 +142,7 @@
     "Web components for every CLJS framework. tyrell-react when you want React-idiomatic events."]
 
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold.mb-6
-    "21 components · Closure-shakeable icons · framework-agnostic"]
+    "22 components · Closure-shakeable icons · framework-agnostic"]
 
    [:div.flex.flex-wrap.items-center.justify-center.gap-4.max-w-xl.mx-auto
     (brand-glyph {:icon "clojure" :title "ClojureScript"})
@@ -702,7 +702,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "Components are bounded. Icons are not."]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components ship at " [:strong.ty-text "~344 KB minified · ~69 KB gzipped"]
+      "All 22 components ship at " [:strong.ty-text "~377 KB minified · ~76 KB gzipped"]
       " (CDN bundle, what users actually pay over the wire). "
       "The icon registry starts empty — you only pay for icons you reference. "
       "For CLJS, " (fw "dev.gersak/tyrell-icons") " is the cleanest path because Closure "

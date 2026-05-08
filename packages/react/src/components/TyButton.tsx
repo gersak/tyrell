@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
@@ -38,6 +38,9 @@ export interface TyButtonProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Disable the button */
   disabled?: boolean;
 
+  /** Loading state — shows a centered spinner, blocks click, preserves width */
+  loading?: boolean;
+
   /** Pill-shaped button (rounded ends) */
   pill?: boolean;
 
@@ -66,6 +69,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     type,
     appearance,
     disabled,
+    loading,
     pill,
     action,
     wide,
@@ -124,6 +128,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     };
 
     if (disabled) webComponentProps.disabled = '';
+    if (loading) webComponentProps.loading = '';
     if (pill) webComponentProps.pill = '';
     if (action) webComponentProps.action = '';
     if (wide) webComponentProps.wide = '';

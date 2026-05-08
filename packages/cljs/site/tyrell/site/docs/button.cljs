@@ -32,6 +32,10 @@
         :type "boolean"
         :default "false"
         :description "Whether the button is disabled"}
+       {:name "loading"
+        :type "boolean"
+        :default "false"
+        :description "Show a centered spinner overlay, block clicks, and set aria-busy. Width is preserved (content kept in flow but hidden), so there is no layout shift. Customize the spinner globally via setLoaderSvg() / window.tyLoader.set()."}
        {:name "action"
         :type "boolean"
         :default "false"
@@ -122,8 +126,8 @@
         ;; Solid
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"
-                                       :letter-spacing "0.05em"}} "Solid"]
+                                                :font-weight "500"
+                                                :letter-spacing "0.05em"}} "Solid"]
                     [:div.grid.gap-3.items-center
                      {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
                      [:div]
@@ -140,8 +144,8 @@
         ;; Outlined
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"
-                                       :letter-spacing "0.05em"}} "Outlined"]
+                                                :font-weight "500"
+                                                :letter-spacing "0.05em"}} "Outlined"]
                     [:div.grid.gap-3.items-center
                      {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
                      [:div]
@@ -158,8 +162,8 @@
         ;; Ghost
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"
-                                       :letter-spacing "0.05em"}} "Ghost"]
+                                                :font-weight "500"
+                                                :letter-spacing "0.05em"}} "Ghost"]
                     [:div.grid.gap-3.items-center
                      {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
                      [:div]
@@ -287,7 +291,7 @@
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Action Buttons (Icon-only)")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
+                                             :line-height "1.6"}}
                    "Action buttons are circular icon-only buttons, perfect for floating action buttons or toolbar actions."]
                   (demo-area
                    [:div.flex.flex-wrap.items-center.gap-3
@@ -353,20 +357,14 @@
                   (demo-area
                    [:div.flex.flex-wrap.gap-3
                     [:ty-button {:disabled true} "Disabled"]
-                    [:ty-button {:flavor "primary"}
-                     [:ty-icon {:slot "start" :name "loader-2" :size "sm" :spin true}]
-                     "Loading..."]
-                    [:ty-button {:flavor "secondary"}
-                     [:ty-icon {:slot "start" :name "refresh-cw" :size "sm" :spin true}]
-                     "Processing"]
+                    [:ty-button {:flavor "primary" :loading ""} "Saving"]
+                    [:ty-button {:flavor "secondary" :loading ""} "Processing"]
                     [:ty-button {:flavor "success" :disabled true} "Success Disabled"]])
                   (code-block "<ty-button disabled>Disabled</ty-button>
 
-<!-- Loading state with spinning icon -->
-<ty-button flavor=\"primary\">
-  <ty-icon slot=\"start\" name=\"loader-2\" size=\"sm\" spin=\"true\"></ty-icon>
-  Loading...
-</ty-button>
+<!-- Built-in loading state — see the dedicated section below for details -->
+<ty-button flavor=\"primary\" loading>Saving</ty-button>
+<ty-button flavor=\"secondary\" loading>Processing</ty-button>
 
 <ty-button flavor=\"success\" disabled>Success Disabled</ty-button>")]
 
@@ -374,7 +372,7 @@
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Wide Buttons")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
+                                             :line-height "1.6"}}
                    "Wide buttons expand to take full available width. Perfect for mobile layouts, forms, and call-to-action sections."]
 
                   [:div.space-y-4
@@ -382,7 +380,7 @@
         ;; Single wide
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Single wide"]
+                                                :font-weight "500"}} "Single wide"]
                     (demo-area
                      [:ty-button {:wide true :flavor "primary"}
                       [:ty-icon {:slot "start" :name "log-in" :size "sm"}]
@@ -395,7 +393,7 @@
         ;; Two-column grid
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Two-column grid"]
+                                                :font-weight "500"}} "Two-column grid"]
                     (demo-area
                      [:div.grid.grid-cols-2.gap-3
                       [:ty-button {:wide true :flavor "primary"}
@@ -418,7 +416,7 @@
         ;; Action panel
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Action panel (three buttons)"]
+                                                :font-weight "500"}} "Action panel (three buttons)"]
                     (demo-area
                      [:div.grid.grid-cols-3.gap-2
                       [:ty-button {:wide true :flavor "success"}
@@ -439,7 +437,7 @@
         ;; Mobile form
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Mobile form layout"]
+                                                :font-weight "500"}} "Mobile form layout"]
                     (demo-area
                      [:div.max-w-sm.space-y-2
                       [:ty-button {:wide true :flavor "primary" :size "lg"}
@@ -470,7 +468,7 @@
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Form Integration")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
+                                             :line-height "1.6"}}
                    "ty-button fully supports HTML form integration with type, name, and value attributes. Default type is 'submit' like native HTML buttons."]
 
                   [:div.space-y-5
@@ -478,7 +476,7 @@
         ;; Basic form
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Basic form with submit"]
+                                                :font-weight "500"}} "Basic form with submit"]
                     (demo-area
                      [:form.ty-elevated.rounded-lg.p-4
                       {:on {:submit (fn [e]
@@ -521,7 +519,7 @@
         ;; Named submit buttons
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Multiple submit buttons with name/value"]
+                                                :font-weight "500"}} "Multiple submit buttons with name/value"]
                     (demo-area
                      [:form.ty-elevated.rounded-lg.p-4
                       {:on {:submit (fn [e]
@@ -565,7 +563,7 @@
         ;; Button types comparison
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Button types comparison"]
+                                                :font-weight "500"}} "Button types comparison"]
                     [:div.ty-elevated.rounded.p-4.mb-3
                      [:table.w-full
                       {:style {:font-size "0.8125rem"}}
@@ -594,57 +592,105 @@
 <ty-button type=\"reset\">Clear</ty-button>
 <ty-button type=\"button\">Custom Action</ty-button>")]]]
 
-      ;; Loading State Patterns
+      ;; Loading State
                  [:div.ty-content.rounded-lg.p-5
-                  (section-label "Loading State Patterns")
+                  (section-label "Loading State")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
-                   "Create loading states using spinning icons. Perfect for async operations."]
+                                             :line-height "1.6"}}
+                   "Add the " [:code.font-mono "loading"] " attribute to overlay a centered spinner, block clicks, and set "
+                   [:code.font-mono "aria-busy"] ". The button keeps its width — your label stays in the layout, just hidden, so there is no layout shift."]
 
-                  [:div.space-y-4
+                  [:div.space-y-5
+
+        ;; Static example
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Standard loading"]
-                    (demo-area
-                     [:div.flex.gap-3
-                      [:ty-button {:flavor "primary"}
-                       [:ty-icon {:slot "start" :name "loader-2" :size "sm" :spin true}]
-                       "Saving..."]
-                      [:ty-button {:flavor "secondary" :disabled true}
-                       [:ty-icon {:slot "start" :name "refresh-cw" :size "sm" :spin true}]
-                       "Syncing..."]])
-                    (code-block "<ty-button flavor=\"primary\">
-  <ty-icon slot=\"start\" name=\"loader-2\" size=\"sm\" spin=\"true\"></ty-icon>
-  Saving...
-</ty-button>")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Action button loading"]
-                    (demo-area
-                     [:div.flex.gap-3
-                      [:ty-button {:action true :flavor "primary"}
-                       [:ty-icon {:name "loader-2" :size "sm" :spin true}]]
-                      [:ty-button {:action true :flavor "secondary" :disabled true}
-                       [:ty-icon {:name "refresh-cw" :size "sm" :spin true}]]])
-                    (code-block "<ty-button action=\"true\" flavor=\"primary\">
-  <ty-icon name=\"loader-2\" size=\"sm\" spin=\"true\"></ty-icon>
-</ty-button>")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                       :font-weight "500"}} "Available spinning icons"]
+                                                :font-weight "500"}} "Static (loading attribute set)"]
                     (demo-area
                      [:div.flex.flex-wrap.gap-3
-                      [:ty-button {:flavor "neutral"}
-                       [:ty-icon {:slot "start" :name "loader" :size "sm" :spin true}]
-                       "loader"]
-                      [:ty-button {:flavor "neutral"}
-                       [:ty-icon {:slot "start" :name "loader-2" :size "sm" :spin true}]
-                       "loader-2"]
-                      [:ty-button {:flavor "neutral"}
-                       [:ty-icon {:slot "start" :name "refresh-cw" :size "sm" :spin true}]
-                       "refresh-cw"]])]]]])
+                      [:ty-button {:flavor "primary" :loading ""} "Save"]
+                      [:ty-button {:flavor "secondary" :loading ""} "Syncing"]
+                      [:ty-button {:flavor "danger" :appearance "outlined" :loading ""} "Delete"]
+                      [:ty-button {:action true :flavor "primary" :loading ""}
+                       [:ty-icon {:name "save" :size "md"}]]])
+                    (code-block "<ty-button flavor=\"primary\" loading>Save</ty-button>
+<ty-button flavor=\"secondary\" loading>Syncing</ty-button>
+<ty-button flavor=\"danger\" appearance=\"outlined\" loading>Delete</ty-button>
+
+<!-- Action (icon-only) buttons too -->
+<ty-button action loading flavor=\"primary\">
+  <ty-icon name=\"save\" size=\"md\"></ty-icon>
+</ty-button>")]
+
+        ;; Interactive toggle demo
+                   [:div
+                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
+                                                :font-weight "500"}} "Interactive — click to simulate a 2s save"]
+                    (demo-area
+                     [:div.flex.flex-wrap.gap-3
+                      [:ty-button {:flavor "primary"
+                                   :on {:click (fn [^js e]
+                                                 (when-let [btn ^js (.closest (.-target e) "ty-button")]
+                                                   (set! (.-loading btn) true)
+                                                   (js/setTimeout #(set! (.-loading btn) false) 2000)))}}
+                       [:ty-icon {:slot "start" :name "save" :size "sm"}]
+                       "Save"]
+                      [:ty-button {:flavor "success"
+                                   :on {:click (fn [^js e]
+                                                 (when-let [btn (.closest (.-target e) "ty-button")]
+                                                   (set! (.-loading btn) true)
+                                                   (js/setTimeout #(set! (.-loading btn) false) 2000)))}}
+                       [:ty-icon {:slot "start" :name "send" :size "sm"}]
+                       "Publish"]])
+                    (code-block "// Vanilla JS — toggle the property, NOT the attribute
+const btn = document.querySelector('ty-button');
+btn.addEventListener('click', async () => {
+  btn.loading = true;
+  await save();
+  btn.loading = false;
+});")]
+
+        ;; Global spinner customization
+                   [:div
+                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
+                                                :font-weight "500"}} "Customize the spinner globally"]
+                    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
+                                               :line-height "1.6"}}
+                     "All loading-aware components — " [:code.font-mono "ty-button"] ", "
+                     [:code.font-mono "ty-dropdown"] ", " [:code.font-mono "ty-multiselect"]
+                     " — pull from a global SVG registry. Set it once at app boot to use your own spinner everywhere. The component still spins the wrapper, so register a "
+                     [:strong "static"] " SVG that uses " [:code.font-mono "currentColor"] " for the stroke or fill."]
+                    (code-block "// ESM (NPM)
+import { setLoaderSvg } from 'tyrell-components';
+
+setLoaderSvg(`
+  <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">
+    <circle cx=\"4\"  cy=\"12\" r=\"2\"/>
+    <circle cx=\"12\" cy=\"12\" r=\"2\"/>
+    <circle cx=\"20\" cy=\"12\" r=\"2\"/>
+  </svg>`);
+
+setLoaderSvg(null); // back to default" "javascript")
+                    (code-block "<!-- CDN / vanilla / HTMX / Datastar -->
+<script src=\"https://unpkg.com/tyrell-components/dist/tyrell.js\"></script>
+<script>
+  window.tyLoader.set('<svg viewBox=\"0 0 24 24\">...</svg>');
+  window.tyLoader.reset();
+</script>" "html")
+                    (code-block ";; ClojureScript
+(ns my.app
+  (:require [\"tyrell-components\" :as ty]))
+
+(ty/setLoaderSvg \"<svg viewBox=\\\"0 0 24 24\\\">...</svg>\")")]
+
+        ;; Notes
+                   [:div.ty-elevated.rounded.p-3
+                    {:style {:font-size "0.8125rem"}}
+                    [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
+                    [:ul.list-disc.list-inside.ty-text-.space-y-1
+                     [:li [:code.font-mono "loading"] " does not imply " [:code.font-mono "disabled"] " — they style differently. Loading is " [:code.font-mono "cursor: wait"] " and blocks the click handler; disabled greys the button out."]
+                     [:li "If your registered SVG already has its own animation, override the wrapper rotation with the CSS variable " [:code.font-mono "--ty-loader-animation: none"] "."]
+                     [:li "When set, the spinner inherits text color via " [:code.font-mono "currentColor"] " — so it adapts to your button flavor automatically."]]]]]])
 
    ;; Common Use Cases
    (doc-section "Common Use Cases"
@@ -654,7 +700,7 @@
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Floating Action Button (FAB)")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
+                                             :line-height "1.6"}}
                    "Use action buttons with primary flavor and large size for main floating actions."]
                   (demo-area
                    [:div.relative.h-28.ty-elevated.rounded-lg
@@ -676,7 +722,7 @@
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Toolbar Actions")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
+                                             :line-height "1.6"}}
                    "Combine text buttons with action buttons in toolbars."]
                   (demo-area
                    [:div.ty-elevated.rounded.p-3.flex.items-center.justify-between

@@ -77,7 +77,7 @@ dropdown       option         multiselect    tag
 modal          popup          tooltip
 calendar       calendar-month calendar-navigation  date-picker
 tabs           tab            wizard
-icon           copy
+icon           copy           file-upload
 ```
 
 Subpath imports compose with `import('...')` for code splitting:

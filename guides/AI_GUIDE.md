@@ -28,7 +28,6 @@ Treasure map. Find your context, follow the link.
 | Colors, surfaces, text classes, dark mode | [CSS_GUIDE.md](CSS_GUIDE.md) |
 | Bundlers, subpath imports, code splitting, SSR | [js/JAVASCRIPT_GUIDE.md](js/JAVASCRIPT_GUIDE.md) |
 | Icon registration and tree-shaking | [js/JAVASCRIPT_GUIDE.md § Icon tree-shaking](js/JAVASCRIPT_GUIDE.md#icon-tree-shaking) |
-| Building a new web component on Ty's base class | [js/TYCOMPONENT_GUIDE.md](js/TYCOMPONENT_GUIDE.md) |
 | Routing in CLJS apps | [clj/ROUTING_GUIDE.md](clj/ROUTING_GUIDE.md) |
 | Internationalization in CLJS | [clj/I18N_GUIDE.md](clj/I18N_GUIDE.md) |
 | Responsive layout in CLJS | [clj/LAYOUT_GUIDE.md](clj/LAYOUT_GUIDE.md) |
@@ -47,7 +46,7 @@ Treasure map. Find your context, follow the link.
 
 If the user is using Ty in their own project (not editing Ty itself), drop this snippet into their `CLAUDE.md`:
 
-→ [CONSUMER_CLAUDE_SNIPPET.md](CONSUMER_CLAUDE_SNIPPET.md)
+→ [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md)
 
 ## For agents working *on* Ty itself
 

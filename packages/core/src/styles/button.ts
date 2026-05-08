@@ -23,6 +23,7 @@ export const buttonStyles = `
 }
 
 button {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,6 +62,46 @@ button:focus-visible {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ===== LOADING STATE =====
+   Spinner overlays the button center; original content kept in flow but
+   hidden via visibility so width/height are preserved (no layout shift).
+*/
+.loader-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  color: currentColor;
+}
+.loader-icon svg {
+  width: 100%;
+  height: 100%;
+}
+button.loading {
+  cursor: wait;
+}
+button.loading > *:not(.loader-icon) {
+  visibility: hidden;
+}
+button.loading > .loader-icon {
+  display: inline-flex;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: ty-button-spin 0.7s linear infinite;
+}
+@keyframes ty-button-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  button.loading > .loader-icon {
+    animation-duration: 1.6s;
+  }
 }
 
 ::slotted(*) {

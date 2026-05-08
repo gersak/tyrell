@@ -163,7 +163,7 @@
     "Web components for every framework. Typed React wrappers when you want them."]
 
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold.mb-6
-    "21 components · ESM · CDN · framework-agnostic"]
+    "22 components · ESM · CDN · framework-agnostic"]
 
    ;; Brand strip
    [:div.flex.flex-wrap.items-center.justify-center.gap-4.max-w-xl.mx-auto
@@ -612,7 +612,7 @@ import 'tyrell-components'
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "Components are bounded. Icons are not."]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 21 components ship at " [:strong.ty-text "~344 KB minified · ~69 KB gzipped"] ". "
+      "All 22 components ship at " [:strong.ty-text "~377 KB minified · ~76 KB gzipped"] ". "
       "Importing the entire Lucide family pulls in " [:strong.ty-text "~820 KB minified · ~125 KB gzipped"] " — most apps need under fifty icons (~10-30 KB gzipped). "
       "Use " (fw "named imports") " for icons, never " (fw "import * as") "; subpath imports for components if your app only renders a handful."]
      [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-accent

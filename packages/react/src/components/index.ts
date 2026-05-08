@@ -65,6 +65,9 @@ export type { TyRadioGroupProps, TyRadioGroupEventDetail } from './TyRadioGroup'
 export { TyCopy } from './TyCopy';
 export type { TyCopyProps } from './TyCopy';
 
+export { TyFileUpload } from './TyFileUpload';
+export type { TyFileUploadProps, TyFileUploadEventDetail } from './TyFileUpload';
+
 export { TyTabs } from './TyTabs';
 export type { TyTabsProps, TabChangeDetail } from './TyTabs';
 
@@ -112,6 +115,7 @@ export { TySwitch as Switch } from './TySwitch';
 export { TyRadio as Radio } from './TyRadio';
 export { TyRadioGroup as RadioGroup } from './TyRadioGroup';
 export { TyCopy as Copy } from './TyCopy';
+export { TyFileUpload as FileUpload } from './TyFileUpload';
 export { TyTabs as Tabs } from './TyTabs';
 export { TyTab as Tab } from './TyTab';
 export { TyCalendarMonth as CalendarMonth } from './TyCalendarMonth';
@@ -178,6 +182,9 @@ export type { TyRadioGroupProps as RadioGroupProps, TyRadioGroupEventDetail as R
 
 // Copy types
 export type { TyCopyProps as CopyProps } from './TyCopy';
+
+// FileUpload types
+export type { TyFileUploadProps as FileUploadProps, TyFileUploadEventDetail as FileUploadEventDetail } from './TyFileUpload';
 
 // Tabs types
 export type { TyTabsProps as TabsProps } from './TyTabs';

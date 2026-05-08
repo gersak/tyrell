@@ -283,11 +283,12 @@ Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `
 | `ty-dropdown` | `search` | `query`, `originalEvent` |
 | `ty-multiselect` | `change` | `values` (JS array), `action` (`"add"`/`"remove"`/`"clear"`/`"set"`), `item` |
 | `ty-multiselect` | `search` | `query`, `element` |
+| `ty-file-upload` | `change` | `value` (File[]), `files` (File[]), `names` (string[]) |
 | `ty-calendar` | `change` | `year`, `month`, `day`, `action`, `source`, `dayContext` |
 | `ty-calendar` | `navigate` | `month`, `year`, `action`, `source` |
 | `ty-date-picker` | `change` | `value` (ISO string) |
-| `ty-tabs` | `change` | `activeId`, `activeIndex`, `previousId`, `previousIndex` |
-| `ty-wizard` | `change` | `activeId`, `activeIndex`, `previousId`, `previousIndex`, `direction` |
+| `ty-tabs` | `ty-tab-change` | `activeId`, `activeIndex`, `previousId`, `previousIndex` |
+| `ty-wizard` | `ty-wizard-step-change` | `activeId`, `activeIndex`, `previousId`, `previousIndex`, `direction` |
 | `ty-modal` | `close` | `reason`, `returnValue` |
 | `ty-tag` | `click` | `value` |
 | `ty-tag` | `dismiss` | `value` |
@@ -348,11 +349,12 @@ Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `
 ;; ty-tabs — activeId is the tab id string
 [:ty-tabs
  {:width "100%" :height "500px"
-  :on {:change (fn [^js e]
-                 (let [^js detail (.-detail e)]
-                   ;; (.-activeId detail)    => "settings"
-                   ;; (.-previousId detail)  => "profile"
-                   (on-tab-change (.-activeId detail))))}}
+  ;; ty-tabs dispatches `ty-tab-change` (not `change`).
+  :on {:ty-tab-change (fn [^js e]
+                        (let [^js detail (.-detail e)]
+                          ;; (.-activeId detail)    => "settings"
+                          ;; (.-previousId detail)  => "profile"
+                          (on-tab-change (.-activeId detail))))}}
  [:ty-tab {:id "profile" :label "Profile"} "..."]
  [:ty-tab {:id "settings" :label "Settings"} "..."]]
 

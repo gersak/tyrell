@@ -10,6 +10,7 @@
    [tyrell.site.docs.clojurescript :as clojurescript-docs]
    [tyrell.site.docs.common :as common]
    [tyrell.site.docs.copy-field :as copy-field-docs]
+   [tyrell.site.docs.file-upload :as file-upload-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]
    [tyrell.site.docs.dropdown :as dropdown-docs]
    [tyrell.site.docs.htmx :as htmx-docs]
@@ -180,6 +181,41 @@
      [:ty-radio {:value "pro"}] [:span.whitespace-nowrap "Pro"]]
     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
      [:ty-radio {:value "team"}] [:span.whitespace-nowrap "Team"]]]])
+
+(def ^:private file-upload-preview
+  [:div.ty-floating.rounded-lg.p-4.flex.flex-col.gap-3
+   {:style {:width "260px"}}
+   [:div {:style {:border "2px dashed var(--ty-border)"
+                  :border-radius "var(--ty-radius-base)"
+                  :padding "1.25rem 1rem"
+                  :text-align "center"
+                  :display "flex"
+                  :flex-direction "column"
+                  :align-items "center"
+                  :gap "0.375rem"}}
+    [:div {:style {:color "var(--ty-text--)" :width "1.75rem" :height "1.75rem"}}
+     [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "none"
+            :stroke "currentColor" :stroke-width "1.5"
+            :stroke-linecap "round" :stroke-linejoin "round"}
+      [:path {:d "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"}]
+      [:polyline {:points "17 8 12 3 7 8"}]
+      [:line {:x1 "12" :y1 "3" :x2 "12" :y2 "15"}]]]
+    [:span {:style {:font-size "0.75rem" :color "var(--ty-text-)"}}
+     "Drop files or "
+     [:span {:style {:color "var(--ty-color-primary)" :font-weight "500"}} "browse"]]]
+   [:div {:style {:display "flex" :align-items "center" :gap "0.5rem"
+                  :padding "0.375rem 0.625rem"
+                  :border-radius "var(--ty-radius-base)"
+                  :background "var(--ty-surface-content)"
+                  :border "1px solid var(--ty-border-soft)"}}
+    [:div {:style {:color "var(--ty-text--)" :width "0.875rem" :height "0.875rem"}}
+     [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "none"
+            :stroke "currentColor" :stroke-width "1.5"
+            :stroke-linecap "round" :stroke-linejoin "round"}
+      [:path {:d "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"}]
+      [:polyline {:points "14 2 14 8 20 8"}]]]
+    [:span {:style {:flex "1" :font-size "0.75rem" :color "var(--ty-text)"}} "resume.pdf"]
+    [:span {:style {:font-size "0.6875rem" :color "var(--ty-text--)"}} "142 KB"]]])
 
 (def ^:private copy-field-preview
   [:div.flex.flex-col.gap-2
@@ -566,6 +602,15 @@
                 :tags ["radio" "select" "exclusive" "single" "form" "choice"]
                 :span [2 2]
                 :preview radio-preview}
+               {:id :tyrell.site.docs/file-upload
+                :segment "file-upload"
+                :icon "upload"
+                :view file-upload-docs/view
+                :name "File Upload"
+                :description "Drop zone file picker — styleable drag-and-drop replacement for <input type=\"file\">. Click or drop, multiple files, accept filter, form-associated."
+                :tags ["file" "upload" "drop" "drag" "form" "input"]
+                :span [2 1]
+                :preview file-upload-preview}
                {:id :tyrell.site.docs/copy-field
                 :segment "copy-field"
                 :icon "copy"

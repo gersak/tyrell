@@ -10,6 +10,7 @@ export { TyCheckbox } from './components/checkbox.js'
 export { TySwitch } from './components/switch.js'
 export { TyRadio, TyRadioGroup } from './components/radio.js'
 export { TyCopy } from './components/copy.js'
+export { TyFileUpload } from './components/file-upload.js'
 export { TyTextarea } from './components/textarea.js'
 export { TyTooltip } from './components/tooltip.js'
 export { TyPopup } from './components/popup.js'
@@ -48,6 +49,7 @@ export type { TyCheckboxElement } from './components/checkbox.js'
 export type { TySwitchElement } from './components/switch.js'
 export type { TyRadioElement, TyRadioGroupElement } from './components/radio.js'
 export type { TyCopyElement } from './components/copy.js'
+export type { TyFileUploadElement } from './components/file-upload.js'
 export type { TyTextareaElement } from './components/textarea.js'
 export type { TooltipFlavor, TooltipAttributes } from './components/tooltip.js'
 export type { PopupAttributes } from './components/popup.js'
@@ -65,6 +67,9 @@ export type { DayContext } from './utils/calendar-utils.js'
 // Resize Observer
 export { getSize, onResize, getAllSizes } from './utils/resize-observer.js'
 export type { ElementSize, ResizeCallback } from './utils/resize-observer.js'
+
+// Loader registry — global override for the spinner SVG used by loading-aware components
+export { setLoaderSvg, getLoaderSvg, resetLoaderSvg } from './utils/loader-registry.js'
 
 // Property capture utilities for React/Reagent compatibility
 export {
@@ -132,6 +137,11 @@ declare global {
       getSize: (id: string) => ResizeSize | undefined
       onResize: (id: string, callback: ResizeCallback) => () => void
       sizes: Record<string, ResizeSize>
+    }
+    tyLoader: {
+      set: (svg: string | null) => void
+      get: () => string
+      reset: () => void
     }
   }
 }

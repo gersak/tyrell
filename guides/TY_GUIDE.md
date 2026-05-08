@@ -17,6 +17,7 @@ When a Ty component exists, use it. Do not improvise HTML.
 | Large numbers | `<ty-input type="compact">` | `<input type="number">` + abbreviation |
 | Checkbox | `<ty-checkbox>` | `<input type="checkbox">` |
 | Textarea | `<ty-textarea>` | `<textarea>` |
+| File upload | `<ty-file-upload>` | `<input type="file">` + custom drop zones |
 | Dropdown | `<ty-dropdown>` | `<select>`, custom menus |
 | Multi-select | `<ty-multiselect>` | Multiple checkboxes |
 | Modal | `<ty-modal>` | `<dialog>`, custom overlays |
@@ -234,6 +235,29 @@ FormData: submits raw number, not formatted string.
 
 ---
 
+### ty-file-upload
+
+Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — selected files appear in `FormData` on submit.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | string | - | FormData key |
+| `multiple` | boolean | `false` | Allow more than one file |
+| `accept` | string | - | File-type filter (`image/*`, `.pdf,.docx`, etc.) |
+| `label` | string | - | |
+| `placeholder` | string | `'Drop files here or click to browse'` | Hint inside the drop zone |
+| `disabled` | boolean | `false` | |
+| `required` | boolean | `false` | |
+| `error` | string | - | Validation message + danger border |
+
+**Properties:** `files` (read-only `File[]`)
+
+**Events:** `change` -> `{ value: File[], files: File[], names: string[] }` — fires on browse, drop, and remove (including when last file is removed → empty array)
+
+**Form integration:** files appear under the `name` attribute as multiple `FormData` entries; `form.reset()` clears the selection.
+
+---
+
 ### ty-dropdown
 
 | Attribute | Type | Default | Description |
@@ -317,7 +341,7 @@ Rich HTML option for `<ty-dropdown>`. Attrs: `value`, `selected`, `disabled`, `h
 
 **Slots:** `label-{id}` (rich label), `marker` (active indicator)
 
-**Events:** `change` -> `{ activeId, activeIndex, previousId, previousIndex }`
+**Events:** `ty-tab-change` -> `{ activeId, activeIndex, previousId, previousIndex }`
 
 ```html
 <ty-tabs height="400px" active="overview">
@@ -351,7 +375,7 @@ Rich HTML option for `<ty-dropdown>`. Attrs: `value`, `selected`, `disabled`, `h
 
 **Slots:** `indicator-{id}` (custom step indicator)
 
-**Events:** `change` -> `{ activeId, activeIndex, previousId, previousIndex, direction }`
+**Events:** `ty-wizard-step-change` -> `{ activeId, activeIndex, previousId, previousIndex, direction }`
 
 ---
 
@@ -578,9 +602,10 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 | `ty-dropdown` | `change` | `{ value, text, option, originalEvent }` |
 | `ty-dropdown` | `search` | `{ query, originalEvent }` |
 | `ty-multiselect` | `change` | `{ values, action, item }` |
+| `ty-file-upload` | `change` | `{ value: File[], files: File[], names: string[] }` |
 | `ty-calendar` | `change` | `{ year, month, day, action, source, dayContext }` |
-| `ty-tabs` | `change` | `{ activeId, activeIndex, previousId, previousIndex }` |
-| `ty-wizard` | `change` | `{ activeId, activeIndex, previousId, previousIndex, direction }` |
+| `ty-tabs` | `ty-tab-change` | `{ activeId, activeIndex, previousId, previousIndex }` |
+| `ty-wizard` | `ty-wizard-step-change` | `{ activeId, activeIndex, previousId, previousIndex, direction }` |
 | `ty-modal` | `close` | `{ reason, returnValue? }` |
 | `ty-tag` | `dismiss` | -- |
 | `ty-button` | `click` | `{ originalEvent }` |

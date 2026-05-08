@@ -1,6 +1,6 @@
 {
   "name": "tyrell-components",
-  "version": "1.0.0-RC7",
+  "version": "1.0.0-TC9",
   "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
   "sideEffects": [
@@ -43,6 +43,10 @@
     "./copy": {
       "types": "./lib/components/copy.d.ts",
       "import": "./lib/components/copy.js"
+    },
+    "./file-upload": {
+      "types": "./lib/components/file-upload.d.ts",
+      "import": "./lib/components/file-upload.js"
     },
     "./popup": {
       "types": "./lib/components/popup.d.ts",

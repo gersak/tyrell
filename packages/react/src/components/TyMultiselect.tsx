@@ -21,7 +21,14 @@ export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElemen
   
   /** Disable the multiselect component */
   disabled?: boolean;
-  
+
+  /**
+   * Loading state — replaces the available-options area with a centered
+   * spinner. Search input stays usable. Pair with `externalSearch` while
+   * fetching results from a parent-owned data source.
+   */
+  loading?: boolean;
+
   /** Make the multiselect read-only */
   readonly?: boolean;
   
@@ -68,6 +75,7 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
     value,
     placeholder,
     disabled,
+    loading,
     readonly,
     flavor,
     label,
@@ -153,6 +161,7 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       webComponentProps.placeholder = placeholder;
     }
 
+    if (loading) webComponentProps.loading = '';
     if (disabled) {
       webComponentProps.disabled = '';  // Boolean attributes as empty string
     }

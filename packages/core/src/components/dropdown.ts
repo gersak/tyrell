@@ -44,6 +44,7 @@ import { isMobileTouch } from '../utils/mobile.js'
 import { TyComponent } from '../base/ty-component.js'
 import type { PropertyChange } from '../utils/property-manager.js'
 import { CustomScrollbar, isCustomScrollbarEnabled } from '../utils/custom-scrollbar.js'
+import { getLoaderSvg } from '../utils/loader-registry.js'
 
 // ============================================================================
 // Element Hash Utility (equivalent to ClojureScript's hash function)
@@ -98,6 +99,7 @@ const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
 const CLEAR_ICON_SVG = `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
   <path d="M6 6L14 14M14 6L6 14" stroke-linecap="round" />
 </svg>`
+
 
 /**
  * Option data structure
@@ -212,6 +214,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
         if (isNaN(num)) return 0
         return Math.max(0, Math.min(5000, num))
       }
+    },
+    loading: {
+      type: 'boolean' as const,
+      visual: true,
+      default: false
     }
   }
 
@@ -219,7 +226,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
   // PRIVATE FIELDS (will be removed in Phase 3)
   // ============================================================================
   private _value: string = ''
-  private _name: string = ''
   private _placeholder: string = 'Select an option...'
   private _label: string = ''
   private _disabled = false
@@ -227,8 +233,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
   private _required = false
   private _externalSearch = false
   private _clearable = true
+  private _loading = false
   private _size: Size = 'md'
-  private _flavor: Flavor = 'neutral'
 
   // Component state
   private _state: DropdownState = {
@@ -248,7 +254,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
   private _outsideClickHandler: ((e: Event) => void) | null = null
   private _optionClickHandler: ((e: Event) => void) | null = null
   private _searchInputHandler: ((e: Event) => void) | null = null
-  private _searchBlurHandler: ((e: Event) => void) | null = null
   private _blockSearchClick: ((e: Event) => void) | null = null
   private _keyboardHandler: ((e: KeyboardEvent) => void) | null = null
   private _clearClickHandler: ((e: Event) => void) | null = null
@@ -278,6 +283,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
     } else {
       this.renderDesktop()
     }
+
+    // Loading visual lives on a dynamically rendered wrapper; reapply each render
+    this.applyLoadingState()
   }
 
 
@@ -331,10 +339,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
           this.syncSelectedOption()
           break
 
-        case 'name':
-          this._name = newValue || ''
-          break
-
         case 'placeholder':
           this._placeholder = newValue || 'Select an option...'
           this.updatePlaceholderInDOM()
@@ -369,15 +373,38 @@ export class TyDropdown extends TyComponent<DropdownState> {
           this._size = newValue
           break
 
-        case 'flavor':
-          this._flavor = newValue
-          break
-
         case 'debounce':
           this._debounce = newValue
           break
+
+        case 'loading':
+          this._loading = newValue
+          this.applyLoadingState()
+          break
       }
     }
+  }
+
+  /**
+   * Toggle the loading visual state on the open popup.
+   * Replaces the options list with a centered spinner; search input stays usable.
+   * Pulls the latest registered loader SVG on each call so registry changes
+   * take effect on the next loading toggle.
+   */
+  private applyLoadingState(): void {
+    const shadow = this.shadowRoot
+    if (!shadow) return
+    const svg = this._loading ? getLoaderSvg() : null
+    shadow.querySelectorAll('.dropdown-options-wrapper').forEach((wrapper) => {
+      wrapper.classList.toggle('loading', this._loading)
+      if (this._loading) {
+        wrapper.setAttribute('aria-busy', 'true')
+        const spinner = wrapper.querySelector('.dropdown-loading-spinner')
+        if (spinner && svg) spinner.innerHTML = svg
+      } else {
+        wrapper.removeAttribute('aria-busy')
+      }
+    })
   }
 
   /**
@@ -395,24 +422,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
     // Defensive check: ensure value is actually a string before calling .trim()
     if (!value || typeof value !== 'string' || value.trim() === '') return null
     return value.trim()
-  }
-
-  /**
-   * Validate flavor attribute
-   */
-  private validateFlavor(flavor: string | null): Flavor {
-    const validFlavors: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-    const normalized = (flavor || 'neutral') as Flavor
-
-    if (!validFlavors.includes(normalized)) {
-      console.warn(
-        `[ty-dropdown] Invalid flavor '${flavor}'. Using 'neutral'. ` +
-        `Valid flavors: ${validFlavors.join(', ')}`
-      )
-      return 'neutral'
-    }
-
-    return normalized
   }
 
   /**
@@ -793,10 +802,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
   // - handleSearchInput(): Handles search input for both dialog and modal
   //   * Desktop: Filters options locally OR dispatches search event
   //   * Mobile: Same behavior
-  // 
-  // - handleSearchBlur(): Resets search when input loses focus
-  //   * Desktop: Clears search and shows all options
-  //   * Mobile: Same behavior
   // ============================================================================
 
   /**
@@ -826,7 +831,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
       searchInput.addEventListener('input', this._searchInputHandler)
       searchInput.addEventListener('click', this._blockSearchClick)
-      // searchInput.addEventListener('blur', this._searchBlurHandler)
     }
 
     // Add clear button handler
@@ -1200,16 +1204,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
   }
 
   /**
-   * Handle search blur - DISABLED
-   * Previously caused race conditions with option clicks.
-   * Search reset now handled in closeDesktopDropdown() instead.
-   */
-  private handleSearchBlur(_e: Event): void {
-    // Blur handler disabled - search reset happens in closeDesktopDropdown
-    // This prevents race conditions where blur timer fires before click completes
-  }
-
-  /**
    * Block search input click from bubbling
    * Prevents search input clicks from triggering outside click handler
    */
@@ -1472,6 +1466,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
                 <div class="dropdown-options">
                   <slot id="options-slot"></slot>
                 </div>
+                <div class="dropdown-loading" aria-hidden="true">
+                  <span class="dropdown-loading-spinner"></span>
+                  <span class="dropdown-loading-text">Searching…</span>
+                </div>
               </div>
             </dialog>
           </div>
@@ -1597,8 +1595,12 @@ export class TyDropdown extends TyComponent<DropdownState> {
             <dialog class="mobile-dialog">
               <div class="mobile-dialog-content">
                 ${searchHeaderHtml}
-                <div class="mobile-options-container">
+                <div class="mobile-options-container dropdown-options-wrapper">
                   <slot id="options-slot"></slot>
+                  <div class="dropdown-loading" aria-hidden="true">
+                    <span class="dropdown-loading-spinner"></span>
+                    <span class="dropdown-loading-text">Searching…</span>
+                  </div>
                 </div>
               </div>
             </dialog>
@@ -1795,6 +1797,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
   get clearable(): boolean { return this.getProperty('clearable') }
   set clearable(v: boolean) { this.setProperty('clearable', v) }
+
+  get loading(): boolean { return this.getProperty('loading') }
+  set loading(v: boolean) { this.setProperty('loading', v) }
 
   get size(): Size { return this.getProperty('size') as Size }
   set size(v: Size) { this.setProperty('size', v) }

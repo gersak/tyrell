@@ -23,15 +23,15 @@
       [:p.text-2xl.font-bold.ty-text "0"]
       [:p.text-xs.ty-text-- "dependencies"]]
      [:div.text-center
-      [:p.text-2xl.font-bold.ty-text "70kB"]
-      [:p.text-xs.ty-text-- "minified"]]
+      [:p.text-2xl.font-bold.ty-text "76kB"]
+      [:p.text-xs.ty-text-- "gzipped"]]
      [:div.text-center
-      [:p.text-2xl.font-bold.ty-text "21"]
+      [:p.text-2xl.font-bold.ty-text "22"]
       [:p.text-xs.ty-text-- "primitives"]]]
 
     ;; Component overview
     [:div.max-w-3xl.mx-auto.mb-8
-     [:p.text-sm.ty-text-.mb-3 "21 primitives, fixed scope:"]
+     [:p.text-sm.ty-text-.mb-3 "22 primitives, fixed scope:"]
      [:div.flex.flex-wrap.gap-2.justify-center
       [:ty-tag {:flavor "primary" :size "sm"} "Button"]
       [:ty-tag {:flavor "primary" :size "sm"} "Input"]

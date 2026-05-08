@@ -979,6 +979,71 @@ export const dropdownStyles = `
   cursor: initial;
 }
 
+/* ==================== LOADING STATE ====================
+   Spinner overlay shown inside the popup options area while
+   the parent (external-search mode) is fetching results.
+   Search input stays usable so users can keep refining.
+
+   Carries its own surface (background + radius + subtle border)
+   so it stays visible even when the host has restyled the popup
+   with a transparent or unusual background.
+   Override with --ty-loader-bg / --ty-loader-radius / --ty-loader-border
+   on the host element.
+*/
+.dropdown-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ty-spacing-2);
+  padding: var(--ty-spacing-4) var(--ty-spacing-3);
+  color: var(--ty-text-);
+  font-size: var(--ty-font-sm);
+  min-height: 4rem;
+  background: var(--ty-loader-bg, var(--ty-surface-floating));
+  border: 1px solid var(--ty-loader-border, var(--ty-border-soft));
+  border-radius: var(--ty-loader-radius, var(--ty-radius-base));
+  box-sizing: border-box;
+}
+
+.dropdown-options-wrapper.loading .dropdown-loading {
+  display: flex;
+}
+
+.dropdown-options-wrapper.loading .dropdown-options,
+.dropdown-options-wrapper.loading > slot#options-slot {
+  display: none;
+}
+
+.dropdown-loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  animation: ty-dropdown-spin 0.7s linear infinite;
+  color: var(--ty-color-primary);
+}
+
+.dropdown-loading-spinner svg {
+  width: 100%;
+  height: 100%;
+}
+
+.dropdown-loading-text {
+  color: var(--ty-text-);
+}
+
+@keyframes ty-dropdown-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-loading-spinner {
+    animation-duration: 1.6s;
+  }
+}
+
 /* Custom scrollbar styles */
 ${customScrollbarStyles}
 `;

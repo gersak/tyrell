@@ -11,6 +11,7 @@ export { TyCheckbox } from './components/checkbox.js'
 export { TySwitch } from './components/switch.js'
 export { TyRadio, TyRadioGroup } from './components/radio.js'
 export { TyCopy } from './components/copy.js'
+export { TyFileUpload } from './components/file-upload.js'
 export { TyTextarea } from './components/textarea.js'
 export { TyTooltip } from './components/tooltip.js'
 export { TyPopup } from './components/popup.js'
@@ -47,6 +48,7 @@ export type { TyCheckboxElement } from './components/checkbox.js'
 export type { TySwitchElement } from './components/switch.js'
 export type { TyRadioElement, TyRadioGroupElement } from './components/radio.js'
 export type { TyCopyElement } from './components/copy.js'
+export type { TyFileUploadElement } from './components/file-upload.js'
 export type { TyTextareaElement } from './components/textarea.js'
 export type { TooltipFlavor, TooltipAttributes } from './components/tooltip.js'
 export type { PopupAttributes } from './components/popup.js'
@@ -81,8 +83,11 @@ export {
   getAllSizes
 } from './utils/resize-observer.js'
 
+// Loader registry — global override for the spinner SVG used by loading-aware components
+export { setLoaderSvg, getLoaderSvg, resetLoaderSvg } from './utils/loader-registry.js'
+
 export type {
-  Size as ResizeSize,
+  ElementSize as ResizeSize,
   ResizeCallback
 } from './utils/resize-observer.js'
 
@@ -97,26 +102,10 @@ import { VERSION } from './version.js'
 
 // Global API
 // Expose window.tyIcons for script tag usage
-import { registerIcons, getIcon, hasIcon, getIconNames } from './utils/icon-registry.js'
+import { registerIcons, getIcon, hasIcon, getIconNames, getCacheInfo, clearIcons } from './utils/icon-registry.js'
 import { getSize as getResizeSize, onResize as subscribeResize, getAllSizes } from './utils/resize-observer.js'
-import type { Size as ResizeSize, ResizeCallback } from './utils/resize-observer.js'
-
-declare global {
-  interface Window {
-    tyVersion: string
-    tyIcons: {
-      register: (icons: Record<string, string>) => void
-      get: (name: string) => string | undefined
-      has: (name: string) => boolean
-      list: () => string[]
-    }
-    tyResizeObserver: {
-      getSize: (id: string) => ResizeSize | undefined
-      onResize: (id: string, callback: ResizeCallback) => () => void
-      sizes: Record<string, ResizeSize>
-    }
-  }
-}
+import type { ResizeCallback } from './utils/resize-observer.js'
+import { setLoaderSvg as registrySetLoaderSvg, getLoaderSvg as registryGetLoaderSvg, resetLoaderSvg as registryResetLoaderSvg } from './utils/loader-registry.js'
 
 if (typeof window !== 'undefined') {
   window.tyVersion = VERSION
@@ -127,13 +116,22 @@ if (typeof window !== 'undefined') {
     },
     get: (name: string) => getIcon(name),
     has: (name: string) => hasIcon(name),
-    list: () => getIconNames()
+    list: () => getIconNames(),
+    cacheInfo: () => getCacheInfo(),
+    clearCache: () => clearIcons()
   }
-  
+
   // Resize Observer API
   window.tyResizeObserver = {
     getSize: (id: string) => getResizeSize(id),
     onResize: (id: string, callback: ResizeCallback) => subscribeResize(id, callback),
     get sizes() { return getAllSizes() }
+  }
+
+  // Loader registry — set once at boot to override the default spinner everywhere
+  window.tyLoader = {
+    set: (svg: string | null) => registrySetLoaderSvg(svg),
+    get: () => registryGetLoaderSvg(),
+    reset: () => registryResetLoaderSvg()
   }
 }

@@ -226,20 +226,21 @@ function ContactForm() {
 
 ## Multiselect
 
-Value is an array, passed as comma-separated string:
+Children must be `<TyTag>` (not `<TyOption>`), and the change detail is
+`{ values, action, item }` — note the plural `values`:
 
 ```tsx
 const [selected, setSelected] = useState<string[]>([])
 
 <TyMultiselect
   value={selected}
-  onChange={(e) => setSelected(e.detail.value)}
+  onChange={(e) => setSelected(e.detail.values)}
   label="Tags"
   placeholder="Select tags..."
 >
-  <TyOption value="react">React</TyOption>
-  <TyOption value="vue">Vue</TyOption>
-  <TyOption value="angular">Angular</TyOption>
+  <TyTag value="react">React</TyTag>
+  <TyTag value="vue">Vue</TyTag>
+  <TyTag value="angular">Angular</TyTag>
 </TyMultiselect>
 ```
 
@@ -806,6 +807,38 @@ Ty components participate in HTML forms via `ElementInternals`:
 </form>
 ```
 
+### File uploads
+
+`TyFileUpload` is uncontrolled — it owns the `File[]`. Read it from `event.detail.files` in `onChange`, or pull it off the form via `FormData` on submit:
+
+```tsx
+import { TyFileUpload } from 'tyrell-react'
+
+function UploadForm() {
+  return (
+    <form
+      encType="multipart/form-data"
+      onSubmit={async (e) => {
+        e.preventDefault()
+        const fd = new FormData(e.currentTarget)
+        await fetch('/api/upload', { method: 'POST', body: fd })
+      }}
+    >
+      <TyFileUpload
+        name="docs"
+        label="Attachments"
+        multiple
+        accept=".pdf,.docx"
+        onChange={(e) => console.log(e.detail.files)}
+      />
+      <TyButton type="submit" flavor="primary">Upload</TyButton>
+    </form>
+  )
+}
+```
+
+The `change` event fires on browse, drop, and remove (including the empty array when the last file is removed). For per-file upload progress, drive an `XMLHttpRequest.upload.onprogress` from your own state — the component is a picker, not an uploader.
+
 ## Next.js Integration
 
 ### App Router Setup
@@ -891,6 +924,7 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyTag` | `value` | `onTagClick` / `onTagDismiss` | -- |
 | `TyIcon` | `name` | -- | -- |
 | `TyCopy` | `value` | -- | -- |
+| `TyFileUpload` | -- (uncontrolled, read `files` from event) | `onChange` | -- |
 | `TyTooltip` | -- | -- | -- |
 | `TyScrollContainer` | -- | -- | `scrollToTop()` / `scrollToBottom()` / `updateShadows()` |
 | `TyWizard` | `active` | -- | -- |

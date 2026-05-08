@@ -16,6 +16,7 @@
    {:title "Text input"
     :ids [:tyrell.site.docs/input-field
           :tyrell.site.docs/textarea
+          :tyrell.site.docs/file-upload
           :tyrell.site.docs/copy-field]}
    {:title "Toggles"
     :ids [:tyrell.site.docs/checkbox
@@ -107,7 +108,7 @@
      [:div.mb-10.md:mb-12
       [:h1.text-3xl.md:text-4xl.font-bold.ty-text++ "Components"]
       [:p.mt-3.text-base.ty-text-.max-w-2xl.leading-relaxed
-       "21 interaction primitives — buttons, inputs, toggles, dates, selection, overlays. "
+       "22 interaction primitives — buttons, inputs, toggles, dates, selection, overlays. "
        "Ty handles the interaction so you don't have to. Drop them into any framework, "
        "style them with any design system. Bring your own cards, layouts, and tables."]]
      ;; Sections by interaction job — each on its own elevated panel,

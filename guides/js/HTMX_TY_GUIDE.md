@@ -31,7 +31,7 @@ That's it. `<ty-*>` elements work as HTMX targets, triggers, and form fields wit
 
 ## Form submission — `FormData` works automatically
 
-Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-dropdown`, `ty-multiselect`, `ty-date-picker`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`.
+Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-dropdown`, `ty-multiselect`, `ty-date-picker`, `ty-file-upload`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`.
 
 ```html
 <form hx-post="/api/contact" hx-target="#result">
@@ -53,6 +53,20 @@ Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `t
 The server receives `email`, `topic`, `message` in the request body. No `hx-vals`, no `hx-include` needed.
 
 **Multi-value fields** (`ty-multiselect`) post repeated entries — your framework's body parser must support multi-value form fields (most do).
+
+**File uploads** (`ty-file-upload`) need `hx-encoding="multipart/form-data"` on the form, just like a native file input. Each selected file is appended to the body under the component's `name` attribute (multiple entries when `multiple` is set):
+
+```html
+<form hx-post="/api/upload"
+      hx-target="#result"
+      hx-encoding="multipart/form-data">
+  <ty-file-upload name="docs" label="Attachments" multiple
+                  accept=".pdf,.docx"></ty-file-upload>
+  <ty-button type="submit" flavor="primary">Upload</ty-button>
+</form>
+```
+
+Server-side: read repeated `docs` parts (Flask `request.files.getlist('docs')`, Rails `params[:docs]`, Express `req.files`, etc.).
 
 ## Triggering on user changes — `hx-trigger="change"`
 

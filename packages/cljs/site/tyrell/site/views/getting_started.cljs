@@ -18,7 +18,7 @@
     [:h1.text-4xl.font-bold.ty-text++.tracking-tight "Getting started"]]
    [:p.text-xl.ty-text.mb-3.font-normal "Pick the stack you're working with."]
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold
-    "21 components · 3000+ icons · framework-agnostic"]])
+    "22 components · 3000+ icons · framework-agnostic"]])
 
 ;; =============================================================================
 ;; Hero stack card — JavaScript / TypeScript

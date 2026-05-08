@@ -1,40 +1,38 @@
 # Tyrell Components
 
-> Framework-agnostic Web Components library. 21 primitives + tree-shakeable icons. Works in HTML, React, Vue, Svelte, HTMX, ClojureScript.
+> Framework-agnostic Web Components library — 22 primitives, form-associated, shadow-DOM-isolated, with 12,000+ tree-shakeable icons. Works in HTML, React, Vue, Svelte, HTMX, Datastar, and every ClojureScript view layer (UIx, Reagent, Helix, Replicant, vanilla).
 
-The single best entry point for AI agents is the treasure-map index at `guides/AI_GUIDE.md` — it routes to the right guide based on framework and topic.
+Pick the framework you're working in below. Each guide assumes you've already loaded `tyrell-components` (CDN or npm) and `tyrell.css`. The doc URLs below are raw markdown — clean payload for ingestion. The single best entry point for navigation is `guides/AI_GUIDE.md`.
 
 ## Core docs
 
-- [AI map](https://github.com/gersak/tyrell/blob/master/guides/AI_GUIDE.md): Treasure map — pick framework + topic, jump to the right guide
-- [Component API](https://github.com/gersak/tyrell/blob/master/guides/TY_GUIDE.md): Universal HTML/JS reference for all 21 components
-- [CSS design system](https://github.com/gersak/tyrell/blob/master/guides/CSS_GUIDE.md): Colors, surfaces, text classes, dark mode
-- [JavaScript / bundlers](https://github.com/gersak/tyrell/blob/master/guides/js/JAVASCRIPT_GUIDE.md): Subpath imports, side-effects, icon tree-shaking, code splitting, SSR
+- [AI map](https://raw.githubusercontent.com/gersak/tyrell/master/guides/AI_GUIDE.md): Treasure map. Two tables — "I'm building in X" and "I need to know Y" — that route to the right guide in one hop.
+- [Component API](https://raw.githubusercontent.com/gersak/tyrell/master/guides/TY_GUIDE.md): Universal HTML/JS reference. All 22 components, their attributes, slots, events, and child-element rules. Framework-neutral.
+- [CSS design system](https://raw.githubusercontent.com/gersak/tyrell/master/guides/CSS_GUIDE.md): Surface levels, semantic colors, text emphasis, dark mode, per-component CSS-variable overrides. Tells you which classes to use and which Tailwind classes to avoid.
+- [JavaScript / bundlers](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/JAVASCRIPT_GUIDE.md): npm subpath imports, side-effect markers, icon tree-shaking with the named-export pattern, code splitting, SSR registration boundary. The reference for any non-CLJS bundler stack.
 
 ## Framework guides
 
-- [React](https://github.com/gersak/tyrell/blob/master/guides/js/REACT_TY_GUIDE.md): `tyrell-react` typed wrappers, Next.js App Router, controlled components
-- [Vue 3 / Nuxt](https://github.com/gersak/tyrell/blob/master/guides/js/VUE_TY_GUIDE.md): Native usage, `isCustomElement`, `v-model` patterns, SSR
-- [Svelte 5 / SvelteKit](https://github.com/gersak/tyrell/blob/master/guides/js/SVELTE_TY_GUIDE.md): Native usage, `bind:value`, `prop:`, SSR
-- [HTMX](https://github.com/gersak/tyrell/blob/master/guides/js/HTMX_TY_GUIDE.md): Form-associated submission, swap upgrades, modals, OOB validation
-- [Datastar / SSE](https://github.com/gersak/tyrell/blob/master/guides/DATASTAR_TY_GUIDE.md): Signal-driven server-rendered UIs
+- [React](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/REACT_TY_GUIDE.md): `tyrell-react` typed wrappers (`<Input>`, `<Dropdown>`, etc.), Next.js App Router boundary, controlled components, refs, calendar custom rendering.
+- [Vue 3 / Nuxt](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/VUE_TY_GUIDE.md): Native usage (no wrapper package), `compilerOptions.isCustomElement`, `v-model` patterns, Nuxt SSR client-only boundary.
+- [Svelte 5 / SvelteKit](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/SVELTE_TY_GUIDE.md): Native usage, `bind:value` for two-way binding, `prop:` for non-string props, `if (browser)` for SSR.
+- [HTMX](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/HTMX_TY_GUIDE.md): Form-associated `<ty-*>` post via FormData with no glue. `change` events bubble, swapped HTML auto-upgrades, OOB validation, modal patterns.
+- [Datastar / SSE](https://raw.githubusercontent.com/gersak/tyrell/master/guides/DATASTAR_TY_GUIDE.md): Signal-driven server-rendered UIs. Two-way binding, slots, event binding to `event.detail`, conditional visibility, SSE response patterns from a Clojure backend.
 
 ## ClojureScript
 
-- [Quickstart](https://github.com/gersak/tyrell/blob/master/guides/clj/QUICKSTART.md): Two-track quickstart — Track A (Reagent / re-frame / UIx / Helix via `tyrell-react`), Track B (Replicant / vanilla via raw `<ty-*>`)
-- [ClojureScript substrate](https://github.com/gersak/tyrell/blob/master/guides/clj/CLOJURESCRIPT_GUIDE.md): Distribution, shadow-cljs setup, raw interop, icon tree-shaking — substrate reference for any CLJS framework
-- [UIx](https://github.com/gersak/tyrell/blob/master/guides/clj/UIX_TY_GUIDE.md): UIx + `tyrell.react` — `defui`, `$`, hooks-only, auto-camelCase props
-- [Reagent / re-frame](https://github.com/gersak/tyrell/blob/master/guides/clj/REAGENT_TY_GUIDE.md): Reagent + `tyrell.react` — hiccup, `r/atom`, `:>` interop with camelCase props
-- [Helix](https://github.com/gersak/tyrell/blob/master/guides/clj/HELIX_TY_GUIDE.md): Helix + `tyrell.react` — `defnc`, `$`, `helix.dom`, `helix.hooks`
-- [Replicant](https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md): Replicant + Ty integration deep-dive (non-React)
-- [Routing](https://github.com/gersak/tyrell/blob/master/guides/clj/ROUTING_GUIDE.md): `tyrell.router` client-side routing
-- [i18n](https://github.com/gersak/tyrell/blob/master/guides/clj/I18N_GUIDE.md): `tyrell.i18n` translations and locale-aware formatting
+- [Quickstart](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/QUICKSTART.md): Five-minute setup. Branches into Track A (React-based: Reagent / re-frame / UIx / Helix via `tyrell.react`) or Track B (Replicant / vanilla via raw `<ty-*>`).
+- [CLJS substrate](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/CLOJURESCRIPT_GUIDE.md): The shared substrate every CLJS framework sits on. Single `dev.gersak/tyrell` Clojars dep, shadow-cljs auto-installs the npm package via `deps.cljs`, raw web-component interop rules, icon tree-shaking under `:advanced`.
+- [UIx](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/UIX_TY_GUIDE.md): UIx + `tyrell.react`. `defui` + `$`, hooks-only (no `r/atom`), auto-camelCase props, `use-watch` pattern for non-React atoms, `uix/lazy` for code splitting.
+- [Reagent / re-frame](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/REAGENT_TY_GUIDE.md): Reagent + `tyrell.react`. Hiccup vectors, `r/atom` reactivity, **`:>` interop requires manual camelCase props** (the most common mistake), Form-2 components for local state.
+- [Helix](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/HELIX_TY_GUIDE.md): Helix + `tyrell.react`. `defnc` + `$`, `helix.dom/d` for DOM elements (asymmetric API), `helix.hooks` with deps-vector-first, `:auto-deps` keyword for compile-time inference.
+- [Replicant](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/REPLICANT_TY_GUIDE.md): Non-React track. Raw `<ty-*>` hiccup with `[:on/change h]`, `:replicant/key` for stable identity, no React or wrapper layer, no `event.detail`-bridging needed (events bubble naturally to Replicant's listeners).
+- [Routing](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/ROUTING_GUIDE.md): `tyrell.router` — component-tree-shaped routes, segments, `landing` priority, role-based authorization, query-param helpers, `(rendered? id)` predicate for self-deciding views.
+- [i18n](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/I18N_GUIDE.md): `tyrell.i18n` — protocol-based `t` for translations, locale-aware number / currency / percent / compact / date formatting via Intl, custom-type extension for domain values.
 
 ## Optional / advanced
 
-- [Layout (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/LAYOUT_GUIDE.md): `tyrell.layout` container-aware breakpoints
-- [Building components (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/COMPONENT_GUIDE.md): `tyrell.shim` web component scaffolding
-- [Code splitting (CLJS)](https://github.com/gersak/tyrell/blob/master/guides/clj/CODE_SPLITTING.md): shadow-cljs lazy loading
-- [TyComponent base class](https://github.com/gersak/tyrell/blob/master/guides/js/TYCOMPONENT_GUIDE.md): Architecture for building new web components on Ty's base
-- [Consumer CLAUDE.md snippet](https://github.com/gersak/tyrell/blob/master/guides/CONSUMER_CLAUDE_SNIPPET.md): Drop-in instructions for AI agents in projects that *use* Ty
-- [Publishing](https://github.com/gersak/tyrell/blob/master/PUBLISHING.md): Release workflow (only relevant when working on Ty itself)
+- [Layout (CLJS)](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/LAYOUT_GUIDE.md): `tyrell.layout` — container-aware breakpoints (not viewport), `with-container` / `with-window`, ResizeObserver hookup, responsive value selection, grid helpers.
+- [Building components (CLJS)](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/COMPONENT_GUIDE.md): `tyrell.shim/define!` — turn any CLJS render fn (Replicant, UIx, Reagent) into a real `<my-element>` Web Component with shadow DOM, attribute observation, form participation.
+- [Code splitting (CLJS)](https://raw.githubusercontent.com/gersak/tyrell/master/guides/clj/CODE_SPLITTING.md): shadow-cljs `:modules` setup. Defer heavy components (calendar, dropdown) behind a lazy wrapper that loads on the route that needs them.
+- [Agent instructions snippet](https://raw.githubusercontent.com/gersak/tyrell/master/guides/AGENT_INSTRUCTIONS.md): Drop-in markdown block for AI agent instruction files (CLAUDE.md, .cursorrules, .windsurfrules, .github/copilot-instructions.md, etc.) when Tyrell is consumed in another project.

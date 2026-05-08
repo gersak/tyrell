@@ -134,8 +134,8 @@
     (let [active? (when route-id (router/rendered? route-id true))]
       [:button.block.w-full.text-left.text-xs.py-1.pl-8.pr-2.transition-colors.cursor-pointer
        {:class (if active?
-                 ["ty-text-accent" "font-medium"]
-                 ["ty-text--" "hover:ty-text+"])
+                 ["ty-text++" "font-medium"]
+                 ["ty-text--" "hover:ty-text++"])
         :on {:click (fn []
                       (if route-id
                         (router/navigate! route-id)

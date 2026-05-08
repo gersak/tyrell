@@ -33,7 +33,14 @@ export interface TyDropdownProps extends Omit<React.HTMLAttributes<HTMLElement>,
   
   /** Disable the dropdown */
   disabled?: boolean;
-  
+
+  /**
+   * Loading state — replaces the open popup options list with a centered
+   * spinner. Search input stays usable. Pair with `externalSearch` while
+   * fetching results from a parent-owned data source.
+   */
+  loading?: boolean;
+
   /** Make dropdown readonly */
   readonly?: boolean;
   
@@ -85,6 +92,7 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
     onChange,
     onSearch,
     disabled,
+    loading,
     externalSearch,
     notSearchable,
     searchable,
@@ -186,7 +194,8 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
 
     // Add conditional attributes
     if (disabled) webComponentProps.disabled = '';
-    
+    if (loading) webComponentProps.loading = '';
+
     // External search mode: parent owns filtering, dropdown dispatches search events.
     // `notSearchable` and `searchable={false}` are deprecated aliases for `externalSearch`.
     if (externalSearch || notSearchable || searchable === false) {

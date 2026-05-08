@@ -44,6 +44,7 @@
 import type { Flavor, Size } from '../types/common.js'
 import { ensureStyles } from '../utils/styles.js'
 import { multiselectStyles } from '../styles/multiselect.js'
+import { getLoaderSvg } from '../utils/loader-registry.js'
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js'
 import { isMobileTouch } from '../utils/mobile.js'
 import { TyComponent } from '../base/ty-component.js'
@@ -96,6 +97,7 @@ const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" he
 const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
 </svg>`
+
 
 /**
  * Tag data structure
@@ -251,13 +253,17 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       type: 'string' as const,
       visual: true,
       default: 'No options available'
+    },
+    loading: {
+      type: 'boolean' as const,
+      visual: true,
+      default: false
     }
   }
 
   // ============================================================================
   // INTERNAL STATE
   // ============================================================================
-  private _value: string = ''
   private _name: string = ''
   private _placeholder: string = 'Select options...'
   private _label: string = ''
@@ -265,9 +271,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
   private _readonly = false
   private _required = false
   private _externalSearch = false
+  private _loading = false
   private _scrollLockId: string | null = null
   private _size: Size = 'md'
-  private _flavor: Flavor = 'neutral'
   private _selectedLabel: string = 'Selected'
   private _availableLabel: string = 'Available'
   private _noSelectionMessage: string = 'No items selected'
@@ -295,7 +301,6 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
   // Event handler references for cleanup
   private _stubClickHandler: ((e: Event) => void) | null = null
-  private _outsideClickHandler: ((e: Event) => void) | null = null
   private _tagClickHandler: ((e: Event) => void) | null = null
   private _tagDismissHandler: ((e: Event) => void) | null = null
   private _searchInputHandler: ((e: Event) => void) | null = null
@@ -383,7 +388,6 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     for (const { name, newValue } of changes) {
       switch (name) {
         case 'value':
-          this._value = newValue || ''
           const selectedValues = this.parseValue(newValue)
           this._state.selectedValues = selectedValues
 
@@ -422,9 +426,6 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         case 'size':
           this._size = newValue
           break
-        case 'flavor':
-          this._flavor = newValue
-          break
         case 'debounce':
           this._debounce = newValue
           break
@@ -440,8 +441,34 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         case 'no-options-message':
           this._noOptionsMessage = newValue || 'No options available'
           break
+        case 'loading':
+          this._loading = newValue
+          this.applyLoadingState()
+          break
       }
     }
+  }
+
+  /**
+   * Toggle the loading visual state on the open popup.
+   * Replaces the available-options area with a centered spinner; search input stays usable.
+   * Pulls the latest registered loader SVG on each call so registry changes
+   * take effect on the next loading toggle.
+   */
+  private applyLoadingState(): void {
+    const shadow = this.shadowRoot
+    if (!shadow) return
+    const svg = this._loading ? getLoaderSvg() : null
+    shadow.querySelectorAll('.dropdown-options-wrapper').forEach((wrapper) => {
+      wrapper.classList.toggle('loading', this._loading)
+      if (this._loading) {
+        wrapper.setAttribute('aria-busy', 'true')
+        const spinner = wrapper.querySelector('.dropdown-loading-spinner')
+        if (spinner && svg) spinner.innerHTML = svg
+      } else {
+        wrapper.removeAttribute('aria-busy')
+      }
+    })
   }
 
   /**
@@ -636,8 +663,6 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
     // Only update if changed
     if (JSON.stringify(newValues.sort()) !== JSON.stringify(oldValues.sort())) {
-      const currentPropertyValue = this.getProperty('value')
-
       // Use TyComponent's property system - this will trigger:
       // 1. onPropertiesChanged() → syncs tags via syncSelectedTags()
       // 2. onPropertiesChanged() → updates placeholder via updateSelectionDisplay()
@@ -991,21 +1016,6 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     this.openDropdown()
   }
 
-  private handleOutsideClick(e: Event): void {
-    if (!this._state.open) return
-
-    const target = e.target as Node
-
-    // Check if click is inside this component (handles shadow DOM retargeting)
-    // Also check composedPath for clicks that originated inside shadow DOM
-    const path = e.composedPath()
-    const clickedInside = path.includes(this)
-
-    if (!clickedInside) {
-      this.closeDropdown()
-    }
-  }
-
   private handleTagClick(e: Event): void {
     const target = e.target as HTMLElement
 
@@ -1317,6 +1327,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     } else {
       this.renderDesktop()
     }
+
+    // Loading wrapper is rendered dynamically — re-apply each render
+    this.applyLoadingState()
   }
 
   /**
@@ -1428,6 +1441,10 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
                 <div class="dropdown-options">
                   <slot id="options-slot"></slot>
                 </div>
+                <div class="dropdown-loading" aria-hidden="true">
+                  <span class="dropdown-loading-spinner"></span>
+                  <span class="dropdown-loading-text">Searching…</span>
+                </div>
               </div>
             </dialog>
           </div>
@@ -1532,9 +1549,13 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
                     <div class="section-header">
                       <span class="section-title">${this._availableLabel}</span>
                     </div>
-                    <div class="section-content">
+                    <div class="section-content dropdown-options-wrapper">
                       <slot id="options-slot"></slot>
                       <div class="empty-state">${this._noOptionsMessage}</div>
+                      <div class="dropdown-loading" aria-hidden="true">
+                        <span class="dropdown-loading-spinner"></span>
+                        <span class="dropdown-loading-text">Searching…</span>
+                      </div>
                     </div>
                   </div>
                   
@@ -1790,6 +1811,14 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
 
   set disabled(value: boolean) {
     this.setProperty('disabled', value)
+  }
+
+  get loading(): boolean {
+    return this.getProperty('loading')
+  }
+
+  set loading(value: boolean) {
+    this.setProperty('loading', value)
   }
 
   get readonly(): boolean {

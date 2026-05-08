@@ -70,6 +70,19 @@ Then use components anywhere:
 
 ---
 
+## Using with AI coding agents
+
+Tyrell is documented for AI agents from day one. Two artifacts make it work:
+
+- **[Agent instructions snippet](guides/AGENT_INSTRUCTIONS.md)** — drop into your project's `CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, or whichever instruction file your agent reads. The snippet teaches the agent the rules (colors come from Tyrell, events live on `event.detail`, icons need registration, etc.) and points at the doc index.
+- **[`llms.txt`](https://gersak.github.io/tyrell/llms.txt)** — machine-readable index of every guide, served as raw markdown. Tell your agent to fetch it once and it has a navigable map of the entire documentation set. Per the [llmstxt.org](https://llmstxt.org) convention.
+
+For agents with web fetch (Claude Code's `WebFetch`, Cursor's `@web`, ChatGPT browsing), pointing them at `https://gersak.github.io/tyrell/llms.txt` at session start is enough. For agents without it, paste the snippet into the instruction file and the agent learns the rules without any network calls.
+
+The treasure-map entry point for AI navigation is **[guides/AI_GUIDE.md](guides/AI_GUIDE.md)** — two routing tables that get an agent to the right framework guide in one hop.
+
+---
+
 ## Guides
 
 Pick the entry point for your stack:
@@ -79,7 +92,6 @@ Pick the entry point for your stack:
 - **[React Guide](guides/js/REACT_TY_GUIDE.md)** — `tyrell-react` wrappers
 - **[Vue Guide](guides/js/VUE_TY_GUIDE.md)** — Vue 3 / Nuxt native usage (no wrapper package)
 - **[Svelte Guide](guides/js/SVELTE_TY_GUIDE.md)** — Svelte 5 / SvelteKit native usage (no wrapper package)
-- **[TyComponent Guide](guides/js/TYCOMPONENT_GUIDE.md)** — base class for building custom components
 
 ### ClojureScript
 - **[Quickstart](guides/clj/QUICKSTART.md)** — five-minute setup for any CLJS view layer

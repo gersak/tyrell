@@ -14,6 +14,7 @@ import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles, buildClassList } from "../utils/styles.js";
 import { buttonStyles } from "../styles/button.js";
+import { getLoaderSvg } from "../utils/loader-registry.js";
 
 type Appearance = "solid" | "outlined" | "ghost";
 
@@ -22,6 +23,7 @@ interface ButtonState {
   size: Size;
   appearance: Appearance;
   disabled: boolean;
+  loading: boolean;
   type: "button" | "submit" | "reset";
   pill: boolean;
   action: boolean;
@@ -79,6 +81,11 @@ export class TyButton
       },
     },
     disabled: {
+      type: "boolean" as const,
+      visual: true,
+      default: false,
+    },
+    loading: {
       type: "boolean" as const,
       visual: true,
       default: false,
@@ -154,6 +161,13 @@ export class TyButton
   }
   set disabled(value: boolean) {
     this.setProperty("disabled", value);
+  }
+
+  get loading(): boolean {
+    return this.getProperty("loading");
+  }
+  set loading(value: boolean) {
+    this.setProperty("loading", value);
   }
 
   get type(): "button" | "submit" | "reset" {
@@ -252,6 +266,11 @@ export class TyButton
     button.disabled = this.disabled;
     button.className = classes;
 
+    const loader = document.createElement("span");
+    loader.className = "loader-icon";
+    loader.setAttribute("aria-hidden", "true");
+    loader.innerHTML = getLoaderSvg();
+
     const startSlot = document.createElement("slot");
     startSlot.name = "start";
     startSlot.className = "start";
@@ -262,12 +281,13 @@ export class TyButton
     endSlot.name = "end";
     endSlot.className = "end";
 
+    button.appendChild(loader);
     button.appendChild(startSlot);
     button.appendChild(defaultSlot);
     button.appendChild(endSlot);
 
     button.addEventListener("click", (e: Event) => {
-      if (this.disabled) return;
+      if (this.disabled || this.loading) return;
       e.stopPropagation();
       this.handleFormAction();
       this.dispatchEvent(
@@ -279,8 +299,22 @@ export class TyButton
       );
     });
 
+    this.applyLoadingState(button);
     shadow.appendChild(button);
     this._structureInitialized = true;
+  }
+
+  private applyLoadingState(button: HTMLButtonElement): void {
+    const isLoading = this.loading;
+    button.classList.toggle("loading", isLoading);
+    if (isLoading) {
+      button.setAttribute("aria-busy", "true");
+      // Pull the latest registered loader SVG so registry changes take effect
+      const loader = button.querySelector(".loader-icon");
+      if (loader) loader.innerHTML = getLoaderSvg();
+    } else {
+      button.removeAttribute("aria-busy");
+    }
   }
 
   protected render(): void {
@@ -296,6 +330,7 @@ export class TyButton
     if (button) {
       button.disabled = this.disabled;
       button.className = classes;
+      this.applyLoadingState(button);
     }
   }
 }

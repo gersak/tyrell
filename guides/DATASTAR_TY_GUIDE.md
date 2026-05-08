@@ -20,7 +20,7 @@ Use Ty web components with Datastar for reactive server-driven UIs. No JavaScrip
 Use `data-bind` for form inputs — it handles wiring automatically:
 
 ```html
-<div data-signals="{name: '', email: '', country: ''}">
+<div data-signals="{name: '', email: '', country: '', tags: []}">
 
   <ty-input data-bind="name" label="Name" placeholder="Your name"></ty-input>
 
@@ -30,6 +30,19 @@ Use `data-bind` for form inputs — it handles wiring automatically:
     <ty-option value="us">United States</ty-option>
     <ty-option value="de">Germany</ty-option>
   </ty-dropdown>
+
+  <!-- ty-multiselect children must be <ty-tag value="..."> only.
+       The change event detail is { values: [...], action, item } — note the
+       plural `values`. `data-bind` works against the comma-separated `value`
+       attribute, but it's usually clearer to bind manually: -->
+  <ty-multiselect
+    label="Tags"
+    placeholder="Select tags..."
+    data-on:change="$tags = evt.detail.values">
+    <ty-tag value="frontend">Frontend</ty-tag>
+    <ty-tag value="backend">Backend</ty-tag>
+    <ty-tag value="ops">Ops</ty-tag>
+  </ty-multiselect>
 
   <ty-button flavor="primary" data-on:click="@post('/api/submit')">
     Submit
@@ -104,9 +117,10 @@ Bind Ty component attributes to signal values:
   Expense
 </ty-tag>
 
-<!-- Set active tab from signal -->
+<!-- Set active tab from signal.
+     ty-tabs dispatches `ty-tab-change` (not `change`); detail.activeId is the new id. -->
 <ty-tabs data-attr:active="$activeTab"
-         data-on:change="$activeTab = evt.detail.value">
+         data-on:ty-tab-change="$activeTab = evt.detail.activeId">
   <ty-tab id="overview" label="Overview">...</ty-tab>
   <ty-tab id="settings" label="Settings">...</ty-tab>
 </ty-tabs>
