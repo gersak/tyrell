@@ -1467,8 +1467,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
                   <slot id="options-slot"></slot>
                 </div>
                 <div class="dropdown-loading" aria-hidden="true">
-                  <span class="dropdown-loading-spinner"></span>
-                  <span class="dropdown-loading-text">Searching…</span>
+                  <slot name="loading">
+                    <span class="dropdown-loading-spinner"></span>
+                    <span class="dropdown-loading-text">Searching…</span>
+                  </slot>
                 </div>
               </div>
             </dialog>
@@ -1598,8 +1600,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
                 <div class="mobile-options-container dropdown-options-wrapper">
                   <slot id="options-slot"></slot>
                   <div class="dropdown-loading" aria-hidden="true">
-                    <span class="dropdown-loading-spinner"></span>
-                    <span class="dropdown-loading-text">Searching…</span>
+                    <slot name="loading">
+                      <span class="dropdown-loading-spinner"></span>
+                      <span class="dropdown-loading-text">Searching…</span>
+                    </slot>
                   </div>
                 </div>
               </div>

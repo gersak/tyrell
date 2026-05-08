@@ -996,17 +996,25 @@ export const dropdownStyles = `
   justify-content: center;
   gap: var(--ty-spacing-2);
   padding: var(--ty-spacing-4) var(--ty-spacing-3);
-  color: var(--ty-text-);
+  color: var(--ty-text-soft);
   font-size: var(--ty-font-sm);
   min-height: 4rem;
-  background: var(--ty-loader-bg, var(--ty-surface-floating));
-  border: 1px solid var(--ty-loader-border, var(--ty-border-soft));
-  border-radius: var(--ty-loader-radius, var(--ty-radius-base));
+  /* Match the .dropdown-options popup look — same background, border, radius, shadow */
+  background: var(--ty-loader-bg, var(--input-bg, var(--ty-input-bg)));
+  border: 1px solid var(--ty-loader-border, var(--input-border, var(--ty-input-border)));
+  border-radius: var(--ty-loader-radius, var(--ty-radius-lg));
+  box-shadow: var(--ty-loader-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
   box-sizing: border-box;
 }
 
 .dropdown-options-wrapper.loading .dropdown-loading {
   display: flex;
+}
+
+/* Make the loading slot transparent for layout so default fallback (spinner + text)
+   AND user-provided slotted content both act as direct flex children of .dropdown-loading. */
+.dropdown-loading > slot[name="loading"] {
+  display: contents;
 }
 
 .dropdown-options-wrapper.loading .dropdown-options,
@@ -1031,7 +1039,7 @@ export const dropdownStyles = `
 }
 
 .dropdown-loading-text {
-  color: var(--ty-text-);
+  color: var(--ty-text-soft);
 }
 
 @keyframes ty-dropdown-spin {

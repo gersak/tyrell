@@ -95,7 +95,7 @@ export const fileUploadStyles = `
 /* ===== UPLOAD ICON ===== */
 
 .upload-icon {
-  color: var(--ty-text--);
+  color: var(--ty-text-faint);
   width: 2.5rem;
   height: 2.5rem;
   display: flex;
@@ -113,7 +113,7 @@ export const fileUploadStyles = `
 /* ===== HINT TEXT ===== */
 
 .upload-hint {
-  color: var(--ty-text-);
+  color: var(--ty-text-soft);
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   pointer-events: none;
@@ -125,7 +125,7 @@ export const fileUploadStyles = `
 }
 
 .upload-sub-hint {
-  color: var(--ty-text--);
+  color: var(--ty-text-faint);
   font-size: var(--ty-font-xs);
   line-height: var(--ty-leading-xs);
   pointer-events: none;
@@ -151,7 +151,7 @@ export const fileUploadStyles = `
 }
 
 .file-icon {
-  color: var(--ty-text--);
+  color: var(--ty-text-faint);
   flex-shrink: 0;
   width: 1rem;
   height: 1rem;
@@ -176,7 +176,7 @@ export const fileUploadStyles = `
 
 .file-size {
   font-size: var(--ty-font-xs);
-  color: var(--ty-text--);
+  color: var(--ty-text-faint);
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
 }
@@ -184,7 +184,7 @@ export const fileUploadStyles = `
 .file-remove {
   flex-shrink: 0;
   cursor: pointer;
-  color: var(--ty-text--);
+  color: var(--ty-text-faint);
   width: 1.25rem;
   height: 1.25rem;
   display: flex;

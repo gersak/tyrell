@@ -1442,8 +1442,10 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
                   <slot id="options-slot"></slot>
                 </div>
                 <div class="dropdown-loading" aria-hidden="true">
-                  <span class="dropdown-loading-spinner"></span>
-                  <span class="dropdown-loading-text">Searching…</span>
+                  <slot name="loading">
+                    <span class="dropdown-loading-spinner"></span>
+                    <span class="dropdown-loading-text">Searching…</span>
+                  </slot>
                 </div>
               </div>
             </dialog>
@@ -1553,8 +1555,10 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
                       <slot id="options-slot"></slot>
                       <div class="empty-state">${this._noOptionsMessage}</div>
                       <div class="dropdown-loading" aria-hidden="true">
-                        <span class="dropdown-loading-spinner"></span>
-                        <span class="dropdown-loading-text">Searching…</span>
+                        <slot name="loading">
+                          <span class="dropdown-loading-spinner"></span>
+                          <span class="dropdown-loading-text">Searching…</span>
+                        </slot>
                       </div>
                     </div>
                   </div>

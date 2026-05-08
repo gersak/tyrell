@@ -326,13 +326,48 @@ dd.addEventListener('search', async (e) => {
   dd.loading = false;
 });" "javascript")]
 
+        ;; Custom loading content (slot)
+                   [:div
+                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem" :font-weight "500"}} "Custom loading content — slot=\"loading\""]
+                    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+                     "Override the built-in spinner + “Searching…” by passing your own content into the "
+                     [:code "loading"] " slot. Useful for translations, custom icons, or full design-system integration. The default is shown when no slot content is provided."]
+                    (demo-area
+                     [:div.flex.flex-col.gap-4 {:style {:max-width "320px"}}
+                      [:ty-dropdown {:label "Croatian"
+                                     :placeholder "Klikni za otvaranje…"
+                                     :external-search ""
+                                     :loading ""}
+                       [:span {:slot "loading" :style {:color "var(--ty-color-primary)"}} "Pretražujem…"]]
+                      [:ty-dropdown {:label "Custom icon + text"
+                                     :placeholder "Click to open…"
+                                     :external-search ""
+                                     :loading ""}
+                       [:div {:slot "loading"
+                              :style {:display "flex" :align-items "center" :gap "0.5rem"}}
+                        [:ty-icon {:name "refresh-cw" :size "sm" :spin "" :class "ty-text-success"}]
+                        [:span.ty-text-success+ {:style {:font-weight "500"}} "Fetching latest…"]]]])
+                    (code-block "<!-- Just translate the text -->
+<ty-dropdown loading external-search>
+  <span slot=\"loading\">Pretražujem…</span>
+</ty-dropdown>
+
+<!-- Custom icon + styling -->
+<ty-dropdown loading external-search>
+  <div slot=\"loading\" style=\"display:flex;gap:0.5rem;align-items:center;\">
+    <ty-icon name=\"refresh-cw\" size=\"sm\" spin></ty-icon>
+    <span>Fetching latest…</span>
+  </div>
+</ty-dropdown>")]
+
         ;; Notes
                    [:div.ty-elevated.rounded.p-3 {:style {:font-size "0.8125rem"}}
                     [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
                     [:ul.list-disc.list-inside.ty-text-.space-y-1
                      [:li "Search input stays editable while loading — users can keep typing."]
                      [:li "The spinner overlay sits inside the popup; the dropdown stub itself is unaffected."]
-                     [:li "Same global registry as " [:code "ty-button"] " — set the spinner SVG once with " [:code "setLoaderSvg(...)"] " or " [:code "window.tyLoader.set(...)"] " to theme every loader in the app."]]]]]])
+                     [:li "Same global registry as " [:code "ty-button"] " — set the spinner SVG once with " [:code "setLoaderSvg(...)"] " or " [:code "window.tyLoader.set(...)"] " to theme every loader in the app."]
+                     [:li "For full control over the loading UI per instance, use the " [:code "loading"] " slot — your slotted content replaces the built-in spinner + text. Wrapper still provides background/border so the popup stays opaque."]]]]]])
 
    ;; Form Integration
    (doc-section "Form Integration"
