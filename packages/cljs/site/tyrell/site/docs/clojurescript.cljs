@@ -702,7 +702,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
       "Components are bounded. Icons are not."]
      [:p.text-sm.ty-text-.leading-relaxed.mb-3
-      "All 22 components ship at " [:strong.ty-text "~377 KB minified · ~76 KB gzipped"]
+      "All 22 components ship at " [:strong.ty-text "~377 KB minified · ~70 KB compressed"]
       " (CDN bundle, what users actually pay over the wire). "
       "The icon registry starts empty — you only pay for icons you reference. "
       "For CLJS, " (fw "dev.gersak/tyrell-icons") " is the cleanest path because Closure "

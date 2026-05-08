@@ -23,8 +23,8 @@
       [:p.text-2xl.font-bold.ty-text "0"]
       [:p.text-xs.ty-text-- "dependencies"]]
      [:div.text-center
-      [:p.text-2xl.font-bold.ty-text "76kB"]
-      [:p.text-xs.ty-text-- "gzipped"]]
+      [:p.text-2xl.font-bold.ty-text "70kB"]
+      [:p.text-xs.ty-text-- "compressed"]]
      [:div.text-center
       [:p.text-2xl.font-bold.ty-text "22"]
       [:p.text-xs.ty-text-- "primitives"]]]

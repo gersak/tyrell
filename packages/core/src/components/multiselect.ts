@@ -830,6 +830,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     if (searchInput) {
       setTimeout(() => searchInput.focus(), 100)
     }
+
+    // Lifecycle event (also fires empty search if external-search)
+    this.fireOpenEvent()
   }
 
   /**
@@ -894,6 +897,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       this.updateTagVisibility(allTags, allTags)
       this.clearHighlights(allTags)
     }
+
+    // Lifecycle event
+    this.fireCloseEvent()
   }
 
   /**
@@ -941,6 +947,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
     requestAnimationFrame(() => {
       this.updateMobileSelectedState()
     })
+
+    // Lifecycle event (also fires empty search if external-search)
+    this.fireOpenEvent()
   }
 
   /**
@@ -994,6 +1003,9 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       const allTags = this.getTagElements()
       allTags.forEach(el => el.removeAttribute('hidden'))
     }
+
+    // Lifecycle event
+    this.fireCloseEvent()
   }
 
   // ============================================================================
@@ -1290,6 +1302,30 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
         query,
         element: this
       },
+      bubbles: true,
+      composed: true
+    }))
+  }
+
+  /**
+   * Dispatch lifecycle events for popup open/close.
+   * On open with external-search, also fire a `search` event with an empty
+   * query so consumers have a clean hook to reset/refetch the option list.
+   */
+  private fireOpenEvent(): void {
+    this.dispatchEvent(new CustomEvent('open', {
+      detail: { mode: this._state.mode, element: this },
+      bubbles: true,
+      composed: true
+    }))
+    if (this._externalSearch) {
+      this.fireSearchEvent('')
+    }
+  }
+
+  private fireCloseEvent(): void {
+    this.dispatchEvent(new CustomEvent('close', {
+      detail: { mode: this._state.mode, element: this },
       bubbles: true,
       composed: true
     }))

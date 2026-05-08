@@ -1070,7 +1070,6 @@ export class TyDropdown extends TyComponent<DropdownState> {
    * Open dropdown dialog
    */
   private openDesktopDropdown(): void {
-    console.log('opening desktop dropdown')
     const shadow = this.shadowRoot!
     const dialog = shadow.querySelector('.dropdown-dialog') as HTMLDialogElement
     if (!dialog) return
@@ -1109,6 +1108,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
     // Hide clear button when dropdown is open
     this.updateClearButton()
+
+    // Lifecycle event (also fires empty search if external-search)
+    this.fireOpenEvent()
   }
 
   /**
@@ -1149,6 +1151,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
     // Show clear button when dropdown is closed (if applicable)
     this.updateClearButton()
+
+    // Lifecycle event
+    this.fireCloseEvent()
   }
 
   /**
@@ -1244,6 +1249,31 @@ export class TyDropdown extends TyComponent<DropdownState> {
         query,
         originalEvent: originalEvent || null
       },
+      bubbles: true,
+      composed: true
+    }))
+  }
+
+  /**
+   * Dispatch lifecycle events for popup open/close.
+   * On open with external-search, also fire a `search` event with an empty
+   * query so consumers have a clean hook to reset/refetch the option list —
+   * fixes the "stale filtered options on reopen" UX issue.
+   */
+  private fireOpenEvent(): void {
+    this.dispatchEvent(new CustomEvent('open', {
+      detail: { mode: this._state.mode },
+      bubbles: true,
+      composed: true
+    }))
+    if (this._externalSearch) {
+      this.fireSearchEvent('')
+    }
+  }
+
+  private fireCloseEvent(): void {
+    this.dispatchEvent(new CustomEvent('close', {
+      detail: { mode: this._state.mode },
       bubbles: true,
       composed: true
     }))
@@ -1730,6 +1760,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
     }
     // Hide clear button when modal is open (stub clear button - desktop only)
     this.updateClearButton()
+
+    // Lifecycle event (also fires empty search if external-search)
+    this.fireOpenEvent()
   }
 
   /**
@@ -1765,6 +1798,9 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
     // Show clear button when modal is closed (if applicable)
     this.updateClearButton()
+
+    // Lifecycle event
+    this.fireCloseEvent()
   }
 
   // ============================================================================

@@ -1017,6 +1017,29 @@ export const dropdownStyles = `
   display: contents;
 }
 
+/* Mobile: full-screen dialog is the surface — drop the card chrome,
+   stack vertically, scale up so it feels native to a fullscreen view.
+   Slotted content adapts automatically since the slot is display:contents. */
+.dropdown-mode-mobile .dropdown-loading {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ty-spacing-3);
+  padding: var(--ty-spacing-8) var(--ty-spacing-4);
+  min-height: 12rem;
+}
+
+.dropdown-mode-mobile .dropdown-loading-spinner {
+  width: 2rem;
+  height: 2rem;
+}
+
+.dropdown-mode-mobile .dropdown-loading-text {
+  font-size: var(--ty-font-base);
+}
+
 .dropdown-options-wrapper.loading .dropdown-options,
 .dropdown-options-wrapper.loading > slot#options-slot {
   display: none;

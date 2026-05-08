@@ -79,7 +79,13 @@
         :when-fired "Fires when the selected option changes"}
        {:name "search"
         :payload "{query: string}"
-        :when-fired "Fires when user types — only when external-search is set"}
+        :when-fired "Fires when user types in external-search mode. Also fires automatically with query=\"\" when the popup opens (so consumers can refresh the option list to a clean state)."}
+       {:name "open"
+        :payload "{mode: 'desktop' | 'mobile'}"
+        :when-fired "Fires when the popup opens. With external-search, a search event with empty query follows immediately."}
+       {:name "close"
+        :payload "{mode: 'desktop' | 'mobile'}"
+        :when-fired "Fires when the popup closes (selection, outside click, Escape, etc.)"}
        {:name "focus"
         :payload "FocusEvent"
         :when-fired "Fires when the dropdown gains focus"}
@@ -301,28 +307,39 @@ document.getElementById('dd').addEventListener('search', async (e) => {
                                     :style {:max-width "320px"}
                                     :on {:search (fn [^js e]
                                                    (when-let [dd (.closest (.-target e) "ty-dropdown")]
-                                                     (set! (.-loading dd) true)
-                                                     (js/setTimeout
-                                                      #(do
-                                                         (set! (.-innerHTML dd)
-                                                               (let [q (.. e -detail -query)]
-                                                                 (->> ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
-                                                                      (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
-                                                                      (map (fn [n] (str "<ty-option value=\"" n "\">" n "</ty-option>")))
-                                                                      (apply str))))
-                                                         (set! (.-loading dd) false))
-                                                      600)))}}
+                                                     (let [q (.. e -detail -query)
+                                                           fruits ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
+                                                           render! (fn []
+                                                                     (set! (.-innerHTML dd)
+                                                                           (->> fruits
+                                                                                (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
+                                                                                (map (fn [n] (str "<ty-option value=\"" n "\">" n "</ty-option>")))
+                                                                                (apply str))))]
+                                                       (if (= q "")
+                                                         ;; Empty query (popup just opened, or search cleared) — instant reset
+                                                         (render!)
+                                                         ;; Real search — show loading while we fake a fetch
+                                                         (do (set! (.-loading dd) true)
+                                                             (js/setTimeout
+                                                              #(do (render!) (set! (.-loading dd) false))
+                                                              600))))))}}
                       [:ty-option {:value "apple"} "Apple"]
                       [:ty-option {:value "banana"} "Banana"]
                       [:ty-option {:value "cherry"} "Cherry"]])
-                    (code-block "// Vanilla JS — toggle around your async fetch
+                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''
 const dd = document.querySelector('ty-dropdown');
 dd.addEventListener('search', async (e) => {
+  const q = e.detail.query;
+
+  if (q === '') {
+    // Popup just opened or search cleared — load default list, no spinner
+    dd.innerHTML = renderOptions(await fetchDefaultList());
+    return;
+  }
+
   dd.loading = true;
-  const results = await fetch(`/api/search?q=${e.detail.query}`).then(r => r.json());
-  dd.innerHTML = results.map(r =>
-    `<ty-option value=\"${r.id}\">${r.name}</ty-option>`
-  ).join('');
+  const results = await fetch(`/api/search?q=${q}`).then(r => r.json());
+  dd.innerHTML = renderOptions(results);
   dd.loading = false;
 });" "javascript")]
 

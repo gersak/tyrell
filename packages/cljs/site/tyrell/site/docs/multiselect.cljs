@@ -99,8 +99,14 @@
         :payload "{values: string[], action: 'add'|'remove'|'clear'|'set', item: string|null}"
         :when-fired "Fires when the selection changes"}
        {:name "search"
-        :payload "{query: string}"
-        :when-fired "Fires on each keystroke — only when external-search is set"}
+        :payload "{query: string, element}"
+        :when-fired "Fires on each keystroke in external-search mode. Also fires automatically with query=\"\" when the popup opens or closes (clean reset hook for the consumer)."}
+       {:name "open"
+        :payload "{mode: 'desktop' | 'mobile', element}"
+        :when-fired "Fires when the popup opens. With external-search, a search event with empty query follows immediately."}
+       {:name "close"
+        :payload "{mode: 'desktop' | 'mobile', element}"
+        :when-fired "Fires when the popup closes (selection, outside click, Escape, etc.)"}
        {:name "focus"
         :payload "FocusEvent"
         :when-fired "Fires when the component gains focus"}
@@ -263,25 +269,38 @@ document.getElementById('ms').addEventListener('change', (e) => {
                                        :style {:max-width "320px"}
                                        :on {:search (fn [^js e]
                                                       (when-let [ms (.closest (.-target e) "ty-multiselect")]
-                                                        (set! (.-loading ms) true)
-                                                        (js/setTimeout
-                                                         #(do
-                                                            (set! (.-innerHTML ms)
-                                                                  (let [q (.. e -detail -query)]
-                                                                    (->> ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
-                                                                         (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
-                                                                         (map (fn [n] (str "<ty-tag value=\"" n "\">" n "</ty-tag>")))
-                                                                         (apply str))))
-                                                            (set! (.-loading ms) false))
-                                                         600)))}}
+                                                        (let [q (.. e -detail -query)
+                                                              fruits ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
+                                                              render! (fn []
+                                                                        (set! (.-innerHTML ms)
+                                                                              (->> fruits
+                                                                                   (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
+                                                                                   (map (fn [n] (str "<ty-tag value=\"" n "\">" n "</ty-tag>")))
+                                                                                   (apply str))))]
+                                                          (if (= q "")
+                                                            ;; Empty query — popup opened or search cleared. Instant reset.
+                                                            (render!)
+                                                            ;; Real search — show loading
+                                                            (do (set! (.-loading ms) true)
+                                                                (js/setTimeout
+                                                                 #(do (render!) (set! (.-loading ms) false))
+                                                                 600))))))}}
                       [:ty-tag {:value "apple"} "Apple"]
                       [:ty-tag {:value "banana"} "Banana"]
                       [:ty-tag {:value "cherry"} "Cherry"]])
-                    (code-block "// Vanilla JS — toggle around your async fetch
+                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''
 const ms = document.querySelector('ty-multiselect');
 ms.addEventListener('search', async (e) => {
+  const q = e.detail.query;
+
+  if (q === '') {
+    // Popup just opened or search cleared — load default list, no spinner
+    ms.innerHTML = renderTags(await fetchDefaultList());
+    return;
+  }
+
   ms.loading = true;
-  const results = await fetch(`/api/tags?q=${e.detail.query}`).then(r => r.json());
+  const results = await fetch(`/api/tags?q=${q}`).then(r => r.json());
   ms.innerHTML = results.map(r =>
     `<ty-tag value=\"${r.id}\">${r.name}</ty-tag>`
   ).join('');
