@@ -272,7 +272,7 @@
  \"Save\"]"
       :snippet-lang "clojure"})
     (compact-stack-card
-     {:route-id :tyrell.site.docs/htmx
+     {:route-id :tyrell.site.docs/html
       :icon "server"
       :flavor "neutral"
       :eyebrow "Server"
@@ -316,8 +316,8 @@
      [:div.flex.items-center.gap-1.5.mt-2.text-sm.font-semibold.ty-text-accent
       [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
        {:style {:border "none"}
-        :on {:click #(router/navigate! :tyrell.site.docs/htmx)}}
-       "Full HTMX setup"]
+        :on {:click #(router/navigate! :tyrell.site.docs/html)}}
+       "Full HTML setup"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
 

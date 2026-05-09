@@ -236,19 +236,19 @@
     [:div
      [:ty-dropdown {:value "est" :placeholder "Timezone"}
       [:ty-option {:value "pst"}
-       [:div.flex.items-center.justify-between
+       [:div.flex.items-center.justify-between.w-full
         [:span "Pacific"] [:span.font-mono.text-xs.ty-text-- "UTC−8"]]]
       [:ty-option {:value "mst"}
-       [:div.flex.items-center.justify-between
+       [:div.flex.items-center.justify-between.w-full
         [:span "Mountain"] [:span.font-mono.text-xs.ty-text-- "UTC−7"]]]
       [:ty-option {:value "cst"}
-       [:div.flex.items-center.justify-between
+       [:div.flex.items-center.justify-between.w-full
         [:span "Central"] [:span.font-mono.text-xs.ty-text-- "UTC−6"]]]
       [:ty-option {:value "est"}
-       [:div.flex.items-center.justify-between
+       [:div.flex.items-center.justify-between.w-full
         [:span "Eastern"] [:span.font-mono.text-xs.ty-text-- "UTC−5"]]]
       [:ty-option {:value "utc"}
-       [:div.flex.items-center.justify-between
+       [:div.flex.items-center.justify-between.w-full
         [:span "UTC"] [:span.font-mono.text-xs.ty-text-- "UTC+0"]]]]]
     [:div
      [:ty-dropdown {:value "en" :placeholder "Language"}
@@ -412,7 +412,7 @@
             ["csv"  "table"     "CSV"  "Spreadsheet"       "ty-text-success"]
             ["pdf"  "file-text" "PDF"  "Printable"         "ty-text-danger"]]]
        ^{:key format}
-       [:div.flex.items-center.justify-between.p-3.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
+       [:div.flex.items-center.justify-between.w-full.p-3.border.ty-border.rounded-lg.cursor-pointer.hover:ty-border-primary.transition-colors
         [:div
          [:p.font-medium.ty-text.text-sm label]
          [:p.text-xs.ty-text- hint]]

@@ -265,6 +265,10 @@ export class TyDropdown extends TyComponent<DropdownState> {
   // Custom scrollbar for options list
   private _optionsScrollbar: CustomScrollbar | null = null
 
+  // MutationObserver for light-DOM children — re-establishes the visual selection
+  // when consumers swap option children (external-search refresh pattern).
+  private _childObserver: MutationObserver | null = null
+
   constructor() {
     super() // TyComponent handles attachInternals() and attachShadow()
 
@@ -299,6 +303,13 @@ export class TyDropdown extends TyComponent<DropdownState> {
    */
   protected onConnect(): void {
     this.initializeState()
+
+    // Observe light-DOM children so we can re-establish the visual selection
+    // when consumers replace options (typical external-search pattern).
+    // redisplaySelected() is idempotent — bails fast when already in sync,
+    // so spurious firings caused by our own clone management are no-ops.
+    this._childObserver = new MutationObserver(() => this.redisplaySelected())
+    this._childObserver.observe(this, { childList: true })
   }
 
   /**
@@ -322,6 +333,43 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
     // Cleanup custom scrollbar
     this._destroyOptionsScrollbar()
+
+    // Disconnect children observer
+    if (this._childObserver) {
+      this._childObserver.disconnect()
+      this._childObserver = null
+    }
+  }
+
+  /**
+   * Re-establish the visual selection (selected attribute + slot clone) for the
+   * current value, when the matching option exists in children but isn't yet
+   * marked. Called from the children MutationObserver — covers the case where
+   * a consumer swaps options dynamically (external-search refresh) and wipes
+   * out the previous selection's marker + clone in the process.
+   *
+   * Idempotent — bails when nothing to do, so it's safe to call from the
+   * MutationObserver callback even when the trigger was our own clone work.
+   */
+  private redisplaySelected(): void {
+    const currentValue = this._state.currentValue
+    if (!currentValue) return
+
+    const options = this.getOptions()
+    const matching = options.find(opt => this.getOptionData(opt).value === currentValue)
+
+    // Already correctly displayed — nothing to do
+    if (!matching || matching.hasAttribute('selected')) return
+
+    // Re-mark and re-clone WITHOUT firing change (we're recovering display state,
+    // not making a new selection)
+    this.clearSelection()
+    const clone = matching.cloneNode(true) as HTMLElement
+    clone.setAttribute('slot', 'selected')
+    clone.setAttribute('cloned', 'true')
+    matching.parentNode!.appendChild(clone)
+    matching.setAttribute('selected', '')
+    this.updateSelectionDisplay()
   }
 
   /**

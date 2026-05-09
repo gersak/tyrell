@@ -468,7 +468,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
    [:ty-button {:flavor \"primary\"} \"Save\"]])"
       :snippet-lang "clojure"
       :cta "Read Replicant guide"
-      :on-click #(js/window.open "https://github.com/gersak/tyrell/blob/master/guides/clj/REPLICANT_TY_GUIDE.md" "_blank")})]])
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/clj/REPLICANT_TY_GUIDE.md" "_blank")})]])
 
 ;; =============================================================================
 ;; Section 5 — React-libs deep-dive (full-width hero card with live preview)

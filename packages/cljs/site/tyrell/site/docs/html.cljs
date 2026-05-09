@@ -1,4 +1,4 @@
-(ns tyrell.site.docs.htmx
+(ns tyrell.site.docs.html
   "HTML / Server-side guide — substrate for HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP."
   (:require [tyrell.router :as router]
             [tyrell.site.docs.common :as common]))
@@ -342,7 +342,9 @@
   Save
 </ty-button>
 <div id=\"result\"></div>"
-      :snippet-lang "html"})
+      :snippet-lang "html"
+      :cta "Open HTMX guide"
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/js/HTMX_TY_GUIDE.md" "_blank")})
 
     (compact-stack-card
      {:eyebrow "Reactive SSE"
@@ -357,7 +359,9 @@
   </ty-icon>
   Save
 </ty-button>"
-      :snippet-lang "html"})
+      :snippet-lang "html"
+      :cta "Open Datastar guide"
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/DATASTAR_TY_GUIDE.md" "_blank")})
 
     (compact-stack-card
      {:eyebrow "Python"
@@ -375,10 +379,12 @@
   </ty-input>
   <ty-button type=\"submit\" flavor=\"primary\">Send</ty-button>
 </form>"
-      :snippet-lang "html"})
+      :snippet-lang "html"
+      :cta "Open Flask example"
+      :on-click #(js/window.open "https://github.com/gersak/ty/tree/master/examples/htmx-flask" "_blank")})
 
     (compact-stack-card
-     {:eyebrow "Ruby"
+     {:eyebrow "Ruby · Elixir · PHP"
       :icon "code"
       :title "Rails · ERB · Phoenix · PHP"
       :tagline ["The pattern is the same shape across every server-side template engine: "
@@ -390,7 +396,9 @@
   </ty-icon>
   Save
 </ty-button>"
-      :snippet-lang "html"})]])
+      :snippet-lang "html"
+      :cta "Open agent instructions"
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/AGENT_INSTRUCTIONS.md" "_blank")})]])
 
 ;; =============================================================================
 ;; Section 5 — Slot-mode deep-dive (full-width hero card with live preview)
@@ -539,7 +547,7 @@
    [:div.flex.items-center.gap-2.mb-2
     [:ty-icon.ty-text-accent {:name "alert-triangle"
                               :size "sm"}]
-    [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Three things to know"]]
+    [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Two things to know"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
     "Each one bites exactly once."]
 
@@ -548,10 +556,13 @@
      {:eyebrow "Form association"
       :icon "form-input"
       :title "Posts like a native input"
-      :body ["Add " (c "name=") " to " (c "<ty-input>") ", "
-             (c "<ty-checkbox>") ", " (c "<ty-radio-group>") ", or "
-             (c "<ty-date-picker>") " — they participate in form submission "
-             "exactly like " (c "<input>") " does. No JS required."]
+      :body ["Add " (c "name=") " to any form-associated component — "
+             (c "<ty-input>") ", " (c "<ty-textarea>") ", "
+             (c "<ty-checkbox>") ", " (c "<ty-switch>") ", "
+             (c "<ty-radio-group>") ", " (c "<ty-dropdown>") ", "
+             (c "<ty-multiselect>") ", " (c "<ty-date-picker>") ", "
+             (c "<ty-file-upload>") " — and it participates in form submission "
+             "exactly like " (c "<input>") ". No JS required."]
       :code "<form method=\"POST\" action=\"/transfer\">
   <ty-input name=\"to\" label=\"Recipient\"></ty-input>
   <ty-input name=\"amount\" label=\"Amount\"></ty-input>
@@ -573,8 +584,8 @@ def transfer():
       :body ["Some icon libraries ship SVG strings with a leading "
              (c "<?xml version='1.0'?>")
              " — valid in standalone " (c ".svg") " files, but "
-             (fw "invalid inside HTML") ". Strip it before slotting. "
-             "Most server-side templates do this automatically when you " (c "{% include %}") " a file."]
+             (fw "invalid inside HTML") ". Wrap your icon-loading helper to strip the prolog "
+             "before slotting — once, in one place."]
       :code "# Python helper
 def inline_svg(path):
     txt = open(f'static/icons/{path}').read()
@@ -584,52 +595,7 @@ def inline_svg(path):
 
 # Jinja filter usage
 {{ inline_svg('save.svg') | safe }}"
-      :code-lang "python"})
-
-    (gotcha-card
-     {:eyebrow "HTMX swaps"
-      :icon "shuffle"
-      :title "Components survive swap automatically"
-      :body ["Components hydrate when they enter the DOM, regardless of how they got there — "
-             "initial render, " (c "hx-swap") ", " (c "hx-target") ", or "
-             "Datastar's " (c "@get") "/" (c "@post") ". Slotted SVG re-renders on each morph because "
-             "it's part of the morph payload."]
-      :code "<!-- Server returns this fragment on swap -->
-<div id=\"result\">
-  <ty-icon size=\"xl\" class=\"ty-text-success\">
-    {% include 'icons/check.svg' %}
-  </ty-icon>
-  <p class=\"ty-text-success\">Saved</p>
-</div>
-
-<!-- Triggering swap from anywhere -->
-<ty-button hx-post=\"/save\" hx-target=\"#result\">
-  Save
-</ty-button>"
-      :code-lang "html"})
-
-    (gotcha-card
-     {:eyebrow "Load order"
-      :icon "alert-triangle"
-      :title "CSS first, JS module is fine async"
-      :body ["The CSS link goes in " (c "<head>")
-             " to prevent a flash of unstyled content. The JS module is "
-             (c "type=\"module\"") " — naturally deferred — so it can sit anywhere. "
-             "If you also use HTMX or Datastar, their order relative to "
-             (c "tyrell.js") " doesn't matter."]
-      :code "<head>
-  <!-- 1. Tyrell CSS — load first to avoid FOUC -->
-  <link rel=\"stylesheet\"
-        href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
-
-  <!-- 2. Components (deferred by type=module) -->
-  <script type=\"module\"
-          src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>
-
-  <!-- 3. HTMX or Datastar — independent of tyrell -->
-  <script src=\"https://unpkg.com/htmx.org@2\"></script>
-</head>"
-      :code-lang "html"})]])
+      :code-lang "python"})]])
 
 ;; =============================================================================
 ;; Section 7 — Bundle size mental model

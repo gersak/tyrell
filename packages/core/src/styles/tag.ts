@@ -40,7 +40,7 @@ export const tagStyles = `
   /* Colors via custom properties — override on :host for full control */
   background: var(--tag-bg, transparent);
   color: var(--tag-color, var(--ty-text));
-  border: 1px solid;jk
+  border: 1px solid;
   border-color: var(--tag-border-color, var(--ty-border));
 }
 
@@ -325,17 +325,6 @@ export const tagStyles = `
 :host([flavor="warning+"]) .tag-container[tabindex]:focus,
 :host([flavor="warning-"]) .tag-container[tabindex]:focus {
   box-shadow: 0 0 0 3px var(--ty-color-warning-faint);
-}
-
-/* ----- INFO (kept for back-compat — not in built-in Flavor union) ----- */
-:host([flavor="info"]) {
-  --tag-bg: var(--ty-bg-info);
-  --tag-color: var(--ty-color-info-strong);
-  --tag-border-color: var(--ty-border-info);
-}
-
-:host([flavor="info"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-info-mild);
 }
 
 :host([flavor="info"]) .tag-container[tabindex]:focus {

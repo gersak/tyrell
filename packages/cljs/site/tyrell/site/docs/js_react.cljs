@@ -344,7 +344,7 @@ import 'tyrell-components'"
         src=\"…/tyrell.js\"></script>"
       :snippet-lang "html"
       :cta "Self-hostable too"
-      :on-click #(router/navigate! :tyrell.site.docs/htmx)})]
+      :on-click #(router/navigate! :tyrell.site.docs/html)})]
 
    [:div {:id "subpath"}
     (subpath-callout)]])

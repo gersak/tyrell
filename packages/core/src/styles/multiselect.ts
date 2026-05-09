@@ -579,42 +579,23 @@ export const multiselectStyles = `
   border-color: var(--mobile-border-color);
 }
 
-/* ===== SECTION HEADERS - Fixed 48px height ===== */
+/* ===== SECTION HEADERS - Labels, not buttons ===== */
 
 .dropdown-mode-mobile .section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 48px;
+  height: 36px;
   flex-shrink: 0;
   padding: 0 16px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ty-text);
-  background: var(--ty-bg-neutral-soft);
-  border-bottom: 1px solid var(--ty-border-faint);
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.3s ease;
-}
-
-/* Expanded section is mild (already viewing it), collapsed is normal (draws attention) */
-.dropdown-mode-mobile [data-expanded="false"] .section-header {
-  color: var(--ty-text);
-}
-
-.dropdown-mode-mobile [data-expanded="true"] .section-header {
+  letter-spacing: 0.06em;
   color: var(--ty-text-mild);
-}
-
-.dropdown-mode-mobile .section-header:hover {
-  background: var(--ty-bg-neutral);
-}
-
-.dropdown-mode-mobile .section-header:active {
-  background: var(--ty-bg-neutral-mild);
+  background: transparent;
+  cursor: default;
+  user-select: none;
 }
 
 .dropdown-mode-mobile .section-header .section-title {
@@ -622,99 +603,60 @@ export const multiselectStyles = `
 }
 
 .dropdown-mode-mobile .section-header .section-count {
-  font-weight: 400;
-  opacity: 0.7;
+  font-weight: 500;
+  color: var(--ty-text-faint);
   margin-left: 0.25rem;
 }
 
-/* Chevron indicator (only for selected section) */
-.dropdown-mode-mobile .section-header .section-chevron {
-  width: 16px;
-  height: 16px;
-  color: var(--ty-text-faint);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dropdown-mode-mobile .section-header .section-chevron svg {
-  width: 100%;
-  height: 100%;
-}
-
-/* Rotate chevron when expanded */
-.dropdown-mode-mobile .mobile-selected-section[data-expanded="true"] .section-chevron {
-  transform: rotate(180deg);
-}
-
-/* Available section header - not clickable */
-.dropdown-mode-mobile .mobile-available-section .section-header {
-  cursor: default;
-}
-
-.dropdown-mode-mobile .mobile-available-section .section-header:hover {
-  background: var(--ty-bg-neutral-soft);
-}
-
-/* ===== SELECTED SECTION - Expandable with smooth transition ===== */
+/* ===== SELECTED STRIP - pinned, capped height, collapses when empty ===== */
 
 .dropdown-mode-mobile .mobile-selected-section {
   display: flex;
   flex-direction: column;
-  background: var(--ty-surface-elevated);
-  border-bottom: 2px solid var(--ty-border);
+  background: var(--ty-input-bg);
   overflow: hidden;
-  transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 0 0 auto;
+  max-height: 40%;
+  transition: max-height 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Collapsed state - just header (48px) */
-.dropdown-mode-mobile .mobile-selected-section[data-expanded="false"] {
-  max-height: 48px;
-  flex: 0 0 48px;
-}
-
-/* Expanded state - takes remaining space */
-.dropdown-mode-mobile .mobile-selected-section[data-expanded="true"] {
-  max-height: 1000px; /* Large enough for content */
-  flex: 1;
+/* Empty: collapse to header only */
+.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] {
+  max-height: 36px;
+  flex: 0 0 36px;
 }
 
 .dropdown-mode-mobile .mobile-selected-section .section-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem 1rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-content: flex-start;
+  /* Soft fade at bottom edge — hints at scrollable overflow */
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
 }
 
-/* ===== AVAILABLE SECTION ===== */
+/* ===== AVAILABLE LIST - takes remaining space ===== */
 
 .dropdown-mode-mobile .mobile-available-section {
   display: flex;
   flex-direction: column;
-  background: var(--ty-surface-floating);
+  background: var(--ty-input-bg);
   overflow: hidden;
-  transition: max-height 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Collapsed state - just header (48px) */
-.dropdown-mode-mobile .mobile-available-section[data-expanded="false"] {
-  max-height: 48px;
-  flex: 0 0 48px;
-}
-
-/* Expanded state - takes remaining space */
-.dropdown-mode-mobile .mobile-available-section[data-expanded="true"] {
-  max-height: 1000px; /* Large enough for content */
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .dropdown-mode-mobile .mobile-available-section .section-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.75rem 1rem;
   display: flex;
   flex-wrap: wrap;
@@ -722,7 +664,9 @@ export const multiselectStyles = `
   align-content: flex-start;
 }
 
-/* ===== EMPTY STATES ===== */
+/* ===== EMPTY STATES =====
+   Selected strip collapses (no text needed).
+   Available shows the empty message only when there are zero tags total. */
 
 .dropdown-mode-mobile .empty-state {
   display: none;
@@ -736,14 +680,11 @@ export const multiselectStyles = `
   font-style: italic;
 }
 
-/* Show empty state when no tags present */
-.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] .empty-state,
 .dropdown-mode-mobile .mobile-available-section[data-empty="true"] .empty-state {
   display: block;
 }
 
-/* Hide slot content when empty */
-.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] slot,
+.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] .section-content,
 .dropdown-mode-mobile .mobile-available-section[data-empty="true"] slot {
   display: none;
 }
@@ -755,19 +696,35 @@ export const multiselectStyles = `
   user-select: none;
   transition: transform 0.1s ease;
   margin: 2px 0; /* Vertical spacing like dropdown options */
+  /* Fade + scale entry — replays on each (re)insertion when a tag moves
+     between selected and available slots */
+  animation: ty-multiselect-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dropdown-mode-mobile .section-content ::slotted(ty-tag:hover) {
-  transform: scale(1.02);
+@media (hover: hover) {
+  .dropdown-mode-mobile .section-content ::slotted(ty-tag:hover) {
+    transform: scale(1.02);
+  }
 }
 
 .dropdown-mode-mobile .section-content ::slotted(ty-tag:active) {
-  transform: scale(0.98);
+  transform: scale(0.96);
 }
 
 /* Dimmed appearance for hidden filtered tags */
 .dropdown-mode-mobile .section-content ::slotted(ty-tag[hidden]) {
   display: none !important;
+}
+
+@keyframes ty-multiselect-tag-enter {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-mode-mobile .section-content ::slotted(ty-tag) {
+    animation: none;
+  }
 }
 
 /* ==================== LOADING STATE ====================

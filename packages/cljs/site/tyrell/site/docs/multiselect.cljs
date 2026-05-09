@@ -260,7 +260,7 @@ document.getElementById('ms').addEventListener('change', (e) => {
                 placeholder=\"Type to search…\">
 </ty-multiselect>")]
 
-        ;; Interactive demo
+                   ;; Interactive demo
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem" :font-weight "500"}} "Interactive — type to simulate a debounced fetch"]
                     (demo-area
@@ -270,12 +270,20 @@ document.getElementById('ms').addEventListener('change', (e) => {
                                        :on {:search (fn [^js e]
                                                       (when-let [ms (.closest (.-target e) "ty-multiselect")]
                                                         (let [q (.. e -detail -query)
+                                                              current-str (or (.-value ms) "")
+                                                              currents (if (empty? current-str) #{} (set (.split current-str ",")))
                                                               fruits ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
+                                                              matches (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))) fruits)
+                                                              ;; Always keep currently-selected tags in the rendered list,
+                                                              ;; otherwise the chips fall back to plain text/placeholder.
+                                                              to-render (distinct
+                                                                         (concat
+                                                                          (filter (fn [n] (contains? currents (.toLowerCase n))) fruits)
+                                                                          matches))
                                                               render! (fn []
                                                                         (set! (.-innerHTML ms)
-                                                                              (->> fruits
-                                                                                   (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
-                                                                                   (map (fn [n] (str "<ty-tag value=\"" n "\">" n "</ty-tag>")))
+                                                                              (->> to-render
+                                                                                   (map (fn [n] (str "<ty-tag value=\"" (.toLowerCase n) "\">" n "</ty-tag>")))
                                                                                    (apply str))))]
                                                           (if (= q "")
                                                             ;; Empty query — popup opened or search cleared. Instant reset.
@@ -288,22 +296,25 @@ document.getElementById('ms').addEventListener('change', (e) => {
                       [:ty-tag {:value "apple"} "Apple"]
                       [:ty-tag {:value "banana"} "Banana"]
                       [:ty-tag {:value "cherry"} "Cherry"]])
-                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''
+                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''.
+// IMPORTANT: always include currently-selected tags in your rendered list,
+// otherwise the chips fall back to plain text (the ty-tag element holds the
+// rich display content — Tyrell tracks values, not display text).
 const ms = document.querySelector('ty-multiselect');
+
 ms.addEventListener('search', async (e) => {
   const q = e.detail.query;
+  const currents = ms.value ? ms.value.split(',') : [];
 
   if (q === '') {
     // Popup just opened or search cleared — load default list, no spinner
-    ms.innerHTML = renderTags(await fetchDefaultList());
+    ms.innerHTML = renderTags(preserveSelected(await fetchDefaultList(), currents));
     return;
   }
 
   ms.loading = true;
   const results = await fetch(`/api/tags?q=${q}`).then(r => r.json());
-  ms.innerHTML = results.map(r =>
-    `<ty-tag value=\"${r.id}\">${r.name}</ty-tag>`
-  ).join('');
+  ms.innerHTML = renderTags(preserveSelected(results, currents));
   ms.loading = false;
 });" "javascript")]
 
@@ -345,6 +356,11 @@ ms.addEventListener('search', async (e) => {
                    [:div.ty-elevated.rounded.p-3 {:style {:font-size "0.8125rem"}}
                     [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
                     [:ul.list-disc.list-inside.ty-text-.space-y-1
+                     [:li [:strong "Always preserve currently-selected tags in your rendered list."] " The "
+                      [:code "ty-tag"] " element carries the chip's display content — Tyrell tracks values as the source of truth, but the visible chip text/styling comes from the matching tag. If you remove a selected tag from the children, that chip falls back to plain text."]
+                     [:li "Each popup-open automatically fires a " [:code "search"] " event with empty query (when "
+                      [:code "external-search"] " is set), so consumers have a clean hook to refresh the list. Listen for "
+                      [:code "open"] " / " [:code "close"] " events for full lifecycle control."]
                      [:li "On mobile the spinner appears inside the available-options section of the bottom sheet — selected chips above stay visible."]
                      [:li "Search input stays editable so users can keep refining the query."]
                      [:li "Same global registry as " [:code "ty-button"] " — set the spinner SVG once with " [:code "setLoaderSvg(...)"] " or " [:code "window.tyLoader.set(...)"] " to theme every loader in the app."]

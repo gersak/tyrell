@@ -308,12 +308,20 @@ document.getElementById('dd').addEventListener('search', async (e) => {
                                     :on {:search (fn [^js e]
                                                    (when-let [dd (.closest (.-target e) "ty-dropdown")]
                                                      (let [q (.. e -detail -query)
+                                                           current (.-value dd)
                                                            fruits ["Apple" "Banana" "Cherry" "Mango" "Orange" "Pear" "Pineapple" "Strawberry"]
+                                                           matches (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))) fruits)
+                                                           ;; Always keep the currently-selected option in the rendered list,
+                                                           ;; otherwise the stub display falls back to placeholder.
+                                                           to-render (distinct
+                                                                       (concat
+                                                                         (when (and current (not= current ""))
+                                                                           (filter (fn [n] (= (.toLowerCase n) current)) fruits))
+                                                                         matches))
                                                            render! (fn []
                                                                      (set! (.-innerHTML dd)
-                                                                           (->> fruits
-                                                                                (filter (fn [n] (.includes (.toLowerCase n) (.toLowerCase q))))
-                                                                                (map (fn [n] (str "<ty-option value=\"" n "\">" n "</ty-option>")))
+                                                                           (->> to-render
+                                                                                (map (fn [n] (str "<ty-option value=\"" (.toLowerCase n) "\">" n "</ty-option>")))
                                                                                 (apply str))))]
                                                        (if (= q "")
                                                          ;; Empty query (popup just opened, or search cleared) — instant reset
@@ -326,20 +334,25 @@ document.getElementById('dd').addEventListener('search', async (e) => {
                       [:ty-option {:value "apple"} "Apple"]
                       [:ty-option {:value "banana"} "Banana"]
                       [:ty-option {:value "cherry"} "Cherry"]])
-                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''
+                    (code-block "// Short-circuit the empty-query case — popup-open auto-fires search with q=''.
+// IMPORTANT: always include the currently-selected option in your rendered list,
+// otherwise the stub display falls back to the placeholder (the option element
+// holds the rich display content — Tyrell tracks value, not display text).
 const dd = document.querySelector('ty-dropdown');
+
 dd.addEventListener('search', async (e) => {
   const q = e.detail.query;
+  const current = dd.value;
 
   if (q === '') {
     // Popup just opened or search cleared — load default list, no spinner
-    dd.innerHTML = renderOptions(await fetchDefaultList());
+    dd.innerHTML = renderOptions(preserveSelected(await fetchDefaultList(), current));
     return;
   }
 
   dd.loading = true;
   const results = await fetch(`/api/search?q=${q}`).then(r => r.json());
-  dd.innerHTML = renderOptions(results);
+  dd.innerHTML = renderOptions(preserveSelected(results, current));
   dd.loading = false;
 });" "javascript")]
 
@@ -381,6 +394,12 @@ dd.addEventListener('search', async (e) => {
                    [:div.ty-elevated.rounded.p-3 {:style {:font-size "0.8125rem"}}
                     [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
                     [:ul.list-disc.list-inside.ty-text-.space-y-1
+                     [:li [:strong "Always preserve the currently-selected option in your rendered list."] " The "
+                      [:code "ty-option"] " element carries the rich display content — Tyrell tracks "
+                      [:code "value"] " as the source of truth, but the visible text/HTML for the stub comes from the matching option. If you remove the selected option, the stub falls back to the placeholder."]
+                     [:li "Each popup-open automatically fires a " [:code "search"] " event with empty query (when "
+                      [:code "external-search"] " is set), so consumers have a clean hook to refresh the list. Listen for "
+                      [:code "open"] " / " [:code "close"] " events for full lifecycle control."]
                      [:li "Search input stays editable while loading — users can keep typing."]
                      [:li "The spinner overlay sits inside the popup; the dropdown stub itself is unaffected."]
                      [:li "Same global registry as " [:code "ty-button"] " — set the spinner SVG once with " [:code "setLoaderSvg(...)"] " or " [:code "window.tyLoader.set(...)"] " to theme every loader in the app."]

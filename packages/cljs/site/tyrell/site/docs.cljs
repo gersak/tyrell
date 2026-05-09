@@ -13,7 +13,7 @@
    [tyrell.site.docs.file-upload :as file-upload-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]
    [tyrell.site.docs.dropdown :as dropdown-docs]
-   [tyrell.site.docs.htmx :as htmx-docs]
+   [tyrell.site.docs.html :as html-docs]
    [tyrell.site.docs.icon :as icon-docs]
    [tyrell.site.docs.input :as input-docs]
    [tyrell.site.docs.js-react :as js-react-docs]
@@ -729,13 +729,13 @@
     :description "Web components and CLJS-native infrastructure for every CLJS framework"
     :tags ["clojure" "clojurescript" "reagent" "re-frame" "uix" "helix" "replicant"]
     :view clojurescript-docs/view}
-   {:id :tyrell.site.docs/htmx
-    :segment "htmx"
+   {:id :tyrell.site.docs/html
+    :segment "html"
     :name "HTML / Server-side"
     :icon "server"
     :description "HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP — render HTML on the server, hydrate as web components"
     :tags ["htmx" "datastar" "server" "html" "ssr" "backend" "flask" "django" "rails" "phoenix" "php" "laravel"]
-    :view htmx-docs/view}
+    :view html-docs/view}
    {:id :tyrell.site.docs/css
     :segment "css"
     :name "CSS System"
