@@ -1,0 +1,11 @@
+# Compiled output
+public/js/
+public/css/tyrell.css
+
+# shadow-cljs
+.shadow-cljs/
+.cpcache/
+target/
+
+# Dependencies
+node_modules/

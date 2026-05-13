@@ -125,7 +125,6 @@
   (when-let [el (.getElementById js/document anchor)]
     (.scrollIntoView el #js {:behavior "smooth" :block "start"})))
 
-
 (defn toc-item [{:keys [anchor label route-id category?]}]
   (if category?
     [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-accent-.transition-colors.cursor-pointer.hover:ty-text-accent
@@ -135,7 +134,7 @@
       [:button.block.w-full.text-left.text-xs.py-1.pl-8.pr-2.transition-colors.cursor-pointer
        {:class (if active?
                  ["ty-text++" "font-medium"]
-                 ["ty-text--" "hover:ty-text++"])
+                 ["ty-text-" "hover:ty-text++"])
         :on {:click (fn []
                       (if route-id
                         (router/navigate! route-id)
@@ -145,7 +144,7 @@
 (defn right-sidebar [{:keys [title items]}]
   [:div.border-l.ty-border.pt-8.pb-8
    (when title
-     [:p.text-xs.uppercase.tracking-widest.ty-text--.pl-4.mb-3
+     [:p.text-xs.uppercase.tracking-widest.ty-text-.pl-4.mb-3
       title])
    [:div
     (for [item items]
@@ -279,7 +278,7 @@
                 (and featured? active?) ["ty-text-accent+" "font-semibold"]
                 featured?               ["ty-text" "hover:ty-text-accent"]
                 active?                 ["ty-text+" "font-medium"]
-                :else                   ["ty-text--" "font-light" "hover:ty-text+"])
+                :else                   ["ty-text-" "font-light" "hover:ty-text+"])
               (when indented? ["pl-7" "text-sm"]))
       :style (cond-> {:letter-spacing (if featured? "normal" "0.02em")}
                active? (assoc :background "linear-gradient(to right, var(--ty-bg-accent) 2px, transparent 40px)"
@@ -375,7 +374,7 @@
            [:ty-icon {:name icon
                       :size "xs"
                       :class ["transition-transform" "duration-150"
-                              (if is-open? "ty-text-accent" "ty-text--")]}]
+                              (if is-open? "ty-text-accent" "ty-text-")]}]
            [:h3.text-xs.font-medium.tracking-wide
             {:class (if is-open? "ty-text" "ty-text-")}
             (str/lower-case title)]]]
@@ -1094,8 +1093,7 @@
   (add-watch state ::render
              (fn [_ _ _ _] (render-app!)))
 
-
-  ;; Watch window size changes for responsive layout (fixes sidebar toggle)
+;; Watch window size changes for responsive layout (fixes sidebar toggle)
   (add-watch layout/window-size ::window-resize
              (fn [_ _ _ _] (render-app!)))
 

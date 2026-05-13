@@ -1,0 +1,64 @@
+{:deps true
+ :nrepl {:port 7890}
+ :dev-http {3010 "public"}
+ :builds
+ {:dev
+  {:target      :browser
+   :output-dir  "public/js"
+   :asset-path  "/js"
+   :module-loader true
+   :modules
+   {:app-core
+    {:entries [app.core
+               app.lazy.reagent-counter
+               app.lazy.uix-counter
+               app.lazy.replicant-counter
+               app.lazy.shared-reagent
+               app.lazy.shared-uix]
+     :init-fn app.core/init}
+    :app-reagent
+    {:entries    [app.components.reagent-counter]
+     :depends-on #{:app-core}}
+    :app-uix
+    {:entries    [app.components.uix-counter]
+     :depends-on #{:app-core}}
+    :app-replicant
+    {:entries    [app.components.replicant-counter]
+     :depends-on #{:app-core}}
+    :app-mixed
+    {:entries    [app.state
+                  app.components.shared-reagent
+                  app.components.shared-uix]
+     :depends-on #{:app-reagent :app-uix}}}}
+
+  :release
+  {:target      :browser
+   :output-dir  "public/js"
+   :asset-path  "/js"
+   :module-loader true
+   :modules
+   {:app-core
+    {:entries [app.core
+               app.lazy.reagent-counter
+               app.lazy.uix-counter
+               app.lazy.replicant-counter
+               app.lazy.shared-reagent
+               app.lazy.shared-uix]
+     :init-fn app.core/init}
+    :app-reagent
+    {:entries    [app.components.reagent-counter]
+     :depends-on #{:app-core}}
+    :app-uix
+    {:entries    [app.components.uix-counter]
+     :depends-on #{:app-core}}
+    :app-replicant
+    {:entries    [app.components.replicant-counter]
+     :depends-on #{:app-core}}
+    :app-mixed
+    {:entries    [app.state
+                  app.components.shared-reagent
+                  app.components.shared-uix]
+     :depends-on #{:app-reagent :app-uix}}}
+   :compiler-options
+   {:optimizations :advanced
+    :infer-externs :auto}}}}

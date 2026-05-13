@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Framework Demo — Tyrell</title>
+  <link rel="stylesheet" href="/css/tyrell.css">
+  <style>
+    body { margin: 0; min-height: 100vh; font-family: "Segoe UI", system-ui, sans-serif; }
+
+    .page { padding: 3rem 2rem; max-width: 960px; margin: 0 auto; }
+
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; letter-spacing: -0.5px; }
+    .subtitle { margin-bottom: 2.5rem; font-size: 0.95rem; }
+
+    /* Spawn buttons */
+    .spawn-row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .spawn-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid currentColor;
+      background: transparent;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .spawn-btn:hover { background: rgba(128,128,128,0.1); }
+    .spawn-btn.reagent   { color: #f97316; }
+    .spawn-btn.uix       { color: #a78bfa; }
+    .spawn-btn.replicant { color: #34d399; }
+    .spawn-btn.mixed     { color: #e879f9; }
+    .spawn-btn .icon { font-size: 1rem; }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    /* Counter grid */
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      min-height: 3rem;
+    }
+
+    .card {
+      border-radius: 12px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      min-width: 200px;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid currentColor;
+      align-self: flex-start;
+    }
+    .badge.reagent   { color: #f97316; }
+    .badge.uix       { color: #a78bfa; }
+    .badge.replicant { color: #34d399; }
+    .badge.mixed     { color: #e879f9; }
+
+    /* Module log */
+    .module-log {
+      margin-top: 2.5rem;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+    }
+    .log-title {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .log-entries { display: flex; flex-direction: column; gap: 0; font-size: 0.8rem; font-family: monospace; }
+    .log-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.4rem 0;
+      border-bottom: 1px solid rgba(128,128,128,0.1);
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .dot.core      { background: #60a5fa; }
+    .dot.reagent   { background: #f97316; }
+    .dot.uix       { background: #a78bfa; }
+    .dot.replicant { background: #34d399; }
+    .log-name { flex: 1; }
+    .log-status { color: var(--ty-text-weak, #888); font-style: italic; }
+    .log-time   { color: var(--ty-text-weak, #888); }
+  </style>
+</head>
+<body class="ty-canvas">
+  <div class="page">
+    <h1 class="ty-text++">Three Frameworks, One Page</h1>
+    <p class="subtitle ty-text-">
+      Click a button to spawn a counter. Each framework's module loads on first use —
+      subsequent spawns of the same type are instant (module already cached).
+    </p>
+
+    <div class="spawn-row">
+      <button class="spawn-btn reagent" onclick="spawn('reagent')">
+        <span class="icon">+</span> Reagent
+      </button>
+      <button class="spawn-btn uix" onclick="spawn('uix')">
+        <span class="icon">+</span> UIx
+      </button>
+      <button class="spawn-btn replicant" onclick="spawn('replicant')">
+        <span class="icon">+</span> Replicant
+      </button>
+    </div>
+
+    <div class="section-label ty-text-">Shared state — one r/atom, two frameworks</div>
+    <div class="spawn-row">
+      <button class="spawn-btn mixed" onclick="spawnShared('reagent')">
+        <span class="icon">+</span> Reagent view
+      </button>
+      <button class="spawn-btn mixed" onclick="spawnShared('uix')">
+        <span class="icon">+</span> UIx view
+      </button>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <div class="module-log ty-elevated">
+      <div class="log-title ty-text-">Module load log</div>
+      <div class="log-entries">
+        <div class="log-entry">
+          <span class="dot core"></span>
+          <span class="log-name ty-text">app-core</span>
+          <span class="log-time ty-text-" id="core-time">loaded</span>
+        </div>
+        <div class="log-entry">
+          <span class="dot reagent"></span>
+          <span class="log-name ty-text">app-reagent</span>
+          <span class="log-status" id="reagent-status">not loaded</span>
+        </div>
+        <div class="log-entry">
+          <span class="dot uix"></span>
+          <span class="log-name ty-text">app-uix</span>
+          <span class="log-status" id="uix-status">not loaded</span>
+        </div>
+        <div class="log-entry">
+          <span class="dot replicant"></span>
+          <span class="log-name ty-text">app-replicant</span>
+          <span class="log-status" id="replicant-status">not loaded</span>
+        </div>
+        <div class="log-entry">
+          <span class="dot" style="background:#e879f9"></span>
+          <span class="log-name ty-text">app-mixed</span>
+          <span class="log-status" id="mixed-status">not loaded</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app-core.js"></script>
+  <script>
+    var counts = { reagent: 5, uix: 10, replicant: 0 };
+
+    function spawn(type) {
+      var grid  = document.getElementById('grid');
+      var card  = document.createElement('div');
+      card.className = 'card ty-elevated';
+
+      var badge = document.createElement('span');
+      badge.className = 'badge ' + type;
+      badge.textContent = type;
+
+      var el = document.createElement(type + '-counter');
+      el.setAttribute('initial', counts[type]);
+      counts[type]++;
+
+      card.appendChild(badge);
+      card.appendChild(el);
+      grid.appendChild(card);
+    }
+
+    function spawnShared(framework) {
+      var grid  = document.getElementById('grid');
+      var card  = document.createElement('div');
+      card.className = 'card ty-elevated';
+
+      var badge = document.createElement('span');
+      badge.className = 'badge mixed';
+      badge.textContent = 'shared / ' + framework;
+
+      var el = document.createElement('shared-' + framework);
+
+      card.appendChild(badge);
+      card.appendChild(el);
+      grid.appendChild(card);
+    }
+
+    document.addEventListener('module-loaded', function(e) {
+      var key    = e.detail.module.replace('app-', '');
+      var ms     = e.detail.ms;
+      var status = document.getElementById(key + '-status');
+      if (status) {
+        status.className   = 'log-time ty-text-';
+        status.textContent = 'loaded in ' + ms + 'ms';
+      }
+    });
+  </script>
+</body>
+</html>
