@@ -1,12 +1,12 @@
-# JavaScript + Ty Guide
+# JavaScript + Tyrell Guide
 
-Use Ty web components from vanilla JavaScript and any bundler. This guide covers distribution, the side-effects model, subpath imports, icon tree-shaking, code splitting, and the SSR boundary — the substrate every framework integration sits on.
+Use Tyrell web components from vanilla JavaScript and any bundler. This guide covers distribution, the side-effects model, subpath imports, icon tree-shaking, code splitting, and the SSR boundary — the substrate every framework integration sits on.
 
 For framework-specific patterns, see [REACT_TY_GUIDE.md](./REACT_TY_GUIDE.md), [VUE_TY_GUIDE.md](./VUE_TY_GUIDE.md), and [SVELTE_TY_GUIDE.md](./SVELTE_TY_GUIDE.md).
 
 ## Two distribution channels
 
-Ty ships through two channels — pick one based on your build setup, not both at once.
+Tyrell ships through two channels — pick one based on your build setup, not both at once.
 
 ### CDN — zero build
 
@@ -45,7 +45,7 @@ if (!customElements.get("ty-button")) {
 
 `customElements.define(...)` is a **side effect** — calling it makes `<ty-button>` work in the DOM. Importing the file triggers that side effect; once registered, the component class is rarely referenced from your code (you write `<ty-button>` in HTML or JSX, not `new TyButton()`).
 
-This matters because modern bundlers eliminate "unused" code aggressively. Ty's `package.json` declares the side-effectful files explicitly:
+This matters because modern bundlers eliminate "unused" code aggressively. Tyrell's `package.json` declares the side-effectful files explicitly:
 
 ```json
 "sideEffects": [
@@ -254,7 +254,7 @@ For Vue 3 inside Vite, see [VUE_TY_GUIDE.md](./VUE_TY_GUIDE.md).
 
 ### Webpack 5
 
-Honors `sideEffects` and subpath exports. If you've manually overridden `sideEffects: false` for the project, you need to allow Ty's modules:
+Honors `sideEffects` and subpath exports. If you've manually overridden `sideEffects: false` for the project, you need to allow Tyrell's modules:
 
 ```js
 // webpack.config.js
@@ -300,7 +300,7 @@ What you should **not** do is render `<ty-*>` tags on the server expecting them 
 
 - Accept the brief flash (acceptable for most apps), or
 - Wrap critical UI with a skeleton until `customElements.whenDefined()` resolves, or
-- Use Declarative Shadow DOM for SSR-friendly initial markup (advanced; not currently supported by Ty out of the box).
+- Use Declarative Shadow DOM for SSR-friendly initial markup (advanced; not currently supported by Tyrell out of the box).
 
 ## Bundle size — what to expect
 
@@ -365,7 +365,7 @@ Combined with route-level splits, only the route that renders the chart pays the
 
 ## Performance — startup ordering
 
-If you load Ty via NPM and have hundreds of `<ty-*>` elements in initial HTML:
+If you load Tyrell via NPM and have hundreds of `<ty-*>` elements in initial HTML:
 
 ```js
 // main.js — register first, paint second

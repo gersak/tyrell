@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Ty web components library will be documented in this file.
+All notable changes to the Tyrell web components library will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -133,7 +133,7 @@ Complete restructuring of all documentation into `guides/` folder.
   - Container-aware breakpoints (vs CSS media queries)
   - `with-window`, `with-container`, `with-resize-observer` macros
   - Breakpoint queries, responsive values, grid helpers, aspect ratio
-- **`guides/DATASTAR_TY_GUIDE.md`** - Datastar + Ty guide (moved from root)
+- **`guides/DATASTAR_TY_GUIDE.md`** - Datastar + Tyrell guide (moved from root)
 
 #### Changed
 - **All guides moved to `guides/`** with subdirectories:
@@ -224,7 +224,7 @@ Complete restructuring of all documentation into `guides/` folder.
 
 ### 🎉 Major Release - TypeScript Migration Complete
 
-This is a **major milestone release** that represents a complete rewrite of the Ty component library in TypeScript while maintaining the powerful ClojureScript infrastructure for advanced features.
+This is a **major milestone release** that represents a complete rewrite of the Tyrell component library in TypeScript while maintaining the powerful ClojureScript infrastructure for advanced features.
 
 ---
 
@@ -461,7 +461,7 @@ Some components now use **TyComponent base class** with unified property handlin
 ## 📚 Documentation Added
 
 - **`BUILDING_WITH_TYCOMPONENT.md`** - Comprehensive guide for building components with TyComponent base class
-- **`CSS_GUIDE.md`** - Ty CSS system usage guide (TY for colors, Tailwind for everything else)
+- **`CSS_GUIDE.md`** - Tyrell CSS system usage guide (Tyrell for colors, Tailwind for everything else)
 - **`TYPESCRIPT_DEV_GUIDE.md`** - Development workflow for TypeScript components
 - **`PROJECT_SUMMARY.md`** - Updated with TypeScript architecture details
 - **`packages/cljs/README.md`** - ClojureScript package documentation

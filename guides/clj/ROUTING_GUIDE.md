@@ -1,4 +1,4 @@
-# Ty Router — ClojureScript Routing Guide
+# Tyrell Router — ClojureScript Routing Guide
 
 The `tyrell.router` namespace provides client-side routing for any ClojureScript framework (Replicant, UIx, Reagent, etc.). It uses a zipper-based tree structure with browser history integration.
 

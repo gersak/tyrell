@@ -4,7 +4,7 @@
 
 ## Overview
 
-Ty uses shadow-cljs module system to split components into separate chunks:
+Tyrell uses shadow-cljs module system to split components into separate chunks:
 
 ```
 ty-lazy.js        (core + lightweight components)

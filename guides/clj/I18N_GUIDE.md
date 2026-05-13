@@ -1,4 +1,4 @@
-# Ty i18n — Internationalization Guide
+# Tyrell i18n — Internationalization Guide
 
 The `tyrell.i18n` namespaces provide internationalization for any ClojureScript framework. Protocol-based, leveraging the browser's native `Intl` API for number/date formatting.
 

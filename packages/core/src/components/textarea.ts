@@ -653,7 +653,7 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       container.className = 'textarea-container'
 
       const labelEl = document.createElement('label')
-      labelEl.className = 'textarea-label'
+      labelEl.className = 'ty-field-label'
       if (this.label) {
         labelEl.innerHTML = this.label +
           (this.required ? ` <span class="required-icon">${REQUIRED_ICON}</span>` : '')

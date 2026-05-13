@@ -1,6 +1,6 @@
-# Vue + Ty Guide
+# Vue + Tyrell Guide
 
-Use Ty web components in Vue 3 natively — no wrapper package needed. Vue 3 has first-class custom element support; one config line and `v-bind` / `v-model` / `@event` work as expected.
+Use Tyrell web components in Vue 3 natively — no wrapper package needed. Vue 3 has first-class custom element support; one config line and `v-bind` / `v-model` / `@event` work as expected.
 
 For installation, subpath imports, and the side-effects model, see [JAVASCRIPT_GUIDE.md](./JAVASCRIPT_GUIDE.md).
 
@@ -97,7 +97,7 @@ Three Vue idioms to remember:
 
 ## v-model
 
-Vue's `v-model` does not work out of the box on web components — Vue's default `v-model` expects `value` + `@input` (for native inputs). Ty inputs emit `change` events with `event.detail.value`.
+Vue's `v-model` does not work out of the box on web components — Vue's default `v-model` expects `value` + `@input` (for native inputs). Tyrell inputs emit `change` events with `event.detail.value`.
 
 Use the `:value` + `@change` pattern explicitly, or build a small `v-model` wrapper:
 
@@ -270,6 +270,337 @@ onMounted(async () => {
 </script>
 ```
 
+## Form controls
+
+### ty-textarea
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const bio = ref('')
+</script>
+
+<template>
+  <ty-textarea
+    label="Bio"
+    placeholder="Tell us about yourself..."
+    rows="4"
+    max-height="200px"
+    :value="bio"
+    @change="bio = $event.detail.value"
+  />
+</template>
+```
+
+Attrs: `rows`, `min-height`, `max-height`, `resize` (`none`|`both`|`horizontal`|`vertical`).
+
+### ty-checkbox and ty-switch
+
+Both are "just the control" primitives — wrap in `<label>` to make the text clickable:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const agreed = ref(false)
+const darkMode = ref(false)
+</script>
+
+<template>
+  <label class="flex items-center gap-2">
+    <ty-checkbox
+      :checked="agreed"
+      @change="agreed = $event.detail.checked"
+    />
+    I agree to the terms
+  </label>
+
+  <label class="flex items-center gap-2">
+    <ty-switch
+      :checked="darkMode"
+      @change="darkMode = $event.detail.checked"
+    />
+    Dark mode
+  </label>
+</template>
+```
+
+Event detail: `{ value, checked, formValue, originalEvent }`.
+
+### ty-radio-group / ty-radio
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const plan = ref('starter')
+const plans = [
+  { value: 'starter', label: 'Starter' },
+  { value: 'pro', label: 'Pro' },
+  { value: 'enterprise', label: 'Enterprise' },
+]
+</script>
+
+<template>
+  <ty-radio-group
+    label="Plan"
+    :value="plan"
+    @change="plan = $event.detail.value"
+  >
+    <label
+      v-for="p in plans"
+      :key="p.value"
+      class="flex items-center gap-2"
+    >
+      <ty-radio :value="p.value" />
+      {{ p.label }}
+    </label>
+  </ty-radio-group>
+</template>
+```
+
+Add `orientation="horizontal"` to `ty-radio-group` for a side-by-side layout.
+
+### ty-file-upload
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const files = ref([])
+</script>
+
+<template>
+  <ty-file-upload
+    label="Attachments"
+    accept="image/*,.pdf"
+    multiple
+    @change="files = $event.detail.files"
+  />
+  <p v-if="files.length">{{ files.length }} file(s) selected</p>
+</template>
+```
+
+Event detail: `{ value: File[], files: File[], names: string[] }`. Files appear in `FormData` under the `name` attribute automatically on form submit.
+
+---
+
+## Date picker and calendar
+
+### ty-date-picker
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const date = ref(null)
+</script>
+
+<template>
+  <ty-date-picker
+    label="Start Date"
+    placeholder="Select a date..."
+    :value="date"
+    @change="date = $event.detail.value"
+  />
+</template>
+```
+
+Value is a UTC ISO string (`2024-09-21T08:30:00.000Z`). Pass `null` or empty string to clear. Add `with-time` for datetime selection, `locale="de-DE"` for locale-aware display.
+
+### ty-calendar (standalone)
+
+For inline date pickers or custom date UIs:
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const now = new Date()
+const year = ref(now.getFullYear())
+const month = ref(now.getMonth() + 1)
+const day = ref(null)
+
+function onDaySelect(e) {
+  year.value = e.detail.year
+  month.value = e.detail.month
+  day.value = e.detail.day
+}
+</script>
+
+<template>
+  <ty-calendar
+    :year="year"
+    :month="month"
+    :day="day"
+    @change="onDaySelect"
+  />
+</template>
+```
+
+Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM-DD`.
+
+---
+
+## Tabs and wizard
+
+### ty-tabs
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const activeTab = ref('overview')
+</script>
+
+<template>
+  <ty-tabs
+    height="300px"
+    :active="activeTab"
+    @ty-tab-change="activeTab = $event.detail.activeId"
+  >
+    <ty-tab id="overview" label="Overview">
+      <div class="p-4">Overview content</div>
+    </ty-tab>
+    <ty-tab id="details" label="Details">
+      <div class="p-4">Details content</div>
+    </ty-tab>
+  </ty-tabs>
+</template>
+```
+
+Rich tab labels via named slots on `ty-tabs`:
+
+```vue
+<template>
+  <ty-tabs height="300px" active="overview">
+    <span slot="label-overview" class="flex items-center gap-2">
+      <ty-icon name="layout-dashboard" size="sm" />
+      Overview
+    </span>
+    <ty-tab id="overview" label="Overview">…</ty-tab>
+  </ty-tabs>
+</template>
+```
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex }`.
+
+### ty-wizard
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const step = ref('info')
+const completed = ref([])
+
+function advance(nextId) {
+  completed.value = [...completed.value, step.value]
+  step.value = nextId
+}
+</script>
+
+<template>
+  <ty-wizard
+    height="400px"
+    :active="step"
+    :completed="completed.join(',')"
+  >
+    <ty-step id="info" label="Info">
+      <div class="p-6">
+        <ty-input label="Name" required />
+        <ty-button flavor="primary" @click="advance('review')">Next</ty-button>
+      </div>
+    </ty-step>
+    <ty-step id="review" label="Review">
+      <div class="p-6">
+        <ty-button @click="step = 'info'">Back</ty-button>
+        <ty-button flavor="success" @click="advance('done')">Finish</ty-button>
+      </div>
+    </ty-step>
+    <ty-step id="done" label="Done">
+      <div class="p-6">All done!</div>
+    </ty-step>
+  </ty-wizard>
+</template>
+```
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }`.
+
+---
+
+## Tooltip and popup
+
+### ty-tooltip
+
+Nest `<ty-tooltip>` inside the trigger — it positions itself automatically:
+
+```vue
+<template>
+  <ty-button>
+    Save
+    <ty-tooltip placement="top">Changes saved to your account</ty-tooltip>
+  </ty-button>
+
+  <ty-icon name="info">
+    <ty-tooltip flavor="primary" :delay="300">Required field</ty-tooltip>
+  </ty-icon>
+</template>
+```
+
+Attrs: `placement` (default `top`), `delay` (ms), `flavor` (`dark`|`light`|semantic colors), `disabled`.
+
+### ty-popup
+
+Nest `<ty-popup>` inside the trigger — it opens on click and closes on outside click or ESC:
+
+```vue
+<template>
+  <ty-button>
+    Options
+    <ty-popup placement="bottom-start">
+      <div class="ty-elevated p-2 rounded-lg min-w-40">
+        <div class="px-3 py-2 hover:ty-bg-neutral- rounded cursor-pointer">Edit</div>
+        <div class="px-3 py-2 hover:ty-bg-danger- ty-text-danger rounded cursor-pointer">Delete</div>
+      </div>
+    </ty-popup>
+  </ty-button>
+</template>
+```
+
+For programmatic control, add `manual` and call `ref.value.show()` / `ref.value.hide()`.
+
+---
+
+## Utilities
+
+### ty-copy
+
+```vue
+<template>
+  <ty-copy
+    label="Install"
+    format="code"
+    value="npm install tyrell-components"
+  />
+</template>
+```
+
+`format="code"` renders monospace styling. Copy happens internally — no event handling needed.
+
+### ty-scroll-container
+
+```vue
+<template>
+  <ty-scroll-container max-height="400px">
+    <div
+      v-for="item in items"
+      :key="item.id"
+      class="p-3 border-b ty-divide-y"
+    >
+      {{ item.name }}
+    </div>
+  </ty-scroll-container>
+</template>
+```
+
+Attrs: `max-height`, `shadow` (default `true`), `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
+
+---
+
 ## TypeScript
 
 Augment Vue's JSX intrinsic elements once:
@@ -361,7 +692,7 @@ export default defineNuxtConfig({
 
 1. **Forgetting `isCustomElement`** — Vue warns "Failed to resolve component: ty-button". Add the compiler option.
 2. **Using `prop="value"` instead of `:prop="value"`** for booleans — `disabled="false"` becomes a truthy string `"false"`. Always use `:disabled="false"`.
-3. **Reading `$event.value` instead of `$event.detail.value`** — Ty events follow the standard CustomEvent pattern.
+3. **Reading `$event.value` instead of `$event.detail.value`** — Tyrell events follow the standard CustomEvent pattern.
 4. **Importing `tyrell-components` outside a client boundary in Nuxt** — `customElements is not defined` errors during SSR. Use `.client.ts` suffix or move the import.
 5. **Two-way binding with `v-model` on ty-input** — Vue's default `v-model` doesn't read `event.detail.value`. Use explicit `:value` + `@change`, or write a custom directive.
 

@@ -38,7 +38,7 @@ export const inputStyles = `
 
 /* ===== LABEL STYLING ===== */
 
-.input-label {
+.ty-field-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
@@ -440,7 +440,7 @@ input:focus-visible {
   /* Don't force full width for checkboxes */
 }
 
-.input-container.checkbox-layout .input-label {
+.input-container.checkbox-layout .ty-field-label {
   margin-bottom: 0;
   padding-left: 0;
   order: 2;

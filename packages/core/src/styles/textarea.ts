@@ -34,7 +34,7 @@ export const textareaStyles = `
 
 /* ===== LABEL STYLING ===== */
 
-.textarea-label {
+.ty-field-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);

@@ -758,7 +758,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     const shadow = this.shadowRoot!
     const existingInput = shadow.querySelector('input')
     const existingWrapper = shadow.querySelector('.input-wrapper')
-    const existingLabel = shadow.querySelector('.input-label')
+    const existingLabel = shadow.querySelector('.ty-field-label')
     const existingError = shadow.querySelector('.error-message')
     const classes = this.buildClassList()
 
@@ -816,7 +816,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         } else {
           // Label doesn't exist but we need one - CREATE IT!
           const labelEl = document.createElement('label')
-          labelEl.className = 'input-label'
+          labelEl.className = 'ty-field-label'
           labelEl.innerHTML = `${this.label}${this.required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}`
 
           // Insert label BEFORE the input-wrapper
@@ -847,7 +847,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
 
       // Create initial structure with wrapper and slots
       const labelHtml = this.label ? `
-          <label class="input-label">
+          <label class="ty-field-label">
             ${this.label}
             ${this.required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
           </label>

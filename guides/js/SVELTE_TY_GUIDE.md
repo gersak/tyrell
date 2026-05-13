@@ -1,6 +1,6 @@
-# Svelte + Ty Guide
+# Svelte + Tyrell Guide
 
-Use Ty web components in Svelte 5 (and Svelte 4) natively — no wrapper package needed. Svelte has the cleanest custom-element story of any major framework: tags work as-is, events work via `on:event`, and reactivity flows through `bind:` and `$state` without ceremony.
+Use Tyrell web components in Svelte 5 (and Svelte 4) natively — no wrapper package needed. Svelte has the cleanest custom-element story of any major framework: tags work as-is, events work via `on:event`, and reactivity flows through `bind:` and `$state` without ceremony.
 
 For installation, subpath imports, and the side-effects model, see [JAVASCRIPT_GUIDE.md](./JAVASCRIPT_GUIDE.md).
 
@@ -208,6 +208,318 @@ If you need to call methods at mount time, wait for definition:
 </script>
 ```
 
+## Form controls
+
+### ty-textarea
+
+```svelte
+<script>
+  let bio = $state('')
+</script>
+
+<ty-textarea
+  label="Bio"
+  placeholder="Tell us about yourself..."
+  rows="4"
+  max-height="200px"
+  value={bio}
+  onchange={(e) => bio = e.detail.value}
+/>
+```
+
+Svelte 4: `on:change={(e) => bio = e.detail.value}`.
+
+Attrs: `rows`, `min-height`, `max-height`, `resize` (`none`|`both`|`horizontal`|`vertical`).
+
+### ty-checkbox and ty-switch
+
+Both are "just the control" primitives — wrap in `<label>` to make the text clickable:
+
+```svelte
+<script>
+  let agreed = $state(false)
+  let darkMode = $state(false)
+</script>
+
+<label class="flex items-center gap-2">
+  <ty-checkbox
+    checked={agreed}
+    onchange={(e) => agreed = e.detail.checked}
+  />
+  I agree to the terms
+</label>
+
+<label class="flex items-center gap-2">
+  <ty-switch
+    checked={darkMode}
+    onchange={(e) => darkMode = e.detail.checked}
+  />
+  Dark mode
+</label>
+```
+
+Event detail: `{ value, checked, formValue, originalEvent }`.
+
+### ty-radio-group / ty-radio
+
+```svelte
+<script>
+  let plan = $state('starter')
+  const plans = [
+    { value: 'starter', label: 'Starter' },
+    { value: 'pro', label: 'Pro' },
+    { value: 'enterprise', label: 'Enterprise' },
+  ]
+</script>
+
+<ty-radio-group
+  label="Plan"
+  value={plan}
+  onchange={(e) => plan = e.detail.value}
+>
+  {#each plans as p (p.value)}
+    <label class="flex items-center gap-2">
+      <ty-radio value={p.value} />
+      {p.label}
+    </label>
+  {/each}
+</ty-radio-group>
+```
+
+Add `orientation="horizontal"` to `ty-radio-group` for a side-by-side layout.
+
+### ty-file-upload
+
+```svelte
+<script>
+  let files = $state([])
+</script>
+
+<ty-file-upload
+  label="Attachments"
+  accept="image/*,.pdf"
+  multiple
+  onchange={(e) => files = e.detail.files}
+/>
+{#if files.length}
+  <p>{files.length} file(s) selected</p>
+{/if}
+```
+
+Event detail: `{ value: File[], files: File[], names: string[] }`. Files appear in `FormData` automatically on form submit.
+
+---
+
+## Date picker and calendar
+
+### ty-date-picker
+
+```svelte
+<script>
+  let date = $state(null)
+</script>
+
+<ty-date-picker
+  label="Start Date"
+  placeholder="Select a date..."
+  value={date}
+  onchange={(e) => date = e.detail.value}
+/>
+```
+
+Value is a UTC ISO string (`2024-09-21T08:30:00.000Z`). Pass `null` or empty string to clear. Add `with-time` for datetime selection, `locale="de-DE"` for locale-aware display.
+
+### ty-calendar (standalone)
+
+```svelte
+<script>
+  const now = new Date()
+  let year = $state(now.getFullYear())
+  let month = $state(now.getMonth() + 1)
+  let day = $state(null)
+
+  function onDaySelect(e) {
+    year = e.detail.year
+    month = e.detail.month
+    day = e.detail.day
+  }
+</script>
+
+<ty-calendar
+  {year}
+  {month}
+  {day}
+  onchange={onDaySelect}
+/>
+```
+
+Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM-DD`.
+
+---
+
+## Tabs and wizard
+
+Svelte 5 can't use `onty-tab-change` syntax for hyphenated event names. Use `bind:this` and add the listener in `onMount`:
+
+### ty-tabs
+
+```svelte
+<script>
+  import { onMount } from 'svelte'
+
+  let activeTab = $state('overview')
+  let tabsEl
+
+  onMount(() => {
+    tabsEl.addEventListener('ty-tab-change', (e) => {
+      activeTab = e.detail.activeId
+    })
+  })
+</script>
+
+<ty-tabs bind:this={tabsEl} height="300px" active={activeTab}>
+  <ty-tab id="overview" label="Overview">
+    <div class="p-4">Overview content</div>
+  </ty-tab>
+  <ty-tab id="details" label="Details">
+    <div class="p-4">Details content</div>
+  </ty-tab>
+</ty-tabs>
+```
+
+Svelte 4 can use `on:ty-tab-change` directly:
+
+```svelte
+<ty-tabs height="300px" active={activeTab} on:ty-tab-change={(e) => activeTab = e.detail.activeId}>
+```
+
+Rich tab labels via named slots:
+
+```svelte
+<ty-tabs height="300px" active="overview">
+  <span slot="label-overview" class="flex items-center gap-2">
+    <ty-icon name="layout-dashboard" size="sm" />
+    Overview
+  </span>
+  <ty-tab id="overview" label="Overview">…</ty-tab>
+</ty-tabs>
+```
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex }`.
+
+### ty-wizard
+
+```svelte
+<script>
+  import { onMount } from 'svelte'
+
+  let step = $state('info')
+  let completed = $state([])
+  let wizardEl
+
+  function advance(nextId) {
+    completed = [...completed, step]
+    step = nextId
+  }
+</script>
+
+<ty-wizard
+  bind:this={wizardEl}
+  height="400px"
+  active={step}
+  completed={completed.join(',')}
+>
+  <ty-step id="info" label="Info">
+    <div class="p-6">
+      <ty-input label="Name" required />
+      <ty-button flavor="primary" onclick={() => advance('review')}>Next</ty-button>
+    </div>
+  </ty-step>
+  <ty-step id="review" label="Review">
+    <div class="p-6">
+      <ty-button onclick={() => step = 'info'}>Back</ty-button>
+      <ty-button flavor="success" onclick={() => advance('done')}>Finish</ty-button>
+    </div>
+  </ty-step>
+  <ty-step id="done" label="Done">
+    <div class="p-6">All done!</div>
+  </ty-step>
+</ty-wizard>
+```
+
+Svelte 4: `on:ty-wizard-step-change={handler}`.
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }`.
+
+---
+
+## Tooltip and popup
+
+### ty-tooltip
+
+Nest `<ty-tooltip>` inside the trigger — it positions itself automatically:
+
+```svelte
+<ty-button>
+  Save
+  <ty-tooltip placement="top">Changes saved to your account</ty-tooltip>
+</ty-button>
+
+<ty-icon name="info">
+  <ty-tooltip flavor="primary" delay={300}>Required field</ty-tooltip>
+</ty-icon>
+```
+
+Attrs: `placement` (default `top`), `delay` (ms), `flavor` (`dark`|`light`|semantic colors), `disabled`.
+
+### ty-popup
+
+Nest `<ty-popup>` inside the trigger — opens on click, closes on outside click or ESC:
+
+```svelte
+<ty-button>
+  Options
+  <ty-popup placement="bottom-start">
+    <div class="ty-elevated p-2 rounded-lg min-w-40">
+      <div class="px-3 py-2 hover:ty-bg-neutral- rounded cursor-pointer">Edit</div>
+      <div class="px-3 py-2 hover:ty-bg-danger- ty-text-danger rounded cursor-pointer">Delete</div>
+    </div>
+  </ty-popup>
+</ty-button>
+```
+
+For programmatic control, add `manual` and call `popupEl.show()` / `popupEl.hide()` after `bind:this`.
+
+---
+
+## Utilities
+
+### ty-copy
+
+```svelte
+<ty-copy
+  label="Install"
+  format="code"
+  value="npm install tyrell-components"
+/>
+```
+
+`format="code"` renders monospace styling. Copy happens internally — no event handling needed.
+
+### ty-scroll-container
+
+```svelte
+<ty-scroll-container max-height="400px">
+  {#each items as item (item.id)}
+    <div class="p-3 border-b ty-divide-y">{item.name}</div>
+  {/each}
+</ty-scroll-container>
+```
+
+Attrs: `max-height`, `shadow` (default `true`), `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
+
+---
+
 ## TypeScript
 
 Add JSX-style type augmentation for Svelte's HTML element map:
@@ -296,7 +608,7 @@ Import it from a layout's `onMount`:
 </script>
 ```
 
-### Pattern C — Disable SSR for routes using Ty
+### Pattern C — Disable SSR for routes using Tyrell
 
 If a route can't tolerate the brief unstyled flash:
 
@@ -324,7 +636,7 @@ The `:not(:defined)` selector matches elements whose custom element class hasn't
 ## Common pitfalls
 
 1. **Setting array values via attribute** — `value={[1,2,3]}` becomes the string `"1,2,3"`. Use `prop:value={[1,2,3]}`.
-2. **Reading `e.value` instead of `e.detail.value`** — Ty events follow the standard CustomEvent pattern.
+2. **Reading `e.value` instead of `e.detail.value`** — Tyrell events follow the standard CustomEvent pattern.
 3. **Importing `tyrell-components` at module top-level in SvelteKit** — `customElements is not defined` during SSR. Move imports inside `onMount` or use `if (browser)`.
 4. **Forgetting `bind:this` is async** — the binding fires after mount, not synchronously. Call methods inside `onMount` or in event handlers.
 5. **Svelte 4 `on:click` vs Svelte 5 `onclick`** — Svelte 5 uses standard event handler attributes; Svelte 4 uses the `on:` directive. Either works on custom elements; just match your Svelte version.

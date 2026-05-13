@@ -18,7 +18,6 @@ export const dropdownStyles = `
 :host {
   display: block;
   width: auto;
-  min-width: 200px;
 }
 
 :host {
@@ -33,13 +32,16 @@ export const dropdownStyles = `
 }
 
 /* Label styling */
-.dropdown-label {
-  font-size: 14px;
-  font-weight: 500;
+.ty-field-label {
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+  font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
   margin-bottom: 6px;
-  line-height: 1.25;
   padding-left: 12px;
+  display: flex;
+  align-items: center;
 }
 
 .required-icon {
@@ -79,7 +81,7 @@ export const dropdownStyles = `
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-normal);
   min-height: var(--ty-size-md);
-  padding: var(--ty-spacing-2) var(--ty-spacing-3);
+  padding: 0 var(--ty-spacing-3);
   padding-right: calc(var(--ty-spacing-3) + 1rem + var(--ty-spacing-2));
   transition: var(--ty-transition-all), opacity 0.2s ease;
   outline: none;

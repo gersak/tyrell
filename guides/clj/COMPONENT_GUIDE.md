@@ -179,7 +179,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
     ;; Inject styles into shadow DOM (deduped by ID)
     (ensure-styles! root my-styles "my-component")
 
-    ;; Ty design system classes work inside shadow DOM
+    ;; Tyrell design system classes work inside shadow DOM
     (set! (.-innerHTML root)
       "<div class='ty-elevated p-4 rounded-lg'>
          <h2 class='ty-text+ mb-2'>Title</h2>
@@ -234,7 +234,7 @@ Create the CSS file alongside your ClojureScript:
 Benefits:
 - CSS is bundled at compile time (no runtime fetch)
 - Uses `CSSStyleSheet` for efficient style sharing
-- CSS variables from Ty design system are available
+- CSS variables from Tyrell design system are available
 - Better editor support with separate `.css` files
 
 ---
@@ -386,6 +386,6 @@ For one-time initialization attributes that shouldn't override user state:
 ## See Also
 
 - [Code Splitting Guide](CODE_SPLITTING.md) - Lazy loading and bundle optimization (in guides/)
-- [Ty Components Source](components/ty/components/) - Reference implementations
+- [Tyrell Components Source](components/ty/components/) - Reference implementations
 - [tyrell.shim Source](src/ty/shim.cljs) - Full API
 - [tyrell.css](src/ty/css.cljs) - Style injection utilities

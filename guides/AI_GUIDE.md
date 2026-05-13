@@ -1,4 +1,4 @@
-# Ty for AI Agents
+# Tyrell for AI Agents
 
 Treasure map. Find your context, follow the link.
 
@@ -36,7 +36,7 @@ Treasure map. Find your context, follow the link.
 
 ## Non-negotiable rules
 
-1. **Ty for colors, Tailwind for everything else.** Never `bg-blue-500` — use `ty-bg-primary`. Never `text-gray-900` — use `ty-text` / `ty-text+` / `ty-text++`.
+1. **Tyrell for colors, Tailwind for everything else.** Never `bg-blue-500` — use `ty-bg-primary`. Never `text-gray-900` — use `ty-text` / `ty-text+` / `ty-text++`.
 2. **Event payload lives on `event.detail`.** Always `event.detail.value`, never `event.value`.
 3. **Properties vs attributes.** Booleans, arrays, objects → JS property. Strings → attribute. In React: just props. In Vue: `:prop`. In Svelte: `prop:`.
 4. **Icons require explicit registration.** `<ty-icon name="check">` is a runtime lookup; the bundler can't connect the string to the export. Use `registerIcons({ check, ... })`.
@@ -44,10 +44,10 @@ Treasure map. Find your context, follow the link.
 
 ## For agents working in a *consumer* project
 
-If the user is using Ty in their own project (not editing Ty itself), drop this snippet into their `CLAUDE.md`:
+If the user is using Tyrell in their own project (not editing Tyrell itself), drop this snippet into their `CLAUDE.md`:
 
 → [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md)
 
-## For agents working *on* Ty itself
+## For agents working *on* Tyrell itself
 
 Read the repo's `CLAUDE.md` and `PUBLISHING.md`. Do not edit generated files (`packages/core/lib/`, `packages/core/dist/`, `packages/core/src/icons/*.ts`).

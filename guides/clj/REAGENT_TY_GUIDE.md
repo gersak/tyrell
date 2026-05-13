@@ -284,6 +284,64 @@ This is heavier but simpler — fine for small apps. For larger apps, pattern A 
 
 Then `[:> ty/Icon {:name "check"}]`, or `[:ty-icon {:name "check"}]` for raw DOM (no React wrapping needed for a render-only icon).
 
+## Calendar and wizard
+
+### ty-calendar
+
+```clojure
+(defn calendar-demo []
+  (let [now  (js/Date.)
+        sel  (r/atom {:year  (.getFullYear now)
+                      :month (inc (.getMonth now))
+                      :day   nil})]
+    (fn []
+      (let [{:keys [year month day]} @sel]
+        [:div.flex.flex-col.gap-4
+         [:> ty/Calendar
+          {:year    year
+           :month   month
+           :day     day
+           :onChange (fn [^js e]
+                       (reset! sel {:year  (.. e -detail -year)
+                                    :month (.. e -detail -month)
+                                    :day   (.. e -detail -day)}))}]
+         (when day
+           [:p.ty-text- (str "Selected: " year "-" (when (< month 10) "0") month "-" (when (< day 10) "0") day)])]))))
+```
+
+Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM-DD` when wrapped in `<form>` with a `name` attribute.
+
+### ty-wizard
+
+```clojure
+(defn wizard-demo []
+  (let [step      (r/atom "info")
+        completed (r/atom [])]
+    (fn []
+      (let [advance #(do (swap! completed conj @step)
+                         (reset! step %))]
+        [:> ty/Wizard
+         {:height    "400px"
+          :active    @step
+          :completed (str/join "," @completed)}
+         [:> ty/Step {:id "info" :label "Info"}
+          [:div.p-6.flex.flex-col.gap-4
+           [:> ty/Input {:label "Name" :required true}]
+           [:> ty/Button {:flavor "primary"
+                          :onClick #(advance "review")} "Next"]]]
+         [:> ty/Step {:id "review" :label "Review"}
+          [:div.p-6.flex.gap-2
+           [:> ty/Button {:onClick #(reset! step "info")} "Back"]
+           [:> ty/Button {:flavor "success"
+                          :onClick #(advance "done")} "Finish"]]]
+         [:> ty/Step {:id "done" :label "Done"}
+          [:div.p-6 "All done!"]]]))))
+```
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }` via `onChange` — or listen on the element directly for `ty-wizard-step-change`.
+
+---
+
 ## Common pitfalls
 
 - **`:on-change` vs `:onChange`** — easy to mix up. Through `:>`, you must write camelCase. In a plain `[:input ...]` (HTML), kebab-case works. Reagent does *not* transform props for `:>` components.

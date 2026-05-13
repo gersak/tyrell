@@ -376,7 +376,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       : `<div class="copy-field-value${multilineClass}">${this.value || ''}</div>`
 
     const labelHtml = this.label ? `
-      <label class="input-label">
+      <label class="ty-field-label">
         ${this.label}
         ${this.required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
       </label>

@@ -1,8 +1,8 @@
-# Ty TypeScript Components
+# Tyrell TypeScript Components
 
 **Modern, zero-dependency web components written in TypeScript**
 
-This directory contains the TypeScript implementation of all Ty components. These are production-ready, framework-agnostic web components with full type safety and modern developer experience.
+This directory contains the TypeScript implementation of all Tyrell components. These are production-ready, framework-agnostic web components with full type safety and modern developer experience.
 
 ## 🎯 Why TypeScript?
 
@@ -83,7 +83,7 @@ Create HTML files in `/packages/core/dev/` for testing:
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Ty CSS (local symlink) -->
+  <!-- Tyrell CSS (local symlink) -->
   <link rel="stylesheet" href="./ty.css">
 </head>
 <body class="ty-canvas p-8">
@@ -352,9 +352,9 @@ lib/                    # Library build (ESM)
 └── *.map              # Source maps
 
 dist/                  # CDN bundle
-├── ty.js              # Minified bundle
-├── ty.css             # Bundled with CSS
-└── ty.js.map          # Source map
+├── tyrell.js          # Minified bundle
+├── tyrell.css         # Bundled with CSS
+└── tyrell.js.map      # Source map
 ```
 
 ---

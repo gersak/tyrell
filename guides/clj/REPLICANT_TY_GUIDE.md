@@ -1,11 +1,11 @@
-# Replicant + Ty Components Guide
+# Replicant + Tyrell Guide
 
-Using Ty web components with Replicant (ClojureScript DOM library).
+Using Tyrell web components with Replicant (ClojureScript DOM library).
 
-For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Replicant hiccup, Ty color classes go on the element keyword with dots, Tailwind handles everything else:
+For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Replicant hiccup, Tyrell color classes go on the element keyword with dots, Tailwind handles everything else:
 
 ```clojure
-;; Ty for colors (surfaces, text, bg, border), Tailwind for layout
+;; Tyrell for colors (surfaces, text, bg, border), Tailwind for layout
 [:div.ty-elevated.p-6.rounded-lg.flex.items-center
  [:h2.ty-text++.text-xl.font-bold "Title"]
  [:p.ty-text-.text-sm "Subtitle"]]
@@ -119,7 +119,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
       ]]))
 ```
 
-### Ty Web Components in Hiccup
+### Tyrell Web Components in Hiccup
 
 ```clojure
 ;; Input with label and error
@@ -253,7 +253,7 @@ Event handlers are attached via the `:on` map. Keys are event type keywords, val
 
 ### Type Hint with `^js`
 
-Ty events are JavaScript `CustomEvent` objects. **Always type hint the event parameter with `^js`** so the ClojureScript compiler doesn't munge property access:
+Tyrell events are JavaScript `CustomEvent` objects. **Always type hint the event parameter with `^js`** so the ClojureScript compiler doesn't munge property access:
 
 ```clojure
 ;; CORRECT — ^js ensures .-detail and .-value are not munged
@@ -268,9 +268,9 @@ Ty events are JavaScript `CustomEvent` objects. **Always type hint the event par
     (do-something value)))
 ```
 
-### What Ty Components Emit
+### What Tyrell Components Emit
 
-Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `event.detail`:
+Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always in `event.detail`:
 
 | Component | Event | `event.detail` fields |
 |-----------|-------|-----------------------|
@@ -440,7 +440,7 @@ Every Ty component emits standard DOM `CustomEvent`s. The payload is always in `
 
 ### Form Structure
 
-Use standard `[:form]` with `:on {:submit ...}` and Ty components inside. Each Ty form component supports `name`, `label`, `error`, `required`, and `disabled` attributes:
+Use standard `[:form]` with `:on {:submit ...}` and Tyrell components inside. Each Tyrell form component supports `name`, `label`, `error`, `required`, and `disabled` attributes:
 
 ```clojure
 [:form.space-y-6

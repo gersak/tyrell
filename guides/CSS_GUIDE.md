@@ -1,6 +1,6 @@
-# Ty CSS System
+# Tyrell CSS System
 
-Ty classes handle colors. Use Tailwind for everything else (spacing, layout, typography, sizing).
+Tyrell classes handle colors. Use Tailwind for everything else (spacing, layout, typography, sizing).
 
 ## Surfaces vs Backgrounds
 
@@ -57,7 +57,7 @@ The divider color is **contextual** — each surface points `--ty-divide-color` 
 <ul class="ty-divide-y" style="--ty-divide-color: var(--ty-border-strong);">
 ```
 
-**Prefer `ty-divide-y`/`ty-divide-x` over Tailwind's `divide-y`/`divide-x` when working with Ty surfaces** — Tailwind's defaults are baked at build time and don't follow your theme in dark mode. The Ty utilities use CSS vars that auto-switch.
+**Prefer `ty-divide-y`/`ty-divide-x` over Tailwind's `divide-y`/`divide-x` when working with Tyrell surfaces** — Tailwind's defaults are baked at build time and don't follow your theme in dark mode. The Tyrell utilities use CSS vars that auto-switch.
 
 ## Background Colors (Semantic)
 
@@ -132,7 +132,7 @@ Semantic borders — base only (no +/- variants, except accent):
 
 ## Dark Mode
 
-Ty uses the `dark` class on `<html>` to switch themes. All Ty color variables respond automatically.
+Tyrell uses the `dark` class on `<html>` to switch themes. All Tyrell color variables respond automatically.
 
 ### Requirements
 

@@ -1,4 +1,4 @@
-# Ty Layout — Responsive Layout System
+# Tyrell Layout — Responsive Layout System
 
 The `tyrell.layout` namespace provides container-aware responsive layout for ClojureScript. It uses dynamic vars to propagate container dimensions down the render tree, with Tailwind-matching breakpoints.
 

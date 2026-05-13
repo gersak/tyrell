@@ -1,35 +1,105 @@
 /**
  * Wizard Component Styles
  *
- * Styles for the ty-wizard container component including:
- * - Flexbox layout with step indicators and content carousel
- * - Progress line with animated completion overlay
- * - Step circles with completed/active/pending states
- * - Carousel viewport with transform animations
- * - Responsive design with prefers-reduced-motion support
- * - Fully customizable via CSS Parts (::part)
- *
- * Uses global design system tokens (no component-specific variables):
- * - Surfaces: --ty-surface-floating, --ty-surface-content, --ty-surface-elevated
- * - Colors: --ty-color-success, --ty-color-primary, --ty-color-danger
- * - Borders: --ty-border, --ty-border-soft
- * - Text: --ty-text, --ty-text-soft
- *
  * CSS Parts (for styling via ::part):
  * - indicators-wrapper: The header containing step indicators
  * - progress-line: The background progress track
  * - step-circle: Individual step circle indicators
  * - panels-container: The content viewport
+ *
+ * Theming — two override granularities:
+ *
+ * 1. Accent aliases (broad retheming — one variable shifts a whole state):
+ *    --ty-wizard-active-accent, --ty-wizard-completed-accent,
+ *    --ty-wizard-error-accent, --ty-wizard-pending-accent
+ *
+ * 2. Fine-grained tokens (surgical control — see :host block below):
+ *    --ty-wizard-{region}-{property}
  */
 
 export const wizardStyles = `
+/* ============================================================================
+   Theming Tokens
+   All defaults chain back to global --ty-color-* / --ty-surface-* tokens.
+   Override on the host element or a wrapping container.
+   ============================================================================ */
+
 :host {
   display: block;
-  width: var(--wizard-width, 100%);
-  height: var(--wizard-height, 700px);
+  width: var(--ty-wizard-width, 100%);   /* set by width attribute — not a public token */
+  height: var(--ty-wizard-height, 700px); /* set by height attribute — not a public token */
   box-sizing: border-box;
-  /* Note: --step-circle-size is NOT set here to allow inheritance from light DOM.
-     Use fallbacks in var() calls instead. Set on ty-wizard element to customize. */
+
+  /* Accent aliases — override one to shift the matching circle, glow, and progress fill */
+  --ty-wizard-active-accent:    var(--ty-color-primary);
+  --ty-wizard-completed-accent: var(--ty-color-success);
+  --ty-wizard-error-accent:     var(--ty-color-danger);
+  --ty-wizard-pending-accent:   var(--ty-color-neutral);
+
+  /* Container */
+  --ty-wizard-bg:     var(--ty-surface-floating);
+  --ty-wizard-border: var(--ty-border);
+  --ty-wizard-radius: 12px;
+  --ty-wizard-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+
+  /* Header strip */
+  --ty-wizard-header-bg:      var(--ty-surface-content);
+  --ty-wizard-header-border:  var(--ty-border-soft, var(--ty-border));
+  --ty-wizard-header-padding: 24px 24px 16px;
+
+  /* Progress line */
+  --ty-wizard-progress-track:  var(--ty-border);
+  --ty-wizard-progress-fill:   var(--ty-wizard-completed-accent);
+  --ty-wizard-progress-height: 2px;
+
+  /* Transitions */
+  --ty-wizard-transition-duration: 300ms;
+  --ty-wizard-transition-easing:   ease-in-out;
+
+  /* Circle geometry */
+  --ty-wizard-circle-size:         32px;
+  --ty-wizard-circle-border-width: 2px;
+
+  /* Step circle — completed */
+  --ty-wizard-completed-bg:     var(--ty-wizard-completed-accent);
+  --ty-wizard-completed-border: var(--ty-color-success-strong);
+  --ty-wizard-completed-color:  white;
+  --ty-wizard-completed-glow:   color-mix(in srgb, var(--ty-wizard-completed-accent) 10%, transparent);
+
+  /* Step circle — active */
+  --ty-wizard-active-bg:     var(--ty-wizard-active-accent);
+  --ty-wizard-active-border: var(--ty-color-primary-strong);
+  --ty-wizard-active-color:  white;
+  --ty-wizard-active-glow:   color-mix(in srgb, var(--ty-wizard-active-accent) 10%, transparent);
+
+  /* Step circle — pending */
+  --ty-wizard-pending-bg:     var(--ty-surface-elevated);
+  --ty-wizard-pending-border: var(--ty-border);
+  --ty-wizard-pending-color:  var(--ty-text-soft);
+
+  /* Step circle — error */
+  --ty-wizard-error-bg:     var(--ty-wizard-error-accent);
+  --ty-wizard-error-border: var(--ty-color-danger-strong);
+  --ty-wizard-error-color:  white;
+  --ty-wizard-error-glow:   color-mix(in srgb, var(--ty-wizard-error-accent) 10%, transparent);
+
+  /* Labels */
+  --ty-wizard-label-color:          var(--ty-text);
+  --ty-wizard-label-active-color:   var(--ty-text-strong);
+  --ty-wizard-label-inactive-color: var(--ty-text-soft);
+  --ty-wizard-label-size:           var(--ty-font-sm, 14px);
+  --ty-wizard-label-weight:         var(--ty-font-semibold, 600);
+
+  /* Descriptions */
+  --ty-wizard-description-color:        var(--ty-text-soft);
+  --ty-wizard-description-active-color: var(--ty-text);
+  --ty-wizard-description-size:         var(--ty-font-xs, 12px);
+
+  /* Panels viewport */
+  --ty-wizard-panels-bg: var(--ty-surface-elevated);
+
+  /* Focus */
+  --ty-wizard-focus-outline: var(--ty-wizard-active-accent);
 }
 
 .wizard-container {
@@ -39,16 +109,15 @@ export const wizardStyles = `
   flex-direction: column;
   position: relative;
   box-sizing: border-box;
-  border-radius: 12px;
-  border: 1px solid var(--ty-border);
-  background: var(--ty-surface-floating);
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  border-radius: var(--ty-wizard-radius);
+  border: 1px solid var(--ty-wizard-border);
+  background: var(--ty-wizard-bg);
+  box-shadow: var(--ty-wizard-shadow);
   overflow: hidden;
 }
 
 /* ===================================== */
-/* Step Indicators Wrapper */
-/* Expose as CSS Part for full styling control */
+/* Step Indicators Wrapper               */
 /* ===================================== */
 
 .step-indicators-wrapper {
@@ -56,33 +125,30 @@ export const wizardStyles = `
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
-  padding: 24px 24px 16px;
-  border-bottom: 1px solid var(--ty-border-soft, var(--ty-border));
-  background: var(--ty-surface-content);
+  padding: var(--ty-wizard-header-padding);
+  border-bottom: 1px solid var(--ty-wizard-header-border);
+  background: var(--ty-wizard-header-bg);
 }
 
 /* ===================================== */
-/* Progress Line (behind step circles) */
-/* Expose as CSS Part for custom styling */
+/* Progress Line (behind step circles)   */
 /* ===================================== */
 
 .progress-line {
   position: absolute;
   /*
    * With equal-width indicators (flex: 1), each takes 100%/N of the width.
-   * Circle centers are at: 50%/N, 150%/N, 250%/N, ... from left.
-   * Line spans from first center (50%/N) to last center (100% - 50%/N).
-   * Inset = 50% / step-count from each side.
+   * Circle centers sit at 50%/N from the left edge of each indicator.
+   * Inset = 50% / step-count from each side keeps the line between circle centres.
    */
-  left: calc(50% / var(--step-count, 4));
-  right: calc(50% / var(--step-count, 4));
-  /* Vertically center with step circles - uses circle size variable */
-  top: calc(var(--step-circle-size, 32px) / 2 - 1px);
-  height: 2px;
-  background: var(--ty-border);
+  left: calc(50% / var(--ty-wizard-step-count, 4));
+  right: calc(50% / var(--ty-wizard-step-count, 4));
+  top: calc(var(--ty-wizard-circle-size, 32px) / 2 - 1px);
+  height: var(--ty-wizard-progress-height);
+  background: var(--ty-wizard-progress-track);
   z-index: 0;
   pointer-events: none;
-  transition: opacity var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
+  transition: opacity var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing);
 }
 
 .progress-overlay {
@@ -90,25 +156,23 @@ export const wizardStyles = `
   left: 0;
   top: 0;
   height: 100%;
-  background: var(--ty-color-success);
-  transition: width var(--transition-duration, 500ms) var(--transition-easing, ease-in-out);
+  background: var(--ty-wizard-progress-fill);
+  transition: width var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing);
   will-change: width;
 }
 
 /* ===================================== */
-/* Step Indicators Container */
+/* Step Indicators Container             */
 /* ===================================== */
 
 .step-indicators {
   display: flex;
   align-items: flex-start;
   position: relative;
-  /* No padding - let equal-width indicators fill the space */
 }
 
 /* ===================================== */
-/* Individual Step Indicator */
-/* Expose as CSS Part for step styling */
+/* Individual Step Indicator             */
 /* ===================================== */
 
 .step-indicator {
@@ -122,7 +186,6 @@ export const wizardStyles = `
   padding: 0;
   font: inherit;
   transition: opacity 200ms;
-  /* Equal width for all indicators - makes progress line alignment predictable */
   flex: 1;
   min-width: 0;
 }
@@ -134,66 +197,59 @@ export const wizardStyles = `
 }
 
 .step-indicator:focus-visible {
-  outline: 2px solid var(--ty-color-primary);
+  outline: 2px solid var(--ty-wizard-focus-outline);
   outline-offset: 4px;
   border-radius: 50%;
 }
 
 /* ===================================== */
-/* Step Circle - Smaller, cleaner */
-/* Expose as CSS Part for circle styling */
+/* Step Circle                           */
 /* ===================================== */
 
 .step-circle {
-  /* Circle size - set --step-circle-size on ty-wizard element to customize */
-  width: var(--step-circle-size, 32px);
-  height: var(--step-circle-size, 32px);
+  width: var(--ty-wizard-circle-size);
+  height: var(--ty-wizard-circle-size);
   border-radius: 50%;
-  border: 2px solid;
+  border: var(--ty-wizard-circle-border-width) solid;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 10;
-  transition: all var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
+  transition: all var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing);
   box-sizing: border-box;
   flex-shrink: 0;
 }
 
-/* Completed state - green with success glow */
 .step-circle[data-state="completed"] {
-  background: var(--ty-color-success);
-  border-color: var(--ty-color-success-600, var(--ty-color-success));
-  color: white;
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+  background: var(--ty-wizard-completed-bg);
+  border-color: var(--ty-wizard-completed-border);
+  color: var(--ty-wizard-completed-color);
+  box-shadow: 0 0 0 4px var(--ty-wizard-completed-glow);
 }
 
-/* Active state - primary with primary glow */
 .step-circle[data-state="active"] {
-  background: var(--ty-color-primary);
-  border-color: var(--ty-color-primary-600, var(--ty-color-primary));
-  color: white;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+  background: var(--ty-wizard-active-bg);
+  border-color: var(--ty-wizard-active-border);
+  color: var(--ty-wizard-active-color);
+  box-shadow: 0 0 0 4px var(--ty-wizard-active-glow);
 }
 
-/* Pending state - neutral gray */
 .step-circle[data-state="pending"] {
-  background: var(--ty-surface-elevated, #f3f4f6);
-  border-color: var(--ty-border, #d1d5db);
-  color: var(--ty-text-soft, #6b7280);
+  background: var(--ty-wizard-pending-bg);
+  border-color: var(--ty-wizard-pending-border);
+  color: var(--ty-wizard-pending-color);
 }
 
-/* Error state - red with danger glow */
 .step-circle[data-state="error"] {
-  background: var(--ty-color-danger, #ef4444);
-  border-color: var(--ty-color-danger-600, #dc2626);
-  color: white;
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  background: var(--ty-wizard-error-bg);
+  border-color: var(--ty-wizard-error-border);
+  color: var(--ty-wizard-error-color);
+  box-shadow: 0 0 0 4px var(--ty-wizard-error-glow);
 }
 
 /* ===================================== */
-/* Step Text Container */
-/* Wraps label and description */
+/* Step Text Container                   */
 /* ===================================== */
 
 .step-text {
@@ -204,43 +260,43 @@ export const wizardStyles = `
 }
 
 /* ===================================== */
-/* Step Label - Main title */
+/* Step Label                            */
 /* ===================================== */
 
 .step-label {
-  font-size: var(--ty-font-sm, 14px);
-  font-weight: var(--ty-font-semibold, 600);
-  color: var(--ty-text, inherit);
+  font-size: var(--ty-wizard-label-size);
+  font-weight: var(--ty-wizard-label-weight);
+  color: var(--ty-wizard-label-color);
   transition: color 200ms;
 }
 
 .step-indicator[aria-selected="true"] .step-label {
-  color: var(--ty-text-strong, inherit);
+  color: var(--ty-wizard-label-active-color);
 }
 
 .step-indicator[aria-selected="false"] .step-label {
-  color: var(--ty-text-soft, inherit);
+  color: var(--ty-wizard-label-inactive-color);
 }
 
 /* ===================================== */
-/* Step Description - Subtitle */
+/* Step Description                      */
 /* ===================================== */
 
 .step-description {
-  font-size: var(--ty-font-xs, 12px);
+  font-size: var(--ty-wizard-description-size);
   font-weight: var(--ty-font-normal, 400);
-  color: var(--ty-text-soft, #9ca3af);
+  color: var(--ty-wizard-description-color);
   transition: color 200ms;
   text-align: center;
   max-width: 120px;
 }
 
 .step-indicator[aria-selected="true"] .step-description {
-  color: var(--ty-text, inherit);
+  color: var(--ty-wizard-description-active-color);
 }
 
 /* ===================================== */
-/* Custom Indicator Content via Slots */
+/* Custom Indicator Content via Slots    */
 /* ===================================== */
 
 ::slotted([slot^="indicator-"]) {
@@ -252,46 +308,42 @@ export const wizardStyles = `
 }
 
 /* ===================================== */
-/* Panels Viewport */
-/* Expose as CSS Part for panels container styling */
+/* Panels Viewport                       */
 /* ===================================== */
 
 .panels-viewport {
   position: relative;
   flex: 1;
   overflow: hidden;
-  /* Critical: hides off-screen panels */
   min-height: 0;
-  /* Allows flex child to shrink */
-  background: var(--ty-surface-elevated);
+  background: var(--ty-wizard-panels-bg);
 }
 
 /* ===================================== */
-/* Panels Wrapper (slides horizontally) */
+/* Panels Wrapper (slides horizontally)  */
 /* ===================================== */
 
 .panels-wrapper {
   display: flex;
   height: 100%;
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
+  transition: transform var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing);
   will-change: transform;
 }
 
 /* ===================================== */
-/* Slotted Step Panels */
+/* Slotted Step Panels                   */
 /* ===================================== */
 
 ::slotted(ty-step) {
-  width: var(--wizard-width, 100%);
+  width: var(--ty-wizard-width, 100%);
   height: 100%;
   flex-shrink: 0;
 }
 
 /* ===================================== */
-/* Accessibility & Motion Preferences */
+/* Accessibility & Motion Preferences    */
 /* ===================================== */
 
-/* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .panels-wrapper {
     transition-duration: 0ms !important;
@@ -310,7 +362,6 @@ export const wizardStyles = `
   }
 }
 
-/* Screen reader only content */
 .sr-only {
   position: absolute;
   width: 1px;

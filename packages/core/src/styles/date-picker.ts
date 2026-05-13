@@ -54,13 +54,16 @@ export const datePickerStyles = `
   box-sizing: border-box;
 }
 
-.dropdown-label {
-  font-size: 14px;
-  font-weight: 500;
+.ty-field-label {
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+  font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
   margin-bottom: 6px;
-  line-height: 1.25;
   padding-left: 12px;
+  display: flex;
+  align-items: center;
 }
 
 .required-icon {

@@ -6,12 +6,12 @@ import { customScrollbarStyles } from './custom-scrollbar.js'
 
 export const stepStyles = `
 :host {
-  width: var(--wizard-width, 100%);
-  height: calc(var(--wizard-height, 700px) - var(--indicators-height, 120px));
+  width: var(--ty-wizard-width, 100%);
+  height: calc(var(--ty-wizard-height, 700px) - var(--ty-wizard-indicators-height, 120px));
   display: block;
   box-sizing: border-box;
   flex-shrink: 0;
-  transition: opacity var(--transition-duration, 400ms) var(--transition-easing, ease-in-out);
+  transition: opacity var(--ty-wizard-transition-duration, 400ms) var(--ty-wizard-transition-easing, ease-in-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

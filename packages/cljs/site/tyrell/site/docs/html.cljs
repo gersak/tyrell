@@ -380,8 +380,8 @@
   <ty-button type=\"submit\" flavor=\"primary\">Send</ty-button>
 </form>"
       :snippet-lang "html"
-      :cta "Open Flask example"
-      :on-click #(js/window.open "https://github.com/gersak/ty/tree/master/examples/htmx-flask" "_blank")})
+      :cta "Open component reference"
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/TY_GUIDE.md" "_blank")})
 
     (compact-stack-card
      {:eyebrow "Ruby · Elixir · PHP"
@@ -397,8 +397,8 @@
   Save
 </ty-button>"
       :snippet-lang "html"
-      :cta "Open agent instructions"
-      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/AGENT_INSTRUCTIONS.md" "_blank")})]])
+      :cta "Open component reference"
+      :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/TY_GUIDE.md" "_blank")})]])
 
 ;; =============================================================================
 ;; Section 5 — Slot-mode deep-dive (full-width hero card with live preview)

@@ -70,7 +70,7 @@ Server-side: read repeated `docs` parts (Flask `request.files.getlist('docs')`, 
 
 ## Triggering on user changes — `hx-trigger="change"`
 
-Ty components emit a bubbling `change` event when the user commits a new value. HTMX picks that up the same way it does for native inputs:
+Tyrell components emit a bubbling `change` event when the user commits a new value. HTMX picks that up the same way it does for native inputs:
 
 ```html
 <ty-dropdown name="country"

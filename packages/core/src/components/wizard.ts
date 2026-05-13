@@ -435,7 +435,7 @@ function updateActiveStepState(el: TyWizard, stepId: string): void {
   if (currentActive === stepId || newIndex === undefined) return;
 
   // Update CSS variable for transform
-  el.style.setProperty('--active-index', String(newIndex));
+  el.style.setProperty('--ty-wizard-active-index', String(newIndex));
 
   // Update transform directly
   updateTransform(el, newIndex);
@@ -491,7 +491,7 @@ function setupResizeObserver(el: TyWizard): void {
       const activeIndex = activeId ? findStepIndex(steps, activeId) : 0;
 
       // Update CSS variable with measured width
-      el.style.setProperty('--wizard-width', `${measuredWidth}px`);
+      el.style.setProperty('--ty-wizard-width', `${measuredWidth}px`);
 
       // Update transform with new width
       if (activeIndex !== undefined) {
@@ -596,7 +596,7 @@ function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId
 
   return `
     <div class="step-indicators-wrapper" part="indicators-wrapper">
-      <div class="step-indicators" style="--step-count: ${stepCount}">
+      <div class="step-indicators" style="--ty-wizard-step-count: ${stepCount}">
         <div class="progress-line" part="progress-line" role="progressbar" aria-valuenow="${Math.round(progressPercent)}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-overlay" style="width: ${progressPercent}%"></div>
         </div>
@@ -629,10 +629,10 @@ function render(el: TyWizard): void {
   ensureStyles(shadowRoot, { css: wizardStyles, id: 'ty-wizard' });
 
   // Set CSS variables for dimensions and step count
-  el.style.setProperty('--wizard-width', width.includes('%') ? '100%' : width);
-  el.style.setProperty('--wizard-height', height);
-  el.style.setProperty('--active-index', String(activeIndex));
-  el.style.setProperty('--step-count', String(steps.length));
+  el.style.setProperty('--ty-wizard-width', width.includes('%') ? '100%' : width);
+  el.style.setProperty('--ty-wizard-height', height);
+  el.style.setProperty('--ty-wizard-active-index', String(activeIndex));
+  el.style.setProperty('--ty-wizard-step-count', String(steps.length));
 
   if (existingContainer && existingIndicators && existingViewport) {
     // === SMART UPDATE: Structure exists, only update what changed ===
@@ -655,7 +655,7 @@ function render(el: TyWizard): void {
       const indicators = shadowRoot.querySelector('.step-indicators-wrapper');
       if (indicators) {
         const indicatorsHeight = (indicators as HTMLElement).offsetHeight;
-        el.style.setProperty('--indicators-height', `${indicatorsHeight}px`);
+        el.style.setProperty('--ty-wizard-indicators-height', `${indicatorsHeight}px`);
       }
 
       // Update transform with current active index
@@ -689,7 +689,7 @@ function render(el: TyWizard): void {
       const indicators = shadowRoot.querySelector('.step-indicators-wrapper');
       if (indicators) {
         const indicatorsHeight = (indicators as HTMLElement).offsetHeight;
-        el.style.setProperty('--indicators-height', `${indicatorsHeight}px`);
+        el.style.setProperty('--ty-wizard-indicators-height', `${indicatorsHeight}px`);
       }
 
       // Update transform with measured width

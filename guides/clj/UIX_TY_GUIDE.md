@@ -128,7 +128,7 @@ For derived state, use `use-memo`. For side effects, `use-effect` with an explic
 
 ## Event handling — `event.detail.value`
 
-Ty's React wrappers attach `addEventListener` on the underlying custom element and forward the native `CustomEvent`. So `e.detail.value` is the same access path you'd use in plain JS:
+Tyrell's React wrappers attach `addEventListener` on the underlying custom element and forward the native `CustomEvent`. So `e.detail.value` is the same access path you'd use in plain JS:
 
 ```clojure
 (defui email-field []
@@ -169,7 +169,7 @@ For `Multiselect`, convert the JS array to a CLJS vector if you need it:
 
 ## Composition — children with slots
 
-Ty components accept slotted children — pass them as `$` children with a `:slot` attribute:
+Tyrell components accept slotted children — pass them as `$` children with a `:slot` attribute:
 
 ```clojure
 ($ ty/Input

@@ -1,10 +1,10 @@
 # tyrell-react
 
-**React wrappers for Ty Web Components** - bringing framework-agnostic web components to React with full TypeScript support.
+**React wrappers for Tyrell Web Components** - bringing framework-agnostic web components to React with full TypeScript support.
 
 ## 🎯 Philosophy
 
-Ty web components are **distributed via CDN** and loaded as standard web components. These React wrappers provide:
+Tyrell web components are **distributed via CDN** and loaded as standard web components. These React wrappers provide:
 - ✅ **React-friendly API** - Props instead of attributes
 - ✅ **TypeScript types** - Full type safety
 - ✅ **Event handling** - React synthetic events
@@ -13,7 +13,7 @@ Ty web components are **distributed via CDN** and loaded as standard web compone
 
 ## 📦 Installation
 
-### Step 1: Load Ty Web Components (CDN)
+### Step 1: Load Tyrell Web Components (CDN)
 
 Add to your `index.html`:
 
@@ -21,7 +21,7 @@ Add to your `index.html`:
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Ty Web Components & Styles via CDN -->
+  <!-- Tyrell Web Components & Styles via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
 </head>
@@ -96,7 +96,7 @@ All 18 components wrapped:
 
 ## ⚡ Event Handling (React Convention)
 
-Ty React wrappers follow React conventions for event handling:
+Tyrell React wrappers follow React conventions for event handling:
 
 ### Input Components (Input, Textarea, Checkbox)
 
@@ -387,7 +387,7 @@ Modern browsers with Web Components support:
 
 ## 📝 Why CDN Distribution?
 
-**Ty web components are framework-agnostic** and designed for CDN distribution:
+**Tyrell web components are framework-agnostic** and designed for CDN distribution:
 
 ✅ **Zero version conflicts** - One version serves all frameworks  
 ✅ **Smaller bundles** - Web components load once, shared across all React components  
@@ -397,7 +397,7 @@ Modern browsers with Web Components support:
 
 ## 🤝 Contributing
 
-This package is part of the [Ty monorepo](https://github.com/gersak/tyrell).
+This package is part of the [Tyrell monorepo](https://github.com/gersak/tyrell).
 
 ## 📄 License
 
@@ -405,6 +405,6 @@ MIT License - see [LICENSE](./LICENSE)
 
 ## 🔗 Links
 
-- [Ty Core Package](https://www.npmjs.com/package/tyrell-components)
+- [Tyrell Core Package](https://www.npmjs.com/package/tyrell-components)
 - [GitHub Repository](https://github.com/gersak/tyrell)
 - [Documentation](https://tyrell.gersak.dev) (Coming Soon)

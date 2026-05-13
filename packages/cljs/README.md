@@ -2,7 +2,7 @@
 
 **Framework-agnostic web components for ClojureScript applications.**
 
-Ty provides a complete set of UI components that work seamlessly with Reagent, UIx, Replicant, or any ClojureScript framework. Load via CDN and use as custom HTML elements.
+Tyrell provides a complete set of UI components that work seamlessly with Reagent, UIx, Replicant, or any ClojureScript framework. Load via CDN and use as custom HTML elements.
 
 ## Installation
 

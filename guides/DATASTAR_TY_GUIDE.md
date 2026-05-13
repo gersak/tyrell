@@ -1,13 +1,40 @@
-# Datastar + Ty Guide
+# Datastar + Tyrell Guide
 
-Use Ty web components with Datastar for reactive server-driven UIs. No JavaScript framework needed — just HTML attributes, SSE, and your backend of choice.
+Use Tyrell web components with Datastar for reactive server-driven UIs. No JavaScript framework needed — just HTML attributes, SSE, and your backend of choice.
+
+## Why they fit together
+
+Datastar and Tyrell are built around the same philosophy: **standard HTML attributes, standard DOM events, standard form association**. There is no adapter layer because none is needed.
+
+| What Datastar does | How Tyrell meets it |
+|---|---|
+| `data-bind="x"` — two-way bind to a form element | Tyrell form components implement `ElementInternals` — they behave as native inputs for `data-bind` |
+| `data-on:change="..."` — listen to any DOM event | Tyrell emits standard `CustomEvent` on `change`; `evt.detail.value` is the payload |
+| `data-attr:flavor="$x"` — bind any HTML attribute to a signal | Tyrell attributes are plain HTML attributes — reactive binding just works |
+| `@post('/api/...')` — send signals to server | Server reads signals as JSON, returns SSE with fresh Tyrell HTML |
+| `patch-elements` — morph DOM to new HTML | Server renders Tyrell hiccup; Datastar morphs it in place |
+
+The result: **a full interactive UI driven entirely by server-rendered HTML**. The client runs Datastar (one script tag) and Tyrell (one script tag). Your server emits HTML strings. No build step, no component tree, no hydration.
+
+### PocketLedger — a real app
+
+[`examples/pocketledger/`](../examples/pocketledger/) is a production-quality expense tracker built with this exact stack: **Clojure + Datastar + Tyrell + Tauri** (desktop/Android). It shows tabs, wizard-style setup, forms with currency input, date picker, multiselect categories, scroll container for transaction history, dark mode toggle, and full SSE-driven CRUD — all in ~600 lines of Clojure with no client-side framework.
+
+### Go examples — every component in one place
+
+Two minimal single-file Go servers (standard library only, no external Go deps) that exercise the full primitive surface against the latest TC build:
+
+- [`examples/datastar-go/`](../examples/datastar-go/) — support-ticket form. Covers `ty-input`, `ty-textarea`, `ty-dropdown`, `ty-radio-group`, `ty-date-picker`, `ty-switch`, `ty-checkbox`, `ty-button`, `ty-modal`, `ty-scroll-container`, `ty-icon`, plus debounced server-side validation and a keep-alive SSE feed.
+- [`examples/datastar-go-workspace/`](../examples/datastar-go-workspace/) — workspace dashboard covering everything the first example doesn't: `ty-tabs`, `ty-multiselect` + `ty-tag`, `ty-copy`, `ty-file-upload`, `ty-calendar`, `ty-wizard` + `ty-step`, `ty-popup`, `ty-tooltip`, `ty-resize-observer`, with server-driven wizard transitions and SSE upload progress.
+
+Both pin the CDN to `tyrell-components@tc` (the dist tag that follows the latest TC build) so they track the version under active development. They also demonstrate **server-rendered icons** — inline `<svg>` slotted into `<ty-icon>` so icons paint with zero client-side JS.
 
 ## Setup
 
 ### HTML Head
 
 ```html
-<!-- Ty CSS and Components -->
+<!-- Tyrell CSS and Components -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 
@@ -103,11 +130,11 @@ When you need custom logic beyond simple binding:
 <ty-input data-on:change="$username = evt.detail.value; $dirty = true"></ty-input>
 ```
 
-Always access Ty values through `evt.detail.value`.
+Always access Tyrell values through `evt.detail.value`.
 
 ## Dynamic Attributes
 
-Bind Ty component attributes to signal values:
+Bind Tyrell component attributes to signal values:
 
 ```html
 <!-- Toggle tag flavor based on state -->
@@ -253,6 +280,204 @@ Pre-read the body before Ring's `wrap-params` consumes it:
       wrap-params
       wrap-keyword-params))
 ```
+
+## More form controls
+
+### ty-textarea
+
+```html
+<div data-signals="{notes: ''}">
+  <ty-textarea
+    data-bind="notes"
+    label="Notes"
+    placeholder="Any additional notes..."
+    rows="4"
+    max-height="200px"
+  ></ty-textarea>
+</div>
+```
+
+`data-bind` wires the `change` event automatically. Attrs: `rows`, `min-height`, `max-height`, `resize`.
+
+### ty-checkbox and ty-switch
+
+Wrap in `<label>` to make the text clickable. Read `evt.detail.checked` for boolean state:
+
+```html
+<div data-signals="{agreed: false, darkMode: false}">
+
+  <label class="flex items-center gap-2">
+    <ty-checkbox
+      data-on:change="$agreed = evt.detail.checked"
+    ></ty-checkbox>
+    I agree to the terms
+  </label>
+
+  <label class="flex items-center gap-2">
+    <ty-switch
+      data-on:change="$darkMode = evt.detail.checked;
+                      document.documentElement.classList.toggle('dark', $darkMode)"
+    ></ty-switch>
+    Dark mode
+  </label>
+
+  <ty-button
+    flavor="primary"
+    data-attr:disabled="!$agreed"
+    data-on:click="@post('/api/submit')"
+  >
+    Continue
+  </ty-button>
+
+</div>
+```
+
+### ty-radio-group / ty-radio
+
+```html
+<div data-signals="{plan: 'starter'}">
+
+  <ty-radio-group
+    label="Plan"
+    data-on:change="$plan = evt.detail.value"
+  >
+    <label class="flex items-center gap-2">
+      <ty-radio value="starter"></ty-radio> Starter
+    </label>
+    <label class="flex items-center gap-2">
+      <ty-radio value="pro"></ty-radio> Pro
+    </label>
+    <label class="flex items-center gap-2">
+      <ty-radio value="enterprise"></ty-radio> Enterprise
+    </label>
+  </ty-radio-group>
+
+  <p data-text="'Selected: ' + $plan"></p>
+
+</div>
+```
+
+Add `orientation="horizontal"` for a side-by-side layout.
+
+---
+
+## Calendar
+
+### ty-date-picker (in a form)
+
+`data-bind` works on `ty-date-picker` — value is a UTC ISO string:
+
+```html
+<ty-date-picker
+  data-bind="txDate"
+  label="Date"
+  placeholder="Pick a date"
+></ty-date-picker>
+```
+
+### ty-calendar (standalone / inline)
+
+For an always-visible calendar, bind year/month/day separately:
+
+```html
+<div data-signals="{calYear: 2025, calMonth: 1, calDay: null}">
+
+  <ty-calendar
+    data-attr:year="$calYear"
+    data-attr:month="$calMonth"
+    data-attr:day="$calDay"
+    data-on:change="$calYear = evt.detail.year;
+                    $calMonth = evt.detail.month;
+                    $calDay = evt.detail.day"
+    data-on:navigate="$calYear = evt.detail.year;
+                       $calMonth = evt.detail.month"
+  ></ty-calendar>
+
+  <div data-show="$calDay !== null">
+    <ty-button
+      flavor="primary"
+      data-on:click="@post('/api/book')"
+    >
+      Book selected date
+    </ty-button>
+  </div>
+
+</div>
+```
+
+Event detail for `change`: `{ year, month, day, action, source }`. Event detail for `navigate`: `{ year, month }`.
+
+---
+
+## Tooltip and popup
+
+### ty-tooltip
+
+Nest inside the trigger element — positioning is automatic:
+
+```html
+<ty-button flavor="primary">
+  Save
+  <ty-tooltip placement="top">Saves to your account</ty-tooltip>
+</ty-button>
+
+<ty-icon name="info">
+  <ty-tooltip flavor="primary" delay="300">Required field</ty-tooltip>
+</ty-icon>
+```
+
+No Datastar wiring needed — tooltip shows on hover/focus automatically.
+
+### ty-popup (for context menus, dropdowns, popovers)
+
+```html
+<ty-button>
+  Actions
+  <ty-popup placement="bottom-start">
+    <div class="ty-elevated p-2 rounded-lg min-w-40">
+      <div class="px-3 py-2 rounded cursor-pointer hover:ty-bg-neutral-">Edit</div>
+      <div
+        class="px-3 py-2 rounded cursor-pointer hover:ty-bg-danger- ty-text-danger"
+        data-on:click="@post('/api/delete')"
+      >Delete</div>
+    </div>
+  </ty-popup>
+</ty-button>
+```
+
+The popup closes automatically on outside click or ESC — no Datastar wiring needed for open/close.
+
+---
+
+## Utilities
+
+### ty-copy
+
+```html
+<ty-copy
+  label="API Key"
+  format="code"
+  value="sk-1234abcd"
+></ty-copy>
+```
+
+Copy happens internally — no event handling or signals needed.
+
+### ty-scroll-container
+
+Use when the transaction list (or any list) needs a fixed-height scrollable area:
+
+```html
+<ty-scroll-container max-height="400px">
+  <div id="transaction-list">
+    <!-- Server renders this via patch-elements -->
+  </div>
+</ty-scroll-container>
+```
+
+When `patch-elements` targets `#transaction-list`, the scroll container maintains its position and the shadow edge indicators update automatically.
+
+---
 
 ## Icon Registration
 

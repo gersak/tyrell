@@ -1526,7 +1526,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
     if (label) {
       const labelEl = document.createElement('label');
-      labelEl.className = 'dropdown-label';
+      labelEl.className = 'ty-field-label';
       labelEl.innerHTML = label + (this.getProperty('required') ? '<span class="required-icon">*</span>' : '');
       container.appendChild(labelEl);
     }

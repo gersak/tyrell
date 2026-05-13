@@ -1,6 +1,6 @@
-# React + Ty Guide
+# React + Tyrell Guide
 
-Use Ty web components in React with `tyrell-react` — typed wrappers with React-idiomatic event handling, ref forwarding, and controlled component patterns.
+Use Tyrell web components in React with `tyrell-react` — typed wrappers with React-idiomatic event handling, ref forwarding, and controlled component patterns.
 
 ## Setup
 
@@ -14,7 +14,7 @@ Two packages, two roles:
 - **`tyrell-components`** — the web components, CSS, and 1,600+ tree-shakeable icons.
 - **`tyrell-react`** — typed React wrappers that render `<ty-*>` elements with React-idiomatic props and event handlers.
 
-### 2. Load Ty's web components
+### 2. Load Tyrell's web components
 
 You have two options. Pick one — they're mutually exclusive.
 
@@ -42,7 +42,7 @@ Available subpaths match the component names — `button`, `input`, `dropdown`, 
 
 #### Option B — CDN script tag
 
-Skip the bundler — load Ty from a `<script>` tag in your HTML head:
+Skip the bundler — load Tyrell from a `<script>` tag in your HTML head:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
@@ -90,7 +90,7 @@ function App() {
 Two naming conventions:
 
 ```tsx
-// Ty-prefixed (explicit)
+// Tyrell-prefixed (explicit)
 import { TyButton, TyInput, TyDropdown } from 'tyrell-react'
 
 // Short names (clean)
@@ -431,10 +431,10 @@ Five levels, from lowest to highest elevation:
 </div>
 ```
 
-Surfaces handle background color and text color automatically via the Ty design system. Pair with Tailwind for spacing, layout, and typography — but use only Ty classes for colors:
+Surfaces handle background color and text color automatically via the Tyrell design system. Pair with Tailwind for spacing, layout, and typography — but use only Tyrell classes for colors:
 
 ```tsx
-// Correct: Ty for color, Tailwind for everything else
+// Correct: Tyrell for color, Tailwind for everything else
 <div className="ty-elevated p-6 rounded-lg flex items-center gap-4">
 
 // Wrong: mixing color systems
@@ -511,7 +511,7 @@ Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutr
 
 ## Dark Mode
 
-Ty responds to a `dark` class on `<html>`. All color variables switch automatically.
+Tyrell responds to a `dark` class on `<html>`. All color variables switch automatically.
 
 ```tsx
 // Simple toggle hook
@@ -564,7 +564,7 @@ export default function RootLayout({ children }) {
 
 ## Global Color Customization
 
-Override the whole palette at `:root` level to rebrand Ty:
+Override the whole palette at `:root` level to rebrand Tyrell:
 
 ```css
 :root {
@@ -789,7 +789,7 @@ Use `slot="start"` and `slot="end"` for icons inside buttons, inputs, and tags. 
 
 ## Form Integration
 
-Ty components participate in HTML forms via `ElementInternals`:
+Tyrell components participate in HTML forms via `ElementInternals`:
 
 ```tsx
 <form onSubmit={(e) => {
@@ -860,7 +860,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 ### Client Components
 
-Ty components require the browser — use `'use client'` directive:
+Tyrell components require the browser — use `'use client'` directive:
 
 ```tsx
 'use client'
@@ -881,7 +881,7 @@ export default function SearchForm() {
 
 ### Wait for Components
 
-If you see FOUC (flash of unstyled content), gate rendering until Ty is loaded:
+If you see FOUC (flash of unstyled content), gate rendering until Tyrell is loaded:
 
 ```tsx
 'use client'

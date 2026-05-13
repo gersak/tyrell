@@ -1505,7 +1505,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       const stubClasses = this.buildStubClasses()
 
       const labelHtml = this._label ? `
-        <label class="dropdown-label">
+        <label class="ty-field-label">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
         </label>
@@ -1561,7 +1561,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
     }
 
     // Dynamic label creation (like input.ts fix)
-    const existingLabel = shadow.querySelector('.dropdown-label')
+    const existingLabel = shadow.querySelector('.ty-field-label')
     const container = shadow.querySelector('.dropdown-container')
     const wrapper = shadow.querySelector('.dropdown-wrapper')
 
@@ -1573,7 +1573,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       } else if (container && wrapper) {
         // Label doesn't exist but we need one - CREATE IT!
         const labelEl = document.createElement('label')
-        labelEl.className = 'dropdown-label'
+        labelEl.className = 'ty-field-label'
         labelEl.innerHTML = this._label + (this._required ? '<span class="required-icon">' + REQUIRED_ICON_SVG + '</span>' : '')
         container.insertBefore(labelEl, wrapper)
       }
@@ -1626,7 +1626,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       const stubClasses = this.buildStubClasses()
 
       const labelHtml = this._label ? `
-        <label class="dropdown-label">
+        <label class="ty-field-label">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
         </label>

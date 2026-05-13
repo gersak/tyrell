@@ -1438,7 +1438,7 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       const stubClasses = this.buildStubClasses()
 
       const labelHtml = this._label ? `
-        <label class="dropdown-label">
+        <label class="ty-field-label">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
         </label>
@@ -1512,7 +1512,7 @@ export class TyMultiselect extends TyComponent<MultiselectState> {
       const stubClasses = this.buildStubClasses()
 
       const labelHtml = this._label ? `
-        <label class="dropdown-label">
+        <label class="ty-field-label">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}
         </label>

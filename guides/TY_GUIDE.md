@@ -1,12 +1,12 @@
-# Ty Component Library — Guide
+# Tyrell Component Library — Guide
 
-**Ty** is a framework-agnostic web component library. TypeScript core (`tyrell-components`), React wrappers (`tyrell-react`), ClojureScript infra (`dev.gersak/tyrell`).
+**Tyrell** is a framework-agnostic web component library. TypeScript core (`tyrell-components`), React wrappers (`tyrell-react`), ClojureScript infra (`dev.gersak/tyrell`).
 
 ---
 
-## Use Ty Components
+## Use Tyrell Components
 
-When a Ty component exists, use it. Do not improvise HTML.
+When a Tyrell component exists, use it. Do not improvise HTML.
 
 | Need | Use | Not |
 |------|-----|-----|
@@ -35,7 +35,7 @@ When a Ty component exists, use it. Do not improvise HTML.
 | Error message | `error` attribute on component | `<span class="text-red-500">` |
 | Debounced input | `debounce` attribute | Manual `setTimeout`/debounce |
 
-Plain HTML is OK for: layout (`<div>`, `<section>`), text (`<h1>`-`<h6>`, `<p>`, `<span>` with Ty classes), lists, links, images.
+Plain HTML is OK for: layout (`<div>`, `<section>`), text (`<h1>`-`<h6>`, `<p>`, `<span>` with Tyrell classes), lists, links, images.
 
 ---
 

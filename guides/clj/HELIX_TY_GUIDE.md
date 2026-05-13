@@ -318,6 +318,65 @@ Helix's hooks-first model means non-React atoms (e.g. `tyrell.router/*router*`) 
 
 Helix-side: `($ ty/Icon {:name "check" :size "sm"})` or `(d/i {:class "..."})` if you want a plain `<i>` tag for an inline emoji-substitute. The Tyrell icon registry is global, so a single `(register!)` call on app init suffices.
 
+## Calendar and wizard
+
+### ty-calendar
+
+```clojure
+(defnc calendar-demo []
+  (let [now (js/Date.)
+        [[year month day] set-date]
+        (hooks/use-state [(.getFullYear now)
+                          (inc (.getMonth now))
+                          nil])]
+    (d/div {:class "flex flex-col gap-4"}
+      ($ ty/Calendar
+         {:year  year
+          :month month
+          :day   day
+          :onChange (fn [^js e]
+                      (set-date [(.. e -detail -year)
+                                 (.. e -detail -month)
+                                 (.. e -detail -day)]))})
+      (when day
+        (d/p {:class "ty-text-"}
+          (str "Selected: " year "-" month "-" day))))))
+```
+
+Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM-DD` when wrapped in `d/form` with a `name` attribute.
+
+### ty-wizard
+
+```clojure
+(defnc wizard-demo []
+  (let [[step      setStep]      (hooks/use-state "info")
+        [completed setCompleted] (hooks/use-state [])
+        advance (hooks/use-callback :auto-deps
+                  (fn [next-id]
+                    (setCompleted #(conj % step))
+                    (setStep next-id)))]
+    ($ ty/Wizard
+       {:height    "400px"
+        :active    step
+        :completed (str/join "," completed)}
+       ($ ty/Step {:id "info" :label "Info"}
+          (d/div {:class "p-6 flex flex-col gap-4"}
+            ($ ty/Input {:label "Name" :required true})
+            ($ ty/Button {:flavor "primary"
+                          :onClick #(advance "review")} "Next")))
+       ($ ty/Step {:id "review" :label "Review"}
+          (d/div {:class "p-6 flex gap-2"}
+            ($ ty/Button {:onClick #(setStep "info")} "Back")
+            ($ ty/Button {:flavor "success"
+                          :onClick #(advance "done")} "Finish")))
+       ($ ty/Step {:id "done" :label "Done"}
+          (d/div {:class "p-6"} "All done!")))))
+```
+
+Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }`.
+
+---
+
 ## Common pitfalls
 
 - **camelCase props on `$ Component`** — `:on-click` on a Tyrell wrapper component **does nothing**. It must be `:onClick`. Helix passes props through verbatim. The compiler won't warn.
