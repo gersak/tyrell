@@ -5,6 +5,89 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-RC9] - 2026-05-13
+
+### Wizard CSS variable system
+
+`ty-wizard` now exposes a complete `--ty-wizard-*` token family for theming without touching Shadow DOM internals.
+
+**Accent aliases** — one variable per state, each falling back to a semantic Tyrell color:
+
+```css
+--ty-wizard-active-accent:    var(--ty-color-primary)
+--ty-wizard-completed-accent: var(--ty-color-success)
+--ty-wizard-error-accent:     var(--ty-color-danger)
+--ty-wizard-pending-accent:   var(--ty-color-neutral)
+```
+
+Flip all "active" chrome to your brand color with a single variable:
+```css
+ty-wizard { --ty-wizard-active-accent: #6366f1; }
+```
+
+**Fine-grained tokens** — per-state circle colors, border, text, glow shadows, and layout:
+
+```css
+/* Container */
+--ty-wizard-bg, --ty-wizard-border, --ty-wizard-radius, --ty-wizard-shadow
+
+/* Per state: completed / active / pending / error */
+--ty-wizard-completed-bg, --ty-wizard-completed-border, --ty-wizard-completed-text
+--ty-wizard-completed-glow  /* color-mix(…accent 10%, transparent) */
+/* …active, pending, error follow the same pattern */
+
+/* Progress line */
+--ty-wizard-line-bg, --ty-wizard-line-completed-bg
+
+/* Indicators bar */
+--ty-wizard-indicators-bg, --ty-wizard-indicators-border
+
+/* Step labels */
+--ty-wizard-label-active, --ty-wizard-label-completed
+--ty-wizard-label-pending, --ty-wizard-label-error
+
+/* Transitions */
+--ty-wizard-transition-duration, --ty-wizard-transition-easing
+```
+
+Width and height are set by the `width`/`height` attributes — they are not public theming tokens.
+
+---
+
+### Dropdown & Multiselect — loading state
+
+`ty-dropdown` and `ty-multiselect` now show a loading overlay while an async search is in flight. Set `loading` (boolean attribute) to activate.
+
+**Default slot fallback:** a spinner + "Searching…" label, matching the options popup visually (same background, border, radius, shadow).
+
+**Custom content:** override via `slot="loading"`:
+```html
+<ty-dropdown loading>
+  <span slot="loading">Fetching results…</span>
+  …
+</ty-dropdown>
+```
+
+**CSS variables** for the loading overlay:
+```css
+--ty-loader-bg, --ty-loader-border, --ty-loader-radius, --ty-loader-shadow
+```
+
+---
+
+### Dropdown — external-search selection recovery
+
+`ty-dropdown` now attaches a `MutationObserver` to its light-DOM children. When a consumer replaces `ty-option` children (the standard external-search refresh pattern), the component re-establishes the visual selection for the current value automatically — no extra code required. The observer is torn down on disconnect.
+
+---
+
+### Mobile fixes
+
+- `ty-dropdown` — fixed fullscreen mobile mode layout regressions
+- `ty-multiselect` — fixed tag rendering and selection management in mobile fullscreen mode
+
+---
+
 ## [1.0.0-RC6] - 2026-05-05
 
 ### Version scheme
