@@ -8,8 +8,8 @@
    [tyrell.template :as template]))
 
 ;; Clojars versions — kept in sync with NPM tyrell-components version
-(def ty-version "1.0.0-RC7-SNAPSHOT")
-(def ty-icons-version "1.0.0-RC7-SNAPSHOT")
+(def ty-version "1.0.0-RC9")
+(def ty-icons-version "1.0.0-RC9")
 (def class-dir "target/classes")
 
 ;; Library configurations
