@@ -53,6 +53,8 @@
   :mail lucide/mail
   :palette lucide/palette
   :rocket lucide/rocket
+  :droplet lucide/droplet
+  :sliders lucide/sliders
   :clojure clojure
   :ty-logo ty-logo
 

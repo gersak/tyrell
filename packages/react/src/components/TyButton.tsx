@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
@@ -122,16 +123,22 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
       }
     }, [ref]);
 
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isLoading = useBooleanProperty(elementRef, 'loading', loading);
+    const isPill = useBooleanProperty(elementRef, 'pill', pill);
+    const isAction = useBooleanProperty(elementRef, 'action', action);
+    const isWide = useBooleanProperty(elementRef, 'wide', wide);
+
     const webComponentProps: Record<string, any> = {
       ...props,
       ref: elementRef,
     };
 
-    if (disabled) webComponentProps.disabled = '';
-    if (loading) webComponentProps.loading = '';
-    if (pill) webComponentProps.pill = '';
-    if (action) webComponentProps.action = '';
-    if (wide) webComponentProps.wide = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isLoading) webComponentProps.loading = '';
+    if (isPill) webComponentProps.pill = '';
+    if (isAction) webComponentProps.action = '';
+    if (isWide) webComponentProps.wide = '';
 
     if (appearance) webComponentProps.appearance = appearance;
     if (type) webComponentProps.type = type;

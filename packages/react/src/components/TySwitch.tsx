@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 export interface TySwitchProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Checked (on) state */
@@ -88,27 +88,19 @@ export const TySwitch = React.forwardRef<HTMLElement, TySwitchProps>(
       }
     }, [ref]);
 
-    // Imperatively sync `checked` to the underlying property. React 18 sets
-    // boolean attributes as empty strings on first render but doesn't reliably
-    // remove them when the prop flips back to false on a custom element.
-    // React 19+ handles boolean prop-to-property bridging natively.
-    useEffect(() => {
-      if (!needsPropertyBridge) return;
-      const element = elementRef.current as any;
-      if (!element) return;
-      if (Boolean(element.checked) !== Boolean(checked)) {
-        element.checked = Boolean(checked);
-      }
-    }, [checked]);
+    // Imperative property sync for boolean props (see use-boolean-prop.ts).
+    const isChecked = useBooleanProperty(elementRef, 'checked', checked);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
 
     const webComponentProps: Record<string, any> = {
       ...props,
       ref: elementRef,
     };
 
-    if (checked) webComponentProps.checked = '';
-    if (disabled) webComponentProps.disabled = '';
-    if (required) webComponentProps.required = '';
+    if (isChecked) webComponentProps.checked = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
 
     if (value) webComponentProps.value = value;
     if (name) webComponentProps.name = name;

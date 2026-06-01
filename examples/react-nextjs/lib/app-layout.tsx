@@ -37,6 +37,7 @@ const navigation: NavigationSection[] = [
       { name: 'Settings Panel', href: '/examples/settings', icon: 'settings' },
       { name: 'Tabs', href: '/examples/tabs', icon: 'layout' },
       { name: 'Multiselect', href: '/examples/multiselect', icon: 'layers' },
+      { name: 'Modal × popups', href: '/examples/modal-popups', icon: 'square' },
     ]
   }
 ]

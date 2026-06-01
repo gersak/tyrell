@@ -39,7 +39,7 @@ Treasure map. Find your context, follow the link.
 1. **Tyrell for colors, Tailwind for everything else.** Never `bg-blue-500` — use `ty-bg-primary`. Never `text-gray-900` — use `ty-text` / `ty-text+` / `ty-text++`.
 2. **Event payload lives on `event.detail`.** Always `event.detail.value`, never `event.value`.
 3. **Properties vs attributes.** Booleans, arrays, objects → JS property. Strings → attribute. In React: just props. In Vue: `:prop`. In Svelte: `prop:`.
-4. **Icons require explicit registration.** `<ty-icon name="check">` is a runtime lookup; the bundler can't connect the string to the export. Use `registerIcons({ check, ... })`.
+4. **Icons: two paths.** `<ty-icon name="check">` is a runtime registry lookup — register first with `registerIcons({ check, ... })` (a bundler can't connect a string to the export). Or slot the SVG directly: `<ty-icon><svg>…</svg></ty-icon>` — no registration, ideal for server-rendered apps (HTMX, Datastar, Phoenix, Rails).
 5. **`customElements.define` needs a browser.** In SSR frameworks (Next.js, Nuxt, SvelteKit, Astro), import `tyrell-components` only in client boundaries.
 
 ## For agents working in a *consumer* project

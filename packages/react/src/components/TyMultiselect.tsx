@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Multiselect component
 export interface TyMultiselectEventDetail {
@@ -144,6 +145,13 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       };
     }, [handleChange, handleSearch, onChange, onSearch]);
 
+    // Imperative property sync for boolean props (see use-boolean-prop.ts).
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isLoading = useBooleanProperty(elementRef, 'loading', loading);
+    const isReadonly = useBooleanProperty(elementRef, 'readonly', readonly);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+    const isExternalSearch = useBooleanProperty(elementRef, 'externalSearch', externalSearch);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -161,14 +169,11 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       webComponentProps.placeholder = placeholder;
     }
 
-    if (loading) webComponentProps.loading = '';
-    if (disabled) {
-      webComponentProps.disabled = '';  // Boolean attributes as empty string
-    }
-
-    if (readonly) {
-      webComponentProps.readonly = '';  // Boolean attributes as empty string
-    }
+    if (isLoading) webComponentProps.loading = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isReadonly) webComponentProps.readonly = '';
+    if (isRequired) webComponentProps.required = '';
+    if (isExternalSearch) webComponentProps['external-search'] = '';
 
     if (flavor) {
       webComponentProps.flavor = flavor;
@@ -178,17 +183,8 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       webComponentProps.label = label;
     }
 
-    if (required) {
-      webComponentProps.required = '';  // Boolean attributes as empty string
-    }
-
     if (name) {
       webComponentProps.name = name;
-    }
-    
-    // External (remote) search mode: parent owns filtering, multiselect dispatches search events
-    if (externalSearch) {
-      webComponentProps['external-search'] = '';
     }
 
     // Add debounce attribute

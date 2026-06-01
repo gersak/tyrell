@@ -46,7 +46,7 @@ export const optionStyles = `
 }
 
 .option-content[selected] {
-  background: var(--ty-bg-primary-mild);
+  background: var(--ty-bg-primary-bold);
   color: var(--ty-text-strong);
   font-weight: var(--ty-font-medium);
 }

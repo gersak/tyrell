@@ -479,9 +479,32 @@ When `patch-elements` targets `#transaction-list`, the scroll container maintain
 
 ---
 
-## Icon Registration
+## Icons
 
-### Server-Side (Clojure)
+You have two independent paths. Pick per icon; they coexist freely on the same page.
+
+### Option A — inline SVG (zero client JS)
+
+`<ty-icon>` exposes a `<slot>`. Drop a raw `<svg>` as a child and the registry is bypassed entirely — **no boot script, no `window.tyIcons.register`, no `name=` attribute**:
+
+```html
+<ty-icon size="md" class="ty-text-primary">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+</ty-icon>
+```
+
+`size`, `spin`, `pulse`, `tempo`, and `ty-text-*` color classes still apply because they style the host element, not its slotted contents. Use `currentColor` on `fill`/`stroke` so color classes tint the SVG. This is the recommended default for Datastar — the server already has the SVG strings (Lucide / Heroicons / Material / your custom set), so just emit them inline. Works under SSE patch-elements like any other markup.
+
+The two reference examples (`examples/datastar-go/` and `examples/datastar-go-workspace/`) use this exact pattern — see those for a Go-template setup.
+
+### Option B — registry (`name="…"`)
+
+Use this when you'd rather reference icons by short string name across many fragments and register them once at boot.
+
+#### Server-Side (Clojure)
 
 ```clojure
 (ns myapp.icons
@@ -512,7 +535,7 @@ When `patch-elements` targets `#transaction-list`, the scroll container maintain
      })()"))])
 ```
 
-### JavaScript (Build-Time Bundling)
+#### JavaScript (Build-Time Bundling)
 
 ```javascript
 // icons.js — bundle with esbuild

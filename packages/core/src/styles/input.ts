@@ -138,7 +138,7 @@ export const inputStyles = `
 }
 
 .input-wrapper.error.focused {
-  border-color: var(--ty-color-danger-mild);
+  border-color: var(--ty-color-danger-bold);
   box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
@@ -260,12 +260,12 @@ input::placeholder {
 }
 
 .input-wrapper.primary:hover:not(.disabled) {
-  border-color: var(--ty-color-primary-mild);
+  border-color: var(--ty-color-primary-bold);
 }
 
 .input-wrapper.primary.focused {
-  border-color: var(--ty-color-primary-mild);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--ty-color-primary-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-primary) 15%, transparent);
 }
 
 /* Secondary */
@@ -274,8 +274,8 @@ input::placeholder {
 }
 
 .input-wrapper.secondary.focused {
-  border-color: var(--ty-color-secondary-mild);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: var(--ty-color-secondary-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-secondary) 15%, transparent);
 }
 
 /* Success */
@@ -284,12 +284,12 @@ input::placeholder {
 }
 
 .input-wrapper.success:hover:not(.disabled) {
-  border-color: var(--ty-color-success-mild);
+  border-color: var(--ty-color-success-bold);
 }
 
 .input-wrapper.success.focused {
-  border-color: var(--ty-color-success-mild);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: var(--ty-color-success-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-success) 15%, transparent);
 }
 
 /* Danger */
@@ -298,12 +298,12 @@ input::placeholder {
 }
 
 .input-wrapper.danger:hover:not(.disabled) {
-  border-color: var(--ty-color-danger-mild);
+  border-color: var(--ty-color-danger-bold);
 }
 
 .input-wrapper.danger.focused {
-  border-color: var(--ty-color-danger-mild);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: var(--ty-color-danger-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-danger) 15%, transparent);
 }
 
 /* Warning */
@@ -312,12 +312,12 @@ input::placeholder {
 }
 
 .input-wrapper.warning:hover:not(.disabled) {
-  border-color: var(--ty-color-warning-mild);
+  border-color: var(--ty-color-warning-bold);
 }
 
 .input-wrapper.warning.focused {
-  border-color: var(--ty-color-warning-mild);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  border-color: var(--ty-color-warning-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-warning) 15%, transparent);
 }
 
 /* Neutral (default) */
@@ -604,7 +604,7 @@ input:focus-visible {
 }
 
 .checkbox-container.error:focus {
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-danger) 15%, transparent);
 }
 
 /* Required state */

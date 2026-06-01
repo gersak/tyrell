@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Copy component
 export interface TyCopyProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
@@ -53,6 +54,10 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
       }
     }, [ref]);
 
+    const isMultiline = useBooleanProperty(elementRef, 'multiline', multiline);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -65,11 +70,11 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
     if (size) webComponentProps.size = size;
     if (flavor) webComponentProps.flavor = flavor;
     if (format) webComponentProps.format = format;
-    
+
     // Add boolean attributes
-    if (multiline) webComponentProps.multiline = '';
-    if (disabled) webComponentProps.disabled = '';
-    if (required) webComponentProps.required = '';
+    if (isMultiline) webComponentProps.multiline = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
 
     return React.createElement('ty-copy', webComponentProps);
   }

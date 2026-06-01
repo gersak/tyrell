@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Tooltip component
 export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
@@ -64,9 +65,8 @@ export const TyTooltip = React.forwardRef<HTMLElement, TyTooltipProps>(
       webComponentProps.delay = delay.toString();
     }
 
-    if (disabled) {
-      webComponentProps.disabled = '';  // Boolean attributes as empty string
-    }
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    if (isDisabled) webComponentProps.disabled = '';
 
     if (flavor) {
       webComponentProps.flavor = flavor;

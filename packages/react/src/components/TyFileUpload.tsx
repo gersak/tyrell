@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty File Upload component
 export interface TyFileUploadProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
@@ -81,14 +82,18 @@ export const TyFileUpload = React.forwardRef<HTMLElement, TyFileUploadProps>(
       }
     }, [ref]);
 
+    const isMultiple = useBooleanProperty(elementRef, 'multiple', multiple);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+
     const webComponentProps: Record<string, any> = {
       ...props,
       ref: elementRef,
     };
 
-    if (multiple) webComponentProps.multiple = '';
-    if (disabled) webComponentProps.disabled = '';
-    if (required) webComponentProps.required = '';
+    if (isMultiple) webComponentProps.multiple = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
 
     if (name) webComponentProps.name = name;
     if (accept) webComponentProps.accept = accept;

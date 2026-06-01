@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Checkbox component
 export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
@@ -110,18 +110,13 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
       }
     }, [ref]);
 
-    // Imperatively sync `checked` to the underlying property. React 18 sets
-    // boolean attributes as empty strings on first render but doesn't reliably
-    // remove them when the prop flips back to false on a custom element.
-    // React 19+ handles boolean prop-to-property bridging natively.
-    useEffect(() => {
-      if (!needsPropertyBridge) return;
-      const element = elementRef.current as any;
-      if (!element) return;
-      if (Boolean(element.checked) !== Boolean(checked)) {
-        element.checked = Boolean(checked);
-      }
-    }, [checked]);
+    // Imperative property sync for boolean props (see use-boolean-prop.ts).
+    // React 18 sets boolean attributes as empty strings on first render but
+    // doesn't reliably remove them when the prop flips back to false on a
+    // custom element. React 19+ handles this natively.
+    const isChecked = useBooleanProperty(elementRef, 'checked', checked);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
@@ -130,9 +125,9 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
     };
 
     // Add boolean attributes
-    if (checked) webComponentProps.checked = '';
-    if (disabled) webComponentProps.disabled = '';
-    if (required) webComponentProps.required = '';
+    if (isChecked) webComponentProps.checked = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
     
     // Add string attributes
     if (value) webComponentProps.value = value;

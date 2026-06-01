@@ -198,6 +198,33 @@ When loading from CDN, the registry is exposed on `window.tyIcons`:
 
 The CDN bundle does **not** preload any icon family — it would inflate the bundle. Either fetch icons on demand or copy the SVG strings you need.
 
+### Inline SVG — skip the registry entirely
+
+`<ty-icon>` exposes a `<slot>` whose fallback content is the registry-resolved SVG. **If you slot a raw `<svg>` as a child, the registry path is bypassed completely** — no `registerIcons` call, no `window.tyIcons` setup, no `name=` attribute:
+
+```html
+<ty-icon size="lg" class="ty-text-primary">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+</ty-icon>
+```
+
+The host element still gets every visual feature — `size`, `spin`, `pulse`, `tempo`, color via `ty-text-*` — because those style the `<ty-icon>` element, not its contents. Use `currentColor` on `fill`/`stroke` so color classes still tint the SVG.
+
+**When this is the right choice:**
+
+- Server-rendered apps (HTMX, Datastar, Phoenix LiveView, Rails Turbo, JSF, Symfony, ASP.NET) where the backend already has the SVG markup — no client-side icon catalog needed.
+- One-off custom icons (logos, illustrations) that don't belong in a registry.
+- Migration from existing inline-SVG codebases — drop `<ty-icon>` around your existing SVGs to inherit sizing/animation without rewriting the SVG layer.
+
+**When you still want the registry:**
+
+- Many icons referenced by string name across components (button slots, dropdowns, etc.) — registering once and referencing by name keeps templates clean.
+- Apps where the bundler should make icon usage statically analyzable.
+
+The two paths coexist freely on the same page.
+
 ## Vanilla JS usage
 
 Once components are registered, write plain HTML and listen for events:

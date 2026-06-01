@@ -8,7 +8,7 @@
  * Features:
  * - Native dialog element wrapper
  * - Dual API: declarative (open attribute) and imperative (show/hide methods)
- * - Protected mode with confirmation dialog
+ * - Cancellable `beforeclose` lifecycle event for unsaved-state flows
  * - Auto-hiding close button on hover (desktop only)
  * - Scroll locking with unique modal IDs
  * - Customizable backdrop via CSS variables
@@ -41,15 +41,34 @@ export interface ModalAttributes {
   backdrop: boolean;                // Show backdrop behind modal
   closeOnOutsideClick: boolean;     // Close on backdrop click
   closeOnEscape: boolean;           // Close on ESC key
-  protected: boolean;               // Require confirmation before closing
 }
+
+/**
+ * How a modal close was triggered.
+ */
+export type ModalCloseReason =
+  | 'programmatic'   // .hide() called
+  | 'backdrop'       // user clicked the backdrop
+  | 'escape'         // user pressed ESC
+  | 'close-button'   // user clicked the built-in X
+  | 'native';        // <dialog>.close() fired without us routing it
 
 /**
  * Modal close event detail
  */
 export interface ModalCloseDetail {
-  reason: 'programmatic' | 'native';  // How the modal was closed
+  reason: ModalCloseReason;
   returnValue?: string;               // Optional return value from dialog
+}
+
+/**
+ * Modal beforeclose event detail — fired *before* the modal closes. The event
+ * is cancellable; consumers can call `event.preventDefault()` to abort the
+ * close, render their own UI (e.g. a styled "Discard changes?" prompt), and
+ * later call `.hide()` themselves when ready.
+ */
+export interface ModalBeforeCloseDetail {
+  reason: ModalCloseReason;
 }
 
 // ============================================================================
@@ -104,13 +123,12 @@ function getModalAttributes(el: TyModal): ModalAttributes {
   return {
     open: parseBoolAttr(el, 'open'),
     backdrop: el.hasAttribute('backdrop') ? parseBoolAttr(el, 'backdrop') : true,
-    closeOnOutsideClick: el.hasAttribute('close-on-outside-click') 
-      ? parseBoolAttr(el, 'close-on-outside-click') 
+    closeOnOutsideClick: el.hasAttribute('close-on-outside-click')
+      ? parseBoolAttr(el, 'close-on-outside-click')
       : true,
     closeOnEscape: el.hasAttribute('close-on-escape')
       ? parseBoolAttr(el, 'close-on-escape')
       : true,
-    protected: parseBoolAttr(el, 'protected'),
   };
 }
 
@@ -195,22 +213,41 @@ function ensureInternalDialog(shadowRoot: ShadowRoot): HTMLDialogElement {
 // ============================================================================
 
 /**
- * Close modal with protection check
+ * Close modal with cancellable beforeclose lifecycle.
+ *
+ *   1. Emit `beforeclose` (cancellable, bubbles, composed). Consumers can
+ *      `event.preventDefault()` to abort the close — render your own UI for
+ *      unsaved-state flows.
+ *   2. Remove the `open` attribute, which triggers the actual close.
+ *
+ * Callers pass `reason` so consumers can decide differently based on intent
+ * (e.g. "OK to discard via ESC, but not via .hide() during a save").
  */
-function closeModal(el: TyModal): void {
-  const { protected: isProtected } = getModalAttributes(el);
+function closeModal(
+  el: TyModal,
+  reason: ModalCloseReason = 'programmatic',
+  opts?: { force?: boolean }
+): void {
   const shadowRoot = el.shadowRoot;
   const dialog = shadowRoot ? getModalDialog(shadowRoot) : null;
-  
+
   if (!dialog || !dialog.open) return;
-  
-  // Check if protected mode is enabled
-  if (isProtected) {
-    const confirmed = confirm('You have unsaved changes. Are you sure you want to close?');
-    if (!confirmed) return;
+
+  // `force: true` bypasses the cancellable event. Used by consumers AFTER
+  // they've shown their own confirm UI and the user said "yes, close" —
+  // calling `.hide()` again without force would re-trigger their intercept.
+  if (!opts?.force) {
+    const beforeClose = new CustomEvent<ModalBeforeCloseDetail>('beforeclose', {
+      detail: { reason },
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    el.dispatchEvent(beforeClose);
+    if (beforeClose.defaultPrevented) return;
   }
-  
-  // Remove open attribute
+
+  // Remove open attribute (triggers actual close).
   el.removeAttribute('open');
 }
 
@@ -232,7 +269,7 @@ function handleBackdropClick(el: TyModal, event: Event): void {
   // Only close if clicking on dialog backdrop (not content)
   if (dialog && event.target === dialog) {
     event.preventDefault();
-    closeModal(el);
+    closeModal(el, 'backdrop');
   }
 }
 
@@ -243,7 +280,7 @@ function handleEscapeKey(el: TyModal, event: KeyboardEvent): void {
   event.stopPropagation();
   if (event.key === 'Escape') {
     event.preventDefault();
-    closeModal(el);
+    closeModal(el, 'escape');
   }
 }
 
@@ -253,7 +290,7 @@ function handleEscapeKey(el: TyModal, event: KeyboardEvent): void {
 function handleCloseButtonClick(el: TyModal, event: Event): void {
   event.preventDefault();
   event.stopPropagation();
-  closeModal(el);
+  closeModal(el, 'close-button');
 }
 
 /**
@@ -450,11 +487,21 @@ function render(el: TyModal): void {
     }
   }
   
-  // Handle dialog's native close event
-  dialog.onclose = () => {
+  // Handle dialog's native close event.
+  //
+  // Child components (ty-dropdown, ty-multiselect, ty-date-picker) dispatch a
+  // bubbling+composed `close` custom event when their popups close. Those
+  // events bubble up to *this* dialog and trigger `onclose` too — without this
+  // guard, opening a dropdown inside a modal and closing the dropdown would
+  // close the whole modal. The native dialog `close` event is not composed
+  // and targets the dialog itself, so we only react when `event.target` is
+  // the dialog.
+  dialog.onclose = (event: Event) => {
+    if (event.target !== dialog) return;
+
     // Ensure scroll is unlocked
     unlockScroll(modalId);
-    
+
     // Sync the open attribute
     if (el.hasAttribute('open')) {
       el.removeAttribute('open');
@@ -534,11 +581,17 @@ function cleanup(el: TyModal): void {
 export class TyModal extends HTMLElement {
   /** Programmatic API methods */
   show?: () => void;
-  hide?: () => void;
+  /**
+   * Close the modal. Without `force`, fires `beforeclose` first — consumers
+   * can `preventDefault()` to abort. With `force: true`, bypasses the
+   * cancellable event; used when the consumer has already obtained user
+   * consent through their own UI.
+   */
+  hide?: (opts?: { force?: boolean }) => void;
   
   /** Observed attributes */
   static get observedAttributes() {
-    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'protected'];
+    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape'];
   }
   
   constructor() {
@@ -551,7 +604,7 @@ export class TyModal extends HTMLElement {
     
     // Add public API methods
     this.show = () => openModal(this);
-    this.hide = () => closeModal(this);
+    this.hide = (opts?: { force?: boolean }) => closeModal(this, 'programmatic', opts);
   }
   
   disconnectedCallback() {

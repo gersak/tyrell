@@ -9,10 +9,10 @@
 (defn hero []
   [:div.text-center.mb-12
    [:div.inline-flex.items-center.gap-3.mb-4
-    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-
+    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-
      {:style {:width "44px"
               :height "44px"}}
-     [:ty-icon.ty-text-accent+
+     [:ty-icon.ty-text-primary+
       {:name "rocket"
        :size "lg"}]]
     [:h1.text-4xl.font-bold.ty-text++.tracking-tight "Getting started"]]
@@ -29,14 +29,14 @@
   [{:keys [icon label]}]
   [:div.inline-flex.items-center.gap-1.5.px-2.5.py-1.rounded-full.ty-content
    {:style {:border "1px solid var(--ty-border-)"}}
-   [:ty-icon.ty-text-accent {:name icon
+   [:ty-icon.ty-text-primary {:name icon
                              :size "xs"}]
    [:span.text-xs.font-medium.ty-text label]])
 
 (defn brand-glyph
-  "Brand silhouette — softer baseline (ty-text-), scales + lights up to accent on hover."
+  "Brand silhouette — softer baseline (ty-text-), scales + lights up to primary on hover."
   [{:keys [icon title]}]
-  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-accent.hover:scale-110
+  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-primary.hover:scale-110
    {:style {:width "40px"
             :height "40px"}
     :title title}
@@ -74,7 +74,7 @@
     :on {:click #(router/navigate! :tyrell.site.docs/javascript)}}
 
    ;; Accent strip — visual signal that this is the headline option
-   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-accent+]
+   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-primary+]
 
    [:div.p-6.lg:p-8
 
@@ -86,16 +86,16 @@
 
       ;; Eyebrow
       [:div.flex.items-center.gap-2.mb-5
-       [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "Recommended"]
+       [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "Recommended"]
        [:span.h-1.w-1.rounded-full.ty-bg-neutral]
        [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "Most popular"]]
 
       ;; Title + icon
       [:div.flex.items-start.gap-4.mb-5
-       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
+       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
         {:style {:width "56px"
                  :height "56px"}}
-        [:ty-icon.ty-text-accent++ {:name "code"
+        [:ty-icon.ty-text-primary++ {:name "code"
                                     :size "lg"}]]
        [:div.flex-1.min-w-0
         [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
@@ -118,7 +118,7 @@
       [:div.flex-1]
 
       ;; CTA
-      [:div.flex.items-center.gap-2.text-base.font-semibold.ty-text-accent
+      [:div.flex.items-center.gap-2.text-base.font-semibold.ty-text-primary
        [:span "Read the JS / TypeScript guide"]
        [:ty-icon {:name "arrow-right"
                   :size "sm"}]]]
@@ -243,7 +243,7 @@
 (defn choose-your-stack []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "layers"
+    [:ty-icon.ty-text-primary {:name "layers"
                               :size "sm"}]
     [:h2.text-xl.font-bold.ty-text++.tracking-tight "Choose your stack"]]
    [:p.ty-text-.mb-6.font-normal.text-sm
@@ -295,12 +295,12 @@
 (defn cdn-callout []
   [:div.ty-elevated.rounded-xl.p-5
    {:style {:border "1px solid var(--ty-border-)"
-            :border-left "3px solid var(--ty-color-accent)"}}
+            :border-left "3px solid var(--ty-color-primary)"}}
    [:div.flex.items-start.gap-4
-    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-accent-.flex-shrink-0
+    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-primary-.flex-shrink-0
      {:style {:width "40px"
               :height "40px"}}
-     [:ty-icon.ty-text-accent+
+     [:ty-icon.ty-text-primary+
       {:name "zap"
        :size "md"}]]
     [:div.flex-1.min-w-0
@@ -313,8 +313,8 @@
       "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
 <script src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>"
       "html")
-     [:div.flex.items-center.gap-1.5.mt-2.text-sm.font-semibold.ty-text-accent
-      [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
+     [:div.flex.items-center.gap-1.5.mt-2.text-sm.font-semibold.ty-text-primary
+      [:button.ty-text-primary.cursor-pointer.hover:underline.bg-transparent.p-0
        {:style {:border "none"}
         :on {:click #(router/navigate! :tyrell.site.docs/html)}}
        "Full HTML setup"]
@@ -347,14 +347,14 @@
   "Tiny uppercase numbered label between code blocks in pattern 2."
   [n text]
   [:div.flex.items-center.gap-2.mt-3
-   [:span.text-xs.font-bold.ty-text-accent.tracking-widest "0" n]
+   [:span.text-xs.font-bold.ty-text-primary.tracking-widest "0" n]
    [:span.text-xs.font-semibold.ty-text--.tracking-widest.uppercase text]])
 
 (defn icon-system []
   [:div
    ;; Section heading
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "sparkles"
+    [:ty-icon.ty-text-primary {:name "sparkles"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Icons, registered up front"]]
    [:p.ty-text-.mb-6.font-normal

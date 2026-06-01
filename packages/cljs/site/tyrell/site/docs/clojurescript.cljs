@@ -12,13 +12,13 @@
   [{:keys [icon label]}]
   [:div.inline-flex.items-center.gap-1.5.px-2.5.py-1.rounded-full.ty-content
    {:style {:border "1px solid var(--ty-border-)"}}
-   [:ty-icon.ty-text-accent {:name icon
+   [:ty-icon.ty-text-primary {:name icon
                              :size "xs"}]
    [:span.text-xs.font-medium.ty-text label]])
 
 (defn- brand-glyph
   [{:keys [icon title]}]
-  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-accent.hover:scale-110
+  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-primary.hover:scale-110
    {:style {:width "40px"
             :height "40px"}
     :title title}
@@ -65,7 +65,7 @@
 
 (defn- click-to-copy
   [{:keys [text title]}]
-  [:button.flex.items-center.justify-center.rounded.cursor-pointer.bg-transparent.ty-text--.hover:ty-text-accent.transition-colors.duration-150
+  [:button.flex.items-center.justify-center.rounded.cursor-pointer.bg-transparent.ty-text--.hover:ty-text-primary.transition-colors.duration-150
    {:style {:width "24px"
             :height "24px"
             :border "1px solid var(--ty-border-)"
@@ -92,7 +92,7 @@
 (defn- compact-stack-card
   [{:keys [icon title tagline snippet snippet-lang
            eyebrow eyebrow-flavor cta on-click]
-    :or {eyebrow-flavor "accent"}}]
+    :or {eyebrow-flavor "primary"}}]
   [:div.ty-elevated.rounded-xl.p-5.flex.flex-col
    (cond-> {:style (lift-card-style)}
      on-click (assoc :class "cursor-pointer hover:shadow-lg"
@@ -130,10 +130,10 @@
 (defn- hero []
   [:div.text-center.mb-12
    [:div.inline-flex.items-center.gap-3.mb-4
-    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-
+    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-
      {:style {:width "44px"
               :height "44px"}}
-     [:ty-icon.ty-text-accent+
+     [:ty-icon.ty-text-primary+
       {:name "clojure"
        :size "lg"}]]
     [:h1.text-4xl.font-bold.ty-text++.tracking-tight "ClojureScript"]]
@@ -160,12 +160,12 @@
   [:div.ty-content.rounded-lg.p-3
    {:style {:border "1px solid var(--ty-border-)"}}
    [:div.flex.items-center.justify-between.mb-1
-    [:a.flex.items-center.gap-2.min-w-0.no-underline.ty-text++.hover:ty-text-accent.transition-colors.duration-150
+    [:a.flex.items-center.gap-2.min-w-0.no-underline.ty-text++.hover:ty-text-primary.transition-colors.duration-150
      {:href link
       :target "_blank"
       :rel "noopener noreferrer"
       :title (str "Open " pkg)}
-     [:ty-icon.ty-text-accent {:name "package"
+     [:ty-icon.ty-text-primary {:name "package"
                                :size "xs"}]
      [:code.text-sm.font-mono.font-semibold.truncate pkg]
      [:ty-icon.ty-text-- {:name "external-link"
@@ -184,7 +184,7 @@
   [:div.ty-elevated.rounded-2xl.relative.overflow-hidden
    {:style {:border "1px solid var(--ty-border-)"}}
 
-   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-accent+]
+   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-primary+]
 
    [:div.p-6.lg:p-8
 
@@ -194,15 +194,15 @@
      [:div.flex.flex-col
 
       [:div.flex.items-center.gap-2.mb-5
-       [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "Install"]
+       [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "Install"]
        [:span.h-1.w-1.rounded-full.ty-bg-neutral]
        [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "One Clojars dep, npm pulled implicitly"]]
 
       [:div.flex.items-start.gap-4.mb-5
-       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
+       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
         {:style {:width "56px"
                  :height "56px"}}
-        [:ty-icon.ty-text-accent++ {:name "package"
+        [:ty-icon.ty-text-primary++ {:name "package"
                                     :size "lg"}]]
        [:div.flex-1.min-w-0
         [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
@@ -226,7 +226,7 @@
       [:div.flex-1]
 
       [:div.flex.items-center.gap-2.text-sm.font-medium.ty-text-
-       [:ty-icon.ty-text-accent {:name "info"
+       [:ty-icon.ty-text-primary {:name "info"
                                  :size "xs"}]
        [:span "Skip the bundler entirely with the CDN script tag — see the next section."]]]
 
@@ -241,7 +241,7 @@
        [:div.flex.flex-col.gap-2
         (pkg-row {:pkg "dev.gersak/tyrell"
                   :ecosystem "Clojars · Add this"
-                  :ecosystem-flavor "accent"
+                  :ecosystem-flavor "primary"
                   :subtitle "Router · i18n · layout · icons · components shim"
                   :install-cmd (str "dev.gersak/tyrell {:mvn/version \"" v/TYRELL_VERSION "\"}")
                   :link "https://clojars.org/dev.gersak/tyrell"})
@@ -314,7 +314,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
 (defn- load-options []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "download"
+    [:ty-icon.ty-text-primary {:name "download"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Two ways to load"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -368,7 +368,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
 (defn- frameworks []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "layers"
+    [:ty-icon.ty-text-primary {:name "layers"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Your framework"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -379,10 +379,10 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
    [:div.ty-elevated.rounded-xl.p-5.mb-4
     {:style {:border "1px solid var(--ty-border-)"}}
     [:div.flex.items-start.gap-3
-     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0.ty-bg-accent-
+     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0.ty-bg-primary-
       {:style {:width "36px"
                :height "36px"}}
-      [:ty-icon.ty-text-accent++ {:name "sparkles"
+      [:ty-icon.ty-text-primary++ {:name "sparkles"
                                   :size "sm"}]]
      [:div.flex-1.min-w-0
       [:p.text-sm.ty-text.font-semibold.mb-1.leading-snug
@@ -477,7 +477,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
 (defn- react-libs-deep-dive []
   [:div {:id "react-libs-deep-dive"}
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "react"
+    [:ty-icon.ty-text-primary {:name "react"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "tyrell-react: bridges the event gap"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -490,7 +490,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
    [:div.ty-elevated.rounded-2xl.relative.overflow-hidden
     {:style {:border "1px solid var(--ty-border-)"}}
 
-    [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-accent+]
+    [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-primary+]
 
     [:div.p-6.lg:p-8
 
@@ -500,15 +500,15 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
       [:div.flex.flex-col
 
        [:div.flex.items-center.gap-2.mb-5
-        [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "Most popular"]
+        [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "Most popular"]
         [:span.h-1.w-1.rounded-full.ty-bg-neutral]
         [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "Reagent · re-frame · UIx · Helix"]]
 
        [:div.flex.items-start.gap-4.mb-5
-        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
+        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
          {:style {:width "56px"
                   :height "56px"}}
-         [:ty-icon.ty-text-accent++ {:name "react"
+         [:ty-icon.ty-text-primary++ {:name "react"
                                      :size "lg"}]]
         [:div.flex-1.min-w-0
          [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
@@ -526,7 +526,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
        [:div.flex-1]
 
        [:div.flex.items-center.gap-2.text-sm.font-medium.ty-text-
-        [:ty-icon.ty-text-accent {:name "book-open"
+        [:ty-icon.ty-text-primary {:name "book-open"
                                   :size "xs"}]
         [:span "Imperative refs cover " (fw "ty-modal") ", " (fw "ty-popup") ", and " (fw "ty-scroll-container") "."]]]
 
@@ -592,7 +592,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
               :height "40px"}}
      [:ty-icon.ty-text-neutral++ {:name icon
                                   :size "md"}]]
-    [:span.text-xs.font-bold.uppercase.tracking-widest.ty-text-accent
+    [:span.text-xs.font-bold.uppercase.tracking-widest.ty-text-primary
      eyebrow]]
    [:h3.text-lg.font-bold.ty-text++.leading-tight.mb-2.tracking-tight title]
    (into [:p.text-sm.ty-text-.leading-relaxed.mb-3]
@@ -602,7 +602,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
 (defn- gotchas []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "alert-triangle"
+    [:ty-icon.ty-text-primary {:name "alert-triangle"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Four CLJS-specific things to know"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -691,12 +691,12 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
 (defn- bundle-size-callout []
   [:div.ty-elevated.rounded-xl.p-5
    {:style {:border "1px solid var(--ty-border-)"
-            :border-left "3px solid var(--ty-color-accent)"}}
+            :border-left "3px solid var(--ty-color-primary)"}}
    [:div.flex.items-start.gap-4
-    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-accent-.flex-shrink-0
+    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-primary-.flex-shrink-0
      {:style {:width "40px"
               :height "40px"}}
-     [:ty-icon.ty-text-accent+ {:name "target"
+     [:ty-icon.ty-text-primary+ {:name "target"
                                 :size "md"}]]
     [:div.flex-1.min-w-0
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
@@ -711,8 +711,8 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
       "tree-shaken via shadow-cljs's " [:code.font-mono.text-xs "sideEffects"] " awareness. "
       "Importing the entire Lucide family is " [:strong.ty-text "~820 KB minified · ~125 KB gzipped"]
       " — most apps need under fifty icons (~10-30 KB gzipped)."]
-     [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-accent
-      [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
+     [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-primary
+      [:button.ty-text-primary.cursor-pointer.hover:underline.bg-transparent.p-0
        {:style {:border "none"}
         :on {:click #(router/navigate! :tyrell.site.docs/getting-started)}}
        "See the three icon-registration patterns on Getting Started"]

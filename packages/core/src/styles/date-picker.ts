@@ -32,7 +32,7 @@ export const datePickerStyles = `
      ========================================================================== */
   --ty-calendar-surface-bg: var(--ty-surface-floating);
   --ty-calendar-surface-border: var(--ty-input-border);
-  --ty-calendar-surface-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --ty-calendar-surface-shadow: var(--ty-shadow-lg, 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1));
   --ty-calendar-surface-radius: var(--ty-radius-lg);
 
   /* ==========================================================================
@@ -173,13 +173,13 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub.primary:hover:not([disabled]) {
-  border-color: var(--ty-color-primary-mild);
+  border-color: var(--ty-color-primary-bold);
 }
 
 .date-picker-stub.primary:focus,
 .date-picker-stub.primary.open {
-  border-color: var(--ty-color-primary-mild);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--ty-color-primary-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-primary) 15%, transparent);
 }
 
 /* Secondary - Supporting action focus state */
@@ -188,13 +188,13 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub.secondary:hover:not([disabled]) {
-  border-color: var(--ty-color-secondary-mild);
+  border-color: var(--ty-color-secondary-bold);
 }
 
 .date-picker-stub.secondary:focus,
 .date-picker-stub.secondary.open {
-  border-color: var(--ty-color-secondary-mild);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  border-color: var(--ty-color-secondary-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-secondary) 15%, transparent);
 }
 
 /* Success - Valid/confirmed input state */
@@ -203,13 +203,13 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub.success:hover:not([disabled]) {
-  border-color: var(--ty-color-success-mild);
+  border-color: var(--ty-color-success-bold);
 }
 
 .date-picker-stub.success:focus,
 .date-picker-stub.success.open {
-  border-color: var(--ty-color-success-mild);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: var(--ty-color-success-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-success) 15%, transparent);
 }
 
 /* Danger - Error/invalid input state */
@@ -218,13 +218,13 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub.danger:hover:not([disabled]) {
-  border-color: var(--ty-color-danger-mild);
+  border-color: var(--ty-color-danger-bold);
 }
 
 .date-picker-stub.danger:focus,
 .date-picker-stub.danger.open {
-  border-color: var(--ty-color-danger-mild);
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  border-color: var(--ty-color-danger-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-danger) 15%, transparent);
 }
 
 /* Warning - Caution/attention needed input state */
@@ -233,13 +233,13 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub.warning:hover:not([disabled]) {
-  border-color: var(--ty-color-warning-mild);
+  border-color: var(--ty-color-warning-bold);
 }
 
 .date-picker-stub.warning:focus,
 .date-picker-stub.warning.open {
-  border-color: var(--ty-color-warning-mild);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+  border-color: var(--ty-color-warning-bold);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-warning) 15%, transparent);
 }
 
 /* Text content */

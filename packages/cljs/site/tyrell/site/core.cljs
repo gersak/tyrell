@@ -5,6 +5,7 @@
    [tyrell.layout :as layout]
    [tyrell.router :as router]
    [tyrell.site.docs :as docs]
+   [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.icons :as icons]
    [tyrell.site.state :refer [state]]
    [tyrell.site.styles :as styles]
@@ -127,7 +128,7 @@
 
 (defn toc-item [{:keys [anchor label route-id category?]}]
   (if category?
-    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-accent-.transition-colors.cursor-pointer.hover:ty-text-accent
+    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-primary-.transition-colors.cursor-pointer.hover:ty-text-primary
      {:on {:click #(scroll-to-anchor! anchor)}}
      label]
     (let [active? (when route-id (router/rendered? route-id true))]
@@ -142,7 +143,7 @@
        label])))
 
 (defn right-sidebar [{:keys [title items]}]
-  [:div.border-l.ty-border.pt-8.pb-8
+  [:div.border-l.ty-border-soft.pt-8.pb-8
    (when title
      [:p.text-xs.uppercase.tracking-widest.ty-text-.pl-4.mb-3
       title])
@@ -275,14 +276,14 @@
     [:button.w-full.text-left.rounded-md.transition-colors.duration-150.cursor-pointer.flex.items-center.gap-3.px-3.py-2
      {:class (concat
               (cond
-                (and featured? active?) ["ty-text-accent+" "font-semibold"]
-                featured?               ["ty-text" "hover:ty-text-accent"]
+                (and featured? active?) ["ty-text-primary+" "font-semibold"]
+                featured?               ["ty-text" "hover:ty-text-primary"]
                 active?                 ["ty-text+" "font-medium"]
                 :else                   ["ty-text-" "font-light" "hover:ty-text+"])
               (when indented? ["pl-7" "text-sm"]))
       :style (cond-> {:letter-spacing (if featured? "normal" "0.02em")}
-               active? (assoc :background "linear-gradient(to right, var(--ty-bg-accent) 2px, transparent 40px)"
-                              :box-shadow "inset 2px 0 0 var(--ty-color-accent)"))
+               active? (assoc :background "linear-gradient(to right, var(--ty-bg-primary) 2px, transparent 40px)"
+                              :box-shadow "inset 2px 0 0 var(--ty-color-primary)"))
       :on {:click (fn []
                     (when section-key
                       (set-last-visited-route! section-key route-id))
@@ -290,7 +291,7 @@
                     (swap! state assoc :mobile-menu-open false))}}
      [:ty-icon {:name icon
                 :size "sm"
-                :class (when active? "ty-text-accent")}]
+                :class (when active? "ty-text-primary")}]
      [:span {:class (cond
                       (and featured? active?) ["text-xs" "font-semibold"]
                       featured?               ["text-xs" "font-medium"]
@@ -368,13 +369,13 @@
      (when title
        (if collapsible?
          ;; Collapsible section header (clickable)
-         [:button.w-full.px-3.py-2.cursor-pointer.rounded-md.transition-all.duration-150.hover:ty-bg-accent-
+         [:button.w-full.px-3.py-2.cursor-pointer.rounded-md.transition-all.duration-150.hover:ty-bg-primary-
           {:on {:click #(toggle-nav-section! section-key items)}}
           [:div.flex.items-center.gap-2
            [:ty-icon {:name icon
                       :size "xs"
                       :class ["transition-transform" "duration-150"
-                              (if is-open? "ty-text-accent" "ty-text-")]}]
+                              (if is-open? "ty-text-primary" "ty-text-")]}]
            [:h3.text-xs.font-medium.tracking-wide
             {:class (if is-open? "ty-text" "ty-text-")}
             (str/lower-case title)]]]
@@ -444,6 +445,7 @@
        (set! (.-_resizeUnsub el) nil)))})
 
 (def ^:private css-route-id :tyrell.site.docs/css)
+(def ^:private theming-route-id :tyrell.site.docs/theming)
 
 (defn nav-items []
   [:div.space-y-6
@@ -471,15 +473,19 @@
                {:route-id css-route-id
                 :label "CSS System"
                 :icon "palette"
+                :featured? true}
+               {:route-id theming-route-id
+                :label "Theming"
+                :icon "droplet"
                 :featured? true}]})]]
 
    ;; Quickstart (route navigation) - Always visible.
-   ;; CSS System is shown in the top section as a featured item, so we
-   ;; filter it out here.
+   ;; CSS System + Theming live in the featured top section, so we filter
+   ;; them out of the Quickstart list.
    (nav-section
     {:title "Quickstart"
      :items (for [route guide-routes
-                  :when (not= (:id route) css-route-id)]
+                  :when (not (#{css-route-id theming-route-id} (:id route)))]
               {:route-id (:id route)
                :label (:name route)
                :icon (:icon route)})})])
@@ -620,7 +626,7 @@
           (if (>= i (count text))
             (if (seq current)
               (conj result (if in-match?
-                             [:span.ty-text-accent.font-semibold current]
+                             [:span.ty-text-primary.font-semibold current]
                              [:span current]))
               result)
             (let [char (nth text i)
@@ -630,7 +636,7 @@
                 (recur (inc i)
                        (if (seq current)
                          (conj result (if in-match?
-                                        [:span.ty-text-accent.font-semibold current]
+                                        [:span.ty-text-primary.font-semibold current]
                                         [:span current]))
                          result)
                        is-match?
@@ -673,10 +679,10 @@
   [result idx selected-index query]
   [:li
    [:button.w-full.text-left.px-4.py-3.flex.items-center.gap-3.transition-colors
-    {:class (when-not (= idx selected-index) ["hover:ty-bg-accent-"])
+    {:class (when-not (= idx selected-index) ["hover:ty-bg-primary-"])
      :style (when (= idx selected-index)
-              {:background "linear-gradient(to right, var(--ty-bg-accent), transparent)"
-               :box-shadow "inset 2px 0 0 var(--ty-color-accent)"})
+              {:background "linear-gradient(to right, var(--ty-bg-primary), transparent)"
+               :box-shadow "inset 2px 0 0 var(--ty-color-primary)"})
      :on {:click #(select-search-result! result)
           :mouseenter #(swap! state assoc-in [:search :selected-index] idx)}}
     ;; Icon
@@ -843,7 +849,7 @@
                  :style {:width 40
                          :height 20
                          :margin-top 3}
-                 :class "ty-text-accent"}]
+                 :class "ty-text-primary"}]
       [:span.text-xs.ty-text-- "web components"]]
 
      ;; Navigation content (scrollable)
@@ -866,12 +872,12 @@
 (defn header-title []
   (if-let [{:keys [parent current]} (current-component-breadcrumb)]
     [:div.flex.items-center.gap-1.text-sm
-     [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
+     [:button.ty-text-.hover:ty-text-primary.transition-colors.cursor-pointer
       {:on {:click #(router/navigate! ::components)}}
       "Components"]
      [:span.ty-text-- "›"]
      (when parent
-       [:button.ty-text-.hover:ty-text-accent.transition-colors.cursor-pointer
+       [:button.ty-text-.hover:ty-text-primary.transition-colors.cursor-pointer
         {:on {:click #(router/navigate! (:id parent))}}
         (:name parent)])
      (when parent
@@ -893,7 +899,7 @@
              :border "1px solid var(--ty-border)"}}
     [:ty-icon {:name "search"
                :size "sm"
-               :class ["ty-text--" "group-hover:ty-text-accent" "transition-colors"]}]
+               :class ["ty-text--" "group-hover:ty-text-primary" "transition-colors"]}]
     [:span.ty-text-.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
     [:span.ty-text--.rounded
      {:style {:font-size "8px"
@@ -905,14 +911,14 @@
      (if (.-userAgent js/navigator)
        (if (str/includes? (.-userAgent js/navigator) "Mac") "⌘K" "Ctrl+K")
        "⌘K")]]
-   [:a.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
+   [:a.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors
     {:href "https://github.com/gersak/tyrell"
      :target "_blank"
      :rel "noopener noreferrer"
      :title "View on GitHub"}
     [:ty-icon {:name "github"
                :size "sm"}]]
-   [:button.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors
+   [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors
     {:on {:click toggle-theme!}}
     [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
                :size "sm"}]]])
@@ -923,7 +929,7 @@
     [:ty-resize-observer
      (merge {:id "tyrell.header"}
             (resize-observer-hooks "tyrell.header" [:sidebar-sizes :header]))
-     [:header.border-b.ty-border+
+     [:header.border-b.ty-border-soft
       {:style {:background-color "var(--ty-surface-canvas)"}}
       (if show-sidebar?
         ;; Desktop: Grid layout matching content columns
@@ -942,7 +948,7 @@
                          (router/navigate! ::landing))}}
           [:div.flex.justify-center.align-center.h-8.pl-4
            [:ty-icon {:name "ty-logo"
-                      :class "ty-text-accent"
+                      :class "ty-text-primary"
                       :style {:height 40
                               :width 120}}]]]
          ;; Content header area — title only when right sidebar present
@@ -961,7 +967,7 @@
         [:div.mx-auto.px-4.py-3.flex.items-center.gap-3
          {:style {:max-width "1200px"}}
          ;; Hamburger menu
-         [:button.p-2.rounded-md.hover:ty-bg-accent-.transition-colors.flex-shrink-0
+         [:button.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:on {:click toggle-mobile-menu!}}
           [:ty-icon {:name "menu"
                      :size "sm"
@@ -973,20 +979,20 @@
                          (router/navigate! ::landing))}
            :style {:margin-top "0.18rem"}}
           [:ty-icon {:name "ty-logo"
-                     :class "ty-text-accent"
+                     :class "ty-text-primary"
                      :style {:height 28
                              :width 48}}]]
          ;; Page title / breadcrumb (grows to fill, truncates)
          [:div.flex-1.min-w-0
           (header-title)]
          ;; Search button (icon only)
-         [:button.p-2.rounded-md.hover:ty-bg-accent-.transition-colors.flex-shrink-0
+         [:button.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:on {:click open-search!}}
           [:ty-icon {:name "search"
                      :size "sm"
                      :class "ty-text-"}]]
          ;; GitHub link
-         [:a.p-2.rounded-md.hover:ty-bg-accent-.transition-colors.flex-shrink-0
+         [:a.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:href "https://github.com/gersak/tyrell"
            :target "_blank"
            :rel "noopener noreferrer"
@@ -995,7 +1001,7 @@
                      :size "sm"
                      :class "ty-text-"}]]
          ;; Theme toggle
-         [:button.p-2.rounded-md.ty-text-.hover:ty-text-accent.transition-colors.flex-shrink-0
+         [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors.flex-shrink-0
           {:on {:click toggle-theme!}}
           [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
                      :size "sm"}]]])]]))
@@ -1012,6 +1018,9 @@
        {:style {:height "100%"}}
        (mobile-menu)
        (search-modal)
+       ;; Floating brand-seeds widget — pinned to the corner on every page.
+       ;; Drag the sliders, watch the entire site retint.
+       (theming-docs/floating-seeds)
        (header)
        [:div.flex-1.overflow-y-auto.overflow-x-hidden.ty-canvas
         {:id "main-scroll-container"

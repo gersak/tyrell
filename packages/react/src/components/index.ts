@@ -1,4 +1,25 @@
 // ===================================================================
+// VERSION
+// ===================================================================
+
+import { VERSION } from '../version';
+
+/** Current version of tyrell-react (auto-synced with package.json on build). */
+export { VERSION };
+
+// One-time load banner so consumers can confirm which version of
+// tyrell-react their page is actually running. Mirrors the banner in
+// tyrell-components. Filter DevTools with "tyrell-react" if noisy.
+if (typeof window !== 'undefined') {
+  (window as any).tyReactVersion = VERSION;
+  console.log(
+    `%c[tyrell-react]%c v${VERSION}`,
+    'color:#a78bfa;font-weight:600',
+    'color:inherit;font-weight:400'
+  );
+}
+
+// ===================================================================
 // TYRELL REACT WRAPPER EXPORTS
 // ===================================================================
 // This file provides two export styles for maximum developer flexibility:

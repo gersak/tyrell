@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useImperativeHandle } from 'react';
+import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty ScrollContainer component
 export interface TyScrollContainerProps extends React.HTMLAttributes<HTMLElement> {
@@ -63,6 +65,19 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
       }
     }), []);
 
+    // shadow defaults to true; only the explicit-false case matters at the
+    // attribute level. Bridge it imperatively so flipping back to true
+    // propagates on React 18.
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      if (shadow === undefined) return;
+      const el = elementRef.current as any;
+      if (!el) return;
+      const next = coerceBool(shadow);
+      if (Boolean(el.shadow) !== next) el.shadow = next;
+    }, [shadow]);
+    const isHideScrollbar = useBooleanProperty(elementRef, 'hideScrollbar', hideScrollbar);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -73,8 +88,8 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
     if (maxHeight) webComponentProps['max-height'] = maxHeight;
 
     // Add boolean attributes
-    if (shadow === false) webComponentProps.shadow = 'false';
-    if (hideScrollbar) webComponentProps['hide-scrollbar'] = true;
+    if (shadow !== undefined && !coerceBool(shadow)) webComponentProps.shadow = 'false';
+    if (isHideScrollbar) webComponentProps['hide-scrollbar'] = '';
 
     return React.createElement(
       'ty-scroll-container',

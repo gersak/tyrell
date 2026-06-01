@@ -45,9 +45,11 @@ export const tooltipStyles: StyleContent = {
 
 /* Base tooltip styling - Dark inverted style (like buttons) */
 #tooltip-container {
-  /* Bold, high-contrast styling */
-  background: var(--ty-tooltip-bg, #1f2937);
-  color: var(--ty-tooltip-color, #ffffff);
+  /* Bold, high-contrast styling. Defaults route through the neutral ramp
+   * so the tooltip inverts cleanly: dark in light mode, light in dark mode.
+   * Consumers can pin it to a fixed look via --ty-tooltip-bg/-color. */
+  background: var(--ty-tooltip-bg, var(--ty-color-neutral-strong));
+  color: var(--ty-tooltip-color, var(--ty-color-neutral-faint));
   
   /* Comfortable padding */
   padding: var(--ty-tooltip-padding, 8px 12px);
@@ -116,17 +118,18 @@ export const tooltipStyles: StyleContent = {
 
 /* Light - For dark backgrounds */
 #tooltip-container[data-flavor="light"] {
-  background: var(--ty-surface-elevated, #ffffff);
-  color: var(--ty-text-strong, #111827);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 
+  background: var(--ty-surface-floating, var(--ty-surface-elevated, #ffffff));
+  color: var(--ty-color-neutral-strong, #111827);
+  box-shadow: var(--ty-shadow-lg,
+              0 10px 15px -3px rgba(0, 0, 0, 0.15),
               0 4px 6px -4px rgba(0, 0, 0, 0.1),
-              0 0 0 1px rgba(0, 0, 0, 0.05);
+              0 0 0 1px rgba(0, 0, 0, 0.05));
 }
 
 /* Dark - Inverted style (default) */
 #tooltip-container[data-flavor="dark"] {
-  background: var(--ty-tooltip-bg, #1f2937);
-  color: #ffffff;
+  background: var(--ty-tooltip-bg, var(--ty-color-neutral-strong));
+  color: var(--ty-color-neutral-faint);
 }
 
 /* Secondary - Purple/indigo */

@@ -28,7 +28,7 @@ export const calendarMonthStyles = `
   /* Day cell — hover */
   --ty-calendar-day-hover-color: var(--ty-color-neutral-strong);
   --ty-calendar-day-hover-bg: var(--ty-bg-neutral-soft);
-  --ty-calendar-day-hover-border: var(--ty-border-mild);
+  --ty-calendar-day-hover-border: var(--ty-border-bold);
 
   /* Today */
   --ty-calendar-today-color: var(--ty-color-secondary-strong);
@@ -39,8 +39,8 @@ export const calendarMonthStyles = `
   --ty-calendar-selected-color: var(--ty-color-primary-strong);
   --ty-calendar-selected-bg: var(--ty-bg-primary);
   --ty-calendar-selected-border: var(--ty-calendar-accent);
-  --ty-calendar-selected-hover-bg: var(--ty-bg-primary-mild);
-  --ty-calendar-selected-hover-border: var(--ty-color-primary-mild);
+  --ty-calendar-selected-hover-bg: var(--ty-bg-primary-bold);
+  --ty-calendar-selected-hover-border: var(--ty-color-primary-bold);
 
   /* Modifier states */
   --ty-calendar-weekend-color: var(--ty-color-danger-soft);

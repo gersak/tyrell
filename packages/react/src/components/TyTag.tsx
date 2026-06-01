@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // CSS custom properties that cascade into the shadow DOM for full color control
 export interface TyTagCSSProperties extends React.CSSProperties {
@@ -57,6 +58,12 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
       }
     }, [ref]);
 
+    const isNotPill = useBooleanProperty(elementRef, 'notPill', notPill);
+    const isClickable = useBooleanProperty(elementRef, 'clickable', clickable);
+    const isDismissible = useBooleanProperty(elementRef, 'dismissible', dismissible);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isSelected = useBooleanProperty(elementRef, 'selected', selected);
+
     return React.createElement(
       'ty-tag',
       {
@@ -64,11 +71,11 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
         // click is dispatched as composed CustomEvent by the web component — React's
         // synthetic onClick already catches it, so we just pass it through as onClick
         ...(onClick && { onClick }),
-        ...(notPill && { 'not-pill': "" }),
-        ...(clickable && { clickable: "" }),
-        ...(dismissible && { dismissible: "" }),
-        ...(disabled && { disabled: "" }),
-        ...(selected && { selected: "" }),
+        ...(isNotPill && { 'not-pill': "" }),
+        ...(isClickable && { clickable: "" }),
+        ...(isDismissible && { dismissible: "" }),
+        ...(isDisabled && { disabled: "" }),
+        ...(isSelected && { selected: "" }),
         ref: elementRef,
       },
       children

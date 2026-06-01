@@ -89,7 +89,7 @@ CLJS class shortcuts on DOM elements work — `($ :div.foo.bar)` is the idiomati
 
 ```clojure
 ($ :div.ty-elevated.p-6.rounded-lg
-   {:class (when active? "ty-bg-accent-")}
+   {:class (when active? "ty-bg-primary-")}
    "Content")
 ```
 

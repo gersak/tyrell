@@ -8,7 +8,7 @@
   ":host { display: block; }
    .wrapper { display: flex; flex-direction: column; align-items: center; gap: 1.25rem; }
    .count { font-size: 3.5rem; font-weight: 700; line-height: 1;
-            color: var(--ty-text-strong, #fff); min-width: 4rem; text-align: center; }
+            color: var(--count-color, var(--ty-text-strong, #fff)); min-width: 4rem; text-align: center; }
    .buttons { display: flex; gap: 0.5rem; }
    .buttons ty-button { cursor: pointer; }
    .label { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;

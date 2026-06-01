@@ -212,7 +212,7 @@ function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
       popover.style.borderColor = 'var(--ty-border-secondary, #a78bfa)';
       break;
     case 'success':
-      popover.style.background = 'var(--ty-bg-success-mild, #10b981)';
+      popover.style.background = 'var(--ty-bg-success-bold, #10b981)';
       popover.style.color = 'var(--ty-color-success-strong, #ecfdf5)';
       popover.style.borderColor = 'var(--ty-border-success, #34d399)';
       break;

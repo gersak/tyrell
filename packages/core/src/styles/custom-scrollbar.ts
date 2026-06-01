@@ -44,7 +44,7 @@ export const customScrollbarStyles = `
 .ty-scrollbar-track-y:hover::before,
 .ty-scrollbar-track-y.dragging::before {
   opacity: 1;
-  background: var(--ty-scrollbar-track-hover, rgba(0, 0, 0, 0.06));
+  background: var(--ty-scrollbar-track-hover, color-mix(in oklab, var(--ty-color-neutral-bold) 8%, transparent));
 }
 
 .ty-scrollbar-thumb-y {
@@ -52,7 +52,7 @@ export const customScrollbarStyles = `
   right: 0;
   width: 100%;
   min-height: var(--ty-scrollbar-thumb-min-height, 30px);
-  background: var(--ty-scrollbar-thumb, rgba(0, 0, 0, 0.35));
+  background: var(--ty-scrollbar-thumb, color-mix(in oklab, var(--ty-color-neutral-bold) 40%, transparent));
   border-radius: var(--ty-scrollbar-radius, 4px);
   transition: background 0.15s ease-out;
   box-sizing: border-box;
@@ -61,12 +61,12 @@ export const customScrollbarStyles = `
 
 .ty-scrollbar-thumb-y:hover,
 .ty-scrollbar-track-y.dragging .ty-scrollbar-thumb-y {
-  background: var(--ty-scrollbar-thumb-hover, rgba(0, 0, 0, 0.50));
+  background: var(--ty-scrollbar-thumb-hover, color-mix(in oklab, var(--ty-color-neutral-bold) 55%, transparent));
 }
 
 .ty-scrollbar-thumb-y:active,
 .ty-scrollbar-track-y.dragging .ty-scrollbar-thumb-y {
-  background: var(--ty-scrollbar-thumb-active, rgba(0, 0, 0, 0.60));
+  background: var(--ty-scrollbar-thumb-active, color-mix(in oklab, var(--ty-color-neutral-bold) 70%, transparent));
 }
 
 /* ===================================== */
@@ -109,7 +109,7 @@ export const customScrollbarStyles = `
 .ty-scrollbar-track-x:hover::before,
 .ty-scrollbar-track-x.dragging::before {
   opacity: 1;
-  background: var(--ty-scrollbar-track-hover, rgba(0, 0, 0, 0.06));
+  background: var(--ty-scrollbar-track-hover, color-mix(in oklab, var(--ty-color-neutral-bold) 8%, transparent));
 }
 
 .ty-scrollbar-thumb-x {
@@ -117,7 +117,7 @@ export const customScrollbarStyles = `
   bottom: 0;
   height: 100%;
   min-width: var(--ty-scrollbar-thumb-min-height, 30px);
-  background: var(--ty-scrollbar-thumb, rgba(0, 0, 0, 0.35));
+  background: var(--ty-scrollbar-thumb, color-mix(in oklab, var(--ty-color-neutral-bold) 40%, transparent));
   border-radius: var(--ty-scrollbar-radius, 4px);
   transition: background 0.15s ease-out;
   box-sizing: border-box;
@@ -126,12 +126,12 @@ export const customScrollbarStyles = `
 
 .ty-scrollbar-thumb-x:hover,
 .ty-scrollbar-track-x.dragging .ty-scrollbar-thumb-x {
-  background: var(--ty-scrollbar-thumb-hover, rgba(0, 0, 0, 0.50));
+  background: var(--ty-scrollbar-thumb-hover, color-mix(in oklab, var(--ty-color-neutral-bold) 55%, transparent));
 }
 
 .ty-scrollbar-thumb-x:active,
 .ty-scrollbar-track-x.dragging .ty-scrollbar-thumb-x {
-  background: var(--ty-scrollbar-thumb-active, rgba(0, 0, 0, 0.60));
+  background: var(--ty-scrollbar-thumb-active, color-mix(in oklab, var(--ty-color-neutral-bold) 70%, transparent));
 }
 
 /* ===================================== */

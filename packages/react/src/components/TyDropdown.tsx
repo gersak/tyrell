@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
 
 // Option data structure for data-driven approach
 export interface OptionData {
@@ -186,40 +187,45 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
       return children;
     };
 
+    // Imperative property sync for boolean props (see use-boolean-prop.ts).
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isLoading = useBooleanProperty(elementRef, 'loading', loading);
+    const isExternalSearch = coerceBool(externalSearch) || coerceBool(notSearchable) || searchable === false;
+    useBooleanProperty(elementRef, 'externalSearch', isExternalSearch);
+    // clearable: explicit boolean OR the `notClearable` alias inverts it
+    const isClearable = clearable !== undefined
+      ? coerceBool(clearable)
+      : (coerceBool(notClearable) ? false : undefined);
+    useEffect(() => {
+      if (!needsPropertyBridge) return;
+      if (isClearable === undefined) return;
+      const el = elementRef.current as any;
+      if (!el) return;
+      if (Boolean(el.clearable) !== isClearable) el.clearable = isClearable;
+    }, [isClearable]);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
       ref: elementRef,
     };
 
-    // Add conditional attributes
-    if (disabled) webComponentProps.disabled = '';
-    if (loading) webComponentProps.loading = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isLoading) webComponentProps.loading = '';
+    if (isExternalSearch) webComponentProps['external-search'] = '';
 
-    // External search mode: parent owns filtering, dropdown dispatches search events.
-    // `notSearchable` and `searchable={false}` are deprecated aliases for `externalSearch`.
-    if (externalSearch || notSearchable || searchable === false) {
-      webComponentProps['external-search'] = '';
-    }
-    
     // Handle clearable functionality
-    if (clearable !== undefined) {
-      if (clearable) {
-        webComponentProps.clearable = '';
-      } else {
-        webComponentProps['not-clearable'] = '';
-      }
-    }
-    
-    if (notClearable) {
+    if (isClearable === true) {
+      webComponentProps.clearable = '';
+    } else if (isClearable === false) {
       webComponentProps['not-clearable'] = '';
     }
-    
+
     // Add debounce attribute
     if (debounce !== undefined) {
       webComponentProps.debounce = debounce;
     }
-    
+
     // Add string attributes
     if (name) webComponentProps.name = name;
 

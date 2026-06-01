@@ -592,7 +592,7 @@ export const multiselectStyles = `
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ty-text-mild);
+  color: var(--ty-text-bold);
   background: transparent;
   cursor: default;
   user-select: none;

@@ -12,7 +12,7 @@
 
    ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
       {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
       [:span.ty-text-- "API Reference"]]]

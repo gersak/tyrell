@@ -31,7 +31,7 @@ Each surface exposes three border knobs (color, width, style) via CSS vars. Defa
 ```css
 :root {
   --ty-elevated-border: var(--ty-border);   /* show a 1px ty-border on cards */
-  --ty-floating-border: var(--ty-border-mild);
+  --ty-floating-border: var(--ty-border-bold);
   /* Width and style use --ty-border-width and `solid` unless overridden */
 }
 ```
@@ -69,7 +69,7 @@ The divider color is **contextual** — each surface points `--ty-divide-color` 
 <div class="ty-bg-primary-">    <!-- Softer -->
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`, `accent`.
+Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Text Colors (5-Variant System)
 
@@ -93,7 +93,7 @@ Semantic text colors — same 5 variants per color:
 <p class="ty-text-primary--">   <!-- Minimal primary -->
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`, `accent`.
+Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Border Colors
 
@@ -107,7 +107,7 @@ Base borders (no color, just emphasis) — 5 variants:
 <div class="ty-border--">       <!-- Minimal -->
 ```
 
-Semantic borders — base only (no +/- variants, except accent):
+Semantic borders — base only:
 
 ```html
 <div class="ty-border-primary">
@@ -116,11 +116,6 @@ Semantic borders — base only (no +/- variants, except accent):
 <div class="ty-border-danger">
 <div class="ty-border-warning">
 <div class="ty-border-neutral">
-
-<!-- accent is the only semantic border with variants -->
-<div class="ty-border-accent+">
-<div class="ty-border-accent">
-<div class="ty-border-accent-">
 ```
 
 ## Hover / Focus States
@@ -181,11 +176,11 @@ Override via CSS custom properties:
 ```css
 :root {
   --ty-color-primary-strong: #0034c7;
-  --ty-color-primary-mild: #1c40a8;
+  --ty-color-primary-bold: #1c40a8;
   --ty-color-primary: #4367cd;
   --ty-color-primary-soft: #60a5fa;
   --ty-color-primary-faint: #93c5fd;
-  --ty-bg-primary-mild: #bfdbfe;
+  --ty-bg-primary-bold: #bfdbfe;
   --ty-bg-primary: #dbeafe;
   --ty-bg-primary-soft: #eff6ff;
 }
@@ -193,17 +188,17 @@ Override via CSS custom properties:
 /* Dark mode overrides */
 :root.dark {
   --ty-color-primary-strong: #93c5fd;
-  --ty-color-primary-mild: #60a5fa;
+  --ty-color-primary-bold: #60a5fa;
   --ty-color-primary: #3b82f6;
   --ty-color-primary-soft: #1d4ed8;
   --ty-color-primary-faint: #1e3a5f;
-  --ty-bg-primary-mild: #1e3a8a;
+  --ty-bg-primary-bold: #1e3a8a;
   --ty-bg-primary: #172554;
   --ty-bg-primary-soft: #0f172a;
 }
 ```
 
-Pattern: `--ty-color-{name}-{strong|mild|soft|faint}`, `--ty-bg-{name}-{mild|soft}`, `--ty-border-{name}`.
+Pattern: `--ty-color-{name}-{strong|bold|soft|faint}`, `--ty-bg-{name}-{bold|soft}`, `--ty-border-{name}`.
 
 ---
 

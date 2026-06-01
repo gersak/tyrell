@@ -524,7 +524,7 @@ export const dropdownStyles = `
 
 .dropdown-mode-desktop .dropdown-options ::slotted(option[highlighted]) {
   background-color: var(--ty-bg-primary-soft);
-  color: var(--ty-color-primary-mild);
+  color: var(--ty-color-primary-bold);
 }
 
 .dropdown-mode-desktop .dropdown-options ::slotted(option[selected]) {
@@ -894,7 +894,7 @@ export const dropdownStyles = `
 
 .dropdown-mode-mobile .mobile-options-container ::slotted(option[highlighted]) {
   background-color: var(--ty-bg-primary-soft);
-  color: var(--ty-color-primary-mild);
+  color: var(--ty-color-primary-bold);
 }
 
 .dropdown-mode-mobile .mobile-options-container ::slotted(option[selected]) {
@@ -918,7 +918,7 @@ export const dropdownStyles = `
 
 :host([flavor="primary"]) .dropdown-stub:hover,
 :host([flavor="primary"]) .dropdown-search-input:focus {
-  border-color: var(--ty-color-primary-mild);
+  border-color: var(--ty-color-primary-bold);
   box-shadow: 0 0 0 3px var(--ty-color-primary-faint);
 }
 
@@ -929,7 +929,7 @@ export const dropdownStyles = `
 
 :host([flavor="secondary"]) .dropdown-stub:hover,
 :host([flavor="secondary"]) .dropdown-search-input:focus {
-  border-color: var(--ty-color-secondary-mild);
+  border-color: var(--ty-color-secondary-bold);
   box-shadow: 0 0 0 3px var(--ty-color-secondary-faint);
 }
 
@@ -940,7 +940,7 @@ export const dropdownStyles = `
 
 :host([flavor="success"]) .dropdown-stub:hover,
 :host([flavor="success"]) .dropdown-search-input:focus {
-  border-color: var(--ty-color-success-mild);
+  border-color: var(--ty-color-success-bold);
   box-shadow: 0 0 0 3px var(--ty-color-success-faint);
 }
 
@@ -951,7 +951,7 @@ export const dropdownStyles = `
 
 :host([flavor="danger"]) .dropdown-stub:hover,
 :host([flavor="danger"]) .dropdown-search-input:focus {
-  border-color: var(--ty-color-danger-mild);
+  border-color: var(--ty-color-danger-bold);
   box-shadow: 0 0 0 3px var(--ty-color-danger-faint);
 }
 
@@ -962,7 +962,7 @@ export const dropdownStyles = `
 
 :host([flavor="warning"]) .dropdown-stub:hover,
 :host([flavor="warning"]) .dropdown-search-input:focus {
-  border-color: var(--ty-color-warning-mild);
+  border-color: var(--ty-color-warning-bold);
   box-shadow: 0 0 0 3px var(--ty-color-warning-faint);
 }
 

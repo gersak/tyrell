@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Event detail structure for ty-textarea events
 export interface TyTextareaEventDetail {
@@ -160,12 +161,15 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
       }
     }, [(props as any).value]);
 
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+
     return React.createElement(
       'ty-textarea',
       {
         ...props,
-        ...(disabled && { disabled: "" }),
-        ...(required && { required: "" }),
+        ...(isDisabled && { disabled: "" }),
+        ...(isRequired && { required: "" }),
         ...(minHeight && { 'min-height': minHeight }),  // Convert camelCase to kebab-case
         ...(maxHeight && { 'max-height': maxHeight }),  // Convert camelCase to kebab-case
         ref: elementRef,

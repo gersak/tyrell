@@ -97,8 +97,8 @@ export const scrollContainerStyles = `
   height: 80px;
   background: var(--ty-scroll-shadow-top, radial-gradient(
     ellipse 100% 30% at center,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0),
+    color-mix(in oklab, var(--ty-color-neutral-bold) 12%, transparent),
+    transparent,
     transparent
   ));
   clip-path: inset(50% 0 0 0);
@@ -111,8 +111,8 @@ export const scrollContainerStyles = `
   height: 60px;
   background: var(--ty-scroll-shadow-bottom, radial-gradient(
     ellipse 100% 20% at center,
-    rgba(0, 0, 0, 0.15),
-    rgba(0, 0, 0, 0),
+    color-mix(in oklab, var(--ty-color-neutral-bold) 18%, transparent),
+    transparent,
     transparent
   ));
   clip-path: inset(0 0 50% 0);
@@ -125,8 +125,8 @@ export const scrollContainerStyles = `
   width: 60px;
   background: var(--ty-scroll-shadow-left, radial-gradient(
     ellipse 30% 100% at center,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0),
+    color-mix(in oklab, var(--ty-color-neutral-bold) 12%, transparent),
+    transparent,
     transparent
   ));
   clip-path: inset(0 0 0 50%);
@@ -139,8 +139,8 @@ export const scrollContainerStyles = `
   width: 60px;
   background: var(--ty-scroll-shadow-right, radial-gradient(
     ellipse 30% 100% at center,
-    rgba(0, 0, 0, 0.1),
-    rgba(0, 0, 0, 0),
+    color-mix(in oklab, var(--ty-color-neutral-bold) 12%, transparent),
+    transparent,
     transparent
   ));
   clip-path: inset(0 50% 0 0);
@@ -171,7 +171,7 @@ export const scrollContainerStyles = `
 @media (pointer: coarse) and (hover: none) {
   :host([custom-scrollbar]) .scroll-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: var(--ty-border, rgba(0,0,0,0.2)) transparent;
+    scrollbar-color: var(--ty-border, color-mix(in oklab, var(--ty-color-neutral-bold) 25%, transparent)) transparent;
   }
   :host([custom-scrollbar]) .scroll-wrapper::-webkit-scrollbar {
     display: block;
@@ -179,7 +179,7 @@ export const scrollContainerStyles = `
     height: 4px;
   }
   :host([custom-scrollbar]) .scroll-wrapper::-webkit-scrollbar-thumb {
-    background: var(--ty-border, rgba(0,0,0,0.2));
+    background: var(--ty-border, color-mix(in oklab, var(--ty-color-neutral-bold) 25%, transparent));
     border-radius: 2px;
   }
 }

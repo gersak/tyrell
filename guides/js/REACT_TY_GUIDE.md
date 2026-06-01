@@ -461,7 +461,7 @@ Semantic text colors follow the same five-variant pattern:
 <p className="ty-text-primary-">Softer primary</p>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`, `accent`.
+Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Border Classes
 
@@ -483,7 +483,7 @@ Semantic borders:
 <div className="border ty-border-success">Success border</div>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`. `accent` also has `+` and `-` variants.
+Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`. 
 
 ## Background Colors
 
@@ -507,7 +507,7 @@ Three variants per color — stronger (`+`), base, softer (`-`):
 <div className="ty-bg-primary-">Softer</div>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`, `accent`.
+Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Dark Mode
 
@@ -569,11 +569,11 @@ Override the whole palette at `:root` level to rebrand Tyrell:
 ```css
 :root {
   --ty-color-primary-strong: #0034c7;
-  --ty-color-primary-mild:   #1c40a8;
+  --ty-color-primary-bold:   #1c40a8;
   --ty-color-primary:        #4367cd;
   --ty-color-primary-soft:   #60a5fa;
   --ty-color-primary-faint:  #93c5fd;
-  --ty-bg-primary-mild:      #bfdbfe;
+  --ty-bg-primary-bold:      #bfdbfe;
   --ty-bg-primary:           #dbeafe;
   --ty-bg-primary-soft:      #eff6ff;
 }
@@ -585,7 +585,7 @@ Override the whole palette at `:root` level to rebrand Tyrell:
 }
 ```
 
-Token pattern: `--ty-color-{name}-{strong|mild|soft|faint}`, `--ty-bg-{name}-{mild|soft}`, `--ty-border-{name}`.
+Token pattern: `--ty-color-{name}-{strong|bold|soft|faint}`, `--ty-bg-{name}-{bold|soft}`, `--ty-border-{name}`.
 
 This retunes every component that uses that color. To override a single instance only, use the per-component CSS variables in the section above.
 

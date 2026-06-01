@@ -25,16 +25,24 @@
     :app-replicant
     {:entries    [app.components.replicant-counter]
      :depends-on #{:app-core}}
+    :app-chart
+    {:entries    [app.components.counter-chart]
+     :depends-on #{:app-core}
+     :init-fn    app.components.counter-chart/init!}
     :app-mixed
     {:entries    [app.state
                   app.components.shared-reagent
-                  app.components.shared-uix]
-     :depends-on #{:app-reagent :app-uix}}}}
+                  app.components.shared-uix
+                  app.components.shared-replicant
+                  app.components.reagent-hosts-replicant
+                  app.components.uix-hosts-replicant
+                  app.components.replicant-hosts-reagent]
+     :depends-on #{:app-reagent :app-uix :app-replicant}}}}
 
   :release
   {:target      :browser
-   :output-dir  "public/js"
-   :asset-path  "/js"
+   :output-dir  "../../../gersak.github.io/articles/multi-framework/js"
+   :asset-path  "/articles/multi-framework/js"
    :module-loader true
    :modules
    {:app-core
@@ -43,7 +51,11 @@
                app.lazy.uix-counter
                app.lazy.replicant-counter
                app.lazy.shared-reagent
-               app.lazy.shared-uix]
+               app.lazy.shared-uix
+               app.lazy.shared-replicant
+               app.lazy.reagent-hosts-replicant
+               app.lazy.uix-hosts-replicant
+               app.lazy.replicant-hosts-reagent]
      :init-fn app.core/init}
     :app-reagent
     {:entries    [app.components.reagent-counter]
@@ -54,11 +66,19 @@
     :app-replicant
     {:entries    [app.components.replicant-counter]
      :depends-on #{:app-core}}
+    :app-chart
+    {:entries    [app.components.counter-chart]
+     :depends-on #{:app-core}
+     :init-fn    app.components.counter-chart/init!}
     :app-mixed
     {:entries    [app.state
                   app.components.shared-reagent
-                  app.components.shared-uix]
-     :depends-on #{:app-reagent :app-uix}}}
+                  app.components.shared-uix
+                  app.components.shared-replicant
+                  app.components.reagent-hosts-replicant
+                  app.components.uix-hosts-replicant
+                  app.components.replicant-hosts-reagent]
+     :depends-on #{:app-reagent :app-uix :app-replicant}}}
    :compiler-options
    {:optimizations :advanced
     :infer-externs :auto}}}}

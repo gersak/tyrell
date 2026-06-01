@@ -12,8 +12,11 @@
    .buttons { display: flex; gap: 0.5rem; }
    .buttons ty-button { cursor: pointer; }")
 
-(defui counter [{:keys [initial]}]
+(defui counter [{:keys [initial on-change]}]
   (let [[count set-count] (uix/use-state (or initial 0))]
+    (uix/use-effect
+      (fn [] (when on-change (on-change count)) nil)
+      [count on-change])
     ($ :div {:class "wrapper"}
        ($ :div {:class "count"} count)
        ($ :div {:class "buttons"}
@@ -25,12 +28,17 @@
     (ensure-styles! shadow styles "uix-counter")
     (when-not (.-_mount el)
       (let [mount (.createElement js/document "div")
-            root  (uix.dom/create-root mount)]
+            root  (uix.dom/create-root mount)
+            emit  #(.dispatchEvent el (js/CustomEvent. "counter-value"
+                                        #js {:bubbles true
+                                             :detail  #js {:framework "uix" :value %}}))]
         (set! (.-_mount el) mount)
         (set! (.-_root el) root)
+        (set! (.-_emit el) emit)
         (.appendChild shadow mount)))
     (uix.dom/render-root
-     ($ counter {:initial (shim/parse-int-attr el "initial")})
+     ($ counter {:initial   (shim/parse-int-attr el "initial")
+                 :on-change (.-_emit el)})
      (.-_root el))))
 
 (def configuration

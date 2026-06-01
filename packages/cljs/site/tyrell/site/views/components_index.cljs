@@ -55,19 +55,19 @@
   "A row inside a section panel: name + description on the left, live primitive
    on the right. Components flow inside the panel without their own chrome."
   [{:keys [id name description preview icon]}]
-  [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150.hover:ty-bg-accent-
+  [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150.hover:ty-bg-primary-
    {:on {:click #(router/navigate! id)}}
    ;; Left: name + description + cta
    [:div.flex-shrink-0.w-full.md:w-64
     [:h3.text-base.md:text-lg.font-medium.ty-text.transition-colors
-     {:class "group-hover:ty-text-accent"}
+     {:class "group-hover:ty-text-primary"}
      name]
     (when description
       [:p.mt-1.text-sm.ty-text-.leading-relaxed.transition-colors
        {:class "group-hover:ty-text"}
        description])
     [:div.mt-2.flex.items-center.gap-1.text-xs.ty-text--.transition-colors
-     {:class "group-hover:ty-text-accent"}
+     {:class "group-hover:ty-text-primary"}
      [:span "Docs"]
      [:ty-icon {:name "arrow-right"
                 :size "xs"}]]]

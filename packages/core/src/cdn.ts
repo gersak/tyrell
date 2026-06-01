@@ -109,6 +109,13 @@ import { setLoaderSvg as registrySetLoaderSvg, getLoaderSvg as registryGetLoader
 
 if (typeof window !== 'undefined') {
   window.tyVersion = VERSION
+  // One-time load banner — helps consumers confirm which version of the
+  // library their page is actually running.
+  console.log(
+    `%c[tyrell-components]%c v${VERSION}`,
+    'color:#06b6d4;font-weight:600',
+    'color:inherit;font-weight:400'
+  )
   window.tyIcons = {
     register: (icons: Record<string, string>) => {
       registerIcons(icons)

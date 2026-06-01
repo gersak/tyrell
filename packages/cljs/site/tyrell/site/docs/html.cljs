@@ -11,13 +11,13 @@
   [{:keys [icon label]}]
   [:div.inline-flex.items-center.gap-1.5.px-2.5.py-1.rounded-full.ty-content
    {:style {:border "1px solid var(--ty-border-)"}}
-   [:ty-icon.ty-text-accent {:name icon
+   [:ty-icon.ty-text-primary {:name icon
                              :size "xs"}]
    [:span.text-xs.font-medium.ty-text label]])
 
 (defn- brand-glyph
   [{:keys [icon title]}]
-  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-accent.hover:scale-110
+  [:div.flex.items-center.justify-center.transition-all.duration-200.rounded-lg.cursor-default.ty-text--.hover:ty-text-primary.hover:scale-110
    {:style {:width "40px"
             :height "40px"}
     :title title}
@@ -57,10 +57,10 @@
 
 (defn- compact-stack-card
   "Compact card with eyebrow, title, multi-line tagline, code-chip, bottom CTA.
-   `:eyebrow-flavor` defaults to \"accent\" — use \"success\" for Recommended badges."
+   `:eyebrow-flavor` defaults to \"primary\" — use \"success\" for Recommended badges."
   [{:keys [icon title tagline snippet snippet-lang
            eyebrow eyebrow-flavor cta on-click]
-    :or {eyebrow-flavor "accent"
+    :or {eyebrow-flavor "primary"
          on-click identity}}]
   [:div.ty-elevated.rounded-xl.p-5.flex.flex-col
    {:class (when on-click ["cursor-pointer" "hover:shadow-lg"])
@@ -100,10 +100,10 @@
 (defn- hero []
   [:div.text-center.mb-12
    [:div.inline-flex.items-center.gap-3.mb-4
-    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-
+    [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-
      {:style {:width "44px"
               :height "44px"}}
-     [:ty-icon.ty-text-accent+
+     [:ty-icon.ty-text-primary+
       {:name "server"
        :size "lg"}]]
     [:h1.text-4xl.font-bold.ty-text++.tracking-tight "HTML / Server-side"]]
@@ -132,7 +132,7 @@
   [:div.ty-elevated.rounded-2xl.relative.overflow-hidden
    {:style {:border "1px solid var(--ty-border-)"}}
 
-   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-accent+]
+   [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-primary+]
 
    [:div.p-6.lg:p-8
 
@@ -142,15 +142,15 @@
      [:div.flex.flex-col
 
       [:div.flex.items-center.gap-2.mb-5
-       [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "Setup"]
+       [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "Setup"]
        [:span.h-1.w-1.rounded-full.ty-bg-neutral]
        [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "Two tags. No build."]]
 
       [:div.flex.items-start.gap-4.mb-5
-       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
+       [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
         {:style {:width "56px"
                  :height "56px"}}
-        [:ty-icon.ty-text-accent++ {:name "code"
+        [:ty-icon.ty-text-primary++ {:name "code"
                                     :size "lg"}]]
        [:div.flex-1.min-w-0
         [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
@@ -171,7 +171,7 @@
       [:div.flex-1]
 
       [:div.flex.items-center.gap-2.text-sm.font-medium.ty-text-
-       [:ty-icon.ty-text-accent {:name "info"
+       [:ty-icon.ty-text-primary {:name "info"
                                  :size "xs"}]
        [:span "Self-hostable too — drop the files into "
         (c "/static") " and serve them yourself."]]]
@@ -230,26 +230,26 @@
 (defn- two-rule-callout []
   [:div.ty-elevated.rounded-xl.p-5
    {:style {:border "1px solid var(--ty-border-)"
-            :border-left "3px solid var(--ty-color-accent)"}}
+            :border-left "3px solid var(--ty-color-primary)"}}
    [:div.flex.items-start.gap-4
-    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-accent-.flex-shrink-0
+    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-primary-.flex-shrink-0
      {:style {:width "40px"
               :height "40px"}}
-     [:ty-icon.ty-text-accent+ {:name "target"
+     [:ty-icon.ty-text-primary+ {:name "target"
                                 :size "md"}]]
     [:div.flex-1.min-w-0
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-2
       "Two-rule guideline"]
      [:div.flex.flex-col.gap-2.mb-3
       [:div.flex.items-start.gap-2
-       [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase.mt-0.5 "1"]
+       [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase.mt-0.5 "1"]
        [:p.text-sm.ty-text-.leading-relaxed
         [:strong.ty-text+ "Inside a tyrell slot"]
         " (button " (c "start") "/" (c "end")
         ", input start, dropdown start, etc.) — wrap your SVG in "
         (c "<ty-icon>") ". The wrapper inherits the parent component's size scale."]]
       [:div.flex.items-start.gap-2
-       [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase.mt-0.5 "2"]
+       [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase.mt-0.5 "2"]
        [:p.text-sm.ty-text-.leading-relaxed
         [:strong.ty-text+ "Outside tyrell slots"]
         " — page chrome, body copy, custom layouts — raw "
@@ -272,7 +272,7 @@
 (defn- icon-paths []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "sparkles"
+    [:ty-icon.ty-text-primary {:name "sparkles"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Icons: pick your path"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -318,7 +318,7 @@
 (defn- frameworks []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "layers"
+    [:ty-icon.ty-text-primary {:name "layers"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Your stack"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -407,7 +407,7 @@
 (defn- slot-mode-deep-dive []
   [:div {:id "slot-mode-deep-dive"}
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "sparkles"
+    [:ty-icon.ty-text-primary {:name "sparkles"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Slot mode: server-rendered SVG, zero ceremony"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -420,7 +420,7 @@
    [:div.ty-elevated.rounded-2xl.relative.overflow-hidden
     {:style {:border "1px solid var(--ty-border-)"}}
 
-    [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-accent+]
+    [:div.absolute.top-0.left-0.right-0.h-2.ty-bg-primary+]
 
     [:div.p-6.lg:p-8
 
@@ -430,15 +430,15 @@
       [:div.flex.flex-col
 
        [:div.flex.items-center.gap-2.mb-5
-        [:span.text-xs.font-bold.ty-text-accent.tracking-widest.uppercase "TC8+"]
+        [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "TC8+"]
         [:span.h-1.w-1.rounded-full.ty-bg-neutral]
         [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "HTMX · Datastar · Jinja · ERB · EEx"]]
 
        [:div.flex.items-start.gap-4.mb-5
-        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-accent-.flex-shrink-0
+        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
          {:style {:width "56px"
                   :height "56px"}}
-         [:ty-icon.ty-text-accent++ {:name "feather"
+         [:ty-icon.ty-text-primary++ {:name "feather"
                                      :size "lg"}]]
         [:div.flex-1.min-w-0
          [:h3.text-3xl.font-bold.ty-text++.tracking-tight.leading-tight.mb-2
@@ -457,7 +457,7 @@
        [:div.flex-1]
 
        [:div.flex.items-center.gap-2.text-sm.font-medium.ty-text-
-        [:ty-icon.ty-text-accent {:name "info"
+        [:ty-icon.ty-text-primary {:name "info"
                                   :size "xs"}]
         [:span "Caches as part of your HTML response — gzip dedupes repeated SVG strings."]]]
 
@@ -535,7 +535,7 @@
               :height "40px"}}
      [:ty-icon.ty-text-neutral++ {:name icon
                                   :size "md"}]]
-    [:span.text-xs.font-bold.uppercase.tracking-widest.ty-text-accent
+    [:span.text-xs.font-bold.uppercase.tracking-widest.ty-text-primary
      eyebrow]]
    [:h3.text-lg.font-bold.ty-text++.leading-tight.mb-2.tracking-tight title]
    (into [:p.text-sm.ty-text-.leading-relaxed.mb-3]
@@ -545,7 +545,7 @@
 (defn- gotchas []
   [:div
    [:div.flex.items-center.gap-2.mb-2
-    [:ty-icon.ty-text-accent {:name "alert-triangle"
+    [:ty-icon.ty-text-primary {:name "alert-triangle"
                               :size "sm"}]
     [:h2.text-2xl.font-bold.ty-text++.tracking-tight "Two things to know"]]
    [:p.ty-text-.mb-6.font-normal.leading-relaxed
@@ -604,12 +604,12 @@ def inline_svg(path):
 (defn- bundle-size-callout []
   [:div.ty-elevated.rounded-xl.p-5
    {:style {:border "1px solid var(--ty-border-)"
-            :border-left "3px solid var(--ty-color-accent)"}}
+            :border-left "3px solid var(--ty-color-primary)"}}
    [:div.flex.items-start.gap-4
-    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-accent-.flex-shrink-0
+    [:div.flex.items-center.justify-center.rounded-lg.ty-bg-primary-.flex-shrink-0
      {:style {:width "40px"
               :height "40px"}}
-     [:ty-icon.ty-text-accent+ {:name "target"
+     [:ty-icon.ty-text-primary+ {:name "target"
                                 :size "md"}]]
     [:div.flex-1.min-w-0
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1
@@ -619,8 +619,8 @@ def inline_svg(path):
       "every page load and shared with anyone else using the same CDN URL. "
       "Icons aren't bundled in — you bring your own via slot mode (each SVG ~200–800 bytes inline) "
       "or via the runtime registry. Either way, you only pay for icons you actually render."]
-     [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-accent
-      [:button.ty-text-accent.cursor-pointer.hover:underline.bg-transparent.p-0
+     [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-primary
+      [:button.ty-text-primary.cursor-pointer.hover:underline.bg-transparent.p-0
        {:style {:border "none"}
         :on {:click #(router/navigate! :tyrell.site.docs/getting-started)}}
        "See Getting Started for the full picture"]

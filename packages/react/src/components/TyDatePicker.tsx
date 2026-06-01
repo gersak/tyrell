@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty DatePicker component
 export interface TyDatePickerEventDetail {
@@ -113,20 +114,18 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
       }
     }, [onChange]);
 
-    // Handle open events
+    // Handle open/close events. Guard with `event.target === element` so
+    // bubbled open/close events from popup-like descendants slotted inside
+    // (rare for a date-picker, but defensive — same fix as TyModal/TyPopup)
+    // don't fire the consumer's onOpen/onClose.
     const handleOpen = useCallback((event: Event) => {
-      const customEvent = event as CustomEvent<{}>;
-      if (onOpen) {
-        onOpen(customEvent);
-      }
+      if (event.target !== elementRef.current) return;
+      if (onOpen) onOpen(event as CustomEvent<{}>);
     }, [onOpen]);
 
-    // Handle close events
     const handleClose = useCallback((event: Event) => {
-      const customEvent = event as CustomEvent<{}>;
-      if (onClose) {
-        onClose(customEvent);
-      }
+      if (event.target !== elementRef.current) return;
+      if (onClose) onClose(event as CustomEvent<{}>);
     }, [onClose]);
 
     // Set up event listeners
@@ -185,20 +184,16 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
       webComponentProps.placeholder = placeholder;
     }
 
-    if (required) {
-      webComponentProps.required = '';  // Boolean attributes as empty string
-    }
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isClearable = useBooleanProperty(elementRef, 'clearable', clearable);
 
-    if (disabled) {
-      webComponentProps.disabled = '';  // Boolean attributes as empty string
-    }
+    if (isRequired) webComponentProps.required = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isClearable) webComponentProps.clearable = '';
 
     if (name) {
       webComponentProps.name = name;
-    }
-
-    if (clearable) {
-      webComponentProps.clearable = '';  // Boolean attributes as empty string
     }
 
     if (format) {

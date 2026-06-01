@@ -27,6 +27,7 @@
    [tyrell.site.docs.tabs :as tabs-docs]
    [tyrell.site.docs.tag :as tag-docs]
    [tyrell.site.docs.textarea :as textarea-docs]
+   [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.docs.tooltip :as tooltip-docs]
    [tyrell.site.docs.wizard :as wizard-docs]
     ;; Import component doc namespaces
@@ -742,7 +743,14 @@
     :icon "palette"
     :description "Colors, surfaces, and design tokens"
     :tags ["theme" "colors" "dark mode" "styling" "tailwind"]
-    :view #(ty-styles/view)}])
+    :view #(ty-styles/view)}
+   {:id :tyrell.site.docs/theming
+    :segment "theming"
+    :name "Theming (OKLCH)"
+    :icon "droplet"
+    :description "Interactive brand-layer playground — pick two seeds, retint everything in light + dark."
+    :tags ["theme" "oklch" "brand" "colors" "playground" "dark mode"]
+    :view #(theming-docs/view)}])
 
 ;; Define routes with views from separate namespaces
 

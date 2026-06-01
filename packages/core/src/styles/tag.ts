@@ -199,7 +199,7 @@ export const tagStyles = `
   --tag-border-color: var(--ty-border-primary);
 }
 :host([flavor="primary+"]) {
-  --tag-bg: var(--ty-bg-primary-mild);
+  --tag-bg: var(--ty-bg-primary-bold);
   --tag-color: var(--ty-color-primary-strong);
   --tag-border-color: var(--ty-color-primary);
 }
@@ -211,7 +211,7 @@ export const tagStyles = `
 :host([flavor="primary"]) .tag-container[tabindex]:hover,
 :host([flavor="primary+"]) .tag-container[tabindex]:hover,
 :host([flavor="primary-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-primary-mild);
+  background: var(--ty-bg-primary-bold);
 }
 :host([flavor="primary"]) .tag-container[tabindex]:focus,
 :host([flavor="primary+"]) .tag-container[tabindex]:focus,
@@ -226,7 +226,7 @@ export const tagStyles = `
   --tag-border-color: var(--ty-border-secondary);
 }
 :host([flavor="secondary+"]) {
-  --tag-bg: var(--ty-bg-secondary-mild);
+  --tag-bg: var(--ty-bg-secondary-bold);
   --tag-color: var(--ty-color-secondary-strong);
   --tag-border-color: var(--ty-color-secondary);
 }
@@ -238,7 +238,7 @@ export const tagStyles = `
 :host([flavor="secondary"]) .tag-container[tabindex]:hover,
 :host([flavor="secondary+"]) .tag-container[tabindex]:hover,
 :host([flavor="secondary-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-secondary-mild);
+  background: var(--ty-bg-secondary-bold);
 }
 :host([flavor="secondary"]) .tag-container[tabindex]:focus,
 :host([flavor="secondary+"]) .tag-container[tabindex]:focus,
@@ -253,7 +253,7 @@ export const tagStyles = `
   --tag-border-color: var(--ty-border-success);
 }
 :host([flavor="success+"]) {
-  --tag-bg: var(--ty-bg-success-mild);
+  --tag-bg: var(--ty-bg-success-bold);
   --tag-color: var(--ty-color-success-strong);
   --tag-border-color: var(--ty-color-success);
 }
@@ -265,7 +265,7 @@ export const tagStyles = `
 :host([flavor="success"]) .tag-container[tabindex]:hover,
 :host([flavor="success+"]) .tag-container[tabindex]:hover,
 :host([flavor="success-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-success-mild);
+  background: var(--ty-bg-success-bold);
 }
 :host([flavor="success"]) .tag-container[tabindex]:focus,
 :host([flavor="success+"]) .tag-container[tabindex]:focus,
@@ -280,7 +280,7 @@ export const tagStyles = `
   --tag-border-color: var(--ty-border-danger);
 }
 :host([flavor="danger+"]) {
-  --tag-bg: var(--ty-bg-danger-mild);
+  --tag-bg: var(--ty-bg-danger-bold);
   --tag-color: var(--ty-color-danger-strong);
   --tag-border-color: var(--ty-color-danger);
 }
@@ -292,7 +292,7 @@ export const tagStyles = `
 :host([flavor="danger"]) .tag-container[tabindex]:hover,
 :host([flavor="danger+"]) .tag-container[tabindex]:hover,
 :host([flavor="danger-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-danger-mild);
+  background: var(--ty-bg-danger-bold);
 }
 :host([flavor="danger"]) .tag-container[tabindex]:focus,
 :host([flavor="danger+"]) .tag-container[tabindex]:focus,
@@ -307,7 +307,7 @@ export const tagStyles = `
   --tag-border-color: var(--ty-border-warning);
 }
 :host([flavor="warning+"]) {
-  --tag-bg: var(--ty-bg-warning-mild);
+  --tag-bg: var(--ty-bg-warning-bold);
   --tag-color: var(--ty-color-warning-strong);
   --tag-border-color: var(--ty-color-warning);
 }
@@ -319,7 +319,7 @@ export const tagStyles = `
 :host([flavor="warning"]) .tag-container[tabindex]:hover,
 :host([flavor="warning+"]) .tag-container[tabindex]:hover,
 :host([flavor="warning-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-warning-mild);
+  background: var(--ty-bg-warning-bold);
 }
 :host([flavor="warning"]) .tag-container[tabindex]:focus,
 :host([flavor="warning+"]) .tag-container[tabindex]:focus,
@@ -333,14 +333,14 @@ export const tagStyles = `
 
 /* ----- NEUTRAL ----- */
 :host([flavor="neutral"]) {
-  --tag-color: var(--ty-text-mild);
+  --tag-color: var(--ty-text-bold);
   --tag-bg: var(--ty-bg-neutral-soft);
-  --tag-border-color: var(--ty-border-mild);
+  --tag-border-color: var(--ty-border-bold);
 }
 
 :host([flavor="neutral+"]) {
-  --tag-bg: var(--ty-bg-neutral-mild);
-  --tag-color: var(--ty-text-mild);
+  --tag-bg: var(--ty-bg-neutral-bold);
+  --tag-color: var(--ty-text-bold);
   --tag-border-color: var(--ty-border-strong);
 }
 :host([flavor="neutral-"]) {

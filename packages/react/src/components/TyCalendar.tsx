@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Calendar component
 export interface TyCalendarChangeEventDetail {
@@ -205,13 +206,11 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       webComponentProps.day = day.toString();
     }
 
-    if (showNavigation) {
-      webComponentProps['show-navigation'] = '';  // Boolean attributes as empty string
-    }
+    const isShowNavigation = useBooleanProperty(elementRef, 'showNavigation', showNavigation);
+    const isStateless = useBooleanProperty(elementRef, 'stateless', stateless);
 
-    if (stateless) {
-      webComponentProps.stateless = '';  // Boolean attributes as empty string
-    }
+    if (isShowNavigation) webComponentProps['show-navigation'] = '';
+    if (isStateless) webComponentProps.stateless = '';
 
     if (size) {
       webComponentProps.size = size;

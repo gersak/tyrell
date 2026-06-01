@@ -18,6 +18,11 @@
     [:ty-button {:flavor "secondary" :on {:click #(dispatch! dec)}} "−"]
     [:ty-button {:flavor "primary"   :on {:click #(dispatch! inc)}} "+"]]])
 
+(defn- emit-value! [^js el v]
+  (.dispatchEvent el (js/CustomEvent. "counter-value"
+                       #js {:bubbles true
+                            :detail  #js {:framework "replicant" :value v}})))
+
 (defn render! [^js el]
   (let [shadow (shim/ensure-shadow el)]
     (ensure-styles! shadow styles "replicant-counter")
@@ -26,8 +31,10 @@
         (set! (.-_mount el) mount)
         (.appendChild shadow mount)))
     (let [dispatch! (fn [f]
-                      (set! (.-_count el) (f (or (.-_count el) 0)))
-                      (render! el))]
+                      (let [v (f (or (.-_count el) 0))]
+                        (set! (.-_count el) v)
+                        (emit-value! el v)
+                        (render! el)))]
       (d/render (.-_mount el)
                 (counter-view (or (.-_count el) 0) dispatch!)))))
 
@@ -35,6 +42,7 @@
   {:observed  [:initial]
    :connected (fn [^js el]
                 (set! (.-_count el) (or (shim/parse-int-attr el "initial") 0))
+                (emit-value! el (.-_count el))
                 (render! el))
    :attr      (fn [^js el {:strs [initial]}]
                 (when initial

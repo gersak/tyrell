@@ -9,7 +9,7 @@ Pick the framework you're working in below. Each guide assumes you've already lo
 - [AI map](https://raw.githubusercontent.com/gersak/tyrell/master/guides/AI_GUIDE.md): Treasure map. Two tables — "I'm building in X" and "I need to know Y" — that route to the right guide in one hop.
 - [Component API](https://raw.githubusercontent.com/gersak/tyrell/master/guides/TY_GUIDE.md): Universal HTML/JS reference. All 22 components, their attributes, slots, events, and child-element rules. Framework-neutral.
 - [CSS design system](https://raw.githubusercontent.com/gersak/tyrell/master/guides/CSS_GUIDE.md): Surface levels, semantic colors, text emphasis, dark mode, per-component CSS-variable overrides. Tells you which classes to use and which Tailwind classes to avoid.
-- [JavaScript / bundlers](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/JAVASCRIPT_GUIDE.md): npm subpath imports, side-effect markers, icon tree-shaking with the named-export pattern, code splitting, SSR registration boundary. The reference for any non-CLJS bundler stack.
+- [JavaScript / bundlers](https://raw.githubusercontent.com/gersak/tyrell/master/guides/js/JAVASCRIPT_GUIDE.md): npm subpath imports, side-effect markers, icon tree-shaking with the named-export pattern, the inline-SVG escape hatch (slot raw `<svg>` into `<ty-icon>`, skip the registry — for server-rendered apps), code splitting, SSR registration boundary. The reference for any non-CLJS bundler stack.
 
 ## Framework guides
 

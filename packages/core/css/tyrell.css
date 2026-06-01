@@ -128,7 +128,7 @@ html {
 5-VARIANT COLOR SYSTEM
 Simplified from 7 variants to 5 practical variants:
 -strong = Strong emphasis - active states, strong borders
--mild = Moderate emphasis - hover states, focus rings  
+-bold = Moderate emphasis - hover states, focus rings  
 = Base color - default appearance
 -soft = Reduced emphasis - muted backgrounds, secondary
 -faint = Minimal emphasis - subtle hints, disabled states
@@ -136,50 +136,47 @@ Simplified from 7 variants to 5 practical variants:
 
   /* Primary */
   --ty-color-primary-strong: #163793;
-  --ty-color-primary-mild: #304c9f;
+  --ty-color-primary-bold: #304c9f;
   --ty-color-primary: #466bce;
   --ty-color-primary-soft: #60a5fa;
   --ty-color-primary-faint: #93c5fd;
 
   /* Secondary */
   --ty-color-secondary-strong: #7442c2;
-  --ty-color-secondary-mild: #8153cf;
+  --ty-color-secondary-bold: #8153cf;
   --ty-color-secondary: #9774e7;
   --ty-color-secondary-soft: #a78bfa;
   --ty-color-secondary-faint: #c4b5fd;
 
   /* Success */
   --ty-color-success-strong: #177858;
-  --ty-color-success-mild: #3e9779;
+  --ty-color-success-bold: #3e9779;
   --ty-color-success: #3eaa86;
   --ty-color-success-soft: #64b399;
   --ty-color-success-faint: #7fd4b2;
 
   /* Danger */
   --ty-color-danger-strong: #b91c1c;
-  --ty-color-danger-mild: #dc2626;
+  --ty-color-danger-bold: #dc2626;
   --ty-color-danger: #ef4444;
   --ty-color-danger-soft: #f87171;
   --ty-color-danger-faint: #fca5a5;
 
   /* Warning */
   --ty-color-warning-strong: #e86400;
-  --ty-color-warning-mild: #ee7f00;
+  --ty-color-warning-bold: #ee7f00;
   --ty-color-warning: #f59e0b;
   --ty-color-warning-soft: #fbbf24;
   --ty-color-warning-faint: #fcd34d;
 
   /* Neutral */
   --ty-color-neutral-strong: #000000;
-  --ty-color-neutral-mild: #000000;
+  --ty-color-neutral-bold: #000000;
   --ty-color-neutral: #111827;
   --ty-color-neutral-soft: #374151;
   --ty-color-neutral-faint: #9ca3af;
 
   /* Accent - brand highlights, focus rings, selection states */
-  --ty-color-accent-mild: #ff8800; /* darker - hover/active */
-  --ty-color-accent: #e67b00; /* base */
-  --ty-color-accent-soft: #f59e42; /* lighter - subtle */
 
   /* =================================================================
 BACKGROUND COLORS
@@ -191,7 +188,7 @@ BACKGROUND COLORS
   /* Light canvas - app backgrounds */
   --ty-bg: #ffffff;
   /* WHITE - primary content baseline */
-  --ty-bg-mild: #f8fafc;
+  --ty-bg-bold: #f8fafc;
   /* Subtle elevation - cards with light tint */
   --ty-bg-strong: #e2e8f0;
   /* Maximum elevation - clear distinction */
@@ -201,45 +198,42 @@ BACKGROUND COLORS
 
   /* Primary backgrounds */
   --ty-bg-primary: #e3eefc;
-  --ty-bg-primary-mild: #d5e4f8;
+  --ty-bg-primary-bold: #d5e4f8;
   --ty-bg-primary-soft: #eff6ff;
 
   /* Secondary backgrounds */
   --ty-bg-secondary: #e9d5ff;
-  --ty-bg-secondary-mild: #ddd6fe;
+  --ty-bg-secondary-bold: #ddd6fe;
   --ty-bg-secondary-soft: #f3e8ff;
 
   /* Success backgrounds */
   --ty-bg-success: #d1fae5;
-  --ty-bg-success-mild: #a7f3d0;
+  --ty-bg-success-bold: #a7f3d0;
   --ty-bg-success-soft: #ecfdf5;
 
   /* Danger backgrounds */
   --ty-bg-danger: #fee2e2;
-  --ty-bg-danger-mild: #fecaca;
+  --ty-bg-danger-bold: #fecaca;
   --ty-bg-danger-soft: #fef2f2;
 
   /* Warning backgrounds */
   --ty-bg-warning: #fef3c7;
-  --ty-bg-warning-mild: #fde68a;
+  --ty-bg-warning-bold: #fde68a;
   --ty-bg-warning-soft: #fffbeb;
 
   /* Neutral backgrounds */
   --ty-bg-neutral: #e0e0e0;
-  --ty-bg-neutral-mild: #cecece;
+  --ty-bg-neutral-bold: #cecece;
   --ty-bg-neutral-soft: #ededed;
 
   /* Accent backgrounds */
-  --ty-bg-accent: #ffedd5; /* light orange tint */
-  --ty-bg-accent-mild: #fed7aa; /* slightly stronger */
-  --ty-bg-accent-soft: #fff7ed; /* very subtle */
 
   /* =================================================================
 BORDER COLORS
 ================================================================= */
 
   --ty-border: #e5e7eb;
-  --ty-border-mild: #d1d5db;
+  --ty-border-bold: #d1d5db;
   --ty-border-strong: #6b7280;
   --ty-border-soft: #f3f4f6;
   --ty-border-faint: #fafafa;
@@ -254,9 +248,6 @@ BORDER COLORS
   --ty-border-danger: var(--ty-color-danger);
   --ty-border-warning: var(--ty-color-warning);
   --ty-border-neutral: var(--ty-color-neutral);
-  --ty-border-accent-mild: var(--ty-color-accent-mild);
-  --ty-border-accent: var(--ty-color-accent);
-  --ty-border-accent-soft: var(--ty-color-accent-soft);
 
   /* =================================================================
 SCROLLBAR
@@ -314,7 +305,7 @@ TEXT HIERARCHY
 
   /* Text hierarchy - emphasis based, not semantic */
   --ty-text: #111827;
-  --ty-text-mild: #000000;
+  --ty-text-bold: #000000;
   --ty-text-strong: #000000;
   --ty-text-soft: #374151;
   --ty-text-faint: #9ca3af;
@@ -373,7 +364,7 @@ COMPONENT TOKENS
 
   /* Primary */
   --ty-solid-primary: #4076b9;
-  --ty-solid-primary-strong: var(--ty-color-primary-mild);
+  --ty-solid-primary-strong: var(--ty-color-primary-bold);
   --ty-solid-primary-soft: #7ea7d9;
   --ty-solid-primary-fg: white;
 
@@ -406,9 +397,6 @@ COMPONENT TOKENS
   --ty-solid-neutral-strong: #000000;
   --ty-solid-neutral-soft: #6e6e6e;
   --ty-solid-neutral-fg: white;
-
-  /* Brand-highlight pseudo-flavor (orange) — kept under ty-accent-* namespace */
-  --ty-accent-accent: #cc6d00;
 
   /* =================================================================
 DESIGN SYSTEM TOKENS
@@ -585,94 +573,88 @@ Emphasis logic inverts: lighter = more emphasis
 
   /* Primary */
   --ty-color-primary-strong: #9cbde5;
-  --ty-color-primary-mild: #6c9bd5;
+  --ty-color-primary-bold: #6c9bd5;
   --ty-color-primary: #4976ae;
   --ty-color-primary-soft: #4b698b;
   --ty-color-primary-faint: #445b77;
 
   /* Secondary */
   --ty-color-secondary-strong: #ddd6fe;
-  --ty-color-secondary-mild: #c4b5fd;
+  --ty-color-secondary-bold: #c4b5fd;
   --ty-color-secondary: #a78bfa;
   --ty-color-secondary-soft: #8269bc;
   --ty-color-secondary-faint: #76619f;
 
   /* Success */
   --ty-color-success-strong: #c2f0df;
-  --ty-color-success-mild: #6ee7b7;
+  --ty-color-success-bold: #6ee7b7;
   --ty-color-success: #3aba8b;
   --ty-color-success-soft: #459679;
   --ty-color-success-faint: #1b795c;
 
   /* Danger */
   --ty-color-danger-strong: #ffabab;
-  --ty-color-danger-mild: #e58787;
+  --ty-color-danger-bold: #e58787;
   --ty-color-danger: #d06f6f;
   --ty-color-danger-soft: #b06666;
   --ty-color-danger-faint: #aa6e6e;
 
   /* Warning */
   --ty-color-warning-strong: #fde68a;
-  --ty-color-warning-mild: #fcd34d;
+  --ty-color-warning-bold: #fcd34d;
   --ty-color-warning: #fbbf24;
   --ty-color-warning-soft: #f59e0b;
   --ty-color-warning-faint: #a06726;
 
   /* Neutral */
   --ty-color-neutral-strong: #ffffff;
-  --ty-color-neutral-mild: #f9fafb;
+  --ty-color-neutral-bold: #f9fafb;
   --ty-color-neutral: #d6d6d6;
   --ty-color-neutral-soft: #696969;
   --ty-color-neutral-faint: #474747;
 
   /* Accent - dark mode (emphasis inverted) */
-  --ty-color-accent-mild: #ffb366; /* lighter = more emphasis */
-  --ty-color-accent: #e67b00; /* base */
-  --ty-color-accent-soft: #ac5f00; /* darker = less emphasis */
 
   /* Backgrounds for dark mode */
   --ty-bg-faint: #0f1419;
   --ty-bg-soft: #111827;
   --ty-bg: #1f2937;
-  --ty-bg-mild: #374151;
+  --ty-bg-bold: #374151;
   --ty-bg-strong: #6b7280;
 
   /* Focus ring gap */
   --ty-focus-ring-gap: #1f2937;
 
   /* Semantic backgrounds - much darker in dark mode */
-  --ty-bg-primary-mild: #43517a;
+  --ty-bg-primary-bold: #43517a;
   --ty-bg-primary: #394159;
   --ty-bg-primary-soft: #323a4f;
 
-  --ty-bg-secondary-mild: #58368e;
+  --ty-bg-secondary-bold: #58368e;
   --ty-bg-secondary: #4a3c65;
   --ty-bg-secondary-soft: #3b3645;
 
   --ty-bg-success: #3a4442;
-  --ty-bg-success-mild: #405752;
+  --ty-bg-success-bold: #405752;
   --ty-bg-success-soft: #2f3b38;
 
-  --ty-bg-danger-mild: #853535;
+  --ty-bg-danger-bold: #853535;
   --ty-bg-danger: #522828;
   --ty-bg-danger-soft: #483c3c;
 
-  --ty-bg-warning-mild: #743953;
+  --ty-bg-warning-bold: #743953;
   --ty-bg-warning: #694555;
   --ty-bg-warning-soft: #45333b;
 
-  --ty-bg-neutral-mild: #414141;
+  --ty-bg-neutral-bold: #414141;
   --ty-bg-neutral: #323232;
   --ty-bg-neutral-soft: #242424;
 
   /* Accent backgrounds - dark mode */
-  --ty-bg-accent: #996432;
-  --ty-bg-accent-mild: #da7d25;
-  --ty-bg-accent-soft: #5c3d1a;
 
   /* Borders for dark mode */
   --ty-border-strong: #8c8c8c;
-  --ty-border-mild: #666666;
+  --ty-border-bold: #666666;
   --ty-border: #535353;
   --ty-border-soft: #1f2937;
   --ty-border-faint: #030712;
@@ -695,7 +677,7 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-border: #3e3e3e;
   --ty-floating-border: #494949;
 
-  --ty-text-mild: #f9fafb;
+  --ty-text-bold: #f9fafb;
   --ty-text-strong: #ffffff;
   --ty-text: #d6d6d6;
   --ty-text-soft: #7f8590;
@@ -751,8 +733,6 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-solid-neutral-soft: #2a2a2a;
   --ty-solid-neutral-fg: white;
 
-  --ty-accent-accent: #cc6d00;
-
   /* Input component tokens - dark mode */
   --ty-input-bg: #1b1b1b;
   --ty-input-color: #f9fafb;
@@ -767,8 +747,8 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-label-color: #d1d5db;
 
   /* Modal - dark mode */
-  --ty-modal-bg: var(--ty-bg-mild);
-  --ty-modal-color: var(--ty-color-neutral-mild);
+  --ty-modal-bg: var(--ty-bg-bold);
+  --ty-modal-color: var(--ty-color-neutral-bold);
   --ty-modal-border: var(--ty-border);
   --ty-modal-backdrop: rgba(0, 0, 0, 0.7);
   --ty-modal-shadow:
@@ -796,7 +776,7 @@ Global and semantic text selection colors
 
 /* Global text selection - uses primary colors by default */
 ::selection {
-  background-color: var(--ty-selection-bg, var(--ty-bg-primary-mild));
+  background-color: var(--ty-selection-bg, var(--ty-bg-primary-bold));
   color: var(--ty-selection-color, var(--ty-text-strong));
 }
 
@@ -1037,7 +1017,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-primary\+ {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-bold);
 }
 
 .ty-bg-primary- {
@@ -1049,7 +1029,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-secondary\+ {
-  background-color: var(--ty-bg-secondary-mild);
+  background-color: var(--ty-bg-secondary-bold);
 }
 
 .ty-bg-secondary- {
@@ -1061,7 +1041,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-success\+ {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-bold);
 }
 
 .ty-bg-success- {
@@ -1073,7 +1053,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-danger\+ {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-bold);
 }
 
 .ty-bg-danger- {
@@ -1085,7 +1065,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-warning\+ {
-  background-color: var(--ty-bg-warning-mild);
+  background-color: var(--ty-bg-warning-bold);
 }
 
 .ty-bg-warning- {
@@ -1097,7 +1077,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-neutral\+ {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-bold);
 }
 
 .ty-bg-neutral- {
@@ -1105,18 +1085,6 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 /* Accent backgrounds */
-.ty-bg-accent {
-  background-color: var(--ty-bg-accent);
-}
-
-.ty-bg-accent\+ {
-  background-color: var(--ty-bg-accent-mild);
-}
-
-.ty-bg-accent- {
-  background-color: var(--ty-bg-accent-soft);
-}
-
 /* =================================================================
 TEXT HIERARCHY UTILITIES
 ================================================================= */
@@ -1127,7 +1095,7 @@ TEXT HIERARCHY UTILITIES
 }
 
 .ty-text\+ {
-  color: var(--ty-text-mild) !important;
+  color: var(--ty-text-bold) !important;
 }
 
 .ty-text\+\+ {
@@ -1152,7 +1120,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-primary\+ {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 
 .ty-text-primary {
@@ -1173,7 +1141,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-secondary\+ {
-  color: var(--ty-color-secondary-mild) !important;
+  color: var(--ty-color-secondary-bold) !important;
 }
 
 .ty-text-secondary {
@@ -1194,7 +1162,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-success\+ {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 
 .ty-text-success {
@@ -1215,7 +1183,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-danger\+ {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 
 .ty-text-danger {
@@ -1236,7 +1204,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-warning\+ {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 
 .ty-text-warning {
@@ -1257,7 +1225,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-neutral\+ {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 
 .ty-text-neutral {
@@ -1273,18 +1241,6 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 /* Accent text colors */
-.ty-text-accent\+ {
-  color: var(--ty-color-accent-mild) !important;
-}
-
-.ty-text-accent {
-  color: var(--ty-color-accent) !important;
-}
-
-.ty-text-accent- {
-  color: var(--ty-color-accent-soft) !important;
-}
-
 /* =================================================================
 BORDER UTILITIES
 ================================================================= */
@@ -1295,7 +1251,7 @@ BORDER UTILITIES
 }
 
 .ty-border\+ {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .ty-border\+\+ {
@@ -1335,18 +1291,6 @@ BORDER UTILITIES
   border-color: var(--ty-border-neutral);
 }
 
-.ty-border-accent\+ {
-  border-color: var(--ty-border-accent-mild);
-}
-
-.ty-border-accent {
-  border-color: var(--ty-border-accent);
-}
-
-.ty-border-accent- {
-  border-color: var(--ty-border-accent-soft);
-}
-
 /* =================================================================
 COMPONENT UTILITIES
 ================================================================= */
@@ -1354,7 +1298,7 @@ COMPONENT UTILITIES
 /* Card/Panel utilities */
 .ty-card {
   background-color: var(--ty-surface-elevated);
-  color: var(--ty-color-neutral-mild);
+  color: var(--ty-color-neutral-bold);
 }
 
 .ty-card-elevated {
@@ -1401,7 +1345,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-bg-neutral\+:hover {
-  background-color: var(--ty-bg-neutral-mild) !important;
+  background-color: var(--ty-bg-neutral-bold) !important;
 }
 
 .hover\:ty-bg-neutral\+\+:hover {
@@ -1413,7 +1357,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-bg-primary\+:hover {
-  background-color: var(--ty-bg-primary-mild) !important;
+  background-color: var(--ty-bg-primary-bold) !important;
 }
 
 .hover\:ty-bg-secondary:hover {
@@ -1421,7 +1365,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-bg-secondary\+:hover {
-  background-color: var(--ty-bg-secondary-mild) !important;
+  background-color: var(--ty-bg-secondary-bold) !important;
 }
 
 .hover\:ty-bg-success:hover {
@@ -1429,7 +1373,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-bg-success\+:hover {
-  background-color: var(--ty-bg-success-mild) !important;
+  background-color: var(--ty-bg-success-bold) !important;
 }
 
 .hover\:ty-bg-danger:hover {
@@ -1437,23 +1381,11 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-bg-danger\+:hover {
-  background-color: var(--ty-bg-danger-mild) !important;
+  background-color: var(--ty-bg-danger-bold) !important;
 }
 
 .hover\:ty-bg-danger-:hover {
   background-color: var(--ty-bg-danger-soft) !important;
-}
-
-.hover\:ty-bg-accent:hover {
-  background-color: var(--ty-bg-accent) !important;
-}
-
-.hover\:ty-bg-accent\+:hover {
-  background-color: var(--ty-bg-accent-mild) !important;
-}
-
-.hover\:ty-bg-accent-:hover {
-  background-color: var(--ty-bg-accent-soft) !important;
 }
 
 /* Hover states for text colors */
@@ -1462,7 +1394,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text\+:hover {
-  color: var(--ty-text-mild) !important;
+  color: var(--ty-text-bold) !important;
 }
 
 .hover\:ty-text\+\+:hover {
@@ -1484,7 +1416,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-primary\+:hover {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 
 .hover\:ty-text-primary:hover {
@@ -1505,7 +1437,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-secondary\+:hover {
-  color: var(--ty-color-secondary-mild) !important;
+  color: var(--ty-color-secondary-bold) !important;
 }
 
 .hover\:ty-text-secondary:hover {
@@ -1526,7 +1458,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-success\+:hover {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 
 .hover\:ty-text-success:hover {
@@ -1547,7 +1479,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-danger\+:hover {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 
 .hover\:ty-text-danger:hover {
@@ -1568,7 +1500,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-warning\+:hover {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 
 .hover\:ty-text-warning:hover {
@@ -1589,7 +1521,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-neutral + :hover {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 
 .hover\:ty-text-neutral:hover {
@@ -1605,18 +1537,6 @@ INTERACTIVE STATES
 }
 
 /* Accent text hover states */
-.hover\:ty-text-accent\+:hover {
-  color: var(--ty-color-accent-mild) !important;
-}
-
-.hover\:ty-text-accent:hover {
-  color: var(--ty-color-accent) !important;
-}
-
-.hover\:ty-text-accent-:hover {
-  color: var(--ty-color-accent-soft) !important;
-}
-
 /* Hover states for borders */
 /* Base border hover states */
 .hover\:ty-border\+\+:hover {
@@ -1624,7 +1544,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-border\+:hover {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .hover\:ty-border:hover {
@@ -1664,24 +1584,12 @@ INTERACTIVE STATES
   border-color: var(--ty-border-neutral) !important;
 }
 
-.hover\:ty-border-accent\+:hover {
-  border-color: var(--ty-border-accent-mild) !important;
-}
-
-.hover\:ty-border-accent:hover {
-  border-color: var(--ty-border-accent) !important;
-}
-
-.hover\:ty-border-accent-:hover {
-  border-color: var(--ty-border-accent-soft) !important;
-}
-
 .focus\:ty-border\+\+:focus {
   border-color: var(--ty-border-strong) !important;
 }
 
 .focus\:ty-border + :focus {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .focus\:ty-border:focus {
@@ -1719,18 +1627,6 @@ INTERACTIVE STATES
 
 .focus\:ty-border-neutral:focus {
   border-color: var(--ty-border-neutral) !important;
-}
-
-.focus\:ty-border-accent\+:focus {
-  border-color: var(--ty-border-accent-mild) !important;
-}
-
-.focus\:ty-border-accent:focus {
-  border-color: var(--ty-border-accent) !important;
-}
-
-.focus\:ty-border-accent-:focus {
-  border-color: var(--ty-border-accent-soft) !important;
 }
 
 /* =================================================================

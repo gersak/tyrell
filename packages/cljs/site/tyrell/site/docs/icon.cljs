@@ -10,7 +10,7 @@
 
    ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
       {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
       [:span.ty-text-- "API Reference"]]]
@@ -140,7 +140,55 @@
 <ty-icon name=\"loader\" spin tempo=\"fast\"></ty-icon>
 
 <ty-icon name=\"circle\" pulse></ty-icon>
-<ty-icon name=\"circle\" pulse tempo=\"slow\"></ty-icon>")]])
+<ty-icon name=\"circle\" pulse tempo=\"slow\"></ty-icon>")]
+
+      ;; Inline SVG (BFF / SSR / no registry)
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Inline SVG — no registry needed")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Slot a raw " [:code "<svg>"] " as a child and " [:code "ty-icon"] " renders it directly — the registry/name lookup is skipped. This is the pattern for server-driven UIs (HTMX, Datastar, JSF, Phoenix LiveView, Rails Turbo, etc.) — paste the SVG from your backend and you still get every size, color, and animation feature, with no " [:code "window.tyIcons.register()"] " call required."]
+       (demo-area
+        [:div.flex.flex-wrap.items-center.gap-6
+         [:ty-icon.ty-text-primary {:size "lg"}
+          [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "none"
+                 :stroke "currentColor" :stroke-width "2"
+                 :stroke-linecap "round" :stroke-linejoin "round"}
+           [:path {:d "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"}]]]
+         [:ty-icon.ty-text-success {:size "lg"}
+          [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "none"
+                 :stroke "currentColor" :stroke-width "2"
+                 :stroke-linecap "round" :stroke-linejoin "round"}
+           [:polyline {:points "20 6 9 17 4 12"}]]]
+         [:ty-icon.ty-text-warning {:size "lg" :spin "" :tempo "slow"}
+          [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "none"
+                 :stroke "currentColor" :stroke-width "2"
+                 :stroke-linecap "round" :stroke-linejoin "round"}
+           [:circle {:cx "12" :cy "12" :r "10"}]
+           [:path {:d "M12 6v6l4 2"}]]]
+         [:ty-icon.ty-text-danger {:size "lg" :pulse ""}
+          [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24" :fill "currentColor"}
+           [:path {:d "M12 2 1 21h22L12 2zm0 6 7.5 13h-15L12 8zm-1 4v3h2v-3h-2zm0 4v2h2v-2h-2z"}]]]])
+       (code-block "<!-- Anywhere on the server-rendered page — no JS, no registry -->
+<ty-icon size=\"lg\" class=\"ty-text-primary\">
+  <svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"
+       fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"
+       stroke-linecap=\"round\" stroke-linejoin=\"round\">
+    <path d=\"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06
+             a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78
+             1.06-1.06a5.5 5.5 0 0 0 0-7.78z\"/>
+  </svg>
+</ty-icon>
+
+<!-- spin/pulse/tempo still work because they style the host element -->
+<ty-icon size=\"lg\" spin tempo=\"slow\" class=\"ty-text-warning\">
+  <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">
+    <circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>
+  </svg>
+</ty-icon>")
+       [:p.ty-text--.mt-3 {:style {:font-size "0.75rem" :line-height "1.6"}}
+        [:strong "How it works:"] " the component's shadow root contains a single " [:code "<slot>"]
+        " whose fallback content is driven by the registry. When light-DOM children are present, the browser shows them instead — same CSS classes (" [:code "icon-lg"] ", " [:code "icon-spin"]
+        ", color via " [:code "currentColor"] ") apply to whichever wins. Set " [:code "fill"] " or " [:code "stroke"] " to " [:code "currentColor"] " on your SVG so " [:code "ty-text-*"] " classes still tint it."]]])
 
    ;; Best Practices
    (doc-section "Best Practices"

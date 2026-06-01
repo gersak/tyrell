@@ -127,7 +127,6 @@ FormData: submits raw number, not formatted string.
 | `danger` | Destructive/negative | Delete, expenses, errors |
 | `warning` | Caution | Unsaved changes, limits |
 | `neutral` | Default, no weight | Cancel, Close |
-| `accent` | Brand/highlight | Featured items, active states |
 
 ---
 
@@ -409,7 +408,9 @@ Attrs: `year`, `month`, `day`, `name`, `required`. Property: `dayContentFn`.
 
 ### ty-modal
 
-Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true), `protected`.
+Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true).
+
+Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'`. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
 
 **Methods:** `show()`, `hide()` | **Events:** `close` -> `{ reason, returnValue? }`
 
@@ -436,6 +437,25 @@ Attrs: `manual`, `disable-close`, `placement` (default `'bottom'`), `offset` (8)
 ### ty-icon
 
 Attrs: `name`, `size` (`xs` | `sm` | `md` | `lg` | `xl`), `spin`, `pulse`, `tempo`.
+
+**Two rendering paths:**
+
+1. **Registry lookup** (`name="check"`) — bundler-friendly, tree-shakeable. See the JavaScript guide for `registerIcons` / `window.tyIcons`.
+2. **Inline SVG via slot** — pass raw `<svg>` as a child and the registry is bypassed. No JS registration required. Ideal for server-rendered apps (HTMX, Datastar, Phoenix, Rails, JSF…) where the backend already has the SVG.
+
+```html
+<!-- Path 1: registry -->
+<ty-icon name="check" size="md"></ty-icon>
+
+<!-- Path 2: slotted SVG (no registry needed) -->
+<ty-icon size="md" class="ty-text-primary">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+</ty-icon>
+```
+
+`size`, `spin`, `pulse`, `tempo`, and `ty-text-*` color classes apply to the host element — they work identically on both paths. Use `currentColor` for `fill`/`stroke` so text-color classes still tint the SVG.
 
 ---
 
@@ -572,7 +592,7 @@ Imperative methods via refs: `useRef<TyModalRef>()` -> `.current?.show()` / `.hi
                  :change (fn [e] (-> e .-detail .-value))}}]
 
 ;; Dynamic classes — use vectors, not string concatenation
-[:div {:class ["ty-elevated" "p-4" (when active? "ty-bg-accent-")]}]
+[:div {:class ["ty-elevated" "p-4" (when active? "ty-bg-primary-")]}]
 ```
 
 ---

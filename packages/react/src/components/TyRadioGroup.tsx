@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 export interface TyRadioGroupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Currently selected value (matches one child `<TyRadio value="...">`) */
@@ -98,13 +99,16 @@ export const TyRadioGroup = React.forwardRef<HTMLElement, TyRadioGroupProps>(
       }
     }, [ref]);
 
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+
     const webComponentProps: Record<string, any> = {
       ...props,
       ref: elementRef,
     };
 
-    if (disabled) webComponentProps.disabled = '';
-    if (required) webComponentProps.required = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
 
     if (value !== undefined) webComponentProps.value = value;
     if (name) webComponentProps.name = name;

@@ -20,16 +20,24 @@
       [:ty-button {:flavor "secondary" :on-click #(swap! !count dec)} "−"]
       [:ty-button {:flavor "primary"   :on-click #(swap! !count inc)} "+"]]]))
 
+(defn- emit-value! [^js el v]
+  (js/console.log "[reagent] emit" v)
+  (.dispatchEvent el (js/CustomEvent. "counter-value"
+                       #js {:bubbles true
+                            :detail  #js {:framework "reagent" :value v}})))
+
 (defn render! [^js el]
   (let [shadow (shim/ensure-shadow el)]
     (ensure-styles! shadow styles "reagent-counter")
     (when-not (.-_mount el)
       (set! (.-_count el) (r/atom (or (shim/parse-int-attr el "initial") 0)))
+      (add-watch (.-_count el) :emit (fn [_ _ _ v] (emit-value! el v)))
       (let [mount (.createElement js/document "div")
             root  (rdom/create-root mount)]
         (set! (.-_mount el) mount)
         (set! (.-_root el) root)
         (.appendChild shadow mount)))
+    (emit-value! el @(.-_count el))
     (rdom/render (.-_root el) [(counter-ui (.-_count el))])))
 
 (def configuration

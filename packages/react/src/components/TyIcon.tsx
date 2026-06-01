@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Icon component
 export interface TyIconProps extends React.HTMLAttributes<HTMLElement> {
@@ -37,6 +38,9 @@ export const TyIcon = React.forwardRef<HTMLElement, TyIconProps>(
       }
     }, [ref]);
 
+    const isSpin = useBooleanProperty(elementRef, 'spin', spin);
+    const isPulse = useBooleanProperty(elementRef, 'pulse', pulse);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -49,13 +53,8 @@ export const TyIcon = React.forwardRef<HTMLElement, TyIconProps>(
       webComponentProps.size = size;
     }
 
-    if (spin) {
-      webComponentProps.spin = '';  // Boolean attributes as empty string
-    }
-
-    if (pulse) {
-      webComponentProps.pulse = '';  // Boolean attributes as empty string
-    }
+    if (isSpin) webComponentProps.spin = '';
+    if (isPulse) webComponentProps.pulse = '';
 
     if (tempo) {
       webComponentProps.tempo = tempo;

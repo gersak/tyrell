@@ -72,7 +72,7 @@ textarea.error {
 }
 
 textarea.error:focus {
-  border-color: var(--ty-color-danger-mild);
+  border-color: var(--ty-color-danger-bold);
   box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Option component
 export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
@@ -25,13 +26,17 @@ export const TyOption = React.forwardRef<HTMLElement, TyOptionProps>(
       }
     }, [ref]);
 
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isSelected = useBooleanProperty(elementRef, 'selected', selected);
+    const isHidden = useBooleanProperty(elementRef, 'hidden', hidden);
+
     return React.createElement(
       'ty-option',
       {
         ...props,
-        ...(disabled && { disabled: "" }),
-        ...(selected && { selected: "" }),
-        ...(hidden && { hidden: "" }),
+        ...(isDisabled && { disabled: "" }),
+        ...(isSelected && { selected: "" }),
+        ...(isHidden && { hidden: "" }),
         ref: elementRef,
       },
       children

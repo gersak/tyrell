@@ -6,79 +6,55 @@
 (defn theme-toggle []
   "Simple theme toggle section"
   [:div.flex.justify-center.gap-4.mb-8
-   [:button.px-6.py-3.ty-elevated.border.ty-border.rounded-lg.hover:ty-content.ty-text.transition-colors.cursor-pointer.flex.items-center.gap-2
+   [:button.px-6.py-3.ty-elevated.border.ty-border-soft.rounded-lg.hover:ty-content.ty-text.transition-colors.cursor-pointer.flex.items-center.gap-2
     {:on {:click #(.. js/document -documentElement -classList (remove "dark"))}}
     [:ty-icon {:name "sun" :size "sm"}] "Light Theme"]
-   [:button.px-6.py-3.ty-bg-neutral.ty-text++.border.ty-border.rounded-lg.hover:ty-bg-neutral+.transition-colors.cursor-pointer.flex.items-center.gap-2
+   [:button.px-6.py-3.ty-bg-neutral.ty-text++.rounded-lg.hover:ty-bg-neutral+.transition-colors.cursor-pointer.flex.items-center.gap-2
     {:on {:click #(.. js/document -documentElement -classList (add "dark"))}}
     [:ty-icon {:name "moon" :size "sm"}] "Dark Theme"]])
 
+;; ----------------------------------------------------------------------------
+;; The 5-variant emphasis ladder: public-class suffix → internal token name.
+;; Order is fixed: strong > bold > base > soft > faint.
+;; ----------------------------------------------------------------------------
+
+(def ^:private emphasis-ladder
+  [["++" "strong"]
+   ["+"  "bold"]
+   [""   "base"]
+   ["-"  "soft"]
+   ["--" "faint"]])
+
+(defn- text-ramp [flavor]
+  [:div.space-y-3
+   [:h4.text-sm.font-medium.ty-text (str (clojure.string/capitalize flavor) " Text Variants")]
+   [:div {:class (str "ty-bg-" flavor "- p-4 rounded-lg space-y-2")}
+    (for [[suffix token] emphasis-ladder]
+      [:div.flex.items-baseline.justify-between.gap-3
+       {:key (str flavor suffix)}
+       [:span {:class (str "ty-text-" flavor suffix)}
+        (str "ty-text-" flavor suffix)]
+       [:code.ty-text-- {:style {:font-size "0.6875rem" :font-family "monospace"}}
+        token]])]])
+
 (defn text-variants-demo []
-  "Shows the 5-variant text system"
+  "Shows the 5-variant text system, including the suffix → token mapping."
   [:div.ty-elevated.p-6.rounded-lg
    [:h3.text-lg.font-semibold.ty-text.mb-4 "5-Variant Text System"]
-   [:p.ty-text-.mb-6 "Each semantic color provides 5 levels of emphasis for precise text hierarchy."]
+   [:p.ty-text-.mb-2 "Each semantic color provides 5 levels of emphasis for precise text hierarchy."]
+   [:p.ty-text--.mb-6 {:style {:font-size "0.8125rem"}}
+    "Public class suffix on the left, internal token name on the right. The ladder is "
+    [:code "strong → bold → base → soft → faint"]
+    " — each step less emphatic than the previous. Surface backgrounds use "
+    [:code "ty-bg-{flavor}-bold"] " (formerly " [:code "-mild"] ") and " [:code "ty-bg-{flavor}-soft"] "."]
 
    [:div.grid.gap-6.md:grid-cols-2.lg:grid-cols-3
-    ;; Primary text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Primary Text Variants"]
-     [:div.ty-bg-primary-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-primary++ "ty-text-primary++"]
-      [:div.ty-text-primary+ "ty-text-primary+"]
-      [:div.ty-text-primary "ty-text-primary"]
-      [:div.ty-text-primary- "ty-text-primary-"]
-      [:div.ty-text-primary-- "ty-text-primary--"]]]
-
-    ;; Secondary text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Secondary Text Variants"]
-     [:div.ty-bg-secondary-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-secondary++ "ty-text-secondary++"]
-      [:div.ty-text-secondary+ "ty-text-secondary+"]
-      [:div.ty-text-secondary "ty-text-secondary"]
-      [:div.ty-text-secondary- "ty-text-secondary-"]
-      [:div.ty-text-secondary-- "ty-text-secondary--"]]]
-
-    ;; Success text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Success Text Variants"]
-     [:div.ty-bg-success-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-success++ "ty-text-success++"]
-      [:div.ty-text-success+ "ty-text-success+"]
-      [:div.ty-text-success "ty-text-success"]
-      [:div.ty-text-success- "ty-text-success-"]
-      [:div.ty-text-success-- "ty-text-success--"]]]
-
-    ;; Danger text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Danger Text Variants"]
-     [:div.ty-bg-danger-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-danger++ "ty-text-danger++"]
-      [:div.ty-text-danger+ "ty-text-danger+"]
-      [:div.ty-text-danger "ty-text-danger"]
-      [:div.ty-text-danger- "ty-text-danger-"]
-      [:div.ty-text-danger-- "ty-text-danger--"]]]
-
-    ;; Warning text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Warning Text Variants"]
-     [:div.ty-bg-warning-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-warning++ "ty-text-warning++"]
-      [:div.ty-text-warning+ "ty-text-warning+"]
-      [:div.ty-text-warning "ty-text-warning"]
-      [:div.ty-text-warning- "ty-text-warning-"]
-      [:div.ty-text-warning-- "ty-text-warning--"]]]
-
-    ;; Neutral text variants
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Neutral Text Variants"]
-     [:div.ty-bg-neutral-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-neutral++ "ty-text-neutral++"]
-      [:div.ty-text-neutral+ "ty-text-neutral+"]
-      [:div.ty-text-neutral "ty-text-neutral"]
-      [:div.ty-text-neutral- "ty-text-neutral-"]
-      [:div.ty-text-neutral-- "ty-text-neutral--"]]]]])
+    (text-ramp "primary")
+    (text-ramp "secondary")
+    (text-ramp "success")
+    (text-ramp "danger")
+    (text-ramp "warning")
+    (text-ramp "neutral")]])
 
 (defn background-variants-demo []
   "Shows the 3-variant background system"
@@ -165,45 +141,6 @@
       [:div.ty-text-neutral++.font-medium "ty-bg-neutral-"]
       [:div.ty-text-neutral.text-sm "Softer background"]]]]])
 
-(defn accent-demo []
-  "Shows the accent color system"
-  [:div.ty-elevated.p-6.rounded-lg
-   [:h3.text-lg.font-semibold.ty-text.mb-4 "Accent Color"]
-   [:p.ty-text-.mb-6 "A distinct color for highlights, active states, and branding that sits outside the semantic palette."]
-
-   [:div.grid.gap-6.md:grid-cols-2.lg:grid-cols-3
-    ;; Accent backgrounds
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Accent Backgrounds"]
-     [:div.ty-bg-accent+.p-4.rounded-lg.text-center
-      [:div.ty-text-accent++.font-medium "ty-bg-accent+"]
-      [:div.ty-text-accent.text-sm "Stronger"]]
-     [:div.ty-bg-accent.p-4.rounded-lg.text-center
-      [:div.ty-text-accent++.font-medium "ty-bg-accent"]
-      [:div.ty-text-accent.text-sm "Base"]]
-     [:div.ty-bg-accent-.p-4.rounded-lg.text-center
-      [:div.ty-text-accent++.font-medium "ty-bg-accent-"]
-      [:div.ty-text-accent.text-sm "Softer"]]]
-
-    ;; Accent text
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Accent Text Variants"]
-     [:div.ty-bg-accent-.p-4.rounded-lg.space-y-2
-      [:div.ty-text-accent+ "ty-text-accent+"]
-      [:div.ty-text-accent "ty-text-accent"]
-      [:div.ty-text-accent- "ty-text-accent-"]]]
-
-    ;; Accent borders
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Accent Borders"]
-     [:div.space-y-3
-      [:div.p-4.rounded-lg.border-2.ty-border-accent+.text-center
-       [:div.ty-text.text-sm "ty-border-accent+"]]
-      [:div.p-4.rounded-lg.border-2.ty-border-accent.text-center
-       [:div.ty-text.text-sm "ty-border-accent"]]
-      [:div.p-4.rounded-lg.border-2.ty-border-accent-.text-center
-       [:div.ty-text.text-sm "ty-border-accent-"]]]]]])
-
 (defn surface-classes-demo []
   "Shows surface classes nested to demonstrate layering hierarchy"
   [:div.ty-elevated.p-6.rounded-lg
@@ -211,10 +148,13 @@
    [:p.ty-text-.mb-6 "Semantic surface classes nested to show layering and elevation hierarchy."]
 
    [:div.space-y-6
-    ;; Nested surfaces demonstration - like Russian dolls
-    [:div.ty-canvas.p-6.rounded-lg.border.ty-border.relative
+    ;; Nested surfaces demonstration - like Russian dolls.
+    ;; Canvas is the page surface (no border); inner layers use the soft
+    ;; border (--ty-color-neutral-faint) so the hierarchy reads from
+    ;; surface elevation, not heavy outlines.
+    [:div.ty-canvas.p-6.rounded-lg.relative
      [:div.absolute.top-2.left-3.text-xs.ty-text-.font-mono.opacity-75 "ty-canvas"]
-     [:div.ty-content.p-6.rounded-lg.border.ty-border.relative.mt-6
+     [:div.ty-content.p-6.rounded-lg.border.ty-border-soft.relative.mt-6
       [:div.absolute.top-2.left-3.text-xs.ty-text-.font-mono.opacity-75 "ty-content"]
       [:div.ty-elevated.p-6.rounded-lg.relative.mt-6
        [:div.absolute.top-2.left-3.text-xs.ty-text-.font-mono.opacity-75 "ty-elevated"]
@@ -226,12 +166,12 @@
 
     ;; Individual surface descriptions
     [:div.grid.gap-4.md:grid-cols-2.lg:grid-cols-3
-     [:div.ty-canvas.p-4.rounded-lg.border.ty-border.text-center
+     [:div.ty-canvas.p-4.rounded-lg.text-center
       [:div.ty-text++.font-medium.mb-2 "ty-canvas"]
       [:div.ty-text-.text-sm "App background"]
       [:div.ty-text--.text-xs.mt-1 "Base layer"]]
 
-     [:div.ty-content.p-4.rounded-lg.border.ty-border.text-center
+     [:div.ty-content.p-4.rounded-lg.border.ty-border-soft.text-center
       [:div.ty-text++.font-medium.mb-2 "ty-content"]
       [:div.ty-text-.text-sm "Main areas"]
       [:div.ty-text--.text-xs.mt-1 "Content layer"]]
@@ -369,11 +309,11 @@
                  :class "ty-text-success"}]
       "Do"]
      [:div.space-y-2.text-sm
-      [:div.ty-text- "• Use semantic colors that match meaning (success/success)"]
-      [:div.ty-text- "• Use strong text on soft backgrounds for good contrast"]
+      [:div.ty-text- "• Match semantic color to meaning (success for confirmations, danger for errors)"]
+      [:div.ty-text- "• Pair strong text on soft backgrounds for good contrast"]
       [:div.ty-text- "• Test in both light and dark themes"]
       [:div.ty-text- "• Use ty-elevated for cards and panels"]
-      [:div.ty-text- "• Follow text hierarchy (++ > + > base > - > --)"]]]
+      [:div.ty-text- "• Follow the emphasis ladder: ++ strong > + bold > base > - soft > -- faint"]]]
 
     [:div
      [:h4.text-sm.font-medium.ty-text-danger.mb-3.flex.items-center.gap-2
@@ -422,10 +362,10 @@
        "CSS Variables"]
       [:p.text-sm.ty-text-.mb-2 "Defined in tyrell.css:"]
       [:ul.space-y-1.text-xs.ty-text-
-       [:li "• 130+ variables"]
-       [:li "• 7 colors × 5 variants"]
-       [:li "• Surface hierarchy"]
-       [:li "• Light/dark themes"]]]
+       [:li "• 180+ variables"]
+       [:li "• 6 flavors × 5 emphasis levels (strong / bold / base / soft / faint)"]
+       [:li "• Surface hierarchy (canvas / content / elevated / floating)"]
+       [:li "• Light/dark mode (single seed drives both via tyrell-brand.css)"]]]
      [:div.ty-content.p-4.rounded-lg
       [:h4.font-semibold.ty-text.mb-2.flex.items-center.gap-2
        [:span.ty-bg-success.ty-text-success++.w-8.h-8.rounded-full.flex.items-center.justify-center.text-sm "2"]
@@ -439,8 +379,8 @@
      (common/code-block
        "/* Components reference CSS variables from tyrell.css */
 button {
-  background: var(--ty-color-primary);  /* undefined without tyrell.css! */
-  color: var(--ty-text-strong);         /* undefined without tyrell.css! */
+  background: var(--ty-color-primary);          /* undefined without tyrell.css! */
+  color: var(--ty-color-neutral-strong);        /* undefined without tyrell.css! */
 }"
        "css")]]
 
@@ -473,10 +413,9 @@ button {
    ;; Theme toggle
    (theme-toggle)
 
-   ;; Main content sections
+   ;; Main content sections — single-column flow
    (text-variants-demo)
    (background-variants-demo)
-   (accent-demo)
    (surface-classes-demo)
    (practical-examples)
    (code-examples)

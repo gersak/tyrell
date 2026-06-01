@@ -11,7 +11,7 @@ For the full CSS class reference, see [`CSS_GUIDE.md`](../CSS_GUIDE.md). In Repl
  [:p.ty-text-.text-sm "Subtitle"]]
 
 ;; Dynamic classes — use vectors, not string concatenation
-[:div {:class ["ty-elevated" "p-4" (when active? "ty-bg-accent-")]}]
+[:div {:class ["ty-elevated" "p-4" (when active? "ty-bg-primary-")]}]
 ```
 
 ---
@@ -69,7 +69,7 @@ Multi-class strings like `"text-xs font-light"` warn *and* perform worse — Rep
                  :else                   ["text-xs" "font-light"])}]
 ```
 
-Single-class strings like `(when active? "ty-text-accent")` are fine — the rule only applies to strings that contain spaces.
+Single-class strings like `(when active? "ty-text-primary")` are fine — the rule only applies to strings that contain spaces.
 
 ### 2. `:style` is always a map, never a string
 

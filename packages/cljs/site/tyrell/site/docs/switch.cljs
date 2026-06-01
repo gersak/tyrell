@@ -10,7 +10,7 @@
 
    ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-accent)" :padding-left "0.625rem"}}
+    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
       {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
       [:span.ty-text-- "API Reference"]]]
@@ -181,7 +181,7 @@
             [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
        [:div
         [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-accent+ {:name "square-check" :size "16"}]
+         [:ty-icon.ty-text-primary+ {:name "square-check" :size "16"}]
          [:span.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "Use ty-checkbox when"]]
         [:div.space-y-2
          (for [text ["Part of a form that gets submitted"
@@ -189,7 +189,7 @@
                      "Multiple independent options in a list"
                      "An indeterminate state is needed (e.g. select-all)"]]
            [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-accent+.mt-px {:name "check" :size "14"}]
+            [:ty-icon.ty-text-primary+.mt-px {:name "check" :size "14"}]
             [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
 
    ;; Best Practices

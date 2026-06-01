@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Popup component
 export interface TyPopupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onClose'> {
@@ -56,15 +57,21 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
       }
     }, [ref]);
 
-    // Listen for popup open/close events
+    // Listen for popup open/close events.
+    // Guard with `event.target === element` so bubbled open/close events
+    // from popup-like descendants (ty-dropdown, ty-multiselect, ty-date-picker
+    // when slotted inside this popup) don't fire the consumer's onOpen/onClose.
+    // See TyModal.tsx for the same pattern + rationale.
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
 
       const handleOpen = (event: Event) => {
+        if (event.target !== element) return;
         if (onOpen) onOpen(event as CustomEvent);
       };
       const handleClose = (event: Event) => {
+        if (event.target !== element) return;
         if (onClose) onClose(event as CustomEvent);
       };
 
@@ -92,13 +99,11 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
       webComponentProps.offset = offset.toString();
     }
 
-    if (manual) {
-      webComponentProps.manual = '';  // Boolean attributes as empty string
-    }
+    const isManual = useBooleanProperty(elementRef, 'manual', manual);
+    const isDisableClose = useBooleanProperty(elementRef, 'disableClose', disableClose);
 
-    if (disableClose) {
-      webComponentProps['disable-close'] = '';  // Boolean attributes as empty string
-    }
+    if (isManual) webComponentProps.manual = '';
+    if (isDisableClose) webComponentProps['disable-close'] = '';
 
     return React.createElement(
       'ty-popup',

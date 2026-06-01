@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react';
 import { needsPropertyBridge } from '../utils/react-version';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Event detail structure for ty-input events
 export interface TyInputEventDetail {
@@ -92,7 +93,7 @@ let _warnedOnInputProp = false;
 
 // React wrapper for ty-input web component
 export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
-  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, name, checked, debounce, ...props }, ref) => {
+  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, name, checked, debounce, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     // Catch the most common mistake: passing `onInput` (React's prop) instead
@@ -206,6 +207,11 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
       }
     }, [(props as any).value]);
 
+    // Imperative property sync for boolean props (see use-boolean-prop.ts).
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
+    const isChecked = useBooleanProperty(elementRef, 'checked', checked);
+
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...props,
@@ -213,8 +219,9 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
     };
 
     // Add conditional attributes
-    if (disabled) webComponentProps.disabled = '';
-    if (checked) webComponentProps.checked = '';
+    if (isDisabled) webComponentProps.disabled = '';
+    if (isRequired) webComponentProps.required = '';
+    if (isChecked) webComponentProps.checked = '';
 
     // Add string attributes
     if (name) webComponentProps.name = name;

@@ -14,11 +14,11 @@
     "dev:full": "concurrently \"npm run build:css:watch\" \"npm run dev\""
   },
   "dependencies": {
-    "tyrell-components": "1.0.0-RC6",
-    "tyrell-react": "1.0.0-RC6",
     "next": "^16.2.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tyrell-components": "^1.0.0-TC21",
+    "tyrell-react": "^1.0.0-TC21"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

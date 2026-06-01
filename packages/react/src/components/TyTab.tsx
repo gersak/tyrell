@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Tab component
 export interface TyTabProps extends React.HTMLAttributes<HTMLElement> {
@@ -47,7 +48,8 @@ export const TyTab = React.forwardRef<HTMLElement, TyTabProps>(
     webComponentProps.id = id;
     
     // Add boolean attributes
-    if (disabled) webComponentProps.disabled = '';
+    const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
+    if (isDisabled) webComponentProps.disabled = '';
     
     // Add string attributes
     if (label) webComponentProps.label = label;
