@@ -171,34 +171,165 @@ if (theme === 'dark') document.documentElement.classList.add('dark');
 
 ## Color Customization
 
-Override via CSS custom properties:
+Tyrell ships **two layered theming systems**. Pick the one you need.
+
+### Option 1 — OKLCH brand layer (recommended)
+
+Load `tyrell-brand.css` after `tyrell.css`, then rebrand with one variable:
+
+```html
+<link rel="stylesheet" href=".../tyrell.css">
+<link rel="stylesheet" href=".../tyrell-brand.css">
+```
+
+```css
+:root {
+  --ty-brand-hue: 200;        /* teal. Try 260 indigo, 30 orange, 145 emerald. */
+}
+```
+
+That's it. Primary, secondary, neutral, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Defaults to Tyrell blue (`230°`).
+
+The customisation surface has **five tiers**, each independent. Set just the seeds for the 90% case; reach further when needed.
+
+---
+
+#### Tier 1 — seeds (1 variable)
+
+```css
+:root {
+  --ty-brand-hue: 200;          /* the color (0–360°) */
+  --ty-brand-chroma: 0.15;      /* saturation (0–0.30) — every flavor scales proportionally */
+}
+```
+
+Setting `--ty-brand-chroma: 0` collapses every flavor to grayscale. `0.30` punches up the whole palette. Success / danger / warning still pop because their chromas default to `calc(var(--ty-brand-chroma) * <ratio>)` — danger is `× 1.31`, success `× 1.08`, etc.
+
+---
+
+#### Tier 2 — per-flavor anchor tuning
+
+Each semantic flavor has a hue and a chroma you can pin independently:
+
+```css
+:root {
+  --ty-brand-hue: 200;
+
+  /* Secondary rotates from brand by an offset. Override the offset or the hue directly. */
+  --ty-secondary-offset: 30;            /* close sibling (default 60°) */
+  /* OR: --ty-secondary-hue: 320;       /* fully detached */
+
+  /* Semantic anchors. Override hue and/or chroma. */
+  --ty-success-hue: 165;                /* brand-coherent green */
+  --ty-danger-chroma: 0.20;             /* louder errors */
+
+  /* Neutral tracks brand-hue at very low chroma by default; pin to detach. */
+  --ty-neutral-hue: 230;
+  --ty-neutral-chroma: 0.01;
+}
+```
+
+| Flavor   | Hue var                 | Chroma var                | Default        |
+|----------|-------------------------|---------------------------|----------------|
+| primary  | `--ty-brand-hue`        | `--ty-brand-chroma`       | `230°` / `0.13` |
+| secondary| `--ty-secondary-hue`    | `--ty-secondary-chroma`   | brand + 60° / brand chroma |
+| success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / brand × 1.08 |
+| danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `25°` / brand × 1.31 |
+| warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `75°` / brand × 1.15 |
+| neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | brand-hue / brand × 0.04 |
+
+---
+
+#### Tier 3 — L-curve (emphasis ladder)
+
+The 5-shade text ramp (`strong / bold / base / soft / faint`) is computed from shared lightness stops. Reshape the ladder by overriding any:
+
+```css
+:root {
+  /* Light mode — lower L = more emphasis. */
+  --ty-l-strong: 0.34;  /* darker ++ shade */
+  --ty-l-bold:   0.46;
+  --ty-l-base:   0.54;
+  --ty-l-soft:   0.72;
+  --ty-l-faint:  0.82;  /* less faded -- shade */
+
+  /* 3-shade bg ramp uses its own L-stops. */
+  --ty-l-bg-base: 0.96;
+  --ty-l-bg-bold: 0.92;
+  --ty-l-bg-soft: 0.98;
+}
+```
+
+Use cases: compress the ladder for an "all-soft" muted palette; expand it for higher-contrast accessibility-first themes.
+
+---
+
+#### Tier 4 — saturation curve (per-shade chroma multipliers)
+
+Each shade's chroma = `flavor-chroma × multiplier`. Override to make any shade more or less saturated than the curve's default:
+
+```css
+:root {
+  --ty-c-strong-mult: 0.77;  /* slightly desaturated strong */
+  --ty-c-bold-mult:   1.20;  /* punchier bold */
+  --ty-c-base-mult:   0.92;
+  --ty-c-soft-mult:   0.77;
+  --ty-c-faint-mult:  0.20;  /* whisper-quiet placeholders */
+}
+```
+
+Same idea for bg multipliers: `--ty-c-bg-base-mult`, `--ty-c-bg-bold-mult`, `--ty-c-bg-soft-mult`.
+
+---
+
+#### Tier 5 — per-mode independence
+
+Any of the above can be overridden separately for dark mode:
+
+```css
+:root {
+  --ty-brand-hue: 200;             /* light mode teal */
+}
+html.dark, html[data-theme="dark"] {
+  --ty-brand-hue: 210;             /* slightly cooler teal in dark mode */
+  --ty-c-faint-mult: 0.60;         /* dark mode needs more chroma at faint */
+}
+```
+
+The brand layer's `html.dark` block already redefines the L-curve with inverted defaults (`0.86 / 0.74 / 0.62 / 0.46 / 0.30`) and bumps `--ty-c-faint-mult` so dim shades don't collapse to grey. Override either to fine-tune.
+
+---
+
+### Option 2 — direct token override (legacy / fine-grained)
+
+If you don't load the brand layer, or you want to override individual derived tokens, you can still write hex values directly. The brand layer doesn't block this — the cascade resolves consumer overrides past the formula's output.
 
 ```css
 :root {
   --ty-color-primary-strong: #0034c7;
-  --ty-color-primary-bold: #1c40a8;
-  --ty-color-primary: #4367cd;
-  --ty-color-primary-soft: #60a5fa;
-  --ty-color-primary-faint: #93c5fd;
-  --ty-bg-primary-bold: #bfdbfe;
-  --ty-bg-primary: #dbeafe;
-  --ty-bg-primary-soft: #eff6ff;
+  --ty-color-primary-bold:   #1c40a8;
+  --ty-color-primary:        #4367cd;
+  --ty-color-primary-soft:   #60a5fa;
+  --ty-color-primary-faint:  #93c5fd;
+  --ty-bg-primary-bold:      #bfdbfe;
+  --ty-bg-primary:           #dbeafe;
+  --ty-bg-primary-soft:      #eff6ff;
 }
 
-/* Dark mode overrides */
-:root.dark {
+html.dark {
   --ty-color-primary-strong: #93c5fd;
-  --ty-color-primary-bold: #60a5fa;
-  --ty-color-primary: #3b82f6;
-  --ty-color-primary-soft: #1d4ed8;
-  --ty-color-primary-faint: #1e3a5f;
-  --ty-bg-primary-bold: #1e3a8a;
-  --ty-bg-primary: #172554;
-  --ty-bg-primary-soft: #0f172a;
+  /* …etc */
 }
 ```
 
-Pattern: `--ty-color-{name}-{strong|bold|soft|faint}`, `--ty-bg-{name}-{bold|soft}`, `--ty-border-{name}`.
+**Pattern:** `--ty-color-{flavor}-{strong | bold | soft | faint}`, `--ty-bg-{flavor}-{bold | soft}`, `--ty-border-{flavor}`. Flavors are `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+
+Use this when:
+- You have a fixed brand palette and don't need the OKLCH math
+- You want to override one specific shade without abandoning the formula (set the seed AND the one token)
+- You're integrating with an existing design-token system
+
+The brand layer (Option 1) is strictly more powerful — anything you can do with Option 2 you can also do on top of Option 1. Most apps shouldn't need Option 2 at all.
 
 ---
 

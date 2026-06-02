@@ -7,21 +7,25 @@
  * - step-circle: Individual step circle indicators
  * - panels-container: The content viewport
  *
- * Theming — two override granularities:
+ * Theming: four accent-alias knobs (one per state), four surface knobs
+ * (container chrome), and a small set of geometry/motion overrides.
  *
- * 1. Accent aliases (broad retheming — one variable shifts a whole state):
- *    --ty-wizard-active-accent, --ty-wizard-completed-accent,
- *    --ty-wizard-error-accent, --ty-wizard-pending-accent
+ * Per-state circles read their colors directly from the matching accent
+ * variable — no per-state `-bg` indirection. Override one of:
+ *   --ty-wizard-active-accent     (default: --ty-color-primary)
+ *   --ty-wizard-completed-accent  (default: --ty-color-success)
+ *   --ty-wizard-error-accent      (default: --ty-color-danger)
+ *   --ty-wizard-pending-accent    (default: --ty-color-neutral)
  *
- * 2. Fine-grained tokens (surgical control — see :host block below):
- *    --ty-wizard-{region}-{property}
+ * For per-shade fine control, override the brand-layer's flavor seeds
+ * (--ty-color-primary, --ty-color-success-strong, etc.) — they cascade
+ * through here.
  */
 
 export const wizardStyles = `
 /* ============================================================================
-   Theming Tokens
-   All defaults chain back to global --ty-color-* / --ty-surface-* tokens.
-   Override on the host element or a wrapping container.
+   Theming Tokens — see file header for the override surface.
+   Every default chains back to the brand layer / global scale tokens.
    ============================================================================ */
 
 :host {
@@ -30,17 +34,20 @@ export const wizardStyles = `
   height: var(--ty-wizard-height, 700px); /* set by height attribute — not a public token */
   box-sizing: border-box;
 
-  /* Accent aliases — override one to shift the matching circle, glow, and progress fill */
+  /* State accents — the primary override surface. One variable retints the
+   * matching circle background, border, and glow. */
   --ty-wizard-active-accent:    var(--ty-color-primary);
   --ty-wizard-completed-accent: var(--ty-color-success);
   --ty-wizard-error-accent:     var(--ty-color-danger);
   --ty-wizard-pending-accent:   var(--ty-color-neutral);
 
-  /* Container */
+  /* Container chrome — routes through global scales. Override --ty-radius-lg
+   * or --ty-shadow-md app-wide and the wizard follows; override these locally
+   * to give the wizard a distinct look. */
   --ty-wizard-bg:     var(--ty-surface-floating);
   --ty-wizard-border: var(--ty-border);
-  --ty-wizard-radius: 12px;
-  --ty-wizard-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --ty-wizard-radius: var(--ty-radius-lg, 12px);
+  --ty-wizard-shadow: var(--ty-shadow-md, 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1));
 
   /* Header strip */
   --ty-wizard-header-bg:      var(--ty-surface-content);
@@ -52,48 +59,13 @@ export const wizardStyles = `
   --ty-wizard-progress-fill:   var(--ty-wizard-completed-accent);
   --ty-wizard-progress-height: 2px;
 
-  /* Transitions */
-  --ty-wizard-transition-duration: 300ms;
-  --ty-wizard-transition-easing:   ease-in-out;
+  /* Motion — routes through global motion tokens if defined. */
+  --ty-wizard-transition-duration: var(--ty-transition-duration, 300ms);
+  --ty-wizard-transition-easing:   var(--ty-transition-easing, ease-in-out);
 
   /* Circle geometry */
   --ty-wizard-circle-size:         32px;
   --ty-wizard-circle-border-width: 2px;
-
-  /* Step circle — completed */
-  --ty-wizard-completed-bg:     var(--ty-wizard-completed-accent);
-  --ty-wizard-completed-border: var(--ty-color-success-strong);
-  --ty-wizard-completed-color:  white;
-  --ty-wizard-completed-glow:   color-mix(in srgb, var(--ty-wizard-completed-accent) 10%, transparent);
-
-  /* Step circle — active */
-  --ty-wizard-active-bg:     var(--ty-wizard-active-accent);
-  --ty-wizard-active-border: var(--ty-color-primary-strong);
-  --ty-wizard-active-color:  white;
-  --ty-wizard-active-glow:   color-mix(in srgb, var(--ty-wizard-active-accent) 10%, transparent);
-
-  /* Step circle — pending */
-  --ty-wizard-pending-bg:     var(--ty-surface-elevated);
-  --ty-wizard-pending-border: var(--ty-border);
-  --ty-wizard-pending-color:  var(--ty-text-soft);
-
-  /* Step circle — error */
-  --ty-wizard-error-bg:     var(--ty-wizard-error-accent);
-  --ty-wizard-error-border: var(--ty-color-danger-strong);
-  --ty-wizard-error-color:  white;
-  --ty-wizard-error-glow:   color-mix(in srgb, var(--ty-wizard-error-accent) 10%, transparent);
-
-  /* Labels */
-  --ty-wizard-label-color:          var(--ty-text);
-  --ty-wizard-label-active-color:   var(--ty-text-strong);
-  --ty-wizard-label-inactive-color: var(--ty-text-soft);
-  --ty-wizard-label-size:           var(--ty-font-sm, 14px);
-  --ty-wizard-label-weight:         var(--ty-font-semibold, 600);
-
-  /* Descriptions */
-  --ty-wizard-description-color:        var(--ty-text-soft);
-  --ty-wizard-description-active-color: var(--ty-text);
-  --ty-wizard-description-size:         var(--ty-font-xs, 12px);
 
   /* Panels viewport */
   --ty-wizard-panels-bg: var(--ty-surface-elevated);
@@ -222,30 +194,30 @@ export const wizardStyles = `
 }
 
 .step-circle[data-state="completed"] {
-  background: var(--ty-wizard-completed-bg);
-  border-color: var(--ty-wizard-completed-border);
-  color: var(--ty-wizard-completed-color);
-  box-shadow: 0 0 0 4px var(--ty-wizard-completed-glow);
+  background: var(--ty-wizard-completed-accent);
+  border-color: var(--ty-color-success-strong);
+  color: var(--ty-solid-success-fg, white);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-completed-accent) 12%, transparent);
 }
 
 .step-circle[data-state="active"] {
-  background: var(--ty-wizard-active-bg);
-  border-color: var(--ty-wizard-active-border);
-  color: var(--ty-wizard-active-color);
-  box-shadow: 0 0 0 4px var(--ty-wizard-active-glow);
+  background: var(--ty-wizard-active-accent);
+  border-color: var(--ty-color-primary-strong);
+  color: var(--ty-solid-primary-fg, white);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-active-accent) 12%, transparent);
 }
 
 .step-circle[data-state="pending"] {
-  background: var(--ty-wizard-pending-bg);
-  border-color: var(--ty-wizard-pending-border);
-  color: var(--ty-wizard-pending-color);
+  background: var(--ty-surface-elevated);
+  border-color: var(--ty-border);
+  color: var(--ty-color-neutral);
 }
 
 .step-circle[data-state="error"] {
-  background: var(--ty-wizard-error-bg);
-  border-color: var(--ty-wizard-error-border);
-  color: var(--ty-wizard-error-color);
-  box-shadow: 0 0 0 4px var(--ty-wizard-error-glow);
+  background: var(--ty-wizard-error-accent);
+  border-color: var(--ty-color-danger-strong);
+  color: var(--ty-solid-danger-fg, white);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-error-accent) 12%, transparent);
 }
 
 /* ===================================== */
@@ -264,18 +236,18 @@ export const wizardStyles = `
 /* ===================================== */
 
 .step-label {
-  font-size: var(--ty-wizard-label-size);
-  font-weight: var(--ty-wizard-label-weight);
-  color: var(--ty-wizard-label-color);
+  font-size: var(--ty-font-sm, 14px);
+  font-weight: var(--ty-font-semibold, 600);
+  color: var(--ty-color-neutral);
   transition: color 200ms;
 }
 
 .step-indicator[aria-selected="true"] .step-label {
-  color: var(--ty-wizard-label-active-color);
+  color: var(--ty-color-neutral-strong);
 }
 
 .step-indicator[aria-selected="false"] .step-label {
-  color: var(--ty-wizard-label-inactive-color);
+  color: var(--ty-color-neutral);
 }
 
 /* ===================================== */
@@ -283,16 +255,16 @@ export const wizardStyles = `
 /* ===================================== */
 
 .step-description {
-  font-size: var(--ty-wizard-description-size);
+  font-size: var(--ty-font-xs, 12px);
   font-weight: var(--ty-font-normal, 400);
-  color: var(--ty-wizard-description-color);
+  color: var(--ty-color-neutral);
   transition: color 200ms;
   text-align: center;
   max-width: 120px;
 }
 
 .step-indicator[aria-selected="true"] .step-description {
-  color: var(--ty-wizard-description-active-color);
+  color: var(--ty-color-neutral-bold);
 }
 
 /* ===================================== */

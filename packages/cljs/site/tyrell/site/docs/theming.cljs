@@ -1,6 +1,7 @@
 (ns tyrell.site.docs.theming
   "Interactive playground for the OKLCH brand layer (tyrell-brand.css)."
   (:require
+    [clojure.string :as str]
     [tyrell.site.state :as state]
     [tyrell.site.docs.common :refer [code-block doc-section docs-page
                                      component-header section-label demo-area]]))
@@ -12,13 +13,23 @@
 ;; slider remembers its position across re-renders.
 
 (def ^:private default-seeds
-  {;; SEEDS
-   :brand-hue 230
-   :brand-chroma 0.13
-   :secondary-offset 60        ;; degrees; secondary-hue = brand-hue + offset
+  {;; SEEDS — site defaults (also mirrored as :root overrides in
+   ;; packages/cljs/public/index.html so first paint matches before CLJS boots).
+   :brand-hue 47
+   :brand-chroma 0.135
+   :secondary-offset -25       ;; degrees; secondary-hue = brand-hue + offset
    :secondary-detached? false
-   :secondary-hue 290
-   :secondary-chroma 0.13
+   :secondary-hue 22
+   :secondary-chroma 0.135
+   ;; PER-FLAVOR HUES — semantic anchors. Defaults match the brand layer's
+   ;; CSS fallbacks. Chroma stays bound to the per-flavor multipliers in
+   ;; tyrell-brand.css (success ×1.08, warning ×1.15, danger ×1.31) so
+   ;; the emphasis hierarchy survives any hue change. Neutral isn't tweakable
+   ;; here — it's defined as var(--ty-brand-hue) in the brand layer, so it
+   ;; tracks brand automatically.
+   :success-hue 145
+   :warning-hue 75
+   :danger-hue  25
    ;; L-CURVE (light defaults — sliders write inline so they affect
    ;; whatever theme is active when they're touched).
    :l-strong 0.38
@@ -35,7 +46,8 @@
    ;; UI state
    :floating-open? true
    :show-ladder?   false
-   :show-curve?    false})
+   :show-curve?    false
+   :show-anchors?  true})
 
 (defn- get-seeds []
   (merge default-seeds (get-in @state/state [:brand-playground] {})))
@@ -50,6 +62,9 @@
     :secondary-offset "--ty-secondary-offset"
     :secondary-hue    "--ty-secondary-hue"
     :secondary-chroma "--ty-secondary-chroma"
+    :success-hue      "--ty-success-hue"
+    :warning-hue      "--ty-warning-hue"
+    :danger-hue       "--ty-danger-hue"
     :l-strong        "--ty-l-strong"
     :l-bold          "--ty-l-bold"
     :l-base          "--ty-l-base"
@@ -118,18 +133,27 @@
   (swap! state/state assoc :brand-playground default-seeds)
   (doseq [k [:brand-hue :brand-chroma :secondary-offset
              :secondary-hue :secondary-chroma
+             :success-hue :warning-hue :danger-hue
              :l-strong :l-bold :l-base :l-soft :l-faint
              :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult]]
     (clear-seed! k)))
 
-(defn- toggle-floating! [_]
-  (swap! state/state update-in [:brand-playground :floating-open?] not))
+;; `update-in ... not` is wrong here: on first load the state has no entry, so
+;; `(not nil) → true` matches the seeded default and the user must click twice
+;; to flip it. Read the *merged* value so the toggle always sees the rendered
+;; state.
+(defn- toggle-key! [k]
+  (swap! state/state assoc-in [:brand-playground k] (not (get (get-seeds) k))))
 
-(defn- toggle-ladder! [_]
-  (swap! state/state update-in [:brand-playground :show-ladder?] not))
+(defn- toggle-floating! [_] (toggle-key! :floating-open?))
+(defn- toggle-ladder!   [_] (toggle-key! :show-ladder?))
+(defn- toggle-curve!    [_] (toggle-key! :show-curve?))
+(defn- toggle-anchors!  [_] (toggle-key! :show-anchors?))
 
-(defn- toggle-curve! [_]
-  (swap! state/state update-in [:brand-playground :show-curve?] not))
+;; The inline seeds-panel on THIS page duplicates the floating widget — close
+;; the float on mount so the page lands clean. Users can still pop it back open.
+(defn- close-floating-on-mount! [_]
+  (swap! state/state assoc-in [:brand-playground :floating-open?] false))
 
 ;; ----------------------------------------------------------------------------
 ;; UI fragments
@@ -146,14 +170,34 @@
              :border "1px solid var(--ty-border-soft)"}}]
    [:span.ty-text-- {:style {:font-size "0.6875rem"}} label]])
 
-(defn- preset-chip [label hue chroma]
-  [:button.px-3.py-1.rounded-full.text-sm.transition-all
-   {:style {:background (str "oklch(0.52 " chroma " " hue ")")
-            :color "white"
-            :border "1px solid var(--ty-border-soft)"
-            :cursor "pointer"}
-    :on {:click #(preset! hue chroma)}}
-   label])
+(defn- build-theme-css
+  "Render the current seed state as a paste-ready :root block. Only emits
+   values that differ from the brand-layer defaults — users get the minimal
+   override snippet, not noise."
+  [seeds]
+  (let [{:keys [brand-hue brand-chroma
+                secondary-detached? secondary-hue secondary-offset
+                success-hue warning-hue danger-hue]} seeds
+        lines (cond-> []
+                :always
+                (conj (str "  --ty-brand-hue: " (int brand-hue) ";")
+                      (str "  --ty-brand-chroma: " (.toFixed brand-chroma 3) ";"))
+
+                secondary-detached?
+                (conj (str "  --ty-secondary-hue: " (int secondary-hue) ";"))
+
+                (and (not secondary-detached?) (not= (int secondary-offset) 60))
+                (conj (str "  --ty-secondary-offset: " (int secondary-offset) ";"))
+
+                (not= (int success-hue) 145)
+                (conj (str "  --ty-success-hue: " (int success-hue) ";"))
+
+                (not= (int warning-hue) 75)
+                (conj (str "  --ty-warning-hue: " (int warning-hue) ";"))
+
+                (not= (int danger-hue) 25)
+                (conj (str "  --ty-danger-hue: " (int danger-hue) ";")))]
+    (str ":root {\n" (str/join "\n" lines) "\n}")))
 
 (defn seeds-panel
   "Interactive brand-seeds widget. Exported so the CSS Guide page can embed it
@@ -161,22 +205,23 @@
    watch every swatch/ramp retint in place."
   []
   (let [{:keys [brand-hue brand-chroma
-                secondary-detached? secondary-hue secondary-chroma]} (get-seeds)]
-    [:div.ty-elevated.rounded-xl.p-6
-     [:div.mb-4
+                secondary-detached? secondary-hue
+                success-hue warning-hue danger-hue
+                show-anchors? show-ladder? show-curve?]} (get-seeds)]
+    [:div.ty-elevated.rounded-xl.p-5
+     [:div.mb-3
       [:h2.ty-text++ {:style {:font-size "1rem" :font-weight 600 :margin 0}}
        "Seeds"]
-      [:p.ty-text- {:style {:font-size "0.8125rem" :margin-top "0.25rem"}}
-       "Drag the sliders. Every component on this page retints in real time —
-        light AND dark mode. Toggle the theme button at the top to see dark mode."]]
+      [:p.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem" :line-height 1.5}}
+       "Drag the sliders — every component retints in light AND dark mode."]]
 
-     ;; Hue slider
-     [:div {:style {:margin-bottom "1rem"}}
-      [:div.flex.justify-between.items-center.mb-2
-       [:label.ty-text {:style {:font-size "0.8125rem" :font-weight 500}}
+     ;; Brand hue
+     [:div {:style {:margin-bottom "0.75rem"}}
+      [:div.flex.justify-between.items-center.mb-1
+       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
         [:code "--ty-brand-hue"]]
        [:code.ty-text+
-        {:style {:font-size "0.8125rem" :background "var(--ty-bg-neutral)"
+        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
                  :padding "0.125rem 0.5rem" :border-radius "4px"}}
         (str (int brand-hue) "°")]]
       [:input
@@ -195,13 +240,13 @@
                 :border-radius "4px" :height "8px"
                 :appearance "none" :outline "none"}}]]
 
-     ;; Chroma slider
-     [:div {:style {:margin-bottom "1.25rem"}}
-      [:div.flex.justify-between.items-center.mb-2
-       [:label.ty-text {:style {:font-size "0.8125rem" :font-weight 500}}
+     ;; Brand chroma
+     [:div {:style {:margin-bottom "0.75rem"}}
+      [:div.flex.justify-between.items-center.mb-1
+       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
         [:code "--ty-brand-chroma"]]
        [:code.ty-text+
-        {:style {:font-size "0.8125rem" :background "var(--ty-bg-neutral)"
+        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
                  :padding "0.125rem 0.5rem" :border-radius "4px"}}
         (.toFixed brand-chroma 3)]]
       [:input
@@ -215,45 +260,189 @@
                 :border-radius "4px" :height "8px"
                 :appearance "none" :outline "none"}}]]
 
-     ;; Presets
-     [:div {:style {:margin-bottom "1.25rem"}}
-      (section-label "Presets")
-      [:div.flex.flex-wrap.gap-2
-       (preset-chip "Tyrell blue" 230 0.13)
-       (preset-chip "Teal" 200 0.13)
-       (preset-chip "Indigo" 260 0.14)
-       (preset-chip "Emerald" 145 0.13)
-       (preset-chip "Orange" 30 0.16)
-       (preset-chip "Rose" 350 0.16)
-       (preset-chip "Violet" 290 0.14)]]
+     ;; Presets — inline chip row, no separate header
+     [:div.flex.flex-wrap.gap-1 {:style {:margin-bottom "0.75rem"}}
+      (for [[label hue chroma]
+            [["Tyrell" 230 0.13] ["Teal" 200 0.13] ["Indigo" 260 0.14]
+             ["Emerald" 145 0.13] ["Orange" 30 0.16] ["Rose" 350 0.16]
+             ["Violet" 290 0.14]]]
+        [:button
+         {:key (str "preset-" label)
+          :style {:background (str "oklch(0.52 " chroma " " hue ")")
+                  :color "white"
+                  :border "1px solid var(--ty-border-soft)"
+                  :border-radius "999px"
+                  :font-size "0.6875rem"
+                  :font-weight 500
+                  :padding "0.25rem 0.625rem"
+                  :cursor "pointer"}
+          :on {:click #(preset! hue chroma)}}
+         label])]
 
-     ;; Secondary detach toggle
-     [:div {:style {:padding "0.75rem"
+     ;; Compact detach-secondary toggle
+     [:label.flex.items-center.gap-2.cursor-pointer
+      {:style {:margin-bottom "0.5rem"}}
+      [:input {:type "checkbox" :checked secondary-detached?
+               :on {:change toggle-secondary-detached!}}]
+      [:span.ty-text- {:style {:font-size "0.75rem"}}
+       "Detach secondary (otherwise rotates with brand)"]]
+     (when secondary-detached?
+       [:div {:style {:margin-bottom "0.75rem"}}
+        [:div.flex.justify-between.items-center.mb-1
+         [:label.ty-text- {:style {:font-size "0.6875rem"}}
+          [:code "--ty-secondary-hue"]]
+         [:code.ty-text {:style {:font-size "0.6875rem"}}
+          (str (int secondary-hue) "°")]]
+        [:input
+         {:type "range" :min 0 :max 360 :step 1
+          :value secondary-hue
+          :on {:input set-secondary-hue!}
+          :style {:width "100%" :height "6px"}}]])
+
+     ;; Per-flavor hue anchors — collapsible. Power-user surface for
+     ;; retinting semantic colors (success/warning/danger/neutral). Chroma
+     ;; stays bound to brand-chroma multipliers in tyrell-brand.css so the
+     ;; emphasis hierarchy survives any hue change.
+     [:div {:style {:padding "0.5rem 0.75rem"
+                    :background "var(--ty-bg-neutral-soft)"
+                    :border-radius "8px"
+                    :margin-top "0.75rem"
+                    :margin-bottom "0.75rem"}}
+      [:button.w-full.flex.items-center.justify-between
+       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
+        :on {:click toggle-anchors!}}
+       [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
+                                :letter-spacing "0.08em" :text-transform "uppercase"}}
+        "Per-flavor hue anchors"]
+       [:span.ty-text- {:style {:font-size "0.75rem"}}
+        (if show-anchors? "−" "+")]]
+      (when show-anchors?
+        [:div {:style {:margin-top "0.625rem"}}
+         (for [[k label hue] [[:success-hue "success" success-hue]
+                              [:warning-hue "warning" warning-hue]
+                              [:danger-hue  "danger"  danger-hue]]]
+           [:div {:key (name k) :style {:margin-bottom "0.5rem"}}
+            [:div.flex.justify-between.items-center.mb-1
+             [:label.ty-text- {:style {:font-size "0.6875rem" :text-transform "capitalize"}}
+              label]
+             [:code.ty-text {:style {:font-size "0.6875rem"}}
+              (str (int hue) "°")]]
+            [:input
+             {:type "range" :min 0 :max 360 :step 1 :value hue
+              :on {:input (set-by-key! k)}
+              :style {:width "100%" :height "6px"
+                      :background (str "linear-gradient(to right,"
+                                       " oklch(0.6 0.15 0),"
+                                       " oklch(0.6 0.15 60),"
+                                       " oklch(0.6 0.15 120),"
+                                       " oklch(0.6 0.15 180),"
+                                       " oklch(0.6 0.15 240),"
+                                       " oklch(0.6 0.15 300),"
+                                       " oklch(0.6 0.15 360))")
+                      :border-radius "4px"
+                      :appearance "none" :outline "none"}}]])
+         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
+                                :margin "0.5rem 0 0"}}
+          "Chroma stays bound to the brand-chroma multipliers (success ×1.08, "
+          "warning ×1.15, danger ×1.31). Only the hue changes. Neutral tracks "
+          "brand automatically."]])]
+
+     ;; L-curve — 5 lightness stops. Collapsed by default; matches the
+     ;; floating-widget pattern.
+     [:div {:style {:padding "0.5rem 0.75rem"
                     :background "var(--ty-bg-neutral-soft)"
                     :border-radius "8px"
                     :margin-bottom "0.75rem"}}
-      [:label.flex.items-center.gap-2.cursor-pointer
-       [:input {:type "checkbox" :checked secondary-detached?
-                :on {:change toggle-secondary-detached!}}]
-       [:span.ty-text {:style {:font-size "0.8125rem"}}
-        "Detach secondary (default: rotates with brand at +60°)"]]
-      (when secondary-detached?
-        [:div {:style {:margin-top "0.75rem"}}
-         [:div.flex.justify-between.items-center.mb-1
-          [:label.ty-text- {:style {:font-size "0.75rem"}}
-           [:code "--ty-secondary-hue"]]
-          [:code.ty-text {:style {:font-size "0.75rem"}}
-           (str (int secondary-hue) "°")]]
-         [:input
-          {:type "range" :min 0 :max 360 :step 1
-           :value secondary-hue
-           :on {:input set-secondary-hue!}
-           :style {:width "100%"}}]])]
+      [:button.w-full.flex.items-start.justify-between.gap-2
+       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0
+                :text-align "left"}
+        :on {:click toggle-ladder!}}
+       [:div.flex-1
+        [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
+                                 :letter-spacing "0.08em" :text-transform "uppercase"
+                                 :display "block"}}
+         "L-curve"]
+        [:span.ty-text- {:style {:font-size "0.625rem" :line-height 1.4
+                                 :display "block" :margin-top "0.25rem"
+                                 :text-transform "none" :letter-spacing 0
+                                 :font-weight 400}}
+         "Dark↔light contrast for each emphasis step. Lower = punchier headings, higher = airier."]]
+       [:span.ty-text- {:style {:font-size "0.75rem" :flex-shrink 0}}
+        (if show-ladder? "−" "+")]]
+      (when show-ladder?
+        [:div {:style {:margin-top "0.625rem"}}
+         (for [[k label] [[:l-strong "strong (++)"]
+                          [:l-bold   "bold (+)"]
+                          [:l-base   "base"]
+                          [:l-soft   "soft (-)"]
+                          [:l-faint  "faint (--)"]]
+               :let [v (get (get-seeds) k)]]
+           [:div {:key (name k) :style {:margin-bottom "0.5rem"}}
+            [:div.flex.justify-between.items-center.mb-1
+             [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
+             [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
+            [:input
+             {:type "range" :min 0 :max 1 :step 0.01 :value v
+              :on {:input (set-by-key! k)}
+              :style {:width "100%" :height "6px"}}]])
+         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
+                                :margin "0.375rem 0 0"}}
+          "Lightness per shade. Light mode: lower L = more emphasis. Dark "
+          "mode inverts these values automatically."]])]
+
+     ;; Saturation curve — per-shade chroma multipliers.
+     [:div {:style {:padding "0.5rem 0.75rem"
+                    :background "var(--ty-bg-neutral-soft)"
+                    :border-radius "8px"
+                    :margin-bottom "0.75rem"}}
+      [:button.w-full.flex.items-start.justify-between.gap-2
+       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0
+                :text-align "left"}
+        :on {:click toggle-curve!}}
+       [:div.flex-1
+        [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
+                                 :letter-spacing "0.08em" :text-transform "uppercase"
+                                 :display "block"}}
+         "Saturation curve"]
+        [:span.ty-text- {:style {:font-size "0.625rem" :line-height 1.4
+                                 :display "block" :margin-top "0.25rem"
+                                 :text-transform "none" :letter-spacing 0
+                                 :font-weight 400}}
+         "Per-shade chroma multiplier. Higher = more vivid headings, lower = greyer."]]
+       [:span.ty-text- {:style {:font-size "0.75rem" :flex-shrink 0}}
+        (if show-curve? "−" "+")]]
+      (when show-curve?
+        [:div {:style {:margin-top "0.625rem"}}
+         (for [[k label] [[:c-strong-mult "× strong (++)"]
+                          [:c-bold-mult   "× bold (+)"]
+                          [:c-base-mult   "× base"]
+                          [:c-soft-mult   "× soft (-)"]
+                          [:c-faint-mult  "× faint (--)"]]
+               :let [v (get (get-seeds) k)]]
+           [:div {:key (name k) :style {:margin-bottom "0.5rem"}}
+            [:div.flex.justify-between.items-center.mb-1
+             [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
+             [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
+            [:input
+             {:type "range" :min 0 :max 1.5 :step 0.01 :value v
+              :on {:input (set-by-key! k)}
+              :style {:width "100%" :height "6px"}}]])
+         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
+                                :margin "0.375rem 0 0"}}
+          "Each shade's chroma = flavor-chroma × this multiplier. Drops near "
+          "the extremes so near-white and near-black can hold their tint."]])]
 
      [:button.px-3.py-2.rounded-md.text-sm.ty-text-.border.ty-border-soft
-      {:style {:cursor "pointer"}
+      {:style {:cursor "pointer" :width "100%"}
        :on {:click reset-all!}}
-      "Reset to defaults"]]))
+      "Reset to defaults"]
+
+     ;; Theme export — paste-ready :root override snippet.
+     [:div {:style {:margin-top "0.75rem"}}
+      [:ty-copy {:label "Theme snippet — paste into your :root"
+                 :value (build-theme-css (get-seeds))
+                 :format "code"
+                 :multiline true}]]]))
 
 (defn floating-seeds
   "Compact always-on widget pinned to the bottom-right corner. Collapses to a
@@ -572,19 +761,25 @@
 
     ;; Playground
     (doc-section "Playground"
-      [:div.grid.gap-6 {:style {:grid-template-columns "minmax(280px, 380px) 1fr"
+      [:div.grid.gap-6 {:replicant/on-mount close-floating-on-mount!
+                        :style {:grid-template-columns "minmax(280px, 360px) 1fr"
                                 :align-items "start"}}
        ;; LEFT: seeds
        (seeds-panel)
 
-       ;; RIGHT: live preview
+       ;; RIGHT: live preview — short cards share rows, wide previews go full-width.
        [:div.space-y-4
-        (preview-buttons)
-        (preview-tags)
+        ;; Row 1: short utility cards
+        [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
+         (preview-buttons)
+         (preview-tags)]
+        ;; Row 2: form/surface cards
+        [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
+         (preview-inputs)
+         (preview-surfaces)]
+        ;; Row 3 & 4: full-width — these need horizontal room
         (preview-text-ramps)
-        (preview-bg-tints)
-        (preview-inputs)
-        (preview-surfaces)]])
+        (preview-bg-tints)]])
 
     ;; Architecture
     (doc-section "How the layer is built"

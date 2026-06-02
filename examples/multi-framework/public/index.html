@@ -136,13 +136,33 @@
       </button>
     </div>
 
-    <div class="section-label ty-text-">Shared state — one r/atom, two frameworks</div>
+    <div class="ty-elevated" style="padding:1.25rem;border-radius:12px;margin-bottom:1.5rem">
+      <counter-chart></counter-chart>
+    </div>
+
+    <div class="section-label ty-text-">React hosting Replicant — Replicant as a child inside a React tree</div>
+    <div class="spawn-row">
+      <button class="spawn-btn mixed" onclick="spawnTag('reagent-hosts-replicant', 'Reagent → Replicant')">
+        <span class="icon">+</span> Reagent hosts Replicant
+      </button>
+      <button class="spawn-btn mixed" onclick="spawnTag('uix-hosts-replicant', 'UIx → Replicant')">
+        <span class="icon">+</span> UIx hosts Replicant
+      </button>
+      <button class="spawn-btn mixed" onclick="spawnTag('replicant-hosts-reagent', 'Replicant → Reagent')">
+        <span class="icon">+</span> Replicant hosts Reagent
+      </button>
+    </div>
+
+    <div class="section-label ty-text-">Shared state — one r/atom, three frameworks</div>
     <div class="spawn-row">
       <button class="spawn-btn mixed" onclick="spawnShared('reagent')">
         <span class="icon">+</span> Reagent view
       </button>
       <button class="spawn-btn mixed" onclick="spawnShared('uix')">
         <span class="icon">+</span> UIx view
+      </button>
+      <button class="spawn-btn mixed" onclick="spawnShared('replicant')">
+        <span class="icon">+</span> Replicant view
       </button>
     </div>
 
@@ -202,6 +222,21 @@
       grid.appendChild(card);
     }
 
+    function spawnTag(tag, label) {
+      var grid  = document.getElementById('grid');
+      var card  = document.createElement('div');
+      card.className = 'card ty-elevated';
+
+      var badge = document.createElement('span');
+      badge.className = 'badge mixed';
+      badge.textContent = label;
+
+      var el = document.createElement(tag);
+      card.appendChild(badge);
+      card.appendChild(el);
+      grid.appendChild(card);
+    }
+
     function spawnShared(framework) {
       var grid  = document.getElementById('grid');
       var card  = document.createElement('div');
@@ -209,10 +244,9 @@
 
       var badge = document.createElement('span');
       badge.className = 'badge mixed';
-      badge.textContent = 'shared / ' + framework;
+      badge.textContent = framework;
 
       var el = document.createElement('shared-' + framework);
-
       card.appendChild(badge);
       card.appendChild(el);
       grid.appendChild(card);

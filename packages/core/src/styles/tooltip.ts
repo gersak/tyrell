@@ -104,12 +104,6 @@ export const tooltipStyles: StyleContent = {
   color: #ffffff;
 }
 
-/* Info - Bold cyan/blue */
-#tooltip-container[data-flavor="info"] {
-  background: var(--ty-color-info, #06b6d4);
-  color: #ffffff;
-}
-
 /* Neutral - Medium gray (default alternative) */
 #tooltip-container[data-flavor="neutral"] {
   background: var(--ty-color-neutral, #6b7280);

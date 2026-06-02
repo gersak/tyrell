@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-    <title>Ty Components - Professional Web Components Showcase</title>
+    <title>Tyrell Components - Professional Web Components Showcase</title>
     <meta name="description"
-        content="Explore professional, framework-agnostic web components through real-world scenarios. Ty Components provides a semantic design system with comprehensive theming and accessibility.">
+        content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility.">
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
@@ -18,6 +18,19 @@
     <!-- Ty Complete CSS System (Variables + Utilities) -->
     <link rel="stylesheet" href="/css/tyrell.css">
     <link rel="preloadmodule" href="/css/tyrell.css">
+    <!-- Opt-in OKLCH brand layer. Demoed at /docs/theming. -->
+    <link rel="stylesheet" href="/css/tyrell-brand.css">
+
+    <!-- Site brand seeds: override the brand-layer defaults for this site only.
+         Mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
+         playground sliders + Reset button agree with first-paint values. -->
+    <style>
+        :root {
+            --ty-brand-hue: 47;
+            --ty-brand-chroma: 0.135;
+            --ty-secondary-offset: -25;
+        }
+    </style>
 
     <!-- Site-chrome styles (inline-code pills, etc.) are injected by
          tyrell.site.styles/install! at runtime — see site/tyrell/site/styles.cljs -->

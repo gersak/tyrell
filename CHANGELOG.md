@@ -5,6 +5,98 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-RC10] - 2026-06-02
+
+Headline: **OKLCH brand layer**. Drop `tyrell-brand.css` in next to `tyrell.css`, set 1–2 CSS variables, and the entire library rebrands coherently in light and dark mode. The 186 hexes in `tyrell.css` stay untouched — the new layer overrides them via the cascade. Companion site demo at `/docs/theming` lets you drag sliders and copy a ready-to-paste `:root` snippet.
+
+### Added — Brand layer (`packages/core/css/tyrell-brand.css`)
+
+A single opt-in CSS file. Load AFTER `tyrell.css`. Five-tier customisation surface:
+
+1. **Seeds** — `--ty-brand-hue`, `--ty-brand-chroma`. The two primary knobs. Drive primary, secondary, neutral, surfaces, inputs, solid-button fills, focus rings.
+2. **Per-flavor hue anchors** — `--ty-success-hue` (default 145°), `--ty-warning-hue` (75°), `--ty-danger-hue` (25°). Semantic colors stay green/orange/red across brand changes by default; override to retint.
+3. **L-curve** — five variables (`--ty-l-strong / -bold / -base / -soft / -faint`) plus three bg L-stops shape the emphasis ladder. `:root` is tuned for light mode; `html.dark` redefines with inverted values.
+4. **Saturation curve** — five per-shade chroma multipliers (`--ty-c-strong-mult / -bold-mult / -base-mult / -soft-mult / -faint-mult`) plus three bg multipliers reshape the per-shade saturation.
+5. **Secondary rotation** — `--ty-secondary-offset` (default 60°) — secondary rotates from brand by this angle. Set to 30 for a close sibling, 120 for triadic, 180 for complement. Or detach entirely via explicit `--ty-secondary-hue`.
+
+Every other flavor's chroma defaults to `calc(var(--ty-brand-chroma) * <ratio>)` (success ×1.08, warning ×1.15, danger ×1.31) so a single chroma slider scales every flavor's saturation proportionally while preserving the emphasis hierarchy. Pin any flavor with a literal `--ty-{flavor}-chroma: 0.14`.
+
+### Added — Modal `beforeclose` event
+
+- **Cancellable `beforeclose` event on `<ty-modal>`** — fires before the modal closes. Consumers can call `event.preventDefault()` to abort and render their own confirm UI for unsaved-state flows. Detail carries `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'`.
+- **`.hide({ force: true })`** on the modal's imperative API — bypasses the cancellable event. Use after your own confirm UI captures consent.
+- **`onBeforeClose` React prop** on `<TyModal>` — same target-guarded pattern as `onOpen`/`onClose`.
+
+### Added — Version banners
+
+- `tyrell-components` and `tyrell-react` each log their loaded version once on first import: `[tyrell-components] v1.0.0-RC10`. Programmatic access via `window.tyVersion` / `window.tyReactVersion` and the new `VERSION` named export from each package.
+
+### Changed (breaking) — `mild` → `bold` rename
+
+The second-strongest emphasis token's internal name changed: `--ty-color-{flavor}-mild` is now `--ty-color-{flavor}-bold`. The word "mild" fought its position in the emphasis ladder (it was *more* emphatic than base, not less). The new ladder reads cleanly: `strong > bold > base > soft > faint`. Same applies to `--ty-bg-*` and related tokens. **The public `+`/`-` class suffixes are unchanged** — only the internal token names changed, so most consumers see no breakage.
+
+### Removed (breaking) — `protected` attribute on `<ty-modal>`
+
+The native `confirm()` fallback was inflexible and ugly. New consumers should listen for the cancellable `beforeclose` event (above) and render their own confirm UI.
+
+```html
+<!-- before -->
+<ty-modal protected>…</ty-modal>
+
+<!-- after — for the same native-confirm behavior -->
+<ty-modal onbeforeclose="if (!confirm('Discard?')) event.preventDefault();">…</ty-modal>
+```
+
+### Removed (breaking) — `accent` flavor
+
+`--ty-color-accent-*`, `--ty-bg-accent-*`, `--ty-border-accent-*` tokens and `.ty-text-accent` / `.ty-bg-accent` / etc. utility classes are gone. Accent was visually identical to primary after the brand-layer rewrite; the duplicate namespace added noise. Migrate to `primary` (29 site files migrated as part of this change).
+
+### Fixed — Brand-coherence
+
+Every component now follows the brand layer for color. Hardcoded `rgba`/hex values that previously ignored brand changes are routed through `var(--ty-color-…)` or `color-mix(in oklab, var(--ty-color-…), transparent)`:
+
+- **Focus rings** on `<ty-input>` (6 sites) and `<ty-date-picker>` (5 sites) — previously hardcoded to the original Tyrell blue/violet/green/red/amber rgbas. Now `color-mix(var(--ty-color-{flavor}) 10%, transparent)` in light mode, 15% in dark.
+- **`--ty-input-shadow-focus`** — was hardcoded `rgba(59, 130, 246, 0.1)`. Now routes through `color-mix(var(--ty-color-primary), transparent)`.
+- **`<ty-tooltip>`** default flavor — was `#1f2937` literal. Now `var(--ty-color-neutral-strong)` so tooltips invert cleanly with theme.
+- **Custom scrollbar** thumb/track — was `rgba(0,0,0,…)`. Now `color-mix(var(--ty-color-neutral-bold), transparent)` at varying opacity per state.
+- **`<ty-scroll-container>` edge shadows** — same treatment.
+- **`<ty-date-picker>` surface shadow** — routes to `var(--ty-shadow-lg)`.
+- **Solid neutral button** was a washy mid-grey at L_base. Now routes to `--ty-color-neutral-strong` (light) / `--ty-color-neutral-faint` (dark) — a dark-grey "default action" button in both modes.
+
+### Fixed — Modal & popup event leaks
+
+- **Core modal `dialog.onclose` guarded** with `event.target === dialog`. Child popups (`<ty-dropdown>`, `<ty-multiselect>`, `<ty-date-picker>`) dispatch their own bubbling `close` events; without the guard, the modal's internal `<dialog>` element treated those as its own close signal and closed the parent modal whenever a child popup inside it closed.
+- **React wrapper event-bubble leak.** `TyModal` / `TyPopup` / `TyDatePicker` listeners for `open`/`close` fired on bubbled events from child popups (e.g., a `<TyDropdown>` inside a modal closing would trigger the modal's `onClose`, causing the modal to actually close). All three wrappers now guard with `event.target === element`. Companion fix to the core-layer guard above.
+
+### Fixed — Dark mode brand layer
+
+`tyrell-brand.css` `html.dark` block now explicitly re-declares the color/bg/border tokens it computes from the L-curve. Previously `tyrell.css`'s `html.dark` definitions out-ranked `:root` brand-layer definitions on selector specificity (0,1,1 vs 0,1,0), so the brand-hue slider did nothing in dark mode.
+
+### Fixed — Ghost token references
+
+- `tooltip.ts` referenced `--ty-color-info` (no `info` flavor exists in Tyrell) — the info-flavor variant was removed entirely.
+- `tag.ts` referenced `--ty-border-mildstrong` (a typo for a token that never existed) — replaced with `--ty-border`.
+
+### Internal — React wrappers
+
+All 24 React wrappers migrated to a shared `useBooleanProperty` helper that:
+
+1. Correctly coerces `"false"` string to boolean `false` (not truthy).
+2. Imperatively syncs the JS property in `useEffect` on React 18 where custom-element boolean attribute removal is unreliable when a prop flips from `true` to `false`. Affected props: `disabled`, `required`, `clearable`, `loading`, `readonly`, `open`, `multiline`, `spin`, `pulse`, and modal close-on-* flags.
+
+### Internal — Wizard CSS
+
+Per-component CSS variable count dropped from 43 to 20; hardcoded literals from 11 to 4 (the four remaining are pure geometry — header padding, progress height, circle size, border width). Removed per-state `-bg` / `-color` indirection; step circles read accent variables directly. Routed radius / shadow / transitions through global scale tokens (`--ty-radius-lg`, `--ty-shadow-md`, `--ty-transition-duration`). Replaced legacy `--ty-text-*` references with brand-coherent `--ty-color-neutral-*` so wizard labels retint with brand. `color-mix` switched from `in srgb` to `in oklab`.
+
+### Internal — Site polish
+
+- Surface-demo borders softened: outer `ty-canvas` no longer has a border (it's the page surface, not a card); inner `ty-content` uses `ty-border-soft` instead of `ty-border`. Hierarchy reads from surface tones, not heavy lines.
+- Site header and right-sidebar (TOC) borders moved from `ty-border-strong` / `ty-border` to `ty-border-soft`.
+- CSS Guide architecture section refreshed to reflect 180+ tokens, 6 flavors × 5 emphasis levels (was "7 colors × 5 variants"), and the brand-layer story.
+- New interactive Theming playground at `/docs/theming` — drag sliders, watch every component on the page retint live, copy a paste-ready `:root` snippet.
+
+---
+
 ## [1.0.0-RC9] - 2026-05-13
 
 ### Wizard CSS variable system

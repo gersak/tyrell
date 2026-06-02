@@ -365,10 +365,15 @@
   --ty-input-border: var(--ty-color-neutral-soft);
   --ty-input-border-hover: var(--ty-color-neutral-bold);
   --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-placeholder: var(--ty-color-neutral-bold);
+  --ty-input-placeholder: var(--ty-color-neutral-soft);
   --ty-input-disabled-bg: var(--ty-color-neutral-faint);
   --ty-input-disabled-border: var(--ty-color-neutral-faint);
   --ty-input-disabled-color: var(--ty-color-neutral-bold);
+  --ty-input-shadow-focus: color-mix(
+    in oklab,
+    var(--ty-color-primary) 5%,
+    transparent
+  );
 
   /* Solid buttons — re-route through --ty-color-*. */
   --ty-solid-primary: var(--ty-color-primary);
@@ -705,10 +710,15 @@ html[data-theme="dark"] {
   --ty-input-border: var(--ty-color-neutral-faint);
   --ty-input-border-hover: var(--ty-color-neutral-bold);
   --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-placeholder: var(--ty-color-neutral-bold);
+  --ty-input-placeholder: var(--ty-color-neutral-soft);
   --ty-input-disabled-bg: var(--ty-color-neutral-faint);
   --ty-input-disabled-border: var(--ty-color-neutral-faint);
   --ty-input-disabled-color: var(--ty-color-neutral-bold);
+  --ty-input-shadow-focus: color-mix(
+    in oklab,
+    var(--ty-color-primary) 20%,
+    transparent
+  );
 
   /* Solid buttons — same reason. */
   --ty-solid-primary: var(--ty-color-primary);

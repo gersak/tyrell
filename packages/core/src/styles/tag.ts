@@ -346,7 +346,7 @@ export const tagStyles = `
 :host([flavor="neutral-"]) {
   --tag-bg: var(--ty-bg-neutral-soft);
   --tag-color: var(--ty-text-soft);
-  --tag-border-color: var(--ty-border-mildstrong);
+  --tag-border-color: var(--ty-border);
 }
 :host([flavor="neutral"]) .tag-container[tabindex]:hover,
 :host([flavor="neutral+"]) .tag-container[tabindex]:hover,
