@@ -31,7 +31,7 @@ button {
   font-size: var(--ty-font-xs);
   line-height: var(--ty-leading-xs);
   letter-spacing: var(--ty-tracking-xs);
-  font-weight: var(--ty-font-medium);
+  font-weight: var(--ty-font-semibold);
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
