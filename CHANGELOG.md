@@ -77,12 +77,26 @@ Every component now follows the brand layer for color. Hardcoded `rgba`/hex valu
 - `tooltip.ts` referenced `--ty-color-info` (no `info` flavor exists in Tyrell) — the info-flavor variant was removed entirely.
 - `tag.ts` referenced `--ty-border-mildstrong` (a typo for a token that never existed) — replaced with `--ty-border`.
 
-### Internal — React wrappers
+### Fixed — React boolean props (controlled-state workflow)
 
-All 24 React wrappers migrated to a shared `useBooleanProperty` helper that:
+All 24 React wrappers migrated to a shared `useBooleanProperty` helper that fixes two long-standing bugs in how boolean props are bridged to the underlying custom element:
 
-1. Correctly coerces `"false"` string to boolean `false` (not truthy).
-2. Imperatively syncs the JS property in `useEffect` on React 18 where custom-element boolean attribute removal is unreliable when a prop flips from `true` to `false`. Affected props: `disabled`, `required`, `clearable`, `loading`, `readonly`, `open`, `multiline`, `spin`, `pulse`, and modal close-on-* flags.
+1. **`"false"` was treated as truthy.** Passing `disabled="false"` / `open="false"` (or any non-empty string) was coerced to `true`. The helper now correctly maps `"false"` and `"0"` to `false`.
+2. **`true → false` flips didn't propagate on React 18.** React 18 removes the attribute when a boolean prop flips to `false`, but custom-element JS-property state can lag behind. The helper imperatively syncs the JS property in `useEffect` so the element actually reflects the new value.
+
+Net effect: **controlled state via props now works correctly across the board.** The biggest practical consequence is the modal/popup workflow:
+
+```tsx
+// This pattern was unreliable before — modal could refuse to close.
+const [open, setOpen] = useState(false);
+<TyModal open={open} onClose={() => setOpen(false)}>…</TyModal>
+<button onClick={() => setOpen(true)}>Open</button>
+<button onClick={() => setOpen(false)}>Close</button>
+```
+
+Parent state owns `open`. Flip it `false` and the modal closes. Same applies to `<TyPopup open>`, `<TyDatePicker open>`, and every other wrapper with boolean props (`disabled`, `required`, `clearable`, `loading`, `readonly`, `multiline`, `spin`, `pulse`, and modal close-on-* flags).
+
+For modals that need a confirm-before-close gate, combine this with the new `onBeforeClose` prop and `.hide({force: true})` imperative escape hatch (see "Added — Modal beforeclose event" above).
 
 ### Internal — Wizard CSS
 
