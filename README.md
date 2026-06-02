@@ -52,13 +52,31 @@ Always loads the latest version:
 Pin to a specific version (recommended for production):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css">
-<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/dist/tyrell.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/css/tyrell.css">
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/dist/tyrell.js"></script>
 ```
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
 
-Then use components anywhere:
+### Opt-in OKLCH brand layer (new in RC10)
+
+Drop one more `<link>` and rebrand the whole library coherently in light AND dark mode with a single CSS variable:
+
+```html
+<!-- After tyrell.css. Opt-in — load only if you want to retint. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/css/tyrell-brand.css">
+
+<style>
+  :root {
+    --ty-brand-hue: 200;        /* teal */
+    --ty-brand-chroma: 0.13;
+  }
+</style>
+```
+
+Every component — buttons, inputs, dropdowns, calendars, focus rings, scrollbars — retints together. Drag the sliders at [`/docs/theming`](https://gersak.github.io/tyrell/docs/theming) to preview, then copy the `:root` snippet straight to your app.
+
+### Use components anywhere
 
 ```html
 <ty-button flavor="primary">Click me</ty-button>
@@ -117,7 +135,7 @@ Pick the entry point for your stack:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC6"}}}   ; icons come transitively
+{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC10"}}}  ; icons come transitively
 ```
 
 That single dep brings:
