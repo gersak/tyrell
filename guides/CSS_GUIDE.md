@@ -190,6 +190,37 @@ Load `tyrell-brand.css` after `tyrell.css`, then rebrand with one variable:
 
 That's it. Primary, secondary, neutral, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Defaults to Tyrell blue (`230°`).
 
+#### How it builds colors
+
+Every color in the library is one formula on five axes:
+
+```
+oklch(
+  L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
+  C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
+  H = flavor-hue                                  ← Tier 2
+)
+```
+
+Pick a flavor (primary / secondary / success / warning / danger / neutral) and a shade (strong / bold / base / soft / faint). The formula gives you that cell's color. Five axes:
+
+- **FLAVOR** — which semantic role. Each flavor carries its own hue, chroma, and l-factor seeds.
+- **SHADE** — 5 emphasis stops shared across flavors. Same shade across flavors = same perceptual weight.
+- **HUE** — what color family (0°–360°).
+- **CHROMA** — how saturated (0 grey → ~0.4 max vivid).
+- **L** — how dark or light. Light mode: low L = more emphasis. Dark mode flips the curve so high L = more emphasis.
+
+Worked example — `--ty-color-warning-bold` in light mode:
+
+```
+L = 0.46 × 1     = 0.46     ← l-bold × warning-l-factor (default)
+C = 0.26 × 1.00  = 0.26     ← warning-chroma × c-bold-mult
+H = 75°                     ← warning-hue
+→ oklch(0.46 0.26 75)       a punchy amber
+```
+
+Set `--ty-warning-l-factor: 0.85` and the new L becomes `0.46 × 0.85 = 0.39` — every warning shade shifts in step; primary / success / danger untouched.
+
 The customisation surface has **five tiers**, each independent. Set just the seeds for the 90% case; reach further when needed.
 
 ---
@@ -235,7 +266,7 @@ Each semantic flavor has a hue and a chroma you can pin independently:
 | secondary| `--ty-secondary-hue`    | `--ty-secondary-chroma`   | brand + 60° / brand chroma |
 | success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / brand × 1.08 |
 | danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `25°` / brand × 1.31 |
-| warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `75°` / brand × 1.15 |
+| warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `75°` / brand × 2 |
 | neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | brand-hue / brand × 0.04 |
 
 ---
@@ -282,16 +313,46 @@ Same idea for bg multipliers: `--ty-c-bg-base-mult`, `--ty-c-bg-bold-mult`, `--t
 
 ---
 
-#### Tier 5 — per-mode independence
+#### Tier 5 — per-flavor L-factor
 
-Any of the above can be overridden separately for dark mode:
+A single multiplier per flavor that scales every L-curve value *only for that flavor*. Default `1` = no change. Useful when one flavor's brand-default sits too close to brand-hue on the wheel and the buttons blend.
+
+```css
+:root {
+  --ty-brand-hue: 47;              /* gold brand */
+  --ty-warning-l-factor: 0.85;     /* nudge warning darker so it stands apart */
+}
+```
+
+The full set:
+
+```css
+--ty-primary-l-factor:   1;
+--ty-secondary-l-factor: 1;
+--ty-success-l-factor:   1;
+--ty-warning-l-factor:   1;
+--ty-danger-l-factor:    1;
+--ty-neutral-l-factor:   1;
+```
+
+Effect on the formula: `L = L-curve[shade] × flavor-l-factor`. Set warning's factor to `0.85` and every warning shade (strong/bold/base/soft/faint) shifts by ×0.85; primary/success/danger untouched.
+
+> **Note about dark mode.** The L-curve flips between modes (light: low L = emphatic; dark: high L = emphatic). A factor `< 1` darkens warning in light mode but **dims** it in dark mode. If you want symmetric "more emphatic" in both modes, set the factor in `:root` for light AND set its inverse (roughly `1 / factor`) in `html.dark`. See "Per-mode overrides" below.
+
+---
+
+#### Per-mode overrides
+
+Any tier can be overridden separately for dark mode by repeating the declaration inside `html.dark`:
 
 ```css
 :root {
   --ty-brand-hue: 200;             /* light mode teal */
+  --ty-warning-l-factor: 0.85;     /* darker warning in light mode */
 }
 html.dark, html[data-theme="dark"] {
   --ty-brand-hue: 210;             /* slightly cooler teal in dark mode */
+  --ty-warning-l-factor: 1.15;     /* brighter warning in dark mode */
   --ty-c-faint-mult: 0.60;         /* dark mode needs more chroma at faint */
 }
 ```

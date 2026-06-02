@@ -1,10 +1,10 @@
 (ns tyrell.site.docs.theming
   "Interactive playground for the OKLCH brand layer (tyrell-brand.css)."
   (:require
-    [clojure.string :as str]
-    [tyrell.site.state :as state]
-    [tyrell.site.docs.common :refer [code-block doc-section docs-page
-                                     component-header section-label demo-area]]))
+   [clojure.string :as str]
+   [tyrell.site.state :as state]
+   [tyrell.site.docs.common :refer [code-block doc-section docs-page
+                                    component-header section-label demo-area]]))
 
 ;; ----------------------------------------------------------------------------
 ;; State
@@ -723,8 +723,8 @@
     (for [flavor ["primary" "secondary" "success" "danger" "warning"]]
       [:div {:key flavor :style {:display "flex" :gap "0.375rem"}}
        (for [shade ["soft" "" "bold"]
-             :let [cls (str "ty-bg-" flavor (when (seq shade) (str "-" shade)))
-                   l   (if (= shade "bold") "+" (when (= shade "soft") "-"))]]
+             :let [l   (if (= shade "bold") "+" (when (= shade "soft") "-"))
+                   cls (str "ty-bg-" flavor (when (seq shade) l))]]
          [:div {:key (str flavor shade)
                 :class [cls]
                 :style {:flex 1 :padding "0.75rem" :border-radius "6px"
@@ -737,14 +737,14 @@
 
 (defn view []
   (docs-page
-    (component-header "Theming — OKLCH brand layer"
-                      "Opt-in CSS file. Load it after tyrell.css, set 2 seed variables, get a coherent brand across every component in light + dark mode. The 186 hexes in tyrell.css stay untouched — this layer overrides them via the cascade.")
+   (component-header "Theming — OKLCH brand layer"
+                     "Opt-in CSS file. Load it after tyrell.css, set 2 seed variables, get a coherent brand across every component in light + dark mode. The 186 hexes in tyrell.css stay untouched — this layer overrides them via the cascade.")
 
     ;; Quick-start
-    [:div.ty-elevated.rounded-xl.p-6
-     [:div.mb-3
-      (section-label "30-second start")]
-     (code-block "<!-- 1. Load after tyrell.css -->
+   [:div.ty-elevated.rounded-xl.p-6
+    [:div.mb-3
+     (section-label "30-second start")]
+    (code-block "<!-- 1. Load after tyrell.css -->
 <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
 <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-brand.css\">
 
@@ -755,130 +755,121 @@
     --ty-brand-chroma: 0.13;
   }
 </style>")
-     [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
-      "Or via npm: " [:code "import 'tyrell-components/css/tyrell-brand.css'"]
-      " after the main tyrell.css import."]]
+    [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
+     "Or via npm: " [:code "import 'tyrell-components/css/tyrell-brand.css'"]
+     " after the main tyrell.css import."]]
 
     ;; Playground
-    (doc-section "Playground"
-      [:div.grid.gap-6 {:replicant/on-mount close-floating-on-mount!
-                        :style {:grid-template-columns "minmax(280px, 360px) 1fr"
-                                :align-items "start"}}
-       ;; LEFT: seeds
-       (seeds-panel)
+   (doc-section "Playground"
+                [:div.grid.gap-6 {:replicant/on-mount close-floating-on-mount!
+                                  :style {:grid-template-columns "minmax(280px, 360px) 1fr"
+                                          :align-items "start"}}
+       ;; LEFT: seeds — sticky, natural height. If the panel exceeds the
+       ;; viewport the bottom controls fall below the fold (sticky pins the
+       ;; top edge). Keep the panel content tight enough to fit.
+                 [:div {:style {:position "sticky" :top "1rem"}}
+                  (seeds-panel)]
 
        ;; RIGHT: live preview — short cards share rows, wide previews go full-width.
-       [:div.space-y-4
+                 [:div.space-y-4
         ;; Row 1: short utility cards
-        [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
-         (preview-buttons)
-         (preview-tags)]
+                  [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
+                   (preview-buttons)
+                   (preview-tags)]
         ;; Row 2: form/surface cards
-        [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
-         (preview-inputs)
-         (preview-surfaces)]
+                  [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
+                   (preview-inputs)
+                   (preview-surfaces)]
         ;; Row 3 & 4: full-width — these need horizontal room
-        (preview-text-ramps)
-        (preview-bg-tints)]])
+                  (preview-text-ramps)
+                  (preview-bg-tints)]])
 
-    ;; Architecture
-    (doc-section "How the layer is built"
-      [:div.space-y-4
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Shared lightness stops")
-        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-         "All flavors derive their 5-shade text ramp from the same lightness stops: "
-         [:code "0.40 / 0.52 / 0.66 / 0.82 / 0.95"]
-         ". Chroma drops near the extremes (near-white and near-black can't hold saturation). Only hue and base chroma vary per flavor — that's what keeps "
-         [:code "success-bold"] " and " [:code "danger-bold"]
-         " at the same perceptual weight."]
-        [:div.flex.flex-wrap.gap-3
-         (swatch "L 0.40" 0.40 0.13 230)
-         (swatch "L 0.52" 0.52 0.13 230)
-         (swatch "L 0.66" 0.66 0.12 230)
-         (swatch "L 0.82" 0.82 0.08 230)
-         (swatch "L 0.95" 0.95 0.03 230)]]
+    ;; The formula — how every color is computed
+   (doc-section "The formula"
+                [:div.space-y-4
+                 [:div.ty-content.rounded-lg.p-5
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                   "Every color in the library is one formula on five axes. Pick a flavor "
+                   "(primary / secondary / success / warning / danger / neutral) and a shade "
+                   "(strong / bold / base / soft / faint). The formula gives you the cell."]
+                  (code-block "oklch(
+  L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
+  C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
+  H = flavor-hue                                  ← Tier 2
+)"
+                              "css")
+                  [:div.grid.gap-4.mt-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
+                   [:div
+                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
+                     "FLAVOR axis"]
+                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
+                     "Which semantic role. Each flavor carries its own hue, chroma, and L-factor seeds."]]
+                   [:div
+                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
+                     "SHADE axis"]
+                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
+                     "5 emphasis stops shared across flavors. Same shade across flavors = same perceptual weight."]]
+                   [:div
+                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
+                     "HUE / CHROMA / L"]
+                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
+                     "The OKLCH axes themselves. Light mode: low L = more emphasis. Dark mode flips it."]]]]
 
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Semantic anchors")
-        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-         "Success / danger / warning ship with fixed anchor hues ("
-         [:code "145°"] " / " [:code "25°"] " / " [:code "75°"]
-         ") so they keep their meaning when you change " [:code "--ty-brand-hue"]
-         ". Override " [:code "--ty-success-hue"]
-         " etc. if you want them to follow the brand instead."]]
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Worked example")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                   [:code "--ty-color-warning-bold"] " in light mode resolves to:"]
+                  (code-block "L = 0.46 × 1     = 0.46     ← l-bold × warning-l-factor
+C = 0.26 × 1.00  = 0.26     ← warning-chroma × c-bold-mult
+H = 75°                     ← warning-hue
+→ oklch(0.46 0.26 75)       a punchy amber for +1 emphasis text" "txt")
+                  [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                   "Want warning a notch darker without touching anything else? Set "
+                   [:code "--ty-warning-l-factor: 0.85"] " — the new L becomes 0.46 × 0.85 = 0.39. "
+                   "Every warning shade shifts in step; primary / success / danger are untouched."]
+                  [:div.flex.flex-wrap.gap-3.mt-4
+                   (swatch "L 0.46 (default)" 0.46 0.26 75)
+                   (swatch "L 0.39 (×0.85)" 0.39 0.26 75)]]
 
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Secondary rotates with brand")
-        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-         "By default " [:code "--ty-secondary-hue: calc(var(--ty-brand-hue) + 60)"]
-         " — secondary tracks brand as a sibling accent. Set it to a fixed number
-          to detach (useful when your brand book specifies a secondary)."]]
-
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Dark mode reads the same seeds")
-        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-         "The " [:code "html.dark"] " block uses inverted L-stops (text 0.80–0.28,
-          bg around 0.22) on the SAME hue/chroma seeds. Toggle the theme button
-          at the top — every component re-renders coherently in both modes from
-          the single brand pick."]]])
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Dark mode")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                   "The " [:code "html.dark"] " block redefines the L-curve and saturation curve only — "
+                   "the same flavor seeds and L-factors carry through. Toggle the theme button at the "
+                   "top: every component re-renders coherently in both modes from the same brand pick."]]])
 
     ;; Override recipes
-    (doc-section "Override recipes"
-      [:div.space-y-6
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Just rotate the brand (most common)")
-        (code-block ":root {
+   (doc-section "Override recipes"
+                [:div.space-y-6
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Just rotate the brand (most common)")
+                  (code-block ":root {
   --ty-brand-hue: 200;       /* teal */
   --ty-brand-chroma: 0.13;
 }" "css")]
 
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Detach secondary from brand")
-        (code-block ":root {
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Detach secondary from brand")
+                  (code-block ":root {
   --ty-brand-hue: 200;
   --ty-secondary-hue: 30;    /* warm orange instead of brand+60 */
   --ty-secondary-chroma: 0.16;
 }" "css")]
 
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Pin a single derived token")
-        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-         "The brand layer derives everything from seeds, but the cascade still
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Pin a single derived token")
+                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                   "The brand layer derives everything from seeds, but the cascade still
           resolves consumer overrides of individual derived tokens. Useful for a
           one-off adjustment without abandoning the formula."]
-        (code-block ":root {
+                  (code-block ":root {
   --ty-brand-hue: 200;
   --ty-color-primary-strong: #003344;  /* override just this one shade */
 }" "css")]
 
-       [:div.ty-content.rounded-lg.p-5
-        (section-label "Make success follow the brand")
-        (code-block ":root {
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Make success follow the brand")
+                  (code-block ":root {
   --ty-brand-hue: 200;
   --ty-success-hue: var(--ty-brand-hue);  /* success goes teal too */
-}" "css")]])
-
-    ;; All seeds reference
-    (doc-section "All seeds"
-      [:div.ty-content.rounded-lg.p-5
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-        "Each flavor exposes two seeds: a hue (0–360) and a chroma (0–0.3).
-         The brand layer wires sensible defaults so a single "
-        [:code "--ty-brand-hue"] " change cascades through related flavors."]
-       (code-block "/* Primary — THE brand. */
---ty-brand-hue:    230;
---ty-brand-chroma: 0.13;
-
-/* Secondary — rotates with brand by default. */
---ty-secondary-hue:    calc(var(--ty-brand-hue) + 60);
---ty-secondary-chroma: var(--ty-brand-chroma);
-
-/* Semantic anchors — fixed by default. */
---ty-success-hue: 145;  --ty-success-chroma: 0.14;
---ty-danger-hue:   25;  --ty-danger-chroma:  0.17;
---ty-warning-hue:  75;  --ty-warning-chroma: 0.15;
-
-/* Neutral — tracks brand at very low chroma. */
---ty-neutral-hue:    var(--ty-brand-hue);
---ty-neutral-chroma: 0.005;" "css")])))
+}" "css")]])))

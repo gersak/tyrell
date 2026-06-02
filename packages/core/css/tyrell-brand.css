@@ -12,79 +12,122 @@
  *     --ty-brand-chroma: 0.13;
  *   }
  *
- * Primary, secondary, neutral, surfaces, inputs, solid buttons all retint.
- * Success / danger / warning stay semantic (green / red / amber) — override
- * their *-hue/*-chroma seeds if you want them to follow the brand too.
+ * =====================================================================
+ * THE FORMULA
+ * =====================================================================
  *
- * Three layers of knobs you can override at :root (or html.dark for
- * per-mode tuning):
+ * Every color in the library is one formula on five axes:
  *
- *   1. SEEDS — per-flavor hue + chroma.
- *      --ty-brand-hue, --ty-brand-chroma
- *      --ty-secondary-hue, --ty-secondary-chroma     (default: brand + 60°)
- *      --ty-success-hue, --ty-success-chroma         (default: 145°)
- *      --ty-danger-hue,  --ty-danger-chroma          (default:  25°)
- *      --ty-warning-hue, --ty-warning-chroma         (default:  75°)
- *      --ty-neutral-hue, --ty-neutral-chroma         (default: brand-hue, 0.005)
+ *     oklch(
+ *       L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
+ *       C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
+ *       H = flavor-hue                                  ← Tier 2
+ *     )
  *
- *   2. L-CURVE — lightness stops shared by every flavor.
- *      --ty-l-strong, --ty-l-bold, --ty-l-base, --ty-l-soft, --ty-l-faint
- *      --ty-l-bg-base, --ty-l-bg-bold, --ty-l-bg-soft
- *      Defaults in `:root` are tuned for light mode (lower L = more
- *      emphasis). The `html.dark` block redefines them with inverted
- *      values. Override either block to compress / expand the ladder.
+ * Pick a flavor (primary / secondary / success / warning / danger /
+ * neutral). Pick a shade (strong / bold / base / soft / faint). That's
+ * the cell; the formula gives you its color.
  *
- *   3. SATURATION CURVE — chroma multipliers per shade.
- *      --ty-c-strong-mult, --ty-c-bold-mult, --ty-c-base-mult,
- *      --ty-c-soft-mult, --ty-c-faint-mult
- *      --ty-c-bg-base-mult, --ty-c-bg-bold-mult, --ty-c-bg-soft-mult
- *      Multiplied against the flavor chroma seed. Bump --ty-c-bold-mult
- *      to 1.2 to make `+`-emphasis text more saturated; drop
- *      --ty-c-faint-mult to 0.2 for whisper-quiet placeholders.
+ *     FLAVOR axis  — which semantic role (carries its own hue, chroma,
+ *                    l-factor seeds)
+ *     SHADE axis   — 5 emphasis stops shared across flavors
+ *                    (strong / bold / base / soft / faint)
+ *     HUE axis     — what color family (0°–360°)
+ *     CHROMA axis  — how saturated (0 = grey, ~0.4 = max vivid)
+ *     L axis       — how dark or light (0 = black, 1 = white)
+ *                    Light mode: low L = more emphasis.
+ *                    Dark  mode: high L = more emphasis (curve flips).
+ *
+ * Worked example — `--ty-color-warning-bold` in LIGHT mode:
+ *
+ *     L = 0.46 × 1     = 0.46     ← l-bold × warning-l-factor
+ *     C = 0.26 × 1.00  = 0.26     ← warning-chroma × c-bold-mult
+ *     H = 75°                     ← warning-hue
+ *     → oklch(0.46 0.26 75)       (a punchy amber for +1 emphasis text)
+ *
+ * Want warning a notch darker without touching anything else? Set
+ * `--ty-warning-l-factor: 0.85` and the new L becomes 0.46 × 0.85 =
+ * 0.39. Every warning shade shifts in step; primary / success / danger
+ * are untouched.
+ *
+ * =====================================================================
+ * FILE LAYOUT
+ * =====================================================================
+ *
+ *   SECTION 1 — KNOBS  (~lines 80–225)
+ *     The variables you might want to override. Five tiers from drop-in
+ *     rebrand (Tier 1) to surgical per-flavor tweak (Tier 5).
+ *
+ *   SECTION 2 — IMPLEMENTATION
+ *     The oklch() expressions that wire the knobs through to the actual
+ *     color tokens. Rarely needs editing — Section 1 is the contract.
  *
  * Browser support: OKLCH is in every evergreen browser since mid-2023.
  *
  * ===================================================================== */
 
+/* =====================================================================
+ * SECTION 1 — KNOBS
+ * =====================================================================
+ *
+ * Five tiers, ordered by how often you'd touch them. Override any of
+ * these in your own `:root` (or `html.dark` for per-mode tuning) —
+ * your declaration wins by source order.
+ *
+ *   Tier 1 — SEEDS                 brand-hue + chroma. Rebrand in 2 lines.
+ *   Tier 2 — PER-FLAVOR ANCHORS    each flavor's hue + chroma.
+ *   Tier 3 — L-CURVE               5 lightness stops for the emphasis ramp.
+ *   Tier 4 — SATURATION CURVE      per-shade chroma multipliers.
+ *   Tier 5 — PER-FLAVOR L-FACTOR   per-flavor lightness multiplier — push
+ *                                  one flavor up or down without touching
+ *                                  the others. Default 1.
+ * ===================================================================== */
+
 :root {
   /* ----------------------------------------------------------------
-   * SEEDS
+   * Tier 1 — SEEDS
+   * Brand-hue + chroma drive primary, neutral, surfaces, inputs,
+   * solid buttons. One slider rebrands the page.
    * --------------------------------------------------------------*/
 
   --ty-brand-hue: 230;
   --ty-brand-chroma: 0.13;
 
-  /* Every flavor's chroma tracks --ty-brand-chroma by default, at a
-   * proportion that preserves the relative saturation hierarchy (danger
-   * punchier than primary, neutral near-grey). Drag --ty-brand-chroma to
-   * 0 → everything goes greyscale; push to 0.30 → everything goes vibrant.
-   *
-   * Pin any flavor independently by setting --ty-{flavor}-chroma to a
-   * literal number (e.g. --ty-success-chroma: 0.14;). The multiplier
-   * relationship breaks for that one flavor only. */
-
-  /* Secondary rotates from brand by an exposed offset. Defaults to +60°
+  /* Secondary rotates from brand by an exposed offset. Default +60°
    * (sibling accent). Try 30° for a close sibling, 120° for triadic,
-   * 180° for complement. Set --ty-secondary-hue to a literal number to
-   * detach completely. */
+   * 180° for complement. Set --ty-secondary-hue to a literal number
+   * to detach completely. */
   --ty-secondary-offset: 60;
+
+  /* ----------------------------------------------------------------
+   * Tier 2 — PER-FLAVOR ANCHORS
+   * Semantic colors (success/warning/danger/neutral) have their own
+   * hue + chroma seeds so they keep meaning across brand changes.
+   * Override any individually:
+   *   --ty-success-hue: 160;     (more teal)
+   *   --ty-warning-chroma: 0.2;  (more vivid)
+   * --------------------------------------------------------------*/
+
   --ty-secondary-hue: calc(var(--ty-brand-hue) + var(--ty-secondary-offset));
   --ty-secondary-chroma: var(--ty-brand-chroma);
 
   --ty-success-hue: 145;
   --ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08);
 
+  --ty-warning-hue: 75;
+  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 2);
+
   --ty-danger-hue: 25;
   --ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.31);
-
-  --ty-warning-hue: 75;
-  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 1.15);
 
   --ty-neutral-hue: var(--ty-brand-hue);
   --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04);
 
   /* ----------------------------------------------------------------
-   * L-CURVE — light mode. Lower L = more emphasis.
+   * Tier 3 — L-CURVE (light mode)
+   * 5 lightness stops per flavor for the emphasis ramp.
+   * Lower L = darker = more emphasis in light mode.
+   * Plus 3 bg L stops for the soft-tint backgrounds.
    * --------------------------------------------------------------*/
 
   --ty-l-strong: 0.38; /* ++ max emphasis */
@@ -98,8 +141,10 @@
   --ty-l-bg-soft: 0.98;
 
   /* ----------------------------------------------------------------
-   * SATURATION CURVE — per-shade chroma multipliers.
-   * Each shade's chroma = flavor-chroma × multiplier.
+   * Tier 4 — SATURATION CURVE
+   * Per-shade chroma multipliers. Each shade's chroma =
+   * flavor-chroma × multiplier. Drops near the extremes so
+   * near-white and near-black can hold their tint.
    * --------------------------------------------------------------*/
 
   --ty-c-strong-mult: 0.77;
@@ -112,80 +157,164 @@
   --ty-c-bg-bold-mult: 0.38;
   --ty-c-bg-soft-mult: 0.08;
 
-  /* ================================================================
-   * LIGHT MODE — derived tokens. The math is the same for every
-   * flavor; only the seed (hue + chroma) differs.
-   * ================================================================ */
+  /* ----------------------------------------------------------------
+   * Tier 5 — PER-FLAVOR L-FACTOR
+   * Multiplies the L-curve values for that flavor only. Default 1 =
+   * no change. Useful when one flavor's brand-default sits too close
+   * to brand-hue on the wheel and the buttons blend.
+   *
+   * Example: brand-hue: 47° (gold). Warning sits at 75° (amber).
+   * Both render as similar warm browns at brand-chroma. Drop warning
+   * a notch and it darkens enough to stand apart:
+   *   --ty-warning-l-factor: 0.85;
+   *
+   * NOTE: the L-curve flips between light and dark mode, so a factor
+   * < 1 darkens in light mode but DIMS in dark mode. If you want
+   * symmetric "more emphatic" in both modes, set the factor here for
+   * light AND set its inverse (1 / factor, roughly) in `html.dark`.
+   * --------------------------------------------------------------*/
+
+  --ty-primary-l-factor: 1;
+  --ty-secondary-l-factor: 1;
+  --ty-success-l-factor: 1;
+  --ty-warning-l-factor: 1.15;
+  --ty-danger-l-factor: 1;
+  --ty-neutral-l-factor: 1;
+}
+
+/* Dark mode overrides for the L-curve and saturation curve. Tier 1 + 2
+ * seeds and Tier 5 L-factors carry through unchanged from :root. */
+html.dark,
+html[data-theme="dark"] {
+  /* Tier 3 dark — inverted curve. Higher L = lighter text = more
+   * emphasis on a dark background. */
+  --ty-l-strong: 0.86;
+  --ty-l-bold: 0.74;
+  --ty-l-base: 0.62;
+  --ty-l-soft: 0.46;
+  --ty-l-faint: 0.3;
+
+  --ty-l-bg-base: 0.22;
+  --ty-l-bg-bold: 0.26;
+  --ty-l-bg-soft: 0.19;
+
+  /* Tier 4 dark — dim shades hold more chroma so they don't grey out;
+   * strong shades trim chroma so bright tones don't over-pop. */
+  --ty-c-strong-mult: 0.77;
+  --ty-c-bold-mult: 1;
+  --ty-c-base-mult: 0.92;
+  --ty-c-soft-mult: 0.77;
+  --ty-c-faint-mult: 0.5;
+
+  --ty-c-bg-base-mult: 0.38;
+  --ty-c-bg-bold-mult: 0.54;
+  --ty-c-bg-soft-mult: 0.23;
+}
+
+/* =====================================================================
+ * SECTION 2 — IMPLEMENTATION
+ * =====================================================================
+ *
+ * The oklch() expressions that turn Section 1's knobs into the actual
+ * --ty-color-*, --ty-bg-*, --ty-border-*, --ty-surface-*, --ty-input-*,
+ * and --ty-solid-* tokens that components read.
+ *
+ * Pattern for each flavor's 5-shade fg ramp + 3-shade bg ramp:
+ *
+ *   --ty-color-{flavor}-{shade}: oklch(
+ *     calc(var(--ty-l-{shade}) * var(--ty-{flavor}-l-factor))    ← L
+ *       calc(var(--ty-{flavor}-chroma) * var(--ty-c-{shade}-mult))   ← C
+ *       var(--ty-{flavor}-hue)                                       ← H
+ *   );
+ *
+ * Computed tokens are declared in BOTH `:root` and `html.dark` blocks
+ * because tyrell.css ships hardcoded dark-mode hexes at html.dark
+ * specificity (0,1,1); our brand-layer `:root` (0,1,0) would lose
+ * source-order otherwise. Same math both blocks — just different L/C
+ * inputs from Tier 3/4.
+ * ===================================================================== */
+
+:root {
+  /* ----------------------------------------------------------------
+   * Flavor color ramps (fg + bg + border)
+   * --------------------------------------------------------------*/
 
   /* Primary */
   --ty-color-primary-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-brand-chroma) * var(--ty-c-strong-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-strong) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-strong-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-brand-chroma) * var(--ty-c-bold-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-bold) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bold-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary: oklch(
-    var(--ty-l-base) calc(var(--ty-brand-chroma) * var(--ty-c-base-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-base) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-base-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-brand-chroma) * var(--ty-c-soft-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-soft) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-soft-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-brand-chroma) * var(--ty-c-faint-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-faint) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-faint-mult)) var(--ty-brand-hue)
   );
   --ty-bg-primary: oklch(
-    var(--ty-l-bg-base) calc(var(--ty-brand-chroma) * var(--ty-c-bg-base-mult))
+    calc(var(--ty-l-bg-base) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-brand-hue)
   );
   --ty-bg-primary-bold: oklch(
-    var(--ty-l-bg-bold) calc(var(--ty-brand-chroma) * var(--ty-c-bg-bold-mult))
+    calc(var(--ty-l-bg-bold) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-brand-hue)
   );
   --ty-bg-primary-soft: oklch(
-    var(--ty-l-bg-soft) calc(var(--ty-brand-chroma) * var(--ty-c-bg-soft-mult))
+    calc(var(--ty-l-bg-soft) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-brand-hue)
   );
   --ty-border-primary: var(--ty-color-primary-soft);
 
   /* Secondary */
   --ty-color-secondary-strong: oklch(
-    var(--ty-l-strong)
+    calc(var(--ty-l-strong) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-strong-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-secondary-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-bold-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary: oklch(
-    var(--ty-l-base) calc(var(--ty-secondary-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-base-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-secondary-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-soft-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-secondary-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-faint-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-secondary-hue)
   );
@@ -193,37 +322,42 @@
 
   /* Success */
   --ty-color-success-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-success-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-strong-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-success-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-bold-mult))
       var(--ty-success-hue)
   );
   --ty-color-success: oklch(
-    var(--ty-l-base) calc(var(--ty-success-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-base-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-success-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-soft-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-success-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-faint-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-success-hue)
   );
@@ -231,72 +365,82 @@
 
   /* Danger */
   --ty-color-danger-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-danger-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-strong-mult))
       var(--ty-danger-hue)
   );
   --ty-color-danger-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-danger-chroma) * var(--ty-c-bold-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-bold) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bold-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger: oklch(
-    var(--ty-l-base) calc(var(--ty-danger-chroma) * var(--ty-c-base-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-base) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-base-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-danger-chroma) * var(--ty-c-soft-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-soft) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-soft-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-danger-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-faint-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger: oklch(
-    var(--ty-l-bg-base) calc(var(--ty-danger-chroma) * var(--ty-c-bg-base-mult))
+    calc(var(--ty-l-bg-base) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger-bold: oklch(
-    var(--ty-l-bg-bold) calc(var(--ty-danger-chroma) * var(--ty-c-bg-bold-mult))
+    calc(var(--ty-l-bg-bold) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger-soft: oklch(
-    var(--ty-l-bg-soft) calc(var(--ty-danger-chroma) * var(--ty-c-bg-soft-mult))
+    calc(var(--ty-l-bg-soft) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-danger-hue)
   );
   --ty-border-danger: var(--ty-color-danger-soft);
 
   /* Warning */
   --ty-color-warning-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-warning-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-strong-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-warning-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-bold-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning: oklch(
-    var(--ty-l-base) calc(var(--ty-warning-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-base-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-warning-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-soft-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-warning-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-faint-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-warning-hue)
   );
@@ -304,37 +448,42 @@
 
   /* Neutral — same L curve, near-zero chroma so the grey scale stays grey. */
   --ty-color-neutral-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-neutral-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-bold-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral: oklch(
-    var(--ty-l-base) calc(var(--ty-neutral-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-base-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-neutral-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-soft-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-neutral-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-faint-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-neutral-hue)
   );
@@ -345,21 +494,27 @@
     0.99 calc(var(--ty-neutral-chroma) * 0.4) var(--ty-neutral-hue)
   );
 
-  /* Global neutral borders — read off the neutral color ramp. */
+  /* ----------------------------------------------------------------
+   * Global neutral borders — read off the neutral color ramp.
+   * --------------------------------------------------------------*/
   --ty-border-strong: var(--ty-color-neutral-bold);
   --ty-border: var(--ty-color-neutral-soft);
   --ty-border-bold: var(--ty-color-neutral-soft);
   --ty-border-soft: var(--ty-color-neutral-faint);
   --ty-border-faint: var(--ty-color-neutral-faint);
 
-  /* Surfaces — canvas tinted slightly toward brand for warmth. */
+  /* ----------------------------------------------------------------
+   * Surfaces — canvas tinted slightly toward brand for warmth.
+   * --------------------------------------------------------------*/
   --ty-surface-canvas: oklch(0.985 0.005 var(--ty-brand-hue));
   --ty-surface-content: oklch(1 0 0);
   --ty-surface-elevated: oklch(1 0 0);
   --ty-surface-floating: oklch(1 0 0);
   --ty-surface-input: oklch(1 0 0);
 
-  /* Inputs — tied to neutral ramp so form controls retint with brand. */
+  /* ----------------------------------------------------------------
+   * Inputs — tied to neutral ramp so form controls retint with brand.
+   * --------------------------------------------------------------*/
   --ty-input-bg: var(--ty-surface-input);
   --ty-input-color: var(--ty-color-neutral-strong);
   --ty-input-border: var(--ty-color-neutral-soft);
@@ -375,7 +530,9 @@
     transparent
   );
 
-  /* Solid buttons — re-route through --ty-color-*. */
+  /* ----------------------------------------------------------------
+   * Solid buttons — re-route through --ty-color-*.
+   * --------------------------------------------------------------*/
   --ty-solid-primary: var(--ty-color-primary);
   --ty-solid-primary-strong: var(--ty-color-primary-bold);
   --ty-solid-primary-soft: var(--ty-color-primary-soft);
@@ -401,14 +558,8 @@
   --ty-solid-warning-soft: var(--ty-color-warning-soft);
   --ty-solid-warning-fg: white;
 
-  /* Solid neutral routes to neutral-strong rather than neutral-base.
-   * Neutral-base (L_base) reads as a washy mid-grey on white surfaces;
-   * neutral-strong gives the dark-grey "default action" weight that
-   * design systems typically use for neutral buttons. The "strong"
-   * solid variant clamps higher emphasis (same shade, kept for the
-   * solid-* API shape); "soft" softens to neutral-bold for inactive
-   * states. */
-
+  /* Solid neutral routes to a darker shade than neutral-base. The "soft"
+   * solid-neutral softens to a mid-grey for inactive states. */
   --ty-solid-neutral-soft: oklch(
     0.6 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
@@ -417,7 +568,6 @@
     0.4 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
   );
-
   --ty-solid-neutral-strong: oklch(
     0.2 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
@@ -425,110 +575,90 @@
 }
 
 /* =====================================================================
- * DARK MODE — L-curve and saturation-curve overridden. Same flavor
- * seeds drive both modes; only the L and chroma multipliers change.
+ * SECTION 2 DARK — same computations re-declared so html.dark (0,1,1)
+ * matches tyrell.css's hardcoded dark-mode hexes at source-order
+ * specificity. The math is identical to the :root block above; only
+ * the L/C inputs differ (from html.dark's Tier 3/4 overrides).
  * ===================================================================== */
 
 html.dark,
 html[data-theme="dark"] {
-  --ty-l-strong: 0.86; /* ++ max emphasis in dark = brightest */
-  --ty-l-bold: 0.74;
-  --ty-l-base: 0.62;
-  --ty-l-soft: 0.46;
-  --ty-l-faint: 0.3; /* -- min emphasis = darkest */
-
-  --ty-l-bg-base: 0.22;
-  --ty-l-bg-bold: 0.26;
-  --ty-l-bg-soft: 0.19;
-
-  /* Saturation curve — dark pushes faint chroma up so dim shades don't
-   * collapse into grey, and trims strong so bright tones don't over-pop. */
-  --ty-c-strong-mult: 0.77;
-  --ty-c-bold-mult: 1;
-  --ty-c-base-mult: 0.92;
-  --ty-c-soft-mult: 0.77;
-  --ty-c-faint-mult: 0.5;
-
-  --ty-c-bg-base-mult: 0.38;
-  --ty-c-bg-bold-mult: 0.54;
-  --ty-c-bg-soft-mult: 0.23;
-
-  /* Color tokens re-declared here so we match tyrell.css's `html.dark` block
-   * at the same selector specificity (0,1,1). Without these, tyrell.css's
-   * hardcoded dark-mode hexes out-rank the brand-layer ':root' definitions
-   * and the brand-hue slider does nothing in dark mode. The math is the
-   * same as the light block — just uses the dark L-curve / chroma curve
-   * defined above. */
-
   /* Primary */
   --ty-color-primary-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-brand-chroma) * var(--ty-c-strong-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-strong) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-strong-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-brand-chroma) * var(--ty-c-bold-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-bold) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bold-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary: oklch(
-    var(--ty-l-base) calc(var(--ty-brand-chroma) * var(--ty-c-base-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-base) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-base-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-brand-chroma) * var(--ty-c-soft-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-soft) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-soft-mult)) var(--ty-brand-hue)
   );
   --ty-color-primary-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-brand-chroma) * var(--ty-c-faint-mult))
-      var(--ty-brand-hue)
+    calc(var(--ty-l-faint) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-faint-mult)) var(--ty-brand-hue)
   );
   --ty-bg-primary: oklch(
-    var(--ty-l-bg-base) calc(var(--ty-brand-chroma) * var(--ty-c-bg-base-mult))
+    calc(var(--ty-l-bg-base) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-brand-hue)
   );
   --ty-bg-primary-bold: oklch(
-    var(--ty-l-bg-bold) calc(var(--ty-brand-chroma) * var(--ty-c-bg-bold-mult))
+    calc(var(--ty-l-bg-bold) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-brand-hue)
   );
   --ty-bg-primary-soft: oklch(
-    var(--ty-l-bg-soft) calc(var(--ty-brand-chroma) * var(--ty-c-bg-soft-mult))
+    calc(var(--ty-l-bg-soft) * var(--ty-primary-l-factor))
+      calc(var(--ty-brand-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-brand-hue)
   );
   --ty-border-primary: var(--ty-color-primary-soft);
 
   /* Secondary */
   --ty-color-secondary-strong: oklch(
-    var(--ty-l-strong)
+    calc(var(--ty-l-strong) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-strong-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-secondary-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-bold-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary: oklch(
-    var(--ty-l-base) calc(var(--ty-secondary-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-base-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-secondary-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-soft-mult))
       var(--ty-secondary-hue)
   );
   --ty-color-secondary-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-secondary-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-secondary-l-factor))
+      calc(var(--ty-secondary-chroma) * var(--ty-c-faint-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-secondary-hue)
   );
   --ty-bg-secondary-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-secondary-l-factor))
       calc(var(--ty-secondary-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-secondary-hue)
   );
@@ -536,37 +666,42 @@ html[data-theme="dark"] {
 
   /* Success */
   --ty-color-success-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-success-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-strong-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-success-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-bold-mult))
       var(--ty-success-hue)
   );
   --ty-color-success: oklch(
-    var(--ty-l-base) calc(var(--ty-success-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-base-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-success-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-soft-mult))
       var(--ty-success-hue)
   );
   --ty-color-success-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-success-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-success-l-factor))
+      calc(var(--ty-success-chroma) * var(--ty-c-faint-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-success-hue)
   );
   --ty-bg-success-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-success-l-factor))
       calc(var(--ty-success-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-success-hue)
   );
@@ -574,72 +709,82 @@ html[data-theme="dark"] {
 
   /* Danger */
   --ty-color-danger-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-danger-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-strong-mult))
       var(--ty-danger-hue)
   );
   --ty-color-danger-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-danger-chroma) * var(--ty-c-bold-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-bold) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bold-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger: oklch(
-    var(--ty-l-base) calc(var(--ty-danger-chroma) * var(--ty-c-base-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-base) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-base-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-danger-chroma) * var(--ty-c-soft-mult))
-      var(--ty-danger-hue)
+    calc(var(--ty-l-soft) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-soft-mult)) var(--ty-danger-hue)
   );
   --ty-color-danger-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-danger-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-faint-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger: oklch(
-    var(--ty-l-bg-base) calc(var(--ty-danger-chroma) * var(--ty-c-bg-base-mult))
+    calc(var(--ty-l-bg-base) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger-bold: oklch(
-    var(--ty-l-bg-bold) calc(var(--ty-danger-chroma) * var(--ty-c-bg-bold-mult))
+    calc(var(--ty-l-bg-bold) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-danger-hue)
   );
   --ty-bg-danger-soft: oklch(
-    var(--ty-l-bg-soft) calc(var(--ty-danger-chroma) * var(--ty-c-bg-soft-mult))
+    calc(var(--ty-l-bg-soft) * var(--ty-danger-l-factor))
+      calc(var(--ty-danger-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-danger-hue)
   );
   --ty-border-danger: var(--ty-color-danger-soft);
 
   /* Warning */
   --ty-color-warning-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-warning-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-strong-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-warning-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-bold-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning: oklch(
-    var(--ty-l-base) calc(var(--ty-warning-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-base-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-warning-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-soft-mult))
       var(--ty-warning-hue)
   );
   --ty-color-warning-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-warning-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-warning-l-factor))
+      calc(var(--ty-warning-chroma) * var(--ty-c-faint-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-warning-hue)
   );
   --ty-bg-warning-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-warning-l-factor))
       calc(var(--ty-warning-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-warning-hue)
   );
@@ -647,37 +792,42 @@ html[data-theme="dark"] {
 
   /* Neutral */
   --ty-color-neutral-strong: oklch(
-    var(--ty-l-strong) calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
+    calc(var(--ty-l-strong) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-bold: oklch(
-    var(--ty-l-bold) calc(var(--ty-neutral-chroma) * var(--ty-c-bold-mult))
+    calc(var(--ty-l-bold) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-bold-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral: oklch(
-    var(--ty-l-base) calc(var(--ty-neutral-chroma) * var(--ty-c-base-mult))
+    calc(var(--ty-l-base) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-base-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-soft: oklch(
-    var(--ty-l-soft) calc(var(--ty-neutral-chroma) * var(--ty-c-soft-mult))
+    calc(var(--ty-l-soft) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-soft-mult))
       var(--ty-neutral-hue)
   );
   --ty-color-neutral-faint: oklch(
-    var(--ty-l-faint) calc(var(--ty-neutral-chroma) * var(--ty-c-faint-mult))
+    calc(var(--ty-l-faint) * var(--ty-neutral-l-factor))
+      calc(var(--ty-neutral-chroma) * var(--ty-c-faint-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral: oklch(
-    var(--ty-l-bg-base)
+    calc(var(--ty-l-bg-base) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-base-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral-bold: oklch(
-    var(--ty-l-bg-bold)
+    calc(var(--ty-l-bg-bold) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-bold-mult))
       var(--ty-neutral-hue)
   );
   --ty-bg-neutral-soft: oklch(
-    var(--ty-l-bg-soft)
+    calc(var(--ty-l-bg-soft) * var(--ty-neutral-l-factor))
       calc(var(--ty-neutral-chroma) * var(--ty-c-bg-soft-mult))
       var(--ty-neutral-hue)
   );
@@ -702,9 +852,7 @@ html[data-theme="dark"] {
   --ty-surface-floating: oklch(0.22 0.015 var(--ty-brand-hue));
   --ty-surface-input: oklch(0.18 0.012 var(--ty-brand-hue));
 
-  /* Inputs — re-declared so tyrell.css's hardcoded dark values don't
-   * out-rank our brand-derived ones (same selector specificity, source
-   * order wins). */
+  /* Inputs — re-declared at html.dark specificity. */
   --ty-input-bg: var(--ty-surface-input);
   --ty-input-color: var(--ty-color-neutral-strong);
   --ty-input-border: var(--ty-color-neutral-faint);
@@ -720,7 +868,7 @@ html[data-theme="dark"] {
     transparent
   );
 
-  /* Solid buttons — same reason. */
+  /* Solid buttons */
   --ty-solid-primary: var(--ty-color-primary);
   --ty-solid-primary-strong: var(--ty-color-primary-bold);
   --ty-solid-primary-soft: var(--ty-color-primary-soft);
@@ -746,10 +894,9 @@ html[data-theme="dark"] {
   --ty-solid-warning-soft: var(--ty-color-warning-soft);
   --ty-solid-warning-fg: white;
 
-  /* Solid neutral — see comment in the :root block. In dark mode the
-   * "dark grey" position lives at the OTHER end of the ramp (faint),
-   * because the L-curve inverts. Both modes get "a darker shade than
-   * the page surface" for a punchy default action. */
+  /* Solid neutral — in dark mode, "dark grey" lives at the other end
+   * of the ramp. Both modes get a shade darker than the page surface
+   * for a punchy default action. */
   --ty-solid-neutral-soft: oklch(
     0.2 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
@@ -758,7 +905,6 @@ html[data-theme="dark"] {
     0.3 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)
   );
-
   --ty-solid-neutral-strong: oklch(
     0.4 calc(var(--ty-neutral-chroma) * var(--ty-c-strong-mult))
       var(--ty-neutral-hue)

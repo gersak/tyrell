@@ -21,7 +21,7 @@ The content is agent-agnostic — only the file location differs. Trim the frame
 This project uses [Tyrell](https://github.com/gersak/tyrell) for UI components — `tyrell-components` on NPM and `dev.gersak/tyrell` on Clojars.
 
 ### Rules
-- **Colors come from Tyrell, layout from Tailwind.** Use `ty-bg-primary` / `ty-text++` / `ty-elevated`, never `bg-blue-500` / `text-gray-900`.
+- **Colors come from Tyrell, layout from Tailwind.** Use `ty-bg-primary` / `ty-text++` / `ty-elevated`, never `bg-blue-500` / `text-gray-900`. To rebrand the whole library, load `tyrell-brand.css` after `tyrell.css` and set `--ty-brand-hue` + `--ty-brand-chroma` on `:root` — every component retints coherently in light + dark mode (formula: `oklch(L-curve[shade] × flavor-l-factor, flavor-chroma × sat-curve[shade], flavor-hue)`).
 - **Dividers inside surfaces use `ty-divide-y` / `ty-divide-x`**, not Tailwind's `divide-y` / `divide-x`. Tyrell's variant follows the surrounding surface's border tone via CSS-var inheritance and switches with dark mode; Tailwind's defaults don't.
 - **Event payload lives on `event.detail`.** Read `event.detail.value` (or `.values` for multiselect, `.checked` for checkbox/switch). Never `event.value`.
 - **Properties vs attributes.** Booleans, arrays, objects → set as JS property. Strings → attribute is fine.
