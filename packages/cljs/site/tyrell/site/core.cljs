@@ -128,7 +128,7 @@
 
 (defn toc-item [{:keys [anchor label route-id category?]}]
   (if category?
-    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-primary-.transition-colors.cursor-pointer.hover:ty-text-primary
+    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-primary+.transition-colors.cursor-pointer.hover:ty-text-primary++
      {:on {:click #(scroll-to-anchor! anchor)}}
      label]
     (let [active? (when route-id (router/rendered? route-id true))]
