@@ -3,7 +3,10 @@
  *
  * Three appearance variants × six semantic flavors × three tones (+/base/-).
  * Each variant uses ONE token system:
- *   - solid    → --ty-solid-{flavor}-{strong|base|soft}  (bg) + --ty-solid-{flavor}-fg (text)
+ *   - solid    → flat per-segment tokens --ty-solid-{flavor}{,-hover,-active,
+ *               -strong,-soft,-fg}. Derived in tyrell-brand.css via OKLCH on
+ *               3 axes (color / hover-active / theme chroma-hue); literal in
+ *               tyrell.css. The component does no color math.
  *   - outlined → --ty-color-{flavor}-{strong|base|soft}  (text === border)
  *   - ghost    → --ty-color-{flavor}-{strong|base|soft}  (text), --ty-bg-{flavor}-soft (hover)
  *
@@ -219,101 +222,62 @@ button.pill.lg:has(ty-icon:only-child) { min-width: 2.25rem; min-height: 2.25rem
 button.pill.xl:has(ty-icon:only-child) { min-width: 2.5rem; min-height: 2.5rem; }
 
 /* ============================================================
-   SOLID — saturated brand fill (uses --ty-solid-{flavor}-* tokens)
-   Bare .solid rule = fallback for custom flavors (theme via --ty-button-*).
+   SOLID — flat: one variable per segment. No color math here; all the
+   --ty-solid-{flavor}-{hover,active,strong,soft} tokens are DERIVED in
+   tyrell-brand.css (OKLCH) or set literally in tyrell.css. Override any
+   single token to recolor that one segment. Bare .solid = custom-flavor
+   fallback, themable via --ty-button-{bg,bg-hover,color}.
    ============================================================ */
 
 button.solid {
   border: none;
+  --_ring: var(--ty-color-neutral);
   background: var(--ty-button-bg, var(--ty-solid-neutral));
   color:      var(--ty-button-color, var(--ty-solid-neutral-fg));
 }
-button.solid:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-button-bg, var(--ty-solid-neutral-strong)));
-}
+button.solid.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); }
+button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); }
+button.solid:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
+button.solid:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
 
-/* Primary */
-button.solid.primary {
-  background: var(--ty-button-bg, var(--ty-solid-primary));
-  color:      var(--ty-button-color, var(--ty-solid-primary-fg));
-}
+button.solid.primary   { --_ring: var(--ty-color-primary);   background: var(--ty-button-bg, var(--ty-solid-primary));   color: var(--ty-button-color, var(--ty-solid-primary-fg)); }
 button.solid.primary.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-primary-strong)); }
 button.solid.primary.tone-minus { background: var(--ty-button-bg, var(--ty-solid-primary-soft)); }
-button.solid.primary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-primary-strong));
-}
-button.solid.primary:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-primary);
-}
+button.solid.primary:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-primary-hover)); }
+button.solid.primary:active:not(:disabled) { background: var(--ty-solid-primary-active); }
 
-/* Secondary */
-button.solid.secondary {
-  background: var(--ty-button-bg, var(--ty-solid-secondary));
-  color:      var(--ty-button-color, var(--ty-solid-secondary-fg));
-}
+button.solid.secondary { --_ring: var(--ty-color-secondary); background: var(--ty-button-bg, var(--ty-solid-secondary)); color: var(--ty-button-color, var(--ty-solid-secondary-fg)); }
 button.solid.secondary.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-secondary-strong)); }
 button.solid.secondary.tone-minus { background: var(--ty-button-bg, var(--ty-solid-secondary-soft)); }
-button.solid.secondary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-secondary-strong));
-}
-button.solid.secondary:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-secondary);
-}
+button.solid.secondary:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-secondary-hover)); }
+button.solid.secondary:active:not(:disabled) { background: var(--ty-solid-secondary-active); }
 
-/* Success */
-button.solid.success {
-  background: var(--ty-button-bg, var(--ty-solid-success));
-  color:      var(--ty-button-color, var(--ty-solid-success-fg));
-}
+button.solid.success   { --_ring: var(--ty-color-success);   background: var(--ty-button-bg, var(--ty-solid-success));   color: var(--ty-button-color, var(--ty-solid-success-fg)); }
 button.solid.success.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-success-strong)); }
 button.solid.success.tone-minus { background: var(--ty-button-bg, var(--ty-solid-success-soft)); }
-button.solid.success:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-success-strong));
-}
-button.solid.success:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-success);
-}
+button.solid.success:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-success-hover)); }
+button.solid.success:active:not(:disabled) { background: var(--ty-solid-success-active); }
 
-/* Danger */
-button.solid.danger {
-  background: var(--ty-button-bg, var(--ty-solid-danger));
-  color:      var(--ty-button-color, var(--ty-solid-danger-fg));
-}
+button.solid.danger    { --_ring: var(--ty-color-danger);    background: var(--ty-button-bg, var(--ty-solid-danger));    color: var(--ty-button-color, var(--ty-solid-danger-fg)); }
 button.solid.danger.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-danger-strong)); }
 button.solid.danger.tone-minus { background: var(--ty-button-bg, var(--ty-solid-danger-soft)); }
-button.solid.danger:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-danger-strong));
-}
-button.solid.danger:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-danger);
-}
+button.solid.danger:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-danger-hover)); }
+button.solid.danger:active:not(:disabled) { background: var(--ty-solid-danger-active); }
 
-/* Warning */
-button.solid.warning {
-  background: var(--ty-button-bg, var(--ty-solid-warning));
-  color:      var(--ty-button-color, var(--ty-solid-warning-fg));
-}
+button.solid.warning   { --_ring: var(--ty-color-warning);   background: var(--ty-button-bg, var(--ty-solid-warning));   color: var(--ty-button-color, var(--ty-solid-warning-fg)); }
 button.solid.warning.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-warning-strong)); }
 button.solid.warning.tone-minus { background: var(--ty-button-bg, var(--ty-solid-warning-soft)); }
-button.solid.warning:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-warning-strong));
-}
-button.solid.warning:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-warning);
-}
+button.solid.warning:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-warning-hover)); }
+button.solid.warning:active:not(:disabled) { background: var(--ty-solid-warning-active); }
 
-/* Neutral */
-button.solid.neutral {
-  background: var(--ty-button-bg, var(--ty-solid-neutral));
-  color:      var(--ty-button-color, var(--ty-solid-neutral-fg));
-}
+button.solid.neutral   { --_ring: var(--ty-color-neutral);   background: var(--ty-button-bg, var(--ty-solid-neutral));   color: var(--ty-button-color, var(--ty-solid-neutral-fg)); }
 button.solid.neutral.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); }
 button.solid.neutral.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); }
-button.solid.neutral:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-solid-neutral-strong));
-}
-button.solid.neutral:focus-visible {
-  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--ty-color-neutral);
+button.solid.neutral:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
+button.solid.neutral:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
+
+button.solid:focus-visible {
+  box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--_ring);
 }
 
 /* ============================================================

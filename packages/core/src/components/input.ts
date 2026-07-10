@@ -33,6 +33,10 @@ import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js'
  */
 const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-asterisk-icon lucide-asterisk"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`
 
+/** Password reveal toggle icons (Lucide eye / eye-off) */
+const EYE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`
+const EYE_OFF_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`
+
 /**
  * Ty Input Component (Phase D - Complete with Debounce)
  * 
@@ -252,6 +256,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   // Listener setup tracking
   private _listenersSetup = false
 
+  // True when WE auto-set flavor to 'danger' because `error` was present, so we
+  // know to restore 'neutral' when the error clears (and not clobber a flavor
+  // the consumer set themselves).
+  private _errorAutoDanger = false
+
   // Store references to handlers for cleanup
   private _inputHandler: ((e: Event) => void) | null = null
   private _changeHandler: ((e: Event) => void) | null = null
@@ -337,10 +346,19 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           break
 
         case 'error':
-          // Auto-set flavor to danger when error is present and flavor is neutral
-          if (newValue && this.getProperty('flavor') === 'neutral') {
-            // Use setProperty to trigger proper lifecycle
-            this.setProperty('flavor', 'danger')
+          if (newValue) {
+            // Auto-set flavor to danger when an error appears on a neutral field
+            if (this.getProperty('flavor') === 'neutral') {
+              this.setProperty('flavor', 'danger')
+              this._errorAutoDanger = true
+            }
+          } else if (this._errorAutoDanger) {
+            // Error cleared and WE were the ones who set danger → restore neutral
+            // (live validation passing should drop the danger styling).
+            if (this.getProperty('flavor') === 'danger') {
+              this.setProperty('flavor', 'neutral')
+            }
+            this._errorAutoDanger = false
           }
           break
       }
@@ -634,6 +652,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       this._internals.setFormValue(
         this._shadowValue !== null ? String(this._shadowValue) : null
       )
+      this.updateValidity()
 
       // Clear existing timer
       if (this._inputDebounceTimer !== null) {
@@ -669,6 +688,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       this._internals.setFormValue(
         this._shadowValue !== null ? String(this._shadowValue) : null
       )
+      this.updateValidity()
 
       // Clear existing timer
       if (this._changeDebounceTimer !== null) {
@@ -806,6 +826,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         existingInput.removeAttribute('required')
       }
 
+      // a11y: the shadow <label> isn't programmatically linked to this input,
+      // so give the control an accessible name directly.
+      if (this.label) existingInput.setAttribute('aria-label', this.label)
+      else existingInput.removeAttribute('aria-label')
+
       // ===== BUG FIX: Dynamic label creation =====
       // Update or CREATE label if needed
       if (this.label) {
@@ -870,6 +895,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
                 ${inputMode ? `inputmode="${inputMode}"` : ''}
               />
               <slot name="end"></slot>
+              ${inputType === 'password' ? `
+              <button class="password-toggle" type="button"
+                      aria-label="Show password" aria-pressed="false">
+                ${EYE_ICON_SVG}
+              </button>` : ''}
             </div>
             ${errorHtml}
           </div>
@@ -879,9 +909,61 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       const inputEl = shadow.querySelector('input')!
       inputEl.disabled = this.disabled
       inputEl.required = this.required
+      if (this.label) inputEl.setAttribute('aria-label', this.label) // a11y: name the control
+
+      this.setupPasswordToggle()
 
       // Setup event listeners ONCE
       this.setupEventListeners()
+    }
+
+    // Reflect constraint validation (required, etc.) to the owning <form>.
+    this.updateValidity()
+  }
+
+  /**
+   * Wire the password reveal toggle (rendered only for type="password").
+   * Toggles the NATIVE input's type between password/text — the component's
+   * `type` property stays "password" (form value and API unaffected).
+   */
+  private setupPasswordToggle(): void {
+    const shadow = this.shadowRoot!
+    const toggle = shadow.querySelector('.password-toggle') as HTMLButtonElement | null
+    const inputEl = shadow.querySelector('input')
+    if (!toggle || !inputEl) return
+
+    // Keep focus in the input while clicking the toggle
+    toggle.addEventListener('mousedown', (e) => e.preventDefault())
+    toggle.addEventListener('click', () => {
+      const reveal = inputEl.type === 'password'
+      inputEl.type = reveal ? 'text' : 'password'
+      toggle.innerHTML = reveal ? EYE_OFF_ICON_SVG : EYE_ICON_SVG
+      toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password')
+      toggle.setAttribute('aria-pressed', String(reveal))
+    })
+  }
+
+  /**
+   * Reflect constraint validation to the owning <form> via ElementInternals.
+   * Without this `required` is only cosmetic — the inner shadow <input> can't
+   * block the outer form. Empty + required => valueMissing; otherwise valid.
+   * Disabled fields are barred from constraint validation.
+   */
+  private updateValidity(): void {
+    const inputEl = this.shadowRoot?.querySelector('input') as HTMLInputElement | null
+    if (this.disabled) {
+      this._internals.setValidity({})
+      return
+    }
+    const current = inputEl ? inputEl.value : String(this.getProperty('value') ?? '')
+    if (this.required && current.trim() === '') {
+      this._internals.setValidity(
+        { valueMissing: true },
+        'Please fill out this field',
+        inputEl ?? undefined
+      )
+    } else {
+      this._internals.setValidity({})
     }
   }
 }

@@ -20,6 +20,7 @@
    [tyrell.site.docs.modal :as modal-docs]
    [tyrell.site.docs.multiselect :as multiselect-docs]
    [tyrell.site.docs.popup :as popup-docs]
+   [tyrell.site.docs.select :as select-docs]
    [tyrell.site.docs.radio :as radio-docs]
    [tyrell.site.docs.resize-observer :as resize-observer-docs]
    [tyrell.site.docs.scroll-container :as scroll-container-docs]
@@ -261,49 +262,28 @@
                 :class "ty-text-warning"}]
      "Python"]]])
 
+(def ^:private select-preview
+  [:div.space-y-2 {:style {:width "260px"}}
+   [:ty-select {:placeholder "Pick your stack…"
+                :multiple true
+                :label "Tech stack"
+                :id "select-preview"
+                :value "react,clojure"}
+    [:ty-option {:value "react" :flavor "info"} "React"]
+    [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
+    [:ty-option {:value "node-js" :flavor "success"} "Node.js"]
+    [:ty-option {:value "python" :flavor "warning"} "Python"]]
+   [:div.flex.flex-wrap.gap-2
+    [:ty-selected-tags {:for "select-preview"}]]])
+
 (def ^:private multiselect-preview
-  [:ty-multiselect {:placeholder "Pick your stack…"
-                    :label "Tech stack"
+  [:ty-multiselect {:placeholder "Skills…"
+                    :label "Skills"
                     :value "react,clojure"
                     :style {:width "260px"}}
-   [:ty-icon {:slot "start"
-              :name "tag"
-              :size "sm"}]
-   [:ty-tag {:value "react"
-             :flavor "info"
-             :pill ""}
-    [:ty-icon {:slot "start"
-               :name "react"
-               :size "xs"}]
-    "React"]
-   [:ty-tag {:value "clojure"
-             :flavor "primary"
-             :pill ""}
-    [:ty-icon {:slot "start"
-               :name "clojure"
-               :size "xs"}]
-    "Clojure"]
-   [:ty-tag {:value "node-js"
-             :flavor "success"
-             :pill ""}
-    [:ty-icon {:slot "start"
-               :name "node-js"
-               :size "xs"}]
-    "Node.js"]
-   [:ty-tag {:value "python"
-             :flavor "warning"
-             :pill ""}
-    [:ty-icon {:slot "start"
-               :name "python"
-               :size "xs"}]
-    "Python"]
-   [:ty-tag {:value "github"
-             :flavor "neutral"
-             :pill ""}
-    [:ty-icon {:slot "start"
-               :name "github"
-               :size "xs"}]
-    "GitHub"]])
+   [:ty-tag {:value "react" :flavor "info"} "React"]
+   [:ty-tag {:value "clojure" :flavor "primary"} "Clojure"]
+   [:ty-tag {:value "python" :flavor "warning"} "Python"]])
 
 ;; --- Date & time ---
 
@@ -549,10 +529,21 @@
     :icon "chevron-down"
     :view dropdown-docs/view
     :name "Dropdown"
+    :deprecated "ty-select"
     :description "Searchable single-select. Uses `ty-option` children. Internal filter or external search via event, keyboard navigation, smart popup positioning, mobile fullscreen mode."
     :tags ["select" "options" "form" "menu" "choice"]
     :span [2 1]
     :preview dropdown-preview}
+   {:id :tyrell.site.docs/multiselect
+    :segment "multiselect"
+    :icon "tags"
+    :view multiselect-docs/view
+    :name "Multiselect"
+    :deprecated "ty-select multiple"
+    :description "Multi-value select using `ty-tag` children as both option and selected chip. Search/filter or external search, keyboard navigation, mobile fullscreen mode."
+    :tags ["multiselect" "multiple" "tags" "form"]
+    :span [2 1]
+    :preview multiselect-preview}
    {:id :tyrell.site.docs/icon
     :segment "icon"
     :icon "star"
@@ -639,15 +630,15 @@
     :tags ["dialog" "overlay" "popup" "lightbox"]
     :span [2 2]
     :preview modal-preview}
-   {:id :tyrell.site.docs/multiselect
-    :segment "multiselect"
+   {:id :tyrell.site.docs/select
+    :segment "select"
     :icon "filter"
-    :view multiselect-docs/view
-    :name "Multiselect"
-    :description "Multi-value picker using `ty-tag` children — each tag is both an option and its own selected-chip with flavor. Internal filter or external search via event, keyboard navigation, smart positioning, mobile fullscreen mode."
+    :view select-docs/view
+    :name "Select"
+    :description "The select control — replaces dropdown and multiselect. Single select by default with a form-field look; `multiple` for multi-select, `compact` for a content-hugging trigger skin, or slot a custom trigger. Searchable popup with `ty-option` children, form-associated."
     :tags ["select" "multiple" "tags" "form" "filter"]
     :span [2 1]
-    :preview multiselect-preview}
+    :preview select-preview}
    {:id :tyrell.site.docs/popup
     :segment "popup"
     :icon "message-square"

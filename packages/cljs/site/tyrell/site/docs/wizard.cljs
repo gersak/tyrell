@@ -186,7 +186,7 @@
                        :required ""}
             [:ty-icon {:slot "start" :name "mail"}]]
 
-           [:ty-dropdown {:id "demo-wiz-role"
+           [:ty-select {:id "demo-wiz-role"
                           :label "Role" :value "Engineering"}
             [:ty-option {:value "Engineering"} "Engineering"]
             [:ty-option {:value "Design"} "Design"]
@@ -306,10 +306,10 @@
     <ty-input id=\"email\" label=\"Work email\" type=\"email\" required>
       <ty-icon slot=\"start\" name=\"mail\"></ty-icon>
     </ty-input>
-    <ty-dropdown id=\"role\" label=\"Role\" value=\"Engineering\">
+    <ty-select id=\"role\" label=\"Role\" value=\"Engineering\">
       <ty-option value=\"Engineering\">Engineering</ty-option>
       ...
-    </ty-dropdown>
+    </ty-select>
     <!-- Back / Continue buttons -->
   </ty-step>
 

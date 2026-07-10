@@ -8,32 +8,10 @@ export const calendarNavigationStyles = `
    Size Variants (CSS Custom Properties)
    ============================================================================ */
 
-:host {
-  /* Default (md) */
-  --nav-btn-size: 2rem;
-  --nav-btn-icon-size: 1.25rem;
-  --nav-font-size: 1rem;
-  --nav-padding: 0.5rem 0.75rem;
-  --nav-default-width: 280px;
-
-  /* ==========================================================================
-     Theming Tokens
-     Override these to retheme navigation without touching the global palette.
-     ========================================================================== */
-
-  /* Accent alias — drives focus outline, mirrors --ty-calendar-accent */
-  --ty-calendar-accent: var(--ty-color-primary);
-
-  /* Nav button (prev/next chevrons) */
-  --ty-calendar-nav-color: var(--ty-color-neutral);
-  --ty-calendar-nav-hover-color: var(--ty-color-neutral-strong);
-  --ty-calendar-nav-hover-bg: var(--ty-bg-neutral-soft);
-  --ty-calendar-nav-active-bg: var(--ty-bg-neutral);
-  --ty-calendar-nav-focus-outline: var(--ty-calendar-accent);
-
-  /* Title (month/year display) */
-  --ty-calendar-nav-title-color: var(--ty-color-neutral-strong);
-}
+/* Theming tokens applied as var(--ty-calendar-nav-*, <default>) at point of
+   use (NOT on :host) so consumers can override them from outside — this
+   component is nested inside ty-calendar's shadow, so a :host default would
+   block inherited overrides. --ty-calendar-accent still cascades in. */
 
 :host([data-size="sm"]) {
   --nav-btn-size: 1.5rem;
@@ -98,26 +76,32 @@ export const calendarNavigationStyles = `
   height: var(--nav-btn-size);
   padding: 0;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: var(--ty-radius-base);
   background-color: transparent;
-  color: var(--ty-calendar-nav-color);
+  color: var(--ty-calendar-nav-color, var(--ty-color-neutral));
   cursor: pointer;
   transition: all 0.15s ease;
   outline: none;
 }
 
 .nav-btn:hover {
-  background-color: var(--ty-calendar-nav-hover-bg);
-  color: var(--ty-calendar-nav-hover-color);
+  background-color: var(--ty-calendar-nav-hover-bg, var(--ty-bg-neutral-soft));
+  color: var(--ty-calendar-nav-hover-color, var(--ty-color-neutral-strong));
 }
 
 .nav-btn:active {
-  background-color: var(--ty-calendar-nav-active-bg);
+  background-color: var(--ty-calendar-nav-active-bg, var(--ty-bg-neutral));
   transform: scale(0.95);
 }
 
+.nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+}
+
 .nav-btn:focus-visible {
-  outline: 2px solid var(--ty-calendar-nav-focus-outline);
+  outline: 2px solid var(--ty-calendar-nav-focus-outline, var(--ty-calendar-accent, var(--ty-color-primary)));
   outline-offset: 2px;
 }
 
@@ -135,7 +119,7 @@ export const calendarNavigationStyles = `
 .month-year-display {
   font-size: var(--nav-font-size);
   font-weight: 600;
-  color: var(--ty-calendar-nav-title-color);
+  color: var(--ty-calendar-nav-title-color, var(--ty-color-neutral-strong));
   text-align: center;
   white-space: nowrap;
   letter-spacing: -0.01em;

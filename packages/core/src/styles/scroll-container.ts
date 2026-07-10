@@ -41,6 +41,12 @@ export const scrollContainerStyles = `
   display: none;
 }
 
+/* scroll-anchoring: we manage scroll position in JS, so turn off the browser's
+   native scroll anchoring to avoid double-compensation. */
+:host([scroll-anchoring]) .scroll-wrapper {
+  overflow-anchor: none;
+}
+
 /* ===================================== */
 /* custom-scrollbar: hides native */
 /* ===================================== */

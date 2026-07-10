@@ -31,16 +31,16 @@ That's it. `<ty-*>` elements work as HTMX targets, triggers, and form fields wit
 
 ## Form submission — `FormData` works automatically
 
-Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-dropdown`, `ty-multiselect`, `ty-date-picker`, `ty-file-upload`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`.
+Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-select`, `ty-date-picker`, `ty-file-upload`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`. (`ty-dropdown` and `ty-multiselect` are **deprecated** — use `ty-select`, with `multiple` for multi-value.)
 
 ```html
 <form hx-post="/api/contact" hx-target="#result">
   <ty-input name="email" type="email" label="Email" required></ty-input>
 
-  <ty-dropdown name="topic" label="Topic">
+  <ty-select name="topic" label="Topic">
     <ty-option value="sales">Sales</ty-option>
     <ty-option value="support">Support</ty-option>
-  </ty-dropdown>
+  </ty-select>
 
   <ty-textarea name="message" label="Message" rows="4"></ty-textarea>
 
@@ -52,7 +52,7 @@ Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `t
 
 The server receives `email`, `topic`, `message` in the request body. No `hx-vals`, no `hx-include` needed.
 
-**Multi-value fields** (`ty-multiselect`) post repeated entries — your framework's body parser must support multi-value form fields (most do).
+**Multi-value fields** (`ty-select multiple`) post repeated `name=` entries — your framework's body parser must support multi-value form fields (most do).
 
 **File uploads** (`ty-file-upload`) need `hx-encoding="multipart/form-data"` on the form, just like a native file input. Each selected file is appended to the body under the component's `name` attribute (multiple entries when `multiple` is set):
 
@@ -73,19 +73,19 @@ Server-side: read repeated `docs` parts (Flask `request.files.getlist('docs')`, 
 Tyrell components emit a bubbling `change` event when the user commits a new value. HTMX picks that up the same way it does for native inputs:
 
 ```html
-<ty-dropdown name="country"
-             hx-get="/api/cities"
-             hx-trigger="change"
-             hx-target="#city-picker"
-             hx-vals='js:{country: event.detail.value}'>
+<ty-select name="country"
+           hx-get="/api/cities"
+           hx-trigger="change"
+           hx-target="#city-picker"
+           hx-vals='js:{country: event.detail.value}'>
   <ty-option value="us">United States</ty-option>
   <ty-option value="de">Germany</ty-option>
-</ty-dropdown>
+</ty-select>
 
 <div id="city-picker"></div>
 ```
 
-The `hx-vals='js:{...}'` form lets you pull the actual value off `event.detail.value` rather than relying on serialization. For a single dropdown inside a `<form>`, you can skip `hx-vals` and let normal form serialization handle it.
+The `hx-vals='js:{...}'` form lets you pull the actual value off `event.detail.value` rather than relying on serialization. For a single select inside a `<form>`, you can skip `hx-vals` and let normal form serialization handle it.
 
 **Debouncing.** Use HTMX's built-in modifier — `hx-trigger="change delay:300ms"`. `ty-input` *also* has a built-in `delay` attribute that debounces its own `change` event before HTMX ever sees it; pick one, don't double up.
 
@@ -225,9 +225,9 @@ The OOB swap replaces the input with one carrying the error message. Tyrell rend
 
 ## Common pitfalls
 
-- **Don't put HTMX attributes on the `<ty-option>` / `<ty-tab>` / `<ty-step>` children** — they're internal slots, not interactive. Put them on `<ty-dropdown>` / `<ty-tabs>` / `<ty-wizard>` and use `hx-trigger="change"`.
+- **Don't put HTMX attributes on the `<ty-option>` / `<ty-tab>` / `<ty-step>` children** — they're internal slots, not interactive. Put them on `<ty-select>` / `<ty-tabs>` / `<ty-wizard>` and use `hx-trigger="change"`.
 - **Boolean values from `ty-checkbox`** post as `"on"` (or absent) — same as native `<input type="checkbox">`. `ty-switch` follows the same rule. If you need explicit `true`/`false`, wire it via `hx-vals='js:{enabled: this.checked}'`.
-- **`ty-multiselect` posts a JS array** as the form value, which HTMX's default URL-encoding flattens to repeated `name=` entries. Confirm your backend reads multi-value fields (Express `body-parser` does, Ring's wrap-params does, Rails' `permit(:tags => [])` does).
+- **`ty-select multiple` posts repeated `name=` entries** (one per selected value). Confirm your backend reads multi-value fields (Express `body-parser` does, Ring's wrap-params does, Rails' `permit(:tags => [])` does).
 - **Date format**: `ty-date-picker` posts ISO `YYYY-MM-DD` strings. Parse on the server accordingly.
 - **Don't manually re-register components after a swap** — `customElements.define` is global, registration persists across swaps. Re-running the CDN bundle script will throw `NotSupportedError: already defined`.
 

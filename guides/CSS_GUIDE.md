@@ -415,7 +415,7 @@ Three places you can set them:
 <!-- on a wrapping container — inherits down to all descendants -->
 <div style="--ty-input-border: #16a34a;">
   <ty-input></ty-input>
-  <ty-dropdown>…</ty-dropdown>
+  <ty-select>…</ty-select>
 </div>
 ```
 
@@ -456,7 +456,7 @@ Four hooks. The button reads `var(--ty-button-X, …flavor default…)`, so unse
 <ty-button flavor="brand" appearance="outlined">Brand outlined</ty-button>
 ```
 
-### `<ty-input>`, `<ty-dropdown>`, `<ty-multiselect>`
+### `<ty-input>`, `<ty-select>` (and the deprecated `<ty-dropdown>`/`<ty-multiselect>`)
 
 All form controls read the same `--ty-input-*` tokens. They're defined globally in `:root` but inherit into each component's shadow DOM, so setting one on a host overrides only that element.
 
@@ -492,19 +492,19 @@ Per-flavor border overrides (apply when the `flavor` attribute is set):
           placeholder="Highlighted field"></ty-input>
 
 <!-- Green-tinted dropdown -->
-<ty-dropdown style="--ty-input-bg: #f0fdf4;
+<ty-select style="--ty-input-bg: #f0fdf4;
                     --ty-input-border: #16a34a;
                     --ty-input-border-focus: #15803d;">
   <ty-option value="a">Apple</ty-option>
   <ty-option value="b">Banana</ty-option>
-</ty-dropdown>
+</ty-select>
 
 <!-- Multiselect with a brand tone -->
-<ty-multiselect style="--ty-input-border-focus: #7c3aed;
+<ty-select multiple style="--ty-input-border-focus: #7c3aed;
                        --ty-input-shadow-focus: rgba(124, 58, 237, 0.2);">
   <ty-option value="x">X</ty-option>
   <ty-option value="y">Y</ty-option>
-</ty-multiselect>
+</ty-select>
 ```
 
 ### `<ty-calendar>`, `<ty-calendar-month>`, `<ty-date-picker>`
@@ -583,7 +583,7 @@ Three aliases drive the most-visible colors. Override any of these and selected/
 
 #### Date-picker stub (input-like trigger)
 
-A thin shim over `--ty-input-*`. By default the stub looks identical to other inputs; override these to make it look distinct without affecting `<ty-input>`, `<ty-dropdown>`, etc.
+A thin shim over `--ty-input-*`. By default the stub looks identical to other inputs; override these to make it look distinct without affecting `<ty-input>`, `<ty-select>`, etc.
 
 | Variable | Defaults to |
 |---|---|

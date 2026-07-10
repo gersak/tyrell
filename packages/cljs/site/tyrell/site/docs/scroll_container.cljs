@@ -133,6 +133,49 @@
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
+      ;; Infinite scroll (nearend/nearstart) + scroll anchoring
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Infinite Scroll + Anchoring")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Scroll DOWN → "
+        [:code "nearend"]
+        " appends newer items. Scroll UP → "
+        [:code "nearstart"]
+        " prepends older items, and because "
+        [:code "scroll-anchoring"]
+        " is on, the row you were reading stays put — no jump. Both are edge-triggered "
+        "and re-arm as content grows; tune with "
+        [:code "near-edge-threshold"]
+        " (px)."]
+       (demo-area
+        [:ty-scroll-container
+         {:max-height "240px" :custom-scrollbar true :scroll-anchoring true :near-edge-threshold "120"
+          :replicant/on-mount
+          (fn [{^js node :replicant/node}]
+            (let [low (atom 1)
+                  high (atom 20)
+                  mk (fn [i]
+                       (let [row (js/document.createElement "div")]
+                         (set! (.-className row) "px-3 py-2 ty-text ty-border border-b")
+                         (set! (.. row -style -fontSize) "0.8125rem")
+                         (set! (.-textContent row) (str "Item " i))
+                         row))
+                  append! (fn [k] (dotimes [_ k] (.appendChild node (mk (swap! high inc)))))
+                  prepend! (fn [k] (dotimes [_ k] (.insertBefore node (mk (swap! low dec)) (.-firstChild node))))]
+              ;; seed items 1..20, then start scrolled down a bit so nearstart
+              ;; doesn't fire on mount — leaves room to scroll up into it.
+              (dotimes [i 20] (.appendChild node (mk (inc i))))
+              (js/setTimeout #(when-let [w (.-scrollElement node)] (set! (.-scrollTop w) 160)) 0)
+              (.addEventListener node "nearend"
+                                 (fn [_] (when (< @high 300) (js/setTimeout #(append! 12) 150))))
+              (.addEventListener node "nearstart"
+                                 (fn [_] (when (> @low -300) (js/setTimeout #(prepend! 12) 150))))))}])
+       (code-block "<ty-scroll-container scroll-anchoring near-edge-threshold=\"120\">…</ty-scroll-container>
+
+const sc = document.querySelector('ty-scroll-container');
+sc.addEventListener('nearend',   () => appendNewer());  // scroll down
+sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchored, no jump")]
+
       ;; Custom scrollbar styling
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom Scrollbar Styling")

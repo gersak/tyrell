@@ -6,7 +6,7 @@
 (defn view []
   (docs-page
    (component-header "ty-checkbox"
-                     "Just the box. Boolean state primitive with check/dash SVG icons, semantic flavors, and form association. Wrap in a <label> for click-on-text behavior.")
+                     "Just the tick. Boolean primitive rendered as a single checkmark — full flavor color when checked, faint when unchecked, grayscale when disabled. Wrap in a <label> for click-on-text behavior.")
 
    ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
@@ -30,6 +30,10 @@
         :type "string"
         :default "-"
         :description "Form field name"}
+       {:name "indeterminate"
+        :type "boolean"
+        :default "false"
+        :description "Mixed state (dash) — visual/ARIA only, clicking resolves to checked"}
        {:name "disabled"
         :type "boolean"
         :default "false"
@@ -44,7 +48,7 @@
         :description "Size variant: xs, sm, md, lg, xl"}
        {:name "flavor"
         :type "string"
-        :default "\"primary\""
+        :default "\"neutral\""
         :description "Semantic color: primary, secondary, success, danger, warning, neutral"}])]
 
     [:div

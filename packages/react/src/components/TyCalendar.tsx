@@ -54,6 +54,12 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   /** Calendar width */
   width?: string | number;
   
+  /** Earliest selectable date (ISO "YYYY-MM-DD") — earlier days disabled, navigation clamped */
+  min?: string;
+
+  /** Latest selectable date (ISO "YYYY-MM-DD") — later days disabled, navigation clamped */
+  max?: string;
+
   /** Minimum calendar width */
   minWidth?: string | number;
   
@@ -80,6 +86,9 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   
   /** Callback when navigation changes month/year */
   onNavigate?: (event: CustomEvent<TyCalendarNavigateEventDetail>) => void;
+
+  /** Callback when a day cell is clicked (fires alongside change) */
+  onDayClick?: (event: CustomEvent) => void;
 }
 
 // React wrapper for ty-calendar web component
@@ -93,6 +102,8 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     size,
     locale,
     width,
+    min,
+    max,
     minWidth,
     maxWidth,
     name,
@@ -102,6 +113,7 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     customCSS,
     onChange,
     onNavigate,
+    onDayClick,
     ...props 
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -133,6 +145,10 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       }
     }, [onNavigate]);
 
+    const handleDayClick = useCallback((event: Event) => {
+      if (onDayClick) onDayClick(event as CustomEvent);
+    }, [onDayClick]);
+
     // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
@@ -150,12 +166,17 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
         listeners.push(['navigate', handleNavigate]);
       }
 
+      if (onDayClick) {
+        element.addEventListener('day-click', handleDayClick);
+        listeners.push(['day-click', handleDayClick]);
+      }
+
       return () => {
         listeners.forEach(([eventName, handler]) => {
           element.removeEventListener(eventName, handler);
         });
       };
-    }, [handleChange, handleNavigate, onChange, onNavigate]);
+    }, [handleChange, handleNavigate, handleDayClick, onChange, onNavigate, onDayClick]);
 
     // Set function/object properties directly on the element. Required on
     // React 18, which can't bridge non-string props onto custom elements.
@@ -222,6 +243,14 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
 
     if (width !== undefined) {
       webComponentProps.width = width.toString();
+    }
+
+    if (min) {
+      webComponentProps.min = min;
+    }
+
+    if (max) {
+      webComponentProps.max = max;
     }
 
     if (minWidth !== undefined) {

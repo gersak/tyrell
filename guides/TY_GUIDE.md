@@ -18,8 +18,9 @@ When a Tyrell component exists, use it. Do not improvise HTML.
 | Checkbox | `<ty-checkbox>` | `<input type="checkbox">` |
 | Textarea | `<ty-textarea>` | `<textarea>` |
 | File upload | `<ty-file-upload>` | `<input type="file">` + custom drop zones |
-| Dropdown | `<ty-dropdown>` | `<select>`, custom menus |
-| Multi-select | `<ty-multiselect>` | Multiple checkboxes |
+| Select (single or multi) | `<ty-select>` | `<select>`, custom menus, multiple checkboxes |
+| Dropdown (legacy) | `<ty-dropdown>` — deprecated, use `<ty-select>` | `<select>` |
+| Multi-select (legacy) | `<ty-multiselect>` — deprecated, use `<ty-select multiple>` | Multiple checkboxes |
 | Modal | `<ty-modal>` | `<dialog>`, custom overlays |
 | Tooltip | `<ty-tooltip>` | `title` attr, custom divs |
 | Popup | `<ty-popup>` | Custom positioned divs |
@@ -134,8 +135,9 @@ FormData: submits raw number, not formatted string.
 
 | Parent | Children | Example |
 |--------|----------|---------|
-| `ty-dropdown` | `<option>` (simple) or `<ty-option>` (rich HTML) | `<option value="us">US</option>` |
-| `ty-multiselect` | `<ty-tag>` only | `<ty-tag value="js">JavaScript</ty-tag>` |
+| `ty-select` | `<ty-option>` (rich HTML; `label` attr = clean display text) | `<ty-option value="us">US</ty-option>` |
+| `ty-dropdown` *(deprecated)* | `<option>` or `<ty-option>` | `<option value="us">US</option>` |
+| `ty-multiselect` *(deprecated)* | `<ty-tag>` only | `<ty-tag value="js">JavaScript</ty-tag>` |
 
 ---
 
@@ -181,6 +183,8 @@ FormData: submits raw number, not formatted string.
 
 **Slots:** `start`, `end` | **Events:** `input`, `change` -> `{ value, formattedValue, rawValue, originalEvent }` | `focus`, `blur`
 
+**Password reveal:** `type="password"` renders a built-in eye toggle after the end slot — toggles visibility of the typed value (native input type only; component `type` and form value unchanged).
+
 **Custom colors:** override per input with `--ty-input-bg`, `--ty-input-color`, `--ty-input-border`, `--ty-input-border-hover`, `--ty-input-border-focus`, `--ty-input-shadow-focus`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
@@ -190,6 +194,7 @@ FormData: submits raw number, not formatted string.
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `checked` | boolean | `false` | |
+| `indeterminate` | boolean | `false` | Mixed state (dash); clicking resolves to checked |
 | `value` | string | `'on'` | Form value when checked |
 | `name` | string | - | |
 | `disabled` | boolean | `false` | |
@@ -225,6 +230,8 @@ FormData: submits raw number, not formatted string.
 
 ### ty-copy
 
+Also registered as **`ty-copy-field`** — same element, descriptive name.
+
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `value` | string | - | Text to copy |
@@ -257,7 +264,38 @@ Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — s
 
 ---
 
+### ty-select
+
+The select control — **replaces ty-dropdown and ty-multiselect** (both are now deprecated). Single select by default with a form-field look matching `ty-input`.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `multiple` | boolean | `false` | Multi select (native `<select multiple>` semantics). Absent = single: picking replaces the selection and closes the popup |
+| `compact` | boolean | `false` | Content-hugging trigger for toolbars/filter bars instead of the full-width field. Single shows the selected label; multiple shows placeholder + count badge |
+| `value` | string | `''` | Selected value; comma-separated when multiple (arrays accepted from frameworks) |
+| `name` | string | - | Single submits one FormData entry; multiple submits repeated `name=` entries |
+| `label` | string | - | |
+| `placeholder` | string | `'Select...'` | Shown while empty; selection shows the option itself (single) or joined labels (multiple) |
+| `searchable` | string | `'auto'` | Popup search row: `auto` = only for 8+ options; `searchable`/`"true"` always; `"false"` never. `external-search` always shows it |
+| `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response |
+| `debounce` | number | `0` | Search event debounce (0-5000ms) |
+| `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
+| `disabled` / `readonly` / `required` | boolean | `false` | |
+| `size` | string | `'md'` | `sm` \| `md` \| `lg` |
+
+**Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-tags` templates.
+
+**Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
+
+**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple) | `search` -> `{ query, element }` | `open` / `close`
+
+**Companion:** `<ty-selected-tags for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup.
+
+---
+
 ### ty-dropdown
+
+> **Superseded by ty-select.** Kept for compatibility.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -285,6 +323,8 @@ Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — s
 
 ### ty-multiselect
 
+> **Deprecated — use [`ty-select multiple`](#ty-select).** Kept for compatibility; no new features.
+
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `value` | string | `''` | Comma-separated values |
@@ -311,11 +351,13 @@ Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — s
 
 ### ty-option
 
-Rich HTML option for `<ty-dropdown>`. Attrs: `value`, `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content.
+Rich HTML option for `<ty-select>` (and the deprecated `<ty-dropdown>`). Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content; `data-*` attributes feed `ty-selected-tags` chip templates.
 
 ---
 
 ### ty-tag
+
+The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -380,7 +422,7 @@ Rich HTML option for `<ty-dropdown>`. Attrs: `value`, `selected`, `disabled`, `h
 
 ### ty-calendar
 
-Attrs: `year`, `month`, `day`, `name`, `required`. Property: `dayContentFn`.
+Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — out-of-bounds days disabled, navigation clamped). Property: `dayContentFn`.
 
 **Events:** `change` -> `{ year, month, day, action, source, dayContext }` | `navigate` -> `{ month, year, action, source }`
 
@@ -397,6 +439,8 @@ Attrs: `year`, `month`, `day`, `name`, `required`. Property: `dayContentFn`.
 | `label` | string | - | |
 | `placeholder` | string | - | |
 | `with-time` | boolean | `false` | Include time picker |
+| `min` | string | - | Earliest selectable date (ISO `YYYY-MM-DD`) |
+| `max` | string | - | Latest selectable date (ISO `YYYY-MM-DD`) |
 | `disabled` | boolean | `false` | |
 | `required` | boolean | `false` | |
 | `locale` | string | `'en-US'` | |
@@ -407,6 +451,8 @@ Attrs: `year`, `month`, `day`, `name`, `required`. Property: `dayContentFn`.
 ---
 
 ### ty-modal
+
+Also registered as **`ty-dialog`** — same element, platform/ARIA name (wraps native `<dialog>`).
 
 Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true).
 
@@ -619,7 +665,9 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 |-----------|-------|--------|
 | `ty-input` | `input`, `change` | `{ value, formattedValue, rawValue, originalEvent }` |
 | `ty-checkbox` | `input`, `change` | `{ value, checked, formValue, originalEvent }` |
-| `ty-dropdown` | `change` | `{ value, text, option, originalEvent }` |
+| `ty-select` | `change` | `{ value (scalar / array when multiple), values, items, action, item }` |
+| `ty-select` | `search` | `{ query, element }` |
+| `ty-dropdown` *(deprecated)* | `change` | `{ value, text, option, originalEvent }` |
 | `ty-dropdown` | `search` | `{ query, originalEvent }` |
 | `ty-multiselect` | `change` | `{ values, action, item }` |
 | `ty-file-upload` | `change` | `{ value: File[], files: File[], names: string[] }` |

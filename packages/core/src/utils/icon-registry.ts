@@ -158,37 +158,6 @@ export function registerIcons(icons: Record<string, string>): void {
 }
 
 /**
- * Register a single icon
- * Always updates memory and notifies watchers immediately
- * Cache update happens in background (only if different from cached version)
- * @param name Icon name
- * @param svg SVG string
- */
-export function registerIcon(name: string, svg: string): void {
-  // Always set in memory registry (fast, synchronous)
-  iconRegistry.set(name, svg)
-
-  // Notify watchers immediately (synchronous)
-  scheduleNotification(new Set([name]))
-
-  // Compare with cache in background to avoid unnecessary cache writes
-  getCachedIcon(name).then(cachedSvg => {
-    // Only write to cache if content actually changed
-    if (cachedSvg !== svg) {
-      cacheIcon(name, svg).catch(() => {
-        // Error already logged in cacheIcon
-      })
-    }
-    // If cachedSvg === svg, skip cache write (already up to date)
-  }).catch(() => {
-    // No cached version or error reading cache - write new icon
-    cacheIcon(name, svg).catch(() => {
-      // Error already logged in cacheIcon
-    })
-  })
-}
-
-/**
  * Lookup an icon by name from memory
  * NOTE: This does NOT check cache - use getCachedIcon() for that
  * @param name Icon name
@@ -312,14 +281,6 @@ function notifyWatchers(changedIcons: Set<string>): void {
  */
 export function getIconNames(): string[] {
   return Array.from(iconRegistry.keys())
-}
-
-/**
- * Get registry size (memory only)
- * @returns Number of registered icons in memory
- */
-export function getIconCount(): number {
-  return iconRegistry.size
 }
 
 /**

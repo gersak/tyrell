@@ -80,7 +80,18 @@ export class TyRadio
     ensureStyles(shadow, { css: radioStyles, id: "ty-radio" });
   }
 
-  protected onConnect(): void { }
+  protected onConnect(): void {
+    // Re-arm listeners on RE-connect (base skips render() when already
+    // rendered; onDisconnect removed them). No-op on first connect.
+    this.setupEventListeners();
+
+    // Tell the group we exist. During HTML parsing the group connects BEFORE
+    // its children, so its own onConnect sync sees an empty group — each
+    // radio announcing itself lets the group re-sync as children arrive.
+    this.dispatchEvent(
+      new CustomEvent("ty-radio-connected", { bubbles: true }),
+    );
+  }
   protected onDisconnect(): void {
     this.removeEventListeners();
   }
@@ -107,11 +118,18 @@ export class TyRadio
 
   private removeEventListeners(): void {
     if (!this._listenersSetup) return;
-    const el = this.shadowRoot?.querySelector(".radio-container");
-    if (!el) return;
+
+    // Click lives on the HOST (label delegation + full-element trigger) —
+    // remove it before the shadow-container guard below.
     if (this._clickHandler) {
-      el.removeEventListener("click", this._clickHandler);
+      this.removeEventListener("click", this._clickHandler);
       this._clickHandler = null;
+    }
+
+    const el = this.shadowRoot?.querySelector(".radio-container");
+    if (!el) {
+      this._listenersSetup = false;
+      return;
     }
     if (this._focusHandler) {
       el.removeEventListener("focus", this._focusHandler);
@@ -133,7 +151,9 @@ export class TyRadio
     this._focusHandler = () => el.classList.add("focused");
     this._blurHandler = () => el.classList.remove("focused");
 
-    el.addEventListener("click", this._clickHandler);
+    // Click on the HOST: whole element is a trigger and a wrapping <label>
+    // delegates (the synthetic click lands on the host, not the shadow).
+    this.addEventListener("click", this._clickHandler);
     el.addEventListener("focus", this._focusHandler);
     el.addEventListener("blur", this._blurHandler);
     this._listenersSetup = true;
@@ -157,13 +177,19 @@ export class TyRadio
       radioEl.appendChild(circle);
 
       shadow.appendChild(radioEl);
-      this.setupEventListeners();
     } else {
       radioEl.className = "radio-container " + classes;
       radioEl.tabIndex = this.disabled ? -1 : 0;
       radioEl.setAttribute("aria-checked", String(this.checked));
       radioEl.setAttribute("aria-disabled", String(this.disabled));
     }
+
+    // (Re)attach listeners — onDisconnect removes them, so a reconnected
+    // element needs them again even though the container already exists.
+    this.setupEventListeners();
+
+    // a11y: name the role="radio" element from its wrapping <label>.
+    this.applyLabelName(radioEl);
   }
 
   // Property accessors
@@ -247,6 +273,7 @@ export class TyRadioGroup
   private _listenersSetup: boolean = false;
   private _selectHandler: ((e: Event) => void) | null = null;
   private _keydownHandler: ((e: Event) => void) | null = null;
+  private _connectedHandler: ((e: Event) => void) | null = null;
 
   constructor() {
     super();
@@ -255,7 +282,11 @@ export class TyRadioGroup
   }
 
   protected onConnect(): void {
-    // Sync radio children with current value once light DOM is ready
+    // Re-arm listeners on RE-connect; no-op on first (setup runs in render too)
+    this.setupEventListeners();
+    // Sync radio children with current value once light DOM is ready.
+    // NOTE: during HTML parsing this runs before children are parsed — the
+    // ty-radio-connected listener covers late-arriving radios.
     queueMicrotask(() => this.syncChildren());
   }
 
@@ -389,6 +420,10 @@ export class TyRadioGroup
       this.removeEventListener("keydown", this._keydownHandler);
       this._keydownHandler = null;
     }
+    if (this._connectedHandler) {
+      this.removeEventListener("ty-radio-connected", this._connectedHandler);
+      this._connectedHandler = null;
+    }
     this._listenersSetup = false;
   }
 
@@ -396,8 +431,12 @@ export class TyRadioGroup
     if (this._listenersSetup) return;
     this._selectHandler = (e: Event) => this.handleRadioSelect(e);
     this._keydownHandler = (e: Event) => this.handleKeydown(e as KeyboardEvent);
+    // Radios announce themselves on connect — re-sync so radios parsed AFTER
+    // the group's own onConnect still receive the group's value/size/flavor.
+    this._connectedHandler = () => this.syncChildren();
     this.addEventListener("ty-radio-select", this._selectHandler);
     this.addEventListener("keydown", this._keydownHandler);
+    this.addEventListener("ty-radio-connected", this._connectedHandler);
     this._listenersSetup = true;
   }
 

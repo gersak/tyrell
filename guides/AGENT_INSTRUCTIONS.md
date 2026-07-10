@@ -28,11 +28,11 @@ This project uses [Tyrell](https://github.com/gersak/tyrell) for UI components �
   - React: just props. Vue: `:prop`. Svelte: `prop:`. CLJS via `tyrell.react`: camelCase props through `:>` (Reagent) / `$` (Helix); UIx auto-translates kebab-case.
 - **Icons — two paths.** For `<ty-icon name="check">` register first: import named icons and call `registerIcons({...})` (JS) or `(tyrell.icons/register! {...})` (CLJS). Never `import * as L from 'tyrell-components/icons/lucide'` — that ships all 1,636 icons. Or skip the registry entirely by slotting inline SVG: `<ty-icon><svg>…</svg></ty-icon>` — `size`/`spin`/`pulse`/`ty-text-*` still apply to the host. Use `currentColor` on the SVG. Best for HTMX / Datastar / server-rendered apps.
 - **SSR**: `customElements.define` needs a browser. Import `tyrell-components` only in client boundaries (`'use client'` in Next.js, `.client.ts` in Nuxt, `if (browser)` in SvelteKit).
-- **Composition rules.** `ty-dropdown` and `ty-multiselect` take `<ty-option>` / `<ty-tag>` children (not native `<option>`). `ty-tabs`/`ty-wizard` take `<ty-tab>`/`<ty-step>`. `ty-radio-group` takes `<ty-radio>`.
+- **Composition rules.** `ty-select` takes `<ty-option>` children (not native `<option>`); add `multiple` for multi-select and pair with `<ty-selected-tags>` for chips. (`ty-dropdown`/`ty-multiselect` are deprecated in favor of `ty-select`.) `ty-tabs`/`ty-wizard` take `<ty-tab>`/`<ty-step>`. `ty-radio-group` takes `<ty-radio>`.
 
 ### Components available
 ty-button, ty-input, ty-textarea, ty-checkbox, ty-switch, ty-radio-group / ty-radio,
-ty-dropdown / ty-option, ty-multiselect / ty-tag, ty-copy, ty-file-upload,
+ty-select / ty-option / ty-selected-tags, ty-copy, ty-file-upload,
 ty-date-picker, ty-calendar / ty-calendar-month, ty-modal, ty-popup, ty-tooltip,
 ty-tabs / ty-tab, ty-wizard / ty-step, ty-icon, ty-resize-observer, ty-scroll-container.
 

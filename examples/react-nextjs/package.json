@@ -17,8 +17,8 @@
     "next": "^16.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tyrell-components": "^1.0.0-TC21",
-    "tyrell-react": "^1.0.0-TC21"
+    "tyrell-components": "^1.0.0-TC23",
+    "tyrell-react": "^1.0.0-TC23"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

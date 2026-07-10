@@ -53,23 +53,24 @@ Use `data-bind` for form inputs — it handles wiring automatically:
 
   <ty-input data-bind="email" label="Email" type="email"></ty-input>
 
-  <ty-dropdown data-bind="country" label="Country" placeholder="Select...">
+  <ty-select data-bind="country" label="Country" placeholder="Select...">
     <ty-option value="us">United States</ty-option>
     <ty-option value="de">Germany</ty-option>
-  </ty-dropdown>
+  </ty-select>
 
-  <!-- ty-multiselect children must be <ty-tag value="..."> only.
-       The change event detail is { values: [...], action, item } — note the
-       plural `values`. `data-bind` works against the comma-separated `value`
-       attribute, but it's usually clearer to bind manually: -->
-  <ty-multiselect
+  <!-- Multi-select: add `multiple` — children stay <ty-option>. The change
+       detail is { value, values, items, action, item }; `values` is always
+       the selected array. `data-bind` works against the comma-separated
+       `value` attribute, but it's usually clearer to bind manually: -->
+  <ty-select
+    multiple
     label="Tags"
     placeholder="Select tags..."
     data-on:change="$tags = evt.detail.values">
-    <ty-tag value="frontend">Frontend</ty-tag>
-    <ty-tag value="backend">Backend</ty-tag>
-    <ty-tag value="ops">Ops</ty-tag>
-  </ty-multiselect>
+    <ty-option value="frontend">Frontend</ty-option>
+    <ty-option value="backend">Backend</ty-option>
+    <ty-option value="ops">Ops</ty-option>
+  </ty-select>
 
   <ty-button flavor="primary" data-on:click="@post('/api/submit')">
     Submit
@@ -116,10 +117,10 @@ Use `slot="start"` and `slot="end"` for icons inside buttons, inputs, and tags:
 <ty-button data-on:click="@post('/api/action')">Do it</ty-button>
 
 <!-- Update signal on change -->
-<ty-dropdown data-on:change="$currency = evt.detail.value">
+<ty-select data-on:change="$currency = evt.detail.value">
   <ty-option value="USD">$ USD</ty-option>
   <ty-option value="EUR">EUR</ty-option>
-</ty-dropdown>
+</ty-select>
 ```
 
 ### Manual Event Binding
@@ -578,11 +579,11 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
   <ty-input data-bind="txAmount" label="Amount" type="currency" currency="EUR"></ty-input>
   <ty-date-picker data-bind="txDate" label="Date" placeholder="Pick a date"></ty-date-picker>
 
-  <ty-dropdown data-bind="txCategory" label="Category" placeholder="Select category">
+  <ty-select data-bind="txCategory" label="Category" placeholder="Select category">
     <ty-option value="food">Food</ty-option>
     <ty-option value="transport">Transport</ty-option>
     <ty-option value="utilities">Utilities</ty-option>
-  </ty-dropdown>
+  </ty-select>
 
   <!-- Submit -->
   <ty-button flavor="primary" class="w-full mt-4"
@@ -612,10 +613,10 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
     </ty-step>
 
     <ty-step id="preferences" label="Preferences">
-      <ty-dropdown data-bind="currency" label="Currency">
+      <ty-select data-bind="currency" label="Currency">
         <ty-option value="EUR">EUR</ty-option>
         <ty-option value="USD">$ USD</ty-option>
-      </ty-dropdown>
+      </ty-select>
       <ty-button flavor="primary"
         data-on:click="$wizardStep = 'done'; $wizardCompleted = 'welcome,preferences'">
         Finish

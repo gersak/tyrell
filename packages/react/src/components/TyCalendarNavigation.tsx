@@ -16,7 +16,13 @@ export interface TyCalendarNavigationProps extends Omit<React.HTMLAttributes<HTM
   
   /** Width of navigation */
   width?: string;
-  
+
+  /** Earliest reachable month (ISO "YYYY-MM-DD") — navigation clamps here */
+  min?: string;
+
+  /** Latest reachable month (ISO "YYYY-MM-DD") — navigation clamps here */
+  max?: string;
+
   /** Navigation change event handler */
   onChange?: (event: CustomEvent<NavigationChangeDetail>) => void;
 }
@@ -34,6 +40,8 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
     locale,
     size,
     width,
+    min,
+    max,
     onChange,
     ...props 
   }, ref) => {
@@ -80,6 +88,8 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
     if (locale) webComponentProps.locale = locale;
     if (size) webComponentProps.size = size;
     if (width) webComponentProps.width = width;
+    if (min) webComponentProps.min = min;
+    if (max) webComponentProps.max = max;
 
     return React.createElement(
       'ty-calendar-navigation',

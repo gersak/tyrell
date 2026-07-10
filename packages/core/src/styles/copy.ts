@@ -30,6 +30,38 @@ export const copyStyles = `
   overflow-y: auto;
 }
 
+/* Keep the copy button pinned to the top-right when content wraps to multiple lines */
+.input-wrapper:has(.copy-field-value.multiline) {
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Horizontal scroll variant - scroll long content instead of clipping with ellipsis */
+.copy-field-value.horizontal-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+/* Multiline + horizontal scroll (e.g. code blocks): preserve lines, scroll both axes */
+.copy-field-value.multiline.horizontal-scroll {
+  white-space: pre;
+  word-break: normal;
+  overflow-y: auto;
+}
+
+/* Hide scrollbars on scrollable value - content still scrolls, chrome stays clean */
+.copy-field-value.multiline,
+.copy-field-value.horizontal-scroll {
+  scrollbar-width: none; /* Firefox */
+}
+.copy-field-value.multiline::-webkit-scrollbar,
+.copy-field-value.horizontal-scroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
 /* Code format */
 .copy-field-value {
   font-size: 0.8em;

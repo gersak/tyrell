@@ -35,7 +35,7 @@
 
 import { ensureStyles } from '../utils/styles.js';
 import { calendarNavigationStyles } from '../styles/calendar-navigation.js';
-import { getMonthName } from '../utils/calendar-utils.js';
+import { getMonthName, parseISODate } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { TyComponent } from '../base/ty-component.js';
 import type { PropertyChange } from '../utils/property-manager.js';
@@ -177,6 +177,19 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       type: 'string' as const,
       visual: true,
       default: ''
+    },
+
+    // Navigation bounds — ISO dates. Buttons that would move the display
+    // entirely outside [min, max] months are disabled; year jumps clamp.
+    min: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    max: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
     }
   };
   
@@ -296,9 +309,25 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
   get width(): string {
     return this.getProperty('width');
   }
-  
+
   set width(value: string) {
     this.setProperty('width', value);
+  }
+
+  get min(): string {
+    return this.getProperty('min');
+  }
+
+  set min(value: string) {
+    this.setProperty('min', value ?? '');
+  }
+
+  get max(): string {
+    return this.getProperty('max');
+  }
+
+  set max(value: string) {
+    this.setProperty('max', value ?? '');
   }
   
   // ==========================================================================
@@ -326,39 +355,60 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
   // ==========================================================================
   // Navigation Logic
   // ==========================================================================
-  
+
   /**
-   * Navigate to previous/next month
-   * Handles year boundary crossing
+   * Month index (year * 12 + month - 1) — flat, comparable month math.
    */
-  private navigateMonth(direction: -1 | 1): void {
-    const rawMonth = this._state.displayMonth + direction;
-    
-    let newMonth: number;
-    let newYear: number;
-    
-    if (rawMonth < 1) {
-      // Rolled back to previous year
-      newMonth = 12;
-      newYear = this._state.displayYear - 1;
-    } else if (rawMonth > 12) {
-      // Rolled forward to next year
-      newMonth = 1;
-      newYear = this._state.displayYear + 1;
-    } else {
-      newMonth = rawMonth;
-      newYear = this._state.displayYear;
-    }
-    
-    this.emitChangeEvent(newMonth, newYear);
+  private static monthIndex(year: number, month: number): number {
+    return year * 12 + (month - 1);
   }
-  
+
   /**
-   * Navigate to previous/next year
+   * min/max as month indices (null when unset/invalid)
    */
-  private navigateYear(direction: -1 | 1): void {
-    const newYear = this._state.displayYear + direction;
-    this.emitChangeEvent(this._state.displayMonth, newYear);
+  private boundIndices(): { minIdx: number | null; maxIdx: number | null } {
+    const min = parseISODate(this.min);
+    const max = parseISODate(this.max);
+    return {
+      minIdx: min ? TyCalendarNavigation.monthIndex(min.year, min.month) : null,
+      maxIdx: max ? TyCalendarNavigation.monthIndex(max.year, max.month) : null,
+    };
+  }
+
+  /**
+   * Clamp a target month index to [min, max]
+   */
+  private clampIndex(idx: number): number {
+    const { minIdx, maxIdx } = this.boundIndices();
+    if (minIdx !== null && idx < minIdx) return minIdx;
+    if (maxIdx !== null && idx > maxIdx) return maxIdx;
+    return idx;
+  }
+
+  /**
+   * Navigate by month/year delta, clamped to bounds.
+   * Year jumps near a bound land ON the bound month instead of overshooting.
+   */
+  private navigateBy(deltaMonths: number): void {
+    const current = TyCalendarNavigation.monthIndex(
+      this._state.displayYear,
+      this._state.displayMonth
+    );
+    const target = this.clampIndex(current + deltaMonths);
+    if (target === current) return; // Already at the bound
+
+    this.emitChangeEvent((target % 12) + 1, Math.floor(target / 12));
+  }
+
+  /**
+   * True when navigating by deltaMonths can't move the display (bound reached)
+   */
+  private isNavDisabled(deltaMonths: number): boolean {
+    const current = TyCalendarNavigation.monthIndex(
+      this._state.displayYear,
+      this._state.displayMonth
+    );
+    return this.clampIndex(current + deltaMonths) === current;
   }
   
   // ==========================================================================
@@ -372,12 +422,14 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     className: string,
     title: string,
     svg: string,
-    onClick: () => void
+    onClick: () => void,
+    disabled = false
   ): HTMLButtonElement {
     const button = document.createElement('button');
     button.className = className;
     button.title = title;
     button.innerHTML = svg;
+    button.disabled = disabled;
     button.addEventListener('click', onClick);
     return button;
   }
@@ -423,16 +475,18 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
         'nav-btn nav-year-prev',
         'Previous year',
         CHEVRONS_LEFT_SVG,
-        () => this.navigateYear(-1)
+        () => this.navigateBy(-12),
+        this.isNavDisabled(-12)
       )
     );
-    
+
     leftGroup.appendChild(
       this.createButton(
         'nav-btn nav-month-prev',
         'Previous month',
         CHEVRON_LEFT_SVG,
-        () => this.navigateMonth(-1)
+        () => this.navigateBy(-1),
+        this.isNavDisabled(-1)
       )
     );
     
@@ -454,16 +508,18 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
         'nav-btn nav-month-next',
         'Next month',
         CHEVRON_RIGHT_SVG,
-        () => this.navigateMonth(1)
+        () => this.navigateBy(1),
+        this.isNavDisabled(1)
       )
     );
-    
+
     rightGroup.appendChild(
       this.createButton(
         'nav-btn nav-year-next',
         'Next year',
         CHEVRONS_RIGHT_SVG,
-        () => this.navigateYear(1)
+        () => this.navigateBy(12),
+        this.isNavDisabled(12)
       )
     );
     

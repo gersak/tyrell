@@ -465,10 +465,11 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       horizontal: false
     })
 
-    // Append track to the textarea wrapper (position: relative)
-    const wrapper = this.shadowRoot!.querySelector('.textarea-wrapper')
-    if (wrapper && this._scrollbar.trackY) {
-      wrapper.appendChild(this._scrollbar.trackY)
+    // Append track to the scroll region (position: relative) so it tracks the
+    // textarea edges and never overlaps the header/footer.
+    const scroll = this.shadowRoot!.querySelector('.textarea-scroll')
+    if (scroll && this._scrollbar.trackY) {
+      scroll.appendChild(this._scrollbar.trackY)
     }
   }
 
@@ -494,6 +495,7 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
 
     // Update form internals
     this._internals.setFormValue(value || '')
+    this.updateValidity()
 
     // Emit custom events
     const data = {
@@ -613,6 +615,9 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       existingTextarea.disabled = this.disabled
       existingTextarea.required = this.required
       existingTextarea.className = this.buildClassList()
+      // a11y: shadow <label> isn't linked to the control; name it directly.
+      if (this.label) existingTextarea.setAttribute('aria-label', this.label)
+      else existingTextarea.removeAttribute('aria-label')
 
       // Set name for form association
       if (this.name) {
@@ -668,6 +673,7 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       textareaEl.disabled = this.disabled
       textareaEl.required = this.required
       textareaEl.className = this.buildClassList()
+      if (this.label) textareaEl.setAttribute('aria-label', this.label) // a11y: name the control
 
       // Set name for form association
       if (this.name) {
@@ -684,10 +690,43 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       // Setup event listeners
       this.setupTextareaEvents(textareaEl)
 
-      // Build structure — wrapper provides position context for custom scrollbar
+      // Build composer structure:
+      //   .textarea-wrapper (border) > [.textarea-header > slot] · .textarea-scroll(textarea) · [.textarea-footer > slot]
       const wrapperEl = document.createElement('div')
       wrapperEl.className = 'textarea-wrapper'
-      wrapperEl.appendChild(textareaEl)
+
+      const headerEl = document.createElement('div')
+      headerEl.className = 'textarea-header'
+      const headerSlot = document.createElement('slot')
+      headerSlot.setAttribute('name', 'header')
+      headerEl.appendChild(headerSlot)
+
+      // Scroll region wraps only the textarea so the custom scrollbar can't
+      // overlap header/footer.
+      const scrollEl = document.createElement('div')
+      scrollEl.className = 'textarea-scroll'
+      scrollEl.appendChild(textareaEl)
+
+      const footerEl = document.createElement('div')
+      footerEl.className = 'textarea-footer'
+      const footerSlot = document.createElement('slot')
+      footerSlot.setAttribute('name', 'footer')
+      footerEl.appendChild(footerSlot)
+
+      wrapperEl.appendChild(headerEl)
+      wrapperEl.appendChild(scrollEl)
+      wrapperEl.appendChild(footerEl)
+
+      // Collapse empty slots (no padding/divider) by toggling .has-content.
+      // slotchange fires on initial assignment too.
+      const syncSlot = (slot: HTMLSlotElement, region: HTMLElement) => {
+        const update = () =>
+          region.classList.toggle('has-content', slot.assignedNodes({ flatten: true }).length > 0)
+        slot.addEventListener('slotchange', update)
+        update()
+      }
+      syncSlot(headerSlot, headerEl)
+      syncSlot(footerSlot, footerEl)
 
       container.appendChild(labelEl)
       container.appendChild(wrapperEl)
@@ -707,6 +746,23 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       setTimeout(() => this.resizeTextarea(textareaEl, dummyEl), 0)
 
       this._textareaEl = textareaEl
+    }
+
+    // Reflect constraint validation to the owning <form>. Without this `required`
+    // is cosmetic — the inner shadow <textarea> can't block the outer form.
+    this.updateValidity()
+  }
+
+  /** required + empty => valueMissing; otherwise valid. Disabled fields are
+   *  barred from constraint validation. */
+  private updateValidity(): void {
+    const ta = this.shadowRoot?.querySelector('textarea') as HTMLTextAreaElement | null
+    if (this.disabled) { this._internals.setValidity({}); return }
+    const current = ta ? ta.value : String(this.value ?? '')
+    if (this.required && current.trim() === '') {
+      this._internals.setValidity({ valueMissing: true }, 'Please fill out this field', ta ?? undefined)
+    } else {
+      this._internals.setValidity({})
     }
   }
 }

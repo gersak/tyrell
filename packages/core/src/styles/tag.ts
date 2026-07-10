@@ -195,7 +195,7 @@ export const tagStyles = `
 /* ----- PRIMARY ----- */
 :host([flavor="primary"]) {
   --tag-bg: var(--ty-bg-primary);
-  --tag-color: var(--ty-color-primary-strong);
+  --tag-color: var(--ty-color-primary);
   --tag-border-color: var(--ty-border-primary);
 }
 :host([flavor="primary+"]) {
@@ -222,7 +222,7 @@ export const tagStyles = `
 /* ----- SECONDARY ----- */
 :host([flavor="secondary"]) {
   --tag-bg: var(--ty-bg-secondary);
-  --tag-color: var(--ty-color-secondary-strong);
+  --tag-color: var(--ty-color-secondary);
   --tag-border-color: var(--ty-border-secondary);
 }
 :host([flavor="secondary+"]) {
@@ -249,7 +249,7 @@ export const tagStyles = `
 /* ----- SUCCESS ----- */
 :host([flavor="success"]) {
   --tag-bg: var(--ty-bg-success);
-  --tag-color: var(--ty-color-success-strong);
+  --tag-color: var(--ty-color-success);
   --tag-border-color: var(--ty-border-success);
 }
 :host([flavor="success+"]) {
@@ -276,7 +276,7 @@ export const tagStyles = `
 /* ----- DANGER ----- */
 :host([flavor="danger"]) {
   --tag-bg: var(--ty-bg-danger);
-  --tag-color: var(--ty-color-danger-strong);
+  --tag-color: var(--ty-color-danger);
   --tag-border-color: var(--ty-border-danger);
 }
 :host([flavor="danger+"]) {
@@ -303,7 +303,7 @@ export const tagStyles = `
 /* ----- WARNING ----- */
 :host([flavor="warning"]) {
   --tag-bg: var(--ty-bg-warning);
-  --tag-color: var(--ty-color-warning-strong);
+  --tag-color: var(--ty-color-warning);
   --tag-border-color: var(--ty-border-warning);
 }
 :host([flavor="warning+"]) {

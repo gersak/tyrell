@@ -132,8 +132,8 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
   :error (when (touched :email) (errors :email))
   :on {:change (fn [^js e] (on-email-change (-> e .-detail .-value)))}}]
 
-;; Dropdown
-[:ty-dropdown
+;; Select (single — ty-select deprecates ty-dropdown)
+[:ty-select
  {:label "Country"
   :placeholder "Select..."
   :value selected-country
@@ -141,14 +141,18 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
  [:ty-option {:value "us"} "United States"]
  [:ty-option {:value "de"} "Germany"]]
 
-;; Multiselect
-[:ty-multiselect
- {:label "Skills"
+;; Multi-select (ty-select multiple deprecates ty-multiselect —
+;; children are ty-option, chips render via ty-selected-tags)
+[:ty-select
+ {:multiple true
+  :id "skills"
+  :label "Skills"
   :placeholder "Add skills"
   :value (vec selected-skills)
   :on {:change (fn [^js e] (on-skills-change (vec (-> e .-detail .-values))))}}
- [:ty-tag {:value "clojure" :flavor "primary"} "Clojure"]
- [:ty-tag {:value "javascript" :flavor "warning"} "JavaScript"]]
+ [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
+ [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]]
+[:ty-selected-tags {:for "skills"}]
 
 ;; Checkbox
 [:ty-checkbox
@@ -279,10 +283,10 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 | `ty-textarea` | `input` (every keystroke) | `value`, `originalEvent` |
 | `ty-textarea` | `change` (on blur) | `value`, `originalEvent` |
 | `ty-checkbox` | `change` | `value`, `checked`, `formValue`, `originalEvent` |
-| `ty-dropdown` | `change` | `value`, `text`, `option`, `originalEvent` |
-| `ty-dropdown` | `search` | `query`, `originalEvent` |
-| `ty-multiselect` | `change` | `values` (JS array), `action` (`"add"`/`"remove"`/`"clear"`/`"set"`), `item` |
-| `ty-multiselect` | `search` | `query`, `element` |
+| `ty-select` | `change` | `value` (scalar, or array when `multiple`), `values` (JS array), `items`, `action` (`"add"`/`"remove"`/`"clear"`/`"set"`), `item` |
+| `ty-select` | `search` | `query`, `element` |
+| `ty-dropdown` *(deprecated)* | `change` | `value`, `text`, `option`, `originalEvent` |
+| `ty-multiselect` *(deprecated)* | `change` | `values` (JS array), `action`, `item` |
 | `ty-file-upload` | `change` | `value` (File[]), `files` (File[]), `names` (string[]) |
 | `ty-calendar` | `change` | `year`, `month`, `day`, `action`, `source`, `dayContext` |
 | `ty-calendar` | `navigate` | `month`, `year`, `action`, `source` |
@@ -314,8 +318,8 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
   :on {:change (fn [^js e]
                  (on-bio-change (-> e .-detail .-value)))}}]
 
-;; ty-dropdown — detail includes text label of selected option
-[:ty-dropdown
+;; ty-select — detail.value is the scalar selected value (single select)
+[:ty-select
  {:label "Country"
   :on {:change (fn [^js e]
                  (let [^js detail (.-detail e)]
@@ -325,9 +329,10 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
  [:ty-option {:value "us"} "United States"]
  [:ty-option {:value "de"} "Germany"]]
 
-;; ty-multiselect — values is a JS array, convert with vec
-[:ty-multiselect
- {:label "Tags"
+;; ty-select multiple — values is a JS array, convert with vec
+[:ty-select
+ {:multiple true
+  :label "Tags"
   :on {:change (fn [^js e]
                  (let [^js detail (.-detail e)
                        values (vec (.-values detail))   ; JS array -> CLJ vector
@@ -483,10 +488,12 @@ Key points:
 - `:error` attribute shows built-in error message styling — pass `nil` to hide
 - `:required` adds a visual indicator and form validation
 
-### Dropdown with Rich Content
+### Select with Rich Content
+
+Single select clones the selected option into the field, so rich HTML displays intact.
 
 ```clojure
-[:ty-dropdown
+[:ty-select
  {:label "Select Country"
   :placeholder "Choose a country"
   :value selected-country
@@ -505,18 +512,26 @@ Key points:
     [:div.text-xs.ty-text- "Europe"]]]]]
 ```
 
-### Multiselect with Tags
+### Multi-select with Chips
+
+`ty-select multiple` + `ty-selected-tags` — options are `ty-option` children,
+dismissible chips render out-of-band wherever you put them:
 
 ```clojure
-[:ty-multiselect
- {:label "Select Skills"
+[:ty-select
+ {:multiple true
+  :id "skills-select"
+  :label "Select Skills"
   :placeholder "Add skills"
   :value (vec selected-skills)
   :on {:change (fn [^js e] (on-skills-change (vec (-> e .-detail .-values))))}}
 
- [:ty-tag {:value "clojure" :flavor "primary"} "Clojure"]
- [:ty-tag {:value "javascript" :flavor "warning"} "JavaScript"]
- [:ty-tag {:value "react" :flavor "info"} "React"]]
+ [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
+ [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]
+ [:ty-option {:value "react" :flavor "info"} "React"]]
+
+[:div.flex.flex-wrap.gap-2
+ [:ty-selected-tags {:for "skills-select"}]]
 ```
 
 ---

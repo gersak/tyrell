@@ -150,7 +150,7 @@
 
     ;; User Profile Example
     [:section.mb-16 {:id "user-profile"}
-     [:div.ty-content.rounded-xl.overflow-hidden
+     [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
        [:div.flex.items-center.justify-between
         [:h3.text-lg.font-semibold.ty-text "User Profile Form"]
@@ -169,7 +169,7 @@
 
     ;; Event Booking Example
     [:section.mb-16 {:id "event-booking"}
-     [:div.ty-content.rounded-xl.overflow-hidden
+     [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
        [:div.flex.items-center.justify-between
         [:h3.text-lg.font-semibold.ty-text "Event Booking System"]
@@ -188,7 +188,7 @@
 
     ;; Contact Form Example
     [:section.mb-16 {:id "contact-form"}
-     [:div.ty-content.rounded-xl.overflow-hidden
+     [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
        [:div.flex.items-center.justify-between
         [:h3.text-lg.font-semibold.ty-text "Contact Form"]

@@ -209,7 +209,7 @@ export const placementPreferences = {
 /**
  * Get element dimensions relative to viewport with calculated center points
  */
-export function getElementRect(el: HTMLElement): ElementRect {
+function getElementRect(el: HTMLElement): ElementRect {
   const rect = el.getBoundingClientRect();
   return {
     top: rect.top,
@@ -226,7 +226,7 @@ export function getElementRect(el: HTMLElement): ElementRect {
 /**
  * Get viewport dimensions and scroll position
  */
-export function getViewportRect(): ViewportRect {
+function getViewportRect(): ViewportRect {
   return {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -243,7 +243,7 @@ export function getViewportRect(): ViewportRect {
  * Calculate position for a specific placement
  * Returns x, y coordinates and overflow information
  */
-export function calculatePlacement(options: CalculatePlacementOptions): PositionResult {
+function calculatePlacement(options: CalculatePlacementOptions): PositionResult {
   const {
     targetRect,
     floatingRect,
@@ -371,97 +371,3 @@ export function findBestPosition(options: PositionOptions): PositionResult {
 // Auto-Update Functionality
 // ============================================================================
 
-/**
- * Create auto-update system for position tracking
- * Continuously monitors and updates position when target or floating element changes
- * 
- * @param targetEl - The anchor element to position relative to
- * @param floatingEl - The floating element to position
- * @param updateFn - Callback function that receives new position data
- * @param config - Position options (same as findBestPosition)
- * @returns Cleanup function to stop auto-updating
- */
-export function autoUpdate(
-  targetEl: HTMLElement,
-  floatingEl: HTMLElement,
-  updateFn: (position: PositionResult) => void,
-  config: Omit<PositionOptions, 'targetEl' | 'floatingEl'>
-): CleanupFn {
-  let active = true;
-  let scrollRafId: number | null = null;
-  let resizeTimeout: number | null = null;
-  let resizeObserver: ResizeObserver | null = null;
-  let mutationObserver: MutationObserver | null = null;
-
-  // Update function that recalculates position
-  const update = () => {
-    if (!active) return;
-    const position = findBestPosition({
-      targetEl,
-      floatingEl,
-      ...config,
-    });
-    updateFn(position);
-  };
-
-  // Initial update
-  update();
-
-  // Debounced update for resize events
-  const debouncedUpdate = () => {
-    if (resizeTimeout !== null) {
-      clearTimeout(resizeTimeout);
-    }
-    resizeTimeout = window.setTimeout(() => {
-      resizeTimeout = null;
-      update();
-    }, 10);
-  };
-
-  // RAF-based scroll handler for smooth updates
-  const handleScroll = () => {
-    if (!active) return;
-    if (scrollRafId === null) {
-      scrollRafId = requestAnimationFrame(() => {
-        scrollRafId = null;
-        update();
-      });
-    }
-  };
-
-  // Observe size changes on target, floating element, and body
-  resizeObserver = new ResizeObserver(debouncedUpdate);
-  resizeObserver.observe(targetEl);
-  resizeObserver.observe(floatingEl);
-  resizeObserver.observe(document.body);
-
-  // Observe DOM attribute changes on target
-  mutationObserver = new MutationObserver(update);
-  mutationObserver.observe(targetEl, {
-    attributes: true,
-    attributeFilter: ['class', 'style'],
-  });
-
-  // Listen for scroll events (capture phase for better performance)
-  window.addEventListener('scroll', handleScroll, true);
-  window.addEventListener('resize', debouncedUpdate);
-
-  // Return cleanup function
-  return () => {
-    active = false;
-    if (scrollRafId !== null) {
-      cancelAnimationFrame(scrollRafId);
-    }
-    if (resizeTimeout !== null) {
-      clearTimeout(resizeTimeout);
-    }
-    if (resizeObserver) {
-      resizeObserver.disconnect();
-    }
-    if (mutationObserver) {
-      mutationObserver.disconnect();
-    }
-    window.removeEventListener('scroll', handleScroll, true);
-    window.removeEventListener('resize', debouncedUpdate);
-  };
-}

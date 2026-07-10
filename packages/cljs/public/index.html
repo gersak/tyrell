@@ -1,35 +1,42 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, shrink-to-fit=no"
+    />
     <title>Tyrell Components - Professional Web Components Showcase</title>
-    <meta name="description"
-        content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility.">
+    <meta
+      name="description"
+      content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility."
+    />
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    />
 
     <!-- Ty Complete CSS System (Variables + Utilities) -->
-    <link rel="stylesheet" href="/css/tyrell.css">
-    <link rel="preloadmodule" href="/css/tyrell.css">
+    <link rel="stylesheet" href="/css/tyrell.css" />
+    <link rel="preloadmodule" href="/css/tyrell.css" />
     <!-- Opt-in OKLCH brand layer. Demoed at /docs/theming. -->
-    <link rel="stylesheet" href="/css/tyrell-brand.css">
+    <link rel="stylesheet" href="/css/tyrell-brand.css" />
+    <!-- <link rel="stylesheet" href="/css/tyrell-light.css" /> -->
 
     <!-- Site brand seeds: override the brand-layer defaults for this site only.
          Mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
          playground sliders + Reset button agree with first-paint values. -->
     <style>
-        :root {
-            --ty-brand-hue: 47;
-            --ty-brand-chroma: 0.135;
-            --ty-secondary-offset: -25;
-        }
+      :root {
+        --ty-brand-hue: 215;
+        --ty-brand-chroma: 0.09;
+        --ty-secondary-offset: 74;
+      }
     </style>
 
     <!-- Site-chrome styles (inline-code pills, etc.) are injected by
@@ -39,232 +46,250 @@
     <script type="module" src="/tyrell/tyrell.js"></script>
 
     <!-- Highlight.js for code syntax highlighting -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
-        id="hljs-light">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
-        id="hljs-dark" disabled>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      id="hljs-light"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+      id="hljs-dark"
+      disabled
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/clojure.min.js"></script>
 
     <!-- Mobile-specific CSS fixes -->
     <style>
-        /* Site typography — webfonts for cross-OS consistency */
-        html,
-        body {
-            font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-                'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
+      /* Site typography — webfonts for cross-OS consistency */
+      html,
+      body {
+        font-family:
+          "Inter",
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
 
-        code,
-        pre,
-        kbd,
-        samp,
-        .hljs,
-        .ty-mono {
-            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-                'Liberation Mono', 'Courier New', monospace;
-            font-variant-ligatures: contextual;
-        }
+      code,
+      pre,
+      kbd,
+      samp,
+      .hljs,
+      .ty-mono {
+        font-family:
+          "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+          Consolas, "Liberation Mono", "Courier New", monospace;
+        font-variant-ligatures: contextual;
+      }
 
-        /* iOS fix - prevents scroll bounce and keyboard layout breaking */
-        html,
-        body {
-            height: 100%;
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-        }
+      /* iOS fix - prevents scroll bounce and keyboard layout breaking */
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+      }
 
-        /* App container fills the fixed viewport */
-        #app {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
+      /* App container fills the fixed viewport */
+      #app {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
 
-        /* Fix for code blocks that might overflow */
-        pre,
-        code {
-            overflow-x: auto;
-            word-break: break-word;
-            white-space: pre-wrap;
-        }
+      /* Fix for code blocks that might overflow */
+      pre,
+      code {
+        overflow-x: auto;
+        word-break: break-word;
+        white-space: pre-wrap;
+      }
 
-        /* Custom Highlight.js integration with Ty theme system */
-        .hljs {
-            background: var(--ty-surface-elevated) !important;
-            color: var(--ty-text) !important;
-            border: 1px solid var(--ty-border);
-            border-radius: 8px;
-            padding: 1rem !important;
-            font-size: 12px;
-            line-height: 1.5;
-            margin: 0;
-        }
+      /* Custom Highlight.js integration with Ty theme system */
+      .hljs {
+        background: var(--ty-surface-elevated) !important;
+        color: var(--ty-text) !important;
+        border: 1px solid var(--ty-border);
+        border-radius: 8px;
+        padding: 1rem !important;
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 0;
+      }
 
-        /* Override specific highlight.js token colors to use ty semantic colors */
-        .hljs-keyword,
-        .hljs-selector-tag,
-        .hljs-built_in,
-        .hljs-name {
-            color: var(--ty-color-primary) !important;
-        }
+      /* Override specific highlight.js token colors to use ty semantic colors */
+      .hljs-keyword,
+      .hljs-selector-tag,
+      .hljs-built_in,
+      .hljs-name {
+        color: var(--ty-color-primary) !important;
+      }
 
-        .hljs-string,
-        .hljs-attr {
-            color: var(--ty-color-success) !important;
-        }
+      .hljs-string,
+      .hljs-attr {
+        color: var(--ty-color-success) !important;
+      }
 
-        .hljs-number,
-        .hljs-literal {
-            color: var(--ty-color-info) !important;
-        }
+      .hljs-number,
+      .hljs-literal {
+        color: var(--ty-color-info) !important;
+      }
 
-        .hljs-comment {
-            color: var(--ty-text--) !important;
-            font-style: italic;
-        }
+      .hljs-comment {
+        color: var(--ty-text--) !important;
+        font-style: italic;
+      }
 
-        .hljs-function,
-        .hljs-title {
-            color: var(--ty-color-secondary) !important;
-        }
+      .hljs-function,
+      .hljs-title {
+        color: var(--ty-color-secondary) !important;
+      }
 
-        .hljs-variable,
-        .hljs-template-variable {
-            color: var(--ty-color-warning) !important;
-        }
+      .hljs-variable,
+      .hljs-template-variable {
+        color: var(--ty-color-warning) !important;
+      }
 
-        .hljs-type,
-        .hljs-class {
-            color: var(--ty-color-info) !important;
-        }
+      .hljs-type,
+      .hljs-class {
+        color: var(--ty-color-info) !important;
+      }
 
-        /* Inline code styling lives in /css/site.css now (site-only override
+      /* Inline code styling lives in /css/site.css now (site-only override
            driven by --ty-inline-code-* variables). tyrell.css is untouched. */
 
-        /* Pre blocks containing highlighted code */
-        pre.hljs {
-            white-space: pre;
-            word-break: normal;
+      /* Pre blocks containing highlighted code */
+      pre.hljs {
+        white-space: pre;
+        word-break: normal;
+      }
+
+      /* Mobile typography adjustments */
+      @media (max-width: 768px) {
+        /* Smaller base font size on mobile */
+        html {
+          font-size: 14px;
         }
 
-        /* Mobile typography adjustments */
-        @media (max-width: 768px) {
-
-            /* Smaller base font size on mobile */
-            html {
-                font-size: 14px;
-            }
-
-            /* Adjust hero text for mobile */
-            .hero-title {
-                font-size: 2rem !important;
-                line-height: 1.2 !important;
-            }
-
-            .hero-subtitle {
-                font-size: 1.1rem !important;
-                line-height: 1.4 !important;
-            }
-
-            /* Smaller padding for mobile */
-            .scenario-section {
-                margin-bottom: 2rem !important;
-                padding: 1rem !important;
-            }
+        /* Adjust hero text for mobile */
+        .hero-title {
+          font-size: 2rem !important;
+          line-height: 1.2 !important;
         }
 
-        /* Ensure grid layouts don't overflow */
+        .hero-subtitle {
+          font-size: 1.1rem !important;
+          line-height: 1.4 !important;
+        }
+
+        /* Smaller padding for mobile */
+        .scenario-section {
+          margin-bottom: 2rem !important;
+          padding: 1rem !important;
+        }
+      }
+
+      /* Ensure grid layouts don't overflow */
+      .grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+
+      @media (max-width: 640px) {
         .grid {
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Site-specific menu styles */
+      .menu-item {
+        @apply flex items-center gap-2 lg:gap-3 w-full px-2 lg:px-3 py-2 text-left rounded-md text-sm lg:text-base transition-colors;
+        @apply ty-text hover:ty-content;
+      }
+
+      .menu-item.active {
+        @apply ty-bg-primary- ty-text-primary+;
+      }
+
+      /* Site-specific responsive design */
+      @media (max-width: 1024px) {
+        .sidebar {
+          transform: translateX(-100%);
         }
 
-        @media (max-width: 640px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
+        .sidebar.open {
+          transform: translateX(0);
         }
-
-        /* Site-specific menu styles */
-        .menu-item {
-            @apply flex items-center gap-2 lg:gap-3 w-full px-2 lg:px-3 py-2 text-left rounded-md text-sm lg:text-base transition-colors;
-            @apply ty-text hover:ty-content;
-        }
-
-        .menu-item.active {
-            @apply ty-bg-primary- ty-text-primary+;
-        }
-
-        /* Site-specific responsive design */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .sidebar.open {
-                transform: translateX(0);
-            }
-        }
+      }
     </style>
 
     <!-- Prevent FOUC -->
     <script>
-        // Set initial theme based on localStorage or system preference (default: dark)
-        const storedTheme = localStorage.getItem('theme');
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        const theme = storedTheme || systemTheme || 'dark';
+      // Set initial theme based on localStorage or system preference (default: dark)
+      const storedTheme = localStorage.getItem("theme");
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      const theme = storedTheme || systemTheme || "dark";
 
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      }
+
+      // Initialize theme only - let components handle highlighting
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set initial highlight.js theme
+        updateHighlightTheme(theme);
+      });
+
+      // Function to update highlight.js theme
+      function updateHighlightTheme(theme) {
+        const lightTheme = document.getElementById("hljs-light");
+        const darkTheme = document.getElementById("hljs-dark");
+
+        if (theme === "dark") {
+          lightTheme.disabled = true;
+          darkTheme.disabled = false;
+        } else {
+          lightTheme.disabled = false;
+          darkTheme.disabled = true;
         }
+      }
 
-        // Initialize theme only - let components handle highlighting
-        document.addEventListener('DOMContentLoaded', function () {
-            // Set initial highlight.js theme
-            updateHighlightTheme(theme);
+      // Listen for theme changes and update highlight.js accordingly
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (mutation.attributeName === "class") {
+            const isDark = document.documentElement.classList.contains("dark");
+            updateHighlightTheme(isDark ? "dark" : "light");
+          }
         });
+      });
 
-        // Function to update highlight.js theme
-        function updateHighlightTheme(theme) {
-            const lightTheme = document.getElementById('hljs-light');
-            const darkTheme = document.getElementById('hljs-dark');
-
-            if (theme === 'dark') {
-                lightTheme.disabled = true;
-                darkTheme.disabled = false;
-            } else {
-                lightTheme.disabled = false;
-                darkTheme.disabled = true;
-            }
-        }
-
-        // Listen for theme changes and update highlight.js accordingly
-        const observer = new MutationObserver(function (mutations) {
-            mutations.forEach(function (mutation) {
-                if (mutation.attributeName === 'class') {
-                    const isDark = document.documentElement.classList.contains('dark');
-                    updateHighlightTheme(isDark ? 'dark' : 'light');
-                }
-            });
-        });
-
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['class']
-        });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
     </script>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- App will be mounted here -->
     <div id="app"></div>
 
     <!-- Load site app after DOM is ready -->
     <script defer src="/js/site.js"></script>
-</body>
-
+  </body>
 </html>

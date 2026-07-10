@@ -52,9 +52,12 @@
 
 import { ensureStyles } from '../utils/styles.js';
 import { calendarStyles } from '../styles/calendar.js';
+// Side-effect imports: register the child elements this component createElements
+import './calendar-month.js';
+import './calendar-navigation.js';
 import type { DayContentFn, DayClickDetail, CalendarSize } from './calendar-month.js';
 import type { NavigationChangeDetail } from './calendar-navigation.js';
-import type { DayContext } from '../utils/calendar-utils.js';
+import { parseISODate, type DayContext } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 
 // ============================================================================
@@ -166,6 +169,8 @@ export class TyCalendar extends HTMLElement {
   private _width?: string;
   private _dayContentFn?: DayContentFn;
   private _customCSS?: CSSStyleSheet;
+  private _min?: string; // ISO date bound - passed to navigation + month
+  private _max?: string; // ISO date bound - passed to navigation + month
 
   // Child component references
   private _navigation?: HTMLElement;
@@ -186,7 +191,7 @@ export class TyCalendar extends HTMLElement {
    * Observed attributes
    */
   static get observedAttributes(): string[] {
-    return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width'];
+    return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max'];
   }
 
   constructor() {
@@ -222,7 +227,6 @@ export class TyCalendar extends HTMLElement {
     // Check for dayContentFn set before upgrade
     const plainDayContentFn = (this as any).dayContentFn;
     if (plainDayContentFn && !this._dayContentFn) {
-      console.log('📦 Migrating calendar dayContentFn set before upgrade');
       this._dayContentFn = plainDayContentFn;
       delete (this as any).dayContentFn; // Clean up plain property
     }
@@ -230,7 +234,6 @@ export class TyCalendar extends HTMLElement {
     // Check for customCSS set before upgrade
     const plainCustomCSS = (this as any).customCSS;
     if (plainCustomCSS && !this._customCSS) {
-      console.log('📦 Migrating calendar customCSS set before upgrade');
       this._customCSS = plainCustomCSS;
       delete (this as any).customCSS; // Clean up plain property
     }
@@ -238,7 +241,6 @@ export class TyCalendar extends HTMLElement {
     // Check for value set before upgrade
     const plainValue = (this as any).value;
     if (plainValue && typeof plainValue === 'string' && plainValue !== this.value) {
-      console.log('📦 Migrating calendar value set before upgrade:', plainValue);
       // Parse and set the value properly
       const match = plainValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (match) {
@@ -337,12 +339,38 @@ export class TyCalendar extends HTMLElement {
         // Name change triggers form value update
         this.updateFormValue();
         break;
+
+      case 'min':
+      case 'max':
+        this[name === 'min' ? '_min' : '_max'] = newValue || undefined;
+        this.syncChildComponents();
+        this.updateValidity(); // bounds change can (in)validate current selection
+        break;
     }
   }
 
   // ==========================================================================
   // Property Getters/Setters
   // ==========================================================================
+
+  get min(): string | undefined {
+    return this._min;
+  }
+
+  set min(value: string | undefined) {
+    // Reflect to attribute; attributeChangedCallback syncs children
+    if (value) this.setAttribute('min', value);
+    else this.removeAttribute('min');
+  }
+
+  get max(): string | undefined {
+    return this._max;
+  }
+
+  set max(value: string | undefined) {
+    if (value) this.setAttribute('max', value);
+    else this.removeAttribute('max');
+  }
 
   get year(): number | undefined {
     return this._state.selectedYear;
@@ -571,6 +599,10 @@ export class TyCalendar extends HTMLElement {
     const sizeStr = this.getAttribute('size');
     const widthStr = this.getAttribute('width');
 
+    // Date bounds
+    this._min = this.getAttribute('min') || undefined;
+    this._max = this.getAttribute('max') || undefined;
+
     // Parse year
     const year = parseYear(yearStr);
     if (year) {
@@ -665,6 +697,8 @@ export class TyCalendar extends HTMLElement {
       (this._navigation as any).displayYear = this._state.displayYear;
       (this._navigation as any).locale = this.locale;
       (this._navigation as any).size = this._size;
+      (this._navigation as any).min = this._min ?? '';
+      (this._navigation as any).max = this._max ?? '';
       // Always sync width (set or clear)
       (this._navigation as any).width = this._width;
     }
@@ -675,6 +709,8 @@ export class TyCalendar extends HTMLElement {
       (this._monthDisplay as any).displayYear = this._state.displayYear;
       (this._monthDisplay as any).locale = this.locale;
       (this._monthDisplay as any).size = this._size;
+      (this._monthDisplay as any).min = this._min;
+      (this._monthDisplay as any).max = this._max;
       // Always sync width (set or clear)
       (this._monthDisplay as any).width = this._width;
 
@@ -717,6 +753,40 @@ export class TyCalendar extends HTMLElement {
     } else {
       this._internals.setFormValue('');
     }
+
+    this.updateValidity();
+  }
+
+  /**
+   * Selection outside [min, max] => rangeUnderflow/rangeOverflow.
+   * UI can't produce this (days are disabled), but programmatic values can.
+   */
+  private updateValidity(): void {
+    if (!this._internals) return;
+
+    const { selectedYear, selectedMonth, selectedDay } = this._state;
+    if (selectedYear && selectedMonth && selectedDay) {
+      const sel = Date.UTC(selectedYear, selectedMonth - 1, selectedDay);
+      const min = this._min ? parseISODate(this._min) : null;
+      const max = this._max ? parseISODate(this._max) : null;
+
+      if (min && sel < Date.UTC(min.year, min.month - 1, min.day)) {
+        this._internals.setValidity(
+          { rangeUnderflow: true },
+          `Date must be ${this._min} or later`,
+        );
+        return;
+      }
+      if (max && sel > Date.UTC(max.year, max.month - 1, max.day)) {
+        this._internals.setValidity(
+          { rangeOverflow: true },
+          `Date must be ${this._max} or earlier`,
+        );
+        return;
+      }
+    }
+
+    this._internals.setValidity({});
   }
 
   // ==========================================================================
@@ -844,6 +914,8 @@ export class TyCalendar extends HTMLElement {
     (nav as any).displayYear = this._state.displayYear;
     (nav as any).locale = this.locale;
     (nav as any).size = this._size;
+    (nav as any).min = this._min ?? '';
+    (nav as any).max = this._max ?? '';
 
     // Only set width if explicitly provided
     if (this._width) {
@@ -870,6 +942,8 @@ export class TyCalendar extends HTMLElement {
     (month as any).displayYear = this._state.displayYear;
     (month as any).locale = this.locale;
     (month as any).size = this._size;
+    (month as any).min = this._min;
+    (month as any).max = this._max;
 
     // Only set width if explicitly provided
     if (this._width) {

@@ -50,6 +50,7 @@ interface CopyState {
   flavor: Flavor
   format: 'text' | 'code'
   multiline: boolean
+  horizontalScroll: boolean
   disabled: boolean
   required: boolean
 }
@@ -63,6 +64,8 @@ export interface TyCopyElement extends HTMLElement {
   size: Size
   flavor: Flavor
   format: 'text' | 'code'
+  multiline: boolean
+  horizontalScroll: boolean
   disabled: boolean
   required: boolean
 }
@@ -149,6 +152,11 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       coerce: (v: any) => (v === 'code' ? 'code' : 'text'),
     },
     multiline: {
+      type: 'boolean' as const,
+      visual: true,
+      default: false,
+    },
+    horizontalScroll: {
       type: 'boolean' as const,
       visual: true,
       default: false,
@@ -369,11 +377,15 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
     const shadow = this.shadowRoot!
     const classes = this.buildClassList()
 
-    // Determine display element based on format and multiline
-    const multilineClass = this.multiline ? ' multiline' : ''
+    // Determine display element based on format, multiline and scroll
+    const valueClass = [
+      'copy-field-value',
+      this.multiline ? 'multiline' : '',
+      this.horizontalScroll ? 'horizontal-scroll' : '',
+    ].filter(Boolean).join(' ')
     const displayElement = this.format === 'code'
-      ? `<code class="copy-field-value${multilineClass}">${this.value || ''}</code>`
-      : `<div class="copy-field-value${multilineClass}">${this.value || ''}</div>`
+      ? `<code class="${valueClass}">${this.value || ''}</code>`
+      : `<div class="${valueClass}">${this.value || ''}</div>`
 
     const labelHtml = this.label ? `
       <label class="ty-field-label">
@@ -450,6 +462,14 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
     this.setProperty('multiline', value)
   }
 
+  get horizontalScroll(): boolean {
+    return this.getProperty('horizontalScroll')
+  }
+
+  set horizontalScroll(value: boolean) {
+    this.setProperty('horizontalScroll', value)
+  }
+
   get disabled(): boolean {
     return this.getProperty('disabled')
   }
@@ -470,4 +490,10 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
 // Register the custom element
 if (!customElements.get('ty-copy')) {
   customElements.define('ty-copy', TyCopy)
+}
+
+// Also exposed as ty-copy-field — says what it is (a read-only field with a
+// copy button). A constructor can only register once, hence the subclass.
+if (!customElements.get('ty-copy-field')) {
+  customElements.define('ty-copy-field', class TyCopyField extends TyCopy { })
 }

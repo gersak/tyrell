@@ -19,17 +19,76 @@ export const textareaStyles = `
   /* For absolute positioned dummy element */
 }
 
+/* Bordered container — owns the border + active state (composer layout):
+   header (top slot) · textarea (borderless) · footer (bottom slot). */
 .textarea-wrapper {
   position: relative;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  border: 1px solid var(--input-border, var(--ty-input-border));
+  border-radius: var(--ty-radius-base);
+  background: var(--input-bg, var(--ty-input-bg));
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-/* Custom scrollbar track positioning within textarea border */
-.textarea-wrapper .ty-scrollbar-track-y {
+/* Active ring tied to the TEXTAREA specifically (not :focus-within) so tabbing
+   to a footer button doesn't make the whole field look focused. */
+.textarea-wrapper:has(textarea:focus) {
+  border-color: var(--input-border-focus, var(--ty-input-border-focus));
+  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
+}
+
+/* Error + disabled reflected from the inner textarea (both in shadow DOM, so
+   :has is reliable here — unlike slotted content). */
+.textarea-wrapper:has(textarea.error) {
+  border-color: var(--ty-color-danger);
+  background: var(--ty-bg-danger-soft);
+}
+.textarea-wrapper:has(textarea.error):has(textarea:focus) {
+  border-color: var(--ty-color-danger-bold);
+}
+.textarea-wrapper:has(textarea:disabled) {
+  opacity: 0.5;
+  background: var(--input-disabled-bg, var(--ty-input-disabled-bg));
+  border-color: var(--input-disabled-border, var(--ty-input-disabled-border));
+}
+
+/* Scroll region wraps just the textarea so the custom scrollbar never overlaps
+   the header/footer. */
+.textarea-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+/* Custom scrollbar track positioned to the scroll region (textarea edges) */
+.textarea-scroll .ty-scrollbar-track-y {
   top: 2px;
   right: 2px;
   bottom: 2px;
   border-radius: 0 4px 4px 0;
+}
+
+/* Header / footer slot regions — zero footprint until they have content
+   (the component toggles .has-content via slotchange). footer defaults to
+   space-between so "tools … submit" works; a single wide button fills it. */
+.textarea-header,
+.textarea-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.textarea-footer { justify-content: space-between; }
+.textarea-header.has-content {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--ty-textarea-divider, var(--input-border, var(--ty-input-border)));
+}
+.textarea-footer.has-content {
+  padding: 6px 10px;
+  border-top: 1px solid var(--ty-textarea-divider, var(--input-border, var(--ty-input-border)));
 }
 
 /* ===== LABEL STYLING ===== */
@@ -65,26 +124,17 @@ export const textareaStyles = `
   padding-left: 12px;
 }
 
-/* Error state for textareas */
-textarea.error {
-  border-color: var(--ty-color-danger);
-  background: var(--ty-bg-danger-soft);
-}
-
-textarea.error:focus {
-  border-color: var(--ty-color-danger-bold);
-  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
-}
+/* Error state is reflected on .textarea-wrapper (see above). */
 
 /* ===== TEXTAREA BASE STYLING ===== */
 
 textarea {
-  /* Base appearance — elegant and minimal like input */
+  /* Borderless — the .textarea-wrapper owns the border/background now. */
   box-sizing: border-box;
   width: 100%;
-  border: 1px solid var(--input-border, var(--ty-input-border));
-  border-radius: 6px;
-  background: var(--input-bg, var(--ty-input-bg));
+  flex: 1 1 auto;
+  border: none;
+  background: transparent;
   color: var(--input-color, var(--ty-input-color));
   font-family: inherit;
   /* Linear-paired typography */
@@ -92,7 +142,6 @@ textarea {
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-normal);
-  transition: all 0.15s ease-in-out;
   outline: none;
 
   /* Default size (md) - refined spacing */
@@ -118,24 +167,9 @@ textarea {
   display: none;
 }
 
-/* Focus state - elegant blue glow like input */
-textarea:focus {
-  border-color: var(--input-border-focus, var(--ty-input-border-focus));
-  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
-  background: var(--input-bg, var(--ty-input-bg));
-}
-
-/* Hover state - subtle feedback */
-textarea:hover:not(:disabled) {
-  border-color: var(--input-border-hover, var(--ty-input-border-hover));
-}
-
-/* Disabled state - refined opacity */
+/* Disabled — visual state lives on the wrapper; just the cursor/text here. */
 textarea:disabled {
   cursor: not-allowed;
-  opacity: 0.5;
-  background: var(--input-disabled-bg, var(--ty-input-disabled-bg));
-  border-color: var(--input-disabled-border, var(--ty-input-disabled-border));
   color: var(--input-disabled-color, var(--ty-input-disabled-color));
 }
 

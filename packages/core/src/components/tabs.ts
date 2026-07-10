@@ -413,11 +413,22 @@ function updateMarker(el: TyTabs, activeId: string): void {
   
   const position = calculateMarkerPosition(el, shadowRoot, activeId);
   if (!position) return;
-  
+
+  // Snap without animating when the marker was never positioned, or was
+  // positioned while the tabs were hidden (zero-size rects) — otherwise it
+  // visibly glides in from 0,0 on first display.
+  const snap = !marker.style.left || marker.offsetWidth === 0;
+  if (snap) marker.style.transition = 'none';
+
   marker.style.left = `${position.left}px`;
   marker.style.top = `${position.top}px`;
   marker.style.width = `${position.width}px`;
   marker.style.height = `${position.height}px`;
+
+  if (snap) {
+    marker.offsetWidth; // flush styles so the snap isn't animated
+    marker.style.transition = '';
+  }
 }
 
 /**

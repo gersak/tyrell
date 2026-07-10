@@ -73,17 +73,17 @@ Svelte sets attributes by default. For boolean and complex values, use `prop:` t
 <ty-button disabled={isLoading}>Save</ty-button>
 
 <!-- property (any type) -->
-<ty-multiselect prop:value={selected}>
+<ty-select multiple prop:value={selected}>
   {#each tags as t}
-    <ty-tag value={t}>{t}</ty-tag>
+    <ty-option value={t}>{t}</ty-option>
   {/each}
-</ty-multiselect>
+</ty-select>
 ```
 
 Rules of thumb:
 - **Strings, simple booleans** — attributes are fine: `disabled`, `label="Email"`, `flavor="primary"`.
 - **Arrays, objects, callbacks** — must use `prop:` (attributes serialize to strings).
-- **Multiselect / dropdown values when array** — `prop:value={[...]}`.
+- **Multi-select values when array** — `prop:value={[...]}` on `ty-select multiple`.
 
 ## Two-way binding
 
@@ -107,14 +107,15 @@ For multiselect or any case where you need `event.detail.values` (plural), use e
   let selected = $state([])
 </script>
 
-<ty-multiselect
+<ty-select
+  multiple
   prop:value={selected}
   onchange={(e) => selected = e.detail.values}
 >
-  <ty-tag value="apple">Apple</ty-tag>
-  <ty-tag value="banana">Banana</ty-tag>
-  <ty-tag value="cherry">Cherry</ty-tag>
-</ty-multiselect>
+  <ty-option value="apple">Apple</ty-option>
+  <ty-option value="banana">Banana</ty-option>
+  <ty-option value="cherry">Cherry</ty-option>
+</ty-select>
 ```
 
 ## Composition with child elements
@@ -131,7 +132,7 @@ Slotted children work naturally — `{#each}` blocks render reactive options:
   ]
 </script>
 
-<ty-dropdown
+<ty-select
   label="Country"
   value={country}
   onchange={(e) => country = e.detail.value}
@@ -139,7 +140,10 @@ Slotted children work naturally — `{#each}` blocks render reactive options:
   {#each countries as c (c.code)}
     <ty-option value={c.code}>{c.name}</ty-option>
   {/each}
-</ty-dropdown>
+</ty-select>
+
+<!-- ty-select deprecates ty-dropdown / ty-multiselect: single by default,
+     add `multiple` for multi-select ({e.detail.values} = array). -->
 ```
 
 ## Icons
@@ -626,7 +630,7 @@ The server emits raw `<ty-button>Save</ty-button>` in the HTML response. Browser
 ```css
 ty-button:not(:defined),
 ty-input:not(:defined),
-ty-dropdown:not(:defined) {
+ty-select:not(:defined) {
   visibility: hidden;
 }
 ```

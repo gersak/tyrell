@@ -120,7 +120,7 @@ The same three rules apply across every CLJS framework:
 
 1. **Event payload lives on `event.detail`.** In CLJS: `(.. e -detail -value)` or `(j/get-in e [:detail :value])`.
 2. **Properties vs attributes.** Booleans, arrays, objects must be set as JS properties, not attributes. Strings work as either.
-3. **Don't conflate CLJS data and the DOM.** A `ty-multiselect` `value` is a JS array, not a CLJS vector — convert with `(clj->js)` going in and `(js->clj)` coming out (or use `js/Array.from`).
+3. **Don't conflate CLJS data and the DOM.** A `ty-select multiple` `value` is a JS array, not a CLJS vector — convert with `(clj->js)` going in and `(js->clj)` coming out (or use `js/Array.from`).
 
 ### Vanilla CLJS (no UI framework)
 

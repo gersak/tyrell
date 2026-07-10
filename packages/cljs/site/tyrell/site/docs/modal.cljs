@@ -189,33 +189,33 @@ modalRef.current?.hide({ force: true });" "tsx")]
              {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
              [:ty-input {:name "title" :label "Project name"
                          :placeholder "Eg. Q3 launch site" :required ""}]
-             [:ty-dropdown {:name "priority" :label "Priority" :value "medium"}
+             [:ty-select {:name "priority" :label "Priority" :value "medium"}
               [:ty-option {:value "low"} "Low"]
               [:ty-option {:value "medium"} "Medium"]
               [:ty-option {:value "high"} "High"]
               [:ty-option {:value "urgent"} "Urgent"]]]
 
             [:div {:style {:margin-top "1rem"}}
-             [:ty-multiselect {:name "assignees" :label "Assignees"
+             [:ty-select {:name "assignees" :multiple true :label "Assignees"
                                :placeholder "Add team members..."
                                :value "ada,linus"
                                :clearable ""}
-              [:ty-tag {:value "ada"     :pill "" :size "sm" :flavor "primary"} "Ada Lovelace"]
-              [:ty-tag {:value "linus"   :pill "" :size "sm" :flavor "primary"} "Linus Torvalds"]
-              [:ty-tag {:value "grace"   :pill "" :size "sm" :flavor "primary"} "Grace Hopper"]
-              [:ty-tag {:value "rich"    :pill "" :size "sm" :flavor "primary"} "Rich Hickey"]
-              [:ty-tag {:value "alan"    :pill "" :size "sm" :flavor "primary"} "Alan Kay"]
-              [:ty-tag {:value "barbara" :pill "" :size "sm" :flavor "primary"} "Barbara Liskov"]]]
+              [:ty-option {:value "ada" :flavor "primary"} "Ada Lovelace"]
+              [:ty-option {:value "linus" :flavor "primary"} "Linus Torvalds"]
+              [:ty-option {:value "grace" :flavor "primary"} "Grace Hopper"]
+              [:ty-option {:value "rich" :flavor "primary"} "Rich Hickey"]
+              [:ty-option {:value "alan" :flavor "primary"} "Alan Kay"]
+              [:ty-option {:value "barbara" :flavor "primary"} "Barbara Liskov"]]]
 
             [:div {:style {:margin-top "1rem"}}
-             [:ty-multiselect {:name "tags" :label "Tags"
+             [:ty-select {:name "tags" :multiple true :label "Tags"
                                :placeholder "Pick one or more..."
                                :value "frontend"}
-              [:ty-tag {:value "frontend"      :pill "" :size "sm" :flavor "success"} "frontend"]
-              [:ty-tag {:value "backend"       :pill "" :size "sm" :flavor "warning"} "backend"]
-              [:ty-tag {:value "design"        :pill "" :size "sm" :flavor "secondary"}  "design"]
-              [:ty-tag {:value "infra"         :pill "" :size "sm" :flavor "neutral"} "infra"]
-              [:ty-tag {:value "research"      :pill "" :size "sm" :flavor "info"}    "research"]]]
+              [:ty-option {:value "frontend" :flavor "success"} "frontend"]
+              [:ty-option {:value "backend" :flavor "warning"} "backend"]
+              [:ty-option {:value "design" :flavor "secondary"} "design"]
+              [:ty-option {:value "infra" :flavor "neutral"} "infra"]
+              [:ty-option {:value "research" :flavor "info"} "research"]]]
 
             [:div {:style {:margin-top "1rem"}}
              [:ty-textarea {:name "description" :label "Description"
@@ -253,27 +253,26 @@ modalRef.current?.hide({ force: true });" "tsx")]
       <div class=\"grid gap-4\"
            style=\"grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))\">
         <ty-input name=\"title\" label=\"Project name\" required></ty-input>
-        <ty-dropdown name=\"priority\" label=\"Priority\" value=\"medium\">
+        <ty-select name=\"priority\" label=\"Priority\" value=\"medium\">
           <ty-option value=\"low\">Low</ty-option>
           <ty-option value=\"medium\">Medium</ty-option>
           <ty-option value=\"high\">High</ty-option>
           <ty-option value=\"urgent\">Urgent</ty-option>
-        </ty-dropdown>
+        </ty-select>
       </div>
 
-      <ty-multiselect name=\"assignees\" label=\"Assignees\"
-                      value=\"ada,linus\" clearable>
-        <ty-tag value=\"ada\"   pill size=\"sm\" flavor=\"primary\">Ada Lovelace</ty-tag>
-        <ty-tag value=\"linus\" pill size=\"sm\" flavor=\"primary\">Linus Torvalds</ty-tag>
-        <ty-tag value=\"grace\" pill size=\"sm\" flavor=\"primary\">Grace Hopper</ty-tag>
-        <ty-tag value=\"rich\"  pill size=\"sm\" flavor=\"primary\">Rich Hickey</ty-tag>
-      </ty-multiselect>
+      <ty-select multiple name=\"assignees\" label=\"Assignees\" value=\"ada,linus\">
+        <ty-option value=\"ada\" flavor=\"primary\">Ada Lovelace</ty-option>
+        <ty-option value=\"linus\" flavor=\"primary\">Linus Torvalds</ty-option>
+        <ty-option value=\"grace\" flavor=\"primary\">Grace Hopper</ty-option>
+        <ty-option value=\"rich\" flavor=\"primary\">Rich Hickey</ty-option>
+      </ty-select>
 
-      <ty-multiselect name=\"tags\" label=\"Tags\" value=\"frontend\">
-        <ty-tag value=\"frontend\" pill size=\"sm\" flavor=\"success\">frontend</ty-tag>
-        <ty-tag value=\"backend\"  pill size=\"sm\" flavor=\"warning\">backend</ty-tag>
-        <ty-tag value=\"design\"   pill size=\"sm\" flavor=\"accent\">design</ty-tag>
-      </ty-multiselect>
+      <ty-select multiple name=\"tags\" label=\"Tags\" value=\"frontend\">
+        <ty-option value=\"frontend\" flavor=\"success\">frontend</ty-option>
+        <ty-option value=\"backend\" flavor=\"warning\">backend</ty-option>
+        <ty-option value=\"design\" flavor=\"accent\">design</ty-option>
+      </ty-select>
 
       <ty-textarea name=\"description\" label=\"Description\"
                    min-height=\"100px\" max-height=\"220px\"></ty-textarea>

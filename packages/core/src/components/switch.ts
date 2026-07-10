@@ -127,7 +127,11 @@ export class TySwitch
     ensureStyles(shadow, { css: switchStyles, id: "ty-switch" });
   }
 
-  protected onConnect(): void { }
+  protected onConnect(): void {
+    // Re-arm listeners on RE-connect (base skips render() when already
+    // rendered; onDisconnect removed them). No-op on first connect.
+    this.setupEventListeners();
+  }
   protected onDisconnect(): void {
     this.removeEventListeners();
   }
@@ -176,15 +180,22 @@ export class TySwitch
 
   private removeEventListeners(): void {
     if (!this._listenersSetup) return;
+
+    // Click lives on the HOST (label delegation + full-element trigger) —
+    // remove it before the shadow-container guard below.
+    if (this._clickHandler) {
+      this.removeEventListener("click", this._clickHandler);
+      this._clickHandler = null;
+    }
+
     const shadow = this.shadowRoot;
     if (!shadow) return;
     const el = shadow.querySelector(".switch-container");
-    if (!el) return;
-
-    if (this._clickHandler) {
-      el.removeEventListener("click", this._clickHandler);
-      this._clickHandler = null;
+    if (!el) {
+      this._listenersSetup = false;
+      return;
     }
+
     if (this._keydownHandler) {
       el.removeEventListener("keydown", this._keydownHandler);
       this._keydownHandler = null;
@@ -211,7 +222,9 @@ export class TySwitch
     this._focusHandler = () => el.classList.add("focused");
     this._blurHandler = () => el.classList.remove("focused");
 
-    el.addEventListener("click", this._clickHandler);
+    // Click on the HOST: whole element is a trigger and a wrapping <label>
+    // delegates (the synthetic click lands on the host, not the shadow).
+    this.addEventListener("click", this._clickHandler);
     el.addEventListener("keydown", this._keydownHandler);
     el.addEventListener("focus", this._focusHandler);
     el.addEventListener("blur", this._blurHandler);
@@ -241,13 +254,33 @@ export class TySwitch
       switchEl.appendChild(track);
 
       shadow.appendChild(switchEl);
-      this.setupEventListeners();
     } else {
       switchEl.className = "switch-container " + classes;
       switchEl.tabIndex = this.disabled ? -1 : 0;
       switchEl.setAttribute("aria-checked", this.checked ? "true" : "false");
       switchEl.setAttribute("aria-disabled", this.disabled ? "true" : "false");
       switchEl.setAttribute("aria-required", this.required ? "true" : "false");
+    }
+
+    // (Re)attach listeners — onDisconnect removes them, so a reconnected
+    // element needs them again even though the container already exists.
+    this.setupEventListeners();
+
+    // a11y: mirror the wrapping <label> name onto the role="switch" element.
+    this.applyLabelName(switchEl);
+
+    // Reflect constraint validation to the owning <form> (required was cosmetic).
+    this.updateValidity();
+  }
+
+  /** required + unchecked => valueMissing; otherwise valid. */
+  private updateValidity(): void {
+    const anchor = this.shadowRoot?.querySelector(".switch-container") as HTMLElement | null;
+    if (this.disabled) { this._internals.setValidity({}); return; }
+    if (this.required && !this.checked) {
+      this._internals.setValidity({ valueMissing: true }, "Please turn this on", anchor ?? undefined);
+    } else {
+      this._internals.setValidity({});
     }
   }
 

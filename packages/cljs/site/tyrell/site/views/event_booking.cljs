@@ -1,7 +1,6 @@
 (ns tyrell.site.views.event-booking
   (:require
     [cljs-bean.core :refer [->clj]]
-    [clojure.set :as set]
     [clojure.string :as str]
     [tyrell.i18n :as i18n]
     [tyrell.i18n.time]
@@ -155,10 +154,10 @@
       [:div
        (section-divider "Details")
        [:div.space-y-3
-        [:ty-dropdown {:label "Event Type" :value (:event-type booking-data)
-                       :placeholder "Select event type"
-                       :on {:change #(swap! state assoc-in [:event-booking :booking-data :event-type]
-                                            (.. ^js % -detail -option -value))}}
+        [:ty-select {:label "Event Type" :value (:event-type booking-data)
+                     :placeholder "Select event type"
+                     :on {:change #(swap! state assoc-in [:event-booking :booking-data :event-type]
+                                          (.. ^js % -detail -value))}}
          [:ty-option {:value "meeting"}
           [:div.flex.items-center.gap-2
            [:div.w-6.h-6.ty-bg-primary.rounded.flex.items-center.justify-center
@@ -181,11 +180,11 @@
            [:div [:div.font-medium "Special Event"] [:div.text-xs.ty-text- "$200/hr"]]]]]
 
         [:div.grid.grid-cols-2.gap-3
-         [:ty-dropdown {:label "Duration" :value (:duration booking-data)
-                        :placeholder "Duration"
-                        :on {:change (fn [e]
-                                       (let [value (.. ^js e -detail -option -value)]
-                                         (swap! state assoc-in [:event-booking :booking-data :duration] value)))}}
+         [:ty-select {:label "Duration" :value (:duration booking-data)
+                      :placeholder "Duration"
+                      :on {:change (fn [e]
+                                     (let [value (.. ^js e -detail -value)]
+                                       (swap! state assoc-in [:event-booking :booking-data :duration] value)))}}
           [:ty-option {:value "30"}  "30 min"]
           [:ty-option {:value "60"}  "1 hour"]
           [:ty-option {:value "120"} "2 hours"]
@@ -213,33 +212,28 @@
                                             (.. ^js % -detail -value))}}]]
 
        (section-divider "Add-ons")
-       [:ty-multiselect {:placeholder "Additional services..."
-                         :value (str/join "," selected-services)
-                         :on {:change #(let [values (set (array-seq (.. % -detail -values)))]
-                                         (swap! state assoc-in [:event-booking :selected-services] values))}}
-        (when (contains? selected-services "av-equipment")
-          [:ty-tag {:value "av-equipment" :flavor "primary"}
-           [:div.flex.items-center.gap-1
-            [:ty-icon {:name "video" :size "xs"}] [:span "A/V"] [:span.ty-text-- "+$25"]]])
-        (when (contains? selected-services "catering")
-          [:ty-tag {:value "catering" :flavor "success"}
-           [:div.flex.items-center.gap-1
-            [:ty-icon {:name "utensils" :size "xs"}] [:span "Catering"] [:span.ty-text-- "+$15/pp"]]])
-        [:ty-tag {:value "wifi-upgrade" :flavor "warning"}
-         [:div.flex.items-center.gap-1
-          [:ty-icon {:name "satellite-dish" :size "xs"}] [:span "Premium Wi-Fi"] [:span.ty-text-- "+$10"]]]
-        [:ty-tag {:value "parking" :flavor "warning"}
-         [:div.flex.items-center.gap-1
-          [:ty-icon {:name "car" :size "xs"}] [:span "Parking"] [:span.ty-text-- "+$5/spot"]]]
-        [:ty-tag {:value "security" :flavor "danger"}
-         [:div.flex.items-center.gap-1
-          [:ty-icon {:name "shield" :size "xs"}] [:span "Security"] [:span.ty-text-- "+$50/hr"]]]
-        [:ty-tag {:value "recording" :flavor "secondary"}
-         [:div.flex.items-center.gap-1
-          [:ty-icon {:name "video" :size "xs"}] [:span "Recording"] [:span.ty-text-- "+$75"]]]
-        [:ty-tag {:value "translation" :flavor "danger"}
-         [:div.flex.items-center.gap-1
-          [:ty-icon {:name "globe" :size "xs"}] [:span "Translation"] [:span.ty-text-- "+$100"]]]]
+       ;; ty-select (multiple + compact) with templated out-of-band chips —
+       ;; option data-* attributes feed the chip template below.
+       [:ty-select {:id "booking-addons"
+                    :multiple true
+                    :placeholder "Add services..."
+                    :value (str/join "," selected-services)
+                    :on {:change #(let [values (set (array-seq (.. ^js % -detail -values)))]
+                                    (swap! state assoc-in [:event-booking :selected-services] values))}}
+        [:ty-option {:value "av-equipment" :flavor "primary" :data-icon "video" :data-price "+$25"} "A/V Equipment"]
+        [:ty-option {:value "catering" :flavor "success" :data-icon "utensils" :data-price "+$15/pp"} "Catering"]
+        [:ty-option {:value "wifi-upgrade" :flavor "warning" :data-icon "satellite-dish" :data-price "+$10"} "Premium Wi-Fi"]
+        [:ty-option {:value "parking" :flavor "warning" :data-icon "car" :data-price "+$5/spot"} "Parking"]
+        [:ty-option {:value "security" :flavor "danger" :data-icon "shield" :data-price "+$50/hr"} "Security"]
+        [:ty-option {:value "recording" :flavor "secondary" :data-icon "video" :data-price "+$75"} "Recording"]
+        [:ty-option {:value "translation" :flavor "danger" :data-icon "globe" :data-price "+$100"} "Translation"]]
+       [:div.flex.flex-wrap.gap-2.mt-3
+        [:ty-selected-tags {:for "booking-addons"}
+         [:template
+          [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
+           [:ty-icon {:slot "start" :name "{data-icon}" :size "xs"}]
+           "{label}"
+           [:span.ty-text-- {:slot "end" :style {:font-size "0.6875rem"}} "{data-price}"]]]]]
 
        (section-divider "Summary")
        (let [event-type      (:event-type booking-data)
@@ -308,7 +302,7 @@
       (for [[icon color label desc]
             [["calendar"     "ty-bg-success"  "Calendar Interface" "Date selection with availability indicators."]
              ["clock"        "ty-bg-primary"  "Smart Time Slots"   "Visual availability and real-time status."]
-             ["settings"     "ty-bg-warning"  "Service Config"     "Dropdown and multiselect with pricing."]
+             ["settings"     "ty-bg-warning"  "Service Config"     "Select with templated chips and pricing."]
              ["check-circle" "ty-bg-info"     "Booking Flow"       "Dynamic summary with modal confirmation."]]]
         ^{:key label}
         [:div.ty-elevated.p-4.rounded-lg

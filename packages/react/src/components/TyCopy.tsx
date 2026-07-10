@@ -26,6 +26,12 @@ export interface TyCopyProps extends Omit<React.HTMLAttributes<HTMLElement>, 'on
   
   /** Required field */
   required?: boolean;
+
+  /** Fired after the value is copied to the clipboard */
+  onCopySuccess?: (event: CustomEvent) => void;
+
+  /** Fired when copying to the clipboard fails */
+  onCopyError?: (event: CustomEvent) => void;
 }
 
 // React wrapper for ty-copy web component
@@ -39,7 +45,9 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
     multiline,
     disabled,
     required,
-    ...props 
+    onCopySuccess,
+    onCopyError,
+    ...props
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
@@ -53,6 +61,22 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
         }
       }
     }, [ref]);
+
+    // Custom events → React callbacks
+    useEffect(() => {
+      const el = elementRef.current;
+      if (!el) return;
+      const bound: Array<[string, EventListener]> = [];
+      if (onCopySuccess) {
+        const h = (e: Event) => onCopySuccess(e as CustomEvent);
+        el.addEventListener('copy-success', h); bound.push(['copy-success', h]);
+      }
+      if (onCopyError) {
+        const h = (e: Event) => onCopyError(e as CustomEvent);
+        el.addEventListener('copy-error', h); bound.push(['copy-error', h]);
+      }
+      return () => bound.forEach(([n, h]) => el.removeEventListener(n, h));
+    }, [onCopySuccess, onCopyError]);
 
     const isMultiline = useBooleanProperty(elementRef, 'multiline', multiline);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);

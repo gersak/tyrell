@@ -23,7 +23,8 @@
           :tyrell.site.docs/switch
           :tyrell.site.docs/radio]}
    {:title "Selection"
-    :ids [:tyrell.site.docs/dropdown
+    :ids [:tyrell.site.docs/select
+          :tyrell.site.docs/dropdown
           :tyrell.site.docs/multiselect]}
    {:title "Date & time"
     :ids [:tyrell.site.docs/date-picker
@@ -53,15 +54,22 @@
 
 (defn component-row
   "A row inside a section panel: name + description on the left, live primitive
-   on the right. Components flow inside the panel without their own chrome."
-  [{:keys [id name description preview icon]}]
+   on the right. Components flow inside the panel without their own chrome.
+   `:deprecated` (string = replacement) tints the name danger and renders a
+   bold DEPRECATED badge pointing at the replacement."
+  [{:keys [id name description preview icon deprecated]}]
   [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150.hover:ty-bg-primary-
    {:on {:click #(router/navigate! id)}}
    ;; Left: name + description + cta
    [:div.flex-shrink-0.w-full.md:w-64
-    [:h3.text-base.md:text-lg.font-medium.ty-text.transition-colors
-     {:class "group-hover:ty-text-primary"}
+    [:h3.text-base.md:text-lg.font-medium.transition-colors
+     {:class (if deprecated "ty-text-danger" ["ty-text" "group-hover:ty-text-primary"])}
      name]
+    (when deprecated
+      [:div.mt-1.flex.items-center.gap-1.5.flex-wrap
+       [:span.ty-text-danger.font-bold.text-xs.tracking-widest "DEPRECATED"]
+       [:span.text-xs.ty-text- "— use"]
+       [:code.ty-text-danger.font-semibold.text-xs deprecated]])
     (when description
       [:p.mt-1.text-sm.ty-text-.leading-relaxed.transition-colors
        {:class "group-hover:ty-text"}

@@ -44,7 +44,7 @@
    :c-soft-mult   0.77
    :c-faint-mult  0.46
    ;; UI state
-   :floating-open? true
+   :floating-open? false
    :show-ladder?   false
    :show-curve?    false
    :show-anchors?  true})
@@ -465,7 +465,7 @@
                  :cursor "pointer"}
          :on {:click toggle-floating!}}
         [:div {:style {:width "16px" :height "16px" :border-radius "999px"
-                       :background (str "oklch(0.55 " brand-chroma " " brand-hue ")")
+                       :background "var(--ty-color-primary)"
                        :border "1px solid var(--ty-border-soft)"}}]
         [:span.ty-text {:style {:font-size "0.75rem" :font-weight 600}}
          "Brand"]]
@@ -481,7 +481,7 @@
         [:div.flex.items-center.justify-between.mb-3
          [:div.flex.items-center.gap-2
           [:div {:style {:width "14px" :height "14px" :border-radius "999px"
-                         :background (str "oklch(0.55 " brand-chroma " " brand-hue ")")
+                         :background "var(--ty-color-primary)"
                          :border "1px solid var(--ty-border-soft)"}}]
           [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
                                    :letter-spacing "0.08em" :text-transform "uppercase"}}
@@ -694,7 +694,7 @@
    (section-label "Form controls")
    [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
     [:ty-input {:label "Project name" :placeholder "Eg. Q3 launch site"}]
-    [:ty-dropdown {:label "Priority" :value "medium"}
+    [:ty-select {:label "Priority" :value "medium"}
      [:ty-option {:value "low"}    "Low"]
      [:ty-option {:value "medium"} "Medium"]
      [:ty-option {:value "high"}   "High"]]

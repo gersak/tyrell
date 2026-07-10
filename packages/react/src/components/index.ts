@@ -55,12 +55,18 @@ export type { TyIconProps } from './TyIcon';
 
 export { TyModal } from './TyModal';
 export type { TyModalProps, TyModalEventDetail, TyModalRef } from './TyModal';
+// Platform/ARIA name alias (the element is also registered as ty-dialog)
+export { TyModal as TyDialog } from './TyModal';
+export type { TyModalProps as TyDialogProps, TyModalEventDetail as TyDialogEventDetail, TyModalRef as TyDialogRef } from './TyModal';
 
 export { TyTooltip } from './TyTooltip';
 export type { TyTooltipProps } from './TyTooltip';
 
 export { TyMultiselect } from './TyMultiselect';
 export type { TyMultiselectProps, TyMultiselectEventDetail } from './TyMultiselect';
+
+export { TySelect, TySelectedTags } from './TySelect';
+export type { TySelectProps, TySelectEventDetail, TySelectItem, TySelectedTagsProps } from './TySelect';
 
 export { TyCalendar } from './TyCalendar';
 export type { TyCalendarProps, TyCalendarChangeEventDetail, TyCalendarNavigateEventDetail } from './TyCalendar';
@@ -85,6 +91,9 @@ export type { TyRadioGroupProps, TyRadioGroupEventDetail } from './TyRadioGroup'
 
 export { TyCopy } from './TyCopy';
 export type { TyCopyProps } from './TyCopy';
+// Descriptive name alias (the element is also registered as ty-copy-field)
+export { TyCopy as TyCopyField } from './TyCopy';
+export type { TyCopyProps as TyCopyFieldProps } from './TyCopy';
 
 export { TyFileUpload } from './TyFileUpload';
 export type { TyFileUploadProps, TyFileUploadEventDetail } from './TyFileUpload';

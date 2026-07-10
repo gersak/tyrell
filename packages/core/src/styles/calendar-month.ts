@@ -10,43 +10,11 @@ export const calendarMonthStyles = `
    Defaults chain back to the global --ty-color-* / --ty-bg-* / --ty-border tokens.
    ============================================================================ */
 
-:host {
-  /* Accent aliases — override these three for thin retheming */
-  --ty-calendar-accent: var(--ty-color-primary);
-  --ty-calendar-today-accent: var(--ty-color-secondary);
-  --ty-calendar-muted: var(--ty-color-neutral);
-
-  /* Header (weekday names) */
-  --ty-calendar-header-color: var(--ty-color-neutral-strong);
-
-  /* Day cell — base */
-  --ty-calendar-day-color: var(--ty-calendar-muted);
-  --ty-calendar-day-bg: transparent;
-  --ty-calendar-day-border: var(--ty-border);
-  --ty-calendar-day-radius: 0.375rem;
-
-  /* Day cell — hover */
-  --ty-calendar-day-hover-color: var(--ty-color-neutral-strong);
-  --ty-calendar-day-hover-bg: var(--ty-bg-neutral-soft);
-  --ty-calendar-day-hover-border: var(--ty-border-bold);
-
-  /* Today */
-  --ty-calendar-today-color: var(--ty-color-secondary-strong);
-  --ty-calendar-today-bg: var(--ty-bg-secondary-soft);
-  --ty-calendar-today-border: var(--ty-calendar-today-accent);
-
-  /* Selected */
-  --ty-calendar-selected-color: var(--ty-color-primary-strong);
-  --ty-calendar-selected-bg: var(--ty-bg-primary);
-  --ty-calendar-selected-border: var(--ty-calendar-accent);
-  --ty-calendar-selected-hover-bg: var(--ty-bg-primary-bold);
-  --ty-calendar-selected-hover-border: var(--ty-color-primary-bold);
-
-  /* Modifier states */
-  --ty-calendar-weekend-color: var(--ty-color-danger-soft);
-  --ty-calendar-other-month-color: var(--ty-color-neutral-faint);
-  --ty-calendar-other-month-opacity: 0.5;
-}
+/* Theming tokens are applied as var(--ty-calendar-*, <default>) at point
+   of use (not declared on :host) so consumers can override any of them
+   from outside the shadow root. The 3 accent aliases — --ty-calendar-accent,
+   --ty-calendar-today-accent, --ty-calendar-muted — still cascade into the
+   derived defaults, so overriding one retints the related cells. */
 
 /* ============================================================================
    Base Calendar Container
@@ -58,7 +26,7 @@ export const calendarMonthStyles = `
   box-sizing: border-box;
   gap: 0;
   padding: 0.75rem;
-  border-radius: 0.5rem;
+  border-radius: var(--ty-radius-md);
   font-family: system-ui, sans-serif;
   user-select: none;
   width: var(--calendar-width, fit-content);
@@ -78,7 +46,7 @@ export const calendarMonthStyles = `
 
 .calendar-header-row {
   flex: 0 0 auto;
-  color: var(--ty-calendar-header-color);
+  color: var(--ty-calendar-header-color, var(--ty-color-neutral-strong));
 }
 
 .calendar-day-row {
@@ -131,10 +99,10 @@ export const calendarMonthStyles = `
   margin: 0.125rem;
 
   /* Visual */
-  border-radius: var(--ty-calendar-day-radius);
-  border: 1px solid var(--ty-calendar-day-border);
-  background-color: var(--ty-calendar-day-bg);
-  color: var(--ty-calendar-day-color);
+  border-radius: var(--ty-calendar-day-radius, 0.375rem);
+  border: 1px solid var(--ty-calendar-day-border, var(--ty-border-faint));
+  background-color: var(--ty-calendar-day-bg, transparent);
+  color: var(--ty-calendar-day-color, var(--ty-calendar-muted, var(--ty-color-neutral)));
   cursor: pointer;
   transition: all 0.15s ease;
 
@@ -144,9 +112,9 @@ export const calendarMonthStyles = `
 
 /* Hover State - Stronger Feedback */
 .calendar-day-cell:hover {
-  color: var(--ty-calendar-day-hover-color);
-  background-color: var(--ty-calendar-day-hover-bg);
-  border-color: var(--ty-calendar-day-hover-border);
+  color: var(--ty-calendar-day-hover-color, var(--ty-color-neutral-strong));
+  background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
+  border-color: var(--ty-calendar-day-hover-border, var(--ty-border-bold));
 }
 
 /* ============================================================================
@@ -155,40 +123,48 @@ export const calendarMonthStyles = `
 
 /* Today - Strong Visual Indicator */
 .calendar-day-cell.today {
-  background-color: var(--ty-calendar-today-bg);
-  color: var(--ty-calendar-today-color);
-  border-color: var(--ty-calendar-today-border);
+  background-color: var(--ty-calendar-today-bg, var(--ty-bg-secondary-soft));
+  color: var(--ty-calendar-today-color, var(--ty-color-secondary-strong));
+  border-color: var(--ty-calendar-today-border, var(--ty-calendar-today-accent, var(--ty-color-secondary)));
   font-weight: 600;
 }
 
 /* Weekend - Subtle Color Shift */
 .calendar-day-cell.weekend {
-  color: var(--ty-calendar-weekend-color);
+  color: var(--ty-calendar-weekend-color, var(--ty-color-danger-soft));
 }
 
 /* Other Month - Muted */
 .calendar-day-cell.other-month {
-  color: var(--ty-calendar-other-month-color);
-  opacity: var(--ty-calendar-other-month-opacity);
+  color: var(--ty-calendar-other-month-color, var(--ty-color-neutral-faint));
+  opacity: var(--ty-calendar-other-month-opacity, 0.5);
 }
 
 .calendar-day-cell.other-month:hover { 
-  color: var(--ty-calendar-day-hover-color);
-  background-color: var(--ty-calendar-day-hover-bg);
+  color: var(--ty-calendar-day-hover-color, var(--ty-color-neutral-strong));
+  background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
   opacity: 0.7;
+}
+
+/* Disabled - outside min/max bounds */
+.calendar-day-cell.disabled {
+  color: var(--ty-calendar-disabled-color, var(--ty-color-neutral-faint));
+  opacity: var(--ty-calendar-disabled-opacity, 0.35);
+  cursor: default;
+  pointer-events: none;
 }
 
 /* Selected State (for custom usage) */
 .calendar-day-cell.selected {
-  background-color: var(--ty-calendar-selected-bg);
-  color: var(--ty-calendar-selected-color);
-  border-color: var(--ty-calendar-selected-border);
+  background-color: var(--ty-calendar-selected-bg, var(--ty-bg-primary));
+  color: var(--ty-calendar-selected-color, var(--ty-color-primary-strong));
+  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, var(--ty-color-primary)));
   font-weight: 600;
 }
 
 .calendar-day-cell.selected:hover {
-  background-color: var(--ty-calendar-selected-hover-bg);
-  border-color: var(--ty-calendar-selected-hover-border);
+  background-color: var(--ty-calendar-selected-hover-bg, var(--ty-bg-primary-bold));
+  border-color: var(--ty-calendar-selected-hover-border, var(--ty-color-primary-bold));
 }
 
 .calendar-day-cell.selected.other-month {

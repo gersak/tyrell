@@ -729,6 +729,17 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       visual: false, // Non-visual, just for form field name
       default: ''
     },
+    // Date bounds (ISO) — passed through to the embedded ty-calendar
+    min: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    max: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
 
     // Boolean properties
     required: {
@@ -1161,6 +1172,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   get clearable(): boolean { return this.getProperty('clearable'); }
   set clearable(v: boolean) { this.setProperty('clearable', v); }
 
+  get min(): string { return this.getProperty('min'); }
+  set min(v: string) { this.setProperty('min', v ?? ''); }
+
+  get max(): string { return this.getProperty('max'); }
+  set max(v: string) { this.setProperty('max', v ?? ''); }
+
   // With-time property
   get withTime(): boolean { return this.getProperty('with-time'); }
   set withTime(v: boolean) { this.setProperty('with-time', v); }
@@ -1346,6 +1363,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       calendar.setAttribute('locale', locale);
     }
 
+    // Pass through date bounds
+    const min = this.getProperty('min');
+    const max = this.getProperty('max');
+    if (min) calendar.setAttribute('min', min);
+    if (max) calendar.setAttribute('max', max);
+
     // Add calendar change handler
     calendar.addEventListener('change', (e: Event) => this.handleCalendarChange(e));
 
@@ -1389,6 +1412,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     input.type = this._state.withTime ? 'datetime-local' : 'date';
     if (isDisabled) input.disabled = true;
     if (this.getProperty('required')) input.required = true;
+
+    // Native min/max (datetime-local wants a time suffix)
+    const minBound = this.getProperty('min');
+    const maxBound = this.getProperty('max');
+    if (minBound) input.min = this._state.withTime ? `${minBound}T00:00` : minBound;
+    if (maxBound) input.max = this._state.withTime ? `${maxBound}T23:59` : maxBound;
 
     // Pre-fill value
     const localValue = componentsToLocalValue(this.getComponents(), this._state.withTime);

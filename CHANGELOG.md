@@ -5,6 +5,49 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC26] - 2026-07-09
+
+Headline: **`ty-select` — the select control that replaces `ty-dropdown` and `ty-multiselect`.** Single select by default with a form-field look matching `ty-input`; one attribute each for multi-select and the compact toolbar skin; rich options display intact in the field. Both legacy components are deprecated (kept for compatibility, no new features) — all site demos and framework guides migrated.
+
+### Added — ty-select
+
+- **`multiple`** — native `<select multiple>` semantics. Absent = single select: scalar `value`, picking replaces the selection and closes the popup, one FormData entry. Present = toggle selection, popup stays open, repeated `name=` entries (HTMX-ready).
+- **`compact`** — content-hugging trigger for toolbars/filter bars instead of the default full-width field. Single shows the selected label; multiple shows placeholder + count badge.
+- **`searchable`** — popup search row on demand: `auto` (default) shows it only for 8+ options — short lists open as pure option menus; `searchable`/`"true"` always, `"false"` never; `external-search` always (the input is its mechanism). Magnifier icon in the search row.
+- **Rich selected display (single)** — the selected option is cloned into the trigger (`slot="selected"` + `cloned`, same mechanism as ty-dropdown), so rich HTML options (icons, prices, flags) display intact.
+- **`label` attribute on `ty-option`** — native `<option label>` semantics: clean display text for multi-select field summaries and `ty-selected-tags` chips when option content is rich HTML. Honored by ty-select display, `change` `items`, and chip templates.
+- **`start` / `end` slots** — field adornments (icons, badges), same convention as ty-input; `end` sits before the chevron. Works in the compact skin.
+- **`change` detail `value`** — scalar for single select, array for multiple; `values` always the array form.
+- **Subpath exports** — `tyrell-components/select` and `tyrell-components/selected-tags`.
+- **React wrappers** — `TySelect` + `TySelectedTags` (typed props, array value coercion, React-18 property bridge); `TyOption` gains typed `label` and `flavor` props.
+
+### Added — ty-input password reveal
+
+- `type="password"` renders a built-in eye / eye-off toggle after the end slot. Toggles the native input's type only — component `type`, form value, and API unchanged. `aria-pressed`/`aria-label` swap; focus stays in the field.
+
+### Added — ty-checkbox
+
+- **Redesigned as a single tick** — full flavor color when checked, faint when unchecked, dash + mid-opacity when `indeterminate` (new attribute, native semantics: visual/ARIA only, clicking resolves to checked), grayscale when disabled.
+
+### Added — calendar bounds
+
+- **`min` / `max`** (ISO dates) on `ty-calendar`, `ty-calendar-month`, `ty-calendar-navigation`, and `ty-date-picker` (incl. the native mobile input). Out-of-bounds days are disabled and don't emit; navigation clamps — year jumps land ON the bound month. Out-of-bounds programmatic selections set `rangeUnderflow`/`rangeOverflow` constraint validity. Set cross-wise on two calendars for period pickers.
+
+### Fixed
+
+- **Label-click delegation** for `ty-checkbox`, `ty-switch`, and `ty-radio`: the click handler now lives on the host, so the documented `<label><ty-checkbox></ty-checkbox> text</label>` pattern actually toggles/selects. Previously label-text clicks did nothing (the synthetic click never reached the shadow-internal listener).
+- **Reconnect death**: checkbox/switch/radio moved in the DOM lost their listeners permanently; they re-arm on reconnect.
+- **Parse-order init bugs** (plain-HTML/SSR pages): `ty-radio-group` initial `value` now marks the matching radio (children announce on connect); `ty-selected-tags` `<template>` chips now stamp when the template is parsed after the element connects, and initial picker values render as chips (observes the picker's `selected` attributes).
+- **ty-select popup positioning** with hundreds of options: the height estimate used the uncapped content height and blindly flipped the popup above the field (clipping off-screen); now capped, and when neither side fits it takes the side with more room.
+- **ty-select loading panel** styling: continues the fused one-panel silhouette instead of floating as a detached card with a see-through gap.
+- **`ty-calendar` standalone import**: side-effect imports register its child elements (type-only imports left `ty-calendar-navigation`/`ty-calendar-month` undefined for `tyrell-components/calendar` consumers).
+
+### Changed
+
+- **Monochrome surfaces by default** — `tyrell-brand.css` surfaces no longer tint toward brand; new `--ty-surface-chroma` knob (default `0`) restores the warmth if wanted. Default `--ty-brand-chroma` lowered `0.2` → `0.12`.
+- **Softer input borders** — `--ty-input-border`/`-hover` one step fainter in both the base and brand layers.
+- Aliases: `ty-modal` also registered as **`ty-dialog`**, `ty-copy` as **`ty-copy-field`** (same class; React exports `TyDialog`/`TyCopyField`).
+
 ## [1.0.0-RC10] - 2026-06-02
 
 Headline: **OKLCH brand layer**. Drop `tyrell-brand.css` in next to `tyrell.css`, set 1–2 CSS variables, and the entire library rebrands coherently in light and dark mode. The 186 hexes in `tyrell.css` stay untouched — the new layer overrides them via the cascade. Companion site demo at `/docs/theming` lets you drag sliders and copy a ready-to-paste `:root` snippet.

@@ -34,11 +34,11 @@ For smaller bundles, register only the components you use:
 import 'tyrell-components/css/tyrell.css'
 import 'tyrell-components/button'
 import 'tyrell-components/input'
-import 'tyrell-components/dropdown'
+import 'tyrell-components/select'
 import 'tyrell-components/modal'
 ```
 
-Available subpaths match the component names — `button`, `input`, `dropdown`, `multiselect`, `modal`, `popup`, `tooltip`, `tag`, `option`, `icon`, `checkbox`, `textarea`, `copy`, `tabs`, `tab`, `calendar`, `calendar-month`, `calendar-navigation`, `date-picker`.
+Available subpaths match the component names — `button`, `input`, `select`, `selected-tags`, `dropdown` *(deprecated)*, `multiselect` *(deprecated)*, `modal`, `popup`, `tooltip`, `tag`, `option`, `icon`, `checkbox`, `textarea`, `copy`, `tabs`, `tab`, `calendar`, `calendar-month`, `calendar-navigation`, `date-picker`.
 
 #### Option B — CDN script tag
 
@@ -65,7 +65,7 @@ Bundler imports are the better default for SPAs and SSR apps (Next.js, Remix, Vi
 ### 3. Import and use
 
 ```tsx
-import { TyButton, TyInput, TyDropdown } from 'tyrell-react'
+import { TyButton, TyInput, TySelect } from 'tyrell-react'
 
 function App() {
   const [name, setName] = useState('')
@@ -91,10 +91,10 @@ Two naming conventions:
 
 ```tsx
 // Tyrell-prefixed (explicit)
-import { TyButton, TyInput, TyDropdown } from 'tyrell-react'
+import { TyButton, TyInput, TySelect } from 'tyrell-react'
 
 // Short names (clean)
-import { Button, Input, Dropdown } from 'tyrell-react'
+import { Button, Input, Select } from 'tyrell-react'
 ```
 
 ## Event Handling
@@ -135,10 +135,22 @@ interface TyInputEventDetail {
 ### Selection Components
 
 ```tsx
-<TyDropdown onChange={(e) => setCountry(e.detail.value)}>
+<TySelect onChange={(e) => setCountry(e.detail.value)}>
   <TyOption value="us">United States</TyOption>
   <TyOption value="de">Germany</TyOption>
-</TyDropdown>
+</TySelect>
+```
+
+`TySelect` is the select control (it deprecates `TyDropdown` and `TyMultiselect`).
+Single select by default — `e.detail.value` is the scalar value. Add `multiple`
+for multi-select (`e.detail.value` becomes an array; `e.detail.values` is always
+the array form):
+
+```tsx
+<TySelect multiple value={tags} onChange={(e) => setTags(e.detail.values)}>
+  <TyOption value="react">React</TyOption>
+  <TyOption value="vue">Vue</TyOption>
+</TySelect>
 ```
 
 ### Checkbox
@@ -213,10 +225,10 @@ function ContactForm() {
     <form onSubmit={handleSubmit}>
       <TyInput label="Name" value={form.name} onChange={update('name')} required />
       <TyInput label="Email" type="email" value={form.email} onChange={update('email')} required />
-      <TyDropdown label="Country" value={form.country} onChange={update('country')}>
+      <TySelect label="Country" value={form.country} onChange={update('country')}>
         <TyOption value="us">United States</TyOption>
         <TyOption value="de">Germany</TyOption>
-      </TyDropdown>
+      </TySelect>
       <TyTextarea label="Message" value={form.message} onChange={update('message')} rows={4} />
       <TyButton type="submit" flavor="primary">Send</TyButton>
     </form>
@@ -224,37 +236,46 @@ function ContactForm() {
 }
 ```
 
-## Multiselect
+## Multi-select — `<TySelect multiple>`
 
-Children must be `<TyTag>` (not `<TyOption>`), and the change detail is
-`{ values, action, item }` — note the plural `values`:
+> `TyMultiselect` is **deprecated**. Use `TySelect` with `multiple` — options are
+> `<TyOption>` children (not `<TyTag>`), and selected chips render out-of-band via
+> `<TySelectedTags>` wherever you want them.
 
 ```tsx
 const [selected, setSelected] = useState<string[]>([])
 
-<TyMultiselect
+<TySelect
+  multiple
+  id="tags"
   value={selected}
   onChange={(e) => setSelected(e.detail.values)}
   label="Tags"
   placeholder="Select tags..."
 >
-  <TyTag value="react">React</TyTag>
-  <TyTag value="vue">Vue</TyTag>
-  <TyTag value="angular">Angular</TyTag>
-</TyMultiselect>
+  <TyOption value="react">React</TyOption>
+  <TyOption value="vue">Vue</TyOption>
+  <TyOption value="angular">Angular</TyOption>
+</TySelect>
+
+{/* dismissible chips — anywhere in the layout */}
+<TySelectedTags htmlFor="tags" />
 ```
 
-## Dropdown with Data
+`TyOption` supports rich HTML children; give it a `label` prop for clean display
+text in summaries/chips, and `data-*` attributes to feed `TySelectedTags`
+`<template>` chips.
+
+## Select with Data
+
+Map your data to `<TyOption>` children:
 
 ```tsx
-<TyDropdown
-  options={[
-    { value: 'us', text: 'United States' },
-    { value: 'de', text: 'Germany' },
-    { value: 'jp', text: 'Japan' }
-  ]}
-  onChange={(e) => setCountry(e.detail.value)}
-/>
+<TySelect value={country} onChange={(e) => setCountry(e.detail.value)}>
+  {countries.map(({ value, text }) => (
+    <TyOption key={value} value={value}>{text}</TyOption>
+  ))}
+</TySelect>
 ```
 
 ## Refs and Imperative API
@@ -322,7 +343,7 @@ All components accept a typed `style` prop that supports CSS custom properties f
 
 ### Input components
 
-`TyInput`, `TyTextarea`, `TyDropdown`, and `TyMultiselect` all share the same tokens:
+`TyInput`, `TyTextarea`, `TySelect` (and the deprecated `TyDropdown`/`TyMultiselect`) all share the same tokens:
 
 | Token | Purpose |
 |-------|---------|
@@ -349,9 +370,9 @@ All components accept a typed `style` prop that supports CSS custom properties f
   }}
 />
 
-<TyDropdown style={{ '--input-bg': '#fdf4ff', '--input-border': '#c084fc' }}>
+<TySelect style={{ '--input-bg': '#fdf4ff', '--input-border': '#c084fc' }}>
   <TyOption value="a">Option A</TyOption>
-</TyDropdown>
+</TySelect>
 ```
 
 You can also scope overrides to a container — all input components inside inherit:
@@ -359,7 +380,7 @@ You can also scope overrides to a container — all input components inside inhe
 ```tsx
 <div style={{ '--input-border': '#16a34a', '--input-border-focus': '#15803d' } as any}>
   <TyInput label="Name" value={name} onChange={...} />
-  <TyDropdown label="Role" value={role} onChange={...}>...</TyDropdown>
+  <TySelect label="Role" value={role} onChange={...}>...</TySelect>
 </div>
 ```
 
@@ -798,10 +819,10 @@ Tyrell components participate in HTML forms via `ElementInternals`:
   console.log(Object.fromEntries(data.entries()))
 }}>
   <TyInput name="email" type="email" required label="Email" />
-  <TyDropdown name="role" label="Role">
+  <TySelect name="role" label="Role">
     <TyOption value="admin">Admin</TyOption>
     <TyOption value="user">User</TyOption>
-  </TyDropdown>
+  </TySelect>
   <TyCheckbox name="agree" required>I agree to terms</TyCheckbox>
   <TyButton type="submit" flavor="primary">Submit</TyButton>
 </form>
@@ -914,8 +935,10 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyInput` | `value` | `onChange` / `onChangeCommit` | -- |
 | `TyTextarea` | `value` | `onChange` / `onChangeCommit` | -- |
 | `TyCheckbox` | `checked` | `onChange` | -- |
-| `TyDropdown` | `value` | `onChange` | -- |
-| `TyMultiselect` | `value` (array) | `onChange` | -- |
+| `TySelect` | `value` (string, or array when `multiple`) | `onChange` / `onSearch` / `onOpen` / `onClose` | -- |
+| `TySelectedTags` | `htmlFor` | -- | -- |
+| `TyDropdown` *(deprecated → TySelect)* | `value` | `onChange` | -- |
+| `TyMultiselect` *(deprecated → TySelect multiple)* | `value` (array) | `onChange` | -- |
 | `TyDatePicker` | `value` (ISO) | `onChange` / `onOpen` / `onClose` | -- |
 | `TyCalendar` | `value` (ISO) | `onChange` / `onNavigate` | -- |
 | `TyTabs` | `active` | `onChange` | -- |

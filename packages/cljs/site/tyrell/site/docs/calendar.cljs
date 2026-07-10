@@ -46,6 +46,14 @@
         :type "string"
         :default "\"en-US\""
         :description "Locale for day/month names (e.g. \"de-DE\", \"fr-FR\")"}
+       {:name "min"
+        :type "string"
+        :default "-"
+        :description "Earliest selectable date (ISO YYYY-MM-DD) — earlier days disabled, navigation clamped"}
+       {:name "max"
+        :type "string"
+        :default "-"
+        :description "Latest selectable date (ISO YYYY-MM-DD) — later days disabled, navigation clamped"}
        {:name "show-navigation"
         :type "boolean"
         :default "true"

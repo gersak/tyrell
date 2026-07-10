@@ -153,6 +153,35 @@
   <ty-icon slot=\"end\" name=\"external-link\" size=\"sm\"></ty-icon>
 </ty-input>")])
 
+(defn- button-slot-content []
+  [:div.ty-content.rounded-lg.p-5
+   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+    "Drop a "
+    [:code "ty-button"]
+    " into the end slot for an inline action — submit, send, apply. The button "
+    "keeps its own flavor and sizing independent of the field."]
+   (demo-area
+    [:div.grid.gap-4
+     [:ty-input {:label "Your rating" :type "number" :placeholder "Rate 1–5"}
+      [:ty-icon {:slot "start" :name "star" :size "sm"}]
+      [:ty-button {:slot "end" :flavor "primary" :size "sm"}
+       [:ty-icon {:name "check" :size "sm"}]
+       "Submit"]]
+     [:ty-input {:label "Search" :placeholder "Search..." :type "text"}
+      [:ty-icon {:slot "start" :name "search" :size "sm"}]
+      [:ty-button {:slot "end" :flavor "neutral" :size "sm"}
+       [:ty-icon {:name "send" :size "sm"}]
+       "Go"]]
+     [:ty-input {:label "Promo code" :flavor "success" :placeholder "Enter code"}
+      [:ty-button {:slot "end" :flavor "success" :size "sm"} "Apply"]]])
+   (code-block "<ty-input label=\"Your rating\" type=\"number\" placeholder=\"Rate 1–5\">
+  <ty-icon slot=\"start\" name=\"star\" size=\"sm\"></ty-icon>
+  <ty-button slot=\"end\" flavor=\"primary\" size=\"sm\">
+    <ty-icon name=\"check\" size=\"sm\"></ty-icon>
+    Submit
+  </ty-button>
+</ty-input>")])
+
 (defn- debounce-content []
   [:div.ty-content.rounded-lg.p-5
    [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -349,16 +378,19 @@ document.getElementById('username').addEventListener('input', (e) => {
     "Numeric inputs maintain a shadow value — the unformatted number — accessible via event.detail.value."]
    (demo-area
     [:div.grid.gap-4
-     [:ty-input {:id "usd-amount" :type "currency" :label "USD Amount" :currency "USD" :value "100"}]
+     [:ty-input {:id "usd-amount" :type "currency" :label "USD Amount" :currency "USD" :value "100"
+                 ;; Inline <script> injected via Replicant hiccup never executes, so
+                 ;; wire the live conversion through an on-mount lifecycle hook instead.
+                 :replicant/on-mount
+                 (fn [{^js node :replicant/node}]
+                   (.addEventListener
+                     node "input"
+                     (fn [^js e]
+                       (let [v (js/parseFloat (.. e -detail -value))
+                             eur (js/document.getElementById "eur-amount")]
+                         (when (and eur (not (js/isNaN v)))
+                           (set! (.-value eur) (.toFixed (* v 0.93) 2)))))))}]
      [:ty-input {:id "eur-amount" :type "currency" :label "EUR (at 0.93 rate)" :currency "EUR" :locale "de-DE" :disabled "true" :value "93.00"}]])
-   [:script {:dangerouslySetInnerHTML
-             {:__html "(function(){
-  const usd = document.getElementById('usd-amount');
-  const eur = document.getElementById('eur-amount');
-  usd?.addEventListener('input', (e) => {
-    if (e.detail.value) eur.value = (e.detail.value * 0.93).toFixed(2);
-  });
-})();"}}]
    (code-block "<ty-input id=\"usd\" type=\"currency\" label=\"USD\" currency=\"USD\"></ty-input>
 <ty-input id=\"eur\" type=\"currency\" label=\"EUR\" currency=\"EUR\" locale=\"de-DE\" disabled=\"true\"></ty-input>
 
@@ -431,6 +463,7 @@ document.getElementById('usd').addEventListener('input', (e) => {
 
    (doc-section "Basic Usage" (basic-usage-content))
    (doc-section "Icon Slots" (icon-slots-content))
+   (doc-section "Action Button in Slot" (button-slot-content))
    (doc-section "Debounce" (debounce-content))
 
    (doc-section "Input Types"
@@ -459,4 +492,4 @@ document.getElementById('usd').addEventListener('input', (e) => {
      [:a.ty-text-primary.hover:underline {:href "/docs/copy"} "ty-copy →"]
      [:a.ty-text-primary.hover:underline {:href "/docs/textarea"} "ty-textarea →"]
      [:a.ty-text-primary.hover:underline {:href "/docs/dropdown"} "ty-dropdown →"]
-     [:a.ty-text-primary.hover:underline {:href "/docs/multiselect"} "ty-multiselect →"]]]))
+     [:a.ty-text-primary.hover:underline {:href "/components/select"} "ty-select →"]]]))

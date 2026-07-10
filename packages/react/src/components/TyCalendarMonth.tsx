@@ -22,7 +22,13 @@ export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> 
   
   /** Maximum width */
   maxWidth?: string;
-  
+
+  /** Earliest enabled date (ISO "YYYY-MM-DD") — earlier days disabled */
+  min?: string;
+
+  /** Latest enabled date (ISO "YYYY-MM-DD") — later days disabled */
+  max?: string;
+
   /** Day click event handler */
   onDayClick?: (event: CustomEvent<DayClickDetail>) => void;
 }
@@ -49,6 +55,8 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
     width,
     minWidth,
     maxWidth,
+    min,
+    max,
     onDayClick,
     ...props 
   }, ref) => {
@@ -95,6 +103,8 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
     if (locale) webComponentProps.locale = locale;
     if (size) webComponentProps.size = size;
     if (width) webComponentProps.width = width;
+    if (min) webComponentProps.min = min;
+    if (max) webComponentProps.max = max;
     if (minWidth) webComponentProps['min-width'] = minWidth;
     if (maxWidth) webComponentProps['max-width'] = maxWidth;
 

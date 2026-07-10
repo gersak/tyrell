@@ -319,6 +319,32 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   get form(): HTMLFormElement | null {
     return this._internals.form
   }
+
+  /**
+   * a11y helper for components whose ARIA role lives on an inner shadow element
+   * (checkbox/switch/radio). A wrapping <label> names the form-associated HOST,
+   * not the inner role element — so mirror the host's associated label text onto
+   * the role element as aria-label, giving it an accessible name.
+   */
+  protected applyLabelName(roleEl: HTMLElement): void {
+    let text = Array.from(this._internals.labels ?? [])
+      .map((l) => (l as HTMLElement).textContent?.trim())
+      .filter(Boolean)
+      .join(' ')
+    if (!text) {
+      // Non-form-associated controls (e.g. ty-radio) aren't labelable, so the
+      // wrapping <label> never appears in internals.labels — read it directly,
+      // stripping this element's own subtree from the text.
+      const lbl = this.closest('label')
+      if (lbl) {
+        const clone = lbl.cloneNode(true) as HTMLElement
+        clone.querySelectorAll(this.tagName.toLowerCase()).forEach((n) => n.remove())
+        text = clone.textContent?.trim() ?? ''
+      }
+    }
+    if (text) roleEl.setAttribute('aria-label', text)
+    else roleEl.removeAttribute('aria-label')
+  }
   
   /**
    * Form reset callback - called when form.reset() is invoked

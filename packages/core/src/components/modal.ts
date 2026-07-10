@@ -621,3 +621,9 @@ export class TyModal extends HTMLElement {
 if (!customElements.get('ty-modal')) {
   customElements.define('ty-modal', TyModal);
 }
+
+// Also exposed as ty-dialog — the platform/ARIA name (wraps native <dialog>).
+// A constructor can only register once, hence the subclass.
+if (!customElements.get('ty-dialog')) {
+  customElements.define('ty-dialog', class TyDialog extends TyModal { });
+}

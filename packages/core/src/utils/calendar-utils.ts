@@ -380,46 +380,6 @@ export function getMonthName(
 }
 
 /**
- * Format a day context as an ISO date string
- * 
- * @param dayContext - Day context to format
- * @returns ISO date string (YYYY-MM-DD)
- * 
- * @example
- * formatDayContext({ year: 2025, month: 10, dayInMonth: 13, ... })
- * // Returns: "2025-10-13"
- */
-export function formatDayContext(dayContext: DayContext): string {
-  const { year, month, dayInMonth } = dayContext;
-  const monthStr = month.toString().padStart(2, '0');
-  const dayStr = dayInMonth.toString().padStart(2, '0');
-  return `${year}-${monthStr}-${dayStr}`;
-}
-
-/**
- * Check if a day context matches a specific date
- * 
- * @param dayContext - Day context to check
- * @param year - Target year
- * @param month - Target month (1-12)
- * @param day - Target day
- * @returns True if the day context matches
- * 
- * @example
- * isDayContext(dayCtx, 2025, 10, 13) // true if context is Oct 13, 2025
- */
-export function isDayContext(
-  dayContext: DayContext,
-  year: number,
-  month: number,
-  day: number
-): boolean {
-  return dayContext.year === year
-    && dayContext.month === month
-    && dayContext.dayInMonth === day;
-}
-
-/**
  * Parse an ISO date string (YYYY-MM-DD) into year, month, day components
  * 
  * @param isoString - ISO date string (YYYY-MM-DD)
@@ -451,40 +411,3 @@ export function parseISODate(isoString: string): { year: number; month: number; 
   return { year, month, day };
 }
 
-/**
- * Convert a UTC timestamp to an ISO date string
- * Interprets the timestamp as UTC midnight and returns the date
- * 
- * @param utcTimestamp - UTC timestamp in milliseconds
- * @returns ISO date string (YYYY-MM-DD)
- * 
- * @example
- * const ctx = getCalendarMonthDays(2025, 10)[0];
- * utcTimestampToISO(ctx.value) // "2025-10-13"
- */
-export function utcTimestampToISO(utcTimestamp: number): string {
-  const date = new Date(utcTimestamp);
-  const year = date.getUTCFullYear();
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
-  const day = date.getUTCDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-/**
- * Convert a local timestamp to an ISO date string
- * Interprets the timestamp in local timezone and returns the date
- * 
- * @param localTimestamp - Local timestamp in milliseconds
- * @returns ISO date string (YYYY-MM-DD)
- * 
- * @example
- * const ctx = getCalendarMonthDays(2025, 10)[0];
- * localTimestampToISO(ctx.localValue) // "2025-10-13"
- */
-export function localTimestampToISO(localTimestamp: number): string {
-  const date = new Date(localTimestamp);
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}

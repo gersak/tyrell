@@ -50,6 +50,12 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
   
   /** Whether to include time selection */
   withTime?: boolean;
+
+  /** Earliest selectable date (ISO "YYYY-MM-DD") */
+  min?: string;
+
+  /** Latest selectable date (ISO "YYYY-MM-DD") */
+  max?: string;
   
   /** Callback when the date value changes */
   onChange?: (event: CustomEvent<TyDatePickerEventDetail>) => void;
@@ -76,6 +82,8 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
     format,
     locale,
     withTime,
+    min,
+    max,
     onChange,
     onOpen,
     onClose,
@@ -206,6 +214,14 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
 
     if (withTime) {
       webComponentProps['with-time'] = '';  // Convert camelCase to kebab-case
+    }
+
+    if (min) {
+      webComponentProps.min = min;
+    }
+
+    if (max) {
+      webComponentProps.max = max;
     }
 
     return React.createElement('ty-date-picker', webComponentProps);

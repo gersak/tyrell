@@ -166,7 +166,6 @@ export function unlockScroll(componentId: string): void {
   if (lockState.activeLocks.size === 0) {
     unlockBodyFixed();
   }
-  console.log('Lock status', lockState.activeLocks)
 }
 
 /**

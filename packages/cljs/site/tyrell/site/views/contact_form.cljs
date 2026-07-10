@@ -54,7 +54,8 @@
       (swap! state/state assoc-in [:contact-form :form-data field-key] checked))))
 
 (defn handle-priority-change [^js event]
-  (let [value (-> event .-detail .-option .-value)]
+  ;; ty-select: detail.value is the scalar selected value (single select)
+  (let [value (-> event .-detail .-value)]
     (swap! state/state assoc-in [:contact-form :form-data :priority] value)))
 
 (defn handle-department-change [departments]
@@ -219,8 +220,8 @@
 
       (section-divider "Request")
       [:div.grid.grid-cols-2.gap-3
-       [:ty-dropdown {:label "Priority" :value (:priority form-data)
-                      :on {:change handle-priority-change}}
+       [:ty-select {:label "Priority" :value (:priority form-data)
+                    :on {:change handle-priority-change}}
         [:ty-option {:value "low"}
          [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-green-500.rounded-full] [:span "Low"]]]
         [:ty-option {:value "medium"}
@@ -229,16 +230,22 @@
          [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-yellow-500.rounded-full] [:span "High"]]]
         [:ty-option {:value "critical"}
          [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-red-500.rounded-full] [:span "Critical"]]]]
-       [:ty-multiselect {:placeholder "Department(s)..."
-                         :value (str/join "," (:department form-data))
-                         :on {:change (fn [event]
-                                        (let [values (-> event .-detail .-values)]
-                                          (handle-department-change (set values))))}}
-        [:ty-tag {:value "sales"       :flavor "primary"}   "Sales"]
-        [:ty-tag {:value "support"     :flavor "success"}   "Support"]
-        [:ty-tag {:value "technical"   :flavor "secondary"} "Engineering"]
-        [:ty-tag {:value "billing"     :flavor "warning"}   "Billing"]
-        [:ty-tag {:value "partnership" :flavor "neutral"}   "Partnerships"]]]
+       [:ty-select {:id "contact-departments"
+                    :multiple true
+                    :label "Department(s)"
+                    :placeholder "Department(s)..."
+                    :value (str/join "," (:department form-data))
+                    :on {:change (fn [event]
+                                   (let [values (-> event .-detail .-values)]
+                                     (handle-department-change (set values))))}}
+        [:ty-option {:value "sales"       :flavor "primary"}   "Sales"]
+        [:ty-option {:value "support"     :flavor "success"}   "Support"]
+        [:ty-option {:value "technical"   :flavor "secondary"} "Engineering"]
+        [:ty-option {:value "billing"     :flavor "warning"}   "Billing"]
+        [:ty-option {:value "partnership" :flavor "neutral"}   "Partnerships"]]]
+      ;; Dismissible chips for the selection — default template, flavors carry
+      [:div.flex.flex-wrap.gap-2.mt-2
+       [:ty-selected-tags {:for "contact-departments"}]]
 
       (section-divider "Message")
       [:ty-textarea {:label "Message" :value (:message form-data)

@@ -55,10 +55,3 @@ export function buildClassList(...classes: (string | false | null | undefined)[]
   return classes.filter(Boolean).join(' ')
 }
 
-/**
- * Clear the style cache
- * Useful for testing or hot-reloading
- */
-export function clearStyleCache(): void {
-  styleCache.clear()
-}

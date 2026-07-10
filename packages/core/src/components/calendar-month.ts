@@ -41,6 +41,7 @@ import { calendarMonthStyles } from '../styles/calendar-month.js';
 import {
   getCalendarMonthDays,
   getLocalizedWeekdays,
+  parseISODate,
   type DayContext
 } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
@@ -112,6 +113,17 @@ function isDOMElement(value: unknown): value is HTMLElement {
 }
 
 /**
+ * ISO date string ("YYYY-MM-DD") → UTC-midnight timestamp, matching
+ * DayContext.value semantics. null when unset/invalid.
+ */
+function isoToUTCTimestamp(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const parsed = parseISODate(iso);
+  if (!parsed) return null;
+  return Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+}
+
+/**
  * Normalize size value - add 'px' if just a number
  */
 function normalizeSizeValue(value: string | number | null | undefined): string | null {
@@ -147,6 +159,8 @@ export class TyCalendarMonth extends HTMLElement {
   private _dayContentFn?: DayContentFn;
   private _customCSS?: CSSStyleSheet;
   private _value?: number; // Selected date as timestamp (from parent calendar)
+  private _min?: string; // ISO date - days before this are disabled
+  private _max?: string; // ISO date - days after this are disabled
   private _localeObserver?: () => void; // Cleanup function for locale observer
 
   /**
@@ -154,7 +168,7 @@ export class TyCalendarMonth extends HTMLElement {
    * Properties are the primary API
    */
   static get observedAttributes(): string[] {
-    return ['locale', 'size'];
+    return ['locale', 'size', 'min', 'max'];
   }
 
   constructor() {
@@ -228,6 +242,9 @@ export class TyCalendarMonth extends HTMLElement {
         this._size = newValue;
         this.render();
       }
+    } else if (name === 'min' || name === 'max') {
+      this[name === 'min' ? '_min' : '_max'] = newValue ?? undefined;
+      this.render();
     }
   }
 
@@ -331,6 +348,28 @@ export class TyCalendarMonth extends HTMLElement {
     if (this._customCSS !== sheet) {
       this._customCSS = sheet;
       this.applyCustomCSS();
+    }
+  }
+
+  get min(): string | undefined {
+    return this._min;
+  }
+
+  set min(value: string | undefined) {
+    if (this._min !== value) {
+      this._min = value;
+      this.render();
+    }
+  }
+
+  get max(): string | undefined {
+    return this._max;
+  }
+
+  set max(value: string | undefined) {
+    if (this._max !== value) {
+      this._max = value;
+      this.render();
     }
   }
 
@@ -439,7 +478,7 @@ export class TyCalendarMonth extends HTMLElement {
   /**
    * Render a single day cell
    */
-  private renderDayCell(dayContext: DayContext): HTMLElement {
+  private renderDayCell(dayContext: DayContext, disabled: boolean): HTMLElement {
     const dayElement = document.createElement('div');
 
     // Get content using custom or default function
@@ -457,6 +496,7 @@ export class TyCalendarMonth extends HTMLElement {
 
     // Apply default classes
     const classes = getDefaultDayClasses(dayContext);
+    if (disabled) classes.push('disabled');
     dayElement.className = classes.join(' ');
 
     // Set content
@@ -466,11 +506,13 @@ export class TyCalendarMonth extends HTMLElement {
       dayElement.appendChild(content);
     }
 
-    // Add click handler
-    dayElement.addEventListener('pointerdown', (event: Event) => {
-      event.preventDefault();
-      this.dispatchDayClick(dayContext, event);
-    });
+    // Add click handler (disabled days don't emit)
+    if (!disabled) {
+      dayElement.addEventListener('pointerdown', (event: Event) => {
+        event.preventDefault();
+        this.dispatchDayClick(dayContext, event);
+      });
+    }
 
     return dayElement;
   }
@@ -534,12 +576,19 @@ export class TyCalendarMonth extends HTMLElement {
       dayWeeks.push(days.slice(i, i + 7));
     }
 
+    // Bounds for disabling days (UTC-midnight, same space as DayContext.value)
+    const minTs = isoToUTCTimestamp(this._min);
+    const maxTs = isoToUTCTimestamp(this._max);
+
     dayWeeks.forEach(week => {
       const dayRow = document.createElement('div');
       dayRow.className = 'calendar-row calendar-day-row';
 
       week.forEach(dayContext => {
-        const dayCell = this.renderDayCell(dayContext);
+        const disabled =
+          (minTs !== null && dayContext.value < minTs) ||
+          (maxTs !== null && dayContext.value > maxTs);
+        const dayCell = this.renderDayCell(dayContext, disabled);
         // Add unified cell classes for flex layout
         dayCell.className = `${dayCell.className} calendar-cell calendar-day-cell`;
         dayRow.appendChild(dayCell);

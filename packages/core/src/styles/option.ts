@@ -45,10 +45,14 @@ export const optionStyles = `
   font-weight: var(--ty-font-semibold);
 }
 
+/* Selected: quiet — bolder text color only, no background slab, no weight change */
 .option-content[selected] {
-  background: var(--ty-bg-primary-bold);
-  color: var(--ty-text-strong);
-  font-weight: var(--ty-font-medium);
+  background: transparent;
+  color: var(--ty-text-bold);
+}
+
+.option-content[selected]:hover {
+  background: var(--ty-bg-primary-soft);
 }
 
 .option-text {

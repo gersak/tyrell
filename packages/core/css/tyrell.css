@@ -336,8 +336,8 @@ COMPONENT TOKENS
   /* Input component tokens */
   --ty-input-bg: #ffffff;
   --ty-input-color: #111827;
-  --ty-input-border: #d1d5db;
-  --ty-input-border-hover: #9ca3af;
+  --ty-input-border: #e5e7eb;
+  --ty-input-border-hover: #d1d5db;
   --ty-input-border-focus: var(--ty-color-primary);
   --ty-input-shadow-focus: rgba(59, 130, 246, 0.1);
   --ty-input-placeholder: #9ca3af;
@@ -352,50 +352,58 @@ COMPONENT TOKENS
   --ty-input-warning-border: var(--ty-color-warning);
 
   /* =================================================================
-  SOLID BUTTON FILLS — saturated brand backgrounds for appearance="solid"
-  Each flavor defines:
-    --ty-solid-{flavor}        base saturated fill
-    --ty-solid-{flavor}-strong stronger fill (for solid+ tone)
-    --ty-solid-{flavor}-soft   softer fill   (for solid- tone)
-    --ty-solid-{flavor}-fg     paired text color (default white)
-  Strong/soft default to var(--ty-color-{flavor}-strong/-soft) so they
-  inherit from the existing color hierarchy. Override per flavor if needed.
+  SOLID BUTTON FILLS — plain default values (the contract). The smart
+  per-state derivation (hover/active/tone via OKLCH) lives in the theme
+  engines (tyrell-brand.css / tyrell-simple.css), not here. hover/active
+  alias to -strong as a simple default; a theme overrides them.
   ================================================================= */
 
   /* Primary */
   --ty-solid-primary: #4076b9;
   --ty-solid-primary-strong: var(--ty-color-primary-bold);
   --ty-solid-primary-soft: #7ea7d9;
+  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
+  --ty-solid-primary-active: var(--ty-solid-primary-strong);
   --ty-solid-primary-fg: white;
 
   /* Secondary */
   --ty-solid-secondary: #7e67b4;
   --ty-solid-secondary-strong: #7d58d1;
   --ty-solid-secondary-soft: #9f8ec5;
+  --ty-solid-secondary-hover: var(--ty-solid-secondary-strong);
+  --ty-solid-secondary-active: var(--ty-solid-secondary-strong);
   --ty-solid-secondary-fg: white;
 
   /* Success */
   --ty-solid-success: #3bb68d;
   --ty-solid-success-strong: #27956e;
   --ty-solid-success-soft: #69b99e;
+  --ty-solid-success-hover: var(--ty-solid-success-strong);
+  --ty-solid-success-active: var(--ty-solid-success-strong);
   --ty-solid-success-fg: white;
 
   /* Danger */
   --ty-solid-danger: #df5b5b;
   --ty-solid-danger-strong: #cc3e3e;
   --ty-solid-danger-soft: #d57a7a;
+  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
+  --ty-solid-danger-active: var(--ty-solid-danger-strong);
   --ty-solid-danger-fg: white;
 
   /* Warning */
   --ty-solid-warning: #e1a644;
   --ty-solid-warning-strong: #f59e0b;
   --ty-solid-warning-soft: #fbc56d;
+  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
+  --ty-solid-warning-active: var(--ty-solid-warning-strong);
   --ty-solid-warning-fg: white;
 
   /* Neutral */
   --ty-solid-neutral: #414141;
   --ty-solid-neutral-strong: #000000;
   --ty-solid-neutral-soft: #6e6e6e;
+  --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
+  --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-fg: white;
 
   /* =================================================================
@@ -660,11 +668,11 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-border-faint: #030712;
 
   /* Scrollbar - dark mode */
-  --ty-scrollbar-thumb: rgba(255, 255, 255, 0.22);
-  --ty-scrollbar-thumb-hover: rgba(255, 255, 255, 0.38);
-  --ty-scrollbar-thumb-active: rgba(255, 255, 255, 0.48);
+  --ty-scrollbar-thumb: rgba(255, 255, 255, 0.13);
+  --ty-scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+  --ty-scrollbar-thumb-active: rgba(255, 255, 255, 0.3);
   --ty-scrollbar-track: transparent;
-  --ty-scrollbar-track-hover: rgba(255, 255, 255, 0.06);
+  --ty-scrollbar-track-hover: rgba(255, 255, 255, 0.04);
 
   --ty-surface-canvas: black;
   --ty-surface-content: #1a1a1a;
@@ -695,49 +703,55 @@ Emphasis logic inverts: lighter = more emphasis
     0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   --ty-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
-  /* Solid button fills for dark mode — strong/soft/fg chain through automatically.
-     Note: --ty-color-{flavor}-strong is light-toned in dark mode (emphasis
-     inverts), so solid+ buttons will have a light bg with white text — low
-     contrast for some flavors. Override per flavor via --ty-solid-{flavor}-fg
-     if a specific brand needs darker text. */
+  /* Solid button fills — plain dark defaults. hover/active alias -strong;
+     theme engines override with smart per-state derivation. */
   --ty-solid-primary: #3e536c;
   --ty-solid-primary-strong: #426084;
   --ty-solid-primary-soft: #343f4c;
+  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
+  --ty-solid-primary-active: var(--ty-solid-primary-strong);
   --ty-solid-primary-fg: white;
 
   --ty-solid-secondary: #7e67b4;
   --ty-solid-secondary-strong: #8269bc;
   --ty-solid-secondary-soft: #52466a;
+  --ty-solid-secondary-hover: var(--ty-solid-secondary-strong);
+  --ty-solid-secondary-active: var(--ty-solid-secondary-strong);
   --ty-solid-secondary-fg: white;
 
-  /* Success */
   --ty-solid-success: #3bb68d;
   --ty-solid-success-strong: #459679;
   --ty-solid-success-soft: #285748;
+  --ty-solid-success-hover: var(--ty-solid-success-strong);
+  --ty-solid-success-active: var(--ty-solid-success-strong);
   --ty-solid-success-fg: white;
 
-  /* Danger */
   --ty-solid-danger: #df5b5b;
   --ty-solid-danger-strong: #cc3e3e;
   --ty-solid-danger-soft: #875656;
+  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
+  --ty-solid-danger-active: var(--ty-solid-danger-strong);
   --ty-solid-danger-fg: white;
 
-  /* Warning */
   --ty-solid-warning: #e1a644;
   --ty-solid-warning-strong: #f59e0b;
   --ty-solid-warning-soft: #8b6334;
+  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
+  --ty-solid-warning-active: var(--ty-solid-warning-strong);
   --ty-solid-warning-fg: white;
 
   --ty-solid-neutral: #414141;
   --ty-solid-neutral-strong: #4c4c4c;
   --ty-solid-neutral-soft: #2a2a2a;
+  --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
+  --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-fg: white;
 
   /* Input component tokens - dark mode */
   --ty-input-bg: #1b1b1b;
   --ty-input-color: #f9fafb;
-  --ty-input-border: #505050;
-  --ty-input-border-hover: #7f7f7f;
+  --ty-input-border: #3a3a3a;
+  --ty-input-border-hover: #505050;
   --ty-input-border-focus: var(--ty-color-primary);
   --ty-input-shadow-focus: rgba(96, 165, 250, 0.1);
   --ty-input-placeholder: #717171;

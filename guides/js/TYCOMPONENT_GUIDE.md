@@ -4,6 +4,8 @@
 
 **TyComponent** is an abstract base class that provides a unified, declarative property/attribute lifecycle for web components. It eliminates boilerplate code, ensures consistency, and makes components predictable and easy to maintain.
 
+> The examples below use `ty-dropdown` as the running case study of TyComponent internals. (As a *consumer-facing component* ty-dropdown is deprecated — use `ty-select` — but its source remains a good architecture reference.)
+
 ### Key Benefits
 
 ✅ **Single Code Path** - All property updates flow through one lifecycle

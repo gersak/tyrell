@@ -5,6 +5,9 @@
 
 (defn view []
   (docs-page
+   [:div.ty-bg-warning-.rounded-lg.px-4.py-3.mb-4.flex.items-center.gap-2
+    [:ty-icon.ty-text-warning {:name "info" :size "sm"}]
+    [:span.ty-text.text-sm "Deprecated — use " [:a.ty-text-primary.font-medium {:href "/components/select"} "ty-select multiple"] " instead. Kept for compatibility; no new features."]]
    (component-header "ty-multiselect"
                      "Multi-value select using ty-tag children as both options and selected chips. Tags become dismissible when selected. Search filters by default; set external-search for API-driven filtering.")
 

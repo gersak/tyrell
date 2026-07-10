@@ -21,7 +21,6 @@ import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
 import { checkboxStyles } from "../styles/checkbox.js";
-import { parseBoolean, isBooleanString } from "../utils/parse-boolean.js";
 
 /**
  * Component internal state (for typing TyComponent)
@@ -32,20 +31,22 @@ interface CheckboxState {
 }
 
 /**
- * Checkbox unchecked icon (Font Awesome)
+ * Checkmark icon (Font Awesome). Same glyph for checked and unchecked —
+ * checked shows it at full color, unchecked at faint color (see styles).
  */
-const CHECKBOX_UNCHECKED_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160C96 124.7 124.7 96 160 96z"/></svg>`;
+const CHECK_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M566.6 169.4C579.1 181.9 579.1 202.2 566.6 214.7L278.6 502.7C266.1 515.2 245.8 515.2 233.3 502.7L89.3 358.7C76.8 346.2 76.8 325.9 89.3 313.4C101.8 300.9 122.1 300.9 134.6 313.4L256 434.7L521.4 169.4C533.9 156.9 554.2 156.9 566.6 169.4z"/></svg>`;
 
 /**
- * Checkbox checked icon (Font Awesome)
+ * Dash icon (Font Awesome minus) — shown while indeterminate.
  */
-const CHECKBOX_CHECKED_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160C96 124.7 124.7 96 160 96L480 96zM438 209.7C427.3 201.9 412.3 204.3 404.5 215L285.1 379.2L233 327.1C223.6 317.7 208.4 317.7 199.1 327.1C189.8 336.5 189.7 351.7 199.1 361L271.1 433C276.1 438 283 440.5 289.9 440C296.8 439.5 303.3 435.9 307.4 430.2L443.3 243.2C451.1 232.5 448.7 217.5 438 209.7z"/></svg>`;
+const DASH_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/></svg>`;
 
 /**
  * TyCheckbox Element Interface
  */
 export interface TyCheckboxElement extends HTMLElement {
   checked: boolean;
+  indeterminate: boolean;
   value: string;
   name: string;
   disabled: boolean;
@@ -110,6 +111,13 @@ export class TyCheckbox
       visual: true,
       formValue: true, // Triggers form value update
       emitChange: true, // Emits 'prop:change' event
+      default: false,
+    },
+    // Visual/ARIA "mixed" state (native semantics: no form-value effect,
+    // clicking resolves to checked)
+    indeterminate: {
+      type: "boolean" as const,
+      visual: true,
       default: false,
     },
     // Form submission value (when checked)
@@ -209,8 +217,10 @@ export class TyCheckbox
    * TyComponent already handled pre-connection property capture
    */
   protected onConnect(): void {
-    // TyComponent will call render() automatically after this hook
-    // No need to call render() manually or use requestAnimationFrame
+    // Re-arm listeners on RE-connect: the base class skips render() when
+    // already rendered, and onDisconnect removed the listeners. No-ops on
+    // first connect (no container yet — render() attaches them).
+    this.setupEventListeners();
   }
 
   /**
@@ -255,8 +265,9 @@ export class TyCheckbox
   private handleCheckboxClick(e: Event): void {
     if (this.disabled) return;
 
-    // Toggle checked state - this will trigger automatic form value update
-    const newValue = !this.checked;
+    // Native semantics: clicking an indeterminate checkbox resolves to checked
+    const newValue = this.indeterminate ? true : !this.checked;
+    if (this.indeterminate) this.indeterminate = false;
     this.checked = newValue; // Uses setProperty which handles everything
 
     // Emit custom events after property update
@@ -305,16 +316,20 @@ export class TyCheckbox
   private removeEventListeners(): void {
     if (!this._listenersSetup) return;
 
+    // Click lives on the HOST (label delegation + full-element trigger) —
+    // remove it before the shadow-container guard below.
+    if (this._clickHandler) {
+      this.removeEventListener("click", this._clickHandler);
+      this._clickHandler = null;
+    }
+
     const shadow = this.shadowRoot;
     if (!shadow) return;
 
     const checkboxEl = shadow.querySelector(".checkbox-container");
-    if (!checkboxEl) return;
-
-    // Remove all event listeners using stored handler references
-    if (this._clickHandler) {
-      checkboxEl.removeEventListener("click", this._clickHandler);
-      this._clickHandler = null;
+    if (!checkboxEl) {
+      this._listenersSetup = false;
+      return;
     }
 
     if (this._keydownHandler) {
@@ -364,8 +379,10 @@ export class TyCheckbox
       checkboxEl.classList.remove("focused");
     };
 
-    // Add event listeners
-    checkboxEl.addEventListener("click", this._clickHandler);
+    // Click on the HOST: makes the whole element a trigger and lets a wrapping
+    // <label> delegate (the synthetic click lands on the host, not the shadow).
+    // Keyboard/focus stay on the focusable container.
+    this.addEventListener("click", this._clickHandler);
     checkboxEl.addEventListener("keydown", this._keydownHandler);
     checkboxEl.addEventListener("focus", this._focusHandler);
     checkboxEl.addEventListener("blur", this._blurHandler);
@@ -381,38 +398,56 @@ export class TyCheckbox
     const shadow = this.shadowRoot!;
     let checkboxEl = shadow.querySelector(".checkbox-container") as HTMLElement;
     const classes = this.buildClassList();
+    const ariaChecked = this.indeterminate ? "mixed" : String(this.checked);
 
     if (!checkboxEl) {
       checkboxEl = document.createElement("div");
       checkboxEl.className = "checkbox-container " + classes;
       checkboxEl.tabIndex = this.disabled ? -1 : 0;
       checkboxEl.setAttribute("role", "checkbox");
-      checkboxEl.setAttribute("aria-checked", String(this.checked));
+      checkboxEl.setAttribute("aria-checked", ariaChecked);
       checkboxEl.setAttribute("aria-disabled", String(this.disabled));
       checkboxEl.setAttribute("aria-required", String(this.required));
 
       const checkboxIcon = document.createElement("div");
       checkboxIcon.className = "checkbox-icon";
-      checkboxIcon.innerHTML = this.checked
-        ? CHECKBOX_CHECKED_ICON
-        : CHECKBOX_UNCHECKED_ICON;
       checkboxEl.appendChild(checkboxIcon);
 
       shadow.appendChild(checkboxEl);
-      this.setupEventListeners();
     } else {
       checkboxEl.className = "checkbox-container " + classes;
       checkboxEl.tabIndex = this.disabled ? -1 : 0;
-      checkboxEl.setAttribute("aria-checked", String(this.checked));
+      checkboxEl.setAttribute("aria-checked", ariaChecked);
       checkboxEl.setAttribute("aria-disabled", String(this.disabled));
       checkboxEl.setAttribute("aria-required", String(this.required));
+    }
 
-      const checkboxIcon = checkboxEl.querySelector(".checkbox-icon");
-      if (checkboxIcon) {
-        checkboxIcon.innerHTML = this.checked
-          ? CHECKBOX_CHECKED_ICON
-          : CHECKBOX_UNCHECKED_ICON;
-      }
+    // Dash while indeterminate, tick otherwise (tick's color/opacity carries
+    // the checked/unchecked distinction via CSS).
+    const icon = checkboxEl.querySelector(".checkbox-icon")!;
+    icon.innerHTML = this.indeterminate ? DASH_ICON : CHECK_ICON;
+
+    // (Re)attach listeners — onDisconnect removes them, so a reconnected
+    // element needs them again even though the container already exists.
+    this.setupEventListeners();
+
+    // a11y: role="checkbox" lives on this inner element, but the associated
+    // <label> names the (form-associated) host. Mirror that name onto the role
+    // element so it has an accessible name.
+    this.applyLabelName(checkboxEl);
+
+    // Reflect constraint validation to the owning <form> (required was cosmetic).
+    this.updateValidity();
+  }
+
+  /** required + unchecked => valueMissing; otherwise valid. */
+  private updateValidity(): void {
+    const anchor = this.shadowRoot?.querySelector(".checkbox-container") as HTMLElement | null;
+    if (this.disabled) { this._internals.setValidity({}); return; }
+    if (this.required && !this.checked) {
+      this._internals.setValidity({ valueMissing: true }, "Please check this box", anchor ?? undefined);
+    } else {
+      this._internals.setValidity({});
     }
   }
 
@@ -426,6 +461,14 @@ export class TyCheckbox
 
   set checked(value: boolean) {
     this.setProperty("checked", value);
+  }
+
+  get indeterminate(): boolean {
+    return this.getProperty("indeterminate");
+  }
+
+  set indeterminate(value: boolean) {
+    this.setProperty("indeterminate", value);
   }
 
   get value(): string {

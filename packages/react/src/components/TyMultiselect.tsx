@@ -65,6 +65,8 @@ export interface TyMultiselectProps extends Omit<React.HTMLAttributes<HTMLElemen
 
   /** Callback fired on each search input change (debounced by `debounce`). Use for external/server-side filtering. */
   onSearch?: (event: CustomEvent<{ query: string; element: HTMLElement }>) => void;
+  onOpen?: (event: CustomEvent) => void;
+  onClose?: (event: CustomEvent) => void;
 
   /** Children should be TyTag components, not TyOption */
   children?: React.ReactNode;
@@ -87,6 +89,8 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
     name,
     onChange,
     onSearch,
+    onOpen,
+    onClose,
     children,
     ...props
   }, ref) => {
@@ -131,6 +135,9 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
       }
     }, [onSearch]);
 
+    const handleOpen = useCallback((event: Event) => { if (onOpen) onOpen(event as CustomEvent); }, [onOpen]);
+    const handleClose = useCallback((event: Event) => { if (onClose) onClose(event as CustomEvent); }, [onClose]);
+
     // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
@@ -138,12 +145,16 @@ export const TyMultiselect = React.forwardRef<HTMLElement, TyMultiselectProps>(
 
       if (onChange) element.addEventListener('change', handleChange);
       if (onSearch) element.addEventListener('search', handleSearch);
+      if (onOpen) element.addEventListener('open', handleOpen);
+      if (onClose) element.addEventListener('close', handleClose);
 
       return () => {
         if (onChange) element.removeEventListener('change', handleChange);
         if (onSearch) element.removeEventListener('search', handleSearch);
+        if (onOpen) element.removeEventListener('open', handleOpen);
+        if (onClose) element.removeEventListener('close', handleClose);
       };
-    }, [handleChange, handleSearch, onChange, onSearch]);
+    }, [handleChange, handleSearch, handleOpen, handleClose, onChange, onSearch, onOpen, onClose]);
 
     // Imperative property sync for boolean props (see use-boolean-prop.ts).
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);

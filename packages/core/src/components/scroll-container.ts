@@ -24,10 +24,14 @@ export class TyScrollContainer extends HTMLElement {
   private _shadowRight: HTMLElement | null = null
   private _scrollbar: CustomScrollbar | null = null
   private _resizeObserver: ResizeObserver | null = null
+  private _contentObserver: MutationObserver | null = null
   private _rafId: number | null = null
+  // Edge-trigger state for nearstart/nearend (fire once on entering the zone).
+  private _nearStartFired = false
+  private _nearEndFired = false
 
   static get observedAttributes(): string[] {
-    return ['shadow', 'max-height', 'hide-scrollbar', 'custom-scrollbar', 'overflow-x']
+    return ['shadow', 'max-height', 'hide-scrollbar', 'custom-scrollbar', 'overflow-x', 'scroll-anchoring']
   }
 
   // ============ Property Accessors ============
@@ -78,6 +82,28 @@ export class TyScrollContainer extends HTMLElement {
     else this.removeAttribute('overflow-x')
   }
 
+  /** Distance (px) from an edge at which nearstart/nearend fire. Default 100. */
+  get nearEdgeThreshold(): number {
+    const v = parseInt(this.getAttribute('near-edge-threshold') || '', 10)
+    return Number.isFinite(v) ? v : 100
+  }
+
+  set nearEdgeThreshold(value: number | null) {
+    if (value == null) this.removeAttribute('near-edge-threshold')
+    else this.setAttribute('near-edge-threshold', String(value))
+  }
+
+  /** Preserve visual position when content is added above the viewport
+   *  (e.g. prepending older messages in a chat). Opt-in. */
+  get scrollAnchoring(): boolean {
+    return this.hasAttribute('scroll-anchoring')
+  }
+
+  set scrollAnchoring(value: boolean) {
+    if (value) this.setAttribute('scroll-anchoring', '')
+    else this.removeAttribute('scroll-anchoring')
+  }
+
   constructor() {
     super()
 
@@ -123,11 +149,13 @@ export class TyScrollContainer extends HTMLElement {
     this._updateMaxHeight()
     this._updateShadowState()
     this._setupScrollbar()
+    this._setupAnchoring()
   }
 
   disconnectedCallback(): void {
     this._scrollWrapper?.removeEventListener('scroll', this._onScroll)
     this._destroyScrollbar()
+    this._teardownAnchoring()
 
     if (this._resizeObserver) {
       this._resizeObserver.disconnect()
@@ -154,11 +182,56 @@ export class TyScrollContainer extends HTMLElement {
       this._setupScrollbar()
       this._updateShadowState()
     }
+
+    if (name === 'scroll-anchoring') {
+      this._teardownAnchoring()
+      this._setupAnchoring()
+    }
+  }
+
+  // ============ Private: Scroll Anchoring ============
+
+  // Preserve visual position when content is added ABOVE the viewport (chat
+  // "load older" prepends). A MutationObserver watches the host's children;
+  // any added node sitting above the visible area shifts everything down, so we
+  // add its (above-the-fold) height back to scrollTop. Append-at-bottom is
+  // untouched. CSS sets overflow-anchor:none so native anchoring doesn't fight us.
+  private _setupAnchoring(): void {
+    if (this._contentObserver || !this.scrollAnchoring) return
+
+    this._contentObserver = new MutationObserver((records) => {
+      const wrap = this._scrollWrapper
+      if (!wrap) return
+      const wrapTop = wrap.getBoundingClientRect().top
+      let addedAbove = 0
+      for (const r of records) {
+        r.addedNodes.forEach((n) => {
+          if (n.nodeType !== Node.ELEMENT_NODE) return
+          const rect = (n as HTMLElement).getBoundingClientRect()
+          if (rect.bottom <= wrapTop) addedAbove += rect.height          // fully above
+          else if (rect.top < wrapTop) addedAbove += wrapTop - rect.top  // partly above
+        })
+      }
+      if (addedAbove > 0) {
+        wrap.scrollTop += addedAbove
+        this._scrollbar?.update()
+      }
+    })
+    this._contentObserver.observe(this, { childList: true })
+  }
+
+  private _teardownAnchoring(): void {
+    this._contentObserver?.disconnect()
+    this._contentObserver = null
   }
 
   // ============ Private: Scrollbar Setup ============
 
   private _setupScrollbar(): void {
+    // Idempotent: attributeChangedCallback (attrs set before insertion) and
+    // connectedCallback can both call this. Without the guard a second
+    // CustomScrollbar + track is created → two thumbs.
+    if (this._scrollbar) return
     if (!this._scrollWrapper || !this.customScrollbar) return
 
     this._scrollbar = new CustomScrollbar(this._scrollWrapper, {
@@ -235,6 +308,37 @@ export class TyScrollContainer extends HTMLElement {
         this._shadowRight.classList.toggle('visible', scrollLeft + clientWidth < scrollWidth - threshold)
       }
     }
+
+    // Near-edge events for infinite scroll (vertical). Edge-triggered: fire once
+    // when entering the zone, re-arm only after leaving it. Runs on scroll,
+    // slotchange and resize (all route through here), so loading more content
+    // re-arms naturally once it grows the scroll distance.
+    const scrollable = scrollHeight - clientHeight
+    if (scrollable > 0) {
+      const t = this.nearEdgeThreshold
+      const distEnd = scrollable - scrollTop
+      this._nearEndFired = this._maybeEmitEdge(
+        'nearend', distEnd, t, this._nearEndFired,
+        { distance: distEnd, scrollTop, scrollHeight, clientHeight })
+      this._nearStartFired = this._maybeEmitEdge(
+        'nearstart', scrollTop, t, this._nearStartFired,
+        { distance: scrollTop, scrollTop, scrollHeight, clientHeight })
+    } else {
+      // Not scrollable → re-arm both so they fire fresh once content overflows.
+      this._nearStartFired = false
+      this._nearEndFired = false
+    }
+  }
+
+  /** Edge-trigger one near-edge event; returns the new "fired" state. */
+  private _maybeEmitEdge(
+    name: string, distance: number, threshold: number, fired: boolean, detail: object
+  ): boolean {
+    if (distance > threshold) return false // out of zone → re-arm
+    if (!fired) {
+      this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }))
+    }
+    return true
   }
 
   // ============ Public API ============
@@ -262,6 +366,12 @@ export class TyScrollContainer extends HTMLElement {
     if (this._scrollWrapper) {
       this._scrollWrapper.scrollTo({ left: this._scrollWrapper.scrollWidth, behavior: smooth ? 'smooth' : 'auto' })
     }
+  }
+
+  /** Scroll a slotted descendant (element or CSS selector) into view. */
+  scrollToElement(target: Element | string, smooth = true): void {
+    const el = typeof target === 'string' ? this.querySelector(target) : target
+    el?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'nearest' })
   }
 
   get scrollElement(): HTMLElement | null {

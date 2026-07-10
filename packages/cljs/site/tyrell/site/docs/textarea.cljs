@@ -169,7 +169,37 @@
          {:max-height "150px"
           :label "Custom scrollbar"
           :value "Line 1: The custom scrollbar appears when content overflows.\nLine 2: It auto-hides after you stop scrolling.\nLine 3: Drag the thumb to scroll.\nLine 4: Click the track to jump.\nLine 5: Works on all browsers consistently.\nLine 6: Hidden on touch devices — native scroll is better there.\nLine 7: Respects prefers-reduced-motion.\nLine 8: Try it by resizing this window."}])
-       (code-block "<ty-textarea max-height=\"150px\" label=\"Scrollable\"></ty-textarea>")]])
+       (code-block "<ty-textarea max-height=\"150px\" label=\"Scrollable\"></ty-textarea>")]
+
+      ;; Header / Footer slots (composer)
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Header / Footer slots")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Put actions in the "
+        [:code "header"] " / " [:code "footer"]
+        " slots — both sit INSIDE the field border (composer layout). The focus "
+        "ring shows only while the textarea itself is focused, not when you tab to "
+        "a footer button. The footer is space-between (tools left, submit right); a "
+        [:code "wide"] " button becomes a full-width bottom submit."]
+       (demo-area
+        [:div.grid.gap-4
+         [:ty-textarea {:label "Comment" :placeholder "Write a comment…" :min-height "90px"}
+          [:span.ty-text- {:slot "footer" :style {:font-size "0.75rem"}} "Markdown supported"]
+          [:ty-button {:slot "footer" :flavor "primary" :size "sm"}
+           [:ty-icon {:name "send" :size "sm"}] "Comment"]]
+         [:ty-textarea {:label "Feedback" :placeholder "Tell us what you think…" :min-height "80px"}
+          [:ty-button {:slot "footer" :flavor "success" :wide "true"}
+           [:ty-icon {:name "check" :size "sm"}] "Submit feedback"]]])
+       (code-block "<ty-textarea label=\"Comment\" placeholder=\"Write a comment…\">
+  <span slot=\"footer\">Markdown supported</span>
+  <ty-button slot=\"footer\" flavor=\"primary\" size=\"sm\">
+    <ty-icon name=\"send\" size=\"sm\"></ty-icon> Comment
+  </ty-button>
+</ty-textarea>
+
+<ty-textarea label=\"Feedback\">
+  <ty-button slot=\"footer\" flavor=\"success\" wide=\"true\">Submit feedback</ty-button>
+</ty-textarea>")]])
 
    ;; Advanced Examples
    (doc-section "Advanced Examples"

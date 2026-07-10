@@ -179,37 +179,32 @@
      (str (count (:bio form-data "")) "/500")]]
 
    [:div.mt-3
-    [:ty-multiselect {:placeholder "Skills & technologies..."}
-     [:ty-tag {:value "clojurescript" :flavor "primary"}
-      [:div.flex.items-center.gap-1.5
-       [:span.font-bold.text-xs "λ"] [:span "ClojureScript"]]]
-     [:ty-tag {:value "react" :flavor "neutral"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "⚛"] [:span "React"]]]
-     [:ty-tag {:value "typescript" :flavor "secondary"}
-      [:div.flex.items-center.gap-1.5
-       [:span.font-bold.text-xs "TS"] [:span "TypeScript"]]]
-     [:ty-tag {:value "nodejs" :flavor "success"}
-      [:div.flex.items-center.gap-1.5
-       [:span.font-bold.text-xs "JS"] [:span "Node.js"]]]
-     [:ty-tag {:value "postgresql" :flavor "neutral"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "🐘"] [:span "PostgreSQL"]]]
-     [:ty-tag {:value "python"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "🐍"] [:span "Python"]]]
-     [:ty-tag {:value "rust"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "🦀"] [:span "Rust"]]]
-     [:ty-tag {:value "docker"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "🐳"] [:span "Docker"]]]
-     [:ty-tag {:value "graphql"}
-      [:div.flex.items-center.gap-1.5
-       [:span.font-bold.text-xs "QL"] [:span "GraphQL"]]]
-     [:ty-tag {:value "aws"}
-      [:div.flex.items-center.gap-1.5
-       [:span.text-xs "☁"] [:span "AWS"]]]]]])
+    ;; label attr = clean display text (field summary + chips); rich content
+    ;; stays for the option list; data-glyph feeds the chip template
+    [:ty-select {:id "profile-skills"
+                 :multiple true
+                 :placeholder "Skills & technologies..."
+                 :value "clojurescript,react"}
+     (for [[value flavor glyph label] [["clojurescript" "primary" "λ" "ClojureScript"]
+                                       ["react" "neutral" "⚛" "React"]
+                                       ["typescript" "secondary" "TS" "TypeScript"]
+                                       ["nodejs" "success" "JS" "Node.js"]
+                                       ["postgresql" "neutral" "🐘" "PostgreSQL"]
+                                       ["python" nil "🐍" "Python"]
+                                       ["rust" nil "🦀" "Rust"]
+                                       ["docker" nil "🐳" "Docker"]
+                                       ["graphql" nil "QL" "GraphQL"]
+                                       ["aws" nil "☁" "AWS"]]]
+       [:ty-option (cond-> {:value value :label label :data-glyph glyph}
+                     flavor (assoc :flavor flavor))
+        [:div.flex.items-center.gap-1.5
+         [:span.font-bold.text-xs glyph] [:span label]]])]
+    [:div.flex.flex-wrap.gap-2.mt-2
+     [:ty-selected-tags {:for "profile-skills"}
+      [:template
+       [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
+        [:span.font-bold.text-xs {:slot "start"} "{data-glyph}"]
+        "{label}"]]]]]])
 
 ;; ============================================================================
 ;; Location & Preferences
@@ -220,7 +215,7 @@
    (section-divider "Location & Language")
    [:div.grid.grid-cols-2.gap-3
     [:div
-     [:ty-dropdown {:value "us" :placeholder "Country"}
+     [:ty-select {:value "us" :placeholder "Country"}
       [:ty-option {:value "us"}
        [:div.flex.items-center.gap-2 [:span "🇺🇸"] [:span "United States"]]]
       [:ty-option {:value "ca"}
@@ -234,7 +229,7 @@
       [:ty-option {:value "jp"}
        [:div.flex.items-center.gap-2 [:span "🇯🇵"] [:span "Japan"]]]]]
     [:div
-     [:ty-dropdown {:value "est" :placeholder "Timezone"}
+     [:ty-select {:value "est" :placeholder "Timezone"}
       [:ty-option {:value "pst"}
        [:div.flex.items-center.justify-between.w-full
         [:span "Pacific"] [:span.font-mono.text-xs.ty-text-- "UTC−8"]]]
@@ -251,7 +246,7 @@
        [:div.flex.items-center.justify-between.w-full
         [:span "UTC"] [:span.font-mono.text-xs.ty-text-- "UTC+0"]]]]]
     [:div
-     [:ty-dropdown {:value "en" :placeholder "Language"}
+     [:ty-select {:value "en" :placeholder "Language"}
       [:ty-option {:value "en"}
        [:div.flex.items-center.gap-2
         [:span.font-mono.text-xs.ty-text-- "EN"] [:span "English"]]]
@@ -265,7 +260,7 @@
        [:div.flex.items-center.gap-2
         [:span.font-mono.text-xs.ty-text-- "DE"] [:span "Deutsch"]]]]]
     [:div
-     [:ty-dropdown {:value "auto" :placeholder "Theme"}
+     [:ty-select {:value "auto" :placeholder "Theme"}
       [:ty-option {:value "light"}
        [:div.flex.items-center.gap-2
         [:ty-icon {:name "sun" :size "xs"}] [:span "Light"]]]
@@ -287,11 +282,13 @@
     [:ty-input {:type "password"
                 :label "Current Password"
                 :placeholder "••••••••"
-                :autocomplete "current-password"}]
+                :autocomplete "current-password"}
+     [:ty-icon {:slot "start" :name "lock" :size "sm"}]]
     [:ty-input {:type "password"
                 :label "New Password"
                 :placeholder "••••••••"
-                :autocomplete "new-password"}]]
+                :autocomplete "new-password"}
+     [:ty-icon {:slot "start" :name "lock" :size "sm"}]]]
 
    [:div.grid.grid-cols-2.gap-x-6.gap-y-2
     [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text

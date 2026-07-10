@@ -80,7 +80,9 @@ export interface TyDropdownProps extends Omit<React.HTMLAttributes<HTMLElement>,
   // React event handlers
   onChange?: (event: CustomEvent<TyDropdownEventDetail>) => void;
   onSearch?: (event: CustomEvent<{ query: string; element: HTMLElement }>) => void;
-  
+  onOpen?: (event: CustomEvent) => void;
+  onClose?: (event: CustomEvent) => void;
+
   // Children for slotted approach
   children?: React.ReactNode;
 }
@@ -92,6 +94,8 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
     children,
     onChange,
     onSearch,
+    onOpen,
+    onClose,
     disabled,
     loading,
     externalSearch,
@@ -118,6 +122,9 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
       }
     }, [onSearch]);
 
+    const handleOpen = useCallback((event: Event) => { if (onOpen) onOpen(event as CustomEvent); }, [onOpen]);
+    const handleClose = useCallback((event: Event) => { if (onClose) onClose(event as CustomEvent); }, [onClose]);
+
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -131,6 +138,9 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
         element.addEventListener('search', handleSearch as EventListener);
       }
 
+      if (onOpen) element.addEventListener('open', handleOpen);
+      if (onClose) element.addEventListener('close', handleClose);
+
       return () => {
         if (onChange) {
           element.removeEventListener('change', handleChange as EventListener);
@@ -138,8 +148,10 @@ export const TyDropdown = React.forwardRef<HTMLElement, TyDropdownProps>(
         if (onSearch) {
           element.removeEventListener('search', handleSearch as EventListener);
         }
+        if (onOpen) element.removeEventListener('open', handleOpen);
+        if (onClose) element.removeEventListener('close', handleClose);
       };
-    }, [handleChange, handleSearch, onChange, onSearch]);
+    }, [handleChange, handleSearch, handleOpen, handleClose, onChange, onSearch, onOpen, onClose]);
 
     // Imperatively sync `value` to the underlying element's property whenever
     // it changes. React 18's prop-to-property bridging for custom elements is

@@ -5,7 +5,10 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Checked state */
   checked?: boolean;
-  
+
+  /** Mixed state (dash) — visual/ARIA only; clicking resolves to checked */
+  indeterminate?: boolean;
+
   /** Form field value when checked */
   value?: string;
   
@@ -53,8 +56,9 @@ export interface TyCheckboxEventDetail {
 // React wrapper for ty-checkbox web component
 export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
   ({ 
-    children, 
+    children,
     checked,
+    indeterminate,
     value,
     name,
     disabled,
@@ -115,6 +119,7 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
     // doesn't reliably remove them when the prop flips back to false on a
     // custom element. React 19+ handles this natively.
     const isChecked = useBooleanProperty(elementRef, 'checked', checked);
+    const isIndeterminate = useBooleanProperty(elementRef, 'indeterminate', indeterminate);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
     const isRequired = useBooleanProperty(elementRef, 'required', required);
 
@@ -126,6 +131,7 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
 
     // Add boolean attributes
     if (isChecked) webComponentProps.checked = '';
+    if (isIndeterminate) webComponentProps.indeterminate = '';
     if (isDisabled) webComponentProps.disabled = '';
     if (isRequired) webComponentProps.required = '';
     

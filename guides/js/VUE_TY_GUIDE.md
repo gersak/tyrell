@@ -154,7 +154,7 @@ For most apps, Pattern 1 is fine and explicit.
 
 ## Composition with child elements
 
-`ty-dropdown` / `ty-multiselect` / `ty-tabs` use slotted children. Vue renders them naturally — reactive lists work as expected:
+`ty-select` / `ty-tabs` use slotted children. Vue renders them naturally — reactive lists work as expected. (`ty-dropdown` and `ty-multiselect` are **deprecated** — `ty-select` replaces both.)
 
 ```vue
 <script setup>
@@ -169,7 +169,7 @@ const countries = [
 </script>
 
 <template>
-  <ty-dropdown
+  <ty-select
     label="Country"
     :value="country"
     @change="country = $event.detail.value"
@@ -181,19 +181,24 @@ const countries = [
     >
       {{ c.name }}
     </ty-option>
-  </ty-dropdown>
+  </ty-select>
 </template>
 ```
 
-For multiselect, children are `ty-tag` elements with `value`:
+For multi-select add `multiple` — children stay `ty-option`, and
+`$event.detail.values` is the selected array. Pair with `<ty-selected-tags>`
+for dismissible chips anywhere in the layout:
 
 ```vue
-<ty-multiselect
+<ty-select
+  multiple
+  id="tags"
   :value="selected"
   @change="selected = $event.detail.values"
 >
-  <ty-tag v-for="t in tags" :key="t" :value="t">{{ t }}</ty-tag>
-</ty-multiselect>
+  <ty-option v-for="t in tags" :key="t" :value="t">{{ t }}</ty-option>
+</ty-select>
+<ty-selected-tags for="tags"></ty-selected-tags>
 ```
 
 ## Icons
