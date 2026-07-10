@@ -6,5 +6,5 @@
    before each release build, so the install card always shows what's actually
    published. For dev (`npm run dev:site`) the committed defaults are used.")
 
-(def TYRELL_VERSION "1.0.0-RC10")
-(def TYRELL_COMPONENTS_VERSION "1.0.0-TC23")
+(def TYRELL_VERSION "1.0.0-RC11")
+(def TYRELL_COMPONENTS_VERSION "1.0.0-TC27")

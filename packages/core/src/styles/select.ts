@@ -113,28 +113,32 @@ export const selectStyles = `
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.14)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.08));
 }
 
+/* Card-style header: the search input keeps its own bordered-field look
+   (base styles) and sits inset in the panel, TagPicker-style — no divider,
+   whitespace separates it from the list. */
 .dropdown-header {
   background: var(--input-bg, var(--ty-input-bg));
   border: 1px solid var(--input-border, var(--ty-input-border));
-  border-bottom: 1px solid var(--ty-border-soft);
+  border-bottom: none;
   border-radius: var(--ty-radius-lg) var(--ty-radius-lg) 0 0;
-  padding: 0.25rem 0.5rem;
+  padding: var(--ty-spacing-2) var(--ty-spacing-2) var(--ty-spacing-1);
 }
 .dropdown-dialog.position-below .dropdown-header {
   margin-bottom: 0;
 }
 .dropdown-dialog.position-above .dropdown-header {
   margin-top: 0;
-  border-top: 1px solid var(--ty-border-soft);
+  border-top: none;
   border-bottom: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: 0 0 var(--ty-radius-lg) var(--ty-radius-lg);
+  padding: var(--ty-spacing-1) var(--ty-spacing-2) var(--ty-spacing-2);
 }
 
-/* Magnifier adornment at the start of the search row */
+/* Magnifier adornment inside the search field (header padding + field inset) */
 .dropdown-search-icon {
   position: absolute;
   top: 50%;
-  left: var(--ty-spacing-3);
+  left: calc(var(--ty-spacing-2) + var(--ty-spacing-3));
   transform: translateY(-50%);
   width: 1rem;
   height: 1rem;
@@ -153,21 +157,12 @@ export const selectStyles = `
   flex-shrink: 0;
 }
 
-/* Search input: plain quiet row inside the panel */
+/* Search input: bordered field from base styles; just size + icon room */
 .dropdown-search-input {
-  border: none;
-  border-radius: 0;
-  background: transparent;
   min-height: 2.25rem;
-  padding-top: 10px;
-  padding-bottom: 4px;
   padding-right: var(--ty-spacing-2);
   /* room for the magnifier adornment */
   padding-left: calc(var(--ty-spacing-3) + 1rem + var(--ty-spacing-2));
-}
-.dropdown-search-input:focus {
-  border: none;
-  box-shadow: none;
 }
 /* Trigger already has a chevron - no second one inside the search row */
 .dropdown-search-chevron {
