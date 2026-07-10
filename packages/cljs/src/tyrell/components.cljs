@@ -2,7 +2,7 @@
   "Side-effect import of the tyrell-components npm package.
 
    Requiring this namespace registers all Tyrell web custom elements
-   (ty-button, ty-input, ty-icon, ty-dropdown, ...) with the browser's
+   (ty-button, ty-input, ty-icon, ty-select, ...) with the browser's
    CustomElementRegistry, so they can be used as HTML tags in any
    ClojureScript framework (Replicant, Reagent, Helix, UIx, ...).
 

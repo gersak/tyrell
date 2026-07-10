@@ -44,9 +44,6 @@ export type { TyInputProps, TyInputEventDetail, TyInputCSSProperties } from './T
 export { TyTextarea } from './TyTextarea';
 export type { TyTextareaProps, TyTextareaEventDetail } from './TyTextarea';
 
-export { TyDropdown } from './TyDropdown';
-export type { TyDropdownProps, TyDropdownEventDetail } from './TyDropdown';
-
 export { TyOption } from './TyOption';
 export type { TyOptionProps } from './TyOption';
 
@@ -61,9 +58,6 @@ export type { TyModalProps as TyDialogProps, TyModalEventDetail as TyDialogEvent
 
 export { TyTooltip } from './TyTooltip';
 export type { TyTooltipProps } from './TyTooltip';
-
-export { TyMultiselect } from './TyMultiselect';
-export type { TyMultiselectProps, TyMultiselectEventDetail } from './TyMultiselect';
 
 export { TySelect, TySelectedTags } from './TySelect';
 export type { TySelectProps, TySelectEventDetail, TySelectItem, TySelectedTagsProps } from './TySelect';
@@ -131,12 +125,10 @@ export { TyButton as Button } from './TyButton';
 export { TyTag as Tag } from './TyTag';
 export { TyInput as Input } from './TyInput';
 export { TyTextarea as Textarea } from './TyTextarea';
-export { TyDropdown as Dropdown } from './TyDropdown';
 export { TyOption as Option } from './TyOption';
 export { TyIcon as Icon } from './TyIcon';
 export { TyModal as Modal } from './TyModal';
 export { TyTooltip as Tooltip } from './TyTooltip';
-export { TyMultiselect as Multiselect } from './TyMultiselect';
 export { TyCalendar as Calendar } from './TyCalendar';
 export { TyDatePicker as DatePicker } from './TyDatePicker';
 export { TyPopup as Popup } from './TyPopup';
@@ -171,9 +163,6 @@ export type { TyInputProps as InputProps, TyInputEventDetail as InputEventDetail
 // Textarea types
 export type { TyTextareaProps as TextareaProps, TyTextareaEventDetail as TextareaEventDetail } from './TyTextarea';
 
-// Dropdown types
-export type { TyDropdownProps as DropdownProps, TyDropdownEventDetail as DropdownEventDetail, OptionData } from './TyDropdown';
-
 // Option types
 export type { TyOptionProps as OptionProps } from './TyOption';
 
@@ -185,9 +174,6 @@ export type { TyModalProps as ModalProps, TyModalEventDetail as ModalEventDetail
 
 // Tooltip types
 export type { TyTooltipProps as TooltipProps } from './TyTooltip';
-
-// Multiselect types
-export type { TyMultiselectProps as MultiselectProps, TyMultiselectEventDetail as MultiselectEventDetail } from './TyMultiselect';
 
 // Calendar types
 export type { TyCalendarProps as CalendarProps, TyCalendarChangeEventDetail as CalendarChangeEventDetail, TyCalendarNavigateEventDetail as CalendarNavigateEventDetail } from './TyCalendar';

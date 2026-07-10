@@ -232,33 +232,29 @@
   Error
 </ty-tag>")]
 
-      ;; Multiselect Integration
+      ;; Select Integration
       [:div.ty-content.rounded-lg.p-5
-       (section-label "Multiselect Integration")
+       (section-label "Select Integration")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Tags are the option primitive for ty-multiselect — same element serves as both option and selected chip."]
+        "Tags render the selection of a ty-select via ty-selected-tags — option flavors carry through to the chips."]
        (demo-area
-        [:ty-multiselect {:placeholder "Select skills..."
-                          :value "javascript,react"
-                          :style {:min-width "300px"}}
-         [:ty-tag {:value "javascript" :flavor "warning" :size "sm"}
-          [:span {:slot "start"} "📜"] "JavaScript"]
-         [:ty-tag {:value "typescript" :flavor "primary" :size "sm"}
-          [:span {:slot "start"} "🔷"] "TypeScript"]
-         [:ty-tag {:value "react" :flavor "success" :size "sm"}
-          [:span {:slot "start"} "⚛️"] "React"]
-         [:ty-tag {:value "vue" :flavor "success" :size "sm"}
-          [:span {:slot "start"} "🟢"] "Vue.js"]
-         [:ty-tag {:value "python" :flavor "neutral" :size "sm"}
-          [:span {:slot "start"} "🐍"] "Python"]])
-       (code-block "<ty-multiselect placeholder=\"Select skills...\" value=\"javascript,react\">
-  <ty-tag value=\"javascript\" flavor=\"warning\" size=\"sm\">
-    <span slot=\"start\">📜</span> JavaScript
-  </ty-tag>
-  <ty-tag value=\"react\" flavor=\"success\" size=\"sm\">
-    <span slot=\"start\">⚛️</span> React
-  </ty-tag>
-</ty-multiselect>")]])
+        [:div.space-y-2 {:style {:min-width "300px"}}
+         [:ty-select {:placeholder "Select skills..."
+                      :multiple true
+                      :id "tag-select-demo"
+                      :value "javascript,react"}
+          [:ty-option {:value "javascript" :flavor "warning"} "📜 JavaScript"]
+          [:ty-option {:value "typescript" :flavor "primary"} "🔷 TypeScript"]
+          [:ty-option {:value "react" :flavor "success"} "⚛️ React"]
+          [:ty-option {:value "vue" :flavor "success"} "🟢 Vue.js"]
+          [:ty-option {:value "python" :flavor "neutral"} "🐍 Python"]]
+         [:div.flex.flex-wrap.gap-2
+          [:ty-selected-tags {:for "tag-select-demo"}]]])
+       (code-block "<ty-select placeholder=\"Select skills...\" multiple id=\"skills\" value=\"javascript,react\">
+  <ty-option value=\"javascript\" flavor=\"warning\">📜 JavaScript</ty-option>
+  <ty-option value=\"react\" flavor=\"success\">⚛️ React</ty-option>
+</ty-select>
+<ty-selected-tags for=\"skills\"></ty-selected-tags>")]])
 
    ;; Common Use Cases
    (doc-section "Common Use Cases"

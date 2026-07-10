@@ -28,6 +28,7 @@ export const optionStyles = `
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
   padding: var(--ty-spacing-2) var(--ty-spacing-3);
+  border-radius: var(--ty-radius-md);
 }
 
 :host([cloned]) .option-content {
@@ -36,11 +37,11 @@ export const optionStyles = `
 }
 
 .option-content:hover {
-  background: var(--ty-bg-primary-soft);
+  background: var(--ty-bg-neutral-soft);
 }
 
 .option-content[highlighted] {
-  background: var(--ty-bg-primary-soft);
+  background: var(--ty-bg-neutral-soft);
   color: var(--ty-text-strong);
   font-weight: var(--ty-font-semibold);
 }
@@ -51,8 +52,27 @@ export const optionStyles = `
   color: var(--ty-text-bold);
 }
 
+/* Lucide check — right-aligned, visible only on selected options */
+.option-check {
+  display: none;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--ty-color-primary);
+}
+
+.option-content[selected] .option-check {
+  display: block;
+}
+
+/* Never show the check on the copy cloned into the select's trigger field */
+:host([cloned]) .option-check {
+  display: none;
+}
+
 .option-content[selected]:hover {
-  background: var(--ty-bg-primary-soft);
+  background: var(--ty-bg-neutral-soft);
 }
 
 .option-text {

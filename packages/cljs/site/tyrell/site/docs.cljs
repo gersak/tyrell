@@ -12,13 +12,11 @@
    [tyrell.site.docs.copy-field :as copy-field-docs]
    [tyrell.site.docs.file-upload :as file-upload-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]
-   [tyrell.site.docs.dropdown :as dropdown-docs]
    [tyrell.site.docs.html :as html-docs]
    [tyrell.site.docs.icon :as icon-docs]
    [tyrell.site.docs.input :as input-docs]
    [tyrell.site.docs.js-react :as js-react-docs]
    [tyrell.site.docs.modal :as modal-docs]
-   [tyrell.site.docs.multiselect :as multiselect-docs]
    [tyrell.site.docs.popup :as popup-docs]
    [tyrell.site.docs.select :as select-docs]
    [tyrell.site.docs.radio :as radio-docs]
@@ -41,7 +39,7 @@
 ;; Each preview is a plain hiccup vector rendered inside a bento cell in the
 ;; component picker. Live ty- elements are used wherever they render cleanly
 ;; at rest; styled mocks are used for components that have no at-rest form
-;; (modal, popup, tooltip) or that need rich children (multiselect, tabs, wizard).
+;; (modal, popup, tooltip) or that need rich children (tabs, wizard).
 ;;
 ;; Cells are pointer-events: none in the picker, so live components are visual.
 
@@ -232,36 +230,6 @@
 
 ;; --- Selection ---
 
-(def ^:private dropdown-preview
-  [:ty-dropdown {:placeholder "Pick a stack…"
-                 :value "react"
-                 :label "Framework"
-                 :style {:width "260px"}}
-   [:ty-option {:value "react"}
-    [:span.flex.items-center.gap-2
-     [:ty-icon {:name "react"
-                :size "sm"
-                :class "ty-text-info"}]
-     "React"]]
-   [:ty-option {:value "clojure"}
-    [:span.flex.items-center.gap-2
-     [:ty-icon {:name "clojure"
-                :size "sm"
-                :class "ty-text-success"}]
-     "Clojure"]]
-   [:ty-option {:value "node-js"}
-    [:span.flex.items-center.gap-2
-     [:ty-icon {:name "node-js"
-                :size "sm"
-                :class "ty-text-success"}]
-     "Node.js"]]
-   [:ty-option {:value "python"}
-    [:span.flex.items-center.gap-2
-     [:ty-icon {:name "python"
-                :size "sm"
-                :class "ty-text-warning"}]
-     "Python"]]])
-
 (def ^:private select-preview
   [:div.space-y-2 {:style {:width "260px"}}
    [:ty-select {:placeholder "Pick your stack…"
@@ -275,15 +243,6 @@
     [:ty-option {:value "python" :flavor "warning"} "Python"]]
    [:div.flex.flex-wrap.gap-2
     [:ty-selected-tags {:for "select-preview"}]]])
-
-(def ^:private multiselect-preview
-  [:ty-multiselect {:placeholder "Skills…"
-                    :label "Skills"
-                    :value "react,clojure"
-                    :style {:width "260px"}}
-   [:ty-tag {:value "react" :flavor "info"} "React"]
-   [:ty-tag {:value "clojure" :flavor "primary"} "Clojure"]
-   [:ty-tag {:value "python" :flavor "warning"} "Python"]])
 
 ;; --- Date & time ---
 
@@ -524,26 +483,6 @@
     :tags ["date" "input" "form" "picker" "time"]
     :span [2 1]
     :preview date-picker-preview}
-   {:id :tyrell.site.docs/dropdown
-    :segment "dropdown"
-    :icon "chevron-down"
-    :view dropdown-docs/view
-    :name "Dropdown"
-    :deprecated "ty-select"
-    :description "Searchable single-select. Uses `ty-option` children. Internal filter or external search via event, keyboard navigation, smart popup positioning, mobile fullscreen mode."
-    :tags ["select" "options" "form" "menu" "choice"]
-    :span [2 1]
-    :preview dropdown-preview}
-   {:id :tyrell.site.docs/multiselect
-    :segment "multiselect"
-    :icon "tags"
-    :view multiselect-docs/view
-    :name "Multiselect"
-    :deprecated "ty-select multiple"
-    :description "Multi-value select using `ty-tag` children as both option and selected chip. Search/filter or external search, keyboard navigation, mobile fullscreen mode."
-    :tags ["multiselect" "multiple" "tags" "form"]
-    :span [2 1]
-    :preview multiselect-preview}
    {:id :tyrell.site.docs/icon
     :segment "icon"
     :icon "star"

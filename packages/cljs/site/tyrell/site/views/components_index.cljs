@@ -23,9 +23,7 @@
           :tyrell.site.docs/switch
           :tyrell.site.docs/radio]}
    {:title "Selection"
-    :ids [:tyrell.site.docs/select
-          :tyrell.site.docs/dropdown
-          :tyrell.site.docs/multiselect]}
+    :ids [:tyrell.site.docs/select]}
    {:title "Date & time"
     :ids [:tyrell.site.docs/date-picker
           :tyrell.site.docs/calendar

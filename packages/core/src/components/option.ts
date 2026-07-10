@@ -27,6 +27,14 @@ import { isMobileTouch } from '../utils/mobile.js'
  * </ty-option>
  * ```
  */
+/** Lucide `check` — shown on selected options (kept inline: shadow DOM can't rely on the icon registry) */
+const CHECK_SVG = `
+  <svg class="option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+`
+
 export class TyOption extends HTMLElement implements TyOptionElement {
   private _value: string | undefined = undefined
   private _selected = false
@@ -253,6 +261,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
         shadow.innerHTML = `
           <div class="option-content">
             <span class="option-text"><slot></slot></span>
+            ${CHECK_SVG}
             <button class="option-clear-btn" type="button" aria-label="Clear selection">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -268,7 +277,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
           this.addClearButtonListener(clearBtn)
         }
       } else {
-        shadow.innerHTML = '<div class="option-content"><slot></slot></div>'
+        shadow.innerHTML = `<div class="option-content"><slot></slot>${CHECK_SVG}</div>`
       }
     } else {
       // Update existing content - add/remove clear button as needed

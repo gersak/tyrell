@@ -28,10 +28,6 @@
       "types": "./lib/components/input.d.ts",
       "import": "./lib/components/input.js"
     },
-    "./dropdown": {
-      "types": "./lib/components/dropdown.d.ts",
-      "import": "./lib/components/dropdown.js"
-    },
     "./checkbox": {
       "types": "./lib/components/checkbox.d.ts",
       "import": "./lib/components/checkbox.js"
@@ -91,10 +87,6 @@
     "./date-picker": {
       "types": "./lib/components/date-picker.d.ts",
       "import": "./lib/components/date-picker.js"
-    },
-    "./multiselect": {
-      "types": "./lib/components/multiselect.d.ts",
-      "import": "./lib/components/multiselect.js"
     },
     "./select": {
       "types": "./lib/components/select.d.ts",

@@ -205,7 +205,7 @@ picker.addEventListener('change', (e) => {
       [:div.ty-content.rounded-lg.p-5
        (section-label "Distinct trigger styling")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "The trigger uses " [:code "--ty-date-picker-*"] " — a thin shim over " [:code "--ty-input-*"] ". Override these to make the date-picker look distinct from other form fields without affecting " [:code "<ty-input>"] " or " [:code "<ty-dropdown>"] "."]
+        "The trigger uses " [:code "--ty-date-picker-*"] " — a thin shim over " [:code "--ty-input-*"] ". Override these to make the date-picker look distinct from other form fields without affecting " [:code "<ty-input>"] " or " [:code "<ty-select>"] "."]
        (demo-area
         [:div.flex.justify-center
          [:ty-date-picker {:style {"--ty-date-picker-bg" "#f0fdf4"

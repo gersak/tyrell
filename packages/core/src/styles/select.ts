@@ -202,7 +202,8 @@ export const selectStyles = `
   flex-wrap: nowrap;
   align-items: stretch;
   gap: 0;
-  padding: 0;
+  /* Card-style list: rounded rows sit inset from the panel edges */
+  padding: var(--ty-spacing-1);
   border-top: none;
   border-radius: 0 0 var(--ty-radius-lg) var(--ty-radius-lg);
   box-shadow: none;
@@ -234,20 +235,7 @@ export const selectStyles = `
   border-radius: var(--ty-radius-lg) var(--ty-radius-lg) 0 0;
 }
 
-/* Selection tick — ty-select only (options keep their own styling otherwise;
-   the stamped [selected] attribute is the consumer's styling hook) */
-::slotted(ty-option) {
-  position: relative;
-}
-::slotted(ty-option[selected])::after {
-  content: "✓";
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--ty-color-primary);
-  pointer-events: none;
-}
+/* Selection tick lives inside ty-option (lucide check on [selected]) */
 
 /* Mobile modal: same vertical list */
 .dropdown-mode-mobile .section-content ::slotted(ty-option) {

@@ -559,8 +559,8 @@
       :body ["Add " (c "name=") " to any form-associated component — "
              (c "<ty-input>") ", " (c "<ty-textarea>") ", "
              (c "<ty-checkbox>") ", " (c "<ty-switch>") ", "
-             (c "<ty-radio-group>") ", " (c "<ty-dropdown>") ", "
-             (c "<ty-multiselect>") ", " (c "<ty-date-picker>") ", "
+             (c "<ty-radio-group>") ", " (c "<ty-select>") ", "
+             (c "<ty-date-picker>") ", "
              (c "<ty-file-upload>") " — and it participates in form submission "
              "exactly like " (c "<input>") ". No JS required."]
       :code "<form method=\"POST\" action=\"/transfer\">
