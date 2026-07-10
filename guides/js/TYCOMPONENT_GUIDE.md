@@ -4,7 +4,7 @@
 
 **TyComponent** is an abstract base class that provides a unified, declarative property/attribute lifecycle for web components. It eliminates boilerplate code, ensures consistency, and makes components predictable and easy to maintain.
 
-> The examples below use `ty-dropdown` as the running case study of TyComponent internals. (As a *consumer-facing component* ty-dropdown is deprecated — use `ty-select` — but its source remains a good architecture reference.)
+> The examples below use `ty-select` as the running case study of TyComponent internals — the same patterns apply to every ty component.
 
 ### Key Benefits
 
@@ -74,19 +74,19 @@ TyComponent uses **two distinct event types** to avoid conflicts:
 - Triggered by: attribute changes, property setters, external updates
 - Detail: `{ property: 'name', oldValue: any, newValue: any }`
 - Use case: Reactive frameworks, property watchers, debugging
-- Example: `<ty-dropdown onPropChange={...} />` in React
+- Example: `<ty-select onPropChange={...} />` in React
 
 **`change`** - User Interaction Events
 - Emitted by component business logic (manually dispatched)
 - Triggered by: user clicks, selections, form interactions
-- Detail: Component-specific (e.g., `{ value, text, option, originalEvent }`)
+- Detail: Component-specific (e.g., ty-select emits `{ value, values, items, action, item }` — `value` is a scalar for single select, an array with `multiple`)
 - Use case: Application logic, form handling, user actions
-- Example: `<ty-dropdown onChange={...} />` in React
+- Example: `<ty-select onChange={...} />` in React
 
 **Why separate events?**
 ```javascript
 // React example - clear distinction
-<ty-dropdown
+<ty-select
   // Listen to user interactions
   onChange={(e) => console.log('User selected:', e.detail.value)}
   
@@ -109,7 +109,7 @@ import type { PropertyChange } from '../utils/property-manager.js'
 import type { Flavor, Size } from '../types/common.js'
 
 // Define your component's internal state interface
-interface DropdownState {
+interface SelectState {
   open: boolean
   search: string
   highlightedIndex: number
@@ -118,7 +118,7 @@ interface DropdownState {
   mode: 'desktop' | 'mobile'
 }
 
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // Component implementation here...
 }
 ```
@@ -128,7 +128,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
 This is the **most important part** - define all your properties in one place:
 
 ```typescript
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // ============================================================================
   // PROPERTY CONFIGURATION - Single source of truth
   // ============================================================================
@@ -152,7 +152,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
     placeholder: {
       type: 'string' as const,
       visual: true,
-      default: 'Select an option...'
+      default: 'Select...'
     },
     
     // Boolean property
@@ -163,12 +163,12 @@ export class TyDropdown extends TyComponent<DropdownState> {
     },
     
     // Boolean property with alias support
-    clearable: {
+    externalSearch: {
       type: 'boolean' as const,
       visual: true,
-      default: true,
+      default: false,
       aliases: {
-        'not-clearable': false  // <ty-dropdown not-clearable>
+        'external-search': true  // <ty-select external-search>
       }
     },
     
@@ -180,7 +180,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
       coerce: (v: any) => {
         if (!['sm', 'md', 'lg'].includes(v)) {
-          console.warn(`[ty-dropdown] Invalid size. Using md.`)
+          console.warn(`[ty-select] Invalid size. Using md.`)
           return 'md'
         }
         return v
@@ -220,7 +220,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
 These are **simple wrappers** with **no logic** - TyComponent handles everything:
 
 ```typescript
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // ... property configuration ...
   
   // ============================================================================
@@ -248,11 +248,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
     this.setProperty('disabled', v) 
   }
   
-  get clearable(): boolean {
-    return this.getProperty('clearable')
+  get externalSearch(): boolean {
+    return this.getProperty('externalSearch')
   }
-  set clearable(v: boolean) {
-    this.setProperty('clearable', v)
+  set externalSearch(v: boolean) {
+    this.setProperty('externalSearch', v)
   }
   
   get size(): Size { 
@@ -276,14 +276,14 @@ export class TyDropdown extends TyComponent<DropdownState> {
 ### Step 4: Initialize Internal State
 
 ```typescript
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // ... properties and accessors ...
   
   // ============================================================================
   // INTERNAL STATE - Component-specific state
   // ============================================================================
   
-  private _state: DropdownState = {
+  private _state: SelectState = {
     open: false,
     search: '',
     highlightedIndex: -1,
@@ -301,14 +301,14 @@ export class TyDropdown extends TyComponent<DropdownState> {
 ### Step 5: Implement Constructor
 
 ```typescript
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // ... properties, accessors, state ...
   
   constructor() {
     super() // TyComponent handles attachInternals() and attachShadow()
     
     const shadow = this.shadowRoot!
-    ensureStyles(shadow, { css: dropdownStyles, id: 'ty-dropdown' })
+    ensureStyles(shadow, { css: selectStyles, id: 'ty-select' })
   }
 }
 ```
@@ -381,9 +381,9 @@ protected onPropertiesChanged(changes: PropertyChange[]): void {
         this.updatePlaceholderInDOM()
         break
         
-      case 'clearable':
-        // Update clear button visibility
-        this.updateClearButton()
+      case 'externalSearch':
+        // Update search row visibility
+        this.updateSearchRow()
         break
         
       case 'disabled':
@@ -432,20 +432,14 @@ private renderDesktop(): void {
   const shadow = this.shadowRoot!
   
   shadow.innerHTML = `
-    <div class="ty-dropdown ${this.size} ${this.flavor}">
+    <div class="ty-select ${this.size}">
       ${this.label ? `<label>${this.label}</label>` : ''}
-      <div class="ty-dropdown-trigger">
-        <input 
-          type="text" 
-          placeholder="${this.placeholder}"
-          ?disabled="${this.disabled}"
-          ?readonly="${this.readonly}"
-        />
-        ${this.clearable ? '<button class="clear-btn">×</button>' : ''}
+      <div class="ty-select-trigger">
+        <span class="selected-display">${this.placeholder}</span>
         <button class="chevron-btn">▼</button>
       </div>
-      <div class="ty-dropdown-options">
-        <!-- Options rendered here -->
+      <div class="ty-select-popup">
+        <!-- Search row + options rendered here -->
       </div>
     </div>
   `
@@ -477,15 +471,15 @@ protected static properties = {
 }
 ```
 
-**Usage**:
+**Usage** (this is how `ty-date-picker` defines its clear button):
 ```html
 <!-- Both are equivalent -->
-<ty-dropdown clearable></ty-dropdown>
-<ty-dropdown></ty-dropdown> <!-- default is true -->
+<ty-date-picker clearable></ty-date-picker>
+<ty-date-picker></ty-date-picker> <!-- default is true -->
 
 <!-- Both hide the clear button -->
-<ty-dropdown clearable="false"></ty-dropdown>
-<ty-dropdown not-clearable></ty-dropdown>
+<ty-date-picker clearable="false"></ty-date-picker>
+<ty-date-picker not-clearable></ty-date-picker>
 ```
 
 ### Pattern 2: Validated String Properties
@@ -592,12 +586,12 @@ protected static properties = {
 
 ---
 
-## 🔍 Real-World Example: TyDropdown
+## 🔍 Real-World Example: TySelect
 
-Here's how the actual `TyDropdown` component is structured:
+Here's how the actual `TySelect` component is structured:
 
 ```typescript
-export class TyDropdown extends TyComponent<DropdownState> {
+export class TySelect extends TyComponent<SelectState> {
   // ============================================================================
   // 1. PROPERTY CONFIGURATION
   // ============================================================================
@@ -612,13 +606,18 @@ export class TyDropdown extends TyComponent<DropdownState> {
     placeholder: {
       type: 'string' as const,
       visual: true,
-      default: 'Select an option...'
+      default: 'Select...'
     },
-    clearable: {
+    multiple: {
       type: 'boolean' as const,
       visual: true,
-      default: true,
-      aliases: { 'not-clearable': false }
+      default: false
+    },
+    externalSearch: {
+      type: 'boolean' as const,
+      visual: true,
+      default: false,
+      aliases: { 'external-search': true }
     },
     size: {
       type: 'string' as const,
@@ -627,7 +626,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
       validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
       coerce: (v: any) => {
         if (!['sm', 'md', 'lg'].includes(v)) {
-          console.warn(`[ty-dropdown] Invalid size. Using md.`)
+          console.warn(`[ty-select] Invalid size. Using md.`)
           return 'md'
         }
         return v
@@ -639,7 +638,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
   // ============================================================================
   // 2. INTERNAL STATE
   // ============================================================================
-  private _state: DropdownState = {
+  private _state: SelectState = {
     open: false,
     search: '',
     highlightedIndex: -1,
@@ -657,8 +656,11 @@ export class TyDropdown extends TyComponent<DropdownState> {
   get placeholder(): string { return this.getProperty('placeholder') }
   set placeholder(v: string) { this.setProperty('placeholder', v) }
   
-  get clearable(): boolean { return this.getProperty('clearable') }
-  set clearable(v: boolean) { this.setProperty('clearable', v) }
+  get multiple(): boolean { return this.getProperty('multiple') }
+  set multiple(v: boolean) { this.setProperty('multiple', v) }
+  
+  get externalSearch(): boolean { return this.getProperty('externalSearch') }
+  set externalSearch(v: boolean) { this.setProperty('externalSearch', v) }
   
   get size(): Size { return this.getProperty('size') as Size }
   set size(v: Size) { this.setProperty('size', v) }
@@ -669,7 +671,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
   constructor() {
     super()
     const shadow = this.shadowRoot!
-    ensureStyles(shadow, { css: dropdownStyles, id: 'ty-dropdown' })
+    ensureStyles(shadow, { css: selectStyles, id: 'ty-select' })
   }
   
   // ============================================================================
@@ -690,8 +692,8 @@ export class TyDropdown extends TyComponent<DropdownState> {
           this._state.currentValue = newValue || null
           this.syncSelectedOption()
           break
-        case 'clearable':
-          this.updateClearButton()
+        case 'externalSearch':
+          this.updateSearchRow()
           break
       }
     }
@@ -721,7 +723,7 @@ export class TyDropdown extends TyComponent<DropdownState> {
   // ============================================================================
   private initializeState(): void { /* ... */ }
   private syncSelectedOption(): void { /* ... */ }
-  private updateClearButton(): void { /* ... */ }
+  private updateSearchRow(): void { /* ... */ }
   private attachEventListeners(): void { /* ... */ }
 }
 ```
@@ -760,45 +762,45 @@ export class TyDropdown extends TyComponent<DropdownState> {
 
 ```typescript
 // Via attribute
-dropdown.setAttribute('value', 'test')
-console.assert(dropdown.value === 'test')
+select.setAttribute('value', 'test')
+console.assert(select.value === 'test')
 
 // Via property
-dropdown.value = 'test2'
-console.assert(dropdown.getAttribute('value') === 'test2')
+select.value = 'test2'
+console.assert(select.getAttribute('value') === 'test2')
 
 // Before connectedCallback (React pattern)
-const dropdown = document.createElement('ty-dropdown')
-dropdown.value = 'preset'  // ← Set before mounting
-document.body.appendChild(dropdown)
-console.assert(dropdown.value === 'preset')  // ← Should work!
+const select = document.createElement('ty-select')
+select.value = 'preset'  // ← Set before mounting
+document.body.appendChild(select)
+console.assert(select.value === 'preset')  // ← Should work!
 ```
 
 ### Boolean Properties
 
 ```typescript
 // Attribute presence
-dropdown.setAttribute('disabled', '')
-console.assert(dropdown.disabled === true)
+select.setAttribute('disabled', '')
+console.assert(select.disabled === true)
 
 // Attribute absence
-dropdown.removeAttribute('disabled')
-console.assert(dropdown.disabled === false)
+select.removeAttribute('disabled')
+console.assert(select.disabled === false)
 
 // Alias
-dropdown.setAttribute('not-clearable', '')
-console.assert(dropdown.clearable === false)
+select.setAttribute('external-search', '')
+console.assert(select.externalSearch === true)
 ```
 
 ### Form Integration
 
 ```typescript
 const form = document.createElement('form')
-const dropdown = document.createElement('ty-dropdown')
-dropdown.name = 'country'
-dropdown.value = 'us'
+const select = document.createElement('ty-select')
+select.name = 'country'
+select.value = 'us'
 
-form.appendChild(dropdown)
+form.appendChild(select)
 document.body.appendChild(form)
 
 const formData = new FormData(form)
@@ -809,18 +811,18 @@ console.assert(formData.get('country') === 'us')
 
 ```typescript
 // Listen to property changes (reactive frameworks)
-dropdown.addEventListener('prop:change', (e) => {
+select.addEventListener('prop:change', (e) => {
   console.log('Property changed:', e.detail)
   // { property: 'value', oldValue: 'old', newValue: 'new' }
 })
 
 // Listen to user interaction changes (business logic)
-dropdown.addEventListener('change', (e) => {
+select.addEventListener('change', (e) => {
   console.log('User changed:', e.detail)
-  // { value: 'new', text: 'New Option', option: HTMLElement, originalEvent: Event }
+  // { value: 'new', values: ['new'], items: [...], action: 'add', item: 'new' }
 })
 
-dropdown.value = 'new'  // ← Triggers 'prop:change' if emitChange: true
+select.value = 'new'  // ← Triggers 'prop:change' if emitChange: true
 ```
 
 ---
@@ -906,7 +908,7 @@ protected static properties = {
 ```typescript
 protected render(): void {
   // Don't update properties inside render!
-  if (this._state.open && this.clearable) {
+  if (this._state.open) {
     this.placeholder = 'Search...'  // ← Triggers another render!
   }
 }
@@ -917,7 +919,7 @@ protected render(): void {
 protected onPropertiesChanged(changes: PropertyChange[]): void {
   // Update before render
   if (changes.some(c => c.name === 'open')) {
-    if (this._state.open && this.clearable) {
+    if (this._state.open) {
       // Update internal state, not properties
       this._effectivePlaceholder = 'Search...'
     }
@@ -959,7 +961,7 @@ protected render(): void {
 
 - `/packages/core/src/base/ty-component.ts` - Base class implementation
 - `/packages/core/src/utils/property-manager.ts` - Property lifecycle manager
-- `/packages/core/src/components/dropdown.ts` - Complete real-world example
+- `/packages/core/src/components/select.ts` - Complete real-world example
 
 ---
 

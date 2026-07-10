@@ -80,10 +80,10 @@ Every component — buttons, inputs, dropdowns, calendars, focus rings, scrollba
 
 ```html
 <ty-button flavor="primary">Click me</ty-button>
-<ty-dropdown label="Country" placeholder="Select...">
+<ty-select label="Country" placeholder="Select...">
   <ty-option value="us">United States</ty-option>
   <ty-option value="de">Germany</ty-option>
-</ty-dropdown>
+</ty-select>
 ```
 
 ---
@@ -214,8 +214,8 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 | `ty-checkbox` | Styled checkbox with indeterminate state |
 | `ty-switch` | Toggle switch primitive |
 | `ty-radio-group` / `ty-radio` | Exclusive single-choice selection |
-| `ty-dropdown` | Searchable select with keyboard nav and mobile modal |
-| `ty-multiselect` | Multi-select with tags and search |
+| `ty-select` / `ty-option` | THE select control — single by default, `multiple` for multi-select, searchable popup |
+| `ty-selected-tags` | Out-of-band dismissible chips for a `ty-select` selection |
 | `ty-calendar` | Full calendar with date selection and form integration |
 | `ty-date-picker` | Calendar dropdown for date input |
 | `ty-tabs` / `ty-tab` | Carousel tabs with smooth animations |

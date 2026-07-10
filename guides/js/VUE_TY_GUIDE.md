@@ -154,7 +154,7 @@ For most apps, Pattern 1 is fine and explicit.
 
 ## Composition with child elements
 
-`ty-select` / `ty-tabs` use slotted children. Vue renders them naturally — reactive lists work as expected. (`ty-dropdown` and `ty-multiselect` are **deprecated** — `ty-select` replaces both.)
+`ty-select` / `ty-tabs` use slotted children. Vue renders them naturally — reactive lists work as expected.
 
 ```vue
 <script setup>

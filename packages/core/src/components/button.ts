@@ -13,7 +13,8 @@ import type { Flavor, Size, TyButtonElement } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles, buildClassList } from "../utils/styles.js";
-import { buttonStyles } from "../styles/button.js";
+import { buttonStyles, buttonCustomFlavorCss } from "../styles/button.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { getLoaderSvg } from "../utils/loader-registry.js";
 
 type Appearance = "solid" | "outlined" | "ghost";
@@ -122,14 +123,39 @@ export class TyButton
 
   private _structureInitialized = false;
 
+  // Adopted sheet with generated rules for a custom (non-built-in) flavor
+  private _customFlavorSheet: CSSStyleSheet | null = null;
+
   constructor() {
     super();
     ensureStyles(this.shadowRoot!, { css: buttonStyles, id: "ty-button" });
   }
 
-  protected onConnect(): void {}
+  protected onConnect(): void {
+    this._syncCustomFlavor();
+  }
   protected onDisconnect(): void {}
-  protected onPropertiesChanged(_changes: PropertyChange[]): void {}
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === "flavor")) {
+      this._syncCustomFlavor();
+    }
+  }
+
+  /**
+   * Custom flavors: adopt generated per-flavor rules pointed at the user's
+   * design tokens (--ty-solid-X / --ty-color-X / --ty-bg-X), falling back to
+   * neutral for any token the user didn't define. Tone (+/-) is handled by
+   * the tone-plus/tone-minus classes, so only the base flavor matters here.
+   */
+  private _syncCustomFlavor(): void {
+    const { base } = this.parseFlavor();
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      base,
+      () => buttonCustomFlavorCss(base),
+    );
+  }
 
   // ============================================================================
   // PROPERTY ACCESSORS

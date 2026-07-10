@@ -13,6 +13,14 @@ export const calendarNavigationStyles = `
    component is nested inside ty-calendar's shadow, so a :host default would
    block inherited overrides. --ty-calendar-accent still cascades in. */
 
+:host([data-size="md"]) {
+  --nav-btn-size: 2rem;
+  --nav-btn-icon-size: 1.25rem;
+  --nav-font-size: 1rem;
+  --nav-padding: 0.5rem 0.75rem;
+  --nav-default-width: 280px;
+}
+
 :host([data-size="sm"]) {
   --nav-btn-size: 1.5rem;
   --nav-btn-icon-size: 1rem;

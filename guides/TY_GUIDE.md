@@ -19,8 +19,6 @@ When a Tyrell component exists, use it. Do not improvise HTML.
 | Textarea | `<ty-textarea>` | `<textarea>` |
 | File upload | `<ty-file-upload>` | `<input type="file">` + custom drop zones |
 | Select (single or multi) | `<ty-select>` | `<select>`, custom menus, multiple checkboxes |
-| Dropdown (legacy) | `<ty-dropdown>` — deprecated, use `<ty-select>` | `<select>` |
-| Multi-select (legacy) | `<ty-multiselect>` — deprecated, use `<ty-select multiple>` | Multiple checkboxes |
 | Modal | `<ty-modal>` | `<dialog>`, custom overlays |
 | Tooltip | `<ty-tooltip>` | `title` attr, custom divs |
 | Popup | `<ty-popup>` | Custom positioned divs |
@@ -82,8 +80,7 @@ Components with `start`/`end` slots handle spacing automatically.
 ty-button       slot="start" | (default text) | slot="end"
 ty-input        slot="start" | (input field)  | slot="end"
 ty-tag          slot="start" | (tag text)     | slot="end"
-ty-dropdown     slot="selected"  (custom selected display)
-ty-multiselect  slot="selected"  (custom selected display)
+ty-select       slot="start" | slot="end" | slot="trigger" (custom chrome) | slot="loading"
 ty-tabs         slot="label-{id}" (rich tab label)  |  slot="marker" (active indicator)
 ty-wizard       slot="indicator-{id}" (custom step indicator)
 ```
@@ -129,6 +126,8 @@ FormData: submits raw number, not formatted string.
 | `warning` | Caution | Unsaved changes, limits |
 | `neutral` | Default, no weight | Cancel, Close |
 
+Any other string is a **custom flavor** (`ty-button`, `ty-tag`): define `--ty-color-X` / `--ty-bg-X` / `--ty-solid-X` design tokens and the component themes itself, `+`/`-` shades included. See [CSS_GUIDE.md → Custom Flavors](./CSS_GUIDE.md#custom-flavors-add-your-own).
+
 ---
 
 ## Child Elements
@@ -136,8 +135,7 @@ FormData: submits raw number, not formatted string.
 | Parent | Children | Example |
 |--------|----------|---------|
 | `ty-select` | `<ty-option>` (rich HTML; `label` attr = clean display text) | `<ty-option value="us">US</ty-option>` |
-| `ty-dropdown` *(deprecated)* | `<option>` or `<ty-option>` | `<option value="us">US</option>` |
-| `ty-multiselect` *(deprecated)* | `<ty-tag>` only | `<ty-tag value="js">JavaScript</ty-tag>` |
+| `ty-selected-tags` | optional `<template>` with `{value}`/`{label}`/`{flavor}`/`{data-*}` placeholders | `<template><ty-tag flavor="{flavor}">{label}</ty-tag></template>` |
 
 ---
 
@@ -147,7 +145,7 @@ FormData: submits raw number, not formatted string.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `flavor` | string | `'neutral'` | Built-in: `primary` \| `secondary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is accepted — theme custom flavors via `--ty-button-*` variables. |
+| `flavor` | string | `'neutral'` | Built-in: `primary` \| `secondary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is a custom flavor: define `--ty-solid-X`(`-fg/-hover/...`), `--ty-color-X-*`, `--ty-bg-X-soft` tokens and it themes like a built-in (missing tokens fall back to neutral); `--ty-button-*` variables still override per instance. `ty-tag` works the same way via `--ty-bg-X` / `--ty-color-X` / `--ty-border-X`. |
 | `appearance` | string | `'solid'` | `solid` (saturated brand fill) \| `outlined` (transparent bg, text === border) \| `ghost` (text only with hover bg) |
 | `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
 | `type` | string | `'submit'` | `button` \| `submit` \| `reset` |
@@ -266,7 +264,7 @@ Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — s
 
 ### ty-select
 
-The select control — **replaces ty-dropdown and ty-multiselect** (both are now deprecated). Single select by default with a form-field look matching `ty-input`.
+THE select control. Single select by default with a form-field look matching `ty-input`; `multiple` for multi-select.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -291,67 +289,13 @@ The select control — **replaces ty-dropdown and ty-multiselect** (both are now
 
 **Companion:** `<ty-selected-tags for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup.
 
----
-
-### ty-dropdown
-
-> **Superseded by ty-select.** Kept for compatibility.
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `value` | string | `''` | |
-| `name` | string | - | |
-| `placeholder` | string | `'Select an option...'` | |
-| `label` | string | - | |
-| `disabled` | boolean | `false` | |
-| `readonly` | boolean | `false` | |
-| `required` | boolean | `false` | |
-| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
-| `clearable` | boolean | `true` | |
-| `not-clearable` | boolean | - | Disable clear |
-| `size` | string | `'md'` | |
-| `flavor` | string | `'neutral'` | |
-| `debounce` | number | `0` | Search debounce |
-
-**Children:** `<option>` or `<ty-option>` (for rich HTML) | **Slots:** `selected`
-
-**Events:** `change` -> `{ value, text, option, originalEvent }` | `search` -> `{ query, originalEvent }`
-
-**Custom colors:** uses the shared `--ty-input-*` variable family — override per dropdown with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
-
----
-
-### ty-multiselect
-
-> **Deprecated — use [`ty-select multiple`](#ty-select).** Kept for compatibility; no new features.
-
-| Attribute | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `value` | string | `''` | Comma-separated values |
-| `name` | string | - | |
-| `placeholder` | string | `'Select options...'` | |
-| `label` | string | - | |
-| `disabled` | boolean | `false` | |
-| `readonly` | boolean | `false` | |
-| `required` | boolean | `false` | |
-| `external-search` | boolean | `false` | Switch to external (remote) search — dispatches `search` events instead of filtering locally |
-| `size` | string | `'md'` | |
-| `flavor` | string | `'neutral'` | |
-| `debounce` | number | `0` | Search debounce |
-| `selected-label` | string | `'Selected'` | |
-| `available-label` | string | `'Available'` | |
-
-**Children:** `<ty-tag>` only | **Slots:** `selected`
-
-**Events:** `change` -> `{ values: string[], action: 'add'|'remove'|'clear'|'set', item }` | `search` -> `{ query, element }`
-
-**Custom colors:** uses the shared `--ty-input-*` variable family — override per multiselect with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
+**Custom colors:** uses the shared `--ty-input-*` variable family — override per select with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
 
 ### ty-option
 
-Rich HTML option for `<ty-select>` (and the deprecated `<ty-dropdown>`). Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content; `data-*` attributes feed `ty-selected-tags` chip templates.
+Rich HTML option for `<ty-select>`. Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content; `data-*` attributes feed `ty-selected-tags` chip templates.
 
 ---
 
@@ -361,7 +305,7 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `flavor` | string | `'neutral'` | |
+| `flavor` | string | `'neutral'` | Built-ins plus `+`/`-` shades, same as ty-button. Custom flavor `X` themes from `--ty-bg-X` / `--ty-color-X` / `--ty-border-X` tokens; `ty-tag[flavor="X"] { --tag-bg: ...; --tag-color: ...; --tag-border-color: ...; }` still overrides. |
 | `size` | string | `'md'` | |
 | `value` | string | - | |
 | `selected` | boolean | `false` | |
@@ -667,9 +611,6 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 | `ty-checkbox` | `input`, `change` | `{ value, checked, formValue, originalEvent }` |
 | `ty-select` | `change` | `{ value (scalar / array when multiple), values, items, action, item }` |
 | `ty-select` | `search` | `{ query, element }` |
-| `ty-dropdown` *(deprecated)* | `change` | `{ value, text, option, originalEvent }` |
-| `ty-dropdown` | `search` | `{ query, originalEvent }` |
-| `ty-multiselect` | `change` | `{ values, action, item }` |
 | `ty-file-upload` | `change` | `{ value: File[], files: File[], names: string[] }` |
 | `ty-calendar` | `change` | `{ year, month, day, action, source, dayContext }` |
 | `ty-tabs` | `ty-tab-change` | `{ activeId, activeIndex, previousId, previousIndex }` |

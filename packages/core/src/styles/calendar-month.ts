@@ -46,7 +46,7 @@ export const calendarMonthStyles = `
 
 .calendar-header-row {
   flex: 0 0 auto;
-  color: var(--ty-calendar-header-color, var(--ty-color-neutral-strong));
+  color: var(--ty-calendar-header-color, var(--ty-color-neutral-soft));
 }
 
 .calendar-day-row {
@@ -75,7 +75,7 @@ export const calendarMonthStyles = `
 
 .calendar-header-cell {
   text-align: center;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   padding: 0.25rem;
   letter-spacing: 0.05em;
@@ -98,40 +98,42 @@ export const calendarMonthStyles = `
   /* Spacing */
   margin: 0.125rem;
 
-  /* Visual */
-  border-radius: var(--ty-calendar-day-radius, 0.375rem);
-  border: 1px solid var(--ty-calendar-day-border, var(--ty-border-faint));
+  /* Visual: ghost cells — no boxes; the border is a theming hook only */
+  border-radius: var(--ty-calendar-day-radius, 0.5rem);
+  border: 1px solid var(--ty-calendar-day-border, transparent);
   background-color: var(--ty-calendar-day-bg, transparent);
-  color: var(--ty-calendar-day-color, var(--ty-calendar-muted, var(--ty-color-neutral)));
+  color: var(--ty-calendar-day-color, var(--ty-calendar-muted, var(--ty-text)));
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
   /* Typography */
   font-weight: 400;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Hover State - Stronger Feedback */
+/* Hover: soft rounded pill, no border flash */
 .calendar-day-cell:hover {
-  color: var(--ty-calendar-day-hover-color, var(--ty-color-neutral-strong));
+  color: var(--ty-calendar-day-hover-color, var(--ty-text-strong));
   background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
-  border-color: var(--ty-calendar-day-hover-border, var(--ty-border-bold));
+  border-color: var(--ty-calendar-day-hover-border, transparent);
 }
 
 /* ============================================================================
    Day States
    ============================================================================ */
 
-/* Today - Strong Visual Indicator */
+/* Today: accent number, no slab — never collides with hover, and the
+   selected pill wins when today is picked */
 .calendar-day-cell.today {
-  background-color: var(--ty-calendar-today-bg, var(--ty-bg-secondary-soft));
-  color: var(--ty-calendar-today-color, var(--ty-color-secondary-strong));
-  border-color: var(--ty-calendar-today-border, var(--ty-calendar-today-accent, var(--ty-color-secondary)));
+  background-color: var(--ty-calendar-today-bg, transparent);
+  color: var(--ty-calendar-today-color, var(--ty-calendar-today-accent, var(--ty-color-primary)));
+  border-color: var(--ty-calendar-today-border, transparent);
   font-weight: 600;
 }
 
-/* Weekend - Subtle Color Shift */
+/* Weekend: no distinction by default (hook kept for theming) */
 .calendar-day-cell.weekend {
-  color: var(--ty-calendar-weekend-color, var(--ty-color-danger-soft));
+  color: var(--ty-calendar-weekend-color, var(--ty-calendar-day-color, var(--ty-text)));
 }
 
 /* Other Month - Muted */
@@ -154,17 +156,17 @@ export const calendarMonthStyles = `
   pointer-events: none;
 }
 
-/* Selected State (for custom usage) */
+/* Selected: the one strong element in the grid */
 .calendar-day-cell.selected {
   background-color: var(--ty-calendar-selected-bg, var(--ty-bg-primary));
   color: var(--ty-calendar-selected-color, var(--ty-color-primary-strong));
-  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, var(--ty-color-primary)));
+  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, transparent));
   font-weight: 600;
 }
 
 .calendar-day-cell.selected:hover {
   background-color: var(--ty-calendar-selected-hover-bg, var(--ty-bg-primary-bold));
-  border-color: var(--ty-calendar-selected-hover-border, var(--ty-color-primary-bold));
+  border-color: var(--ty-calendar-selected-hover-border, transparent);
 }
 
 .calendar-day-cell.selected.other-month {

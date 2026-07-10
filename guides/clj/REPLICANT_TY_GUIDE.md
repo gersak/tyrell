@@ -132,7 +132,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
   :error (when (touched :email) (errors :email))
   :on {:change (fn [^js e] (on-email-change (-> e .-detail .-value)))}}]
 
-;; Select (single — ty-select deprecates ty-dropdown)
+;; Select (single)
 [:ty-select
  {:label "Country"
   :placeholder "Select..."
@@ -141,8 +141,8 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
  [:ty-option {:value "us"} "United States"]
  [:ty-option {:value "de"} "Germany"]]
 
-;; Multi-select (ty-select multiple deprecates ty-multiselect —
-;; children are ty-option, chips render via ty-selected-tags)
+;; Multi-select (ty-select with :multiple — children are
+;; ty-option, chips render via ty-selected-tags)
 [:ty-select
  {:multiple true
   :id "skills"
@@ -285,8 +285,6 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 | `ty-checkbox` | `change` | `value`, `checked`, `formValue`, `originalEvent` |
 | `ty-select` | `change` | `value` (scalar, or array when `multiple`), `values` (JS array), `items`, `action` (`"add"`/`"remove"`/`"clear"`/`"set"`), `item` |
 | `ty-select` | `search` | `query`, `element` |
-| `ty-dropdown` *(deprecated)* | `change` | `value`, `text`, `option`, `originalEvent` |
-| `ty-multiselect` *(deprecated)* | `change` | `values` (JS array), `action`, `item` |
 | `ty-file-upload` | `change` | `value` (File[]), `files` (File[]), `names` (string[]) |
 | `ty-calendar` | `change` | `year`, `month`, `day`, `action`, `source`, `dayContext` |
 | `ty-calendar` | `navigate` | `month`, `year`, `action`, `source` |
@@ -528,7 +526,7 @@ dismissible chips render out-of-band wherever you put them:
 
  [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
  [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]
- [:ty-option {:value "react" :flavor "info"} "React"]]
+ [:ty-option {:value "react" :flavor "secondary"} "React"]]
 
 [:div.flex.flex-wrap.gap-2
  [:ty-selected-tags {:for "skills-select"}]]

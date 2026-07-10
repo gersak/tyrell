@@ -7,13 +7,16 @@
  * for a softer shade — e.g. `primary`, `primary+`, `primary-`. Matches the
  * design system's `ty-bg-primary+` / `ty-text-primary-` class convention.
  */
-export type FlavorBase =
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'danger'
-  | 'warning'
-  | 'neutral'
+export const FLAVORS = [
+  'primary',
+  'secondary',
+  'success',
+  'danger',
+  'warning',
+  'neutral',
+] as const
+
+export type FlavorBase = (typeof FLAVORS)[number]
 
 /**
  * A flavor with optional shade suffix: `primary | primary+ | primary-`.

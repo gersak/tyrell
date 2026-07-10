@@ -142,7 +142,7 @@ Slotted children work naturally — `{#each}` blocks render reactive options:
   {/each}
 </ty-select>
 
-<!-- ty-select deprecates ty-dropdown / ty-multiselect: single by default,
+<!-- ty-select: single by default,
      add `multiple` for multi-select ({e.detail.values} = array). -->
 ```
 

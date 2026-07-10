@@ -141,6 +141,83 @@
       [:div.ty-text-neutral++.font-medium "ty-bg-neutral-"]
       [:div.ty-text-neutral.text-sm "Softer background"]]]]])
 
+;; ----------------------------------------------------------------------------
+;; Custom flavors — define the tokens, get a themed component. The <style>
+;; below is the whole integration: no per-component CSS, no JS.
+;; ----------------------------------------------------------------------------
+
+(def ^:private brand-tokens-css
+  ".demo-brand-scope {
+  /* text / border ramp */
+  --ty-color-brand-strong: #115e59;
+  --ty-color-brand: #0d9488;
+  --ty-color-brand-soft: #2dd4bf;
+  --ty-color-brand-faint: #99f6e4;
+  --ty-border-brand: #0d9488;
+
+  /* backgrounds */
+  --ty-bg-brand-bold: #99f6e4;
+  --ty-bg-brand: #ccfbf1;
+  --ty-bg-brand-soft: #f0fdfa;
+
+  /* solid button fills */
+  --ty-solid-brand: #0d9488;
+  --ty-solid-brand-strong: #0f766e;
+  --ty-solid-brand-soft: #5eead4;
+  --ty-solid-brand-hover: #0f766e;
+  --ty-solid-brand-active: #134e4a;
+  --ty-solid-brand-fg: white;
+}")
+
+(defn custom-flavors-demo []
+  "Live proof: a flavor that ships with the app, not the library."
+  [:div.ty-elevated.p-6.rounded-lg
+   [:style brand-tokens-css]
+   [:h3.text-lg.font-semibold.ty-text.mb-4 "Custom Flavors"]
+   [:p.ty-text-.mb-2
+    "Flavors are open-ended. Any " [:code "flavor"] " string that isn't a built-in becomes a "
+    [:strong "custom flavor"] ": define its design tokens ("
+    [:code "--ty-color-X"] ", " [:code "--ty-bg-X"] ", " [:code "--ty-solid-X"]
+    ") and components theme themselves — same shade ramp, hover, focus and "
+    [:code "+"] "/" [:code "-"] " tones as the built-ins."]
+   [:p.ty-text--.mb-6 {:style {:font-size "0.8125rem"}}
+    "Everything below uses " [:code "flavor=\"brand\""]
+    " — a flavor this page invented. The library ships no brand CSS; the tokens in the code block are the entire integration."]
+
+   [:div.demo-brand-scope.space-y-4
+    [:div
+     [:h4.text-sm.font-medium.ty-text.mb-2 "Buttons — solid / outlined / ghost"]
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-button {:flavor "brand"} "Brand"]
+      [:ty-button {:flavor "brand" :appearance "outlined"} "Brand"]
+      [:ty-button {:flavor "brand" :appearance "ghost"} "Brand"]]]
+    [:div
+     [:h4.text-sm.font-medium.ty-text.mb-2 "Tone suffixes work too"]
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-button {:flavor "brand+"} "brand+"]
+      [:ty-button {:flavor "brand"}  "brand"]
+      [:ty-button {:flavor "brand-"} "brand-"]]]
+    [:div
+     [:h4.text-sm.font-medium.ty-text.mb-2 "Tags"]
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-tag {:flavor "brand+"} "brand+"]
+      [:ty-tag {:flavor "brand"}  "brand"]
+      [:ty-tag {:flavor "brand-"} "brand-"]]]
+    [:div
+     [:h4.text-sm.font-medium.ty-text.mb-2 "Graceful fallback — undefined flavors degrade to neutral"]
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-button {:flavor "mystery"} "flavor=\"mystery\""]
+      [:ty-tag {:flavor "mystery"} "mystery"]]]]
+
+   [:div.mt-6
+    [:h4.text-sm.font-medium.ty-text.mb-2 "The entire integration"]
+    (common/code-block brand-tokens-css "css")
+    [:div.mt-3]
+    (common/code-block "<ty-button flavor=\"brand\">Brand</ty-button>
+<ty-button flavor=\"brand\" appearance=\"outlined\">Brand</ty-button>
+<ty-tag flavor=\"brand+\">brand+</ty-tag>"
+                       "html")]])
+
 (defn surface-classes-demo []
   "Shows surface classes nested to demonstrate layering hierarchy"
   [:div.ty-elevated.p-6.rounded-lg
@@ -416,6 +493,7 @@ button {
    ;; Main content sections — single-column flow
    (text-variants-demo)
    (background-variants-demo)
+   (custom-flavors-demo)
    (surface-classes-demo)
    (practical-examples)
    (code-examples)

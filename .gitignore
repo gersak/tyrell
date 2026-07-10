@@ -38,3 +38,5 @@ target/
 .npmrc
 
 examples/pocketledger
+
+PUBLISHING.md

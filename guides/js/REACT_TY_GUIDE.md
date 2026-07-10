@@ -38,7 +38,7 @@ import 'tyrell-components/select'
 import 'tyrell-components/modal'
 ```
 
-Available subpaths match the component names — `button`, `input`, `select`, `selected-tags`, `dropdown` *(deprecated)*, `multiselect` *(deprecated)*, `modal`, `popup`, `tooltip`, `tag`, `option`, `icon`, `checkbox`, `textarea`, `copy`, `tabs`, `tab`, `calendar`, `calendar-month`, `calendar-navigation`, `date-picker`.
+Available subpaths match the component names — `button`, `input`, `select`, `selected-tags`, `modal`, `popup`, `tooltip`, `tag`, `option`, `icon`, `checkbox`, `textarea`, `copy`, `tabs`, `tab`, `calendar`, `calendar-month`, `calendar-navigation`, `date-picker`.
 
 #### Option B — CDN script tag
 
@@ -141,7 +141,7 @@ interface TyInputEventDetail {
 </TySelect>
 ```
 
-`TySelect` is the select control (it deprecates `TyDropdown` and `TyMultiselect`).
+`TySelect` is THE select control.
 Single select by default — `e.detail.value` is the scalar value. Add `multiple`
 for multi-select (`e.detail.value` becomes an array; `e.detail.values` is always
 the array form):
@@ -238,9 +238,8 @@ function ContactForm() {
 
 ## Multi-select — `<TySelect multiple>`
 
-> `TyMultiselect` is **deprecated**. Use `TySelect` with `multiple` — options are
-> `<TyOption>` children (not `<TyTag>`), and selected chips render out-of-band via
-> `<TySelectedTags>` wherever you want them.
+> With `multiple`, options are `<TyOption>` children (not `<TyTag>`), and selected
+> chips render out-of-band via `<TySelectedTags>` wherever you want them.
 
 ```tsx
 const [selected, setSelected] = useState<string[]>([])
@@ -343,7 +342,7 @@ All components accept a typed `style` prop that supports CSS custom properties f
 
 ### Input components
 
-`TyInput`, `TyTextarea`, `TySelect` (and the deprecated `TyDropdown`/`TyMultiselect`) all share the same tokens:
+`TyInput`, `TyTextarea`, and `TySelect` all share the same tokens:
 
 | Token | Purpose |
 |-------|---------|
@@ -937,8 +936,6 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyCheckbox` | `checked` | `onChange` | -- |
 | `TySelect` | `value` (string, or array when `multiple`) | `onChange` / `onSearch` / `onOpen` / `onClose` | -- |
 | `TySelectedTags` | `htmlFor` | -- | -- |
-| `TyDropdown` *(deprecated → TySelect)* | `value` | `onChange` | -- |
-| `TyMultiselect` *(deprecated → TySelect multiple)* | `value` (array) | `onChange` | -- |
 | `TyDatePicker` | `value` (ISO) | `onChange` / `onOpen` / `onClose` | -- |
 | `TyCalendar` | `value` (ISO) | `onChange` / `onNavigate` | -- |
 | `TyTabs` | `active` | `onChange` | -- |

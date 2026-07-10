@@ -50,3 +50,42 @@ describe('ty-button — form submission', () => {
     expect(clicked).to.equal(true);
   });
 });
+
+describe('ty-button custom flavors', () => {
+  const BG = 'rgb(1, 2, 3)';
+  const FG = 'rgb(4, 5, 6)';
+  const NEUTRAL = 'rgb(7, 8, 9)';
+
+  afterEach(() => {
+    for (const p of ['--ty-solid-brand', '--ty-solid-brand-fg', '--ty-solid-neutral', '--ty-color-brand']) {
+      document.documentElement.style.removeProperty(p);
+    }
+  });
+
+  it('solid appearance derives from --ty-solid-X tokens', async () => {
+    document.documentElement.style.setProperty('--ty-solid-brand', BG);
+    document.documentElement.style.setProperty('--ty-solid-brand-fg', FG);
+    const el = await fixture(html`<ty-button flavor="brand">Brand</ty-button>`);
+    await nextFrame();
+    const cs = getComputedStyle(el.shadowRoot!.querySelector('button')!);
+    expect(cs.backgroundColor).to.equal(BG);
+    expect(cs.color).to.equal(FG);
+  });
+
+  it('falls back to neutral tokens when the custom token is missing', async () => {
+    document.documentElement.style.setProperty('--ty-solid-neutral', NEUTRAL);
+    const el = await fixture(html`<ty-button flavor="brand">Brand</ty-button>`);
+    await nextFrame();
+    const cs = getComputedStyle(el.shadowRoot!.querySelector('button')!);
+    expect(cs.backgroundColor).to.equal(NEUTRAL);
+  });
+
+  it('ghost + tone suffix uses the shade token', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand-strong', FG);
+    const el = await fixture(html`<ty-button appearance="ghost" flavor="brand+">Brand</ty-button>`);
+    await nextFrame();
+    const cs = getComputedStyle(el.shadowRoot!.querySelector('button')!);
+    expect(cs.color).to.equal(FG);
+    document.documentElement.style.removeProperty('--ty-color-brand-strong');
+  });
+});

@@ -14,6 +14,70 @@
  *   --ty-button-bg, --ty-button-bg-hover, --ty-button-color, --ty-button-border
  */
 
+import { FLAVORS } from '../types/common.js'
+
+/* One block per flavor, per appearance. Selectors and tokens are formulaic —
+   see the section comments below for which token system each appearance uses.
+
+   Each generator takes an optional fallback flavor `fb`: token references
+   then become var(--ty-*-f, var(--ty-*-fb)). Built-ins pass no fallback
+   (their tokens always exist); buttonCustomFlavorCss() passes 'neutral' so a
+   custom flavor with missing tokens degrades to neutral instead of an
+   invisible button. */
+
+const tokenRef = (prefix: string, f: string, suffix: string, fb?: string) =>
+  fb
+    ? `var(${prefix}-${f}${suffix}, var(${prefix}-${fb}${suffix}))`
+    : `var(${prefix}-${f}${suffix})`
+
+const solidFlavor = (f: string, fb?: string) => {
+  const solid = (suffix: string) => tokenRef('--ty-solid', f, suffix, fb)
+  return `
+button.solid.${f} { --_ring: ${tokenRef('--ty-color', f, '', fb)}; background: var(--ty-button-bg, ${solid('')}); color: var(--ty-button-color, ${solid('-fg')}); }
+button.solid.${f}.tone-plus  { background: var(--ty-button-bg, ${solid('-strong')}); }
+button.solid.${f}.tone-minus { background: var(--ty-button-bg, ${solid('-soft')}); }
+button.solid.${f}:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${solid('-hover')}); }
+button.solid.${f}:active:not(:disabled) { background: ${solid('-active')}; }
+`
+}
+
+const outlinedFlavor = (f: string, fb?: string) => {
+  const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
+  return `
+button.outlined.${f} {
+  color:        var(--ty-button-color,  ${color('')});
+  border-color: var(--ty-button-border, ${color('')});
+}
+button.outlined.${f}.tone-plus {
+  color:        var(--ty-button-color,  ${color('-strong')});
+  border-color: var(--ty-button-border, ${color('-strong')});
+}
+button.outlined.${f}.tone-minus {
+  color:        var(--ty-button-color,  ${color('-soft')});
+  border-color: var(--ty-button-border, ${color('-soft')});
+}
+button.outlined.${f}:hover:not(:disabled) {
+  background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
+}
+`
+}
+
+const ghostFlavor = (f: string, fb?: string) => {
+  const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
+  return `
+button.ghost.${f}            { color: var(--ty-button-color, ${color('')}); }
+button.ghost.${f}.tone-plus  { color: var(--ty-button-color, ${color('-strong')}); }
+button.ghost.${f}.tone-minus { color: var(--ty-button-color, ${color('-soft')}); }
+button.ghost.${f}:hover:not(:disabled) {
+  background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
+}
+`
+}
+
+/** Rules for one custom (non-built-in) flavor across all three appearances. */
+export const buttonCustomFlavorCss = (base: string) =>
+  solidFlavor(base, 'neutral') + outlinedFlavor(base, 'neutral') + ghostFlavor(base, 'neutral')
+
 export const buttonStyles = `
 :host {
   display: inline-block;
@@ -240,42 +304,7 @@ button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral
 button.solid:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
 button.solid:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
 
-button.solid.primary   { --_ring: var(--ty-color-primary);   background: var(--ty-button-bg, var(--ty-solid-primary));   color: var(--ty-button-color, var(--ty-solid-primary-fg)); }
-button.solid.primary.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-primary-strong)); }
-button.solid.primary.tone-minus { background: var(--ty-button-bg, var(--ty-solid-primary-soft)); }
-button.solid.primary:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-primary-hover)); }
-button.solid.primary:active:not(:disabled) { background: var(--ty-solid-primary-active); }
-
-button.solid.secondary { --_ring: var(--ty-color-secondary); background: var(--ty-button-bg, var(--ty-solid-secondary)); color: var(--ty-button-color, var(--ty-solid-secondary-fg)); }
-button.solid.secondary.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-secondary-strong)); }
-button.solid.secondary.tone-minus { background: var(--ty-button-bg, var(--ty-solid-secondary-soft)); }
-button.solid.secondary:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-secondary-hover)); }
-button.solid.secondary:active:not(:disabled) { background: var(--ty-solid-secondary-active); }
-
-button.solid.success   { --_ring: var(--ty-color-success);   background: var(--ty-button-bg, var(--ty-solid-success));   color: var(--ty-button-color, var(--ty-solid-success-fg)); }
-button.solid.success.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-success-strong)); }
-button.solid.success.tone-minus { background: var(--ty-button-bg, var(--ty-solid-success-soft)); }
-button.solid.success:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-success-hover)); }
-button.solid.success:active:not(:disabled) { background: var(--ty-solid-success-active); }
-
-button.solid.danger    { --_ring: var(--ty-color-danger);    background: var(--ty-button-bg, var(--ty-solid-danger));    color: var(--ty-button-color, var(--ty-solid-danger-fg)); }
-button.solid.danger.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-danger-strong)); }
-button.solid.danger.tone-minus { background: var(--ty-button-bg, var(--ty-solid-danger-soft)); }
-button.solid.danger:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-danger-hover)); }
-button.solid.danger:active:not(:disabled) { background: var(--ty-solid-danger-active); }
-
-button.solid.warning   { --_ring: var(--ty-color-warning);   background: var(--ty-button-bg, var(--ty-solid-warning));   color: var(--ty-button-color, var(--ty-solid-warning-fg)); }
-button.solid.warning.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-warning-strong)); }
-button.solid.warning.tone-minus { background: var(--ty-button-bg, var(--ty-solid-warning-soft)); }
-button.solid.warning:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-warning-hover)); }
-button.solid.warning:active:not(:disabled) { background: var(--ty-solid-warning-active); }
-
-button.solid.neutral   { --_ring: var(--ty-color-neutral);   background: var(--ty-button-bg, var(--ty-solid-neutral));   color: var(--ty-button-color, var(--ty-solid-neutral-fg)); }
-button.solid.neutral.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); }
-button.solid.neutral.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); }
-button.solid.neutral:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
-button.solid.neutral:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
-
+${FLAVORS.map((f) => solidFlavor(f)).join('')}
 button.solid:focus-visible {
   box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--_ring);
 }
@@ -296,107 +325,7 @@ button.outlined:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, var(--ty-bg-neutral-soft));
 }
 
-/* Primary */
-button.outlined.primary {
-  color:        var(--ty-button-color,  var(--ty-color-primary));
-  border-color: var(--ty-button-border, var(--ty-color-primary));
-}
-button.outlined.primary.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-primary-strong));
-  border-color: var(--ty-button-border, var(--ty-color-primary-strong));
-}
-button.outlined.primary.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-primary-soft));
-  border-color: var(--ty-button-border, var(--ty-color-primary-soft));
-}
-button.outlined.primary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-primary-soft));
-}
-
-/* Secondary */
-button.outlined.secondary {
-  color:        var(--ty-button-color,  var(--ty-color-secondary));
-  border-color: var(--ty-button-border, var(--ty-color-secondary));
-}
-button.outlined.secondary.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-secondary-strong));
-  border-color: var(--ty-button-border, var(--ty-color-secondary-strong));
-}
-button.outlined.secondary.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-secondary-soft));
-  border-color: var(--ty-button-border, var(--ty-color-secondary-soft));
-}
-button.outlined.secondary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-secondary-soft));
-}
-
-/* Success */
-button.outlined.success {
-  color:        var(--ty-button-color,  var(--ty-color-success));
-  border-color: var(--ty-button-border, var(--ty-color-success));
-}
-button.outlined.success.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-success-strong));
-  border-color: var(--ty-button-border, var(--ty-color-success-strong));
-}
-button.outlined.success.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-success-soft));
-  border-color: var(--ty-button-border, var(--ty-color-success-soft));
-}
-button.outlined.success:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-success-soft));
-}
-
-/* Danger */
-button.outlined.danger {
-  color:        var(--ty-button-color,  var(--ty-color-danger));
-  border-color: var(--ty-button-border, var(--ty-color-danger));
-}
-button.outlined.danger.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-danger-strong));
-  border-color: var(--ty-button-border, var(--ty-color-danger-strong));
-}
-button.outlined.danger.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-danger-soft));
-  border-color: var(--ty-button-border, var(--ty-color-danger-soft));
-}
-button.outlined.danger:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-danger-soft));
-}
-
-/* Warning */
-button.outlined.warning {
-  color:        var(--ty-button-color,  var(--ty-color-warning));
-  border-color: var(--ty-button-border, var(--ty-color-warning));
-}
-button.outlined.warning.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-warning-strong));
-  border-color: var(--ty-button-border, var(--ty-color-warning-strong));
-}
-button.outlined.warning.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-warning-soft));
-  border-color: var(--ty-button-border, var(--ty-color-warning-soft));
-}
-button.outlined.warning:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-warning-soft));
-}
-
-/* Neutral */
-button.outlined.neutral {
-  color:        var(--ty-button-color,  var(--ty-color-neutral));
-  border-color: var(--ty-button-border, var(--ty-color-neutral));
-}
-button.outlined.neutral.tone-plus {
-  color:        var(--ty-button-color,  var(--ty-color-neutral-strong));
-  border-color: var(--ty-button-border, var(--ty-color-neutral-strong));
-}
-button.outlined.neutral.tone-minus {
-  color:        var(--ty-button-color,  var(--ty-color-neutral-soft));
-  border-color: var(--ty-button-border, var(--ty-color-neutral-soft));
-}
-button.outlined.neutral:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-neutral-soft));
-}
+${FLAVORS.map((f) => outlinedFlavor(f)).join('')}
 
 /* ============================================================
    GHOST — text only, hover bg (uses --ty-color-* + --ty-bg-*-soft)
@@ -412,51 +341,4 @@ button.ghost:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, var(--ty-bg-neutral-soft));
 }
 
-/* Primary */
-button.ghost.primary            { color: var(--ty-button-color, var(--ty-color-primary)); }
-button.ghost.primary.tone-plus  { color: var(--ty-button-color, var(--ty-color-primary-strong)); }
-button.ghost.primary.tone-minus { color: var(--ty-button-color, var(--ty-color-primary-soft)); }
-button.ghost.primary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-primary-soft));
-}
-
-/* Secondary */
-button.ghost.secondary            { color: var(--ty-button-color, var(--ty-color-secondary)); }
-button.ghost.secondary.tone-plus  { color: var(--ty-button-color, var(--ty-color-secondary-strong)); }
-button.ghost.secondary.tone-minus { color: var(--ty-button-color, var(--ty-color-secondary-soft)); }
-button.ghost.secondary:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-secondary-soft));
-}
-
-/* Success */
-button.ghost.success            { color: var(--ty-button-color, var(--ty-color-success)); }
-button.ghost.success.tone-plus  { color: var(--ty-button-color, var(--ty-color-success-strong)); }
-button.ghost.success.tone-minus { color: var(--ty-button-color, var(--ty-color-success-soft)); }
-button.ghost.success:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-success-soft));
-}
-
-/* Danger */
-button.ghost.danger            { color: var(--ty-button-color, var(--ty-color-danger)); }
-button.ghost.danger.tone-plus  { color: var(--ty-button-color, var(--ty-color-danger-strong)); }
-button.ghost.danger.tone-minus { color: var(--ty-button-color, var(--ty-color-danger-soft)); }
-button.ghost.danger:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-danger-soft));
-}
-
-/* Warning */
-button.ghost.warning            { color: var(--ty-button-color, var(--ty-color-warning)); }
-button.ghost.warning.tone-plus  { color: var(--ty-button-color, var(--ty-color-warning-strong)); }
-button.ghost.warning.tone-minus { color: var(--ty-button-color, var(--ty-color-warning-soft)); }
-button.ghost.warning:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-warning-soft));
-}
-
-/* Neutral */
-button.ghost.neutral            { color: var(--ty-button-color, var(--ty-color-neutral)); }
-button.ghost.neutral.tone-plus  { color: var(--ty-button-color, var(--ty-color-neutral-strong)); }
-button.ghost.neutral.tone-minus { color: var(--ty-button-color, var(--ty-color-neutral-soft)); }
-button.ghost.neutral:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, var(--ty-bg-neutral-soft));
-}
-`;
+${FLAVORS.map((f) => ghostFlavor(f)).join('')}`;

@@ -3,6 +3,41 @@
  * PORTED FROM: clj/ty/components/tag.css
  */
 
+import { FLAVORS } from '../types/common.js'
+
+/* Neutral maps to text/border tokens instead of flavor tokens, so it is
+   written out by hand in the template below. */
+const COLOR_FLAVORS = FLAVORS.filter((f) => f !== 'neutral')
+
+const tagFlavor = (f: string) => `
+/* ----- ${f.toUpperCase()} ----- */
+:host([flavor="${f}"]) {
+  --tag-bg: var(--ty-bg-${f});
+  --tag-color: var(--ty-color-${f});
+  --tag-border-color: var(--ty-border-${f});
+}
+:host([flavor="${f}+"]) {
+  --tag-bg: var(--ty-bg-${f}-bold);
+  --tag-color: var(--ty-color-${f}-strong);
+  --tag-border-color: var(--ty-color-${f});
+}
+:host([flavor="${f}-"]) {
+  --tag-bg: var(--ty-bg-${f}-soft);
+  --tag-color: var(--ty-color-${f});
+  --tag-border-color: var(--ty-border-${f});
+}
+:host([flavor="${f}"]) .tag-container[tabindex]:hover,
+:host([flavor="${f}+"]) .tag-container[tabindex]:hover,
+:host([flavor="${f}-"]) .tag-container[tabindex]:hover {
+  background: var(--ty-bg-${f}-bold);
+}
+:host([flavor="${f}"]) .tag-container[tabindex]:focus,
+:host([flavor="${f}+"]) .tag-container[tabindex]:focus,
+:host([flavor="${f}-"]) .tag-container[tabindex]:focus {
+  box-shadow: 0 0 0 3px var(--ty-color-${f}-faint);
+}
+`
+
 export const tagStyles = `
 /* Tag Component Styles using centralized ty.variables.css */
 
@@ -190,147 +225,11 @@ export const tagStyles = `
 /* ===== FLAVOR VARIANTS =====
    Each flavor sets --tag-bg / --tag-color / --tag-border-color on :host.
    Append '+' to flavor for a stronger shade (mild background, strong color),
-   or '-' for a softer shade (soft background, base color). */
+   or '-' for a softer shade (soft background, base color).
+   Generated per flavor above; neutral diverges (text/border tokens) and
+   stays hand-written below. */
 
-/* ----- PRIMARY ----- */
-:host([flavor="primary"]) {
-  --tag-bg: var(--ty-bg-primary);
-  --tag-color: var(--ty-color-primary);
-  --tag-border-color: var(--ty-border-primary);
-}
-:host([flavor="primary+"]) {
-  --tag-bg: var(--ty-bg-primary-bold);
-  --tag-color: var(--ty-color-primary-strong);
-  --tag-border-color: var(--ty-color-primary);
-}
-:host([flavor="primary-"]) {
-  --tag-bg: var(--ty-bg-primary-soft);
-  --tag-color: var(--ty-color-primary);
-  --tag-border-color: var(--ty-border-primary);
-}
-:host([flavor="primary"]) .tag-container[tabindex]:hover,
-:host([flavor="primary+"]) .tag-container[tabindex]:hover,
-:host([flavor="primary-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-primary-bold);
-}
-:host([flavor="primary"]) .tag-container[tabindex]:focus,
-:host([flavor="primary+"]) .tag-container[tabindex]:focus,
-:host([flavor="primary-"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-primary-faint);
-}
-
-/* ----- SECONDARY ----- */
-:host([flavor="secondary"]) {
-  --tag-bg: var(--ty-bg-secondary);
-  --tag-color: var(--ty-color-secondary);
-  --tag-border-color: var(--ty-border-secondary);
-}
-:host([flavor="secondary+"]) {
-  --tag-bg: var(--ty-bg-secondary-bold);
-  --tag-color: var(--ty-color-secondary-strong);
-  --tag-border-color: var(--ty-color-secondary);
-}
-:host([flavor="secondary-"]) {
-  --tag-bg: var(--ty-bg-secondary-soft);
-  --tag-color: var(--ty-color-secondary);
-  --tag-border-color: var(--ty-border-secondary);
-}
-:host([flavor="secondary"]) .tag-container[tabindex]:hover,
-:host([flavor="secondary+"]) .tag-container[tabindex]:hover,
-:host([flavor="secondary-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-secondary-bold);
-}
-:host([flavor="secondary"]) .tag-container[tabindex]:focus,
-:host([flavor="secondary+"]) .tag-container[tabindex]:focus,
-:host([flavor="secondary-"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-secondary-faint);
-}
-
-/* ----- SUCCESS ----- */
-:host([flavor="success"]) {
-  --tag-bg: var(--ty-bg-success);
-  --tag-color: var(--ty-color-success);
-  --tag-border-color: var(--ty-border-success);
-}
-:host([flavor="success+"]) {
-  --tag-bg: var(--ty-bg-success-bold);
-  --tag-color: var(--ty-color-success-strong);
-  --tag-border-color: var(--ty-color-success);
-}
-:host([flavor="success-"]) {
-  --tag-bg: var(--ty-bg-success-soft);
-  --tag-color: var(--ty-color-success);
-  --tag-border-color: var(--ty-border-success);
-}
-:host([flavor="success"]) .tag-container[tabindex]:hover,
-:host([flavor="success+"]) .tag-container[tabindex]:hover,
-:host([flavor="success-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-success-bold);
-}
-:host([flavor="success"]) .tag-container[tabindex]:focus,
-:host([flavor="success+"]) .tag-container[tabindex]:focus,
-:host([flavor="success-"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-success-faint);
-}
-
-/* ----- DANGER ----- */
-:host([flavor="danger"]) {
-  --tag-bg: var(--ty-bg-danger);
-  --tag-color: var(--ty-color-danger);
-  --tag-border-color: var(--ty-border-danger);
-}
-:host([flavor="danger+"]) {
-  --tag-bg: var(--ty-bg-danger-bold);
-  --tag-color: var(--ty-color-danger-strong);
-  --tag-border-color: var(--ty-color-danger);
-}
-:host([flavor="danger-"]) {
-  --tag-bg: var(--ty-bg-danger-soft);
-  --tag-color: var(--ty-color-danger);
-  --tag-border-color: var(--ty-border-danger);
-}
-:host([flavor="danger"]) .tag-container[tabindex]:hover,
-:host([flavor="danger+"]) .tag-container[tabindex]:hover,
-:host([flavor="danger-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-danger-bold);
-}
-:host([flavor="danger"]) .tag-container[tabindex]:focus,
-:host([flavor="danger+"]) .tag-container[tabindex]:focus,
-:host([flavor="danger-"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-danger-faint);
-}
-
-/* ----- WARNING ----- */
-:host([flavor="warning"]) {
-  --tag-bg: var(--ty-bg-warning);
-  --tag-color: var(--ty-color-warning);
-  --tag-border-color: var(--ty-border-warning);
-}
-:host([flavor="warning+"]) {
-  --tag-bg: var(--ty-bg-warning-bold);
-  --tag-color: var(--ty-color-warning-strong);
-  --tag-border-color: var(--ty-color-warning);
-}
-:host([flavor="warning-"]) {
-  --tag-bg: var(--ty-bg-warning-soft);
-  --tag-color: var(--ty-color-warning);
-  --tag-border-color: var(--ty-border-warning);
-}
-:host([flavor="warning"]) .tag-container[tabindex]:hover,
-:host([flavor="warning+"]) .tag-container[tabindex]:hover,
-:host([flavor="warning-"]) .tag-container[tabindex]:hover {
-  background: var(--ty-bg-warning-bold);
-}
-:host([flavor="warning"]) .tag-container[tabindex]:focus,
-:host([flavor="warning+"]) .tag-container[tabindex]:focus,
-:host([flavor="warning-"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-warning-faint);
-}
-
-:host([flavor="info"]) .tag-container[tabindex]:focus {
-  box-shadow: 0 0 0 3px var(--ty-color-info-faint);
-}
-
+${COLOR_FLAVORS.map(tagFlavor).join('')}
 /* ----- NEUTRAL ----- */
 :host([flavor="neutral"]) {
   --tag-color: var(--ty-text-bold);

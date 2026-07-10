@@ -176,7 +176,6 @@ Simplified from 7 variants to 5 practical variants:
   --ty-color-neutral-soft: #374151;
   --ty-color-neutral-faint: #9ca3af;
 
-  /* Accent - brand highlights, focus rings, selection states */
 
   /* =================================================================
 BACKGROUND COLORS
@@ -226,7 +225,6 @@ BACKGROUND COLORS
   --ty-bg-neutral-bold: #cecece;
   --ty-bg-neutral-soft: #ededed;
 
-  /* Accent backgrounds */
 
   /* =================================================================
 BORDER COLORS
@@ -621,7 +619,6 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-color-neutral-soft: #696969;
   --ty-color-neutral-faint: #474747;
 
-  /* Accent - dark mode (emphasis inverted) */
 
   /* Backgrounds for dark mode */
   --ty-bg-faint: #0f1419;
@@ -658,7 +655,6 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-bg-neutral: #323232;
   --ty-bg-neutral-soft: #242424;
 
-  /* Accent backgrounds - dark mode */
 
   /* Borders for dark mode */
   --ty-border-strong: #8c8c8c;
@@ -1098,7 +1094,6 @@ SEMANTIC BACKGROUND UTILITIES
   background-color: var(--ty-bg-neutral-soft);
 }
 
-/* Accent backgrounds */
 /* =================================================================
 TEXT HIERARCHY UTILITIES
 ================================================================= */
@@ -1254,7 +1249,6 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
   color: var(--ty-color-neutral-faint) !important;
 }
 
-/* Accent text colors */
 /* =================================================================
 BORDER UTILITIES
 ================================================================= */
@@ -1550,7 +1544,6 @@ INTERACTIVE STATES
   color: var(--ty-color-neutral-faint) !important;
 }
 
-/* Accent text hover states */
 /* Hover states for borders */
 /* Base border hover states */
 .hover\:ty-border\+\+:hover {

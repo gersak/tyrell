@@ -38,8 +38,8 @@ export const datePickerStyles = `
   /* ==========================================================================
      Theming Tokens — Time Section
      ========================================================================== */
-  --ty-calendar-time-bg: var(--ty-bg-neutral-faint);
-  --ty-calendar-time-border: var(--ty-input-border);
+  --ty-calendar-time-bg: transparent;
+  --ty-calendar-time-border: var(--ty-border-faint);
   --ty-calendar-time-label-color: var(--ty-color-neutral);
   --ty-calendar-time-input-color: var(--ty-input-color);
   --ty-calendar-time-placeholder-color: var(--ty-input-placeholder);
@@ -413,14 +413,22 @@ export const datePickerStyles = `
 
 .time-input {
   width: 3.5rem;
-  border: none;
+  border: 1px solid var(--ty-input-border);
   border-radius: var(--ty-radius-sm);
-  background: transparent;
+  background: var(--ty-input-bg);
   color: var(--ty-calendar-time-input-color);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
+  font-variant-numeric: tabular-nums;
   text-align: center;
+  padding: 0.25rem 0.375rem;
   outline: none;
+  transition: var(--ty-transition-all);
+}
+
+.time-input:focus {
+  border-color: var(--ty-input-border-focus);
+  box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
 }
 
 .time-input::placeholder {

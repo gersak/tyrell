@@ -8,9 +8,9 @@ Tyrell uses shadow-cljs module system to split components into separate chunks:
 
 ```
 ty-lazy.js        (core + lightweight components)
-ty-dropdown.js    (loaded when <ty-dropdown> is used)
+ty-select.js      (loaded when <ty-select> is used)
 ty-calendar.js    (loaded when <ty-calendar> is used)
-ty-multiselect.js (loaded when <ty-multiselect> is used)
+ty-date-picker.js (loaded when <ty-date-picker> is used)
 ```
 
 ---
@@ -32,8 +32,8 @@ ty-multiselect.js (loaded when <ty-multiselect> is used)
      :init-fn tyrell.core/init}
 
     ;; Lazy modules - loaded on demand
-    :ty-dropdown
-    {:entries [tyrell.components.dropdown]
+    :ty-select
+    {:entries [tyrell.components.select]
      :depends-on #{:ty-core}}
 
     :ty-calendar
@@ -46,9 +46,9 @@ ty-multiselect.js (loaded when <ty-multiselect> is used)
     {:entries [tyrell.components.date-picker]
      :depends-on #{:ty-calendar}}
 
-    :ty-multiselect
-    {:entries [tyrell.components.multiselect]
-     :depends-on #{:ty-dropdown}}}}}}
+    :ty-selected-tags
+    {:entries [tyrell.components.selected-tags]
+     :depends-on #{:ty-select}}}}}}
 ```
 
 ---

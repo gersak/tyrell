@@ -394,6 +394,50 @@ The brand layer (Option 1) is strictly more powerful — anything you can do wit
 
 ---
 
+## Custom Flavors (add your own)
+
+The six flavors are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by `ty-button` and `ty-tag`.
+
+```css
+/* One rule = a new flavor, usable anywhere in scope */
+:root {
+  /* text / border ramp — used by ty-tag, outlined + ghost buttons */
+  --ty-color-brand-strong: #115e59;
+  --ty-color-brand: #0d9488;
+  --ty-color-brand-soft: #2dd4bf;
+  --ty-color-brand-faint: #99f6e4;   /* focus ring */
+  --ty-border-brand: #0d9488;
+
+  /* backgrounds — ty-tag fills, button hover tints */
+  --ty-bg-brand-bold: #99f6e4;
+  --ty-bg-brand: #ccfbf1;
+  --ty-bg-brand-soft: #f0fdfa;
+
+  /* solid button fills */
+  --ty-solid-brand: #0d9488;
+  --ty-solid-brand-strong: #0f766e;  /* tone+ */
+  --ty-solid-brand-soft: #5eead4;    /* tone- */
+  --ty-solid-brand-hover: #0f766e;
+  --ty-solid-brand-active: #134e4a;
+  --ty-solid-brand-fg: white;
+}
+```
+
+```html
+<ty-button flavor="brand">Brand</ty-button>
+<ty-button flavor="brand+" appearance="outlined">Stronger</ty-button>
+<ty-tag flavor="brand-">softer chip</ty-tag>
+```
+
+Notes:
+
+- **Missing tokens degrade gracefully.** A button token you didn't define falls back to the `neutral` equivalent; an undefined flavor renders as neutral. You can start with just `--ty-solid-X` + `--ty-solid-X-fg` and add the ramp later.
+- **Scoping works like any CSS variable** — define on `:root` for app-wide, or on a container to scope the flavor to a section. Add a `html.dark` block for dark-mode values.
+- **Per-instance overrides still win.** `--ty-button-*` variables and `ty-tag[flavor="X"] { --tag-bg: … }` rules (next section) take precedence over the generated token wiring.
+- Flavor names must be plain identifiers (letters, digits, `-`, `_`).
+
+---
+
 ## Per-Component Color Overrides
 
 The customization above retunes the *whole palette*. To recolor a single instance instead — a one-off brand button, a highlighted input, a green dropdown — set the component's CSS variables on the host element. Custom properties inherit through the shadow DOM, so a value on the host wins over the global default inside that component only.
@@ -443,7 +487,9 @@ Four hooks. The button reads `var(--ty-button-X, …flavor default…)`, so unse
   Gradient
 </ty-button>
 
-<!-- Define a reusable custom flavor in CSS -->
+<!-- Quick reusable flavor via override variables. For a full flavor with
+     shade ramp, tones and tag support, prefer the token-based approach in
+     "Custom Flavors" above — these per-instance variables override it. -->
 <style>
   ty-button[flavor="brand"] {
     --ty-button-bg: #7c3aed;
@@ -456,7 +502,7 @@ Four hooks. The button reads `var(--ty-button-X, …flavor default…)`, so unse
 <ty-button flavor="brand" appearance="outlined">Brand outlined</ty-button>
 ```
 
-### `<ty-input>`, `<ty-select>` (and the deprecated `<ty-dropdown>`/`<ty-multiselect>`)
+### `<ty-input>`, `<ty-select>`
 
 All form controls read the same `--ty-input-*` tokens. They're defined globally in `:root` but inherit into each component's shadow DOM, so setting one on a host overrides only that element.
 

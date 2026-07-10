@@ -18,14 +18,14 @@ The result: **a full interactive UI driven entirely by server-rendered HTML**. T
 
 ### PocketLedger — a real app
 
-[`examples/pocketledger/`](../examples/pocketledger/) is a production-quality expense tracker built with this exact stack: **Clojure + Datastar + Tyrell + Tauri** (desktop/Android). It shows tabs, wizard-style setup, forms with currency input, date picker, multiselect categories, scroll container for transaction history, dark mode toggle, and full SSE-driven CRUD — all in ~600 lines of Clojure with no client-side framework.
+[`examples/pocketledger/`](../examples/pocketledger/) is a production-quality expense tracker built with this exact stack: **Clojure + Datastar + Tyrell + Tauri** (desktop/Android). It shows tabs, wizard-style setup, forms with currency input, date picker, multi-select categories, scroll container for transaction history, dark mode toggle, and full SSE-driven CRUD — all in ~600 lines of Clojure with no client-side framework.
 
 ### Go examples — every component in one place
 
 Two minimal single-file Go servers (standard library only, no external Go deps) that exercise the full primitive surface against the latest TC build:
 
-- [`examples/datastar-go/`](../examples/datastar-go/) — support-ticket form. Covers `ty-input`, `ty-textarea`, `ty-dropdown`, `ty-radio-group`, `ty-date-picker`, `ty-switch`, `ty-checkbox`, `ty-button`, `ty-modal`, `ty-scroll-container`, `ty-icon`, plus debounced server-side validation and a keep-alive SSE feed.
-- [`examples/datastar-go-workspace/`](../examples/datastar-go-workspace/) — workspace dashboard covering everything the first example doesn't: `ty-tabs`, `ty-multiselect` + `ty-tag`, `ty-copy`, `ty-file-upload`, `ty-calendar`, `ty-wizard` + `ty-step`, `ty-popup`, `ty-tooltip`, `ty-resize-observer`, with server-driven wizard transitions and SSE upload progress.
+- [`examples/datastar-go/`](../examples/datastar-go/) — support-ticket form. Covers `ty-input`, `ty-textarea`, `ty-select` + `ty-option`, `ty-radio-group`, `ty-date-picker`, `ty-switch`, `ty-checkbox`, `ty-button`, `ty-modal`, `ty-scroll-container`, `ty-icon`, plus debounced server-side validation and a keep-alive SSE feed.
+- [`examples/datastar-go-workspace/`](../examples/datastar-go-workspace/) — workspace dashboard covering everything the first example doesn't: `ty-tabs`, `ty-select` (`multiple`) + `ty-selected-tags` + `ty-tag`, `ty-copy`, `ty-file-upload`, `ty-calendar`, `ty-wizard` + `ty-step`, `ty-popup`, `ty-tooltip`, `ty-resize-observer`, with server-driven wizard transitions and SSE upload progress.
 
 Both pin the CDN to `tyrell-components@tc` (the dist tag that follows the latest TC build) so they track the version under active development. They also demonstrate **server-rendered icons** — inline `<svg>` slotted into `<ty-icon>` so icons paint with zero client-side JS.
 

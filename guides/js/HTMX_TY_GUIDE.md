@@ -31,7 +31,7 @@ That's it. `<ty-*>` elements work as HTMX targets, triggers, and form fields wit
 
 ## Form submission — `FormData` works automatically
 
-Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-select`, `ty-date-picker`, `ty-file-upload`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`. (`ty-dropdown` and `ty-multiselect` are **deprecated** — use `ty-select`, with `multiple` for multi-value.)
+Every form-associated ty component (`ty-input`, `ty-textarea`, `ty-checkbox`, `ty-switch`, `ty-radio-group`, `ty-select`, `ty-date-picker`, `ty-file-upload`) calls `internals.setFormValue()` on every change. HTMX's `hx-post` / `hx-put` on a `<form>` includes them in the serialized payload under their `name` attribute — same as `<input>`.
 
 ```html
 <form hx-post="/api/contact" hx-target="#result">

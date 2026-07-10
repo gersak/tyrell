@@ -5,6 +5,50 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC29] - Unreleased
+
+Headline: **date-picker & calendar restyle** — ghost day cells, one strong element (the selected day), proper time inputs — plus custom flavors for `ty-tag`/`ty-button` and the docs/guides purge of the removed components.
+
+### Added
+
+- **Custom flavors for `ty-tag` and `ty-button`** — any identifier works as a `flavor`: the component generates the same token wiring built-in flavors get, pointed at your design tokens (`--ty-bg-X`, `--ty-color-X`, `--ty-solid-X`, …). Buttons degrade to `neutral` when tokens are missing instead of rendering invisible. Injected as a shadow stylesheet, so page-level `ty-tag[flavor="X"] { --tag-bg: … }` overrides still win. Flavor CSS is generated per flavor/appearance from one formula (completes the generator that partially shipped in TC28).
+
+### Changed
+
+- **Calendar day grid restyle** (`ty-calendar-month`, and therefore `ty-calendar` / `ty-date-picker`): day cells are ghost cells — no border boxes; hover is a soft neutral rounded pill; the selected day is the single filled element; **today** is an accent-colored semibold number (no background slab — never collides with hover, selected pill wins when today is picked); weekends are undifferentiated by default (theme back via `--ty-calendar-weekend-color`); weekday headers muted; day numbers use tabular numerals. All `--ty-calendar-*` theming hooks kept — only defaults changed.
+- **Date-picker time section**: gray slab replaced by a transparent row with a hairline separator; hour/minute inputs are now proper mini-fields (border, input background, focus ring, tabular digits).
+- **Docs & guides**: every reference to the removed `ty-dropdown`/`ty-multiselect` purged from README, all guides, and agent instructions (TYCOMPONENT_GUIDE's case study rewritten around the real `TySelect` API).
+
+### Fixed
+
+- **`ty-calendar-navigation` at `md` (the default size) had zero padding** — only `sm`/`lg` defined the size CSS variables, so `padding: var(--nav-padding)` collapsed to nothing and the month/year header sat flush against the popup's top edge. `md` now has its own block (`0.5rem 0.75rem` padding, `2rem` buttons, `280px` default width), aligned with the month grid.
+
+## [1.0.0-TC28] - 2026-07-10
+
+Headline: **card-style `ty-select` popup search** — a detached bordered field with the `ty-input` focus ring instead of the fused search header. (Published mid-stream; the calendar restyle and nav-padding fix that were staged alongside landed in TC29.)
+
+### Changed
+
+- **`ty-select` popup search**: the fused search header is now a detached bordered field inside the panel — its own rounded border and `ty-input`-style focus ring, whitespace instead of a divider line, magnifier inside the field.
+- Groundwork for generated per-flavor button CSS (completed in TC29).
+
+## [1.0.0-TC27] - 2026-07-10
+
+Headline: **`ty-dropdown` and `ty-multiselect` removed** (deprecated in TC26) — the bundle drops ~18%, and `ty-select` gets the visual polish pass: a real check icon on selected options and card-style list rows.
+
+### Removed
+
+- **`ty-dropdown` and `ty-multiselect`**: components, `tyrell-components/dropdown` + `/multiselect` subpath exports, React wrappers (`TyDropdown`, `TyMultiselect` and aliases), ClojureScript `tyrell.react` defs, docs pages, and tests. Migration guide lives on the select docs page (`ty-select` = single by default, `multiple` for multi, chips out-of-band via `ty-selected-tags`). Minified CDN bundle: 74 kB gzip.
+
+### Changed — ty-select popup
+
+- **Selection tick is now the lucide `check` icon** rendered inside `ty-option` (right-aligned, primary color) — replaces the text-glyph "✓" overlay ty-select stamped on selected options. Hidden on the clone displayed in the trigger field. Works everywhere `ty-option` renders.
+- **Card-style option list**: rows are inset from the panel edges with rounded corners; hover and keyboard highlight use the neutral surface (`--ty-bg-neutral-soft`) instead of primary — selection stays expressed by the check + bolder text, not a background slab.
+
+### Fixed
+
+- **`ty-tabs` marker no longer glides in from the top-left corner** on first display. The active-tab marker's position transition also ran on its very first positioning — and on the first re-measure after rendering hidden (modals, drawers, toggled panels), where it had been "positioned" at 0,0 with zero-size rects. The marker now snaps (no animation) when it was never positioned or currently has zero rendered size; tab-to-tab switching still animates.
+
 ## [1.0.0-TC26] - 2026-07-09
 
 Headline: **`ty-select` — the select control that replaces `ty-dropdown` and `ty-multiselect`.** Single select by default with a form-field look matching `ty-input`; one attribute each for multi-select and the compact toolbar skin; rich options display intact in the field. Both legacy components are deprecated (kept for compatibility, no new features) — all site demos and framework guides migrated.

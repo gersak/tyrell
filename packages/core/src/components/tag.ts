@@ -10,6 +10,7 @@ import type {
   TyTagElement,
   TyTagEventDetail,
 } from "../types/common.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
@@ -53,8 +54,10 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
       default: "neutral",
       // Built-in: primary | secondary | success | danger | warning | neutral.
       // Append `+` for stronger or `-` for softer shade (e.g. "primary+",
-      // "danger-"). Any other string is passed through — theme custom flavors
-      // via :host([flavor="X"]) { --tag-bg: ...; --tag-color: ...; --tag-border-color: ...; }
+      // "danger-"). Any other string is a custom flavor: if you define the
+      // design tokens (--ty-bg-X, --ty-color-X, --ty-border-X) it just works
+      // (see _syncCustomFlavor), and ty-tag[flavor="X"] { --tag-bg: ...; }
+      // rules in the page still override.
     },
     size: {
       type: "string" as const,
@@ -109,6 +112,11 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
   // Event listener cleanup function
   private _cleanup: (() => void) | null = null;
 
+  // Adopted sheet holding generated rules for a custom (non-built-in) flavor.
+  // Must be an adopted sheet, not a <style> element — render() replaces
+  // shadowRoot.innerHTML, which would destroy an injected element.
+  private _customFlavorSheet: CSSStyleSheet | null = null;
+
   constructor() {
     super(); // TyComponent handles attachInternals() and attachShadow()
 
@@ -128,11 +136,45 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
    * TyComponent will call render() automatically after this hook
    */
   protected onConnect(): void {
+    this._syncCustomFlavor();
     // Setup event listeners after initial render happens
     // Use queueMicrotask to ensure render() has been called by TyComponent
     queueMicrotask(() => {
       this.setupEventListeners();
     });
+  }
+
+  /**
+   * Custom (non-built-in) flavors: generate the same --tag-* wiring the
+   * built-in flavors get, pointed at the user's design tokens
+   * (--ty-bg-X / --ty-color-X / --ty-border-X). See utils/flavor-sheet.ts
+   * for why this is an adopted sheet and how page-level overrides survive.
+   */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ flavor, base, shade }) => {
+        const bg =
+          shade === "+" ? `--ty-bg-${base}-bold`
+          : shade === "-" ? `--ty-bg-${base}-soft`
+          : `--ty-bg-${base}`;
+        const color = shade === "+" ? `--ty-color-${base}-strong` : `--ty-color-${base}`;
+        return `
+:host([flavor="${flavor}"]) {
+  --tag-bg: var(${bg});
+  --tag-color: var(${color});
+  --tag-border-color: var(--ty-border-${base}, var(--ty-color-${base}));
+}
+:host([flavor="${flavor}"]) .tag-container[tabindex]:hover {
+  background: var(--ty-bg-${base}-bold, var(--tag-bg));
+}
+:host([flavor="${flavor}"]) .tag-container[tabindex]:focus {
+  box-shadow: 0 0 0 3px var(--ty-color-${base}-faint, var(--tag-color));
+}`;
+      },
+    );
   }
 
   /**
@@ -145,8 +187,10 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
   /**
    * Handle property changes - called BEFORE render
    */
-  protected onPropertiesChanged(_changes: PropertyChange[]): void {
-    // No special handling needed - TyComponent handles rendering automatically
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === "flavor")) {
+      this._syncCustomFlavor();
+    }
   }
 
   // ============================================================================
