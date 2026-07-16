@@ -5,7 +5,19 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0-TC29] - Unreleased
+## [1.0.0-TC30] - 2026-07-10
+
+Headline: **React 18 `className` fix** — utility classes on every `tyrell-react` wrapper now actually apply.
+
+### Fixed
+
+- **`className` on React wrappers did nothing under React 18** — React lowercases `className` on custom elements into a literal `classname=""` attribute no CSS matches, so host-level utility classes (layout, sizing — most visible on `TyScrollContainer`) were silently dropped. All 25 wrappers now normalize props through `hostProps()`, re-passing `className` as `class` (verbatim pass-through; harmless on React 19).
+
+## [1.0.0-RC12] - 2026-07-10
+
+`latest`-channel promotion of the TC27–TC29 line (npm `tyrell-components` + `tyrell-react`), and the first matching **Clojars release**: `dev.gersak/tyrell` and `dev.gersak/tyrell-icons` `1.0.0-RC12` — `tyrell.react` no longer references the removed `TyDropdown`/`TyMultiselect` exports (RC11 fails to compile against tyrell-react ≥ TC27).
+
+## [1.0.0-TC29] - 2026-07-10
 
 Headline: **date-picker & calendar restyle** — ghost day cells, one strong element (the selected day), proper time inputs — plus custom flavors for `ty-tag`/`ty-button` and the docs/guides purge of the removed components.
 

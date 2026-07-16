@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
@@ -167,7 +168,7 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
     return React.createElement(
       'ty-textarea',
       {
-        ...props,
+        ...hostProps(props),
         ...(isDisabled && { disabled: "" }),
         ...(isRequired && { required: "" }),
         ...(minHeight && { 'min-height': minHeight }),  // Convert camelCase to kebab-case

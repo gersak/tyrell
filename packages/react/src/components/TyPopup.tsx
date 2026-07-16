@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Popup component
@@ -86,7 +87,7 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

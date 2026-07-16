@@ -1,14 +1,12 @@
 (ns tyrell.site.docs
   "Documentation system for ty components - provides data and views"
   (:require
-   [clojure.string :as str]
    [tyrell.router :as router]
    [tyrell.site.docs.button :as button-docs]
    [tyrell.site.docs.calendar :as calendar-docs]
    [tyrell.site.docs.calendar-month :as calendar-month-docs]
    [tyrell.site.docs.checkbox :as checkbox-docs]
    [tyrell.site.docs.clojurescript :as clojurescript-docs]
-   [tyrell.site.docs.common :as common]
    [tyrell.site.docs.copy-field :as copy-field-docs]
    [tyrell.site.docs.file-upload :as file-upload-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]

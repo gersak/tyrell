@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Tooltip component
@@ -48,7 +49,7 @@ export const TyTooltip = React.forwardRef<HTMLElement, TyTooltipProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

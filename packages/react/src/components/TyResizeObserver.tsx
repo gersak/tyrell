@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 
 // Type definitions for Ty ResizeObserver component
 export interface TyResizeObserverProps extends React.HTMLAttributes<HTMLElement> {
@@ -35,7 +36,7 @@ export const TyResizeObserver = React.forwardRef<HTMLElement, TyResizeObserverPr
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
       id,
     };

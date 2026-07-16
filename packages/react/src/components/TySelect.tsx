@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
@@ -175,7 +176,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 
@@ -230,7 +231,7 @@ export const TySelectedTags = React.forwardRef<HTMLElement, TySelectedTagsProps>
       }
     }, [ref]);
 
-    const webComponentProps: Record<string, any> = { ...props, ref: elementRef };
+    const webComponentProps: Record<string, any> = { ...hostProps(props), ref: elementRef };
     if (htmlFor) webComponentProps.for = htmlFor;
 
     return React.createElement('ty-selected-tags', webComponentProps, children);

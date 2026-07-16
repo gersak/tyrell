@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 export interface TySwitchProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
@@ -94,7 +95,7 @@ export const TySwitch = React.forwardRef<HTMLElement, TySwitchProps>(
     const isRequired = useBooleanProperty(elementRef, 'required', required);
 
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

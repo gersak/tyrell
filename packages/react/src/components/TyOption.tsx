@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // Type definitions for Ty Option component
@@ -44,7 +45,7 @@ export const TyOption = React.forwardRef<HTMLElement, TyOptionProps>(
     return React.createElement(
       'ty-option',
       {
-        ...props,
+        ...hostProps(props),
         ...(label && { label }),
         ...(flavor && { flavor }),
         ...(isDisabled && { disabled: "" }),

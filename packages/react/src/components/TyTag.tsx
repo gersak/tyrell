@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 // CSS custom properties that cascade into the shadow DOM for full color control
@@ -67,7 +68,7 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
     return React.createElement(
       'ty-tag',
       {
-        ...props,
+        ...hostProps(props),
         // click is dispatched as composed CustomEvent by the web component — React's
         // synthetic onClick already catches it, so we just pass it through as onClick
         ...(onClick && { onClick }),

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useImperativeHandle } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
 import { needsPropertyBridge } from '../utils/react-version';
 
@@ -166,7 +167,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

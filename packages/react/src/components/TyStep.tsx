@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 
 // Type definitions for Ty Step component
 export interface TyStepProps extends React.HTMLAttributes<HTMLElement> {
@@ -47,7 +48,7 @@ export const TyStep = React.forwardRef<HTMLElement, TyStepProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
       id,
     };

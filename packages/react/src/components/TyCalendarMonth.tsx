@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 
 // Type definitions for Ty Calendar Month component
 export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> {
@@ -93,7 +94,7 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

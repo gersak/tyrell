@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 export interface TyRadioProps extends React.HTMLAttributes<HTMLElement> {
@@ -43,7 +44,7 @@ export const TyRadio = React.forwardRef<HTMLElement, TyRadioProps>(
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
 
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

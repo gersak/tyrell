@@ -612,6 +612,12 @@ export class TyModal extends HTMLElement {
   }
   
   attributeChangedCallback(_name: string, _oldValue: string | null, _newValue: string | null) {
+    // React (and any framework that conditionally mounts an already-open
+    // modal) sets initial attributes BEFORE inserting the element into the
+    // document, and showModal() on a disconnected <dialog> throws
+    // InvalidStateError. Defer — connectedCallback render()s on insertion
+    // and applies `open` then.
+    if (!this.isConnected) return;
     // Re-render on attribute changes
     render(this);
   }

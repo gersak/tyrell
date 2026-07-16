@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 
 // Type definitions for Ty Calendar Navigation component
 export interface TyCalendarNavigationProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
@@ -78,7 +79,7 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

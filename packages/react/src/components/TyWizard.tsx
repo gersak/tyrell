@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { hostProps } from '../utils/host-props';
 
 // Type definitions for Ty Wizard component
 export interface TyWizardProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
@@ -77,7 +78,7 @@ export const TyWizard = React.forwardRef<HTMLElement, TyWizardProps>(
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
-      ...props,
+      ...hostProps(props),
       ref: elementRef,
     };
 

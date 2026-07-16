@@ -6,7 +6,6 @@
    [tyrell.router :as router]
    [tyrell.site.docs :as docs]
    [tyrell.site.docs.theming :as theming-docs]
-   [tyrell.site.icons :as icons]
    [tyrell.site.state :refer [state]]
    [tyrell.site.styles :as styles]
    [tyrell.site.views.components-index :as components-index]
