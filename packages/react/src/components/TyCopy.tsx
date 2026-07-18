@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Copy component
 export interface TyCopyProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Text to copy */
@@ -14,7 +17,7 @@ export interface TyCopyProps extends Omit<React.HTMLAttributes<HTMLElement>, 'on
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   
   /** Semantic styling variant */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
   
   /** Display format */
   format?: 'text' | 'code';

@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Checkbox component
 export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Checked state */
@@ -29,7 +32,7 @@ export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>,
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   
   /** Semantic styling variant */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
   
   /**
    * Fires when checkbox state changes (React convention)

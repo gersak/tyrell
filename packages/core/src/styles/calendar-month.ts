@@ -3,6 +3,48 @@
  * Improved design with better visual hierarchy and size variants
  */
 
+import { FLAVORS } from "../types/common.js";
+
+/* Flavor rules set --calendar-month-* local vars, wired in as the fallback
+   BEHIND every existing --ty-calendar-* public override (so those keep
+   working exactly as before) and AHEAD of the hardcoded primary default.
+   Doubles as the per-instance override API for a specific flavor: e.g.
+   `ty-calendar-month { --calendar-month-accent: ... }`. Fallback flavor
+   `fb` is used for custom flavors so missing tokens degrade to neutral. */
+const calendarMonthFlavor = (f: string, fb?: string) => {
+  const color = (s: string) =>
+    fb
+      ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
+      : `var(--ty-color-${f}${s})`;
+  const bg = (s: string) =>
+    fb
+      ? `var(--ty-bg-${f}${s}, var(--ty-bg-${fb}${s}))`
+      : `var(--ty-bg-${f}${s})`;
+  return `
+:host([flavor="${f}"]) {
+  --calendar-month-accent: ${color("")};
+  --calendar-month-selected-bg: ${bg("")};
+  --calendar-month-selected-color: ${color("-strong")};
+  --calendar-month-selected-hover-bg: ${bg("-bold")};
+}
+:host([flavor="${f}+"]) {
+  --calendar-month-accent: ${color("-strong")};
+  --calendar-month-selected-bg: ${bg("-bold")};
+  --calendar-month-selected-color: ${color("-strong")};
+  --calendar-month-selected-hover-bg: ${bg("-bold")};
+}
+:host([flavor="${f}-"]) {
+  --calendar-month-accent: ${color("-soft")};
+  --calendar-month-selected-bg: ${bg("-soft")};
+  --calendar-month-selected-color: ${color("")};
+  --calendar-month-selected-hover-bg: ${bg("")};
+}
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const calendarMonthCustomFlavorCss = (base: string) => calendarMonthFlavor(base, "neutral");
+
 export const calendarMonthStyles = `
 /* ============================================================================
    Theming Tokens
@@ -126,7 +168,7 @@ export const calendarMonthStyles = `
    selected pill wins when today is picked */
 .calendar-day-cell.today {
   background-color: var(--ty-calendar-today-bg, transparent);
-  color: var(--ty-calendar-today-color, var(--ty-calendar-today-accent, var(--ty-color-primary)));
+  color: var(--ty-calendar-today-color, var(--ty-calendar-today-accent, var(--calendar-month-accent, var(--ty-color-primary))));
   border-color: var(--ty-calendar-today-border, transparent);
   font-weight: 600;
 }
@@ -158,14 +200,14 @@ export const calendarMonthStyles = `
 
 /* Selected: the one strong element in the grid */
 .calendar-day-cell.selected {
-  background-color: var(--ty-calendar-selected-bg, var(--ty-bg-primary));
-  color: var(--ty-calendar-selected-color, var(--ty-color-primary-strong));
-  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, transparent));
+  background-color: var(--ty-calendar-selected-bg, var(--calendar-month-selected-bg, var(--ty-bg-primary)));
+  color: var(--ty-calendar-selected-color, var(--calendar-month-selected-color, var(--ty-color-primary-strong)));
+  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, var(--calendar-month-accent, transparent)));
   font-weight: 600;
 }
 
 .calendar-day-cell.selected:hover {
-  background-color: var(--ty-calendar-selected-hover-bg, var(--ty-bg-primary-bold));
+  background-color: var(--ty-calendar-selected-hover-bg, var(--calendar-month-selected-hover-bg, var(--ty-bg-primary-bold)));
   border-color: var(--ty-calendar-selected-hover-border, transparent);
 }
 
@@ -250,4 +292,9 @@ export const calendarMonthStyles = `
   justify-content: center;
   box-sizing: border-box;
 }
+
+/* ============================================================================
+   Flavor Variants (set --calendar-month-*, consumed above)
+   ============================================================================ */
+${FLAVORS.map((f) => calendarMonthFlavor(f)).join("")}
 `;

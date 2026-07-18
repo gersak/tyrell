@@ -5,7 +5,27 @@
  * ty-radio: circle with inner dot when checked
  */
 
+import { FLAVORS } from "../types/common.js";
 import { inputStyles } from "./input.js";
+
+/* Flavor rules only set --radio-color (checked border + inner dot); base
+   rules below consume it. Doubles as the per-instance override API:
+   `ty-radio { --radio-color: … }`. Fallback flavor `fb` is used for custom
+   flavors so missing tokens degrade to neutral. */
+const radioFlavor = (f: string, fb?: string) => {
+  const tok = (s: string) =>
+    fb
+      ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
+      : `var(--ty-color-${f}${s})`;
+  return `
+:host([flavor="${f}"])  { --radio-color: ${tok("")}; }
+:host([flavor="${f}+"]) { --radio-color: ${tok("-strong")}; }
+:host([flavor="${f}-"]) { --radio-color: ${tok("-soft")}; }
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const radioCustomFlavorCss = (base: string) => radioFlavor(base, "neutral");
 
 export const radioStyles = `
 ${inputStyles}
@@ -106,6 +126,8 @@ ${inputStyles}
   transition: border-color 0.15s ease-in-out;
 }
 
+/* Default (no flavor attribute) is primary — defaults don't reflect to the
+   host attribute, so the base rules' fallback carries the default look. */
 .radio-circle::after {
   content: "";
   position: absolute;
@@ -114,13 +136,13 @@ ${inputStyles}
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--ty-color-primary);
+  background: var(--radio-color, var(--ty-color-primary));
   transform: translate(-50%, -50%) scale(0);
   transition: transform 0.15s ease-in-out;
 }
 
 .radio-container[aria-checked="true"] .radio-circle {
-  border-color: var(--ty-color-primary);
+  border-color: var(--radio-color, var(--ty-color-primary));
 }
 
 .radio-container[aria-checked="true"] .radio-circle::after {
@@ -140,22 +162,6 @@ ${inputStyles}
 .radio-container.xl .radio-circle { width: 26px; height: 26px; }
 .radio-container.xl .radio-circle::after { width: 12px; height: 12px; }
 
-/* Flavor variants — color of inner dot + checked border */
-.radio-container.primary[aria-checked="true"] .radio-circle { border-color: var(--ty-color-primary); }
-.radio-container.primary .radio-circle::after { background: var(--ty-color-primary); }
-
-.radio-container.secondary[aria-checked="true"] .radio-circle { border-color: var(--ty-color-secondary); }
-.radio-container.secondary .radio-circle::after { background: var(--ty-color-secondary); }
-
-.radio-container.success[aria-checked="true"] .radio-circle { border-color: var(--ty-color-success); }
-.radio-container.success .radio-circle::after { background: var(--ty-color-success); }
-
-.radio-container.danger[aria-checked="true"] .radio-circle { border-color: var(--ty-color-danger); }
-.radio-container.danger .radio-circle::after { background: var(--ty-color-danger); }
-
-.radio-container.warning[aria-checked="true"] .radio-circle { border-color: var(--ty-color-warning); }
-.radio-container.warning .radio-circle::after { background: var(--ty-color-warning); }
-
-.radio-container.neutral[aria-checked="true"] .radio-circle { border-color: var(--ty-color-neutral); }
-.radio-container.neutral .radio-circle::after { background: var(--ty-color-neutral); }
+/* Flavor variants — set --radio-color, consumed by the base rules above */
+${FLAVORS.map((f) => radioFlavor(f)).join("")}
 `;

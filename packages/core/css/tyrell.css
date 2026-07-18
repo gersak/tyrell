@@ -344,10 +344,12 @@ COMPONENT TOKENS
   --ty-input-disabled-color: #9ca3af;
   --ty-label-color: #374151;
 
-  /* Input semantic states */
-  --ty-input-success-border: var(--ty-color-success);
-  --ty-input-danger-border: var(--ty-color-danger);
-  --ty-input-warning-border: var(--ty-color-warning);
+  /* Input semantic states — RESTING border for a flavored field. Soft on
+     purpose: the full-strength color is reserved for hover/focus, so the
+     emphasis ladder (rest → hover → focus+ring) reads like neutral's. */
+  --ty-input-success-border: var(--ty-color-success-soft);
+  --ty-input-danger-border: var(--ty-color-danger-soft);
+  --ty-input-warning-border: var(--ty-color-warning-soft);
 
   /* =================================================================
   SOLID BUTTON FILLS — plain default values (the contract). The smart

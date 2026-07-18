@@ -3,6 +3,9 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Calendar component
 export interface TyCalendarChangeEventDetail {
   /** Selected month (1-12) */
@@ -48,7 +51,10 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   
   /** Calendar size */
   size?: 'sm' | 'md' | 'lg';
-  
+
+  /** Visual flavor for the selected/today day cells (nav stays neutral chrome) */
+  flavor?: ShadedFlavor | (string & {});
+
   /** Locale for date formatting */
   locale?: string;
   
@@ -101,6 +107,7 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     showNavigation,
     stateless,
     size,
+    flavor,
     locale,
     width,
     min,
@@ -236,6 +243,10 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
 
     if (size) {
       webComponentProps.size = size;
+    }
+
+    if (flavor) {
+      webComponentProps.flavor = flavor;
     }
 
     if (locale) {

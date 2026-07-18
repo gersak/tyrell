@@ -86,4 +86,54 @@ describe('ty-calendar', () => {
       expect(nav.displayYear).to.equal(2025);
     });
   });
+
+  describe('flavor', () => {
+    const selectedBg = (month: any) =>
+      getComputedStyle(month.shadowRoot.querySelector('.calendar-day-cell.selected')).backgroundColor;
+
+    afterEach(() => {
+      document.documentElement.style.removeProperty('--ty-bg-success');
+      document.documentElement.style.removeProperty('--ty-bg-brand');
+    });
+
+    it('ty-calendar forwards its flavor into the nested ty-calendar-month', async () => {
+      document.documentElement.style.setProperty('--ty-bg-success', 'rgb(7, 8, 9)');
+      const el = (await fixture(html`
+        <ty-calendar flavor="success" year="2026" month="7" day="20"></ty-calendar>
+      `)) as any;
+      await nextFrame();
+      const month = el.shadowRoot.querySelector('ty-calendar-month') as any;
+      expect(month.getAttribute('flavor')).to.equal('success');
+      expect(selectedBg(month)).to.equal('rgb(7, 8, 9)');
+    });
+
+    it('derives the selected day color from a custom flavor token', async () => {
+      document.documentElement.style.setProperty('--ty-bg-brand', 'rgb(1, 2, 3)');
+      const el = (await fixture(html`
+        <ty-calendar flavor="brand" year="2026" month="7" day="20"></ty-calendar>
+      `)) as any;
+      await nextFrame();
+      const month = el.shadowRoot.querySelector('ty-calendar-month') as any;
+      expect(selectedBg(month)).to.equal('rgb(1, 2, 3)');
+    });
+
+    it('the pre-existing --ty-calendar-selected-bg override still wins over a flavor', async () => {
+      // ty-calendar-month lives two shadow roots deep in the ty-date-picker
+      // case (ty-calendar's, inside the picker's), so no light-DOM selector
+      // can target it directly — but --ty-calendar-selected-bg was never
+      // claimed by any internal rule (flavor's generated CSS only ever sets
+      // the new, private --calendar-month-selected-bg one layer behind it),
+      // so it still inherits cleanly through both shadow boundaries from
+      // any ancestor and keeps outranking the flavor default, unchanged
+      // from before this feature existed.
+      document.documentElement.style.setProperty('--ty-bg-success', 'rgb(7, 8, 9)');
+      const el = (await fixture(html`
+        <ty-calendar flavor="success" year="2026" month="7" day="20"
+                     style="--ty-calendar-selected-bg: rgb(9, 9, 9);"></ty-calendar>
+      `)) as any;
+      await nextFrame();
+      const month = el.shadowRoot.querySelector('ty-calendar-month') as any;
+      expect(selectedBg(month)).to.equal('rgb(9, 9, 9)');
+    });
+  });
 });

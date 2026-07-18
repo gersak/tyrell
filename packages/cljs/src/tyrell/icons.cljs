@@ -33,12 +33,12 @@
   (if-let [register-fn (some-> js/window.tyIcons .-register)]
     (do
       (register-fn
-        (clj->js
-          (reduce-kv
-            (fn [acc k v]
-              (assoc acc (name k) v))
-            {}
-            icons-map)))
+       (clj->js
+        (reduce-kv
+         (fn [acc k v]
+           (assoc acc (name k) v))
+         {}
+         icons-map)))
       true)
     (do
       (.warn js/console "[tyrell.icons] window.tyIcons not available. Ensure tyrell.js is loaded.")

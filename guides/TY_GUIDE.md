@@ -126,7 +126,7 @@ FormData: submits raw number, not formatted string.
 | `warning` | Caution | Unsaved changes, limits |
 | `neutral` | Default, no weight | Cancel, Close |
 
-Any other string is a **custom flavor** (`ty-button`, `ty-tag`): define `--ty-color-X` / `--ty-bg-X` / `--ty-solid-X` design tokens and the component themes itself, `+`/`-` shades included. See [CSS_GUIDE.md → Custom Flavors](./CSS_GUIDE.md#custom-flavors-add-your-own).
+Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `--ty-solid-X` design tokens and the component themes itself, `+`/`-` shades included. Every flavored component supports this (`ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group`, `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar`); missing tokens degrade to neutral. See [CSS_GUIDE.md → Custom Flavors](./CSS_GUIDE.md#custom-flavors-add-your-own).
 
 ---
 
@@ -173,7 +173,7 @@ Any other string is a **custom flavor** (`ty-button`, `ty-tag`): define `--ty-co
 | `disabled` | boolean | `false` | |
 | `required` | boolean | `false` | |
 | `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
-| `flavor` | string | `'neutral'` | |
+| `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the border + focus ring; per-instance override via `--input-accent` / `--input-accent-bold` / `--input-ring`. |
 | `currency` | string | `'USD'` | ISO 4217 code (for `type="currency"`) |
 | `locale` | string | `'en-US'` | Locale for numeric formatting |
 | `precision` | number | - | Decimal places |
@@ -199,7 +199,7 @@ Any other string is a **custom flavor** (`ty-button`, `ty-tag`): define `--ty-co
 | `required` | boolean | `false` | |
 | `error` | string | - | |
 | `size` | string | `'md'` | |
-| `flavor` | string | `'neutral'` | |
+| `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Per-instance override via `--checkbox-color` / `--checkbox-color-off`. |
 
 **Slots:** (default) = label | **Events:** `input`, `change` -> `{ value, checked, formValue, originalEvent }`
 
@@ -235,6 +235,7 @@ Also registered as **`ty-copy-field`** — same element, descriptive name.
 | `value` | string | - | Text to copy |
 | `label` | string | - | |
 | `format` | string | `'text'` | `text` \| `code` |
+| `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the copy button + hover tint; per-instance override via `--copy-color` / `--copy-color-hover` / `--copy-bg-hover`. |
 | `disabled` | boolean | `false` | |
 
 ---
@@ -280,6 +281,7 @@ THE select control. Single select by default with a form-field look matching `ty
 | `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
 | `disabled` / `readonly` / `required` | boolean | `false` | |
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` |
+| `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
 **Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-tags` templates.
 
@@ -366,7 +368,7 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 ### ty-calendar
 
-Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — out-of-bounds days disabled, navigation clamped). Property: `dayContentFn`.
+Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — out-of-bounds days disabled, navigation clamped), `flavor` (default `'primary'` — built-ins, `+`/`-` shades, or a custom flavor; colors the selected/today day in the nested `ty-calendar-month`, navigation stays neutral chrome). Property: `dayContentFn`.
 
 **Events:** `change` -> `{ year, month, day, action, source, dayContext }` | `navigate` -> `{ month, year, action, source }`
 
@@ -389,6 +391,7 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 | `required` | boolean | `false` | |
 | `locale` | string | `'en-US'` | |
 | `size` | string | `'md'` | |
+| `flavor` | string | `'default'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the stub border + focus ring (override via `--date-picker-accent` / `--date-picker-accent-bold` / `--date-picker-ring`) and the popup calendar's selected/today day (forwarded to the nested `ty-calendar`). |
 
 **Events:** `change` | **Form value:** UTC ISO `2024-09-21T08:30:00.000Z`
 
@@ -410,7 +413,7 @@ Always render modals in DOM. Control with `open` attribute or `show()`/`hide()`.
 
 ### ty-tooltip
 
-Attrs: `placement` (default `'top'`), `offset` (8), `delay` (200ms), `disabled`, `flavor` (default `'dark'`).
+Attrs: `placement` (default `'top'`), `offset` (8), `delay` (200ms), `disabled`, `flavor` (default `'dark'`; also `light` / `info`, built-in semantics with `+`/`-` shades, or a custom flavor from `--ty-bg-X` / `--ty-color-X` tokens).
 
 Nest as child of target: `<ty-button>Hover<ty-tooltip>Help text</ty-tooltip></ty-button>`
 

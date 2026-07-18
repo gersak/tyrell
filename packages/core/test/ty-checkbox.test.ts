@@ -72,3 +72,44 @@ describe('ty-checkbox', () => {
     expect(form.checkValidity()).to.equal(true);
   });
 });
+
+describe('ty-checkbox flavor tones', () => {
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-primary');
+    document.documentElement.style.removeProperty('--ty-color-primary-strong');
+  });
+
+  it('flavor="primary+" resolves the -strong token when checked', async () => {
+    document.documentElement.style.setProperty('--ty-color-primary', 'rgb(1, 2, 3)');
+    document.documentElement.style.setProperty('--ty-color-primary-strong', 'rgb(4, 5, 6)');
+    const el = (await fixture(html`<ty-checkbox flavor="primary+" checked></ty-checkbox>`)) as any;
+    await nextFrame();
+    const cs = getComputedStyle(el.shadowRoot.querySelector('.checkbox-container'));
+    expect(cs.color).to.equal('rgb(4, 5, 6)');
+  });
+});
+
+describe('ty-checkbox focus ring follows flavor', () => {
+  it('rings in the flavor color, not a fixed primary', async () => {
+    document.documentElement.style.setProperty('--ty-color-danger', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-primary', 'rgb(1, 2, 3)');
+    const el = (await fixture(html`<ty-checkbox flavor="danger" checked></ty-checkbox>`)) as any;
+    await nextFrame();
+    const container = el.shadowRoot.querySelector('.checkbox-container') as HTMLElement;
+    // .focused is a real class the component toggles on keyboard focus
+    // (see setupEventListeners) — set it directly to exercise the same
+    // rule :focus-visible would, without needing a real focus event.
+    // .checkbox-container has `transition: all 0.15s` — without disabling
+    // it, a computed-style read shortly after toggling .focused catches an
+    // interpolated (near-zero) box-shadow mid-animation, not the final value.
+    container.style.setProperty('transition', 'none', 'important');
+    container.classList.add('focused');
+    const ring = getComputedStyle(container).boxShadow;
+    // color-mix() results serialize in the mix's color space (oklab), not
+    // the original rgb() string — assert shape/alpha, not an exact color.
+    expect(ring, 'ring is a 3px spread').to.match(/0px 0px 0px 3px/);
+    expect(ring, 'ring is at 25% alpha (the danger mix, not primary\'s)').to.match(/\/ 0\.25\)/);
+    document.documentElement.style.removeProperty('--ty-color-danger');
+    document.documentElement.style.removeProperty('--ty-color-primary');
+  });
+});

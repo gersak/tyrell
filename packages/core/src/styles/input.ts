@@ -4,6 +4,54 @@
  * Phase A: Regular input styles only (no checkbox, no numeric formatting)
  */
 
+import { FLAVORS } from "../types/common.js";
+
+/* Flavor rules only set --input-accent (border), --input-accent-bold
+   (hover/focus border), and --input-ring (focus shadow); the wrapper base
+   rules consume them. They double as the per-instance override API:
+   `ty-input { --input-accent: … }`. Neutral is skipped — it IS the default
+   chrome (--ty-input-* tokens), and input's auto-danger-on-error logic
+   relies on neutral being the unstyled state.
+
+   Fallback flavor `fb` is used for custom flavors: suffixed tokens fall
+   back to the custom base color first (a flavor defining only
+   --ty-color-X still gets sensible hover/focus), then to neutral.
+
+   Emphasis ladder mirrors the neutral chrome (faint rest → soft hover →
+   focus + ring): a flavored field rests on its -soft shade and only
+   escalates to the full color on hover/focus — a resting field shouldn't
+   shout its full-saturation border (tones shift the whole ladder). */
+const inputFlavor = (f: string, fb?: string) => {
+  const c = (s: string) =>
+    fb
+      ? s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}, var(--ty-color-${fb}${s})))`
+        : `var(--ty-color-${f}, var(--ty-color-${fb}))`
+      : s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
+        : `var(--ty-color-${f})`;
+  return `
+:host([flavor="${f}"]) {
+  --input-accent: var(--ty-input-${f}-border, ${c("-soft")});
+  --input-accent-bold: ${c("")};
+  --input-ring: color-mix(in oklab, ${c("")} 15%, transparent);
+}
+:host([flavor="${f}+"]) {
+  --input-accent: ${c("")};
+  --input-accent-bold: ${c("-strong")};
+  --input-ring: color-mix(in oklab, ${c("-strong")} 15%, transparent);
+}
+:host([flavor="${f}-"]) {
+  --input-accent: ${c("-faint")};
+  --input-accent-bold: ${c("-soft")};
+  --input-ring: color-mix(in oklab, ${c("-soft")} 15%, transparent);
+}
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const inputCustomFlavorCss = (base: string) => inputFlavor(base, "neutral");
+
 export const inputStyles = `
 :host {
   display: block;
@@ -74,7 +122,7 @@ export const inputStyles = `
   gap: 0.5rem; /* No gap by default */
   width: 100%;
   box-sizing: border-box;
-  border: 1px solid var(--input-border, var(--ty-input-border));
+  border: 1px solid var(--input-accent, var(--input-border, var(--ty-input-border)));
   border-radius: var(--ty-radius-base);
   background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
   transition: all 0.15s ease-in-out;
@@ -84,14 +132,16 @@ export const inputStyles = `
   padding: 0 12px;
 }
 
-/* Wrapper states */
+/* Wrapper states — --input-accent* are set by the flavor rules below;
+   without a flavor attribute they're unset and the default chrome chain
+   (per-instance --input-* var, then --ty-input-* token) applies. */
 .input-wrapper:hover:not(.disabled) {
-  border-color: var(--input-border-hover, var(--ty-input-border-hover));
+  border-color: var(--input-accent-bold, var(--input-border-hover, var(--ty-input-border-hover)));
 }
 
 .input-wrapper.focused {
-  border-color: var(--input-border-focus, var(--ty-input-border-focus));
-  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
+  border-color: var(--input-accent-bold, var(--input-border-focus, var(--ty-input-border-focus)));
+  box-shadow: 0 0 0 3px var(--input-ring, var(--input-shadow-focus, var(--ty-input-shadow-focus)));
 }
 
 .input-wrapper.disabled {
@@ -132,7 +182,7 @@ export const inputStyles = `
   color: var(--input-color, var(--ty-input-color));
 }
 .password-toggle:focus-visible {
-  outline: 2px solid var(--ty-color-primary);
+  outline: 2px solid var(--input-accent, var(--ty-color-primary));
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -280,79 +330,8 @@ input::placeholder {
   letter-spacing: var(--ty-tracking-lg);
 }
 
-/* ===== SEMANTIC FLAVOR MODIFIERS ===== */
-
-/* Primary */
-.input-wrapper.primary {
-  border-color: var(--ty-input-primary-border, var(--ty-color-primary));
-}
-
-.input-wrapper.primary:hover:not(.disabled) {
-  border-color: var(--ty-color-primary-bold);
-}
-
-.input-wrapper.primary.focused {
-  border-color: var(--ty-color-primary-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-primary) 15%, transparent);
-}
-
-/* Secondary */
-.input-wrapper.secondary {
-  border-color: var(--ty-input-secondary-border, var(--ty-color-secondary));
-}
-
-.input-wrapper.secondary.focused {
-  border-color: var(--ty-color-secondary-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-secondary) 15%, transparent);
-}
-
-/* Success */
-.input-wrapper.success {
-  border-color: var(--ty-input-success-border);
-}
-
-.input-wrapper.success:hover:not(.disabled) {
-  border-color: var(--ty-color-success-bold);
-}
-
-.input-wrapper.success.focused {
-  border-color: var(--ty-color-success-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-success) 15%, transparent);
-}
-
-/* Danger */
-.input-wrapper.danger {
-  border-color: var(--ty-input-danger-border);
-}
-
-.input-wrapper.danger:hover:not(.disabled) {
-  border-color: var(--ty-color-danger-bold);
-}
-
-.input-wrapper.danger.focused {
-  border-color: var(--ty-color-danger-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-danger) 15%, transparent);
-}
-
-/* Warning */
-.input-wrapper.warning {
-  border-color: var(--ty-input-warning-border);
-}
-
-.input-wrapper.warning:hover:not(.disabled) {
-  border-color: var(--ty-color-warning-bold);
-}
-
-.input-wrapper.warning.focused {
-  border-color: var(--ty-color-warning-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-warning) 15%, transparent);
-}
-
-/* Neutral (default) */
-.input-wrapper.neutral.focused {
-  border-color: var(--input-border-focus, var(--ty-input-border-focus));
-  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
-}
+/* ===== SEMANTIC FLAVOR MODIFIERS (set --input-accent*, consumed above) ===== */
+${FLAVORS.filter((f) => f !== "neutral").map((f) => inputFlavor(f)).join("")}
 
 /* ===== ACCESSIBILITY ENHANCEMENTS ===== */
 

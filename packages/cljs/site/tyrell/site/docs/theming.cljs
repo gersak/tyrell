@@ -2,9 +2,10 @@
   "Interactive playground for the OKLCH brand layer (tyrell-brand.css)."
   (:require
    [clojure.string :as str]
+   [tyrell.router :as router]
    [tyrell.site.state :as state]
    [tyrell.site.docs.common :refer [code-block doc-section docs-page
-                                    component-header section-label demo-area]]))
+                                    component-header section-label]]))
 
 ;; ----------------------------------------------------------------------------
 ;; State
@@ -30,8 +31,8 @@
    :success-hue 145
    :warning-hue 75
    :danger-hue  25
-   ;; L-CURVE (light defaults — sliders write inline so they affect
-   ;; whatever theme is active when they're touched).
+   ;; L-CURVE (light-mode defaults; dark-mode defaults live in
+   ;; dark-curve-defaults below — curve edits are stored per theme).
    :l-strong 0.38
    :l-bold   0.46
    :l-base   0.54
@@ -49,8 +50,34 @@
    :show-curve?    false
    :show-anchors?  true})
 
-(defn- get-seeds []
-  (merge default-seeds (get-in @state/state [:brand-playground] {})))
+;; The brand layer redefines the L-curve and saturation curve in html.dark
+;; (hues are theme-invariant), so curve edits must be theme-scoped too:
+;; stored under [:brand-playground :curves <theme>] and applied via an
+;; injected <style> with :root / html.dark blocks — an inline style on <html>
+;; would clobber BOTH themes at once.
+(def ^:private curve-keys
+  #{:l-strong :l-bold :l-base :l-soft :l-faint
+    :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult})
+
+;; Mirror of the html.dark block in tyrell-brand.css.
+(def ^:private dark-curve-defaults
+  {:l-strong 0.72 :l-bold 0.66 :l-base 0.62 :l-soft 0.46 :l-faint 0.30
+   :c-strong-mult 0.77 :c-bold-mult 1.00 :c-base-mult 0.92 :c-soft-mult 0.77
+   :c-faint-mult 0.50})
+
+(defn- active-theme []
+  (if (= "dark" (:theme @state/state)) :dark :light))
+
+(defn- get-seeds
+  "Merged seed view for the ACTIVE theme: brand defaults, dark curve
+   defaults when dark, then the user's per-theme curve overrides."
+  []
+  (let [st (get-in @state/state [:brand-playground] {})
+        theme (active-theme)]
+    (merge default-seeds
+           (when (= theme :dark) dark-curve-defaults)
+           (apply dissoc st :curves curve-keys)
+           (get-in st [:curves theme]))))
 
 (defn- key->var
   "Map a state key to the CSS variable it drives. Returns nil for keys
@@ -89,13 +116,41 @@
   (when-let [css-name (key->var k)]
     (.removeProperty (.-style (.-documentElement js/document)) css-name)))
 
+(defn- curve-css
+  "Render the per-theme curve overrides as :root / html.dark blocks."
+  [st]
+  (let [block (fn [sel m]
+                (when (seq m)
+                  (str sel " {\n"
+                       (str/join "\n" (for [[k v] m] (str "  " (key->var k) ": " v ";")))
+                       "\n}")))]
+    (str/join "\n" (remove nil? [(block ":root" (get-in st [:curves :light]))
+                                 (block "html.dark" (get-in st [:curves :dark]))]))))
+
+(defn- sync-curve-style!
+  "Write curve overrides into <style id=ty-playground-curves> appended to
+   <head> — later in document order than tyrell-brand.css, so equal-specificity
+   :root / html.dark rules win, each theme independently."
+  []
+  (let [el (or (.getElementById js/document "ty-playground-curves")
+               (let [e (.createElement js/document "style")]
+                 (set! (.-id e) "ty-playground-curves")
+                 (.appendChild (.-head js/document) e)
+                 e))]
+    (set! (.-textContent el) (curve-css (get-in @state/state [:brand-playground] {})))))
+
 (defn- set-by-key!
-  "Generic onChange — write the parsed number into both state and CSS."
+  "Generic onChange — write the parsed number into both state and CSS.
+   Curve keys go to the active theme's override map + style tag; everything
+   else (hues, chroma) is theme-invariant and stays on the inline path."
   [k]
   (fn [^js e]
     (let [v (js/parseFloat (.. e -target -value))]
-      (swap! state/state assoc-in [:brand-playground k] v)
-      (apply-seed! k v))))
+      (if (contains? curve-keys k)
+        (do (swap! state/state assoc-in [:brand-playground :curves (active-theme) k] v)
+            (sync-curve-style!))
+        (do (swap! state/state assoc-in [:brand-playground k] v)
+            (apply-seed! k v))))))
 
 (defn- set-brand-hue! [^js e]
   (let [v (js/parseFloat (.. e -target -value))]
@@ -131,12 +186,15 @@
 
 (defn- reset-all! [_]
   (swap! state/state assoc :brand-playground default-seeds)
+  ;; Curve keys included for hygiene: older builds wrote them inline on <html>.
   (doseq [k [:brand-hue :brand-chroma :secondary-offset
              :secondary-hue :secondary-chroma
              :success-hue :warning-hue :danger-hue
              :l-strong :l-bold :l-base :l-soft :l-faint
              :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult]]
-    (clear-seed! k)))
+    (clear-seed! k))
+  ;; State no longer has :curves — this empties the style tag.
+  (sync-curve-style!))
 
 ;; `update-in ... not` is wrong here: on first load the state has no entry, so
 ;; `(not nil) → true` matches the seeded default and the user must click twice
@@ -196,8 +254,17 @@
                 (conj (str "  --ty-warning-hue: " (int warning-hue) ";"))
 
                 (not= (int danger-hue) 25)
-                (conj (str "  --ty-danger-hue: " (int danger-hue) ";")))]
-    (str ":root {\n" (str/join "\n" lines) "\n}")))
+                (conj (str "  --ty-danger-hue: " (int danger-hue) ";")))
+        curve-lines (fn [theme]
+                      (let [defaults (cond-> default-seeds
+                                       (= theme :dark) (merge dark-curve-defaults))]
+                        (for [[k v] (get-in @state/state [:brand-playground :curves theme])
+                              :when (not= v (get defaults k))]
+                          (str "  " (key->var k) ": " (.toFixed v 2) ";"))))
+        dark-lines (curve-lines :dark)]
+    (str ":root {\n" (str/join "\n" (concat lines (curve-lines :light))) "\n}"
+         (when (seq dark-lines)
+           (str "\nhtml.dark {\n" (str/join "\n" dark-lines) "\n}")))))
 
 (defn seeds-panel
   "Interactive brand-seeds widget. Exported so the CSS Guide page can embed it
@@ -387,8 +454,8 @@
               :style {:width "100%" :height "6px"}}]])
          [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
                                 :margin "0.375rem 0 0"}}
-          "Lightness per shade. Light mode: lower L = more emphasis. Dark "
-          "mode inverts these values automatically."]])]
+          "Lightness per shade for the ACTIVE theme — toggle dark/light to "
+          "tune each side independently. Light: lower L = more emphasis."]])]
 
      ;; Saturation curve — per-shade chroma multipliers.
      [:div {:style {:padding "0.5rem 0.75rem"
@@ -634,8 +701,11 @@
                "Per-shade chroma multipliers. Each shade's chroma = flavor-chroma × multiplier."]])])
 
         [:div.flex.justify-between.items-center
-         [:a.ty-text-primary {:href "/guides/theming"
-                              :style {:font-size "0.6875rem" :text-decoration "underline"}}
+         [:a.ty-text-primary {:href "#"
+                              :style {:font-size "0.6875rem" :text-decoration "underline"}
+                              :on {:click (fn [^js e]
+                                            (.preventDefault e)
+                                            (router/navigate! :tyrell.site.docs/theming))}}
           "Full reference →"]
          [:button.ty-text-.hover:ty-text
           {:style {:cursor "pointer" :background "transparent" :border "none"
@@ -716,39 +786,22 @@
        [:strong.ty-text+ label]
        [:div.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem"}} "Surface"]])]])
 
-(defn- preview-bg-tints []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Background tints (--ty-bg-{flavor}-*)")
-   [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
-    (for [flavor ["primary" "secondary" "success" "danger" "warning"]]
-      [:div {:key flavor :style {:display "flex" :gap "0.375rem"}}
-       (for [shade ["soft" "" "bold"]
-             :let [l   (if (= shade "bold") "+" (when (= shade "soft") "-"))
-                   cls (str "ty-bg-" flavor (when (seq shade) l))]]
-         [:div {:key (str flavor shade)
-                :class [cls]
-                :style {:flex 1 :padding "0.75rem" :border-radius "6px"
-                        :font-size "0.75rem" :text-align "center"}}
-          [:span {:class (str "ty-text-" flavor)} flavor l]])])]])
-
 ;; ----------------------------------------------------------------------------
 ;; Page
 ;; ----------------------------------------------------------------------------
 
 (defn view []
   (docs-page
-   (component-header "Theming — OKLCH brand layer"
-                     "Opt-in CSS file. Load it after tyrell.css, set 2 seed variables, get a coherent brand across every component in light + dark mode. The 186 hexes in tyrell.css stay untouched — this layer overrides them via the cascade.")
+   (component-header "Theming"
+                     "Two CSS variables re-brand every component — light and dark, no build step, no JS. Everything on this page is live: drag the seeds, watch the library follow.")
 
     ;; Quick-start
    [:div.ty-elevated.rounded-xl.p-6
     [:div.mb-3
      (section-label "30-second start")]
-    (code-block "<!-- 1. Load after tyrell.css -->
-<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
+    (code-block "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
 <link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-brand.css\">
 
-<!-- 2. Rebrand the entire UI in 2 lines -->
 <style>
   :root {
     --ty-brand-hue: 200;        /* teal */
@@ -756,8 +809,8 @@
   }
 </style>")
     [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
-     "Or via npm: " [:code "import 'tyrell-components/css/tyrell-brand.css'"]
-     " after the main tyrell.css import."]]
+     "That's the whole rebrand. Via npm: "
+     [:code "import 'tyrell-components/css/tyrell-brand.css'"] " after tyrell.css."]]
 
     ;; Playground
    (doc-section "Playground"
@@ -780,96 +833,46 @@
                   [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
                    (preview-inputs)
                    (preview-surfaces)]
-        ;; Row 3 & 4: full-width — these need horizontal room
-                  (preview-text-ramps)
-                  (preview-bg-tints)]])
+        ;; Row 3: full-width — needs horizontal room
+                  (preview-text-ramps)]])
 
     ;; The formula — how every color is computed
    (doc-section "The formula"
-                [:div.space-y-4
-                 [:div.ty-content.rounded-lg.p-5
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                   "Every color in the library is one formula on five axes. Pick a flavor "
-                   "(primary / secondary / success / warning / danger / neutral) and a shade "
-                   "(strong / bold / base / soft / faint). The formula gives you the cell."]
-                  (code-block "oklch(
-  L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
-  C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
-  H = flavor-hue                                  ← Tier 2
+                [:div.ty-content.rounded-lg.p-5
+                 [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                  "Every color in the library is one computation: a flavor (primary … neutral) "
+                  "brings hue + chroma, a shade (++ … --) brings the emphasis step."]
+                 (code-block "oklch(
+  L = L-curve[shade] × flavor-l-factor
+  C = flavor-chroma  × saturation-curve[shade]
+  H = flavor-hue
 )"
-                              "css")
-                  [:div.grid.gap-4.mt-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
-                   [:div
-                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
-                     "FLAVOR axis"]
-                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
-                     "Which semantic role. Each flavor carries its own hue, chroma, and L-factor seeds."]]
-                   [:div
-                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
-                     "SHADE axis"]
-                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
-                     "5 emphasis stops shared across flavors. Same shade across flavors = same perceptual weight."]]
-                   [:div
-                    [:p.ty-text+ {:style {:font-size "0.75rem" :font-weight 600 :margin-bottom "0.25rem"}}
-                     "HUE / CHROMA / L"]
-                    [:p.ty-text- {:style {:font-size "0.75rem" :line-height 1.5}}
-                     "The OKLCH axes themselves. Light mode: low L = more emphasis. Dark mode flips it."]]]]
+                             "css")
+                 [:p.ty-text-.mt-4.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                  "So " [:code "--ty-color-warning-bold"] " = oklch(0.46 0.26 75) — and one seed "
+                  "moves a whole flavor: " [:code "--ty-warning-l-factor: 0.85"] " darkens every "
+                  "warning shade in step, nothing else moves."]
+                 [:div.flex.flex-wrap.gap-3
+                  (swatch "L 0.46 (default)" 0.46 0.26 75)
+                  (swatch "L 0.39 (×0.85)" 0.39 0.26 75)]
+                 [:p.ty-text-.mt-4 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                  "Dark mode is the same formula — " [:code "html.dark"] " swaps in a flipped "
+                  "L-curve, your seeds carry through untouched."]])
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Worked example")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                   [:code "--ty-color-warning-bold"] " in light mode resolves to:"]
-                  (code-block "L = 0.46 × 1     = 0.46     ← l-bold × warning-l-factor
-C = 0.26 × 1.00  = 0.26     ← warning-chroma × c-bold-mult
-H = 75°                     ← warning-hue
-→ oklch(0.46 0.26 75)       a punchy amber for +1 emphasis text" "txt")
-                  [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                   "Want warning a notch darker without touching anything else? Set "
-                   [:code "--ty-warning-l-factor: 0.85"] " — the new L becomes 0.46 × 0.85 = 0.39. "
-                   "Every warning shade shifts in step; primary / success / danger are untouched."]
-                  [:div.flex.flex-wrap.gap-3.mt-4
-                   (swatch "L 0.46 (default)" 0.46 0.26 75)
-                   (swatch "L 0.39 (×0.85)" 0.39 0.26 75)]]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Dark mode")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                   "The " [:code "html.dark"] " block redefines the L-curve and saturation curve only — "
-                   "the same flavor seeds and L-factors carry through. Toggle the theme button at the "
-                   "top: every component re-renders coherently in both modes from the same brand pick."]]])
-
-    ;; Override recipes
-   (doc-section "Override recipes"
-                [:div.space-y-6
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Just rotate the brand (most common)")
-                  (code-block ":root {
-  --ty-brand-hue: 200;       /* teal */
+    ;; Override recipes — one block, copy what you need
+   (doc-section "Recipes"
+                [:div.ty-content.rounded-lg.p-5
+                 (code-block ":root {
+  /* rotate the brand — usually all you need */
+  --ty-brand-hue: 200;
   --ty-brand-chroma: 0.13;
-}" "css")]
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Detach secondary from brand")
-                  (code-block ":root {
-  --ty-brand-hue: 200;
-  --ty-secondary-hue: 30;    /* warm orange instead of brand+60 */
-  --ty-secondary-chroma: 0.16;
-}" "css")]
+  /* detach secondary (default: brand-hue + 60) */
+  --ty-secondary-hue: 30;
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Pin a single derived token")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                   "The brand layer derives everything from seeds, but the cascade still
-          resolves consumer overrides of individual derived tokens. Useful for a
-          one-off adjustment without abandoning the formula."]
-                  (code-block ":root {
-  --ty-brand-hue: 200;
-  --ty-color-primary-strong: #003344;  /* override just this one shade */
-}" "css")]
+  /* pull a semantic flavor toward the brand */
+  --ty-success-hue: var(--ty-brand-hue);
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Make success follow the brand")
-                  (code-block ":root {
-  --ty-brand-hue: 200;
-  --ty-success-hue: var(--ty-brand-hue);  /* success goes teal too */
-}" "css")]])))
+  /* pin one derived token — cascade still wins */
+  --ty-color-primary-strong: #003344;
+}" "css")])))

@@ -4,7 +4,7 @@
  * Exclusive selection within a group. ty-radio-group manages the selection
  * value and form integration; ty-radio is the individual choice element.
  *
- * Composition (ty-multiselect-style):
+ * Composition (container + children, like ty-select + ty-option):
  *   <ty-radio-group name="plan" value="pro" label="Plan">
  *     <ty-radio value="free">Free</ty-radio>
  *     <ty-radio value="pro">Pro</ty-radio>
@@ -21,7 +21,8 @@ import type { Flavor, Size } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
-import { radioStyles } from "../styles/radio.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
+import { radioStyles, radioCustomFlavorCss } from "../styles/radio.js";
 
 const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`;
 
@@ -69,6 +70,7 @@ export class TyRadio
     },
   };
 
+  private _customFlavorSheet: CSSStyleSheet | null = null;
   private _listenersSetup: boolean = false;
   private _clickHandler: ((e: Event) => void) | null = null;
   private _focusHandler: (() => void) | null = null;
@@ -91,14 +93,29 @@ export class TyRadio
     this.dispatchEvent(
       new CustomEvent("ty-radio-connected", { bubbles: true }),
     );
+    this._syncCustomFlavor();
   }
   protected onDisconnect(): void {
     this.removeEventListeners();
   }
-  protected onPropertiesChanged(_changes: PropertyChange[]): void { }
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === "flavor")) {
+      this._syncCustomFlavor();
+    }
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ base }) => radioCustomFlavorCss(base),
+    );
+  }
 
   private buildClassList(): string {
-    const classes: string[] = [this.size, this.flavor];
+    const classes: string[] = [this.size];
     if (this.disabled) classes.push("disabled");
     return classes.join(" ");
   }

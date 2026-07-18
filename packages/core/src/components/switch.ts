@@ -20,7 +20,8 @@ import type { Flavor, Size } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
-import { switchStyles } from "../styles/switch.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
+import { switchStyles, switchCustomFlavorCss } from "../styles/switch.js";
 
 interface SwitchState {
   checked: boolean;
@@ -82,39 +83,17 @@ export class TySwitch
         return v;
       },
     },
+    // Any string is accepted: built-ins get static CSS, other identifiers
+    // become custom flavors (see _syncCustomFlavor), garbage degrades to
+    // the default look.
     flavor: {
       type: "string" as const,
       visual: true,
       default: "primary",
-      validate: (v: any) => {
-        const valid: Flavor[] = [
-          "primary",
-          "secondary",
-          "success",
-          "danger",
-          "warning",
-          "neutral",
-        ];
-        return valid.includes(v);
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = [
-          "primary",
-          "secondary",
-          "success",
-          "danger",
-          "warning",
-          "neutral",
-        ];
-        if (!valid.includes(v)) {
-          console.warn(`[ty-switch] Invalid flavor '${v}'. Using 'primary'.`);
-          return "primary";
-        }
-        return v;
-      },
     },
   };
 
+  private _customFlavorSheet: CSSStyleSheet | null = null;
   private _listenersSetup: boolean = false;
   private _clickHandler: ((e: Event) => void) | null = null;
   private _keydownHandler: ((e: Event) => void) | null = null;
@@ -131,18 +110,33 @@ export class TySwitch
     // Re-arm listeners on RE-connect (base skips render() when already
     // rendered; onDisconnect removed them). No-op on first connect.
     this.setupEventListeners();
+    this._syncCustomFlavor();
   }
   protected onDisconnect(): void {
     this.removeEventListeners();
   }
-  protected onPropertiesChanged(_changes: PropertyChange[]): void { }
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === "flavor")) {
+      this._syncCustomFlavor();
+    }
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ base }) => switchCustomFlavorCss(base),
+    );
+  }
 
   protected getFormValue(): FormDataEntryValue | null {
     return this.checked ? this.value : null;
   }
 
   private buildClassList(): string {
-    const classes: string[] = [this.size, this.flavor];
+    const classes: string[] = [this.size];
     if (this.disabled) classes.push("disabled");
     if (this.required) classes.push("required");
     return classes.join(" ");

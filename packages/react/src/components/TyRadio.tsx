@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 export interface TyRadioProps extends React.HTMLAttributes<HTMLElement> {
   /** Form field value (selected by parent ty-radio-group when matches its `value`) */
   value?: string;
@@ -19,7 +22,7 @@ export interface TyRadioProps extends React.HTMLAttributes<HTMLElement> {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   /** Semantic styling variant — typically inherited from the parent group */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
 
   /** Label content (wrap in a `<label>` for click delegation, see ty-radio docs) */
   children?: React.ReactNode;

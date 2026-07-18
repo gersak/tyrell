@@ -1,9 +1,9 @@
 /**
  * Select Component Styles
- * Layered over the shared multiselect styles (popup, mobile modal, search).
+ * Layered over the shared select-field styles (popup, mobile modal, search).
  *
  * Skins:
- * - default FIELD: the base .multiselect-stub already carries the form-field
+ * - default FIELD: the base .select-stub already carries the form-field
  *   look (width 100%, --ty-input-* tokens) — only text treatment added here
  * - .compact: content-hugging trigger for toolbars, count badge
  * - .custom-trigger (slot="trigger"): all chrome stripped
@@ -11,7 +11,7 @@
 
 export const selectStyles = `
 /* ===== COMPACT skin: hugs content (field skin = base styles) ===== */
-.multiselect-stub.compact {
+.select-stub.compact {
   display: inline-flex;
   flex-wrap: nowrap;
   width: auto;
@@ -21,7 +21,7 @@ export const selectStyles = `
 }
 
 /* Consumer-provided trigger (slot="trigger"): no chrome at all */
-.multiselect-stub.custom-trigger {
+.select-stub.custom-trigger {
   display: inline-block;
   border: none;
   background: none;
@@ -29,7 +29,7 @@ export const selectStyles = `
   min-height: 0;
   border-radius: 0;
 }
-.multiselect-stub.custom-trigger:hover {
+.select-stub.custom-trigger:hover {
   border: none;
 }
 
@@ -42,8 +42,10 @@ export const selectStyles = `
   height: 1.25rem;
   padding: 0 0.375rem;
   border-radius: 9999px;
-  background: var(--ty-bg-primary-soft);
-  color: var(--ty-text-primary);
+  /* --ty-text-primary never existed as a token — this silently fell back
+     to inherited/unset color. Now follows the select's own flavor. */
+  background: color-mix(in oklab, var(--select-accent, var(--ty-color-primary)) 15%, transparent);
+  color: var(--select-accent-bold, var(--ty-color-primary-strong));
   font-size: var(--ty-font-xs);
   font-weight: var(--ty-font-semibold);
   font-style: normal;
@@ -52,7 +54,7 @@ export const selectStyles = `
   display: none;
 }
 /* Selection text (field skin): single line, ellipsis, input colors */
-.multiselect-stub .dropdown-placeholder {
+.select-stub .dropdown-placeholder {
   font-style: normal;
   flex: 1 1 auto;
   min-width: 0;
@@ -63,45 +65,45 @@ export const selectStyles = `
 }
 
 /* Empty state: muted placeholder color */
-.multiselect-stub .dropdown-placeholder.placeholder-shown {
+.select-stub .dropdown-placeholder.placeholder-shown {
   color: var(--input-placeholder, var(--ty-input-placeholder));
 }
-.multiselect-stub .dropdown-placeholder[hidden] {
+.select-stub .dropdown-placeholder[hidden] {
   display: none;
 }
 
 /* Single-select display clone (slot="selected"): the selected ty-option
    projected into the stub — its own :host([cloned]) styling strips the
    list-row chrome; here it just takes the text's flex slot. */
-.multiselect-stub slot[name="selected"] {
+.select-stub slot[name="selected"] {
   display: none;
 }
-.multiselect-stub.has-clone slot[name="selected"] {
+.select-stub.has-clone slot[name="selected"] {
   display: block;
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
 }
-.multiselect-stub.compact.has-clone slot[name="selected"] {
+.select-stub.compact.has-clone slot[name="selected"] {
   flex: 0 1 auto;
 }
 
 /* start/end slot content (icons etc.) — spacing comes from the stub's flex
    gap; muted like ty-input adornments. end sits before the chevron. */
-.multiselect-stub ::slotted([slot="start"]),
-.multiselect-stub ::slotted([slot="end"]) {
+.select-stub ::slotted([slot="start"]),
+.select-stub ::slotted([slot="end"]) {
   flex-shrink: 0;
   color: var(--ty-text-soft);
 }
 
 /* Compact skin: the text IS the trigger label — no grow, regular text color */
-.multiselect-stub.compact .dropdown-placeholder {
+.select-stub.compact .dropdown-placeholder {
   flex-grow: 0;
   color: var(--ty-text);
 }
 
-/* Trigger stays visible while the popup is open (multiselect hides it) */
-.dropdown-wrapper:has(.dropdown-chevron.open) .multiselect-stub {
+/* Trigger stays visible while the popup is open (the popup hides it) */
+.dropdown-wrapper:has(.dropdown-chevron.open) .select-stub {
   opacity: 1;
   pointer-events: auto;
 }

@@ -17,8 +17,9 @@ import type { Flavor, Size } from '../types/common.js'
 import { TyComponent } from '../base/ty-component.js'
 import type { PropertyChange } from '../utils/property-manager.js'
 import { ensureStyles } from '../utils/styles.js'
+import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js'
 import { inputStyles } from '../styles/input.js'
-import { copyStyles } from '../styles/copy.js'
+import { copyStyles, copyCustomFlavorCss } from '../styles/copy.js'
 
 /**
  * Copy icon SVG (from Lucide)
@@ -128,22 +129,13 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
         return v
       },
     },
+    // Any string is accepted: built-ins get static CSS, other identifiers
+    // become custom flavors (see _syncCustomFlavor), garbage degrades to
+    // the default look.
     flavor: {
       type: 'string' as const,
       visual: true,
       default: 'neutral',
-      validate: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        return valid.includes(v)
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        if (!valid.includes(v)) {
-          console.warn(`[ty-copy] Invalid flavor '${v}'. Using 'neutral'. Valid flavors: ${valid.join(', ')}`)
-          return 'neutral'
-        }
-        return v
-      },
     },
     format: {
       type: 'string' as const,
@@ -178,6 +170,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
   // ============================================================================
   private _copyTimeout: number | null = null
   private _showingSuccess = false
+  private _customFlavorSheet: CSSStyleSheet | null = null
 
   constructor() {
     super() // TyComponent handles attachInternals() and attachShadow()
@@ -199,6 +192,17 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
    */
   protected onConnect(): void {
     // TyComponent will call render() automatically after this hook
+    this._syncCustomFlavor()
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ base }) => copyCustomFlavorCss(base),
+    )
   }
 
   /**
@@ -215,8 +219,10 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
   /**
    * Handle property changes - called BEFORE render
    */
-  protected onPropertiesChanged(_changes: PropertyChange[]): void {
-    // No special handling needed - TyComponent handles rendering automatically
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === 'flavor')) {
+      this._syncCustomFlavor()
+    }
   }
 
   // ============================================================================
@@ -227,7 +233,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
    * Build CSS class list
    */
   private buildClassList(): string {
-    const classes: string[] = [this.size, this.flavor]
+    const classes: string[] = [this.size]
 
     if (this.disabled) classes.push('disabled')
     if (this.required) classes.push('required')

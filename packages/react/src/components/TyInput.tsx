@@ -3,6 +3,9 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Event detail structure for ty-input events
 export interface TyInputEventDetail {
   value: any; // shadow value (processed/parsed)
@@ -32,7 +35,7 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   | 'currency' | 'percent' | 'compact';
 
   /** Semantic styling variant */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
 
   /** Input size */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';

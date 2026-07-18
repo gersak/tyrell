@@ -13,24 +13,17 @@
 import { findBestPosition, placementPreferences, type Placement, type CleanupFn } from '../utils/positioning.js';
 import { ensureStyles } from '../utils/styles.js';
 import { tooltipStyles } from '../styles/tooltip.js';
+import type { Flavor } from '../types/common.js';
 
 // ============================================================================
 // Types
 // ============================================================================
 
 /**
- * Valid tooltip flavors (semantic colors)
+ * Tooltip flavors: dark (default) / light / info plus any Flavor —
+ * built-in semantic colors or a custom flavor backed by --ty-*-X tokens.
  */
-export type TooltipFlavor =
-  | 'dark'
-  | 'light'
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'danger'
-  | 'warning'
-  | 'info'
-  | 'neutral';
+export type TooltipFlavor = 'dark' | 'light' | 'info' | Flavor;
 
 /**
  * Tooltip attributes configuration
@@ -65,24 +58,15 @@ const popoverElements = new WeakMap<TyTooltip, HTMLElement>();
 // ============================================================================
 
 /**
- * Validate and normalize flavor attribute
+ * Normalize the flavor attribute. Any plain identifier (with optional +/-
+ * shade suffix) is accepted — built-ins and custom flavors alike get their
+ * colors from tokens in applyFlavorStyles(). Anything else (including
+ * would-be CSS injection through the attribute) falls back to 'dark'.
  */
 function validateFlavor(flavor: string | null): TooltipFlavor {
-  const validFlavors: TooltipFlavor[] = [
-    'dark', 'light', 'primary', 'secondary',
-    'success', 'danger', 'warning', 'info', 'neutral'
-  ];
-  const normalized = (flavor || 'dark') as TooltipFlavor;
-
-  if (!validFlavors.includes(normalized)) {
-    console.warn(
-      `[ty-tooltip] Invalid flavor '${flavor}'. Using 'dark'. ` +
-      `Valid flavors: ${validFlavors.join(', ')}.`
-    );
-    return 'dark';
-  }
-
-  return normalized;
+  const full = flavor || 'dark';
+  const base = full.replace(/[+-]$/, '');
+  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(base) ? (full as TooltipFlavor) : 'dark';
 }
 
 /**
@@ -191,7 +175,13 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
 }
 
 /**
- * Apply flavor-specific styles to popover
+ * Apply flavor-specific styles to popover.
+ *
+ * dark / light / info are hand-written extras; every other flavor —
+ * built-in semantic or custom — is one token formula, with neutral
+ * fallbacks so a custom flavor with missing tokens degrades gracefully.
+ * flavor has passed validateFlavor's identifier guard, so interpolating
+ * it into var() names is safe.
  */
 function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
   // Reset to defaults first
@@ -199,54 +189,33 @@ function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
   popover.style.removeProperty('color');
   popover.style.removeProperty('border-color');
 
-  // Apply flavor-specific styles
   switch (flavor) {
-    case 'primary':
-      popover.style.background = 'var(--ty-bg-primary, #3b82f6)';
-      popover.style.color = 'var(--ty-color-primary-strong, #eff6ff)';
-      popover.style.borderColor = 'var(--ty-border-primary, #60a5fa)';
-      break;
-    case 'secondary':
-      popover.style.background = 'var(--ty-bg-secondary, #8b5cf6)';
-      popover.style.color = 'var(--ty-color-secondary-strong, #f5f3ff)';
-      popover.style.borderColor = 'var(--ty-border-secondary, #a78bfa)';
-      break;
-    case 'success':
-      popover.style.background = 'var(--ty-bg-success-bold, #10b981)';
-      popover.style.color = 'var(--ty-color-success-strong, #ecfdf5)';
-      popover.style.borderColor = 'var(--ty-border-success, #34d399)';
-      break;
-    case 'danger':
-      popover.style.background = 'var(--ty-bg-danger, #ef4444)';
-      popover.style.color = 'var(--ty-color-danger-strong, #fef2f2)';
-      popover.style.borderColor = 'var(--ty-border-danger, #f87171)';
-      break;
-    case 'warning':
-      popover.style.background = 'var(--ty-bg-warning, #f59e0b)';
-      popover.style.color = 'var(--ty-color-warning-strong, #fffbeb)';
-      popover.style.borderColor = 'var(--ty-border-warning, #fbbf24)';
-      break;
-    case 'info':
-      popover.style.background = 'var(--ty-bg-info, #06b6d4)';
-      popover.style.color = 'var(--ty-text-strong, #f0f9ff)';
-      popover.style.borderColor = 'var(--ty-border-info, #22d3ee)';
+    case 'dark':
+      // Default look — routed through the documented --ty-tooltip-* escape
+      // hatch so consumers can retheme without a flavor.
+      popover.style.background = 'var(--ty-tooltip-bg, var(--ty-bg-neutral-soft, #4b5563))';
+      popover.style.color = 'var(--ty-tooltip-color, var(--ty-color-neutral-strong, #f3f4f6))';
+      popover.style.borderColor = 'var(--ty-border-strong, #6b7280)';
       break;
     case 'light':
       popover.style.background = 'var(--ty-surface-elevated, #ffffff)';
       popover.style.color = 'var(--ty-text-strong, #111827)';
       popover.style.borderColor = 'var(--ty-border, #e5e7eb)';
       break;
-    case 'neutral':
-      popover.style.background = 'var(--ty-bg-neutral, #6b7280)';
-      popover.style.color = 'var(--ty-color-neutral-strong, #f9fafb)';
-      popover.style.borderColor = 'var(--ty-border-neutral, #9ca3af)';
+    case 'info':
+      popover.style.background = 'var(--ty-bg-info, #06b6d4)';
+      popover.style.color = 'var(--ty-text-strong, #f0f9ff)';
+      popover.style.borderColor = 'var(--ty-border-info, #22d3ee)';
       break;
-    case 'dark':
-    default:
-      popover.style.background = 'var(--ty-bg-neutral-soft, #4b5563)';
-      popover.style.color = 'var(--ty-color-neutral-strong, #f3f4f6)';
-      popover.style.borderColor = 'var(--ty-border-strong, #6b7280)';
+    default: {
+      const base = flavor.replace(/[+-]$/, '');
+      const shade = flavor.slice(base.length);
+      const bgSfx = shade === '+' ? '-bold' : shade === '-' ? '-soft' : '';
+      popover.style.background = `var(--ty-bg-${base}${bgSfx}, var(--ty-bg-neutral))`;
+      popover.style.color = `var(--ty-color-${base}-strong, var(--ty-color-neutral-strong))`;
+      popover.style.borderColor = `var(--ty-border-${base}, var(--ty-color-${base}))`;
       break;
+    }
   }
 }
 
@@ -517,8 +486,10 @@ export class TyTooltip extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null) {
-    // Update flavor in real-time if tooltip is visible
-    if (name === 'flavor' && this._open) {
+    // Restyle the popover on flavor change even while hidden — it's cached
+    // in popoverElements once created, so a change made while closed would
+    // otherwise be silently lost until the element is torn down.
+    if (name === 'flavor') {
       const popover = popoverElements.get(this);
       if (popover) {
         const flavor = validateFlavor(newValue);

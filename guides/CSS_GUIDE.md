@@ -396,7 +396,9 @@ The brand layer (Option 1) is strictly more powerful — anything you can do wit
 
 ## Custom Flavors (add your own)
 
-The six flavors are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by `ty-button` and `ty-tag`.
+The six flavors are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by **every flavored component**: `ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group` (and its `ty-radio` children), `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar` (and its `ty-calendar-month`).
+
+Most components need only the `--ty-color-X` ramp (`ty-tag` and `ty-tooltip` also read `--ty-bg-X` / `--ty-border-X`; solid buttons read `--ty-solid-X`):
 
 ```css
 /* One rule = a new flavor, usable anywhere in scope */
@@ -432,9 +434,54 @@ The six flavors are not a closed set. Pass any identifier as `flavor` and define
 Notes:
 
 - **Missing tokens degrade gracefully.** A button token you didn't define falls back to the `neutral` equivalent; an undefined flavor renders as neutral. You can start with just `--ty-solid-X` + `--ty-solid-X-fg` and add the ramp later.
+- **Field emphasis ladders need the shade tokens.** Flavored fields (`ty-input`, `ty-select`, `ty-date-picker`) rest on `--ty-color-X-soft` and escalate to `--ty-color-X` on hover/focus. Define only the base token and the ladder flattens — rest and focus both show the full color (visible, but no state distinction). Both the hand-picked ramp above and the quick path below provide the shades.
 - **Scoping works like any CSS variable** — define on `:root` for app-wide, or on a container to scope the flavor to a section. Add a `html.dark` block for dark-mode values.
-- **Per-instance overrides still win.** `--ty-button-*` variables and `ty-tag[flavor="X"] { --tag-bg: … }` rules (next section) take precedence over the generated token wiring.
+- **Per-instance overrides still win.** `--ty-button-*` variables and each component's local flavor vars (next section) take precedence over the generated token wiring — e.g. `ty-tag[flavor="X"] { --tag-bg: … }` or `ty-switch[flavor="X"] { --switch-track: … }`.
 - Flavor names must be plain identifiers (letters, digits, `-`, `_`).
+
+### The quick path: one color in, a full ramp out
+
+Hand-picking 14 values gives you full control over every shade, but it's not the only option. Every one of those tokens can instead be *derived* from a single base color with [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) — the same "one seed → full ramp" idea the OKLCH brand layer uses for the built-in flavors, just with a simpler formula:
+
+```css
+:root {
+  --brand-base: #7c3aed; /* the only color you actually pick */
+
+  --ty-color-brand: var(--brand-base);
+  --ty-color-brand-strong: color-mix(in oklab, var(--brand-base) 80%, black);
+  --ty-color-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
+  --ty-color-brand-faint: color-mix(in oklab, var(--brand-base) 30%, white);
+
+  --ty-bg-brand: color-mix(in oklab, var(--brand-base) 12%, white);
+  --ty-bg-brand-bold: color-mix(in oklab, var(--brand-base) 24%, white);
+  --ty-bg-brand-soft: color-mix(in oklab, var(--brand-base) 6%, white);
+
+  --ty-solid-brand: var(--brand-base);
+  --ty-solid-brand-hover: color-mix(in oklab, var(--brand-base) 85%, black);
+  --ty-solid-brand-active: color-mix(in oklab, var(--brand-base) 70%, black);
+  --ty-solid-brand-strong: color-mix(in oklab, var(--brand-base) 80%, black);
+  --ty-solid-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
+  --ty-solid-brand-fg: white;
+}
+```
+
+Change `--brand-base` and every shade updates with it — including live, from a `<input type="color">`, since it's an ordinary CSS variable. The docs site's "CSS System" page demonstrates this working live: the "Try the Flavor Axis" section's `custom` chip is driven by exactly this formula.
+
+Trade-off: this mixes toward flat `black`/`white`, so it won't invert correctly for dark mode the way the hand-picked values (or the real OKLCH brand layer) do — pick per-theme base colors, or a `light-dark()`/`html.dark` override for `--brand-base`, if you need that. For a flavor that's fully theme-aware out of the box, use the brand layer's own hue/chroma seeds instead (see the docs site's "Theming" page) rather than a hand-rolled custom flavor.
+
+Each flavored component funnels its colors through a few local vars, which double as the per-instance override API (set them on the host from any page-level rule):
+
+| Component | Local vars |
+|---|---|
+| `ty-tag` | `--tag-bg`, `--tag-color`, `--tag-border-color` |
+| `ty-switch` | `--switch-track` (checked track) |
+| `ty-radio` | `--radio-color` (checked border + dot) |
+| `ty-checkbox` | `--checkbox-color` (checked), `--checkbox-color-off`, `--checkbox-ring` (focus ring) |
+| `ty-input` | `--input-accent` (border), `--input-accent-bold` (hover/focus), `--input-ring` |
+| `ty-select` | `--select-accent` (border), `--select-accent-bold` (hover/open border), `--select-ring` (open focus ring) |
+| `ty-date-picker` | `--date-picker-accent`, `--date-picker-accent-bold`, `--date-picker-ring` |
+| `ty-copy` | `--copy-color`, `--copy-color-hover`, `--copy-bg-hover` |
+| `ty-calendar-month` | `--calendar-month-accent` (today + selected border), `--calendar-month-selected-bg`, `--calendar-month-selected-color`, `--calendar-month-selected-hover-bg` — also reachable via the pre-existing `--ty-calendar-*` overrides, which still win |
 
 ---
 

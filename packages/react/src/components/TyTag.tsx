@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // CSS custom properties that cascade into the shadow DOM for full color control
 export interface TyTagCSSProperties extends React.CSSProperties {
   '--tag-bg'?: string;
@@ -11,7 +14,7 @@ export interface TyTagCSSProperties extends React.CSSProperties {
 
 // Type definitions for Ty Tag component
 export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'style' | 'onClick'> {
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   notPill?: boolean;
   clickable?: boolean;

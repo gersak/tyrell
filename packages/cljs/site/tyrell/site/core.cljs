@@ -1,6 +1,7 @@
 (ns tyrell.site.core
   (:require
    [clojure.string :as str]
+   tyrell.site.icons
    [replicant.dom :as rdom]
    [tyrell.layout :as layout]
    [tyrell.router :as router]

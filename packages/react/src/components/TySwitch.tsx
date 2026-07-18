@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 export interface TySwitchProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Checked (on) state */
   checked?: boolean;
@@ -22,7 +25,7 @@ export interface TySwitchProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   /** Semantic styling variant */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
 
   /**
    * Fires when switch state changes (React convention)

@@ -1,10 +1,14 @@
 (ns tyrell.site.views.ty-styles
   "Site view showcasing ty CSS classes and design system"
   (:require
-    [tyrell.site.docs.common :as common :refer [docs-page]]))
+   [clojure.string]
+   [tyrell.router :as router]
+   [tyrell.site.state :as state]
+   [tyrell.site.docs.common :as common :refer [docs-page]]))
 
-(defn theme-toggle []
+(defn theme-toggle
   "Simple theme toggle section"
+  []
   [:div.flex.justify-center.gap-4.mb-8
    [:button.px-6.py-3.ty-elevated.border.ty-border-soft.rounded-lg.hover:ty-content.ty-text.transition-colors.cursor-pointer.flex.items-center.gap-2
     {:on {:click #(.. js/document -documentElement -classList (remove "dark"))}}
@@ -37,8 +41,9 @@
        [:code.ty-text-- {:style {:font-size "0.6875rem" :font-family "monospace"}}
         token]])]])
 
-(defn text-variants-demo []
+(defn text-variants-demo
   "Shows the 5-variant text system, including the suffix → token mapping."
+  []
   [:div.ty-elevated.p-6.rounded-lg
    [:h3.text-lg.font-semibold.ty-text.mb-4 "5-Variant Text System"]
    [:p.ty-text-.mb-2 "Each semantic color provides 5 levels of emphasis for precise text hierarchy."]
@@ -56,8 +61,9 @@
     (text-ramp "warning")
     (text-ramp "neutral")]])
 
-(defn background-variants-demo []
+(defn background-variants-demo
   "Shows the 3-variant background system"
+  []
   [:div.ty-elevated.p-6.rounded-lg
    [:h3.text-lg.font-semibold.ty-text.mb-4 "Background Variants"]
    [:p.ty-text-.mb-6 "Each semantic color provides 3 background intensities: +, base, and -."]
@@ -141,85 +147,9 @@
       [:div.ty-text-neutral++.font-medium "ty-bg-neutral-"]
       [:div.ty-text-neutral.text-sm "Softer background"]]]]])
 
-;; ----------------------------------------------------------------------------
-;; Custom flavors — define the tokens, get a themed component. The <style>
-;; below is the whole integration: no per-component CSS, no JS.
-;; ----------------------------------------------------------------------------
-
-(def ^:private brand-tokens-css
-  ".demo-brand-scope {
-  /* text / border ramp */
-  --ty-color-brand-strong: #115e59;
-  --ty-color-brand: #0d9488;
-  --ty-color-brand-soft: #2dd4bf;
-  --ty-color-brand-faint: #99f6e4;
-  --ty-border-brand: #0d9488;
-
-  /* backgrounds */
-  --ty-bg-brand-bold: #99f6e4;
-  --ty-bg-brand: #ccfbf1;
-  --ty-bg-brand-soft: #f0fdfa;
-
-  /* solid button fills */
-  --ty-solid-brand: #0d9488;
-  --ty-solid-brand-strong: #0f766e;
-  --ty-solid-brand-soft: #5eead4;
-  --ty-solid-brand-hover: #0f766e;
-  --ty-solid-brand-active: #134e4a;
-  --ty-solid-brand-fg: white;
-}")
-
-(defn custom-flavors-demo []
-  "Live proof: a flavor that ships with the app, not the library."
-  [:div.ty-elevated.p-6.rounded-lg
-   [:style brand-tokens-css]
-   [:h3.text-lg.font-semibold.ty-text.mb-4 "Custom Flavors"]
-   [:p.ty-text-.mb-2
-    "Flavors are open-ended. Any " [:code "flavor"] " string that isn't a built-in becomes a "
-    [:strong "custom flavor"] ": define its design tokens ("
-    [:code "--ty-color-X"] ", " [:code "--ty-bg-X"] ", " [:code "--ty-solid-X"]
-    ") and components theme themselves — same shade ramp, hover, focus and "
-    [:code "+"] "/" [:code "-"] " tones as the built-ins."]
-   [:p.ty-text--.mb-6 {:style {:font-size "0.8125rem"}}
-    "Everything below uses " [:code "flavor=\"brand\""]
-    " — a flavor this page invented. The library ships no brand CSS; the tokens in the code block are the entire integration."]
-
-   [:div.demo-brand-scope.space-y-4
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Buttons — solid / outlined / ghost"]
-     [:div.flex.flex-wrap.items-center.gap-2
-      [:ty-button {:flavor "brand"} "Brand"]
-      [:ty-button {:flavor "brand" :appearance "outlined"} "Brand"]
-      [:ty-button {:flavor "brand" :appearance "ghost"} "Brand"]]]
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Tone suffixes work too"]
-     [:div.flex.flex-wrap.items-center.gap-2
-      [:ty-button {:flavor "brand+"} "brand+"]
-      [:ty-button {:flavor "brand"}  "brand"]
-      [:ty-button {:flavor "brand-"} "brand-"]]]
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Tags"]
-     [:div.flex.flex-wrap.items-center.gap-2
-      [:ty-tag {:flavor "brand+"} "brand+"]
-      [:ty-tag {:flavor "brand"}  "brand"]
-      [:ty-tag {:flavor "brand-"} "brand-"]]]
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Graceful fallback — undefined flavors degrade to neutral"]
-     [:div.flex.flex-wrap.items-center.gap-2
-      [:ty-button {:flavor "mystery"} "flavor=\"mystery\""]
-      [:ty-tag {:flavor "mystery"} "mystery"]]]]
-
-   [:div.mt-6
-    [:h4.text-sm.font-medium.ty-text.mb-2 "The entire integration"]
-    (common/code-block brand-tokens-css "css")
-    [:div.mt-3]
-    (common/code-block "<ty-button flavor=\"brand\">Brand</ty-button>
-<ty-button flavor=\"brand\" appearance=\"outlined\">Brand</ty-button>
-<ty-tag flavor=\"brand+\">brand+</ty-tag>"
-                       "html")]])
-
-(defn surface-classes-demo []
+(defn surface-classes-demo
   "Shows surface classes nested to demonstrate layering hierarchy"
+  []
   [:div.ty-elevated.p-6.rounded-lg
    [:h3.text-lg.font-semibold.ty-text.mb-4 "Surface Hierarchy"]
    [:p.ty-text-.mb-6 "Semantic surface classes nested to show layering and elevation hierarchy."]
@@ -272,205 +202,194 @@
       [:div "• " [:strong.ty-text++ "ty-elevated"] " - Cards, panels, forms - elevated with shadow"]
       [:div "• " [:strong.ty-text++ "ty-floating"] " - Modals, dropdowns, tooltips - highest elevation"]]]]])
 
-(defn practical-examples []
-  "Shows real-world component patterns using ty classes"
-  [:div.ty-elevated.p-6.rounded-lg
-   [:h3.text-lg.font-semibold.ty-text.mb-4 "Practical Component Examples"]
-   [:p.ty-text-.mb-6 "Real-world patterns demonstrating proper ty class usage."]
+;; ----------------------------------------------------------------------------
+;; Brand flavor — THE showcase. One attribute (flavor="brand"), one design
+;; token (the color picker), and every component follows: hover, focus,
+;; tones, light/dark. Built-in chips prove the same axis drives stock
+;; flavors. This replaces the former separate "flavor axis" and "custom
+;; flavors" sections.
+;; ----------------------------------------------------------------------------
 
-   [:div.space-y-6
-    ;; Alert examples
+(def ^:private built-in-flavors
+  ["primary" "secondary" "success" "danger" "warning" "neutral"])
+
+(defn- fp-flavor [] (get-in @state/state [:flavor-picker :flavor] "brand"))
+(defn- fp-tone []   (get-in @state/state [:flavor-picker :tone] ""))
+(defn- fp-hex []    (get-in @state/state [:flavor-picker :hex] "#7c3aed"))
+(defn- fp-value []  (str (fp-flavor) (fp-tone)))
+
+(defn- fp-set-flavor! [f] (swap! state/state assoc-in [:flavor-picker :flavor] f))
+(defn- fp-set-tone!   [t] (swap! state/state assoc-in [:flavor-picker :tone] t))
+(defn- fp-set-hex!    [^js e]
+  (swap! state/state assoc-in [:flavor-picker :hex] (.. e -target -value)))
+
+;; One custom flavor, "brand", entirely derived from a single base color via
+;; color-mix() — the CSS text never changes; only --fp-brand-base does. This
+;; is the "one color in, full ramp out" pattern for custom flavors: built-ins
+;; get their ramp from the OKLCH brand layer, a custom flavor can get the
+;; same shape from color-mix() in three lines per token.
+;;
+;; The -soft/-faint/-bg tokens mix toward white for light-mode tints; in dark
+;; mode that reads as a near-white patch against dark surfaces (worst on
+;; ty-tag, which fills a real background with --ty-bg-brand), so html.dark
+;; flips those same tokens to mix toward black instead. -strong/solid tokens
+;; already mix toward black and read fine in both themes.
+(def ^:private flavor-picker-scope-css
+  ".flavor-picker-scope {
+  --ty-color-brand: var(--fp-brand-base);
+  --ty-color-brand-strong: color-mix(in oklab, var(--fp-brand-base) 80%, black);
+  --ty-color-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, white);
+  --ty-color-brand-faint: color-mix(in oklab, var(--fp-brand-base) 30%, white);
+  --ty-bg-brand: color-mix(in oklab, var(--fp-brand-base) 12%, white);
+  --ty-bg-brand-bold: color-mix(in oklab, var(--fp-brand-base) 24%, white);
+  --ty-bg-brand-soft: color-mix(in oklab, var(--fp-brand-base) 6%, white);
+  --ty-solid-brand: var(--fp-brand-base);
+  --ty-solid-brand-hover: color-mix(in oklab, var(--fp-brand-base) 85%, black);
+  --ty-solid-brand-active: color-mix(in oklab, var(--fp-brand-base) 70%, black);
+  --ty-solid-brand-strong: color-mix(in oklab, var(--fp-brand-base) 80%, black);
+  --ty-solid-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, white);
+  --ty-solid-brand-fg: white;
+}
+html.dark .flavor-picker-scope {
+  --ty-color-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, black);
+  --ty-color-brand-faint: color-mix(in oklab, var(--fp-brand-base) 25%, black);
+  --ty-bg-brand: color-mix(in oklab, var(--fp-brand-base) 18%, black);
+  --ty-bg-brand-bold: color-mix(in oklab, var(--fp-brand-base) 30%, black);
+  --ty-bg-brand-soft: color-mix(in oklab, var(--fp-brand-base) 10%, black);
+}")
+
+(defn- flavor-chip [flavor label]
+  [:ty-tag (cond-> {:flavor flavor :clickable "true"
+                    :on {:click (fn [_] (fp-set-flavor! flavor))}}
+             (= flavor (fp-flavor)) (assoc :selected ""))
+   label])
+
+(defn- tone-toggle []
+  [:div.flex.items-center.gap-1
+   (for [[label tone] [["−" "-"] ["base" ""] ["+" "+"]]]
+     [:ty-button {:size "xs"
+                  :flavor (fp-flavor)
+                  :appearance (if (= tone (fp-tone)) "solid" "ghost")
+                  :on {:click (fn [_] (fp-set-tone! tone))}}
+      label])])
+
+(defn- brand-live-grid []
+  (let [v (fp-value)]
+    [:div.space-y-5
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-button {:flavor v} "Solid"]
+      [:ty-button {:flavor v :appearance "outlined"} "Outlined"]
+      [:ty-button {:flavor v :appearance "ghost"} "Ghost"]
+      [:ty-tag {:flavor v} v]]
+     [:div.flex.flex-wrap.items-center.gap-x-5.gap-y-2
+      [:label.flex.items-center.gap-2.cursor-pointer [:ty-switch {:flavor v :checked ""}] [:span.ty-text-.text-sm "Switch"]]
+      [:label.flex.items-center.gap-2.cursor-pointer [:ty-checkbox {:flavor v :checked ""}] [:span.ty-text-.text-sm "Checkbox"]]
+      [:ty-radio-group.flex.items-center {:flavor v :name "flavor-picker-radio" :value "b"}
+       [:label.flex.items-center.gap-1.mr-3.cursor-pointer [:ty-radio {:value "a"}] [:span.ty-text-.text-sm "A"]]
+       [:label.flex.items-center.gap-1.cursor-pointer [:ty-radio {:value "b"}] [:span.ty-text-.text-sm "B"]]]]
+     [:div.grid.gap-3.sm:grid-cols-2
+      [:ty-input {:flavor v :placeholder "Themed input"}]
+      [:ty-select {:flavor v :placeholder "Themed select"}
+       [:ty-option {:value "a"} "Option A"]
+       [:ty-option {:value "b"} "Option B"]]]
+     [:ty-date-picker {:flavor v :value "2026-07-17"}]
+     [:ty-copy {:flavor v :value (fp-hex)}]
+     [:div.flex.flex-wrap.items-center.gap-2
+      [:ty-button {:flavor v} "Hover me" [:ty-tooltip {:flavor v} "Themed tooltip"]]
+      [:ty-button {:flavor "mystery" :appearance "outlined"} "flavor=\"mystery\""]
+      [:span.ty-text--.text-xs "← undefined flavors degrade to neutral"]]]))
+
+;; Shown, not run — the live demo derives the same ramp from the color
+;; picker via flavor-picker-scope-css. Keep the two in sync.
+(def ^:private brand-integration-css
+  ":root {
+  /* the one color you pick */
+  --brand: #7c3aed;
+
+  --ty-color-brand: var(--brand);
+  --ty-solid-brand: var(--brand);
+  --ty-solid-brand-fg: white;
+  --ty-solid-brand-hover:
+    color-mix(in oklab,
+      var(--brand) 85%, black);
+  --ty-bg-brand:
+    color-mix(in oklab,
+      var(--brand) 12%, white);
+
+  /* …remaining tokens: same pattern */
+}")
+
+(defn brand-flavor-demo
+  "THE flavor showcase: brand propagation + customization in one section."
+  []
+  [:div.ty-elevated.p-6.rounded-lg.flavor-picker-scope
+   {:style {"--fp-brand-base" (fp-hex)}}
+   [:style flavor-picker-scope-css]
+   [:h3.text-lg.font-semibold.ty-text.mb-2 "Your Brand. One Attribute."]
+   [:p.ty-text-.mb-4
+    "Flavors are open-ended: " [:code "flavor=\"brand\""] " isn't in the library — its only "
+    "design token is the color picker below. Define a handful of CSS variables and every "
+    "component follows: hover, focus, " [:code "+"] "/" [:code "−"] " tones, light and dark. "
+    "No JS theme object, no build step, works server-rendered."]
+
+   [:div.flex.flex-wrap.items-center.gap-x-4.gap-y-3.mb-8
+    [:div.flex.items-center.gap-1
+     (flavor-chip "brand" "brand")
+     [:input {:type "color" :value (fp-hex)
+              :style {:width "1.75rem" :height "1.75rem" :padding "0" :border "none"
+                      :border-radius "0.375rem" :cursor "pointer" :background "none"}
+              :on {:input fp-set-hex!}}]]
+    [:div.flex.flex-wrap.gap-2
+     (for [f built-in-flavors] (flavor-chip f f))]
+    [:div.ml-auto (tone-toggle)]]
+
+   [:div.grid.gap-6.lg:grid-cols-2
+    (brand-live-grid)
+    [:div.space-y-3
+     (common/section-label "The entire integration")
+     (common/code-block brand-integration-css "css")
+     (common/code-block "<ty-button flavor=\"brand\">
+  Checkout
+</ty-button>" "html")]]
+
+   [:div.mt-6.pt-4.border-t.ty-border-soft
+    (common/section-label "The same job elsewhere")
+    [:div.grid.gap-x-6.gap-y-1.sm:grid-cols-2.mt-2.text-sm
+     [:div [:span.ty-text.font-medium "Material UI"] [:span.ty-text- " — createTheme() + ThemeProvider, JS, React-only"]]
+     [:div [:span.ty-text.font-medium "Shoelace / Web Awesome"] [:span.ty-text- " — variant names are a fixed enum; new ones need per-component overrides"]]
+     [:div [:span.ty-text.font-medium "Tailwind"] [:span.ty-text- " — edit config, re-run the build"]]
+     [:div [:span.ty-text.font-medium "ty"] [:span.ty-text- " — a dozen CSS custom properties, scoped anywhere the cascade reaches"]]]]
+
+   [:p.ty-text--.mt-4 {:style {:font-size "0.8125rem"}}
+    "Note: " [:code "neutral"] " renders as unstyled default chrome for input/date-picker — "
+    "correct, not a bug. The " [:code "color-mix()"] " ramp here is the quick path; the "
+    "production per-flavor OKLCH ramp lives on the "
+    [:a.ty-text-primary {:href "#"
+                         :on {:click (fn [^js e]
+                                       (.preventDefault e)
+                                       (router/navigate! :tyrell.site.docs/theming))}}
+     "Theming"] " page."]])
+
+(defn css-architecture-explanation
+  "Critical warning: components render unstyled without tyrell.css"
+  []
+  [:div.ty-bg-primary-.border.ty-border-primary.p-6.rounded-xl
+   [:div.flex.items-start.gap-4
+    [:ty-icon.ty-text-primary++.flex-shrink-0.mt-1 {:name "alert-triangle"
+                                                    :size "lg"}]
     [:div
-     [:h4.text-sm.font-medium.ty-text.mb-3 "Alert Components"]
-     [:div.grid.gap-4.md:grid-cols-2.lg:grid-cols-3
-      [:div.ty-bg-success-.ty-border-success.border.rounded-lg.p-4
-       [:div.flex.items-center.gap-3
-        [:ty-icon {:name "check-circle"
-                   :size "sm"}]
-        [:div
-         [:div.ty-text-success++.font-medium "Success"]
-         [:div.ty-text-success.text-sm "Operation completed successfully"]]]]
-
-      [:div.ty-bg-danger-.ty-border-danger.border.rounded-lg.p-4
-       [:div.flex.items-center.gap-3
-        [:ty-icon {:name "alert-circle"
-                   :size "sm"}]
-        [:div
-         [:div.ty-text-danger++.font-medium "Error"]
-         [:div.ty-text-danger.text-sm "Something went wrong, please try again"]]]]
-
-      [:div.ty-bg-warning-.ty-border-warning.border.rounded-lg.p-4
-       [:div.flex.items-center.gap-3
-        [:ty-icon {:name "alert-triangle"
-                   :size "sm"}]
-        [:div
-         [:div.ty-text-warning++.font-medium "Warning"]
-         [:div.ty-text-warning.text-sm "Please review before proceeding"]]]]
-
-      [:div.ty-bg-neutral-.ty-border-neutral.border.rounded-lg.p-4
-       [:div.flex.items-center.gap-3
-        [:ty-icon {:name "info"
-                   :size "sm"}]
-        [:div
-         [:div.ty-text-neutral++.font-medium "Information"]
-         [:div.ty-text-neutral.text-sm "This is a helpful informational note"]]]]]]
-
-    ;; Card example
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-3 "Card Component"]
-     [:div.ty-elevated.p-6.rounded-lg
-      [:h5.ty-text-primary++.text-lg.font-semibold.mb-2 "Card Title"]
-      [:p.ty-text.mb-4 "This is a card component using ty-elevated for the surface and ty-text-primary++ for the title to create proper hierarchy."]
-      [:div.flex.gap-3
-       [:button.px-4.py-2.ty-bg-primary.ty-text-primary++.rounded.hover:ty-bg-primary+.transition-colors "Primary Action"]
-       [:button.px-4.py-2.ty-bg-secondary.ty-text-secondary++.rounded.hover:ty-bg-secondary+.transition-colors "Secondary"]]]]
-
-    ;; Status badges
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-3 "Status Badges"]
-     [:div.flex.flex-wrap.gap-3
-      [:span.px-3.py-1.ty-bg-success.ty-text-success++.rounded-full.text-sm.font-medium "Active"]
-      [:span.px-3.py-1.ty-bg-warning.ty-text-warning++.rounded-full.text-sm.font-medium "Pending"]
-      [:span.px-3.py-1.ty-bg-danger.ty-text-danger++.rounded-full.text-sm.font-medium "Failed"]
-      [:span.px-3.py-1.ty-bg-neutral.ty-text-neutral++.rounded-full.text-sm.font-medium "Draft"]
-      [:span.px-3.py-1.ty-bg-secondary.ty-text-secondary++.rounded-full.text-sm.font-medium "Archived"]
-      [:span.px-3.py-1.ty-bg-primary.ty-text-primary++.rounded-full.text-sm.font-medium "Featured"]]]]])
-
-(defn code-examples []
-  "Shows code patterns for using ty classes"
-  [:div.ty-elevated.p-6.rounded-lg
-   [:h3.text-lg.font-semibold.ty-text.mb-4 "Code Examples"]
-   [:p.ty-text-.mb-6 "Copy these patterns to use ty classes effectively in your components."]
-
-   [:div.space-y-6
-    ;; Alert pattern
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Alert Component Pattern"]
-     (common/code-block "[:div.ty-bg-success-.ty-border-success.border.rounded-lg.p-4
-  [:div.flex.items-center.gap-3
-    [:ty-icon {:name \"check-circle\" :size \"sm\"}]
-    [:div
-      [:div.ty-text-success++.font-medium \"Success\"]
-      [:div.ty-text-success.text-sm \"Message text\"]]]]"
-                        "clojure")]
-
-    ;; Card pattern
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Card Component Pattern"]
-     (common/code-block "[:div.ty-elevated.p-6.rounded-lg
-  [:h3.ty-text-primary++.text-lg.font-semibold \"Title\"]
-  [:p.ty-text \"Body content with good contrast\"]
-  [:div.ty-text-neutral-.text-sm \"Helper text\"]]"
-                        "clojure")]
-
-    ;; Form validation pattern
-    [:div
-     [:h4.text-sm.font-medium.ty-text.mb-2 "Form Validation Pattern"]
-     (common/code-block "[:div.space-y-2
-  [:input.ty-input.border.ty-border-danger]
-  [:div.ty-text-danger.text-sm \"Error message\"]
-  [:div.ty-text-danger-.text-xs \"Validation hint\"]]"
-                        "clojure")]]])
-
-(defn usage-guidelines []
-  "Shows best practices for using ty classes"
-  [:div.ty-elevated.p-6.rounded-lg
-   [:h3.text-lg.font-semibold.ty-text.mb-4 "Usage Guidelines"]
-   [:p.ty-text-.mb-6 "Best practices for effective use of the ty design system."]
-
-   [:div.grid.gap-6.md:grid-cols-2
-    [:div
-     [:h4.text-sm.font-medium.ty-text-success.mb-3.flex.items-center.gap-2
-      [:ty-icon {:name "check"
-                 :size "sm"
-                 :class "ty-text-success"}]
-      "Do"]
-     [:div.space-y-2.text-sm
-      [:div.ty-text- "• Match semantic color to meaning (success for confirmations, danger for errors)"]
-      [:div.ty-text- "• Pair strong text on soft backgrounds for good contrast"]
-      [:div.ty-text- "• Test in both light and dark themes"]
-      [:div.ty-text- "• Use ty-elevated for cards and panels"]
-      [:div.ty-text- "• Follow the emphasis ladder: ++ strong > + bold > base > - soft > -- faint"]]]
-
-    [:div
-     [:h4.text-sm.font-medium.ty-text-danger.mb-3.flex.items-center.gap-2
-      [:ty-icon {:name "x"
-                 :size "sm"
-                 :class "ty-text-danger"}]
-      "Don't"]
-     [:div.space-y-2.text-sm
-      [:div.ty-text- "• Mix competing semantic colors"]
-      [:div.ty-text- "• Use faint text on saturated backgrounds"]
-      [:div.ty-text- "• Rely on color alone for meaning"]
-      [:div.ty-text- "• Ignore accessibility contrast requirements"]
-      [:div.ty-text- "• Use too many emphasis levels in one component"]]]]])
-
-(defn css-architecture-explanation []
-  "Critical section explaining why tyrell.css is required"
-  [:div.space-y-6
-   ;; Critical Warning Box
-   [:div.ty-bg-primary-.border.ty-border-primary.p-6.rounded-xl.mb-8
-    [:div.flex.items-start.gap-4
-     [:ty-icon.ty-text-primary++.flex-shrink-0.mt-1 {:name "alert-triangle"
-                                                     :size "lg"}]
-     [:div
-      [:h3.text-xl.font-bold.ty-text-primary++.mb-3 "tyrell.css is REQUIRED"]
-      [:p.ty-text-primary.mb-3
-       "Every setup below requires " [:code.ty-bg-primary.px-2.py-1.rounded.font-mono "tyrell.css"]
-       ". Components depend on CSS variables defined in this stylesheet. Without it, components "
-       [:strong "render but have no styling"] "."]
-      [:div.p-4.rounded-lg
-       [:p.text-sm.ty-text-primary++.font-medium.mb-2 "What breaks without tyrell.css:"]
-       [:ul.space-y-1.text-sm.ty-text-primary
-        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No colors (CSS variables undefined)"]
-        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No layout (surface hierarchy missing)"]
-        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No theme switching"]
-        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] [:span "Utility classes (" [:code.font-mono "ty-bg-primary"] ") don't work"]]]]]]]
-
-   ;; Architecture Explanation
-   [:div.ty-elevated.p-6.rounded-xl
-    [:h3.text-xl.font-semibold.ty-text.mb-4 "CSS Variable Architecture"]
-    [:p.ty-text-.mb-4
-     "ty uses CSS variables as design tokens. Components reference these variables for all styling."]
-    [:div.grid.gap-4.md:grid-cols-2
-     [:div.ty-content.p-4.rounded-lg
-      [:h4.font-semibold.ty-text.mb-2.flex.items-center.gap-2
-       [:span.ty-bg-primary.ty-text-primary++.w-8.h-8.rounded-full.flex.items-center.justify-center.text-sm "1"]
-       "CSS Variables"]
-      [:p.text-sm.ty-text-.mb-2 "Defined in tyrell.css:"]
-      [:ul.space-y-1.text-xs.ty-text-
-       [:li "• 180+ variables"]
-       [:li "• 6 flavors × 5 emphasis levels (strong / bold / base / soft / faint)"]
-       [:li "• Surface hierarchy (canvas / content / elevated / floating)"]
-       [:li "• Light/dark mode (single seed drives both via tyrell-brand.css)"]]]
-     [:div.ty-content.p-4.rounded-lg
-      [:h4.font-semibold.ty-text.mb-2.flex.items-center.gap-2
-       [:span.ty-bg-success.ty-text-success++.w-8.h-8.rounded-full.flex.items-center.justify-center.text-sm "2"]
-       "Components Use Them"]
-      [:p.text-sm.ty-text-.mb-2 "Reference variables:"]
-      [:ul.space-y-1.text-xs.ty-text-
-       [:li "• Web components"]
-       [:li "• Utility classes"]
-       [:li "• Your custom styles"]]]]
-    [:div.mt-4
-     (common/code-block
-       "/* Components reference CSS variables from tyrell.css */
-button {
-  background: var(--ty-color-primary);          /* undefined without tyrell.css! */
-  color: var(--ty-color-neutral-strong);        /* undefined without tyrell.css! */
-}"
-       "css")]]
-
-   ;; Installation Reminder
-   [:div.ty-bg-primary-.border.ty-border-primary.p-4.rounded-xl
-    [:h4.font-semibold.ty-text-primary.mb-3 "Always Include tyrell.css First"]
-    (common/code-block
-      "<!-- CSS first (required) -->
-<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css\">
-
-<!-- Then JavaScript -->
-<script src=\"https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js\"></script>"
-      "html")]])
+     [:h3.text-xl.font-bold.ty-text-primary++.mb-3 "tyrell.css is REQUIRED"]
+     [:p.ty-text-primary.mb-3
+      "Every setup below requires " [:code.ty-bg-primary.px-2.py-1.rounded.font-mono "tyrell.css"]
+      ". Components depend on CSS variables defined in this stylesheet. Without it, components "
+      [:strong "render but have no styling"] "."]
+     [:div.p-4.rounded-lg
+      [:p.text-sm.ty-text-primary++.font-medium.mb-2 "What breaks without tyrell.css:"]
+      [:ul.space-y-1.text-sm.ty-text-primary
+       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No colors (CSS variables undefined)"]
+       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No layout (surface hierarchy missing)"]
+       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No theme switching"]
+       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] [:span "Utility classes (" [:code.font-mono "ty-bg-primary"] ") don't work"]]]]]]])
 
 (defn view []
   (docs-page
@@ -493,12 +412,9 @@ button {
    ;; Main content sections — single-column flow
    (text-variants-demo)
    (background-variants-demo)
-   (custom-flavors-demo)
    (surface-classes-demo)
-   (practical-examples)
-   (code-examples)
+   (brand-flavor-demo)
    (css-architecture-explanation)
-   (usage-guidelines)
 
    ;; Footer summary
    [:div.ty-elevated.p-6.rounded-lg.text-center

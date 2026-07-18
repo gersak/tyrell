@@ -6,6 +6,31 @@
  * dash at mid-opacity when indeterminate, grayscale when disabled.
  */
 
+import { FLAVORS } from "../types/common.js";
+
+/* Flavor rules only set --checkbox-color (checked) / --checkbox-color-off
+   (unchecked) / --checkbox-ring (focus ring); the base rules below consume
+   them. Doubles as the per-instance override API: `ty-checkbox {
+   --checkbox-color: … }`. --checkbox-ring pre-resolves the color-mix() here
+   (rather than inlining a nested var(...,fallback) as a color-mix argument
+   directly in the box-shadow rule) — that nested form fails at
+   computed-value time in some engines. Fallback flavor `fb` is used for
+   custom flavors so missing tokens degrade to neutral. */
+const checkboxFlavor = (f: string, fb?: string) => {
+  const tok = (s: string) =>
+    fb
+      ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
+      : `var(--ty-color-${f}${s})`;
+  return `
+:host([flavor="${f}"])  { --checkbox-color: ${tok("")}; --checkbox-color-off: ${tok("-soft")}; --checkbox-ring: color-mix(in oklab, ${tok("")} 25%, transparent); }
+:host([flavor="${f}+"]) { --checkbox-color: ${tok("-strong")}; --checkbox-color-off: ${tok("-soft")}; --checkbox-ring: color-mix(in oklab, ${tok("-strong")} 25%, transparent); }
+:host([flavor="${f}-"]) { --checkbox-color: ${tok("-soft")}; --checkbox-color-off: ${tok("-faint")}; --checkbox-ring: color-mix(in oklab, ${tok("-soft")} 25%, transparent); }
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const checkboxCustomFlavorCss = (base: string) => checkboxFlavor(base, "neutral");
+
 export const checkboxStyles = `
 :host {
   display: inline-flex;
@@ -22,17 +47,21 @@ export const checkboxStyles = `
   cursor: pointer;
   border-radius: 6px;
   gap: var(--ty-spacing-1);
-  color: var(--ty-text-faint);
+  /* Default (no flavor attribute) is neutral — defaults don't reflect to the
+     host attribute, so the fallbacks here carry the default look. */
+  color: var(--checkbox-color-off, var(--ty-color-neutral-soft));
 }
 
 .checkbox-container[aria-checked="true"] {
-  color: var(--ty-text);
+  color: var(--checkbox-color, var(--ty-color-neutral));
 }
 
-/* Visible focus ring (keyboard) — .focused is toggled by the component */
+/* Visible focus ring (keyboard) — .focused is toggled by the component.
+   Matches the checked-state color so a danger checkbox gets a red ring,
+   not a fixed primary one. */
 .checkbox-container.focused,
 .checkbox-container:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-primary) 25%, transparent);
+  box-shadow: 0 0 0 3px var(--checkbox-ring, color-mix(in oklab, var(--ty-color-primary) 25%, transparent));
 }
 
 .checkbox-icon {
@@ -72,55 +101,8 @@ export const checkboxStyles = `
   height: 24px;
 }
 
-/* ===== SEMANTIC FLAVORS ===== */
-
-.checkbox-container.primary {
-  color: var(--ty-color-primary-soft);
-}
-
-.checkbox-container.primary[aria-checked="true"] {
-  color: var(--ty-color-primary);
-}
-
-.checkbox-container.secondary {
-  color: var(--ty-color-secondary-soft);
-}
-
-.checkbox-container.secondary[aria-checked="true"] {
-  color: var(--ty-color-secondary);
-}
-
-.checkbox-container.success {
-  color: var(--ty-color-success-soft);
-}
-
-.checkbox-container.success[aria-checked="true"] {
-  color: var(--ty-color-success);
-}
-
-.checkbox-container.danger {
-  color: var(--ty-color-danger-soft);
-}
-
-.checkbox-container.danger[aria-checked="true"] {
-  color: var(--ty-color-danger);
-}
-
-.checkbox-container.warning {
-  color: var(--ty-color-warning-soft);
-}
-
-.checkbox-container.warning[aria-checked="true"] {
-  color: var(--ty-color-warning);
-}
-
-.checkbox-container.neutral {
-  color: var(--ty-color-neutral-soft);
-}
-
-.checkbox-container.neutral[aria-checked="true"] {
-  color: var(--ty-color-neutral);
-}
+/* ===== SEMANTIC FLAVORS (set --checkbox-color[-off], consumed above) ===== */
+${FLAVORS.map((f) => checkboxFlavor(f)).join("")}
 
 /* ===== STATES ===== */
 

@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Tooltip component
 export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
   /** Tooltip positioning relative to the parent element */
@@ -17,7 +20,7 @@ export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
   disabled?: boolean;
   
   /** Semantic styling variant */
-  flavor?: 'dark' | 'light' | 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'neutral';
+  flavor?: 'dark' | 'light' | 'info' | ShadedFlavor | (string & {});
   
   /** Tooltip content */
   children?: React.ReactNode;

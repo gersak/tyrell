@@ -37,7 +37,8 @@
  */
 
 import { ensureStyles } from '../utils/styles.js';
-import { calendarMonthStyles } from '../styles/calendar-month.js';
+import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js';
+import { calendarMonthStyles, calendarMonthCustomFlavorCss } from '../styles/calendar-month.js';
 import {
   getCalendarMonthDays,
   getLocalizedWeekdays,
@@ -162,13 +163,14 @@ export class TyCalendarMonth extends HTMLElement {
   private _min?: string; // ISO date - days before this are disabled
   private _max?: string; // ISO date - days after this are disabled
   private _localeObserver?: () => void; // Cleanup function for locale observer
+  private _customFlavorSheet: CSSStyleSheet | null = null;
 
   /**
    * Observed attributes (minimal - mainly for debugging)
    * Properties are the primary API
    */
   static get observedAttributes(): string[] {
-    return ['locale', 'size', 'min', 'max'];
+    return ['locale', 'size', 'min', 'max', 'flavor'];
   }
 
   constructor() {
@@ -222,6 +224,7 @@ export class TyCalendarMonth extends HTMLElement {
       this.render();
     });
 
+    this._syncCustomFlavor();
     this.render();
   }
 
@@ -245,7 +248,23 @@ export class TyCalendarMonth extends HTMLElement {
     } else if (name === 'min' || name === 'max') {
       this[name === 'min' ? '_min' : '_max'] = newValue ?? undefined;
       this.render();
+    } else if (name === 'flavor') {
+      this._syncCustomFlavor();
     }
+  }
+
+  /**
+   * Custom (non-built-in) flavors — the `flavor` attribute itself drives
+   * built-in flavors directly via `:host([flavor="X"])` CSS, no JS needed.
+   * See utils/flavor-sheet.ts.
+   */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.getAttribute('flavor'),
+      ({ base }) => calendarMonthCustomFlavorCss(base),
+    );
   }
 
   // ==========================================================================
@@ -294,6 +313,15 @@ export class TyCalendarMonth extends HTMLElement {
       this._size = value;
       this.render();
     }
+  }
+
+  get flavor(): string {
+    return this.getAttribute('flavor') || 'primary';
+  }
+
+  set flavor(value: string) {
+    if (value) this.setAttribute('flavor', value);
+    else this.removeAttribute('flavor');
   }
 
   get width(): string | undefined {

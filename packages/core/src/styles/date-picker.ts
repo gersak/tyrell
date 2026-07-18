@@ -3,6 +3,45 @@
  * PORTED FROM: cljs/ty/components/date_picker.css
  */
 
+import { FLAVORS } from "../types/common.js";
+
+/* Flavor rules only set --date-picker-accent (border), -accent-bold
+   (hover/focus border), and -ring (focus shadow); the stub base rules
+   consume them. Doubles as the per-instance override API. Neutral is
+   skipped — the 'default' flavor is the unstyled --ty-date-picker-* chrome.
+   Fallback flavor `fb` is used for custom flavors (suffixed tokens fall
+   back to the custom base color, then neutral). */
+const datePickerFlavor = (f: string, fb?: string) => {
+  const c = (s: string) =>
+    fb
+      ? s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}, var(--ty-color-${fb}${s})))`
+        : `var(--ty-color-${f}, var(--ty-color-${fb}))`
+      : s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
+        : `var(--ty-color-${f})`;
+  return `
+:host([flavor="${f}"]) {
+  --date-picker-accent: var(--ty-input-${f}-border, ${c("-soft")});
+  --date-picker-accent-bold: ${c("")};
+  --date-picker-ring: color-mix(in oklab, ${c("")} 15%, transparent);
+}
+:host([flavor="${f}+"]) {
+  --date-picker-accent: ${c("")};
+  --date-picker-accent-bold: ${c("-strong")};
+  --date-picker-ring: color-mix(in oklab, ${c("-strong")} 15%, transparent);
+}
+:host([flavor="${f}-"]) {
+  --date-picker-accent: ${c("-faint")};
+  --date-picker-accent-bold: ${c("-soft")};
+  --date-picker-ring: color-mix(in oklab, ${c("-soft")} 15%, transparent);
+}
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const datePickerCustomFlavorCss = (base: string) => datePickerFlavor(base, "neutral");
+
 export const datePickerStyles = `
 /* Date Picker Component Styles */
 :host {
@@ -107,7 +146,7 @@ export const datePickerStyles = `
   align-items: center;
   background: var(--ty-date-picker-bg);
   color: var(--ty-date-picker-color);
-  border: 1px solid var(--ty-date-picker-border);
+  border: 1px solid var(--date-picker-accent, var(--ty-date-picker-border));
   border-radius: var(--ty-date-picker-radius);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
@@ -121,7 +160,7 @@ export const datePickerStyles = `
 }
 
 .date-picker-stub:hover:not([disabled]):not(.open) {
-  border-color: var(--ty-date-picker-border-hover);
+  border-color: var(--date-picker-accent-bold, var(--ty-date-picker-border-hover));
 }
 
 .date-picker-stub[disabled] {
@@ -133,8 +172,8 @@ export const datePickerStyles = `
 
 .date-picker-stub:focus,
 .date-picker-stub.open {
-  border-color: var(--ty-date-picker-border-focus);
-  box-shadow: 0 0 0 3px var(--ty-date-picker-shadow-focus);
+  border-color: var(--date-picker-accent-bold, var(--ty-date-picker-border-focus));
+  box-shadow: 0 0 0 3px var(--date-picker-ring, var(--ty-date-picker-shadow-focus));
 }
 
 /* Size variants */
@@ -166,81 +205,8 @@ export const datePickerStyles = `
   padding-right: calc(var(--ty-spacing-4) + 1.25rem + var(--ty-spacing-3));
 }
 
-/* Flavor variants */
-/* Primary - Main brand focus state */
-.date-picker-stub.primary {
-  border-color: var(--ty-input-primary-border, var(--ty-color-primary));
-}
-
-.date-picker-stub.primary:hover:not([disabled]) {
-  border-color: var(--ty-color-primary-bold);
-}
-
-.date-picker-stub.primary:focus,
-.date-picker-stub.primary.open {
-  border-color: var(--ty-color-primary-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-primary) 15%, transparent);
-}
-
-/* Secondary - Supporting action focus state */
-.date-picker-stub.secondary {
-  border-color: var(--ty-input-secondary-border, var(--ty-color-secondary));
-}
-
-.date-picker-stub.secondary:hover:not([disabled]) {
-  border-color: var(--ty-color-secondary-bold);
-}
-
-.date-picker-stub.secondary:focus,
-.date-picker-stub.secondary.open {
-  border-color: var(--ty-color-secondary-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-secondary) 15%, transparent);
-}
-
-/* Success - Valid/confirmed input state */
-.date-picker-stub.success {
-  border-color: var(--ty-input-success-border, var(--ty-color-success));
-}
-
-.date-picker-stub.success:hover:not([disabled]) {
-  border-color: var(--ty-color-success-bold);
-}
-
-.date-picker-stub.success:focus,
-.date-picker-stub.success.open {
-  border-color: var(--ty-color-success-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-success) 15%, transparent);
-}
-
-/* Danger - Error/invalid input state */
-.date-picker-stub.danger {
-  border-color: var(--ty-input-danger-border, var(--ty-color-danger));
-}
-
-.date-picker-stub.danger:hover:not([disabled]) {
-  border-color: var(--ty-color-danger-bold);
-}
-
-.date-picker-stub.danger:focus,
-.date-picker-stub.danger.open {
-  border-color: var(--ty-color-danger-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-danger) 15%, transparent);
-}
-
-/* Warning - Caution/attention needed input state */
-.date-picker-stub.warning {
-  border-color: var(--ty-input-warning-border, var(--ty-color-warning));
-}
-
-.date-picker-stub.warning:hover:not([disabled]) {
-  border-color: var(--ty-color-warning-bold);
-}
-
-.date-picker-stub.warning:focus,
-.date-picker-stub.warning.open {
-  border-color: var(--ty-color-warning-bold);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ty-color-warning) 15%, transparent);
-}
+/* Flavor variants — set --date-picker-accent*, consumed by the stub rules above */
+${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join("")}
 
 /* Text content */
 .stub-text {
@@ -288,8 +254,13 @@ export const datePickerStyles = `
 }
 
 .stub-clear:hover {
-  color: var(--ty-color-negative);
-  background-color: var(--ty-bg-negative-faint);
+  /* Clear is a destructive utility action, not the field's semantic flavor
+     — it stays neutral at rest and always warns danger-red on hover,
+     regardless of the field's own flavor. (--ty-color-negative/
+     --ty-bg-negative-faint used here previously don't exist as tokens —
+     this silently fell back to unstyled inherited color.) */
+  color: var(--ty-color-danger);
+  background-color: var(--ty-bg-danger-soft);
 }
 
 .stub-arrow {
@@ -298,16 +269,16 @@ export const datePickerStyles = `
   justify-content: center;
   width: 1rem;
   height: 1rem;
-  color: var(--ty-color-neutral-soft);
+  color: var(--date-picker-accent, var(--ty-color-neutral-soft));
 }
 
 .date-picker-stub:hover .stub-arrow {
-  color: var(--ty-color-neutral);
+  color: var(--date-picker-accent-bold, var(--ty-color-neutral));
 }
 
 .date-picker-stub:focus .stub-arrow,
 .date-picker-stub.open .stub-arrow {
-  color: var(--ty-date-picker-border-focus);
+  color: var(--date-picker-accent-bold, var(--ty-date-picker-border-focus));
 }
 
 /* Calendar dialog (showModal positioning system) */

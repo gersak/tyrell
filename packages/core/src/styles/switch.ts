@@ -6,7 +6,28 @@
  * and error layout consistency.
  */
 
+import { FLAVORS } from "../types/common.js";
 import { inputStyles } from "./input.js";
+
+/* Flavor rules only set --switch-track; the single checked-state rule below
+   consumes it. The var doubles as the per-instance override API:
+   `ty-switch { --switch-track: … }` (outer-document host rules beat :host).
+   Optional fallback flavor `fb` is used for custom flavors so missing
+   tokens degrade to neutral instead of an unstyled track. */
+const switchFlavor = (f: string, fb?: string) => {
+  const tok = (s: string) =>
+    fb
+      ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
+      : `var(--ty-color-${f}${s})`;
+  return `
+:host([flavor="${f}"])  { --switch-track: ${tok("")}; }
+:host([flavor="${f}+"]) { --switch-track: ${tok("-strong")}; }
+:host([flavor="${f}-"]) { --switch-track: ${tok("-soft")}; }
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const switchCustomFlavorCss = (base: string) => switchFlavor(base, "neutral");
 
 export const switchStyles = `
 ${inputStyles}
@@ -63,8 +84,10 @@ ${inputStyles}
 }
 
 /* ===== CHECKED STATE ===== */
+/* Default (no flavor attribute) is primary — defaults don't reflect to the
+   host attribute, so the base rule's fallback carries the default look. */
 .switch-container[aria-checked="true"] .switch-track {
-  background: var(--ty-color-primary);
+  background: var(--switch-track, var(--ty-color-primary));
 }
 
 .switch-container[aria-checked="true"] .switch-thumb {
@@ -90,12 +113,7 @@ ${inputStyles}
 .switch-container.xl .switch-thumb { width: 24px; height: 24px; }
 .switch-container.xl[aria-checked="true"] .switch-thumb { transform: translateX(24px); }
 
-/* ===== FLAVOR VARIANTS (checked-state colors) ===== */
-.switch-container.primary[aria-checked="true"] .switch-track { background: var(--ty-color-primary); }
-.switch-container.secondary[aria-checked="true"] .switch-track { background: var(--ty-color-secondary); }
-.switch-container.success[aria-checked="true"] .switch-track { background: var(--ty-color-success); }
-.switch-container.danger[aria-checked="true"] .switch-track { background: var(--ty-color-danger); }
-.switch-container.warning[aria-checked="true"] .switch-track { background: var(--ty-color-warning); }
-.switch-container.neutral[aria-checked="true"] .switch-track { background: var(--ty-color-neutral); }
+/* ===== FLAVOR VARIANTS (set --switch-track, consumed above) ===== */
+${FLAVORS.map((f) => switchFlavor(f)).join("")}
 
 `;

@@ -489,7 +489,7 @@ function render(el: TyModal): void {
   
   // Handle dialog's native close event.
   //
-  // Child components (ty-dropdown, ty-multiselect, ty-date-picker) dispatch a
+  // Child components (ty-select, ty-date-picker) dispatch a
   // bubbling+composed `close` custom event when their popups close. Those
   // events bubble up to *this* dialog and trigger `onclose` too — without this
   // guard, opening a dropdown inside a modal and closing the dropdown would

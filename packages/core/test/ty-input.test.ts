@@ -104,3 +104,97 @@ describe('ty-input — password reveal toggle', () => {
     expect(el.shadowRoot.querySelector('.password-toggle')).to.be.null;
   });
 });
+
+describe('ty-input custom flavors', () => {
+  const BRAND = 'rgb(1, 2, 3)';
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-brand');
+  });
+
+  const borderColor = (el: any) =>
+    getComputedStyle(el.shadowRoot.querySelector('.input-wrapper')).borderTopColor;
+
+  it('derives the wrapper border from a custom flavor token', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const el = (await fixture(html`<ty-input flavor="brand"></ty-input>`)) as any;
+    await nextFrame();
+    expect(borderColor(el)).to.equal(BRAND);
+  });
+
+  it('page-level --input-accent rules override a custom flavor (escape hatch)', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const wrap = await fixture(html`
+      <div>
+        <style>ty-input[flavor="brand"] { --input-accent: rgb(9, 9, 9); }</style>
+        <ty-input flavor="brand"></ty-input>
+      </div>
+    `);
+    await nextFrame();
+    const el = wrap.querySelector('ty-input') as any;
+    expect(borderColor(el)).to.equal('rgb(9, 9, 9)');
+  });
+});
+
+describe('ty-input password toggle focus outline follows flavor', () => {
+  it('outlines in the flavor color, not a fixed primary', async () => {
+    document.documentElement.style.setProperty('--ty-color-danger', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-primary', 'rgb(1, 2, 3)');
+    const el = (await fixture(html`<ty-input type="password" flavor="danger"></ty-input>`)) as any;
+    await nextFrame();
+    const toggle = el.shadowRoot.querySelector('.password-toggle') as HTMLButtonElement;
+    toggle.focus();
+    const outline = getComputedStyle(toggle).outlineColor;
+    expect(outline, 'outline uses the danger flavor, not primary').to.equal('rgb(7, 8, 9)');
+    document.documentElement.style.removeProperty('--ty-color-danger');
+    document.documentElement.style.removeProperty('--ty-color-primary');
+  });
+});
+
+describe('ty-input flavored emphasis ladder', () => {
+  it('rests on the -soft shade and escalates to the base color on focus', async () => {
+    document.documentElement.style.setProperty('--ty-color-success', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-success-soft', 'rgb(4, 5, 6)');
+    const el = (await fixture(html`<ty-input flavor="success"></ty-input>`)) as any;
+    await nextFrame();
+    const wrap = el.shadowRoot.querySelector('.input-wrapper') as HTMLElement;
+    wrap.style.setProperty('transition', 'none', 'important');
+
+    expect(getComputedStyle(wrap).borderTopColor, 'resting border is soft').to.equal('rgb(4, 5, 6)');
+
+    el.shadowRoot.querySelector('input').focus();
+    await nextFrame();
+    expect(getComputedStyle(wrap).borderTopColor, 'focused border is the full color').to.equal('rgb(7, 8, 9)');
+
+    document.documentElement.style.removeProperty('--ty-color-success');
+    document.documentElement.style.removeProperty('--ty-color-success-soft');
+  });
+});
+
+describe('ty-input custom flavor emphasis ladder', () => {
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-brand');
+    document.documentElement.style.removeProperty('--ty-color-brand-soft');
+  });
+
+  it('with a -soft token defined, custom flavors get the same rest→focus ladder', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-brand-soft', 'rgb(4, 5, 6)');
+    const el = (await fixture(html`<ty-input flavor="brand"></ty-input>`)) as any;
+    await nextFrame();
+    const wrap = el.shadowRoot.querySelector('.input-wrapper') as HTMLElement;
+    wrap.style.setProperty('transition', 'none', 'important');
+    expect(getComputedStyle(wrap).borderTopColor, 'rest is soft').to.equal('rgb(4, 5, 6)');
+    el.shadowRoot.querySelector('input').focus();
+    await nextFrame();
+    expect(getComputedStyle(wrap).borderTopColor, 'focus is full color').to.equal('rgb(7, 8, 9)');
+  });
+
+  it('with only the base token, rest degrades to the full color (flat, but visible)', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', 'rgb(7, 8, 9)');
+    const el = (await fixture(html`<ty-input flavor="brand"></ty-input>`)) as any;
+    await nextFrame();
+    const wrap = el.shadowRoot.querySelector('.input-wrapper') as HTMLElement;
+    expect(getComputedStyle(wrap).borderTopColor).to.equal('rgb(7, 8, 9)');
+  });
+});

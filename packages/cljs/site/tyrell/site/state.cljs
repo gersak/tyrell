@@ -11,6 +11,9 @@
          ;; Resize observer - element sizes by ID
          :element-sizes {}
 
+         ;; CSS System page — interactive flavor axis picker
+         :flavor-picker {:flavor "brand" :tone "" :hex "#7c3aed"}
+
          ;; Command palette search state
          :search {:open false
                   :query ""

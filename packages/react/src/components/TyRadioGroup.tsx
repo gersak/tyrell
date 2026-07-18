@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 export interface TyRadioGroupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Currently selected value (matches one child `<TyRadio value="...">`) */
   value?: string;
@@ -28,7 +31,7 @@ export interface TyRadioGroupProps extends Omit<React.HTMLAttributes<HTMLElement
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   /** Group flavor — propagates to all `<TyRadio>` children */
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+  flavor?: ShadedFlavor | (string & {});
 
   /**
    * Fires when selection changes (React convention)

@@ -19,7 +19,8 @@ import type { Flavor, Size, InputType, TyInputElement } from '../types/common.js
 import { TyComponent } from '../base/ty-component.js'
 import type { PropertyChange } from '../utils/property-manager.js'
 import { ensureStyles } from '../utils/styles.js'
-import { inputStyles } from '../styles/input.js'
+import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js'
+import { inputStyles, inputCustomFlavorCss } from '../styles/input.js'
 import {
   formatNumber,
   parseNumericValue,
@@ -183,22 +184,13 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         return v
       }
     },
+    // Any string is accepted: built-ins get static CSS, other identifiers
+    // become custom flavors (see _syncCustomFlavor), garbage degrades to
+    // the default look.
     flavor: {
       type: 'string' as const,
       visual: true,
-      default: 'neutral',
-      validate: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        return valid.includes(v)
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = ['primary', 'secondary', 'success', 'danger', 'warning', 'neutral']
-        if (!valid.includes(v)) {
-          console.warn(`[ty-input] Invalid flavor '${v}'. Using 'neutral'.`)
-          return 'neutral'
-        }
-        return v
-      }
+      default: 'neutral'
     },
     // Numeric formatting properties
     currency: {
@@ -260,6 +252,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   // know to restore 'neutral' when the error clears (and not clobber a flavor
   // the consumer set themselves).
   private _errorAutoDanger = false
+  private _customFlavorSheet: CSSStyleSheet | null = null
 
   // Store references to handlers for cleanup
   private _inputHandler: ((e: Event) => void) | null = null
@@ -297,6 +290,18 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     this._localeObserver = observeLocaleChanges(this, () => {
       this.render()
     })
+
+    this._syncCustomFlavor()
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ base }) => inputCustomFlavorCss(base)
+    )
   }
 
   /**
@@ -334,6 +339,10 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   protected onPropertiesChanged(changes: PropertyChange[]): void {
     for (const { name, newValue } of changes) {
       switch (name) {
+        case 'flavor':
+          this._syncCustomFlavor()
+          break
+
         case 'value':
           // Parse to shadow value for numeric types
           this._shadowValue = this.parseShadowValue(newValue || '')
@@ -537,7 +546,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
    * Build CSS class list for input wrapper
    */
   private buildClassList(): string {
-    const classes: string[] = [this.size, this.flavor]
+    const classes: string[] = [this.size]
 
     if (this.disabled) classes.push('disabled')
     if (this.required) classes.push('required')

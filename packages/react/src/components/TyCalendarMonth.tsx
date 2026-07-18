@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Calendar Month component
 export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> {
   /** Display year */
@@ -14,7 +17,10 @@ export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> 
   
   /** Calendar size */
   size?: 'sm' | 'md' | 'lg';
-  
+
+  /** Visual flavor for the selected/today day cells */
+  flavor?: ShadedFlavor | (string & {});
+
   /** Width of calendar */
   width?: string;
   
@@ -53,6 +59,7 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
     displayMonth,
     locale,
     size,
+    flavor,
     width,
     minWidth,
     maxWidth,
@@ -103,6 +110,7 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
     if (displayMonth !== undefined) webComponentProps['display-month'] = displayMonth;
     if (locale) webComponentProps.locale = locale;
     if (size) webComponentProps.size = size;
+    if (flavor) webComponentProps.flavor = flavor;
     if (width) webComponentProps.width = width;
     if (min) webComponentProps.min = min;
     if (max) webComponentProps.max = max;

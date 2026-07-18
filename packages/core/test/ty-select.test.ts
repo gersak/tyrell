@@ -16,7 +16,7 @@ describe('ty-select', () => {
       await tick();
 
       // Open, then pick
-      (el.shadowRoot.querySelector('.multiselect-stub') as HTMLElement).click();
+      (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
       await tick();
 
       setTimeout(() => (el.querySelector('ty-option[value="eywa"]') as HTMLElement).click());
@@ -158,7 +158,7 @@ describe('ty-select', () => {
       expect(clone.getAttribute('value')).to.equal('bobo');
       expect(clone.textContent).to.equal('Bobo Robot');
 
-      const stub = el.shadowRoot.querySelector('.multiselect-stub') as HTMLElement;
+      const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
       expect(stub.classList.contains('has-selection'), 'still shows as selected').to.be.true;
     });
 
@@ -190,7 +190,7 @@ describe('ty-select', () => {
         </ty-select>
       `)) as any;
       await tick();
-      const stub = el.shadowRoot.querySelector('.multiselect-stub') as HTMLElement;
+      const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
       expect(stub.classList.contains('compact')).to.be.true;
 
       const badge = stub.querySelector('.select-count') as HTMLElement;
@@ -209,11 +209,120 @@ describe('ty-select', () => {
         </ty-select>
       `)) as any;
       await tick();
-      const stub = el.shadowRoot.querySelector('.multiselect-stub') as HTMLElement;
+      const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
       expect(stub.classList.contains('compact')).to.be.false;
       expect((stub.querySelector('.select-count') as HTMLElement).hidden).to.be.true;
       expect((stub.querySelector('.dropdown-placeholder') as HTMLElement).textContent)
         .to.equal('Bobo, EYWA');
     });
+  });
+});
+
+describe('ty-select flavor', () => {
+  const BRAND = 'rgb(1, 2, 3)';
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-success');
+    document.documentElement.style.removeProperty('--ty-color-brand');
+  });
+
+  const borderColor = (el: any) =>
+    getComputedStyle(el.shadowRoot.querySelector('.select-stub')).borderTopColor;
+
+  it('colors the stub border from a built-in flavor', async () => {
+    document.documentElement.style.setProperty('--ty-color-success', 'rgb(4, 5, 6)');
+    const el = (await fixture(html`<ty-select flavor="success"></ty-select>`)) as any;
+    await tick();
+    expect(borderColor(el)).to.equal('rgb(4, 5, 6)');
+  });
+
+  it('derives the stub border from a custom flavor token', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const el = (await fixture(html`<ty-select flavor="brand"></ty-select>`)) as any;
+    await tick();
+    expect(borderColor(el)).to.equal(BRAND);
+  });
+
+  it('page-level --select-accent overrides a flavor (escape hatch)', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const wrap = await fixture(html`
+      <div>
+        <style>ty-select[flavor="brand"] { --select-accent: rgb(9, 9, 9); }</style>
+        <ty-select flavor="brand"></ty-select>
+      </div>
+    `);
+    await tick();
+    const el = wrap.querySelector('ty-select') as any;
+    expect(borderColor(el)).to.equal('rgb(9, 9, 9)');
+  });
+});
+
+describe('ty-select open-state ring', () => {
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-success');
+  });
+
+  it('escalates border + adds a ring while the dropdown is open, matching the flavor', async () => {
+    document.documentElement.style.setProperty('--ty-color-success', 'rgb(4, 5, 6)');
+    const el = (await fixture(html`
+      <ty-select flavor="success">
+        <ty-option value="a">A</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const closedShadow = getComputedStyle(stub).boxShadow;
+    expect(closedShadow, 'no ring while closed').to.equal('none');
+
+    stub.click();
+    await tick();
+
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'dropdown opened').to.be.true;
+
+    const openShadow = getComputedStyle(stub).boxShadow;
+    // color-mix() results serialize in the mix's color space (oklab here),
+    // not the original rgb() string, so assert shape/alpha rather than an
+    // exact color match: a real 3px ring at 15% alpha, not the closed 'none'.
+    expect(openShadow, 'ring appears while open').to.not.equal('none');
+    expect(openShadow, 'ring is a 3px spread').to.match(/0px 0px 0px 3px/);
+    expect(openShadow, 'ring is at 15% alpha').to.match(/\/ 0\.15\)/);
+  });
+});
+
+describe('ty-select count badge follows flavor', () => {
+  it('colors the compact-mode count badge from the flavor, not a fixed primary', async () => {
+    document.documentElement.style.setProperty('--ty-color-danger', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-primary', 'rgb(1, 2, 3)');
+    const el = (await fixture(html`
+      <ty-select multiple compact flavor="danger" value="bobo,eywa">
+        <ty-option value="bobo">Bobo</ty-option>
+        <ty-option value="eywa">EYWA</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const badge = el.shadowRoot.querySelector('.select-count') as HTMLElement;
+    const cs = getComputedStyle(badge);
+    expect(cs.backgroundColor, 'badge bg does not use fixed primary').to.not.include('1, 2, 3');
+    // badge text = --select-accent-bold = the flavor's base color (the
+    // "active" step of the rest→hover/focus emphasis ladder)
+    expect(cs.color, 'badge text uses the danger flavor').to.equal('rgb(7, 8, 9)');
+    document.documentElement.style.removeProperty('--ty-color-danger');
+    document.documentElement.style.removeProperty('--ty-color-primary');
+  });
+});
+
+describe('ty-select loading spinner follows flavor', () => {
+  it('colors the loading spinner from the flavor, not a fixed primary', async () => {
+    document.documentElement.style.setProperty('--ty-color-danger', 'rgb(7, 8, 9)');
+    document.documentElement.style.setProperty('--ty-color-primary', 'rgb(1, 2, 3)');
+    const el = (await fixture(html`<ty-select flavor="danger" loading></ty-select>`)) as any;
+    await tick();
+    const spinner = el.shadowRoot.querySelector('.dropdown-loading-spinner') as HTMLElement;
+    expect(spinner, 'spinner rendered').to.exist;
+    expect(getComputedStyle(spinner).color).to.equal('rgb(7, 8, 9)');
+    document.documentElement.style.removeProperty('--ty-color-danger');
+    document.documentElement.style.removeProperty('--ty-color-primary');
   });
 });

@@ -3,6 +3,9 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty DatePicker component
 export interface TyDatePickerEventDetail {
   /** The selected date value (ISO string or formatted string based on format) */
@@ -22,8 +25,8 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
   /** Input size: "sm" | "md" | "lg" */
   size?: 'sm' | 'md' | 'lg';
   
-  /** Visual flavor: "default" | "success" | "danger" | "warning" */
-  flavor?: 'default' | 'success' | 'danger' | 'warning';
+  /** Visual flavor — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens. Also tints the popup calendar's selected/today day. */
+  flavor?: 'default' | ShadedFlavor | (string & {});
   
   /** Label text displayed above the input */
   label?: string;

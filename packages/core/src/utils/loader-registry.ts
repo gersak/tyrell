@@ -2,8 +2,8 @@
  * Global loader-icon registry.
  *
  * Set once at app bootstrap to override the default spinner SVG used by
- * every loading-aware component (`ty-button`, `ty-dropdown`, `ty-multiselect`,
- * etc.). Components call `getLoaderSvg()` on every render, so changing the
+ * every loading-aware component (`ty-button`, `ty-select`, etc.). Components
+ * call `getLoaderSvg()` on every render, so changing the
  * registered SVG affects future renders.
  *
  * The wrapper element rotates the SVG with `transform: rotate()`, so prefer

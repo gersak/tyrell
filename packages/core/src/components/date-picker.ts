@@ -48,11 +48,13 @@
  */
 
 import { ensureStyles } from '../utils/styles.js';
-import { datePickerStyles } from '../styles/date-picker.js';
+import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js';
+import { datePickerStyles, datePickerCustomFlavorCss } from '../styles/date-picker.js';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { isMobileTouch } from '../utils/mobile.js';
 import { TyComponent } from '../base/ty-component.js';
+import type { Flavor } from '../types/common.js';
 import type { PropertyChange } from '../utils/property-manager.js';
 
 // ============================================================================
@@ -97,7 +99,7 @@ type DatePickerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 /**
  * Date picker flavors (visual styles)
  */
-type DatePickerFlavor = 'default' | 'primary' | 'secondary' | 'success' | 'danger' | 'warning';
+type DatePickerFlavor = 'default' | Flavor;
 
 /**
  * Date format types
@@ -824,6 +826,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
   // Locale observer cleanup
   private _localeObserver?: () => void;
+  private _customFlavorSheet: CSSStyleSheet | null = null;
 
   /**
    * Form-associated custom element
@@ -859,6 +862,21 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     this._localeObserver = observeLocaleChanges(this, () => {
       this.render();
     });
+
+    this._syncCustomFlavor();
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    // 'default' is this component's neutral: map it to a built-in so no
+    // custom sheet is generated for it.
+    const flavor = this.flavor === 'default' ? 'neutral' : this.flavor;
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      flavor,
+      ({ base }) => datePickerCustomFlavorCss(base),
+    );
   }
 
   /**
@@ -882,9 +900,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   protected onPropertiesChanged(changes: PropertyChange[]): void {
     for (const { name, newValue } of changes) {
       switch (name) {
+        case 'flavor':
+          this._syncCustomFlavor();
+          break;
+
         // Simple visual properties - just trigger re-render (handled by TyComponent)
         case 'size':
-        case 'flavor':
         case 'label':
         case 'placeholder':
         case 'required':
@@ -1218,11 +1239,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const classes = ['date-picker-stub'];
 
     const size = this.getProperty('size') || 'md';
-    const flavor = this.getProperty('flavor');
 
     classes.push(size);
 
-    if (flavor && flavor !== 'default') classes.push(flavor);
     if (this.getProperty('disabled')) classes.push('disabled');
     if (this.getProperty('required')) classes.push('required');
     if (this._state.open) classes.push('open');
@@ -1368,6 +1387,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const max = this.getProperty('max');
     if (min) calendar.setAttribute('min', min);
     if (max) calendar.setAttribute('max', max);
+
+    // Match the popup calendar to the stub's flavor. 'default' is the
+    // stub's own unstyled state, not a real flavor — leave the calendar on
+    // its own default rather than forwarding the literal string.
+    const flavor = this.getProperty('flavor');
+    if (flavor && flavor !== 'default') calendar.setAttribute('flavor', flavor);
 
     // Add calendar change handler
     calendar.addEventListener('change', (e: Event) => this.handleCalendarChange(e));
@@ -1660,6 +1685,16 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       calendar.setAttribute('year', this._state.year!.toString());
       calendar.setAttribute('month', this._state.month!.toString());
       calendar.setAttribute('day', this._state.day!.toString());
+    }
+
+    // Keep an already-open popup's flavor in sync. render() only rebuilds
+    // (and re-forwards flavor) while the dialog is CLOSED — while open it
+    // takes this partial-update path instead, so without this the calendar
+    // would stay stuck on whatever flavor was active when it was opened.
+    if (calendar) {
+      const flavor = this.getProperty('flavor');
+      if (flavor && flavor !== 'default') calendar.setAttribute('flavor', flavor);
+      else calendar.removeAttribute('flavor');
     }
 
     if (this._timeInput && this._state.hour !== undefined && this._state.minute !== undefined) {

@@ -171,6 +171,7 @@ export class TyCalendar extends HTMLElement {
   private _customCSS?: CSSStyleSheet;
   private _min?: string; // ISO date bound - passed to navigation + month
   private _max?: string; // ISO date bound - passed to navigation + month
+  private _flavor: string = 'primary'; // passed to month display only (nav stays neutral chrome)
 
   // Child component references
   private _navigation?: HTMLElement;
@@ -191,7 +192,7 @@ export class TyCalendar extends HTMLElement {
    * Observed attributes
    */
   static get observedAttributes(): string[] {
-    return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max'];
+    return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
   }
 
   constructor() {
@@ -346,6 +347,11 @@ export class TyCalendar extends HTMLElement {
         this.syncChildComponents();
         this.updateValidity(); // bounds change can (in)validate current selection
         break;
+
+      case 'flavor':
+        this._flavor = newValue || 'primary';
+        this.syncChildComponents();
+        break;
     }
   }
 
@@ -370,6 +376,15 @@ export class TyCalendar extends HTMLElement {
   set max(value: string | undefined) {
     if (value) this.setAttribute('max', value);
     else this.removeAttribute('max');
+  }
+
+  get flavor(): string {
+    return this._flavor;
+  }
+
+  set flavor(value: string) {
+    if (value) this.setAttribute('flavor', value);
+    else this.removeAttribute('flavor');
   }
 
   get year(): number | undefined {
@@ -711,6 +726,7 @@ export class TyCalendar extends HTMLElement {
       (this._monthDisplay as any).size = this._size;
       (this._monthDisplay as any).min = this._min;
       (this._monthDisplay as any).max = this._max;
+      (this._monthDisplay as any).flavor = this._flavor;
       // Always sync width (set or clear)
       (this._monthDisplay as any).width = this._width;
 
@@ -944,6 +960,7 @@ export class TyCalendar extends HTMLElement {
     (month as any).size = this._size;
     (month as any).min = this._min;
     (month as any).max = this._max;
+    (month as any).flavor = this._flavor;
 
     // Only set width if explicitly provided
     if (this._width) {

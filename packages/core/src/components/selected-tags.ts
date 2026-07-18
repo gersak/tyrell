@@ -1,7 +1,7 @@
 /**
  * TySelectedTags Web Component
  *
- * Out-of-band chip display for a picker (ty-select / ty-multiselect / ty-dropdown).
+ * Out-of-band chip display for a picker (ty-select).
  * The picker owns the value + form submission; this element just renders the
  * selected values as dismissible <ty-tag> chips, anywhere in the layout.
  *

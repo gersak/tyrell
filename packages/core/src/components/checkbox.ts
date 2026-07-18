@@ -20,7 +20,8 @@ import type { Flavor, Size } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
-import { checkboxStyles } from "../styles/checkbox.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
+import { checkboxStyles, checkboxCustomFlavorCss } from "../styles/checkbox.js";
 
 /**
  * Component internal state (for typing TyComponent)
@@ -31,15 +32,17 @@ interface CheckboxState {
 }
 
 /**
- * Checkmark icon (Font Awesome). Same glyph for checked and unchecked —
- * checked shows it at full color, unchecked at faint color (see styles).
+ * Checkmark icon (Lucide `check`, same glyph as ty-option's selected check;
+ * stroke-width 3 for presence at 16px — it replaces a heavy fill glyph).
+ * Same glyph for checked and unchecked — checked shows it at full color,
+ * unchecked at faint color (see styles).
  */
-const CHECK_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M566.6 169.4C579.1 181.9 579.1 202.2 566.6 214.7L278.6 502.7C266.1 515.2 245.8 515.2 233.3 502.7L89.3 358.7C76.8 346.2 76.8 325.9 89.3 313.4C101.8 300.9 122.1 300.9 134.6 313.4L256 434.7L521.4 169.4C533.9 156.9 554.2 156.9 566.6 169.4z"/></svg>`;
+const CHECK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
 
 /**
- * Dash icon (Font Awesome minus) — shown while indeterminate.
+ * Dash icon (Lucide `minus`) — shown while indeterminate.
  */
-const DASH_ICON = `<svg fill='currentColor' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320z"/></svg>`;
+const DASH_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>`;
 
 /**
  * TyCheckbox Element Interface
@@ -152,36 +155,13 @@ export class TyCheckbox
         return v;
       },
     },
+    // Any string is accepted: built-ins get static CSS, other identifiers
+    // become custom flavors (see _syncCustomFlavor), garbage degrades to
+    // the default look.
     flavor: {
       type: "string" as const,
       visual: true,
       default: "neutral",
-      validate: (v: any) => {
-        const valid: Flavor[] = [
-          "primary",
-          "secondary",
-          "success",
-          "danger",
-          "warning",
-          "neutral",
-        ];
-        return valid.includes(v);
-      },
-      coerce: (v: any) => {
-        const valid: Flavor[] = [
-          "primary",
-          "secondary",
-          "success",
-          "danger",
-          "warning",
-          "neutral",
-        ];
-        if (!valid.includes(v)) {
-          console.warn(`[ty-checkbox] Invalid flavor '${v}'. Using 'neutral'.`);
-          return "neutral";
-        }
-        return v;
-      },
     },
   };
 
@@ -190,6 +170,7 @@ export class TyCheckbox
   // NOTE: _internals provided by TyComponent base class
   // ============================================================================
 
+  private _customFlavorSheet: CSSStyleSheet | null = null;
   private _listenersSetup: boolean = false;
 
   // Store references to handlers for cleanup
@@ -221,6 +202,17 @@ export class TyCheckbox
     // already rendered, and onDisconnect removed the listeners. No-ops on
     // first connect (no container yet — render() attaches them).
     this.setupEventListeners();
+    this._syncCustomFlavor();
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.flavor,
+      ({ base }) => checkboxCustomFlavorCss(base),
+    );
   }
 
   /**
@@ -234,8 +226,10 @@ export class TyCheckbox
   /**
    * Handle property changes - called BEFORE render
    */
-  protected onPropertiesChanged(_changes: PropertyChange[]): void {
-    // No special handling needed - TyComponent handles rendering automatically
+  protected onPropertiesChanged(changes: PropertyChange[]): void {
+    if (changes.some((c) => c.name === "flavor")) {
+      this._syncCustomFlavor();
+    }
   }
 
   /**
@@ -251,7 +245,7 @@ export class TyCheckbox
    * Build CSS class list for checkbox container
    */
   private buildClassList(): string {
-    const classes: string[] = [this.size, this.flavor];
+    const classes: string[] = [this.size];
 
     if (this.disabled) classes.push("disabled");
     if (this.required) classes.push("required");

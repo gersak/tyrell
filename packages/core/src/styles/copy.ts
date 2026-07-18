@@ -4,6 +4,31 @@
  * Extends input styles with copy-specific styling
  */
 
+import { FLAVORS } from "../types/common.js";
+
+/* Flavor rules only set --copy-color (button), --copy-color-hover, and
+   --copy-bg-hover (wrapper hover); the base rules below consume them.
+   Doubles as the per-instance override API. Fallback flavor `fb` is used
+   for custom flavors so missing tokens degrade to neutral. */
+const copyFlavor = (f: string, fb?: string) => {
+  const c = (s: string) =>
+    fb
+      ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
+      : `var(--ty-color-${f}${s})`;
+  const bg = (s: string) =>
+    fb
+      ? `var(--ty-bg-${f}${s}, var(--ty-bg-${fb}${s}))`
+      : `var(--ty-bg-${f}${s})`;
+  return `
+:host([flavor="${f}"])  { --copy-color: ${c("")}; --copy-color-hover: ${c("-strong")}; --copy-bg-hover: ${bg("-soft")}; }
+:host([flavor="${f}+"]) { --copy-color: ${c("-strong")}; --copy-color-hover: ${c("-strong")}; --copy-bg-hover: ${bg("-soft")}; }
+:host([flavor="${f}-"]) { --copy-color: ${c("-soft")}; --copy-color-hover: ${c("")}; --copy-bg-hover: ${bg("-soft")}; }
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const copyCustomFlavorCss = (base: string) => copyFlavor(base, "neutral");
+
 export const copyStyles = `
 /* Copy field value display */
 .copy-field-value {
@@ -67,9 +92,9 @@ export const copyStyles = `
   font-size: 0.8em;
 }
 
-/* Hover state - primary soft background */
+/* Hover state — flavor-soft background (primary by default) */
 .input-wrapper:not(.disabled):hover {
-  background: var(--ty-bg-primary-soft);
+  background: var(--copy-bg-hover, var(--ty-bg-primary-soft));
   transition: background 0.2s ease;
 }
 
@@ -84,14 +109,14 @@ export const copyStyles = `
   cursor: pointer;
   border: none;
   background: transparent;
-  color: var(--ty-text-soft);
+  color: var(--copy-color, var(--ty-text-soft));
   transition: color 0.2s ease, transform 0.2s ease;
   padding: 0;
   margin: 0;
 }
 
 .copy-button:hover:not(.disabled) {
-  color: var(--ty-text);
+  color: var(--copy-color-hover, var(--ty-text));
   transform: scale(1.1);
 }
 
@@ -123,4 +148,7 @@ export const copyStyles = `
 .input-wrapper.disabled {
   cursor: not-allowed;
 }
+
+/* ===== SEMANTIC FLAVORS (set --copy-*, consumed above) ===== */
+${FLAVORS.map((f) => copyFlavor(f)).join("")}
 `

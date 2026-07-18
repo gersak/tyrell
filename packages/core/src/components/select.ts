@@ -39,9 +39,10 @@
  * ```
  */
 
-import type { Size } from "../types/common.js";
+import type { Flavor, Size } from "../types/common.js";
 import { ensureStyles } from "../utils/styles.js";
-import { multiselectStyles } from "../styles/multiselect.js";
+import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
+import { selectBaseStyles, selectCustomFlavorCss } from "../styles/select-base.js";
 import { selectStyles } from "../styles/select.js";
 import { getLoaderSvg } from "../utils/loader-registry.js";
 import { lockScroll, unlockScroll } from "../utils/scroll-lock.js";
@@ -125,7 +126,7 @@ interface TagData {
 /**
  * Component state structure
  */
-interface MultiselectState {
+interface SelectState {
   open: boolean;
   search: string;
   highlightedIndex: number;
@@ -161,9 +162,9 @@ interface ChangeEventDetail {
 }
 
 /**
- * Ty Multiselect Component
+ * Ty Select Component
  */
-export class TySelect extends TyComponent<MultiselectState> {
+export class TySelect extends TyComponent<SelectState> {
   // ============================================================================
   // PROPERTY CONFIGURATION - Declarative property lifecycle
   // ============================================================================
@@ -286,6 +287,14 @@ export class TySelect extends TyComponent<MultiselectState> {
       visual: true,
       default: false,
     },
+    // Any string is accepted: built-ins get static CSS, other identifiers
+    // become custom flavors (see _syncCustomFlavor), garbage degrades to
+    // the default look.
+    flavor: {
+      type: "string" as const,
+      visual: true,
+      default: "neutral",
+    },
   };
 
   // ============================================================================
@@ -308,7 +317,7 @@ export class TySelect extends TyComponent<MultiselectState> {
   private _noOptionsMessage: string = "No options available";
 
   // Component state
-  private _state: MultiselectState = {
+  private _state: SelectState = {
     open: false,
     search: "",
     highlightedIndex: -1,
@@ -339,11 +348,13 @@ export class TySelect extends TyComponent<MultiselectState> {
   // that remove the matching option (and often the clone itself) from the DOM.
   private _selectedClone: HTMLElement | null = null;
 
+  private _customFlavorSheet: CSSStyleSheet | null = null;
+
   constructor() {
     super(); // TyComponent handles attachInternals() and attachShadow()
 
     const shadow = this.shadowRoot!;
-    ensureStyles(shadow, { css: multiselectStyles, id: "ty-select-base" });
+    ensureStyles(shadow, { css: selectBaseStyles, id: "ty-select-base" });
     ensureStyles(shadow, { css: selectStyles, id: "ty-select" });
 
     // DON'T render here - wait for onConnect() to initialize values first
@@ -390,6 +401,18 @@ export class TySelect extends TyComponent<MultiselectState> {
       this.updateSelectionDisplay();
     });
     this._childObserver.observe(this, { childList: true });
+
+    this._syncCustomFlavor();
+  }
+
+  /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
+  private _syncCustomFlavor(): void {
+    this._customFlavorSheet = syncCustomFlavorSheet(
+      this.shadowRoot!,
+      this._customFlavorSheet,
+      this.getProperty("flavor"),
+      ({ base }) => selectCustomFlavorCss(base),
+    );
   }
 
   /**
@@ -450,6 +473,9 @@ export class TySelect extends TyComponent<MultiselectState> {
           break;
         case "name":
           this._name = newValue || "";
+          break;
+        case "flavor":
+          this._syncCustomFlavor();
           break;
         case "multiple":
           this._multiple = newValue;
@@ -556,7 +582,7 @@ export class TySelect extends TyComponent<MultiselectState> {
   }
 
   /**
-   * Parse multiselect value (comma-separated string to array)
+   * Parse select value (comma-separated string to array)
    */
   private parseValue(value: string | null): string[] {
     // Defensive check: ensure value is actually a string before calling .trim()
@@ -745,7 +771,7 @@ export class TySelect extends TyComponent<MultiselectState> {
    */
   private calculatePosition(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".multiselect-stub") as HTMLElement;
+    const stub = shadow.querySelector(".select-stub") as HTMLElement;
     const dialog = shadow.querySelector(
       ".dropdown-dialog",
     ) as HTMLDialogElement;
@@ -881,7 +907,7 @@ export class TySelect extends TyComponent<MultiselectState> {
     if (!dialog) return;
 
     // Lock body scroll while dropdown is open
-    const lockId = `multiselect-${this.id || "anon"}-${getElementHash(this)}`;
+    const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
     this._scrollLockId = lockId;
     lockScroll(lockId);
 
@@ -1006,7 +1032,7 @@ export class TySelect extends TyComponent<MultiselectState> {
     if (!dialog) return;
 
     // Lock body scroll while mobile modal is open
-    const lockId = `multiselect-${this.id || "anon"}-${getElementHash(this)}`;
+    const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
     this._scrollLockId = lockId;
     lockScroll(lockId);
 
@@ -1463,7 +1489,7 @@ export class TySelect extends TyComponent<MultiselectState> {
    */
   private setupTriggerSlot(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".multiselect-stub");
+    const stub = shadow.querySelector(".select-stub");
     const slot = shadow.querySelector(
       'slot[name="trigger"]',
     ) as HTMLSlotElement | null;
@@ -1482,7 +1508,7 @@ export class TySelect extends TyComponent<MultiselectState> {
    */
   private setupEventListeners(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".multiselect-stub");
+    const stub = shadow.querySelector(".select-stub");
     const optionsSlot = shadow.querySelector("#options-slot");
     const searchInput = shadow.querySelector(".dropdown-search-input");
 
@@ -1544,7 +1570,7 @@ export class TySelect extends TyComponent<MultiselectState> {
     const shadow = this.shadowRoot!;
 
     // Only set innerHTML and setup listeners if container doesn't exist
-    if (!shadow.querySelector(".multiselect-container")) {
+    if (!shadow.querySelector(".select-container")) {
       const stubClasses = this.buildStubClasses();
 
       const labelHtml = this._label
@@ -1559,10 +1585,10 @@ export class TySelect extends TyComponent<MultiselectState> {
       const searchPlaceholder = "Search...";
 
       shadow.innerHTML = `
-        <div class="multiselect-container dropdown-mode-desktop">
+        <div class="select-container dropdown-mode-desktop">
           ${labelHtml}
           <div class="dropdown-wrapper">
-            <div class="dropdown-stub multiselect-stub ${stubClasses}"
+            <div class="dropdown-stub select-stub ${stubClasses}"
                  ${this._disabled ? "disabled" : ""}>
               <slot name="trigger">
                 <slot name="start"></slot>
@@ -1625,7 +1651,7 @@ export class TySelect extends TyComponent<MultiselectState> {
     const shadow = this.shadowRoot!;
 
     // Only set innerHTML and setup listeners if container doesn't exist
-    if (!shadow.querySelector(".multiselect-container")) {
+    if (!shadow.querySelector(".select-container")) {
       const stubClasses = this.buildStubClasses();
 
       const labelHtml = this._label
@@ -1670,10 +1696,10 @@ export class TySelect extends TyComponent<MultiselectState> {
       `;
 
       shadow.innerHTML = `
-        <div class="multiselect-container dropdown-mode-mobile">
+        <div class="select-container dropdown-mode-mobile">
           ${labelHtml}
           <div class="dropdown-wrapper">
-            <div class="dropdown-stub multiselect-stub ${stubClasses}"
+            <div class="dropdown-stub select-stub ${stubClasses}"
                  ${this._disabled ? "disabled" : ""}>
               <slot name="trigger">
                 <slot name="start"></slot>
@@ -1734,7 +1760,7 @@ export class TySelect extends TyComponent<MultiselectState> {
    */
   private setupMobileEventListeners(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".multiselect-stub");
+    const stub = shadow.querySelector(".select-stub");
     const optionsSlot = shadow.querySelector("#options-slot");
     const searchInput = shadow.querySelector(".mobile-search-input");
     const closeButton = shadow.querySelector(".mobile-close-button");
@@ -1881,7 +1907,7 @@ export class TySelect extends TyComponent<MultiselectState> {
    */
   private updateSelectionDisplay(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".multiselect-stub");
+    const stub = shadow.querySelector(".select-stub");
     if (!stub) return;
 
     // Selection comes from STATE, not from scanning option elements —
@@ -2096,6 +2122,14 @@ export class TySelect extends TyComponent<MultiselectState> {
 
   set size(value: Size) {
     this.setProperty("size", value);
+  }
+
+  get flavor(): Flavor {
+    return this.getProperty("flavor") as Flavor;
+  }
+
+  set flavor(value: Flavor) {
+    this.setProperty("flavor", value);
   }
 
   get form(): HTMLFormElement | null {

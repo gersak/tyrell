@@ -3,6 +3,9 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+
 // Type definitions for Ty Select component
 export interface TySelectItem {
   value: string;
@@ -74,6 +77,9 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Size variant */
   size?: 'sm' | 'md' | 'lg';
 
+  /** Visual flavor for the field border — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens */
+  flavor?: ShadedFlavor | (string & {});
+
   /** Callback when selection changes */
   onChange?: (event: CustomEvent<TySelectEventDetail>) => void;
 
@@ -103,6 +109,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     debounce,
     loading,
     size,
+    flavor,
     onChange,
     onSearch,
     onOpen,
@@ -197,6 +204,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     if (label) webComponentProps.label = label;
     if (name) webComponentProps.name = name;
     if (size) webComponentProps.size = size;
+    if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();
     if (searchable === 'always' || searchable === true) webComponentProps.searchable = 'true';
     else if (searchable === 'never' || searchable === false) webComponentProps.searchable = 'false';

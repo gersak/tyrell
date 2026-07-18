@@ -1,12 +1,52 @@
 /**
- * Multiselect Component Styles
- * PORTED FROM: clj/ty/components/multiselect.css
+ * Select Field Styles — shared chrome for ty-select (both single and
+ * multiple modes). Formerly split across ty-dropdown / ty-multiselect;
+ * those were consolidated into ty-select and this file kept the name.
  */
 
+import { FLAVORS } from "../types/common.js";
 import { customScrollbarStyles } from "./custom-scrollbar.js";
 
-export const multiselectStyles = `
-/* Multiselect-specific styles extending dropdown base styles */
+/* Flavor rules only set --select-accent (border), --select-accent-bold
+   (hover/open border), and --select-ring (open focus ring); the .select-stub
+   rules below consume them. Doubles as the per-instance override API:
+   `ty-select { --select-accent: … }`. Neutral is skipped — it IS the default
+   unstyled chrome (--ty-input-* tokens), same convention as
+   ty-input/ty-date-picker. Fallback flavor `fb` is used for custom flavors
+   so missing tokens degrade to neutral. */
+const selectFlavor = (f: string, fb?: string) => {
+  const c = (s: string) =>
+    fb
+      ? s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}, var(--ty-color-${fb}${s})))`
+        : `var(--ty-color-${f}, var(--ty-color-${fb}))`
+      : s
+        ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
+        : `var(--ty-color-${f})`;
+  return `
+:host([flavor="${f}"]) {
+  --select-accent: var(--ty-input-${f}-border, ${c("-soft")});
+  --select-accent-bold: ${c("")};
+  --select-ring: color-mix(in oklab, ${c("")} 15%, transparent);
+}
+:host([flavor="${f}+"]) {
+  --select-accent: ${c("")};
+  --select-accent-bold: ${c("-strong")};
+  --select-ring: color-mix(in oklab, ${c("-strong")} 15%, transparent);
+}
+:host([flavor="${f}-"]) {
+  --select-accent: ${c("-faint")};
+  --select-accent-bold: ${c("-soft")};
+  --select-ring: color-mix(in oklab, ${c("-soft")} 15%, transparent);
+}
+`;
+};
+
+/** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
+export const selectCustomFlavorCss = (base: string) => selectFlavor(base, "neutral");
+
+export const selectBaseStyles = `
+/* Select-field-specific styles extending dropdown base styles */
 
 :host {
   --mobile-border-color: var(--ty-border, #5858587d);
@@ -147,10 +187,10 @@ export const multiselectStyles = `
   height: 100%;
 }
 
-/* ===== MULTISELECT-SPECIFIC STYLES ===== */
+/* ===== SELECT FIELD-SPECIFIC STYLES ===== */
 
-/* Multiselect stub modifications */
-.multiselect-stub {
+/* Select stub modifications */
+.select-stub {
   min-height: 2.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -162,7 +202,7 @@ export const multiselectStyles = `
   outline: none;
   background: var(--input-bg, var(--ty-input-bg));
   color: var(--input-color, var(--ty-input-color));
-  border: 1px solid var(--input-border, var(--ty-input-border));
+  border: 1px solid var(--select-accent, var(--input-border, var(--ty-input-border)));
   border-radius: var(--ty-radius-md);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
@@ -174,11 +214,11 @@ export const multiselectStyles = `
   box-sizing: border-box;
 }
 
-.multiselect-stub:hover {
-  border-color: var(--input-border-hover, var(--ty-input-border-hover));
+.select-stub:hover {
+  border-color: var(--select-accent-bold, var(--input-border-hover, var(--ty-input-border-hover)));
 }
 
-.multiselect-stub[disabled] {
+.select-stub[disabled] {
   background-color: var(--input-disabled-bg, var(--ty-input-disabled-bg));
   color: var(--input-disabled-color, var(--ty-input-disabled-color));
   cursor: not-allowed;
@@ -186,23 +226,33 @@ export const multiselectStyles = `
 }
 
 /* Hide stub when dropdown is open */
-.dropdown-wrapper:has(.dropdown-chevron.open) .multiselect-stub {
+.dropdown-wrapper:has(.dropdown-chevron.open) .select-stub {
   opacity: 0;
   pointer-events: none;
 }
 
+/* Open state — same escalation as ty-input's .focused: bolder border + ring.
+   Applies whenever the stub stays visible while open (field skin without
+   the opacity-hide above kicking in — e.g. single-select with no tags). */
+.dropdown-wrapper:has(.dropdown-chevron.open) .select-stub,
+.select-stub:focus,
+.select-stub:focus-visible {
+  border-color: var(--select-accent-bold, var(--input-border-focus, var(--ty-input-border-focus)));
+  box-shadow: 0 0 0 3px var(--select-ring, var(--input-shadow-focus, var(--ty-input-shadow-focus)));
+}
+
 /* Hide stub chips when mobile dialog is open (let modal show them) */
-.dropdown-mode-mobile .dropdown-wrapper:has(.mobile-dialog[open]) .multiselect-chips {
+.dropdown-mode-mobile .dropdown-wrapper:has(.mobile-dialog[open]) .select-chips {
   display: none;
 }
 
 /* When tags are present, reduce padding to make room */
-.multiselect-stub.has-tags {
+.select-stub.has-tags {
   padding: 0.25rem 2.5rem 0.25rem 0.5rem;
   width: 100%;
 }
 
-.multiselect-stub.has-tags slot[name="selected"] {
+.select-stub.has-tags slot[name="selected"] {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -233,7 +283,7 @@ export const multiselectStyles = `
 
 
 /* Tags container */
-.multiselect-chips {
+.select-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
@@ -256,7 +306,7 @@ export const multiselectStyles = `
   display: none;
 }
 
-/* Options area styling - Override for multiselect */
+/* Options area styling - Override for select */
 .dropdown-options {
   opacity: 0;
   background: var(--input-bg, var(--ty-input-bg));
@@ -280,7 +330,7 @@ export const multiselectStyles = `
     opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Multiselect-specific: flex wrap for tags */
+  /* Select-specific: flex wrap for tags */
   display: flex;
   flex-wrap: wrap;
   padding: 0.5rem;
@@ -327,21 +377,21 @@ export const multiselectStyles = `
   opacity: 0.5;
 }
 
-/* Ensure ty-tag components in multiselect have proper sizing */
-.multiselect-chips ty-tag {
+/* Ensure ty-tag components in the select field have proper sizing */
+.select-chips ty-tag {
   max-width: 150px;
 }
 
 /* Responsive adjustments */
 @media (max-width: 640px) {
-  .multiselect-chips ty-tag {
+  .select-chips ty-tag {
     max-width: 100px;
   }
 }
 
 
 /* Ensure proper spacing in container layouts */
-.multiselect-container {
+.select-container {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -383,7 +433,7 @@ export const multiselectStyles = `
   height: 100%;
 }
 
-:host([disabled]) .multiselect-container {
+:host([disabled]) .select-container {
   pointer-events: none;
 }
 
@@ -698,7 +748,7 @@ export const multiselectStyles = `
   margin: 2px 0; /* Vertical spacing like dropdown options */
   /* Fade + scale entry — replays on each (re)insertion when a tag moves
      between selected and available slots */
-  animation: ty-multiselect-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: ty-select-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (hover: hover) {
@@ -716,7 +766,7 @@ export const multiselectStyles = `
   display: none !important;
 }
 
-@keyframes ty-multiselect-tag-enter {
+@keyframes ty-select-tag-enter {
   from { opacity: 0; transform: scale(0.85); }
   to   { opacity: 1; transform: scale(1); }
 }
@@ -798,8 +848,9 @@ export const multiselectStyles = `
   width: 1.125rem;
   height: 1.125rem;
   flex-shrink: 0;
-  animation: ty-multiselect-spin 0.7s linear infinite;
-  color: var(--ty-color-primary);
+  animation: ty-select-spin 0.7s linear infinite;
+  /* Active-state indicator — full accent, not the soft resting shade */
+  color: var(--select-accent-bold, var(--ty-color-primary));
 }
 
 .dropdown-loading-spinner svg {
@@ -811,7 +862,7 @@ export const multiselectStyles = `
   color: var(--ty-text-soft);
 }
 
-@keyframes ty-multiselect-spin {
+@keyframes ty-select-spin {
   to { transform: rotate(360deg); }
 }
 
@@ -823,5 +874,8 @@ export const multiselectStyles = `
 
 /* Custom scrollbar styles */
 ${customScrollbarStyles}
+
+/* ===== FLAVOR VARIANTS (set --select-accent*, consumed above) ===== */
+${FLAVORS.filter((f) => f !== "neutral").map((f) => selectFlavor(f)).join("")}
 `;
 

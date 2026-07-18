@@ -37,3 +37,43 @@ describe('ty-switch', () => {
     expect(form.checkValidity()).to.equal(true);
   });
 });
+
+describe('ty-switch flavors', () => {
+  const BRAND = 'rgb(1, 2, 3)';
+  const SUCCESS = 'rgb(4, 5, 6)';
+
+  afterEach(() => {
+    document.documentElement.style.removeProperty('--ty-color-brand');
+    document.documentElement.style.removeProperty('--ty-color-success');
+  });
+
+  const trackColor = (el: any) =>
+    getComputedStyle(el.shadowRoot.querySelector('.switch-track')).backgroundColor;
+
+  it('colors the checked track from a built-in flavor', async () => {
+    document.documentElement.style.setProperty('--ty-color-success', SUCCESS);
+    const el = (await fixture(html`<ty-switch flavor="success" checked></ty-switch>`)) as any;
+    await nextFrame();
+    expect(trackColor(el)).to.equal(SUCCESS);
+  });
+
+  it('derives styling for a custom flavor from design tokens', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const el = (await fixture(html`<ty-switch flavor="brand" checked></ty-switch>`)) as any;
+    await nextFrame();
+    expect(trackColor(el)).to.equal(BRAND);
+  });
+
+  it('page-level --switch-track rules override a custom flavor (escape hatch)', async () => {
+    document.documentElement.style.setProperty('--ty-color-brand', BRAND);
+    const wrap = await fixture(html`
+      <div>
+        <style>ty-switch[flavor="brand"] { --switch-track: rgb(9, 9, 9); }</style>
+        <ty-switch flavor="brand" checked></ty-switch>
+      </div>
+    `);
+    await nextFrame();
+    const el = wrap.querySelector('ty-switch') as any;
+    expect(trackColor(el)).to.equal('rgb(9, 9, 9)');
+  });
+});
