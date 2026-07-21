@@ -5,6 +5,14 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC33] - 2026-07-21
+
+Headline: **New brand default** — `--ty-brand-hue`/`--ty-brand-chroma` now `45`/`0.125` (amber/orange) instead of `230`/`0.12` (indigo).
+
+### Changed
+
+- **`tyrell-brand.css` default brand seed changed** from hue `230` / chroma `0.12` to hue `45` / chroma `0.125`. Anyone not overriding `--ty-brand-hue`/`--ty-brand-chroma` themselves will see their primary/neutral/surface colors shift on upgrade. Docs site's own OKLCH playground default (`theming.cljs` `default-seeds`, `packages/cljs/public/index.html`) synced to match.
+
 ## [1.0.0-TC32] - 2026-07-21
 
 Headline: **`ty-select` chrome fixes** — font-family, height, and custom-trigger outline.
