@@ -80,3 +80,104 @@ describe('ty-date-picker stub icon', () => {
     expect(hoverRule.cssText).to.not.include('negative');
   });
 });
+
+describe('ty-date-picker open-state desync', () => {
+  it('reopens after _state.open is stranded true with a closed dialog', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-07-17"></ty-date-picker>`)) as any;
+
+    // Simulate the desync: a host re-render replaced the dialog element
+    // (fresh, closed) while internal state still says open.
+    el._state.open = true;
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.false;
+
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+
+    const fresh = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(fresh.open, 'click heals the desync and opens the dialog').to.be.true;
+    expect(el._state.open).to.be.true;
+  });
+});
+
+describe('ty-date-picker accessibility — keyboard focus + ARIA', () => {
+  it('the stub is keyboard-focusable (tabindex="0") and carries role="button" + aria-haspopup', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+
+    expect(stub.getAttribute('tabindex'), 'in the tab order').to.equal('0');
+    expect(stub.getAttribute('role')).to.equal('button');
+    expect(stub.getAttribute('aria-haspopup')).to.equal('dialog');
+  });
+
+  it('disabled picker is removed from the tab order and marked aria-disabled', async () => {
+    const el = (await fixture(html`<ty-date-picker disabled></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+
+    expect(stub.getAttribute('tabindex')).to.equal('-1');
+    expect(stub.getAttribute('aria-disabled')).to.equal('true');
+  });
+
+  it('label is programmatically associated via aria-labelledby', async () => {
+    const el = (await fixture(html`<ty-date-picker label="Arrival date"></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    const labelledBy = stub.getAttribute('aria-labelledby');
+    expect(labelledBy, 'aria-labelledby is set').to.be.a('string').and.not.empty;
+
+    const label = el.shadowRoot.getElementById(labelledBy!);
+    expect(label, 'the referenced label exists').to.exist;
+    expect(label!.textContent).to.include('Arrival date');
+  });
+
+  it('Enter on the closed, focused stub opens the calendar (keyboard-only path)', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+
+    // No click, no mouse — the ONLY way a keyboard-only user can open this.
+    stub.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await nextFrame();
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'opened via keyboard alone').to.be.true;
+  });
+
+  it('Space on the closed, focused stub also opens it', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    await nextFrame();
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.true;
+  });
+
+  it('aria-expanded toggles true/false with the calendar open/close state', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    let stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    expect(stub.getAttribute('aria-expanded'), 'closed initially').to.equal('false');
+
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+    // Opening triggers a full DOM rebuild (see renderStub) — re-query.
+    stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    expect(stub.getAttribute('aria-expanded'), 'true once open').to.equal('true');
+
+    // handleStubClick only ever opens (a second click while open is a no-op
+    // guard) — Escape is the real close path, wired via a document listener.
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await nextFrame();
+    stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    expect(stub.getAttribute('aria-expanded'), 'false again after close').to.equal('false');
+  });
+});

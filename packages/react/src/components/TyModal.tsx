@@ -33,6 +33,12 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** Allow closing modal with Escape key (default: true) */
   closeOnEscape?: boolean;
 
+  /**
+   * Accessible name — sets aria-label on the internal <dialog>. The dialog
+   * gets role="dialog" for free, but nothing names it unless you set this.
+   */
+  label?: string;
+
   /** React event handlers */
   onOpen?: (event: CustomEvent<TyModalEventDetail>) => void;
   onClose?: (event: CustomEvent<TyModalEventDetail>) => void;
@@ -65,6 +71,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     backdrop,
     closeOnOutsideClick,
     closeOnEscape,
+    label,
     onOpen,
     onClose,
     onBeforeClose,
@@ -184,6 +191,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     if (closeOnEscape !== undefined && !coerceBool(closeOnEscape)) {
       webComponentProps['close-on-escape'] = 'false';
     }
+    if (label) webComponentProps.label = label;
 
     return React.createElement(
       'ty-modal',

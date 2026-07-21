@@ -48,6 +48,7 @@ export const datePickerStyles = `
   display: block;
   width: auto;
   min-width: 200px;
+  font-family: var(--ty-font-sans);
 
   /* ==========================================================================
      Theming Tokens — Date Picker Stub
@@ -177,13 +178,6 @@ export const datePickerStyles = `
 }
 
 /* Size variants */
-.date-picker-stub.xs {
-  min-height: var(--ty-size-xs);
-  font-size: var(--ty-font-xs);
-  padding: var(--ty-spacing-1) var(--ty-spacing-2);
-  padding-right: calc(var(--ty-spacing-2) + 0.875rem + var(--ty-spacing-1));
-}
-
 .date-picker-stub.sm {
   min-height: var(--ty-size-sm);
   font-size: var(--ty-font-xs);
@@ -196,13 +190,6 @@ export const datePickerStyles = `
   font-size: var(--ty-font-base);
   padding: var(--ty-spacing-2) var(--ty-spacing-4);
   padding-right: calc(var(--ty-spacing-4) + 1.125rem + var(--ty-spacing-2));
-}
-
-.date-picker-stub.xl {
-  min-height: var(--ty-size-xl);
-  font-size: var(--ty-font-lg);
-  padding: var(--ty-spacing-3) var(--ty-spacing-4);
-  padding-right: calc(var(--ty-spacing-4) + 1.25rem + var(--ty-spacing-3));
 }
 
 /* Flavor variants — set --date-picker-accent*, consumed by the stub rules above */

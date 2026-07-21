@@ -29,10 +29,7 @@ import {
 } from '../utils/number-format.js'
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js'
 
-/**
- * Required indicator SVG icon (from Lucide)
- */
-const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-asterisk-icon lucide-asterisk"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`
+import { REQUIRED_ICON_SVG } from '../utils/icons.js'
 
 /** Password reveal toggle icons (Lucide eye / eye-off) */
 const EYE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`
@@ -175,9 +172,12 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       type: 'string' as const,
       visual: true,
       default: 'md',
-      validate: (v: any) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
+      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
+      validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
       coerce: (v: any) => {
-        if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(v)) {
+        if (v === 'xs') return 'sm'
+        if (v === 'xl') return 'lg'
+        if (!['sm', 'md', 'lg'].includes(v)) {
           console.warn(`[ty-input] Invalid size '${v}'. Using 'md'.`)
           return 'md'
         }

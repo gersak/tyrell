@@ -185,7 +185,11 @@ button.loading > .loader-icon {
   flex-grow: 1;
 }
 
-/* ===== SIZES ===== */
+/* ===== SIZES =====
+   Buttons run a 4px ladder (24-40px). Shared scale with fields
+   (--ty-size-sm/md/lg — see tyrell.css): field sm = button md (32px),
+   field md = button lg (36px), field lg = button xl (40px) — a button
+   and a field of the paired size sit flush, same height, in a row. */
 
 button.xs {
   padding: 0 var(--ty-spacing-2);
@@ -193,7 +197,7 @@ button.xs {
   line-height: var(--ty-leading-xs);
   letter-spacing: var(--ty-tracking-xs);
   gap: var(--ty-spacing-1);
-  height: 1.375rem;
+  height: 1.5rem; /* 24px */
 }
 
 button.sm {
@@ -202,7 +206,7 @@ button.sm {
   line-height: var(--ty-leading-xs);
   letter-spacing: var(--ty-tracking-xs);
   gap: var(--ty-spacing-1);
-  height: 1.5rem;
+  height: 1.75rem; /* 28px */
 }
 
 button.md {
@@ -211,7 +215,7 @@ button.md {
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
   gap: var(--ty-spacing-2);
-  height: 1.8rem;
+  height: 2rem; /* 32px — matches field sm */
 }
 
 button.lg {
@@ -220,7 +224,7 @@ button.lg {
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
   gap: var(--ty-spacing-2);
-  height: 2.1rem;
+  height: 2.25rem; /* 36px — matches field md */
 }
 
 button.xl {
@@ -229,7 +233,7 @@ button.xl {
   line-height: var(--ty-leading-base);
   letter-spacing: var(--ty-tracking-base);
   gap: var(--ty-spacing-2);
-  height: 2.3rem;
+  height: 2.5rem; /* 40px — matches field lg */
 }
 
 /* ===== ACTION (icon-only square) ===== */

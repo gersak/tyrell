@@ -569,12 +569,18 @@ function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId
       circleContent = `<span style="font-size: 12px; font-weight: 700;">${index + 1}</span>`;
     }
 
+    // No aria-controls: the button lives in shadow DOM, the panel (<ty-step>,
+    // see the render() step below) is light DOM — ARIA id-references don't
+    // resolve across a shadow-tree boundary, so a cross-boundary reference
+    // here is spec-invalid even though getElementById can technically find
+    // the target (axe's aria-valid-attr-value correctly flags it). The
+    // load-bearing relationship is role=tab + aria-selected here, and
+    // aria-labelledby (pointing back at this button) on the <ty-step> side.
     return `<button
       class="step-indicator"
       role="tab"
       data-step-id="${stepId}"
       id="step-${stepId}"
-      aria-controls="panel-${stepId}"
       aria-selected="${isActive}"
       tabindex="${isActive ? '0' : '-1'}"
       data-active="${isActive}"
@@ -597,10 +603,12 @@ function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId
   return `
     <div class="step-indicators-wrapper" part="indicators-wrapper">
       <div class="step-indicators" style="--ty-wizard-step-count: ${stepCount}">
-        <div class="progress-line" part="progress-line" role="progressbar" aria-valuenow="${Math.round(progressPercent)}" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-line" part="progress-line" role="progressbar" aria-label="Wizard progress" aria-valuenow="${Math.round(progressPercent)}" aria-valuemin="0" aria-valuemax="100">
           <div class="progress-overlay" style="width: ${progressPercent}%"></div>
         </div>
-        ${indicators}
+        <div class="step-tablist" role="tablist" style="display: contents;">
+          ${indicators}
+        </div>
       </div>
     </div>
   `;
@@ -619,6 +627,17 @@ function render(el: TyWizard): void {
   const activeId = getActiveStepId(el, steps);
   const activeIndex = activeId ? (findStepIndex(steps, activeId) ?? 0) : 0;
   const completedIds = getCompletedStepIds(el);
+
+  // Each <ty-step> IS its tabpanel (single catch-all <slot> in the carousel
+  // viewport below) — same pattern and same rationale as ty-tabs. `id` is
+  // also the stepId (getStepId reads it directly), so it's never reassigned.
+  steps.forEach((step) => {
+    const stepId = getStepId(step);
+    if (!stepId) return;
+    step.setAttribute('role', 'tabpanel');
+    step.setAttribute('aria-labelledby', `step-${stepId}`);
+    step.setAttribute('tabindex', '0');
+  });
 
   // Check if structure already exists
   const existingContainer = shadowRoot.querySelector('.wizard-container');

@@ -368,6 +368,63 @@ export function findBestPosition(options: PositionOptions): PositionResult {
 }
 
 // ============================================================================
-// Auto-Update Functionality
+// Anchored modal popups (select, date-picker)
 // ============================================================================
+
+/**
+ * Below/above placement for trigger-anchored `<dialog>` popups.
+ *
+ * Unlike findBestPosition (12-placement engine for non-modal floats), these
+ * popups only ever open below or above their trigger, and their CSS anchors
+ * with `top:` when below but `bottom:` when above — so both conventions are
+ * returned and the caller picks by `below`.
+ */
+export interface AnchoredPopupOptions {
+  anchorRect: DOMRect | ElementRect;
+  popupWidth: number;
+  popupHeight: number;
+  /** Gap between trigger and popup edge (px, default 4) */
+  gap?: number;
+  /** Minimum distance from viewport edges (px, default 8) */
+  padding?: number;
+}
+
+export interface AnchoredPopupPosition {
+  /** Popup left edge, viewport coords, clamped into view */
+  x: number;
+  /** CSS `top` value when below */
+  topY: number;
+  /** CSS `bottom` value when above */
+  bottomY: number;
+  below: boolean;
+}
+
+export function computeAnchoredPosition(o: AnchoredPopupOptions): AnchoredPopupPosition {
+  const gap = o.gap ?? 4;
+  const padding = o.padding ?? 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  const spaceBelow = vh - o.anchorRect.bottom;
+  const spaceAbove = o.anchorRect.top;
+
+  // Below when it fits — and when neither side fits, the side with MORE room
+  // instead of blindly flipping up (a trigger near the viewport top used to
+  // clip the popup off-screen).
+  const below =
+    spaceBelow >= o.popupHeight + gap + padding || spaceBelow >= spaceAbove;
+
+  // Anchor to the trigger's left edge, clamped into the viewport
+  const x = Math.max(
+    padding,
+    Math.min(o.anchorRect.left, vw - o.popupWidth - padding),
+  );
+
+  return {
+    x,
+    topY: o.anchorRect.bottom + gap,
+    bottomY: vh - o.anchorRect.top + gap,
+    below,
+  };
+}
 

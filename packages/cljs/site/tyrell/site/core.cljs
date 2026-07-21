@@ -10,7 +10,8 @@
    [tyrell.site.state :refer [state]]
    [tyrell.site.styles :as styles]
    [tyrell.site.views.components-index :as components-index]
-   [tyrell.site.views.landing :as landing]))
+   [tyrell.site.views.landing :as landing]
+   [tyrell.site.views.sandbox-sizing :as sandbox-sizing]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -55,7 +56,15 @@
     :segment "components"
     :name "Components"
     :icon "grid"
-    :view components-index/view}])
+    :view components-index/view}
+
+   ;; HIDDEN — deliberately absent from nav-items below and from every route
+   ;; list used to render nav/search. Reachable only by typing the URL.
+   ;; Throwaway integration-testing page; delete once its question is settled.
+   {:id ::sandbox-sizing
+    :segment "internal/sizing"
+    :name "Sizing Sandbox (hidden)"
+    :view sandbox-sizing/view}])
 
 ;; Import docs components that are already configured
 (def component-routes docs/docs-components)

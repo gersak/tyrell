@@ -52,6 +52,11 @@ const autoUpdateCleanup = new WeakMap<TyTooltip, CleanupFn>();
 const eventCleanup = new WeakMap<TyTooltip, CleanupFn>();
 const timeoutState = new WeakMap<TyTooltip, TimeoutState>();
 const popoverElements = new WeakMap<TyTooltip, HTMLElement>();
+// Cached separately from getAnchorElement()/el.parentElement — by the time
+// disconnectedCallback fires the element has already been removed from the
+// DOM, so parentElement is null and cleanup() couldn't otherwise find the
+// anchor to strip its aria-describedby.
+const anchorElements = new WeakMap<TyTooltip, HTMLElement>();
 
 // ============================================================================
 // Helper Functions
@@ -119,6 +124,29 @@ function getAnchorElement(el: TyTooltip): HTMLElement | null {
 }
 
 /**
+ * Add `id` to the anchor's aria-describedby without clobbering a value the
+ * consumer may already have set for something else (WAI-ARIA APG tooltip
+ * pattern: append, don't overwrite).
+ */
+function addDescribedBy(anchor: HTMLElement, id: string): void {
+  const ids = (anchor.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+  if (!ids.includes(id)) {
+    ids.push(id);
+    anchor.setAttribute('aria-describedby', ids.join(' '));
+  }
+}
+
+/** Inverse of addDescribedBy — used on teardown. */
+function removeDescribedBy(anchor: HTMLElement, id: string): void {
+  const ids = (anchor.getAttribute('aria-describedby') || '').split(/\s+/).filter((x) => x && x !== id);
+  if (ids.length > 0) {
+    anchor.setAttribute('aria-describedby', ids.join(' '));
+  } else {
+    anchor.removeAttribute('aria-describedby');
+  }
+}
+
+/**
  * Get or create popover element using Popover API
  * The popover is created in document.body for top-layer placement
  */
@@ -128,28 +156,25 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
   if (!popover) {
     // Create popover element
     popover = document.createElement('div');
-    popover.id = `ty-tooltip-${Math.random().toString(36).substr(2, 9)}`;
+    popover.id = `ty-tooltip-${Math.random().toString(36).slice(2, 11)}`;
     popover.setAttribute('popover', 'manual');
+    // WAI-ARIA APG tooltip pattern: the popover needs role="tooltip" and
+    // the trigger needs aria-describedby pointing at it, or a keyboard/
+    // screen-reader user gets no indication the tooltip exists at all —
+    // hover-only visibility isn't enough on its own.
+    popover.setAttribute('role', 'tooltip');
     popover.className = 'ty-tooltip-popover';
-
-    // Get initial attributes
-    const { flavor } = getTooltipAttributes(el);
-    popover.setAttribute('data-flavor', flavor);
-
-    // Copy content from slot
-    const content = el.textContent || '';
-    popover.textContent = content;
 
     // Apply inline styles (since popover is outside shadow DOM, we need inline styles)
     const styles = `
       position: fixed;
       margin: 0;
       padding: 8px 12px;
-      background: var(--ty-tooltip-bg, #1f2937);
-      color: #ffffff;
+      background: var(--ty-tooltip-bg, #262626);
+      color: var(--ty-tooltip-color, #f5f5f5);
       border: none;
       border-radius: 6px;
-      font-size: var(--ty-font-sm, 14px);
+      font-size: var(--ty-font-xs, 12px);
       font-weight: var(--ty-font-semibold, 600);
       line-height: 1.5;
       max-width: 250px;
@@ -161,15 +186,30 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
 
     popover.style.cssText = styles;
 
-    // Apply flavor-specific styles
-    applyFlavorStyles(popover, flavor);
-
     // Append to body
     document.body.appendChild(popover);
 
     // Store reference
     popoverElements.set(el, popover);
+
+    const anchor = anchorElements.get(el);
+    if (anchor) addDescribedBy(anchor, popover.id);
   }
+
+  // Resync on every call (not just creation) — content and flavor can
+  // change between shows, and this is eagerly called from connectedCallback
+  // (see below) so a keyboard user tabbing straight to the trigger gets a
+  // real aria-describedby target immediately, not one that only exists
+  // after the (default 600ms) hover delay has already elapsed.
+  const { flavor } = getTooltipAttributes(el);
+  popover.setAttribute('data-flavor', flavor);
+  // innerHTML, not textContent — the tooltip's own docs promise "Content is
+  // any HTML nested inside the ty-tooltip element"; textContent silently
+  // stripped it. Relocating the developer's own authored markup between two
+  // elements they control isn't a new trust boundary (same model ty-select
+  // already uses to clone rich option HTML into its trigger).
+  popover.innerHTML = el.innerHTML;
+  applyFlavorStyles(popover, flavor);
 
   return popover;
 }
@@ -191,11 +231,14 @@ function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
 
   switch (flavor) {
     case 'dark':
-      // Default look — routed through the documented --ty-tooltip-* escape
-      // hatch so consumers can retheme without a flavor.
-      popover.style.background = 'var(--ty-tooltip-bg, var(--ty-bg-neutral-soft, #4b5563))';
-      popover.style.color = 'var(--ty-tooltip-color, var(--ty-color-neutral-strong, #f3f4f6))';
-      popover.style.borderColor = 'var(--ty-border-strong, #6b7280)';
+      // Default look — theme-INDEPENDENT on purpose (matches Material/
+      // Bootstrap/Ant/Shoelace: a tooltip stays a fixed dark chip whether
+      // the page is light or dark, so it always pops). Routed through the
+      // --ty-tooltip-* tokens (defined once in :root, not redeclared in
+      // html.dark) so consumers can retheme without a flavor.
+      popover.style.background = 'var(--ty-tooltip-bg, #262626)';
+      popover.style.color = 'var(--ty-tooltip-color, #f5f5f5)';
+      popover.style.borderColor = 'var(--ty-tooltip-border, #404040)';
       break;
     case 'light':
       popover.style.background = 'var(--ty-surface-elevated, #ffffff)';
@@ -405,6 +448,7 @@ function scheduleHide(el: TyTooltip): void {
 function setupEvents(el: TyTooltip): void {
   const anchor = getAnchorElement(el);
   if (!anchor) return;
+  anchorElements.set(el, anchor);
 
   const handleEnter = () => scheduleShow(el);
   const handleLeave = () => scheduleHide(el);
@@ -433,19 +477,26 @@ function cleanup(el: TyTooltip): void {
   clearTimeouts(el);
   cleanupAutoUpdate(el);
 
-  const cleanup = eventCleanup.get(el);
-  if (cleanup) {
-    cleanup();
+  const eventsCleanup = eventCleanup.get(el);
+  if (eventsCleanup) {
+    eventsCleanup();
     eventCleanup.delete(el);
   }
 
-  // Remove popover from body
+  // Strip aria-describedby before removing the popover it points at — by
+  // this point (disconnectedCallback) el.parentElement is already null, so
+  // this must use the cached anchor, not getAnchorElement(el).
   const popover = popoverElements.get(el);
+  const anchor = anchorElements.get(el);
+  if (popover && anchor) {
+    removeDescribedBy(anchor, popover.id);
+  }
   if (popover) {
     popover.remove();
     popoverElements.delete(el);
   }
 
+  anchorElements.delete(el);
   timeoutState.delete(el);
 }
 
@@ -479,6 +530,12 @@ export class TyTooltip extends HTMLElement {
 
     // Setup events on anchor
     setupEvents(this);
+
+    // Eagerly create the (hidden) popover so role="tooltip" + the anchor's
+    // aria-describedby exist from connect, not only after the first show —
+    // a keyboard user tabbing to the trigger must not wait out the hover
+    // delay just to get an accessible description.
+    getOrCreatePopover(this);
   }
 
   disconnectedCallback() {

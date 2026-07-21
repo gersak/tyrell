@@ -1,5 +1,6 @@
 import { fixture, html, expect, oneEvent } from '@open-wc/testing';
 import '../lib/components/select.js';
+import '../lib/components/input.js';
 import '../lib/components/option.js';
 
 const tick = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -324,5 +325,327 @@ describe('ty-select loading spinner follows flavor', () => {
     expect(getComputedStyle(spinner).color).to.equal('rgb(7, 8, 9)');
     document.documentElement.style.removeProperty('--ty-color-danger');
     document.documentElement.style.removeProperty('--ty-color-primary');
+  });
+});
+
+describe('ty-select size follows ty-input', () => {
+  // Both consume var(--ty-size-*) — tyrell.css isn't loaded in this harness,
+  // so seed the tokens directly (same pattern as the color-token tests above).
+  // Fields come in exactly three sizes; legacy xs/xl coerce to sm/lg.
+  const SIZES = { sm: '2.25rem', md: '2.5rem', lg: '2.75rem' };
+  const EXPECTED: Record<string, number> = { sm: 36, md: 40, lg: 44 };
+
+  before(() => {
+    for (const [k, v] of Object.entries(SIZES)) {
+      document.documentElement.style.setProperty(`--ty-size-${k}`, v);
+    }
+  });
+  after(() => {
+    for (const k of Object.keys(SIZES)) {
+      document.documentElement.style.removeProperty(`--ty-size-${k}`);
+    }
+  });
+
+  (['sm', 'md', 'lg'] as const).forEach((size) => {
+    it(`stub height matches input at size=${size} (${EXPECTED[size]}px)`, async () => {
+      const inp = (await fixture(html`<ty-input size=${size} placeholder="x"></ty-input>`)) as any;
+      const sel = (await fixture(html`
+        <ty-select size=${size}><ty-option value="a">A</ty-option></ty-select>
+      `)) as any;
+      await tick();
+
+      const inputH = inp.shadowRoot.querySelector('.input-wrapper').getBoundingClientRect().height;
+      const stub = sel.shadowRoot.querySelector('.select-stub');
+      const stubH = stub.getBoundingClientRect().height;
+
+      // The size class must actually reach the stub (the bug was: applied but unstyled)
+      expect(stub.classList.contains(size), `stub carries .${size}`).to.be.true;
+      expect(Math.round(inputH), 'input matches ladder').to.equal(EXPECTED[size]);
+      expect(Math.round(stubH), 'select stub matches input').to.equal(EXPECTED[size]);
+    });
+  });
+});
+
+describe('ty-select allow-create', () => {
+  const openAndType = async (el: any, text: string) => {
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.click();
+    await tick();
+    const search = el.shadowRoot.querySelector('.dropdown-search-input') as HTMLInputElement;
+    search.value = text;
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    return search;
+  };
+
+  const pressEnter = async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await tick();
+  };
+
+  it('forces the search row on even under the auto threshold', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.click();
+    await tick();
+    const header = el.shadowRoot.querySelector('.dropdown-header') as HTMLElement;
+    expect(header.hidden, 'search row shown').to.be.false;
+  });
+
+  it('mints a new option verbatim (no transform) on Enter and selects it', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await openAndType(el, 'New York');
+    await pressEnter();
+
+    expect(el.getAttribute('value')).to.equal('New York');
+    const created = el.querySelector('ty-option[value="New York"]');
+    expect(created, 'new ty-option exists in light DOM').to.exist;
+    expect(created!.textContent).to.equal('New York');
+  });
+
+  it('create-transform="slug" normalizes the value but keeps the label verbatim', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create create-transform="slug"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await openAndType(el, '  Robert Gersak!! ');
+    await pressEnter();
+
+    expect(el.getAttribute('value')).to.equal('robert_gersak');
+    const created = el.querySelector('ty-option[value="robert_gersak"]');
+    expect(created!.textContent).to.equal('Robert Gersak!!');
+  });
+
+  it('dedups against an existing option instead of creating a duplicate', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create>
+        <ty-option value="a">Apple</ty-option>
+      </ty-select>
+    `)) as any;
+    await openAndType(el, 'apple'); // case-insensitive match on label text
+    await pressEnter();
+
+    expect(el.getAttribute('value')).to.equal('a');
+    // Single-select creates a [cloned] display-clone ty-option on selection —
+    // exclude it, same as the component's own getTagElements() does.
+    expect(el.querySelectorAll('ty-option:not([cloned])').length, 'no duplicate minted').to.equal(1);
+  });
+
+  it('the create event is cancelable — preventDefault stops select from creating anything', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    el.addEventListener('create', (e: CustomEvent) => e.preventDefault());
+    await openAndType(el, 'Ignored');
+    await pressEnter();
+
+    expect(el.getAttribute('value')).to.be.oneOf([null, '']);
+    expect(el.querySelectorAll('ty-option').length).to.equal(1);
+  });
+
+  it('a listener can mutate detail.value without calling preventDefault', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    el.addEventListener('create', (e: CustomEvent) => {
+      e.detail.value = 'custom-id';
+    });
+    await openAndType(el, 'Whatever Label');
+    await pressEnter();
+
+    expect(el.getAttribute('value')).to.equal('custom-id');
+    const created = el.querySelector('ty-option[value="custom-id"]');
+    expect(created!.textContent).to.equal('Whatever Label');
+  });
+
+  it('multiple: creating appends to selection, clears search, keeps the dropdown open', async () => {
+    const el = (await fixture(html`
+      <ty-select multiple allow-create><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    el.setAttribute('value', 'a');
+    await tick();
+    const search = await openAndType(el, 'Second');
+    await pressEnter();
+
+    const values = (el.getAttribute('value') || '').split(',');
+    expect(values).to.include.members(['a', 'Second']);
+    expect(search.value, 'search box clears after create').to.equal('');
+
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'dropdown stays open for the next tag').to.be.true;
+  });
+
+  it('highlighting a real option with arrow keys wins over create on Enter', async () => {
+    const el = (await fixture(html`
+      <ty-select allow-create>
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b">Banana</ty-option>
+      </ty-select>
+    `)) as any;
+    await openAndType(el, 'an'); // matches both "Banana" (contains 'an') via substring filter
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    await tick();
+    await pressEnter();
+
+    // Whichever got highlighted, it must be an EXISTING option, not a new "an" one.
+    expect(el.querySelectorAll('ty-option:not([cloned])').length).to.equal(2);
+    expect(['a', 'b']).to.include(el.getAttribute('value'));
+  });
+
+  it('without allow-create, Enter on unmatched text does nothing', async () => {
+    const el = (await fixture(html`
+      <ty-select searchable="always"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.click();
+    await tick();
+    const search = el.shadowRoot.querySelector('.dropdown-search-input') as HTMLInputElement;
+    search.value = 'Nothing Matches This';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await pressEnter();
+
+    expect(el.querySelectorAll('ty-option').length).to.equal(1);
+    expect(el.getAttribute('value')).to.be.oneOf([null, '']);
+  });
+});
+
+describe('ty-select accessibility — keyboard focus + ARIA combobox pattern', () => {
+  it('the stub is keyboard-focusable (tabindex="0") and carries role="combobox"', async () => {
+    const el = (await fixture(html`
+      <ty-select><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+
+    expect(stub.getAttribute('tabindex'), 'in the tab order').to.equal('0');
+    expect(stub.getAttribute('role')).to.equal('combobox');
+    expect(stub.getAttribute('aria-haspopup')).to.equal('listbox');
+  });
+
+  it('disabled select is removed from the tab order and marked aria-disabled', async () => {
+    const el = (await fixture(html`
+      <ty-select disabled><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+
+    expect(stub.getAttribute('tabindex')).to.equal('-1');
+    expect(stub.getAttribute('aria-disabled')).to.equal('true');
+  });
+
+  it('aria-controls points at a real element with role="listbox"', async () => {
+    const el = (await fixture(html`
+      <ty-select><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const listboxId = stub.getAttribute('aria-controls');
+    expect(listboxId, 'aria-controls is set').to.be.a('string').and.not.empty;
+
+    const listbox = el.shadowRoot.getElementById(listboxId!);
+    expect(listbox, 'the referenced element exists').to.exist;
+    expect(listbox!.getAttribute('role')).to.equal('listbox');
+  });
+
+  it('multiple select marks the listbox aria-multiselectable', async () => {
+    const el = (await fixture(html`
+      <ty-select multiple><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const listbox = el.shadowRoot.getElementById(stub.getAttribute('aria-controls')!);
+    expect(listbox!.getAttribute('aria-multiselectable')).to.equal('true');
+  });
+
+  it('label is programmatically associated via aria-labelledby, not just visible text', async () => {
+    const el = (await fixture(html`
+      <ty-select label="Country"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const labelledBy = stub.getAttribute('aria-labelledby');
+    expect(labelledBy, 'aria-labelledby is set').to.be.a('string').and.not.empty;
+
+    const label = el.shadowRoot.getElementById(labelledBy!);
+    expect(label, 'the referenced label exists').to.exist;
+    expect(label!.textContent).to.include('Country');
+  });
+
+  it('Enter on the closed, focused stub opens the dropdown (keyboard-only path)', async () => {
+    const el = (await fixture(html`
+      <ty-select><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+
+    // No click, no mouse — the ONLY way a keyboard-only user can open this.
+    stub.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await tick();
+
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'opened via keyboard alone').to.be.true;
+  });
+
+  it('ArrowDown on the closed, focused stub also opens it (native <select> convention)', async () => {
+    const el = (await fixture(html`
+      <ty-select><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    await tick();
+
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.true;
+  });
+
+  it('aria-expanded toggles true/false with the dropdown open/close state', async () => {
+    const el = (await fixture(html`
+      <ty-select><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    expect(stub.getAttribute('aria-expanded'), 'closed initially').to.equal('false');
+
+    stub.click();
+    await tick();
+    expect(stub.getAttribute('aria-expanded'), 'true once open').to.equal('true');
+
+    (el as any).querySelector('ty-option').click();
+    await tick();
+    expect(stub.getAttribute('aria-expanded'), 'false again after picking (closes)').to.equal('false');
+  });
+
+  it('every option gets role="option" even before any selection is made', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b">B</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const options = Array.from(el.querySelectorAll('ty-option')) as HTMLElement[];
+    options.forEach((o) => {
+      expect(o.getAttribute('role')).to.equal('option');
+      expect(o.getAttribute('aria-selected'), `${o.getAttribute('value')} starts unselected`).to.equal('false');
+    });
+  });
+
+  it('aria-selected tracks live selection state on the actual option elements', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b">B</ty-option>
+      </ty-select>
+    `)) as any;
+    el.setAttribute('value', 'b');
+    await tick();
+
+    const a = el.querySelector('ty-option[value="a"]') as HTMLElement;
+    const b = el.querySelector('ty-option[value="b"]') as HTMLElement;
+    expect(a.getAttribute('aria-selected')).to.equal('false');
+    expect(b.getAttribute('aria-selected')).to.equal('true');
   });
 });

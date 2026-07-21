@@ -49,6 +49,7 @@ export const selectBaseStyles = `
 /* Select-field-specific styles extending dropdown base styles */
 
 :host {
+  font-family: var(--ty-font-sans);
   --mobile-border-color: var(--ty-border, #5858587d);
 }
 
@@ -191,12 +192,12 @@ export const selectBaseStyles = `
 
 /* Select stub modifications */
 .select-stub {
-  min-height: 2.5rem;
+  min-height: var(--ty-size-md);
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
   align-items: center;
-  padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+  padding: 0 2.5rem 0 0.75rem;
   /* Transitions - includes opacity for open state */
   transition: var(--ty-transition-all), opacity 0.2s ease;
   outline: none;
@@ -212,6 +213,38 @@ export const selectBaseStyles = `
   position: relative;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* ===== SIZE MODIFIERS =====
+   buildStubClasses() always stamps exactly one size class on .select-stub.
+   min-height comes from the shared --ty-size-* tokens (same ones ty-input
+   and ty-date-picker consume) so a given size is the same height on every
+   field. Right padding stays 2.5rem for chevron room. Zero vertical
+   padding — same fix as ty-input: with align-items:center on a flex
+   container, ANY vertical padding adds on top of min-height instead of
+   being absorbed by it, so a padded stub silently overflows past the
+   shared field height (measured +3px at sm/md before this was zeroed).
+   min-height + centering alone gets the exact height. */
+.select-stub.sm {
+  min-height: var(--ty-size-sm);
+  padding: 0 2.5rem 0 0.625rem;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  letter-spacing: var(--ty-tracking-sm);
+}
+
+/* md matches the base rule; listed for parity/overrides */
+.select-stub.md {
+  min-height: var(--ty-size-md);
+  padding: 0 2.5rem 0 0.75rem;
+}
+
+.select-stub.lg {
+  min-height: var(--ty-size-lg);
+  padding: 0 2.5rem 0 0.875rem;
+  font-size: var(--ty-font-base);
+  line-height: var(--ty-leading-base);
+  letter-spacing: var(--ty-tracking-base);
 }
 
 .select-stub:hover {
@@ -239,6 +272,26 @@ export const selectBaseStyles = `
 .select-stub:focus-visible {
   border-color: var(--select-accent-bold, var(--input-border-focus, var(--ty-input-border-focus)));
   box-shadow: 0 0 0 3px var(--select-ring, var(--input-shadow-focus, var(--ty-input-shadow-focus)));
+}
+
+/* Custom trigger (slot="trigger"): setupTriggerSlot() toggles this class when
+   the consumer assigns their own content — the slot's fallback (start/selected/
+   placeholder/end/chevron, i.e. the whole default field skin) is entirely
+   replaced at that point, so the wrapping .select-stub itself must go bare.
+   Without this, the stub's own border/background/padding and the open/focus
+   ring above still wrapped the custom content in a second, unwanted outline. */
+.select-stub.custom-trigger {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.select-stub.custom-trigger:hover,
+.dropdown-wrapper:has(.dropdown-chevron.open) .select-stub.custom-trigger,
+.select-stub.custom-trigger:focus,
+.select-stub.custom-trigger:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 /* Hide stub chips when mobile dialog is open (let modal show them) */

@@ -158,6 +158,9 @@ function closePopup(el: TyPopup, force = false): void {
   dialog.classList.remove('open');
   dialog.classList.remove('preparing-animation');
 
+  const anchor = getAnchorElement(el);
+  if (anchor?.hasAttribute('aria-haspopup')) anchor.setAttribute('aria-expanded', 'false');
+
   setTimeout(() => {
     dialog.classList.remove('position-calculated');
     dialog.close(); // This will trigger 'close' event which unlocks scroll
@@ -181,6 +184,9 @@ function openPopup(el: TyPopup): void {
 
   // Step 1: showModal() immediately - dialog gets [open] attribute and proper layout
   dialog.showModal();
+
+  const anchor = getAnchorElement(el);
+  if (anchor?.hasAttribute('aria-haspopup')) anchor.setAttribute('aria-expanded', 'true');
 
   // Step 2: Wait for layout to settle, then measure and position
   requestAnimationFrame(() => {
@@ -273,6 +279,12 @@ function setupAnchorEvents(el: TyPopup): void {
 
   if (!anchor || manual) return;
 
+  // Screen reader gets no other signal that clicking this opens something —
+  // the popup itself is a real <dialog> (showModal()), which already gives
+  // it role="dialog" + focus-trap for free, so only the trigger needs this.
+  anchor.setAttribute('aria-haspopup', 'dialog');
+  if (!anchor.hasAttribute('aria-expanded')) anchor.setAttribute('aria-expanded', 'false');
+
   // Remove any existing listener first
   const existingHandler = anchorClickHandlers.get(el);
   if (existingHandler) {
@@ -296,6 +308,8 @@ function cleanupAnchorEvents(el: TyPopup): void {
     anchor.removeEventListener('pointerdown', handler);
     anchorClickHandlers.delete(el);
   }
+  anchor?.removeAttribute('aria-haspopup');
+  anchor?.removeAttribute('aria-expanded');
 }
 
 /**

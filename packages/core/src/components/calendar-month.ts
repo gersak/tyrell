@@ -165,6 +165,15 @@ export class TyCalendarMonth extends HTMLElement {
   private _localeObserver?: () => void; // Cleanup function for locale observer
   private _customFlavorSheet: CSSStyleSheet | null = null;
 
+  // ARIA grid roving-tabindex state — index into the flat 42-day array.
+  // null means "not yet resolved"; render() picks a sensible default
+  // (selected day, else today, else the 1st rendered day) and persists it
+  // across re-renders so keyboard focus survives unrelated prop changes.
+  // Reset to null on month/year navigation (see the property setters below)
+  // so the new month gets a fresh default instead of a stale index.
+  private _focusedIndex: number | null = null;
+  private _cellElements: HTMLElement[] = [];
+
   /**
    * Observed attributes (minimal - mainly for debugging)
    * Properties are the primary API
@@ -278,6 +287,7 @@ export class TyCalendarMonth extends HTMLElement {
   set displayYear(value: number) {
     if (this._displayYear !== value) {
       this._displayYear = value;
+      this._focusedIndex = null;
       this.render();
     }
   }
@@ -289,6 +299,7 @@ export class TyCalendarMonth extends HTMLElement {
   set displayMonth(value: number) {
     if (this._displayMonth !== value) {
       this._displayMonth = value;
+      this._focusedIndex = null;
       this.render();
     }
   }
@@ -475,7 +486,7 @@ export class TyCalendarMonth extends HTMLElement {
   /**
    * Dispatch day-click custom event with day context
    */
-  private dispatchDayClick(dayContext: DayContext, domEvent: Event): void {
+  private dispatchDayClick(dayContext: DayContext, _domEvent: Event): void {
     const detail: DayClickDetail = {
       dayContext,
       value: dayContext.value,
@@ -506,7 +517,13 @@ export class TyCalendarMonth extends HTMLElement {
   /**
    * Render a single day cell
    */
-  private renderDayCell(dayContext: DayContext, disabled: boolean): HTMLElement {
+  /**
+   * WAI-ARIA grid pattern: gridcell + roving tabindex (exactly one cell in
+   * the whole grid is tabindex="0" at a time — the rest are -1, so Tab
+   * enters/exits the grid in one hop and arrow keys move focus inside it).
+   * Disabled days are excluded from the roving set entirely.
+   */
+  private renderDayCell(dayContext: DayContext, disabled: boolean, isRoving: boolean): HTMLElement {
     const dayElement = document.createElement('div');
 
     // Get content using custom or default function
@@ -534,11 +551,31 @@ export class TyCalendarMonth extends HTMLElement {
       dayElement.appendChild(content);
     }
 
-    // Add click handler (disabled days don't emit)
-    if (!disabled) {
+    dayElement.setAttribute('role', 'gridcell');
+    dayElement.setAttribute(
+      'aria-label',
+      new Intl.DateTimeFormat(this._locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        .format(new Date(dayContext.localValue)),
+    );
+    dayElement.setAttribute('aria-selected', String(!!dayContext.isSelected));
+    if (dayContext.today) dayElement.setAttribute('aria-current', 'date');
+
+    if (disabled) {
+      dayElement.setAttribute('aria-disabled', 'true');
+      dayElement.setAttribute('tabindex', '-1');
+    } else {
+      dayElement.setAttribute('tabindex', isRoving ? '0' : '-1');
+      // Add click handler (disabled days don't emit)
       dayElement.addEventListener('pointerdown', (event: Event) => {
         event.preventDefault();
         this.dispatchDayClick(dayContext, event);
+      });
+      dayElement.addEventListener('keydown', (event: Event) => {
+        const ke = event as KeyboardEvent;
+        if (ke.key === 'Enter' || ke.key === ' ') {
+          ke.preventDefault();
+          this.dispatchDayClick(dayContext, event);
+        }
       });
     }
 
@@ -584,14 +621,22 @@ export class TyCalendarMonth extends HTMLElement {
     // Create unified flex container
     const calendarContainer = document.createElement('div');
     calendarContainer.className = `calendar-flex-container calendar-size-${this._size}`;
+    calendarContainer.setAttribute('role', 'grid');
+    calendarContainer.setAttribute(
+      'aria-label',
+      new Intl.DateTimeFormat(this._locale, { month: 'long', year: 'numeric' })
+        .format(new Date(this._displayYear, this._displayMonth - 1, 1)),
+    );
 
     // Create header row with weekday names
     const headerRow = document.createElement('div');
     headerRow.className = 'calendar-row calendar-header-row';
+    headerRow.setAttribute('role', 'row');
 
     weekdays.forEach(weekday => {
       const headerCell = document.createElement('div');
       headerCell.className = 'calendar-cell calendar-header-cell';
+      headerCell.setAttribute('role', 'columnheader');
       headerCell.textContent = weekday;
       headerRow.appendChild(headerCell);
     });
@@ -608,21 +653,76 @@ export class TyCalendarMonth extends HTMLElement {
     const minTs = isoToUTCTimestamp(this._min);
     const maxTs = isoToUTCTimestamp(this._max);
 
+    // Roving-tabindex target: keep the persisted index if still valid and
+    // not disabled, else fall back to selected day, else today, else the
+    // first rendered day — always something focusable exists in the grid.
+    const disabledAt = (i: number) => {
+      const v = days[i].value;
+      return (minTs !== null && v < minTs) || (maxTs !== null && v > maxTs);
+    };
+    let defaultIndex = days.findIndex(d => d.isSelected);
+    if (defaultIndex === -1) defaultIndex = days.findIndex(d => d.today);
+    if (defaultIndex === -1) defaultIndex = 0;
+    if (
+      this._focusedIndex === null ||
+      this._focusedIndex < 0 ||
+      this._focusedIndex > 41 ||
+      disabledAt(this._focusedIndex)
+    ) {
+      this._focusedIndex = defaultIndex;
+    }
+
+    this._cellElements = [];
+    let flatIndex = 0;
     dayWeeks.forEach(week => {
       const dayRow = document.createElement('div');
       dayRow.className = 'calendar-row calendar-day-row';
+      dayRow.setAttribute('role', 'row');
 
       week.forEach(dayContext => {
         const disabled =
           (minTs !== null && dayContext.value < minTs) ||
           (maxTs !== null && dayContext.value > maxTs);
-        const dayCell = this.renderDayCell(dayContext, disabled);
+        const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === this._focusedIndex);
         // Add unified cell classes for flex layout
         dayCell.className = `${dayCell.className} calendar-cell calendar-day-cell`;
         dayRow.appendChild(dayCell);
+        this._cellElements[flatIndex] = dayCell;
+        flatIndex++;
       });
 
       calendarContainer.appendChild(dayRow);
+    });
+
+    // Arrow-key roving-tabindex navigation: Left/Right move a day,
+    // Up/Down move a week — pure index arithmetic works because `days` is a
+    // flat, chronologically-ordered 42-cell array (Monday-first weeks), so
+    // index+1 is always the next calendar day and index+7 the next week.
+    // Delegated on the grid (one listener, not 42) — this component is
+    // stateless about which month is shown, so moving past the rendered
+    // 42-day range just clamps at the edge rather than crossing months.
+    calendarContainer.addEventListener('keydown', (event: Event) => {
+      const ke = event as KeyboardEvent;
+      const delta =
+        ke.key === 'ArrowLeft' ? -1 :
+        ke.key === 'ArrowRight' ? 1 :
+        ke.key === 'ArrowUp' ? -7 :
+        ke.key === 'ArrowDown' ? 7 :
+        0;
+      if (delta === 0) return;
+
+      const currentIndex = this._focusedIndex ?? defaultIndex;
+      const nextIndex = currentIndex + delta;
+      if (nextIndex < 0 || nextIndex > 41 || disabledAt(nextIndex)) return;
+
+      ke.preventDefault();
+      this._cellElements[currentIndex]?.setAttribute('tabindex', '-1');
+      this._focusedIndex = nextIndex;
+      const nextCell = this._cellElements[nextIndex];
+      if (nextCell) {
+        nextCell.setAttribute('tabindex', '0');
+        nextCell.focus();
+      }
     });
 
     root.appendChild(calendarContainer);

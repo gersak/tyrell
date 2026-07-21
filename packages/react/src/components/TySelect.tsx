@@ -71,10 +71,26 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Debounce for the search event in ms (0-5000) */
   debounce?: number;
 
+  /**
+   * Enter on unmatched search text mints a new <ty-option> (forces the
+   * search row on, same as externalSearch). Listen to onCreate to mutate
+   * the value before it's created, or preventDefault() to take over
+   * entirely (e.g. after a server round-trip).
+   */
+  allowCreate?: boolean;
+
+  /**
+   * Opt-in normalizer for the value allowCreate mints — the display label
+   * is always kept verbatim. 'slug': lowercase, spaces → '_', strips
+   * everything else non-alphanumeric. Default: value === typed text.
+   */
+  createTransform?: 'slug';
+
   /** Loading state — shows a spinner in the options area (external search in flight) */
   loading?: boolean;
 
   /** Size variant */
+  /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
   size?: 'sm' | 'md' | 'lg';
 
   /** Visual flavor for the field border — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens */
@@ -87,6 +103,13 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   onSearch?: (event: CustomEvent<{ query: string; element: HTMLElement }>) => void;
   onOpen?: (event: CustomEvent) => void;
   onClose?: (event: CustomEvent) => void;
+
+  /**
+   * Fired before allowCreate mints a new option — cancelable. Mutate
+   * `event.detail.value` to change the id that gets created (e.g. slugify
+   * it yourself), or call `event.preventDefault()` to create it yourself.
+   */
+  onCreate?: (event: CustomEvent<{ value: string; label: string }>) => void;
 
   /** TyOption children (plus optional slot="trigger" / slot="start" / slot="end" elements) */
   children?: React.ReactNode;
@@ -107,6 +130,8 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     searchable,
     externalSearch,
     debounce,
+    allowCreate,
+    createTransform,
     loading,
     size,
     flavor,
@@ -114,6 +139,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     onSearch,
     onOpen,
     onClose,
+    onCreate,
     children,
     ...props
   }, ref) => {
@@ -153,6 +179,9 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
 
     const handleOpen = useCallback((event: Event) => { if (onOpen) onOpen(event as CustomEvent); }, [onOpen]);
     const handleClose = useCallback((event: Event) => { if (onClose) onClose(event as CustomEvent); }, [onClose]);
+    const handleCreate = useCallback((event: Event) => {
+      if (onCreate) onCreate(event as CustomEvent<{ value: string; label: string }>);
+    }, [onCreate]);
 
     // Set up event listeners
     useEffect(() => {
@@ -163,14 +192,16 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
       if (onSearch) element.addEventListener('search', handleSearch);
       if (onOpen) element.addEventListener('open', handleOpen);
       if (onClose) element.addEventListener('close', handleClose);
+      if (onCreate) element.addEventListener('create', handleCreate);
 
       return () => {
         if (onChange) element.removeEventListener('change', handleChange);
         if (onSearch) element.removeEventListener('search', handleSearch);
         if (onOpen) element.removeEventListener('open', handleOpen);
         if (onClose) element.removeEventListener('close', handleClose);
+        if (onCreate) element.removeEventListener('create', handleCreate);
       };
-    }, [handleChange, handleSearch, handleOpen, handleClose, onChange, onSearch, onOpen, onClose]);
+    }, [handleChange, handleSearch, handleOpen, handleClose, handleCreate, onChange, onSearch, onOpen, onClose, onCreate]);
 
     // Imperative property sync for boolean props (see use-boolean-prop.ts).
     const isMultiple = useBooleanProperty(elementRef, 'multiple', multiple);
@@ -180,6 +211,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     const isRequired = useBooleanProperty(elementRef, 'required', required);
     const isLoading = useBooleanProperty(elementRef, 'loading', loading);
     const isExternalSearch = useBooleanProperty(elementRef, 'externalSearch', externalSearch);
+    const isAllowCreate = useBooleanProperty(elementRef, 'allowCreate', allowCreate);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
@@ -199,6 +231,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     if (isRequired) webComponentProps.required = '';
     if (isLoading) webComponentProps.loading = '';
     if (isExternalSearch) webComponentProps['external-search'] = '';
+    if (isAllowCreate) webComponentProps['allow-create'] = '';
 
     if (placeholder) webComponentProps.placeholder = placeholder;
     if (label) webComponentProps.label = label;
@@ -206,6 +239,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     if (size) webComponentProps.size = size;
     if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();
+    if (createTransform) webComponentProps['create-transform'] = createTransform;
     if (searchable === 'always' || searchable === true) webComponentProps.searchable = 'true';
     else if (searchable === 'never' || searchable === false) webComponentProps.searchable = 'false';
     // 'auto' / undefined → omit (component default)

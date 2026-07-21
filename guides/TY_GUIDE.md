@@ -156,6 +156,8 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 
 **Slots:** `start`, (default), `end` | **Events:** `click` -> `{ originalEvent }`
 
+**Sizing:** buttons run a 24-40px 4px ladder, sharing its top three steps with the fields' 32/36/40px ladder. Pairing with a field: **alongside** in a row, field `sm`/`md`/`lg` match button `md`/`lg`/`xl` exactly (32/36/40); **embedded** in a field's `end` slot, use the **same** size name — it nests with a consistent ~4px margin. See [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing).
+
 **Custom colors:** override per button with `--ty-button-bg`, `--ty-button-bg-hover`, `--ty-button-color`, `--ty-button-border`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
 ---
@@ -172,7 +174,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 | `error` | string | - | Built-in error message |
 | `disabled` | boolean | `false` | |
 | `required` | boolean | `false` | |
-| `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
+| `size` | string | `'md'` | `sm` \| `md` \| `lg` (legacy `xs`/`xl` coerce to `sm`/`lg`) — see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the border + focus ring; per-instance override via `--input-accent` / `--input-accent-bold` / `--input-ring`. |
 | `currency` | string | `'USD'` | ISO 4217 code (for `type="currency"`) |
 | `locale` | string | `'en-US'` | Locale for numeric formatting |
@@ -238,6 +240,8 @@ Also registered as **`ty-copy-field`** — same element, descriptive name.
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the copy button + hover tint; per-instance override via `--copy-color` / `--copy-color-hover` / `--copy-bg-hover`. |
 | `disabled` | boolean | `false` | |
 
+The copy button is icon-only and carries `aria-label`, updated live through its states: "Copy to clipboard" → "Copied!" / "Copy failed" → back.
+
 ---
 
 ### ty-file-upload
@@ -275,21 +279,25 @@ THE select control. Single select by default with a form-field look matching `ty
 | `name` | string | - | Single submits one FormData entry; multiple submits repeated `name=` entries |
 | `label` | string | - | |
 | `placeholder` | string | `'Select...'` | Shown while empty; selection shows the option itself (single) or joined labels (multiple) |
-| `searchable` | string | `'auto'` | Popup search row: `auto` = only for 8+ options; `searchable`/`"true"` always; `"false"` never. `external-search` always shows it |
+| `searchable` | string | `'auto'` | Popup search row: `auto` = only for 8+ options; `searchable`/`"true"` always; `"false"` never. `external-search` and `allow-create` always show it |
 | `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response |
+| `allow-create` | boolean | `false` | Enter on unmatched search text mints a new `<ty-option>` and selects it. Exact match (value or label, case-insensitive) selects the existing option instead of duplicating. Single: replaces selection, closes. Multiple: appends, clears search, stays open (tags-input pattern). Fires the cancelable `create` event first — see below |
+| `create-transform` | string | `'none'` | `'slug'`: normalizes the **value** allow-create mints (lowercase, spaces → `_`, strips non-alphanumeric). The display label is always kept verbatim regardless |
 | `debounce` | number | `0` | Search event debounce (0-5000ms) |
 | `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
 | `disabled` / `readonly` / `required` | boolean | `false` | |
-| `size` | string | `'md'` | `sm` \| `md` \| `lg` |
+| `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
 **Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-tags` templates.
 
 **Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
 
-**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple) | `search` -> `{ query, element }` | `open` / `close`
+**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` includes `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
 
 **Companion:** `<ty-selected-tags for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup.
+
+**Full keyboard + ARIA combobox pattern:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="combobox"` / `aria-haspopup="listbox"` / `aria-expanded` / `aria-controls` (the popup's `role="listbox"`, `aria-multiselectable` when `multiple`) / `aria-labelledby` (when `label` is set — the visible label text, programmatically associated, not just nearby). Each `<ty-option>` gets `role="option"` + a live `aria-selected`. `Enter`/`Space`/`ArrowDown` open the closed, focused field — not just a mouse click.
 
 **Custom colors:** uses the shared `--ty-input-*` variable family — override per select with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
 
@@ -330,6 +338,8 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 **Events:** `ty-tab-change` -> `{ activeId, activeIndex, previousId, previousIndex }`
 
+**ARIA:** full tab pattern — `role="tablist"` / `role="tab"` (+ `aria-selected`) on the buttons, `role="tabpanel"` (+ `aria-labelledby`, `tabindex="0"`) on each `<ty-tab>` itself (it *is* the panel — there's no separate wrapper). No `aria-controls`: the button lives in shadow DOM and the panel in light DOM, and ARIA id-references don't resolve across that boundary — `aria-labelledby` (light DOM → shadow DOM id) is the direction that actually works.
+
 ```html
 <ty-tabs height="400px" active="overview">
   <span slot="label-overview" class="flex items-center gap-2">
@@ -364,6 +374,8 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 **Events:** `ty-wizard-step-change` -> `{ activeId, activeIndex, previousId, previousIndex, direction }`
 
+**ARIA:** same tab pattern as `ty-tabs` — step indicators are `role="tab"` inside a dedicated `role="tablist"` (kept separate from the progress line, which is its own `role="progressbar"` with an `aria-label` — a `tablist` may only contain tabs), each `<ty-step>` is `role="tabpanel"` + `aria-labelledby` + `tabindex="0"`.
+
 ---
 
 ### ty-calendar
@@ -373,6 +385,8 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 **Events:** `change` -> `{ year, month, day, action, source, dayContext }` | `navigate` -> `{ month, year, action, source }`
 
 **Form value:** ISO date `YYYY-MM-DD`
+
+**Keyboard + ARIA:** the day grid (in the nested `ty-calendar-month`) is a real WAI-ARIA grid — `role="grid"`/`row`/`columnheader`/`gridcell`, with roving `tabindex` (exactly one day is in the tab order at a time; arrow keys move it — `←`/`→` by a day, `↑`/`↓` by a week — and `Enter`/`Space` select). Disabled (out-of-`min`/`max`) days are excluded from the roving set. Each day's `aria-label` is a full readable date (e.g. "Wednesday, July 15, 2026"), not just the visible number.
 
 ---
 
@@ -395,13 +409,15 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 
 **Events:** `change` | **Form value:** UTC ISO `2024-09-21T08:30:00.000Z`
 
+**Keyboard + ARIA:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="button"` (it's a trigger, not editable text) / `aria-haspopup="dialog"` / `aria-expanded` / `aria-labelledby` (when `label` is set). `Enter`/`Space` open the closed, focused field, not just a mouse click. The popup itself is a native `<dialog>` opened via `showModal()`, so it already gets `role="dialog"` + focus-trap semantics from the browser for free.
+
 ---
 
 ### ty-modal
 
 Also registered as **`ty-dialog`** — same element, platform/ARIA name (wraps native `<dialog>`).
 
-Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true).
+Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
 
 Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'`. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
 
@@ -413,9 +429,15 @@ Always render modals in DOM. Control with `open` attribute or `show()`/`hide()`.
 
 ### ty-tooltip
 
-Attrs: `placement` (default `'top'`), `offset` (8), `delay` (200ms), `disabled`, `flavor` (default `'dark'`; also `light` / `info`, built-in semantics with `+`/`-` shades, or a custom flavor from `--ty-bg-X` / `--ty-color-X` tokens).
+Attrs: `placement` (default `'top'`), `offset` (8), `delay` (600ms), `disabled`, `flavor` (default `'dark'`; also `light` / `info`, built-in semantics with `+`/`-` shades, or a custom flavor from `--ty-bg-X` / `--ty-color-X` tokens).
 
 Nest as child of target: `<ty-button>Hover<ty-tooltip>Help text</ty-tooltip></ty-button>`
+
+**Content is real HTML**, not plain text — `<ty-tooltip><kbd>Ctrl+S</kbd> to save</ty-tooltip>` renders the `<kbd>` tag, not the literal text.
+
+**Accessible by default:** the popover gets `role="tooltip"` and the trigger (`ty-tooltip`'s parent element — must be the actual interactive/focusable element, not a wrapping `<div>`) gets a matching `aria-describedby`, wired eagerly on connect — a keyboard user tabbing to the trigger doesn't have to wait out the hover `delay` to get an accessible description. An existing `aria-describedby` on the trigger is appended to, not overwritten.
+
+**Default (`dark`) flavor is theme-independent by design** — a fixed dark chip in both light and dark pages (matches Material/Bootstrap/Ant/Shoelace), so it always pops regardless of what it's sitting on. Colors come from `--ty-tooltip-bg` / `--ty-tooltip-color` / `--ty-tooltip-border`, defined once on `:root` (not redeclared per theme) — override them globally, or per instance with `<ty-tooltip style="--ty-tooltip-bg: #000">`. `light`/`info`/custom flavors are unaffected and still theme-adaptive.
 
 ---
 
@@ -424,6 +446,8 @@ Nest as child of target: `<ty-button>Hover<ty-tooltip>Help text</ty-tooltip></ty
 Attrs: `manual`, `disable-close`, `placement` (default `'bottom'`), `offset` (8).
 
 **Methods:** `show()`, `hide()`
+
+Nest as child of the trigger: `<button>Click me<ty-popup>...</ty-popup></button>`. Unless `manual`, the trigger automatically gets `aria-haspopup="dialog"` and a live `aria-expanded` (the popup itself is a real `<dialog>` via `showModal()`, so it already has `role="dialog"` + focus-trap for free).
 
 ---
 

@@ -5,6 +5,48 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC32] - 2026-07-21
+
+Headline: **`ty-select` chrome fixes** — font-family, height, and custom-trigger outline.
+
+### Fixed
+
+- **`ty-select` / `ty-date-picker` labels (and other unstyled shadow-DOM text) ignored `--ty-font-sans`** — neither component's `:host` pinned `font-family`, so text silently inherited whatever font the host page happened to be using instead of the library's own token, unlike `ty-input` which already pinned it. Both now set `font-family: var(--ty-font-sans)` on `:host`, matching `ty-input`.
+- **`ty-select` with a custom trigger (`slot="trigger"`) still showed the default field outline** — `setupTriggerSlot()` toggled a `custom-trigger` class on `.select-stub` when a consumer slotted their own trigger content, but no CSS ever consumed that class, so the default border/background/padding and the open/focus ring (`box-shadow: 0 0 0 3px ...`) kept wrapping the custom content regardless. `.select-stub.custom-trigger` now goes fully bare (no border, background, padding, or ring) in every state, as originally intended.
+
+## [1.0.0-TC31] - 2026-07-20
+
+Headline: **flavors everywhere** — custom flavors and `+`/`-` tones, previously a `ty-button`/`ty-tag` exclusive, now work on every flavored component. Also: field and button sizing reworked onto one shared height scale.
+
+### Added
+
+- **Custom flavors + `+`/`-` tones for all flavored components** — `ty-switch`, `ty-radio`/`ty-radio-group`, `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, and `ty-calendar`/`ty-calendar-month` now use the same mechanism as `ty-button`/`ty-tag`: any identifier is a valid `flavor`, themed from your `--ty-color-X` (and where relevant `--ty-bg-X` / `--ty-border-X`) tokens, with missing tokens degrading to neutral. `+`/`-` shade suffixes map to `-strong`/`-soft` tokens.
+- **Per-instance color override vars on each component** — flavor colors funnel through local vars (`--switch-track`, `--radio-color`, `--checkbox-color[-off]`, `--input-accent[-bold]`/`--input-ring`, `--select-accent[-bold]`/`--select-ring`, `--date-picker-accent[-bold]`/`--date-picker-ring`, `--copy-color[-hover]`/`--copy-bg-hover`, `--calendar-month-accent`/`-selected-bg`/`-selected-color`/`-selected-hover-bg`), so e.g. `ty-switch[flavor="brand"] { --switch-track: … }` page rules recolor a single instance. See CSS_GUIDE.md → Per-Component Color Overrides.
+- **`ty-select` gets an open-state focus ring** — matching `ty-input`'s `.focused` treatment (bolder border + a 3px 15%-alpha ring in the flavor color), the field previously had zero visual escalation when the dropdown opened.
+- **`ty-copy` flavor actually renders** — the documented `flavor` attribute previously had no CSS behind it; it now colors the copy button, its hover, and the wrapper hover tint.
+- **`ty-select` gained a `flavor` attribute** — previously had none (no error/danger coloring existed for it at all); now colors the field border + hover like `ty-input`, same built-ins/tones/custom-flavor support.
+- **`ty-calendar` / `ty-calendar-month` gained a `flavor` attribute** — colors the selected day and today's number; `ty-calendar` forwards its flavor to the nested `ty-calendar-month` only (navigation arrows stay neutral chrome). `ty-date-picker` forwards its own flavor to the popup calendar it opens, so the two match automatically with no new API.
+
+### Fixed
+
+- **`ty-tooltip` no longer gets stuck on a stale flavor** — the popover element is created once and cached; a flavor change made while the tooltip was closed was silently dropped (`attributeChangedCallback` only restyled `if (name === 'flavor' && this._open)`). It now restyles on every flavor change regardless of visibility.
+- **`ty-date-picker`'s popup calendar no longer gets stuck on a stale flavor** — `render()` only rebuilds (and re-forwards `flavor`) while the dialog is closed; changing the flavor while the popup is already open previously left it showing whatever flavor was active when it was opened. `updateDisplay()` (the open-dialog partial-update path) now also syncs `flavor` onto the existing `ty-calendar`.
+- **Several icons/badges were hardcoded to primary regardless of the component's own flavor** — `ty-select`'s loading spinner and compact-mode count badge, `ty-date-picker`'s calendar trigger icon, and `ty-input`'s password-reveal focus outline all ignored `flavor` and always rendered primary-colored (or, for the calendar icon, a neutral tone that tracks the brand hue and so visually reads as a washed-out primary on the default theme). All four now follow the component's own accent, matching `ty-copy`'s icon (which already did).
+- **`ty-checkbox`'s focus ring was hardcoded to `--ty-color-primary`** regardless of flavor — now matches the checked-state color via a new `--checkbox-ring` var.
+- **`ty-date-picker`'s clear-button hover was silently unstyled** — it referenced `--ty-color-negative` / `--ty-bg-negative-faint`, neither of which exists as a token; fixed to `--ty-color-danger` / `--ty-bg-danger-soft` (clear stays neutral at rest and always warns danger-red on hover — a destructive utility action, not the field's own flavor).
+- **`ty-select`'s compact-mode count badge referenced `--ty-text-primary`**, a nonexistent token, for its text color (silently fell back to unstyled inherited black) — fixed alongside making it follow flavor.
+- **`ty-select` rendered 3-4px taller than `ty-input`/`ty-date-picker` at the same `size`** — the `.select-stub` size rules carried vertical padding (`0.375rem`/`0.5rem`) that stacked on top of `min-height` instead of being absorbed by the stub's `align-items: center`; zeroed, matching `ty-input`'s existing zero-vertical-padding approach. Fields now measure pixel-identical at every size.
+
+### Changed
+
+- **Unknown flavors no longer coerce** — components previously rewrote unknown flavors to a default (`primary`/`neutral`/`dark`) with a console warning. Any plain identifier now passes through as a custom flavor; syntactically invalid values fall back to the default look silently. Matches the existing `ty-button`/`ty-tag` behavior.
+- **`ty-tooltip` flavor colors are token-derived** — the per-flavor switch statement collapsed to one formula (`--ty-bg-X` / `--ty-color-X-strong` / `--ty-border-X`); `dark`/`light`/`info` stay hand-tuned, and the default `dark` look routes through the documented `--ty-tooltip-bg`/`--ty-tooltip-color` escape hatch again (it previously clobbered it). Minor normalization: `success` tooltips now use `--ty-bg-success` like every other flavor (was `-bold`).
+- **`ty-input` secondary/warning flavors gained hover states**; flavor CSS is generated from one formula, so all built-ins behave identically.
+- **Flavored field borders follow the neutral emphasis ladder** — a flavored `ty-input`/`ty-select`/`ty-date-picker` previously rested on the full-strength flavor color, leaving no visible difference between rest, hover, and focus. Fields now rest on the flavor's `-soft` shade and escalate to the full color on hover/focus (+ ring), mirroring neutral's faint→soft→focus progression; `+`/`-` tones shift the whole ladder. The `--ty-input-{success,danger,warning}-border` tokens now alias the `-soft` shades accordingly.
+- React wrappers: `flavor` prop types widened to accept `+`/`-` shades and custom flavor strings (`TySwitch`, `TyRadio`, `TyRadioGroup`, `TyCheckbox`, `TyInput`, `TySelect`, `TyCopy`, `TyDatePicker`, `TyTooltip`, `TyTag`, `TyCalendar`, `TyCalendarMonth`).
+- **Field size ladder collapsed from five sizes to three** — `ty-input`/`ty-select`/`ty-date-picker` now come in exactly `sm`/`md`/`lg` (32/36/40px) via `--ty-size-{sm,md,lg}`, always the same height across all three field components at a given size. Legacy `xs`/`xl` attribute values still work but coerce to `sm`/`lg`.
+- **`ty-button`'s size ladder now shares a scale with fields instead of running independently underneath them** — `xs`–`xl` is 24/28/32/36/40px, and the top three steps land exactly on the field ladder (button `md` = field `sm`, `lg` = field `md`, `xl` = field `lg`), so a button and a field of the paired size sit flush, same height, in a row. `xs`/`sm` remain button-only steps (compact toolbars, icon actions).
+
 ## [1.0.0-TC30] - 2026-07-10
 
 Headline: **React 18 `className` fix** — utility classes on every `tyrell-react` wrapper now actually apply.

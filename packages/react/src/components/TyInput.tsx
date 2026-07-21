@@ -38,7 +38,8 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   flavor?: ShadedFlavor | (string & {});
 
   /** Input size */
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
+  size?: 'sm' | 'md' | 'lg';
 
   /** Input value */
   value?: string;

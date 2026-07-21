@@ -14,6 +14,9 @@
          ;; CSS System page — interactive flavor axis picker
          :flavor-picker {:flavor "brand" :tone "" :hex "#7c3aed"}
 
+         ;; CSS System page — interactive font/radius picker
+         :typography-picker {:font "sans" :radius "8"}
+
          ;; Command palette search state
          :search {:open false
                   :query ""

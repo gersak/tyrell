@@ -162,7 +162,6 @@ function formatDateISO(year: number, month: number, day: number): string {
 export class TyCalendar extends HTMLElement {
   // Private state
   private _state: CalendarState;
-  private _locale: string = 'en-US';
   private _showNavigation: boolean = true;
   private _stateless: boolean = false;
   private _size: CalendarSize = 'md';
@@ -312,7 +311,8 @@ export class TyCalendar extends HTMLElement {
         break;
 
       case 'locale':
-        this._locale = newValue || 'en-US';
+        // Attribute is the source of truth — `get locale` resolves it via
+        // getEffectiveLocale; children just need a re-sync.
         this.syncChildComponents();
         break;
 
@@ -464,7 +464,6 @@ export class TyCalendar extends HTMLElement {
   }
 
   set locale(value: string) {
-    this._locale = value;
     this.setAttribute('locale', value);
   }
 
@@ -608,7 +607,6 @@ export class TyCalendar extends HTMLElement {
     const yearStr = this.getAttribute('year');
     const monthStr = this.getAttribute('month');
     const dayStr = this.getAttribute('day');
-    const localeStr = this.getAttribute('locale');
     const showNavStr = this.getAttribute('show-navigation');
     const statelessStr = this.getAttribute('stateless');
     const sizeStr = this.getAttribute('size');
@@ -638,11 +636,6 @@ export class TyCalendar extends HTMLElement {
         this._state.selectedMonth = month;
         this._state.selectedDay = day;
       }
-    }
-
-    // Locale
-    if (localeStr) {
-      this._locale = localeStr;
     }
 
     // Show navigation

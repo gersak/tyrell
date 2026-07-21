@@ -134,8 +134,7 @@
      [:ty-input {:label "Email" :placeholder "email@example.com" :type "email"}
       [:ty-icon {:slot "start" :name "mail" :size "sm"}]]
      [:ty-input {:label "Password" :placeholder "Enter password" :type "password"}
-      [:ty-icon {:slot "start" :name "lock" :size "sm"}]
-      [:ty-icon {:slot "end" :name "eye" :size "sm"}]]
+      [:ty-icon {:slot "start" :name "lock" :size "sm"}]]
      [:ty-input {:label "Website" :placeholder "https://" :type "text"}
       [:ty-icon {:slot "start" :name "globe" :size "sm"}]
       [:ty-icon {:slot "end" :name "external-link" :size "sm"}]]])
@@ -145,7 +144,6 @@
 
 <ty-input label=\"Password\" placeholder=\"Enter password\" type=\"password\">
   <ty-icon slot=\"start\" name=\"lock\" size=\"sm\"></ty-icon>
-  <ty-icon slot=\"end\" name=\"eye\" size=\"sm\"></ty-icon>
 </ty-input>
 
 <ty-input label=\"Website\" placeholder=\"https://\">

@@ -16,8 +16,8 @@
 (def ^:private default-seeds
   {;; SEEDS — site defaults (also mirrored as :root overrides in
    ;; packages/cljs/public/index.html so first paint matches before CLJS boots).
-   :brand-hue 47
-   :brand-chroma 0.135
+   :brand-hue 45
+   :brand-chroma 0.125
    :secondary-offset -25       ;; degrees; secondary-hue = brand-hue + offset
    :secondary-detached? false
    :secondary-hue 22

@@ -160,6 +160,14 @@ export const calendarMonthStyles = `
   border-color: var(--ty-calendar-day-hover-border, transparent);
 }
 
+/* Keyboard focus ring (roving tabindex — see calendar-month.ts's render()).
+   :focus-visible, not :focus, so mouse/pointerdown activation doesn't flash
+   a ring; only Tab-in / arrow-key navigation does. */
+.calendar-day-cell:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--calendar-month-accent, var(--ty-color-primary));
+}
+
 /* ============================================================================
    Day States
    ============================================================================ */
@@ -178,10 +186,15 @@ export const calendarMonthStyles = `
   color: var(--ty-calendar-weekend-color, var(--ty-calendar-day-color, var(--ty-text)));
 }
 
-/* Other Month - Muted */
+/* Other Month - Muted.
+   Was color: var(--ty-color-neutral-faint) at opacity 0.5 — -faint alone is
+   only ~2.5:1 against the content surface (already under the 4.5:1 AA text
+   minimum), and blending it toward the background via opacity made it
+   worse (~1.5:1 in light mode). --ty-calendar-other-month-color is its own
+   token (tyrell.css :root / html.dark) calibrated to actually pass, with
+   opacity dropped rather than layered on top. */
 .calendar-day-cell.other-month {
-  color: var(--ty-calendar-other-month-color, var(--ty-color-neutral-faint));
-  opacity: var(--ty-calendar-other-month-opacity, 0.5);
+  color: var(--ty-calendar-other-month-color, #6b7280);
 }
 
 .calendar-day-cell.other-month:hover { 

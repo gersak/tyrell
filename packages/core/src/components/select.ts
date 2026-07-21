@@ -46,6 +46,7 @@ import { selectBaseStyles, selectCustomFlavorCss } from "../styles/select-base.j
 import { selectStyles } from "../styles/select.js";
 import { getLoaderSvg } from "../utils/loader-registry.js";
 import { lockScroll, unlockScroll } from "../utils/scroll-lock.js";
+import { computeAnchoredPosition } from "../utils/positioning.js";
 import { isMobileTouch } from "../utils/mobile.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
@@ -89,10 +90,7 @@ function getElementHash(element: object): number {
 // SVG Icons
 // ============================================================================
 
-/**
- * Required indicator SVG icon (from Lucide)
- */
-const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-asterisk"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`;
+import { REQUIRED_ICON_SVG } from "../utils/icons.js";
 
 /**
  * Chevron down icon SVG
@@ -106,6 +104,20 @@ const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
  * Short lists scan faster than they search — native <select> has no search.
  */
 const SEARCH_AUTO_THRESHOLD = 7;
+
+/**
+ * create-transform="slug": lowercase, spaces → '_', strip anything else
+ * non-alphanumeric, collapse/trim stray underscores.
+ */
+function slugify(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, "")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
+}
 
 /**
  * Search (magnifier) icon SVG — popup search input adornment (from Lucide)
@@ -138,7 +150,18 @@ interface SelectState {
 /**
  * Change event action types
  */
-type ChangeAction = "add" | "remove" | "clear" | "set";
+type ChangeAction = "add" | "remove" | "clear" | "set" | "create";
+
+/**
+ * Detail for the cancelable `create` event — fired before a new option is
+ * minted from typed search text (see tryCreateFromSearch). Listeners may
+ * mutate `value` (e.g. slugify it) or call preventDefault() to take over
+ * entirely (create their own <ty-option>, e.g. after a server round-trip).
+ */
+interface CreateEventDetail {
+  value: string;
+  label: string;
+}
 
 /**
  * Selected item info — enough for out-of-band chip rendering
@@ -236,6 +259,24 @@ export class TySelect extends TyComponent<SelectState> {
       default: false,
       aliases: { "external-search": true },
     },
+    // Enter on unmatched search text mints a new <ty-option> — forces the
+    // search row on (same as external-search: the input IS the mechanism).
+    allowCreate: {
+      type: "boolean" as const,
+      visual: true,
+      default: false,
+      aliases: { "allow-create": true },
+    },
+    // Opt-in normalizer for the value minted by allow-create (label/display
+    // text is always kept verbatim). 'none' (default): value === typed text.
+    // 'slug': lowercase, spaces → '_', strips anything else non-alphanumeric.
+    createTransform: {
+      type: "string" as const,
+      visual: false,
+      default: "none",
+      aliases: { "create-transform": true },
+      coerce: (v: any) => (v === "slug" ? "slug" : "none"),
+    },
     // Search row visibility: 'auto' (default) shows it only for long option
     // lists; searchable / searchable="true" forces it on, searchable="false"
     // off. external-search always shows it (the input IS the mechanism).
@@ -253,8 +294,11 @@ export class TySelect extends TyComponent<SelectState> {
       type: "string" as const,
       visual: true,
       default: "md",
+      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
       validate: (v: any) => ["sm", "md", "lg"].includes(v),
       coerce: (v: any) => {
+        if (v === "xs") return "sm";
+        if (v === "xl") return "lg";
         if (!["sm", "md", "lg"].includes(v)) {
           console.warn(`[ty-select] Invalid size. Using md.`);
           return "md";
@@ -309,6 +353,8 @@ export class TySelect extends TyComponent<SelectState> {
   private _readonly = false;
   private _required = false;
   private _externalSearch = false;
+  private _allowCreate = false;
+  private _createTransform: "none" | "slug" = "none";
   private _searchable: "auto" | "always" | "never" = "auto";
   private _loading = false;
   private _scrollLockId: string | null = null;
@@ -390,6 +436,7 @@ export class TySelect extends TyComponent<SelectState> {
     // (only acts on tags whose desired-vs-actual selected state differs), so
     // spurious firings caused by our own re-slot work are no-ops.
     this._childObserver = new MutationObserver(() => {
+      this.ensureOptionRoles();
       if (this._state.selectedValues.length > 0) {
         this.syncSelectedTags(this._state.selectedValues);
       }
@@ -401,6 +448,9 @@ export class TySelect extends TyComponent<SelectState> {
       this.updateSelectionDisplay();
     });
     this._childObserver.observe(this, { childList: true });
+    // MutationObserver only fires on FUTURE mutations — cover the initial
+    // set of options too (the common case: none selected yet at connect).
+    this.ensureOptionRoles();
 
     this._syncCustomFlavor();
   }
@@ -516,6 +566,14 @@ export class TySelect extends TyComponent<SelectState> {
           this._searchable = newValue;
           if (this.isConnected && this.shadowRoot)
             this.updateSearchVisibility();
+          break;
+        case "allowCreate":
+          this._allowCreate = newValue;
+          if (this.isConnected && this.shadowRoot)
+            this.updateSearchVisibility();
+          break;
+        case "createTransform":
+          this._createTransform = newValue;
           break;
         case "size":
           this._size = newValue;
@@ -704,6 +762,23 @@ export class TySelect extends TyComponent<SelectState> {
       } else if (!shouldBeSelected && isSelected) {
         this.deselectTag(tag);
       }
+      // ARIA listbox pattern: every option reports its live selected state,
+      // not just ones that changed this pass — cheap (idempotent setAttribute).
+      tag.setAttribute("aria-selected", String(shouldBeSelected));
+    });
+  }
+
+  /**
+   * role="option" for every current option/tag — separate from
+   * syncSelectedTags (which only runs when the `value` property changes)
+   * so it also covers the "nothing selected yet, value never touched"
+   * startup case. Idempotent; cheap to call from the child MutationObserver
+   * on every light-DOM change.
+   */
+  private ensureOptionRoles(): void {
+    this.getTagElements().forEach((tag) => {
+      if (!tag.hasAttribute("role")) tag.setAttribute("role", "option");
+      if (!tag.hasAttribute("aria-selected")) tag.setAttribute("aria-selected", "false");
     });
   }
 
@@ -779,8 +854,6 @@ export class TySelect extends TyComponent<SelectState> {
     if (!stub || !dialog) return;
 
     const stubRect = stub.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
 
     // Get dialog dimensions (it's already shown with showModal).
     // Cap the estimate: with hundreds of options the raw measurement can be
@@ -793,7 +866,6 @@ export class TySelect extends TyComponent<SelectState> {
       MAX_POPUP_ESTIMATE,
     );
 
-    const padding = 8;
     const wrapPadding = 20;
 
     // Popup width is independent of the trigger — a small button trigger still
@@ -805,31 +877,16 @@ export class TySelect extends TyComponent<SelectState> {
       ? cssWidth
       : Math.max(stubRect.width, 320);
 
-    // Available space calculations
-    const spaceBelow = viewportHeight - stubRect.bottom;
-    const spaceAbove = stubRect.top;
+    const pos = computeAnchoredPosition({
+      anchorRect: stubRect,
+      popupWidth,
+      popupHeight: estimatedHeight,
+    });
+    const positionBelow = pos.below;
 
-    // Smart direction logic: below when it fits — and when neither side
-    // fits, take the side with MORE room instead of blindly flipping up
-    // (a field near the viewport top used to clip the popup off-screen).
-    const positionBelow =
-      spaceBelow >= estimatedHeight + padding || spaceBelow >= spaceAbove;
-
-    // Anchor to the trigger's left edge, clamped into the viewport
-    const x = Math.max(
-      padding - wrapPadding,
-      Math.min(
-        stubRect.left - wrapPadding,
-        viewportWidth - popupWidth - wrapPadding - padding,
-      ),
-    );
-
-    // Open below (or above) the trigger — never covering it
-    const gap = 4;
-    const y = positionBelow
-      ? stubRect.bottom + gap - wrapPadding
-      : viewportHeight - stubRect.top + gap - wrapPadding;
-
+    // Shift by the dialog's transparent wrap (room for shadows)
+    const x = pos.x - wrapPadding;
+    const y = (positionBelow ? pos.topY : pos.bottomY) - wrapPadding;
     const width = popupWidth + wrapPadding + wrapPadding;
 
     // Set CSS variables for positioning
@@ -906,6 +963,9 @@ export class TySelect extends TyComponent<SelectState> {
     ) as HTMLDialogElement;
     if (!dialog) return;
 
+    const stubEl = shadow.querySelector(".select-stub");
+    if (stubEl) stubEl.setAttribute("aria-expanded", "true");
+
     // Lock body scroll while dropdown is open
     const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
     this._scrollLockId = lockId;
@@ -961,6 +1021,9 @@ export class TySelect extends TyComponent<SelectState> {
     ) as HTMLDialogElement;
 
     if (!dialog) return;
+
+    const stubEl = shadow.querySelector(".select-stub");
+    if (stubEl) stubEl.setAttribute("aria-expanded", "false");
 
     // Destroy custom scrollbar
     this._destroyOptionsScrollbar();
@@ -1031,6 +1094,9 @@ export class TySelect extends TyComponent<SelectState> {
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
     if (!dialog) return;
 
+    const stubEl = shadow.querySelector(".select-stub");
+    if (stubEl) stubEl.setAttribute("aria-expanded", "true");
+
     // Lock body scroll while mobile modal is open
     const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
     this._scrollLockId = lockId;
@@ -1073,6 +1139,9 @@ export class TySelect extends TyComponent<SelectState> {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
     if (!dialog) return;
+
+    const stubEl = shadow.querySelector(".select-stub");
+    if (stubEl) stubEl.setAttribute("aria-expanded", "false");
 
     // Close immediately — ::backdrop doesn't support transitions
     dialog.classList.remove("open");
@@ -1133,6 +1202,22 @@ export class TySelect extends TyComponent<SelectState> {
     this.openDropdown();
   }
 
+  /**
+   * Keyboard-open the (closed) stub. The stub is a plain div with
+   * tabindex="0", not a native <button> — Enter/Space don't turn into
+   * click events on their own the way they do for real form controls, and
+   * without this a keyboard-only user could Tab to the field but never
+   * open it. document-level handleKeyboard() only runs once already open
+   * (it early-returns on !this._state.open), so this is the other half.
+   */
+  private handleStubKeydown(e: KeyboardEvent): void {
+    if (this._disabled || this._readonly || this._state.open) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      e.preventDefault();
+      this.openDropdown();
+    }
+  }
+
   private handleTagClick(e: Event): void {
     const target = e.target as HTMLElement;
 
@@ -1144,6 +1229,17 @@ export class TySelect extends TyComponent<SelectState> {
     e.preventDefault();
     e.stopPropagation();
 
+    this.selectByTag(tag);
+  }
+
+  /**
+   * Select/toggle a tag by element — the part of handleTagClick that has no
+   * dependency on a real DOM event, so keyboard/programmatic callers (Enter
+   * on a highlighted option, allow-create's exact-match dedup) can call it
+   * directly instead of faking an Event object just to satisfy
+   * preventDefault()/stopPropagation().
+   */
+  private selectByTag(tag: HTMLElement): void {
     const tagValue = this.getTagData(tag).value;
     const currentValues = this.getSelectedValues();
 
@@ -1171,6 +1267,104 @@ export class TySelect extends TyComponent<SelectState> {
         tagValue,
       );
     }
+  }
+
+  /**
+   * allow-create: Enter with unmatched search text mints a new option.
+   * Returns true if it handled the key (created, or selected an existing
+   * exact match instead of duplicating) — false if there's nothing to do
+   * (blank query, or allow-create is off), so the caller's normal Enter
+   * handling (select highlighted, or no-op) proceeds.
+   */
+  private tryCreateFromSearch(): boolean {
+    if (!this._allowCreate) return false;
+
+    const query = (this._state.search || "").trim();
+    if (!query) return false;
+
+    const queryLower = query.toLowerCase();
+    const allTags = this.getTagElements().map((el) => this.getTagData(el));
+
+    // Dedup: typed text exactly matches an existing option (by value or
+    // display text) — select it instead of minting a duplicate.
+    const existing = allTags.find(
+      (t) =>
+        t.value.toLowerCase() === queryLower ||
+        t.text.toLowerCase() === queryLower,
+    );
+    if (existing) {
+      this.selectByTag(existing.element);
+      return true;
+    }
+
+    const rawLabel = query;
+    const defaultValue =
+      this._createTransform === "slug" ? slugify(rawLabel) : rawLabel;
+    if (!defaultValue) return true; // slugified to nothing — handled no-op
+
+    const detail: CreateEventDetail = { value: defaultValue, label: rawLabel };
+    const event = new CustomEvent("create", {
+      detail,
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(event);
+    if (event.defaultPrevented) return true; // consumer takes over entirely
+
+    const finalValue = detail.value;
+    const option = document.createElement("ty-option");
+    option.setAttribute("value", finalValue);
+    option.textContent = rawLabel;
+    this.appendChild(option);
+
+    if (!this._multiple) {
+      this.updateComponentValue([finalValue], true, "create", finalValue);
+      if (this._state.mode === "mobile") {
+        this.closeMobileModal();
+      } else {
+        this.closeDropdown();
+      }
+      return true;
+    }
+
+    const currentValues = this.getSelectedValues();
+    this.updateComponentValue(
+      [...currentValues, finalValue],
+      true,
+      "create",
+      finalValue,
+    );
+    this.clearSearchAfterCreate();
+    return true;
+  }
+
+  /**
+   * Multiple + allow-create: clear the search box and re-show the full
+   * (now-longer) option list so the next tag can be typed immediately —
+   * the tags-input pattern.
+   */
+  private clearSearchAfterCreate(): void {
+    this._state.search = "";
+    this._state.highlightedIndex = -1;
+    const shadow = this.shadowRoot;
+    if (!shadow) return;
+    const desktopInput = shadow.querySelector(
+      ".dropdown-search-input",
+    ) as HTMLInputElement | null;
+    const mobileInput = shadow.querySelector(
+      ".mobile-search-input",
+    ) as HTMLInputElement | null;
+    if (desktopInput) desktopInput.value = "";
+    if (mobileInput) mobileInput.value = "";
+
+    const allTags = this.getTagElements().map((el) => this.getTagData(el));
+    this._state.filteredTags = allTags;
+    this.updateTagVisibility(allTags, allTags);
+    this.updateOptionsVisibility(true);
+    this.clearHighlights(allTags);
+    this.updateMobileSelectedState();
+    (desktopInput ?? mobileInput)?.focus();
   }
 
   private blockSearchClick(e: Event): void {
@@ -1246,13 +1440,15 @@ export class TySelect extends TyComponent<SelectState> {
       case "Enter":
         e.preventDefault();
         e.stopPropagation();
-        // Select highlighted tag if any
+        // A highlighted (arrowed-to) option always wins — the user picked
+        // it explicitly, so allow-create must not shadow it with a new one.
         if (
           currentHighlightedIndex >= 0 &&
           currentHighlightedIndex < tagsCount
         ) {
-          const tag = filteredTags[currentHighlightedIndex];
-          this.handleTagClick({ target: tag.element } as any);
+          this.selectByTag(filteredTags[currentHighlightedIndex].element);
+        } else {
+          this.tryCreateFromSearch();
         }
         break;
 
@@ -1515,6 +1711,7 @@ export class TySelect extends TyComponent<SelectState> {
     if (stub) {
       this._stubClickHandler = this.handleStubClick.bind(this);
       stub.addEventListener("click", this._stubClickHandler);
+      stub.addEventListener("keydown", this.handleStubKeydown.bind(this) as EventListener);
     }
 
     this.setupTriggerSlot();
@@ -1572,10 +1769,12 @@ export class TySelect extends TyComponent<SelectState> {
     // Only set innerHTML and setup listeners if container doesn't exist
     if (!shadow.querySelector(".select-container")) {
       const stubClasses = this.buildStubClasses();
+      const listboxId = `select-listbox-${getElementHash(this)}`;
+      const labelId = `select-label-${getElementHash(this)}`;
 
       const labelHtml = this._label
         ? `
-        <label class="ty-field-label">
+        <label class="ty-field-label" id="${labelId}">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}
         </label>
@@ -1589,7 +1788,13 @@ export class TySelect extends TyComponent<SelectState> {
           ${labelHtml}
           <div class="dropdown-wrapper">
             <div class="dropdown-stub select-stub ${stubClasses}"
-                 ${this._disabled ? "disabled" : ""}>
+                 role="combobox"
+                 aria-haspopup="listbox"
+                 aria-expanded="false"
+                 aria-controls="${listboxId}"
+                 ${this._label ? `aria-labelledby="${labelId}"` : ""}
+                 tabindex="${this._disabled ? "-1" : "0"}"
+                 ${this._disabled ? 'disabled aria-disabled="true"' : ""}>
               <slot name="trigger">
                 <slot name="start"></slot>
                 <slot name="selected"></slot>
@@ -1617,7 +1822,7 @@ export class TySelect extends TyComponent<SelectState> {
                 </div>
               </div>
               <div class="dropdown-options-wrapper">
-                <div class="dropdown-options">
+                <div class="dropdown-options" id="${listboxId}" role="listbox" ${this._multiple ? 'aria-multiselectable="true"' : ""}>
                   <slot id="options-slot"></slot>
                 </div>
                 <div class="dropdown-loading" aria-hidden="true">
@@ -1653,10 +1858,12 @@ export class TySelect extends TyComponent<SelectState> {
     // Only set innerHTML and setup listeners if container doesn't exist
     if (!shadow.querySelector(".select-container")) {
       const stubClasses = this.buildStubClasses();
+      const listboxId = `select-listbox-${getElementHash(this)}`;
+      const labelId = `select-label-${getElementHash(this)}`;
 
       const labelHtml = this._label
         ? `
-        <label class="ty-field-label">
+        <label class="ty-field-label" id="${labelId}">
           ${this._label}
           ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}
         </label>
@@ -1700,7 +1907,13 @@ export class TySelect extends TyComponent<SelectState> {
           ${labelHtml}
           <div class="dropdown-wrapper">
             <div class="dropdown-stub select-stub ${stubClasses}"
-                 ${this._disabled ? "disabled" : ""}>
+                 role="combobox"
+                 aria-haspopup="listbox"
+                 aria-expanded="false"
+                 aria-controls="${listboxId}"
+                 ${this._label ? `aria-labelledby="${labelId}"` : ""}
+                 tabindex="${this._disabled ? "-1" : "0"}"
+                 ${this._disabled ? 'disabled aria-disabled="true"' : ""}>
               <slot name="trigger">
                 <slot name="start"></slot>
                 <slot name="selected"></slot>
@@ -1727,7 +1940,7 @@ export class TySelect extends TyComponent<SelectState> {
                     <div class="section-header">
                       <span class="section-title">${this._availableLabel}</span>
                     </div>
-                    <div class="section-content dropdown-options-wrapper">
+                    <div class="section-content dropdown-options-wrapper" id="${listboxId}" role="listbox" ${this._multiple ? 'aria-multiselectable="true"' : ""}>
                       <slot id="options-slot"></slot>
                       <div class="empty-state">${this._noOptionsMessage}</div>
                       <div class="dropdown-loading" aria-hidden="true">
@@ -1768,6 +1981,7 @@ export class TySelect extends TyComponent<SelectState> {
 
     if (stub) {
       stub.addEventListener("click", (e) => this.handleMobileStubClick(e));
+      stub.addEventListener("keydown", (e) => this.handleMobileStubKeydown(e as KeyboardEvent));
     }
 
     this.setupTriggerSlot();
@@ -1821,6 +2035,15 @@ export class TySelect extends TyComponent<SelectState> {
     this.openMobileModal();
   }
 
+  /** Keyboard-open the (closed) mobile stub — see handleStubKeydown for why this is needed. */
+  private handleMobileStubKeydown(e: KeyboardEvent): void {
+    if (this._disabled || this._readonly || this._state.open) return;
+    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
+      e.preventDefault();
+      this.openMobileModal();
+    }
+  }
+
   /**
    * Handle mobile tag click - select and potentially close
    */
@@ -1870,6 +2093,8 @@ export class TySelect extends TyComponent<SelectState> {
    */
   private shouldShowSearch(): boolean {
     if (this._externalSearch) return true;
+    // allow-create's only input mechanism IS the search box.
+    if (this._allowCreate) return true;
     if (this._searchable === "always") return true;
     if (this._searchable === "never") return false;
     return this.getTagElements().length > SEARCH_AUTO_THRESHOLD;

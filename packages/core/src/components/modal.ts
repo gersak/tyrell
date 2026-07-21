@@ -145,7 +145,7 @@ function getModalDialog(shadowRoot: ShadowRoot): HTMLDialogElement | null {
 function getModalId(el: TyModal): string {
   let id = modalIds.get(el);
   if (!id) {
-    id = `modal-${el.id || Math.random().toString(36).substr(2, 9)}`;
+    id = `modal-${el.id || Math.random().toString(36).slice(2, 11)}`;
     modalIds.set(el, id);
   }
   return id;
@@ -449,6 +449,18 @@ function render(el: TyModal): void {
   } else {
     dialog.removeAttribute('data-backdrop');
   }
+
+  // Accessible name: <dialog> has an implicit role="dialog" for free, but
+  // nothing gives it a NAME unless the consumer's own slotted heading
+  // happens to get wired up manually. Opt-in `label` attribute (same
+  // pattern as ty-select/ty-date-picker's `label` prop) — unset stays
+  // exactly as before (no regression, just no fix without opting in).
+  const label = el.getAttribute('label');
+  if (label) {
+    dialog.setAttribute('aria-label', label);
+  } else {
+    dialog.removeAttribute('aria-label');
+  }
   
   // Setup event handlers
   setupBackdropClick(el, dialog, attributes.closeOnOutsideClick);
@@ -591,7 +603,7 @@ export class TyModal extends HTMLElement {
   
   /** Observed attributes */
   static get observedAttributes() {
-    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape'];
+    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'label'];
   }
   
   constructor() {

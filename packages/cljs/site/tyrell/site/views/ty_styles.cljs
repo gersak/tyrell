@@ -370,6 +370,95 @@ html.dark .flavor-picker-scope {
                                        (router/navigate! :tyrell.site.docs/theming))}}
      "Theming"] " page."]])
 
+;; ----------------------------------------------------------------------------
+;; Typography & shape — live font-family / border-radius override demo. Same
+;; "minimal variable surface" point as brand-flavor-demo, but for the two
+;; tokens that aren't color. No derivation machinery needed here (unlike the
+;; OKLCH brand ramp) — --ty-font-sans and --ty-radius-{base,md} are the
+;; literal tokens components already read; this just sets them directly on a
+;; scoped container.
+;; ----------------------------------------------------------------------------
+
+(def ^:private font-presets
+  [["sans" "Sans (default)" nil]
+   ["serif" "Serif" "Georgia, Cambria, \"Times New Roman\", Times, serif"]
+   ["mono" "Monospace" "\"JetBrains Mono\", \"Fira Code\", ui-monospace, SFMono-Regular, monospace"]])
+
+(def ^:private radius-presets
+  [["0" "Sharp"]
+   ["4" "Subtle"]
+   ["8" "Default"]
+   ["16" "Soft"]
+   ["9999" "Pill"]])
+
+(defn- tp-font []   (get-in @state/state [:typography-picker :font] "sans"))
+(defn- tp-radius [] (get-in @state/state [:typography-picker :radius] "8"))
+(defn- tp-set-font!   [f] (swap! state/state assoc-in [:typography-picker :font] f))
+(defn- tp-set-radius! [r] (swap! state/state assoc-in [:typography-picker :radius] r))
+
+(defn- tp-font-value []
+  (some (fn [[k _ v]] (when (= k (tp-font)) v)) font-presets))
+
+(defn- typography-picker-style []
+  (cond-> {"--ty-radius-base" (str (tp-radius) "px")
+           "--ty-radius-md"   (str (tp-radius) "px")}
+    (tp-font-value) (assoc "--ty-font-sans" (tp-font-value))))
+
+(defn- picker-chip [selected? label on-click]
+  [:ty-button {:size "xs" :flavor "neutral"
+               :appearance (if selected? "solid" "outlined")
+               :on {:click on-click}}
+   label])
+
+(defn- typography-live-grid []
+  [:div.space-y-4
+   [:div.flex.flex-wrap.items-center.gap-2
+    [:ty-button {:flavor "primary"} "Primary"]
+    [:ty-button {:flavor "neutral" :appearance "outlined"} "Neutral"]
+    [:ty-tag {:flavor "primary"} "Tag"]]
+   [:div.grid.gap-3.sm:grid-cols-2
+    [:ty-input {:label "Name" :placeholder "Type here…"}]
+    [:ty-select {:label "Country" :placeholder "Choose…"}
+     [:ty-option {:value "a"} "Option A"]
+     [:ty-option {:value "b"} "Option B"]]]
+   [:ty-date-picker {:label "Date" :value "2026-07-17"}]])
+
+(defn- typography-integration-css []
+  (str ":root {\n"
+       (when-let [v (tp-font-value)] (str "  --ty-font-sans: " v ";\n"))
+       "  --ty-radius-base: " (tp-radius) "px;\n"
+       "  --ty-radius-md: " (tp-radius) "px;\n"
+       "}"))
+
+(defn typography-shape-demo
+  "Live font-family + border-radius override — same point as brand-flavor-demo
+   (a handful of CSS variables control everything), minus the OKLCH shape."
+  []
+  [:div.ty-elevated.p-6.rounded-lg
+   {:style (typography-picker-style)}
+   [:h3.text-lg.font-semibold.ty-text.mb-2 "Type & Shape. Two Variables."]
+   [:p.ty-text-.mb-4
+    "No color-mix ramp needed here — " [:code "--ty-font-sans"] " and "
+    [:code "--ty-radius-{base,md}"] " are the literal tokens every component "
+    "already reads. Change them once, everything below follows — including "
+    "the field " [:code "label"] ", not just the input text."]
+
+   [:div.flex.flex-wrap.items-center.gap-x-6.gap-y-3.mb-8
+    [:div.flex.items-center.gap-2
+     [:span.ty-text--.text-xs "Font"]
+     (for [[k label _] font-presets]
+       (picker-chip (= k (tp-font)) label (fn [_] (tp-set-font! k))))]
+    [:div.flex.items-center.gap-2
+     [:span.ty-text--.text-xs "Radius"]
+     (for [[v label] radius-presets]
+       (picker-chip (= v (tp-radius)) label (fn [_] (tp-set-radius! v))))]]
+
+   [:div.grid.gap-6.lg:grid-cols-2
+    (typography-live-grid)
+    [:div.space-y-3
+     (common/section-label "The entire integration")
+     (common/code-block (typography-integration-css) "css")]]])
+
 (defn css-architecture-explanation
   "Critical warning: components render unstyled without tyrell.css"
   []
@@ -414,6 +503,7 @@ html.dark .flavor-picker-scope {
    (background-variants-demo)
    (surface-classes-demo)
    (brand-flavor-demo)
+   (typography-shape-demo)
    (css-architecture-explanation)
 
    ;; Footer summary

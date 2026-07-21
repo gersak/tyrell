@@ -562,7 +562,6 @@ function renderTabButtons(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string 
       role="tab"
       data-tab-id="${tabId}"
       id="tab-${tabId}"
-      aria-controls="panel-${tabId}"
       aria-selected="${active}"
       tabindex="${active ? '0' : '-1'}"
       data-active="${active}"
@@ -602,7 +601,6 @@ function renderButtonsOnly(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string
       role="tab"
       data-tab-id="${tabId}"
       id="tab-${tabId}"
-      aria-controls="panel-${tabId}"
       aria-selected="${active}"
       tabindex="${active ? '0' : '-1'}"
       data-active="${active}"
@@ -625,7 +623,25 @@ function render(el: TyTabs): void {
   const tabs = getChildTabs(el);
   const activeId = getActiveTabId(el, tabs);
   const activeIndex = activeId ? (findTabIndex(tabs, activeId) ?? 0) : 0;
-  
+
+  // Each <ty-tab> IS its tabpanel (no separate wrapper — there's just one
+  // catch-all <slot> in the carousel viewport below). role/aria-labelledby/
+  // tabindex go directly on the light-DOM host; its `id` attribute is ALSO
+  // its tabId (getTabId reads it directly), so it's never touched here.
+  // No aria-controls on the tab BUTTON pointing at this: it lives in the
+  // shadow root while the panel is in light DOM, and ARIA id-references
+  // don't resolve across a shadow-tree boundary — axe's aria-valid-attr-value
+  // correctly flags that as invalid even though getElementById can find the
+  // target. role=tab + aria-selected + aria-labelledby (this direction) is
+  // what's actually load-bearing; caught by axe once ty-tabs got coverage.
+  tabs.forEach((tab) => {
+    const tabId = getTabId(tab);
+    if (!tabId) return;
+    tab.setAttribute('role', 'tabpanel');
+    tab.setAttribute('aria-labelledby', `tab-${tabId}`);
+    tab.setAttribute('tabindex', '0');
+  });
+
   // Check if structure already exists
   const existingContainer = shadowRoot.querySelector('.tabs-container');
   const existingButtons = shadowRoot.querySelector('.tab-buttons');

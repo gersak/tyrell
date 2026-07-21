@@ -36,10 +36,7 @@ const CHECK_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" heigh
  */
 const ERROR_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`
 
-/**
- * Required indicator SVG icon (from Lucide)
- */
-const REQUIRED_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-asterisk-icon lucide-asterisk"><path d="M12 6v12"/><path d="M17.196 9 6.804 15"/><path d="m6.804 9 10.392 6"/></svg>`
+import { REQUIRED_ICON_SVG } from '../utils/icons.js'
 
 /**
  * Component internal state
@@ -305,6 +302,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
     if (copyButton) {
       copyButton.classList.add('success')
       copyButton.innerHTML = CHECK_ICON_SVG
+      copyButton.setAttribute('aria-label', 'Copied!')
     }
 
     // Reset after 2 seconds
@@ -314,6 +312,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       if (btn) {
         btn.classList.remove('success')
         btn.innerHTML = COPY_ICON_SVG
+        btn.setAttribute('aria-label', 'Copy to clipboard')
       }
       this._copyTimeout = null
     }, 2000)
@@ -333,6 +332,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
     if (copyButton) {
       copyButton.classList.add('error')
       copyButton.innerHTML = ERROR_ICON_SVG
+      copyButton.setAttribute('aria-label', 'Copy failed')
     }
 
     this._copyTimeout = window.setTimeout(() => {
@@ -340,6 +340,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       if (btn) {
         btn.classList.remove('error')
         btn.innerHTML = COPY_ICON_SVG
+        btn.setAttribute('aria-label', 'Copy to clipboard')
       }
       this._copyTimeout = null
     }, 2000)
@@ -405,7 +406,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
         ${labelHtml}
         <div class="input-wrapper ${classes}">
           ${displayElement}
-          <button class="copy-button${this._showingSuccess ? ' success' : ''}" type="button" ${this.disabled ? 'disabled' : ''}>
+          <button class="copy-button${this._showingSuccess ? ' success' : ''}" type="button" aria-label="${this._showingSuccess ? 'Copied!' : 'Copy to clipboard'}" ${this.disabled ? 'disabled' : ''}>
             ${this._showingSuccess ? CHECK_ICON_SVG : COPY_ICON_SVG}
           </button>
         </div>

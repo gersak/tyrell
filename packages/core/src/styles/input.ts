@@ -59,16 +59,6 @@ export const inputStyles = `
   width: 100%;
 }
 
-:host([size="xl"]) {
-  font-size: 20px;
-}
-
-
-:host([size="xs"]) {
-  font-size: 12px;
-}
-
-
 :host([size="sm"]) {
   font-size: 14px;
 }
@@ -128,7 +118,7 @@ export const inputStyles = `
   transition: all 0.15s ease-in-out;
   
   /* Default size (md) */
-  min-height: 40px;
+  min-height: var(--ty-size-md);
   padding: 0 12px;
 }
 
@@ -265,22 +255,9 @@ input::placeholder {
 
 /* ===== SIZE MODIFIERS ===== */
 
-/* Extra Small */
-.input-wrapper.xs {
-  min-height: 32px;
-  padding: 0 8px;
-  border-radius: var(--ty-input-radius-xs, var(--ty-radius-base));
-}
-
-.input-wrapper.xs input {
-  font-size: var(--ty-font-xs);
-  line-height: var(--ty-leading-xs);
-  letter-spacing: var(--ty-tracking-xs);
-}
-
 /* Small */
 .input-wrapper.sm {
-  min-height: 36px;
+  min-height: var(--ty-size-sm);
   padding: 0 10px;
   border-radius: var(--ty-input-radius-sm, var(--ty-radius-base));
 }
@@ -293,7 +270,7 @@ input::placeholder {
 
 /* Medium (default) */
 .input-wrapper.md {
-  min-height: 40px;
+  min-height: var(--ty-size-md);
   padding: 0 12px;
   border-radius: var(--ty-input-radius-md, var(--ty-radius-base));
 }
@@ -306,7 +283,7 @@ input::placeholder {
 
 /* Large */
 .input-wrapper.lg {
-  min-height: 44px;
+  min-height: var(--ty-size-lg);
   padding: 0 14px;
   border-radius: var(--ty-input-radius-lg, var(--ty-radius-base));
 }
@@ -315,19 +292,6 @@ input::placeholder {
   font-size: var(--ty-font-base);
   line-height: var(--ty-leading-base);
   letter-spacing: var(--ty-tracking-base);
-}
-
-/* Extra Large */
-.input-wrapper.xl {
-  min-height: 48px;
-  padding: 0 16px;
-  border-radius: var(--ty-input-radius-xl, var(--ty-radius-base));
-}
-
-.input-wrapper.xl input {
-  font-size: var(--ty-font-lg);
-  line-height: var(--ty-leading-lg);
-  letter-spacing: var(--ty-tracking-lg);
 }
 
 /* ===== SEMANTIC FLAVOR MODIFIERS (set --input-accent*, consumed above) ===== */

@@ -119,21 +119,21 @@
         "Common pattern — actions inside the popup close it via " [:code ".closePopup()"] " on the nearest " [:code "ty-popup"] " ancestor."]
        (demo-area
         [:ty-button {:action ""}
-         [:ty-icon {:name "more-horizontal" :size "16"}]
+         [:ty-icon {:name "more-horizontal" :size "sm"}]
          [:ty-popup {:placement "bottom"}
           [:div.ty-elevated.rounded-lg.py-1 {:style {:min-width "160px"}}
            [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
                                     :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "edit-2" :size "14"}] "Edit"]
+            [:ty-icon {:name "edit" :size "xs"}] "Edit"]
            [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
                                     :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "copy" :size "14"}] "Duplicate"]
+            [:ty-icon {:name "copy" :size "xs"}] "Duplicate"]
            [:div {:style {:height "1px" :background "var(--ty-border-soft)" :margin "0.25rem 0"}}]
            [:button.w-full.ty-text-danger {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
                                            :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "trash-2" :size "14"}] "Delete"]]]])
+            [:ty-icon {:name "trash-2" :size "xs"}] "Delete"]]]])
        (code-block "<ty-button action>
-  <ty-icon name=\"more-horizontal\" size=\"16\"></ty-icon>
+  <ty-icon name=\"more-horizontal\" size=\"sm\"></ty-icon>
   <ty-popup placement=\"bottom\">
     <div class=\"ty-elevated rounded-lg py-1\" style=\"min-width: 160px\">
       <button onclick=\"this.closest('ty-popup').closePopup()\">Edit</button>

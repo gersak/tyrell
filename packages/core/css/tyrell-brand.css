@@ -96,8 +96,8 @@
    * solid buttons. One slider rebrands the page.
    * --------------------------------------------------------------*/
 
-  --ty-brand-hue: 230;
-  --ty-brand-chroma: 0.12; /* restrained EU default; the loud 0.2 read as "bollywood" */
+  --ty-brand-hue: 45;
+  --ty-brand-chroma: 0.125; /* restrained default; the loud 0.2 read as "bollywood" */
 
   /* Surface tint. 0 = monochrome surfaces (default, no brand leak).
    * Bump to ~0.005 (light) / ~0.012 (dark) to warm surfaces toward brand. */

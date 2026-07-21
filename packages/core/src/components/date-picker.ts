@@ -51,6 +51,7 @@ import { ensureStyles } from '../utils/styles.js';
 import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js';
 import { datePickerStyles, datePickerCustomFlavorCss } from '../styles/date-picker.js';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
+import { computeAnchoredPosition } from '../utils/positioning.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { isMobileTouch } from '../utils/mobile.js';
 import { TyComponent } from '../base/ty-component.js';
@@ -126,6 +127,21 @@ const CALENDAR_ICON_SVG = `<svg stroke='currentColor' fill='none' stroke-width='
 const CLEAR_ICON_SVG = `<svg stroke='currentColor' fill='none' stroke-width='2' viewBox='0 0 24 24' width='14' height='14' xmlns='http://www.w3.org/2000/svg'><line x1='18' y1='6' x2='6' y2='18'></line><line x1='6' y1='6' x2='18' y2='18'></line></svg>`;
 
 const SCHEDULE_ICON_SVG = `<svg stroke='currentColor' fill='none' stroke-width='2' viewBox='0 0 24 24' width='16' height='16' xmlns='http://www.w3.org/2000/svg'><circle cx='12' cy='12' r='10'></circle><polyline points='12,6 12,12 16,14'></polyline></svg>`;
+
+// Stable per-instance id (survives across full-rebuild re-renders, unlike a
+// fresh Math.random() per render) — used to wire the stub's aria-labelledby
+// to the label element it's paired with. Same pattern as select.ts's
+// getElementHash.
+const elementIds = new WeakMap<object, number>();
+let elementIdCounter = 0;
+function getElementHash(element: object): number {
+  let id = elementIds.get(element);
+  if (id === undefined) {
+    id = ++elementIdCounter;
+    elementIds.set(element, id);
+  }
+  return id;
+}
 
 // ============================================================================
 // Helper Functions - Date Parsing & Conversion
@@ -440,8 +456,8 @@ class TimeInput {
   private setupEventListeners(): void {
     this.element.addEventListener('keydown', (e) => this.handleKeyDown(e));
     this.element.addEventListener('input', (e) => this.handleInput(e));
-    this.element.addEventListener('click', (e) => this.handleClick(e));
-    this.element.addEventListener('focus', (e) => this.handleFocus(e));
+    this.element.addEventListener('click', () => this.handleClick());
+    this.element.addEventListener('focus', () => this.handleFocus());
   }
 
   /**
@@ -493,14 +509,14 @@ class TimeInput {
   /**
    * Handle click events - position cursor at first digit
    */
-  private handleClick(event: Event): void {
+  private handleClick(): void {
     this.updateState({ caretPosition: 0 });
   }
 
   /**
    * Handle focus events - position cursor at first digit
    */
-  private handleFocus(event: Event): void {
+  private handleFocus(): void {
     this.updateState({ caretPosition: 0 });
   }
 
@@ -702,9 +718,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       type: 'string' as const,
       visual: true,
       default: 'md',
-      validate: (v: any) => ['xs', 'sm', 'md', 'lg', 'xl'].includes(v),
+      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
+      validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
       coerce: (v: any) => {
-        if (!['xs', 'sm', 'md', 'lg', 'xl'].includes(v)) {
+        if (v === 'xs') return 'sm';
+        if (v === 'xl') return 'lg';
+        if (!['sm', 'md', 'lg'].includes(v)) {
           console.warn(`[ty-date-picker] Invalid size '${v}'. Using 'md'.`);
           return 'md';
         }
@@ -1263,6 +1282,31 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       stub.setAttribute('disabled', 'true');
     }
 
+    // Not text-editable (click/Enter/Space just opens the calendar dialog),
+    // so role="button" — not role="combobox", which implies typing. The
+    // popup is a real <dialog> opened via showModal() (see openDropdown),
+    // so it already gets role="dialog" + focus-trap from the browser for
+    // free; only the trigger itself needs wiring.
+    stub.setAttribute('role', 'button');
+    stub.setAttribute('aria-haspopup', 'dialog');
+    stub.setAttribute('aria-expanded', String(this._state.open));
+    stub.setAttribute('tabindex', isDisabled ? '-1' : '0');
+    if (isDisabled) stub.setAttribute('aria-disabled', 'true');
+    if (this.getProperty('label')) {
+      stub.setAttribute('aria-labelledby', `date-picker-label-${getElementHash(this)}`);
+    }
+    // Same gap as ty-select had: a plain div's Enter/Space don't turn into
+    // click events on their own, so without this a keyboard-only user could
+    // Tab to the field but never open it.
+    stub.addEventListener('keydown', (e: Event) => {
+      const ke = e as KeyboardEvent;
+      if (this._state.open) return;
+      if (ke.key === 'Enter' || ke.key === ' ') {
+        ke.preventDefault();
+        this.handleStubClick(e);
+      }
+    });
+
     // Start slot — leading icon (search, calendar variant, etc.)
     const startSlot = document.createElement('slot');
     startSlot.name = 'start';
@@ -1522,34 +1566,24 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     if (!stub || !dialog) return;
 
     const stubRect = stub.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const viewportWidth = window.innerWidth;
 
-    // Calendar-specific height estimation
-    const estimatedHeight = 400;
-    const padding = 0;
-
-    // Available space calculations
-    const spaceBelow = viewportHeight - stubRect.bottom;
-    const spaceAbove = stubRect.top;
-    const spaceRight = viewportWidth - stubRect.left;
-
-    // Smart direction logic
-    const positionBelow = spaceBelow >= estimatedHeight + padding;
-    const fitsHorizontally = spaceRight >= stubRect.width;
+    // Measure when shown; the estimate only covers the pre-layout call
+    const dialogRect = dialog.getBoundingClientRect();
+    const estimatedHeight = dialogRect.height || 400;
+    const popupWidth = dialogRect.width || 320;
 
     const wrapPadding = 8;
 
-    // Calculate position coordinates
-    const x = fitsHorizontally
-      ? stubRect.left - wrapPadding
-      : Math.max(padding, viewportWidth - stubRect.width - padding);
+    const pos = computeAnchoredPosition({
+      anchorRect: stubRect,
+      popupWidth,
+      popupHeight: estimatedHeight,
+      gap: 0,
+    });
+    const positionBelow = pos.below;
 
-    const y = positionBelow
-      ? stubRect.bottom
-      : spaceAbove >= estimatedHeight + padding
-        ? viewportHeight - stubRect.top
-        : Math.max(padding, Math.min(stubRect.bottom, viewportHeight - estimatedHeight - padding));
+    const x = pos.x - wrapPadding;
+    const y = positionBelow ? pos.topY : pos.bottomY;
 
     // Set CSS variables for positioning
     this.style.setProperty('--calendar-x', `${x}px`);
@@ -1581,6 +1615,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     if (label) {
       const labelEl = document.createElement('label');
       labelEl.className = 'ty-field-label';
+      labelEl.id = `date-picker-label-${getElementHash(this)}`;
       labelEl.innerHTML = label + (this.getProperty('required') ? '<span class="required-icon">*</span>' : '');
       container.appendChild(labelEl);
     }
@@ -1736,6 +1771,16 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
   private handleStubClick(event: Event): void {
     event.preventDefault();
+
+    // Heal state/DOM desync: a host re-render can replace the dialog element
+    // while `open` is still true, stranding the picker (openDropdown
+    // early-returns on _state.open). Reality wins: closed dialog → closed state.
+    const dialog = this.shadowRoot?.querySelector('.calendar-dialog') as HTMLDialogElement | null;
+    if (this._state.open && (!dialog || !dialog.open)) {
+      this.updateState({ open: false }, true);
+      unlockScroll(`date-picker-${this.id || this.toString()}`);
+    }
+
     const disabled = this.getProperty('disabled');
     // FIXME: Timestamp guard is a workaround. Calendar day cells use pointerdown,
     // which closes the dialog before the click event fires — the click then hits the
@@ -1893,6 +1938,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
         this.calculateCalendarPosition();
         dialog.classList.add('open');
 
+        const stubEl = this.shadowRoot.querySelector('.date-picker-stub');
+        if (stubEl) stubEl.setAttribute('aria-expanded', 'true');
+
         // Remove focus from any focused elements to prevent the blue outline
         const focusedElement = this.shadowRoot.activeElement as HTMLElement;
         if (focusedElement) {
@@ -1924,6 +1972,10 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
         dialog.classList.remove('position-above', 'position-below', 'open');
         dialog.close();
       }
+      // closeDropdown() doesn't call render(), so the stub's aria-expanded
+      // (still "true" from open) needs an explicit flip here too.
+      const stubEl = this.shadowRoot.querySelector('.date-picker-stub');
+      if (stubEl) stubEl.setAttribute('aria-expanded', 'false');
     }
 
     this.dispatchEvent(new CustomEvent('close', {

@@ -29,3 +29,12 @@ describe('ty-copy flavor', () => {
     expect(cs.color).to.equal('rgb(1, 2, 3)');
   });
 });
+
+describe('ty-copy accessibility — copy button has a real accessible name', () => {
+  it('the icon-only button carries aria-label (was: none at all)', async () => {
+    const el = (await fixture(html`<ty-copy value="x"></ty-copy>`)) as any;
+    await nextFrame();
+    const btn = el.shadowRoot.querySelector('.copy-button');
+    expect(btn.getAttribute('aria-label'), 'has an accessible name').to.be.a('string').and.not.empty;
+  });
+});

@@ -92,6 +92,7 @@
   :trash-2 lucide/trash-2
   :filter lucide/filter
   :more-vertical lucide/more-vertical
+  :more-horizontal lucide/more-horizontal
 
      ;; Form field icons
   :building lucide/building

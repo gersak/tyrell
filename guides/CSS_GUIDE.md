@@ -481,7 +481,37 @@ Each flavored component funnels its colors through a few local vars, which doubl
 | `ty-select` | `--select-accent` (border), `--select-accent-bold` (hover/open border), `--select-ring` (open focus ring) |
 | `ty-date-picker` | `--date-picker-accent`, `--date-picker-accent-bold`, `--date-picker-ring` |
 | `ty-copy` | `--copy-color`, `--copy-color-hover`, `--copy-bg-hover` |
-| `ty-calendar-month` | `--calendar-month-accent` (today + selected border), `--calendar-month-selected-bg`, `--calendar-month-selected-color`, `--calendar-month-selected-hover-bg` — also reachable via the pre-existing `--ty-calendar-*` overrides, which still win |
+| `ty-tooltip` (default `dark` flavor only) | `--ty-tooltip-bg`, `--ty-tooltip-color`, `--ty-tooltip-border` — defined once on `:root`, deliberately NOT redeclared per theme (a tooltip should always pop, light page or dark) |
+| `ty-calendar-month` | `--calendar-month-accent` (today + selected border), `--calendar-month-selected-bg`, `--calendar-month-selected-color`, `--calendar-month-selected-hover-bg` — also reachable via the pre-existing `--ty-calendar-*` overrides, which still win. `--ty-calendar-other-month-color` (prev/next-month day text — its `:root` / `html.dark` defaults are pre-calibrated to pass WCAG AA contrast; if you override it, check contrast against your own surface color) |
+
+---
+
+## Component Sizing
+
+**Fields** (`ty-input`, `ty-select`, `ty-date-picker`) come in exactly **three sizes** — `sm` / `md` / `lg` — sharing one height ladder via `--ty-size-{sm,md,lg}` (32/36/40px). The same `size` value is the same height on all three, so fields always line up in a form row. Legacy `xs`/`xl` are accepted and coerce to `sm`/`lg`.
+
+**Buttons** run a 4px ladder — `xs` 24 / `sm` 28 / `md` 32 / `lg` 36 / `xl` 40 — sharing its top three steps with the field ladder, not a smaller ladder underneath it:
+
+| Placement | Rule | Example |
+|---|---|---|
+| **Alongside** a field (separate elements in a row) | field `sm` = button `md` (32); field `md` = button `lg` (36); field `lg` = button `xl` (40) — exact height match, flush in the row | input `size="md"` + button `size="lg"` → both 36px |
+| **Embedded** in a field's `end` slot | Same size name — nests with a consistent ~4px margin | input `size="md"` + slotted button `size="md"` (36 vs 32) |
+| Button `xs`/`sm` | No matching field — these two steps are button-only (compact toolbars, icon actions) | — |
+
+```html
+<!-- Alongside: button lg matches field md exactly -->
+<div style="display:flex; gap:0.5rem;">
+  <ty-input size="md" placeholder="Search…"></ty-input>
+  <ty-button size="lg">Search</ty-button>
+</div>
+
+<!-- Embedded: same size name nests with a ~4px margin -->
+<ty-input size="md" placeholder="Search…">
+  <ty-button slot="end" size="md" appearance="ghost">Go</ty-button>
+</ty-input>
+```
+
+Override `--ty-size-*` on `:root` (or scope it to a container) to shift the field ladder — fields and the three matching button tiers (`md`/`lg`/`xl`) follow automatically.
 
 ---
 

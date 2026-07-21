@@ -521,17 +521,19 @@ DESIGN SYSTEM TOKENS
   --ty-transition-shadow: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --ty-transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Component Sizes */
-  --ty-size-xs: 1.5rem;
-  /* 24px */
+  /* Component Sizes — single source of truth for FIELD heights.
+     Fields (ty-input, ty-select, ty-date-picker) come in exactly three
+     sizes and consume these via min-height: var(--ty-size-*), so the same
+     `size` attribute is the same height on every field. Shared scale with
+     ty-button's 4px ladder (see button.ts): field sm = button md (32px),
+     field md = button lg (36px), field lg = button xl (40px) — a button
+     and a field of the paired size sit flush, same height, in a row. */
   --ty-size-sm: 2rem;
   /* 32px */
-  --ty-size-md: 2.5rem;
+  --ty-size-md: 2.25rem;
+  /* 36px */
+  --ty-size-lg: 2.5rem;
   /* 40px */
-  --ty-size-lg: 3rem;
-  /* 48px */
-  --ty-size-xl: 3.5rem;
-  /* 56px */
 
   /* Z-Index Scale */
   --ty-z-auto: auto;
@@ -566,6 +568,34 @@ DESIGN SYSTEM TOKENS
     transparent
   );
   --ty-scroll-shadow-transition: opacity 0.2s ease-out;
+
+  /* =================================================================
+  TOOLTIP (default/"dark" flavor)
+  Deliberately theme-INDEPENDENT — defined once here, not redeclared in
+  html.dark below. A tooltip's job is to pop against whatever it's sitting
+  on, light page or dark; every major library (Material, Bootstrap, Ant,
+  Shoelace) keeps its default tooltip a fixed dark chip regardless of page
+  theme. Override on :root (or scope to a container) to retheme globally
+  without touching flavor="light"/"info"/other components.
+  Values are pure achromatic gray (R=G=B, no hue) — matches
+  --ty-solid-neutral's "no tint" convention. Don't reuse a Tailwind
+  slate/cool-gray hex here (e.g. #1f2937) — those carry a real blue
+  undertone (blue channel > red/green) and read as a color flavor next to
+  genuinely neutral buttons, which was exactly the bug being fixed.
+  ================================================================= */
+  --ty-tooltip-bg: #262626;
+  --ty-tooltip-color: #f5f5f5;
+  --ty-tooltip-border: #404040;
+
+  /* =================================================================
+  CALENDAR — "other month" day de-emphasis
+  --ty-color-neutral-faint alone is only ~2.5:1 against white — already
+  below the 4.5:1 WCAG AA text minimum before the (now-removed) opacity
+  fade made it worse still. This is its own token, calibrated to actually
+  pass, rather than reusing -faint here. Real bug, caught by adding
+  axe-core coverage for the first time, not a design choice being revised.
+  ================================================================= */
+  --ty-calendar-other-month-color: #6b7280; /* 4.83:1 vs white */
 }
 
 /* =================================================================
@@ -779,6 +809,10 @@ Emphasis logic inverts: lighter = more emphasis
     rgba(0, 0, 0, 0),
     transparent
   );
+
+  /* Calendar "other month" de-emphasis — see the :root definition for why
+     this is its own token instead of --ty-color-neutral-faint. */
+  --ty-calendar-other-month-color: #8a8a8a; /* 5.04:1 vs dark content bg (#1a1a1a) */
 }
 
 /* =================================================================
