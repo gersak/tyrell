@@ -975,17 +975,12 @@
         ;; Mobile: Single row flex layout
         [:div.mx-auto.px-4.py-3.flex.items-center.gap-3
          {:style {:max-width "1200px"}}
-         ;; Hamburger menu
-         [:button.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
-          {:on {:click toggle-mobile-menu!}}
-          [:ty-icon {:name "menu"
-                     :size "sm"
-                     :class "ty-text-"}]]
-         ;; Logo
+         ;; Logo doubles as the mobile menu trigger (was a separate hamburger
+         ;; button + logo-navigates-home; one tap target now opens the nav).
          [:a.flex.items-center.flex-shrink-0.cursor-pointer
           {:on {:click (fn [e]
                          (.preventDefault e)
-                         (router/navigate! ::landing))}
+                         (toggle-mobile-menu!))}
            :style {:margin-top "0.18rem"}}
           [:ty-icon {:name "ty-logo"
                      :class "ty-text-primary"

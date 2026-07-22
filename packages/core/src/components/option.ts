@@ -9,7 +9,6 @@
 import type { TyOptionElement } from '../types/common.js'
 import { ensureStyles } from '../utils/styles.js'
 import { optionStyles } from '../styles/option.js'
-import { isMobileTouch } from '../utils/mobile.js'
 
 /**
  * Ty Option Component
@@ -41,16 +40,9 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   private _disabled = false
   private _highlighted = false
   private _hidden = false
-  private _isMobile: boolean
-
-  // Clear button event handler reference for cleanup
-  private _clearButtonHandler: ((e: Event) => void) | null = null
 
   constructor() {
     super()
-
-    // Detect mobile device automatically
-    this._isMobile = isMobileTouch()
 
     const shadow = this.attachShadow({ mode: 'open' })
     ensureStyles(shadow, { css: optionStyles, id: 'ty-option' })
@@ -76,11 +68,6 @@ export class TyOption extends HTMLElement implements TyOptionElement {
     this.render()
   }
 
-
-  disconnectedCallback(): void {
-    // Clean up clear button event listener
-    this.removeClearButtonListener()
-  }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return
@@ -211,112 +198,16 @@ export class TyOption extends HTMLElement implements TyOptionElement {
 
 
   /**
-   * Remove clear button event listener if it exists
-   */
-  private removeClearButtonListener(): void {
-    if (this._clearButtonHandler) {
-      const clearBtn = this.shadowRoot?.querySelector('.option-clear-btn')
-      if (clearBtn) {
-        clearBtn.removeEventListener('click', this._clearButtonHandler)
-      }
-      this._clearButtonHandler = null
-    }
-  }
-
-  /**
-   * Add clear button event listener (only if not already added)
-   */
-  private addClearButtonListener(clearBtn: Element): void {
-    // Remove existing listener first (if any)
-    this.removeClearButtonListener()
-
-    // Create new handler
-    this._clearButtonHandler = (e: Event) => {
-      e.preventDefault()
-      e.stopPropagation()
-
-      this.dispatchEvent(new CustomEvent('clear-selection', {
-        bubbles: true,
-        composed: true,
-        detail: { value: this._value }
-      }))
-    }
-
-    // Add listener
-    clearBtn.addEventListener('click', this._clearButtonHandler)
-  }
-
-  /**
  * Render the option component with rich HTML content and property sync
  */
   private render(): void {
     const shadow = this.shadowRoot!
-    const value = this.getOptionValue()
 
-    // Create wrapper with optional clear button
+    // Create wrapper once — the check icon alone communicates selection;
+    // clicking a selected option again deselects it (see select.ts), so no
+    // separate clear affordance is needed on mobile.
     if (!shadow.querySelector('.option-content')) {
-      const shouldShowClear = this._selected && this._isMobile
-
-      if (shouldShowClear) {
-        shadow.innerHTML = `
-          <div class="option-content">
-            <span class="option-text"><slot></slot></span>
-            ${CHECK_SVG}
-            <button class="option-clear-btn" type="button" aria-label="Clear selection">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          </div>
-        `
-
-        // Add clear button click handler
-        const clearBtn = shadow.querySelector('.option-clear-btn')
-        if (clearBtn) {
-          this.addClearButtonListener(clearBtn)
-        }
-      } else {
-        shadow.innerHTML = `<div class="option-content"><slot></slot>${CHECK_SVG}</div>`
-      }
-    } else {
-      // Update existing content - add/remove clear button as needed
-      const shouldShowClear = this._selected && this._isMobile
-      const existingClearBtn = shadow.querySelector('.option-clear-btn')
-
-      if (shouldShowClear && !existingClearBtn) {
-        // Need to add clear button
-        const content = shadow.querySelector('.option-content')
-        if (content) {
-          // Wrap slot in span if not already wrapped
-          const slot = content.querySelector('slot')
-          if (slot && !slot.parentElement?.classList.contains('option-text')) {
-            const textSpan = document.createElement('span')
-            textSpan.className = 'option-text'
-            slot.parentNode?.insertBefore(textSpan, slot)
-            textSpan.appendChild(slot)
-          }
-
-          // Add clear button
-          const clearBtn = document.createElement('button')
-          clearBtn.className = 'option-clear-btn'
-          clearBtn.type = 'button'
-          clearBtn.setAttribute('aria-label', 'Clear selection')
-          clearBtn.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          `
-          this.addClearButtonListener(clearBtn)
-          content.appendChild(clearBtn)
-        }
-      } else if (!shouldShowClear && existingClearBtn) {
-        // Remove clear button
-        existingClearBtn.remove()
-        // Clean up event listener
-        this.removeClearButtonListener()
-      }
+      shadow.innerHTML = `<div class="option-content"><slot></slot>${CHECK_SVG}</div>`
     }
 
     // Update content wrapper attributes

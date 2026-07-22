@@ -12,7 +12,7 @@
          :element-sizes {}
 
          ;; CSS System page — interactive flavor axis picker
-         :flavor-picker {:flavor "brand" :tone "" :hex "#7c3aed"}
+         :flavor-picker {:flavor "brand" :tone "" :hex "#C966D6"}
 
          ;; CSS System page — interactive font/radius picker
          :typography-picker {:font "sans" :radius "8"}

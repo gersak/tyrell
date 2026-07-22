@@ -152,11 +152,28 @@ export const selectStyles = `
   height: 100%;
 }
 
-/* Mobile header: flex row, icon flows inline before the input */
+/* Mobile header: flex row, icon flows inline before the input. Same 32x32
+   footprint as .mobile-close-button (18px glyph centered in the box, not a
+   bare 18px glyph flush at the edge) so the row has two matching bookends —
+   a bare icon on one side and a 32px circle on the other read as lopsided
+   even with equal flex gap on both sides. Matching them also centers the
+   search input's flex:1 fill symmetrically between the two. Fixed white +
+   18px glyph, same reasoning as .mobile-header-label — this sits on the
+   dark ::backdrop blur in both themes, not a theme surface. */
 .dropdown-mode-mobile .mobile-header-content .dropdown-search-icon {
   position: static;
   transform: none;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: #ffffff;
+}
+.dropdown-mode-mobile .mobile-header-content .dropdown-search-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* Search input: bordered field from base styles; just size + icon room */

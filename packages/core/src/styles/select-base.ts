@@ -501,12 +501,17 @@ export const selectBaseStyles = `
   right: 0;
   bottom: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh; /* dvh, not vh — shrinks with the on-screen keyboard so the
+                     dialog never sits partly behind it */
   max-width: 100vw;
-  max-height: 100vh;
+  max-height: 100dvh;
   margin: 0;
   padding: 0;
-  padding-top: 10vh; /* Position content from top */
+  padding-top: 6dvh; /* Sit higher than the old 10vh, but 4dvh left the
+                         floating label with no headroom — it sits above
+                         .mobile-search-header via position:absolute, so it
+                         needs room inside this padding, not just inside the
+                         content box, or it crowds the very top of the screen */
   border: none;
   background: transparent; /* Backdrop handles background */
   /* Note: Don't set display - browser controls <dialog> visibility */
@@ -527,7 +532,9 @@ export const selectBaseStyles = `
 
 /* Native dialog backdrop with blur */
 .dropdown-mode-mobile .mobile-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.65); /* was 0.5 — needed more depth to reliably
+                                       carry white header text/icons over a
+                                       light page blurred behind it */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -539,7 +546,7 @@ export const selectBaseStyles = `
   width: calc(100% - 32px); /* Side margins */
   max-width: 400px; /* Constrained width like dropdown */
   min-height: 200px;
-  max-height: calc(90vh - 10vh);
+  max-height: 90dvh; /* leaves room below the 6dvh padding-top, shrinks with keyboard */
   opacity: 0;
   transform: scale(0.95);
   transition: 
@@ -572,64 +579,73 @@ export const selectBaseStyles = `
   align-items: center;
   gap: 12px;
   width: 100%;
-}
-
-/* Header for non-searchable (label + close button) */
-.dropdown-mode-mobile .mobile-header-nosearch {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
+  /* When search is disabled, updateSearchVisibility() hides the icon+input
+     (see select.ts) but leaves the close button as the row's only child —
+     without this it falls back to flex-start and strands the button on the
+     left. Harmless when search IS shown: the input's flex:1 already
+     consumes all remaining space, so justify-content never gets a say. */
   justify-content: flex-end;
-  margin-bottom: 16px;
-  padding: 0;
-  background: transparent;
-  position: relative;
-  min-height: 40px;
 }
 
 .dropdown-mode-mobile .mobile-header-label {
   position: absolute;
   bottom: 100%;
-  left: 6px;
-  margin-bottom: 4px;
-  font-size: var(--ty-font-lg);
-  line-height: var(--ty-leading-lg);
-  letter-spacing: var(--ty-tracking-lg);
-  font-weight: 700;
-  color: var(--ty-color-neutral);
+  left: 2px;
+  margin-bottom: 8px; /* was 4px — too tight against the search row */
+  font-size: var(--ty-font-base); /* was --ty-font-lg — read as oversized/heavy paired with 700 */
+  line-height: var(--ty-leading-base);
+  letter-spacing: var(--ty-tracking-base);
+  font-weight: 600; /* was 700 — 700 at font-lg read as clunky */
+  /* This sits on the dialog's ::backdrop (rgba(0,0,0,.65) + blur) — a fixed
+     DARK overlay regardless of theme, not the theme's own surface color.
+     A theme-toggling token (light mode → black) fights that: black text on
+     a dark blurred backdrop is the wrong combination. Fixed white, same
+     reasoning as ty-tooltip's deliberately theme-independent default in
+     tyrell.css — this element's job is to pop against a dark backdrop in
+     both themes, not to track the page's light/dark state. */
+  color: #ffffff;
   pointer-events: none;
 }
 
-/* Close button - circular with border (matches dropdown.ts) */
+/* Close button — borderless ghost icon button (was a bordered circle badge,
+   which read as a heavy, disconnected "chip" next to the plain search icon).
+   Matches ty-button's ghost treatment: transparent at rest, soft neutral
+   fill on hover/active, no border ever. */
 .dropdown-mode-mobile .mobile-close-button {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ty-surface-floating);
-  border: 2px solid var(--mobile-border-color);
+  background: transparent;
+  border: none;
   border-radius: 50%;
-  color: var(--ty-text-strong);
+  /* Same reasoning as .mobile-header-label: fixed white, not a theme token —
+     this sits on the dark ::backdrop blur in both themes, never on a theme
+     surface. */
+  color: #ffffff;
   cursor: pointer;
   transition: var(--ty-transition-all);
   padding: 0;
 }
 
+/* Hover/active fills also go fixed-white-tinted rather than theme neutral —
+   --ty-bg-neutral-soft is a LIGHT fill in light mode, which would swallow
+   the white icon it's meant to sit behind. */
 .dropdown-mode-mobile .mobile-close-button:hover {
-  background: var(--ty-bg-neutral);
-  border-color: var(--ty-border);
-  color: var(--ty-text-strong);
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .dropdown-mode-mobile .mobile-close-button:active {
   transform: scale(0.9);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .dropdown-mode-mobile .mobile-close-button svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 /* Mobile search input (matches dropdown.ts) */

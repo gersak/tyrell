@@ -5,6 +5,16 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC34] - 2026-07-22
+
+Headline: **`ty-select` mobile-mode fixes** — stale hidden options, focus/keyboard, and external-search results not appearing.
+
+### Fixed
+
+- **Mobile options stayed hidden after a previous search, on open** — `openDropdown()` (desktop) has always defensively re-shown the options area on every open ("may have been hidden from previous search"); `openMobileModal()` had no equivalent. Added the mobile-appropriate reset (`updateTagVisibility` unhides every option on open, matching desktop's intent via the mechanism mobile actually uses — per-option `hidden` attribute rather than desktop's container-level `display:none`).
+- **Mobile search input's focus was racing `showModal()`'s own native focus algorithm** — a manual `searchInput.focus()` call right after `showModal()` lost the race; `document.activeElement` ended up back on the host element, so keystrokes weren't reaching the input at all despite it looking focused. Replaced with the `autofocus` HTML attribute, which `showModal()` itself honors as part of its spec'd focusing steps — no race, and it correctly falls through to the close button when search is hidden.
+- **`external-search` results never appeared on mobile after typing** — `.mobile-available-section[data-empty="true"] slot { display: none }` hides the *entire* options slot, not just the empty-state message, and only `updateMobileSelectedState()` (which sets `data-empty`) recomputes it. Internal filtering already called that; `external-search` bypasses internal filtering entirely and only the `MutationObserver` watching for consumer-driven `ty-option` swaps was left to catch a change — and it never called `updateMobileSelectedState()`. Result: the consumer's new options were genuinely in the DOM, correctly slotted, just invisible. Fixed by having the observer refresh mobile state too.
+
 ## [1.0.0-TC33] - 2026-07-21
 
 Headline: **New brand default** — `--ty-brand-hue`/`--ty-brand-chroma` now `45`/`0.125` (amber/orange) instead of `230`/`0.12` (indigo).

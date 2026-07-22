@@ -446,6 +446,15 @@ export class TySelect extends TyComponent<SelectState> {
       // including our display clone. Rebuild the selection display (idempotent:
       // a clone that already matches is left alone, so no observer loop).
       this.updateSelectionDisplay();
+      // Mobile's "Available (N)" count and empty-state come from
+      // updateMobileSelectedState(), which internal search filtering already
+      // triggers — but external-search bypasses internal filtering entirely
+      // (handleSearchInput returns early for it), so this was the only place
+      // left that could catch a child-list change and it didn't. Without
+      // this, .mobile-available-section[data-empty="true"] slot { display:
+      // none } stays stuck hidden after a consumer replaces the options —
+      // the new options are correctly in the DOM, just invisible.
+      this.updateMobileSelectedState();
     });
     this._childObserver.observe(this, { childList: true });
     // MutationObserver only fires on FUTURE mutations — cover the initial
@@ -1109,18 +1118,29 @@ export class TySelect extends TyComponent<SelectState> {
     // Update component state
     this._state.open = true;
 
-    // Initialize options state
+    // Initialize options state. Also ensure nothing stays hidden from a
+    // previous search — mirrors openDropdown()'s updateOptionsVisibility(true)
+    // ("may have been hidden from previous search"), which openMobileModal()
+    // never had a mobile-appropriate equivalent for: desktop hides the whole
+    // options container (a single display:none toggle, harmless to reset
+    // unconditionally), mobile hides individual options via their `hidden`
+    // attribute (updateTagVisibility), so the reset has to happen here.
     const tags = this.getTagElements().map((el) => this.getTagData(el));
     this._state.filteredTags = tags;
+    this.updateTagVisibility(tags, tags);
 
-    // Focus search input (when the search row is shown)
-    const searchInput = shadow.querySelector(
-      ".mobile-search-input",
-    ) as HTMLInputElement;
-    if (searchInput && this.shouldShowSearch()) {
-      // Small delay to ensure dialog is ready
-      setTimeout(() => searchInput.focus(), 100);
-    }
+    // Focus the search input: the `autofocus` attribute on
+    // .mobile-search-input (see render template) handles this — showModal()
+    // itself runs the spec'd "dialog focusing steps" on every call, which
+    // look for an autofocus descendant and focus it natively, skipping it
+    // automatically if it's hidden (search disabled) in favor of the next
+    // focusable element. A manual searchInput.focus() call here, AFTER
+    // showModal() already ran its own focusing steps in the same task, was
+    // racing that native behavior — document.activeElement ended up back on
+    // the host element, not the input, which is why typing did nothing:
+    // keystrokes weren't reaching the search box at all despite it visually
+    // looking focused (cursor showing from the browser's own caret paint,
+    // not actual DOM focus).
 
     // Update state after slots are ready
     requestAnimationFrame(() => {
@@ -1893,6 +1913,7 @@ export class TySelect extends TyComponent<SelectState> {
               class="mobile-search-input ${this._size}"
               type="text"
               placeholder="${searchPlaceholder}"
+              autofocus
               ${this._disabled ? "disabled" : ""}
             />
             <button class="mobile-close-button" type="button" aria-label="Close">
