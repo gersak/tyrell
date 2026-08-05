@@ -814,6 +814,11 @@ export class TySelect extends TyComponent<SelectState> {
       // 4. render() → automatic if visual properties changed
       this.setProperty("value", valueStr);
 
+      // Explicit call, not just relying on render()'s cascade — `value` may
+      // not always be flagged as a "visual" property requiring a full
+      // re-render, and validity must update the moment selection changes.
+      this.updateValidity();
+
       // Dispatch change event (with rich items for out-of-band chip rendering)
       if (dispatchChange) {
         this.dispatchChangeEvent({
@@ -1697,6 +1702,33 @@ export class TySelect extends TyComponent<SelectState> {
 
     // Loading wrapper is rendered dynamically — re-apply each render
     this.applyLoadingState();
+
+    // Reflect constraint validation (required) to the owning <form>.
+    this.updateValidity();
+  }
+
+  /**
+   * Reflect constraint validation to the owning <form> via ElementInternals.
+   * Without this `required` is only cosmetic — form.checkValidity() (and a
+   * real submit) never actually blocks on an empty required select. Mirrors
+   * ty-input's updateValidity(): empty + required => valueMissing; disabled
+   * fields are barred from constraint validation.
+   */
+  private updateValidity(): void {
+    if (this.disabled) {
+      this._internals.setValidity({});
+      return;
+    }
+    if (this.required && this.getSelectedValues().length === 0) {
+      const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
+      this._internals.setValidity(
+        { valueMissing: true },
+        "Please select a value",
+        stub ?? undefined,
+      );
+    } else {
+      this._internals.setValidity({});
+    }
   }
 
   /**

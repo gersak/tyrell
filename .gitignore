@@ -40,3 +40,9 @@ target/
 examples/pocketledger
 
 PUBLISHING.md
+
+# Playwright e2e artifacts
+packages/core/test-results/
+packages/core/playwright-report/
+packages/core/e2e-results.json
+packages/core/blob-report/

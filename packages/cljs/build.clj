@@ -7,7 +7,10 @@
    [deps-deploy.deps-deploy :as deploy]
    [tyrell.template :as template]))
 
-;; Clojars versions — kept in sync with NPM tyrell-components version
+;; Clojars versions (dev.gersak/tyrell, dev.gersak/tyrell-icons).
+;; NOT the NPM version — the docs site pins tyrell-components from
+;; packages/core/package.json via read-ty-version, which shadows this
+;; inside github-pages. These two have diverged and that is fine.
 (def ty-version "1.0.0-RC12")
 (def ty-icons-version "1.0.0-RC12")
 (def class-dir "target/classes")

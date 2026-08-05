@@ -40,6 +40,7 @@ export interface PopupAttributes {
 // ============================================================================
 
 const anchorClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
+const anchorKeyClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
 const outsideClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
 const escapeHandlers = new WeakMap<TyPopup, (e: KeyboardEvent) => void>();
 const closeRequestHandlers = new WeakMap<TyPopup, (e: CustomEvent) => void>();
@@ -285,16 +286,30 @@ function setupAnchorEvents(el: TyPopup): void {
   anchor.setAttribute('aria-haspopup', 'dialog');
   if (!anchor.hasAttribute('aria-expanded')) anchor.setAttribute('aria-expanded', 'false');
 
-  // Remove any existing listener first
+  // Remove any existing listeners first
   const existingHandler = anchorClickHandlers.get(el);
   if (existingHandler) {
     anchor.removeEventListener('pointerdown', existingHandler);
   }
+  const existingKeyHandler = anchorKeyClickHandlers.get(el);
+  if (existingKeyHandler) {
+    anchor.removeEventListener('click', existingKeyHandler);
+  }
 
-  // Create new handler and store reference
+  // Create new handlers and store references
   const handler = (e: Event) => handleAnchorClick(el, e);
   anchorClickHandlers.set(el, handler);
   anchor.addEventListener('pointerdown', handler);
+
+  // pointerdown covers mouse/touch; native keyboard activation (Enter/Space
+  // on a focused anchor) fires 'click' with detail === 0, which pointerdown
+  // never sees — without this, a keyboard-only user could focus the anchor
+  // but had no way to open the popup (same gap fixed in ty-tabs).
+  const keyHandler = (e: Event) => {
+    if ((e as MouseEvent).detail === 0) handleAnchorClick(el, e);
+  };
+  anchorKeyClickHandlers.set(el, keyHandler);
+  anchor.addEventListener('click', keyHandler);
 }
 
 /**
@@ -307,6 +322,11 @@ function cleanupAnchorEvents(el: TyPopup): void {
   if (anchor && handler) {
     anchor.removeEventListener('pointerdown', handler);
     anchorClickHandlers.delete(el);
+  }
+  const keyHandler = anchorKeyClickHandlers.get(el);
+  if (anchor && keyHandler) {
+    anchor.removeEventListener('click', keyHandler);
+    anchorKeyClickHandlers.delete(el);
   }
   anchor?.removeAttribute('aria-haspopup');
   anchor?.removeAttribute('aria-expanded');

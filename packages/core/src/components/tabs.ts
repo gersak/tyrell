@@ -105,6 +105,7 @@ interface MarkerPosition {
 
 const eventHandlers = new WeakMap<TyTabs, {
   tabClickHandlers: Map<string, (e: Event) => void>;
+  tabKeyClickHandlers: Map<string, (e: Event) => void>;
 }>();
 
 const resizeObservers = new WeakMap<TyTabs, ResizeObserver>();
@@ -265,8 +266,15 @@ function cleanupEventListeners(el: TyTabs): void {
       button.removeEventListener('pointerdown', handler);
     }
   });
-  
+  handlers.tabKeyClickHandlers.forEach((handler, tabId) => {
+    const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-tab-id='${tabId}']`);
+    if (button) {
+      button.removeEventListener('click', handler);
+    }
+  });
+
   handlers.tabClickHandlers.clear();
+  handlers.tabKeyClickHandlers.clear();
 }
 
 /**
@@ -279,18 +287,31 @@ function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLEleme
   // Initialize handlers storage
   const handlers = {
     tabClickHandlers: new Map<string, (e: Event) => void>(),
+    tabKeyClickHandlers: new Map<string, (e: Event) => void>(),
   };
-  
+
   // Add click listener for each tab button
   tabs.forEach((tab) => {
     const tabId = getTabId(tab);
     if (!tabId) return;
-    
+
     const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-tab-id='${tabId}']`);
     if (button) {
       const handler = (e: Event) => handleTabClick(el, tabId, e);
+      // pointerdown: snappy mouse/touch activation (no native click delay).
+      // click, gated to event.detail === 0: native <button> keyboard
+      // activation (Enter/Space) fires 'click' with detail 0 — real mouse
+      // clicks report detail >= 1 — so this covers keyboard users without
+      // double-firing handleTabClick on an actual pointer click (which
+      // already fired via pointerdown above). Without this, keyboard-only
+      // users could Tab to a tab button but had no way to activate it.
+      const keyClickHandler = (e: Event) => {
+        if ((e as MouseEvent).detail === 0) handleTabClick(el, tabId, e);
+      };
       button.addEventListener('pointerdown', handler);
+      button.addEventListener('click', keyClickHandler);
       handlers.tabClickHandlers.set(tabId, handler);
+      handlers.tabKeyClickHandlers.set(tabId, keyClickHandler);
     }
   });
   
@@ -497,34 +518,35 @@ function setupResizeObserver(el: TyTabs): void {
     oldObserver.disconnect();
   }
   
-  const { width } = getTabsAttributes(el);
-  
-  // Only setup observer for percentage widths
-  if (width.includes('%')) {
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      const measuredWidth = entry.contentRect.width;
-      const tabs = getChildTabs(el);
-      const activeId = getActiveTabId(el, tabs);
-      const activeIndex = activeId ? findTabIndex(tabs, activeId) : 0;
-      
-      // Update CSS variable with measured width
-      el.style.setProperty('--tabs-width', `${measuredWidth}px`);
-      
-      // Update transform with new width
-      if (activeIndex !== undefined) {
-        updateTransform(el, activeIndex);
-      }
-      
-      // Update marker position (tab button positions may have changed)
-      if (activeId) {
-        updateMarker(el, activeId);
-      }
-    });
-    
-    observer.observe(el);
-    resizeObservers.set(el, observer);
-  }
+  // Observe unconditionally (not just for '%' widths) — overflow can happen
+  // at any fixed width too, and needs to react to container resizes.
+  const observer = new ResizeObserver((entries) => {
+    const entry = entries[0];
+    const { width } = getTabsAttributes(el);
+    const tabs = getChildTabs(el);
+    const activeId = getActiveTabId(el, tabs);
+    const activeIndex = activeId ? findTabIndex(tabs, activeId) : 0;
+
+    // Update CSS variable with measured width (percentage widths only)
+    if (width.includes('%')) {
+      el.style.setProperty('--tabs-width', `${entry.contentRect.width}px`);
+    }
+
+    // Update transform with new width
+    if (activeIndex !== undefined) {
+      updateTransform(el, activeIndex);
+    }
+
+    // Update marker position (tab button positions may have changed)
+    if (activeId) {
+      updateMarker(el, activeId);
+    }
+
+    updateOverflow(el);
+  });
+
+  observer.observe(el);
+  resizeObservers.set(el, observer);
 }
 
 /**
@@ -611,6 +633,132 @@ function renderButtonsOnly(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string
   }).join('');
 }
 
+// ============================================================================
+// Overflow Handling (collapse tabs that don't fit into a "more" menu)
+// ============================================================================
+
+const OVERFLOW_TRIGGER_WIDTH = 40;
+
+/** Build a display label for a hidden tab's overflow-menu entry. */
+function getTabMenuLabel(tabsEl: TyTabs, tab: HTMLElement): string {
+  const tabId = getTabId(tab);
+  if (tabId && getTabLabelType(tabsEl, tab) === 'slot') {
+    const slotted = tabsEl.querySelector(`[slot='label-${tabId}']`);
+    return slotted?.textContent?.trim() || tabId;
+  }
+  return tab.getAttribute('label') || 'Tab';
+}
+
+/** Remove the "more" trigger + its popup, if present. */
+function removeOverflowMenu(shadowRoot: ShadowRoot): void {
+  shadowRoot.querySelector('.tab-overflow-trigger')?.remove();
+}
+
+/**
+ * Build the "more" trigger button + its ty-popup menu for the given
+ * (already-hidden) tab buttons, and append it to the buttons container.
+ * Reuses ty-popup instead of a second floating-menu implementation.
+ */
+function renderOverflowMenu(
+  el: TyTabs,
+  container: HTMLElement,
+  hiddenButtons: HTMLButtonElement[],
+  allTabs: HTMLElement[]
+): void {
+  if (hiddenButtons.length === 0) return;
+
+  const tabsById = new Map(allTabs.map((tab) => [getTabId(tab), tab]));
+
+  const trigger = document.createElement('button');
+  trigger.className = 'tab-overflow-trigger';
+  trigger.type = 'button';
+  trigger.setAttribute('aria-label', `${hiddenButtons.length} more tabs`);
+  trigger.textContent = '⋯';
+
+  const popup = document.createElement('ty-popup');
+  popup.setAttribute('placement', 'bottom');
+
+  const menu = document.createElement('div');
+  menu.className = 'tab-overflow-menu';
+  menu.setAttribute('role', 'menu');
+
+  hiddenButtons.forEach((btn) => {
+    const tabId = btn.dataset.tabId;
+    const tab = tabId ? tabsById.get(tabId) : undefined;
+    if (!tabId || !tab) return;
+
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'tab-overflow-item';
+    item.setAttribute('role', 'menuitem');
+    item.textContent = getTabMenuLabel(el, tab);
+    if (isTabDisabled(tab)) {
+      item.disabled = true;
+    } else {
+      item.addEventListener('click', () => {
+        setActiveTab(el, tabId);
+        (popup as any).closePopup?.();
+      });
+    }
+    menu.appendChild(item);
+  });
+
+  popup.appendChild(menu);
+  trigger.appendChild(popup);
+  container.appendChild(trigger);
+}
+
+/**
+ * Measure the tab buttons against the available width and collapse whatever
+ * doesn't fit behind a "more" trigger + popup menu. The active tab is always
+ * kept visible — if it would be the one to overflow, the last visible button
+ * is hidden in its place instead.
+ */
+function updateOverflow(el: TyTabs): void {
+  const shadowRoot = el.shadowRoot;
+  if (!shadowRoot) return;
+
+  const container = shadowRoot.querySelector<HTMLElement>('.tab-buttons');
+  if (!container) return;
+
+  removeOverflowMenu(shadowRoot);
+  const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('.tab-button'));
+  buttons.forEach((b) => b.classList.remove('overflow-hidden'));
+  if (buttons.length === 0) return;
+
+  const available = container.clientWidth;
+  let total = 0;
+  let cutoff = buttons.length;
+  for (let i = 0; i < buttons.length; i++) {
+    total += buttons[i].offsetWidth;
+    if (total > available) { cutoff = i; break; }
+  }
+  if (cutoff >= buttons.length) return; // everything fits
+
+  // Recompute the cutoff leaving room for the "more" trigger itself.
+  total = 0;
+  cutoff = buttons.length;
+  for (let i = 0; i < buttons.length; i++) {
+    total += buttons[i].offsetWidth;
+    if (total > available - OVERFLOW_TRIGGER_WIDTH) { cutoff = i; break; }
+  }
+  cutoff = Math.max(cutoff, 1);
+
+  const tabs = getChildTabs(el);
+  const activeId = getActiveTabId(el, tabs);
+  const hidden = new Set(buttons.slice(cutoff));
+
+  const activeButton = activeId ? buttons.find((b) => b.dataset.tabId === activeId) : undefined;
+  if (activeButton && hidden.has(activeButton)) {
+    const lastVisible = buttons[cutoff - 1];
+    hidden.delete(activeButton);
+    hidden.add(lastVisible);
+  }
+
+  buttons.forEach((b) => b.classList.toggle('overflow-hidden', hidden.has(b)));
+  renderOverflowMenu(el, container, buttons.filter((b) => hidden.has(b)), tabs);
+}
+
 /**
  * Render the tabs container with buttons and panel viewport.
  * Smart rendering: checks if structure exists and only updates when needed.
@@ -671,6 +819,7 @@ function render(el: TyTabs): void {
     existingContainer.setAttribute('data-placement', placement);
     
     // SMART UPDATE: Preserve marker wrapper, only update buttons
+    existingButtons.querySelector('.tab-overflow-trigger')?.remove();
     const allButtons = existingButtons.querySelectorAll('.tab-button');
     allButtons.forEach(button => button.remove());
     
@@ -699,13 +848,15 @@ function render(el: TyTabs): void {
       
       // Update transform with current active index
       updateTransform(el, activeIndex);
-      
+
       // Update marker position to match active tab
       if (activeId) {
         updateMarker(el, activeId);
       }
+
+      updateOverflow(el);
     });
-    
+
     // Update panel interaction states
     if (activeId) {
       updatePanelInteraction(el, activeId);
@@ -735,13 +886,15 @@ function render(el: TyTabs): void {
       
       // Update transform with measured width
       updateTransform(el, activeIndex);
-      
+
       // Update marker position to match active tab
       if (activeId) {
         updateMarker(el, activeId);
       }
+
+      updateOverflow(el);
     });
-    
+
     // Setup event listeners
     setupEventListeners(el, shadowRoot, tabs);
 

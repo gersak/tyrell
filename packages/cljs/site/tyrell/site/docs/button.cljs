@@ -44,6 +44,10 @@
         :type "boolean"
         :default "false"
         :description "Makes button take more horizontal space"}
+       {:name "muted"
+        :type "boolean"
+        :default "false"
+        :description "Desaturates the flavor color at rest; reveals it on hover (pointer devices only) and on press/focus. Use for low-priority actions that shouldn't compete for attention until the user reaches for them."}
        {:name "type"
         :type "string"
         :default "\"button\""
@@ -185,6 +189,25 @@
 <!-- Outlined and ghost via the appearance attribute -->
 <ty-button appearance=\"outlined\" flavor=\"success+\">Success outlined</ty-button>
 <ty-button appearance=\"ghost\" flavor=\"danger\">Danger ghost</ty-button>")]
+
+      ;; Muted
+                 [:div.ty-content.rounded-lg.p-5
+                  (section-label "Muted (suppress until interaction)")
+                  [:p.ty-text-.mb-4
+                   {:style {:font-size "0.8125rem"
+                            :line-height "1.6"}}
+                   "Add " [:code.font-mono "muted"] " to desaturate a button's flavor color at rest. Hover it back to color (mouse/trackpad only — touch has no hover) or press it — "
+                   [:code.font-mono ":active"] " and " [:code.font-mono ":focus-visible"] " always reveal the real color, so touch users still see it on tap. Try hovering the buttons below."]
+                  (demo-area
+                   [:div.flex.flex-wrap.gap-3
+                    [:ty-button {:flavor "primary" :muted true} "Primary muted"]
+                    [:ty-button {:flavor "danger" :appearance "outlined" :muted true} "Danger outlined muted"]
+                    [:ty-button {:flavor "success" :appearance "ghost" :muted true} "Success ghost muted"]
+                    [:ty-button {:action true :flavor "secondary" :muted true}
+                     [:ty-icon {:name "more-vertical" :size "sm"}]]])
+                  (code-block "<ty-button flavor=\"primary\" muted>Primary muted</ty-button>
+<ty-button flavor=\"danger\" appearance=\"outlined\" muted>Danger outlined muted</ty-button>
+<ty-button flavor=\"success\" appearance=\"ghost\" muted>Success ghost muted</ty-button>")]
 
       ;; Custom Colors via CSS Variables
                  [:div.ty-content.rounded-lg.p-5

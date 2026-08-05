@@ -196,14 +196,23 @@ export const wizardStyles = `
 .step-circle[data-state="completed"] {
   background: var(--ty-wizard-completed-accent);
   border-color: var(--ty-color-success-strong);
-  color: var(--ty-solid-success-fg, white);
+  /* Derived from the accent this circle actually paints, not from
+     --ty-solid-success-fg: the two diverge in dark mode (--ty-solid-l
+     dims solid fills by 0.25 L), which stranded white text at 3.5:1. */
+  color: oklch(
+    from var(--ty-wizard-completed-accent)
+      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+  );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-completed-accent) 12%, transparent);
 }
 
 .step-circle[data-state="active"] {
   background: var(--ty-wizard-active-accent);
   border-color: var(--ty-color-primary-strong);
-  color: var(--ty-solid-primary-fg, white);
+  color: oklch(
+    from var(--ty-wizard-active-accent)
+      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+  );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-active-accent) 12%, transparent);
 }
 
@@ -216,7 +225,10 @@ export const wizardStyles = `
 .step-circle[data-state="error"] {
   background: var(--ty-wizard-error-accent);
   border-color: var(--ty-color-danger-strong);
-  color: var(--ty-solid-danger-fg, white);
+  color: oklch(
+    from var(--ty-wizard-error-accent)
+      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+  );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-error-accent) 12%, transparent);
 }
 

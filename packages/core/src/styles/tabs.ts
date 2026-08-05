@@ -137,6 +137,76 @@ export const tabsStyles = `
   outline-offset: -2px;
 }
 
+.tab-button.overflow-hidden {
+  display: none;
+}
+
+/* ===================================== */
+/* Overflow "more" trigger + menu */
+/* ===================================== */
+
+.tab-overflow-trigger {
+  flex-shrink: 0;
+  width: 40px;
+  min-width: 40px;
+  padding: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ty-text-soft);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+}
+
+.tab-overflow-trigger:hover {
+  color: var(--ty-text-strong);
+}
+
+.tab-overflow-trigger:focus-visible {
+  outline: 2px solid var(--ty-color-primary);
+  outline-offset: -2px;
+}
+
+.tab-overflow-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--ty-spacing-2, 4px);
+  background: var(--ty-surface-floating);
+  border-radius: var(--ty-radius-md);
+  box-shadow: var(--ty-shadow-md, 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1));
+}
+
+.tab-overflow-item {
+  padding: var(--ty-spacing-2, 6px) var(--ty-spacing-3, 12px);
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--ty-radius-md);
+  color: var(--ty-text);
+  font: inherit;
+  font-size: var(--ty-font-sm);
+  white-space: nowrap;
+}
+
+.tab-overflow-item:hover {
+  background: var(--ty-bg-neutral-soft);
+  color: var(--ty-text-strong);
+}
+
+.tab-overflow-item[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ===================================== */
 /* Panels Viewport */
 /* Expose as CSS Part for panels container styling */

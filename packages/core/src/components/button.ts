@@ -106,6 +106,11 @@ export class TyButton
       visual: true,
       default: false,
     },
+    muted: {
+      type: "boolean" as const,
+      visual: true,
+      default: false,
+    },
     wide: {
       type: "boolean" as const,
       visual: false,
@@ -217,6 +222,13 @@ export class TyButton
     this.setProperty("action", value);
   }
 
+  get muted(): boolean {
+    return this.getProperty("muted");
+  }
+  set muted(value: boolean) {
+    this.setProperty("muted", value);
+  }
+
   get wide(): boolean {
     return this.getProperty("wide");
   }
@@ -260,6 +272,7 @@ export class TyButton
       this.appearance,
       this.pill && "pill",
       this.action && "action",
+      this.muted && "muted",
       tone === "+" && "tone-plus",
       tone === "-" && "tone-minus",
     );

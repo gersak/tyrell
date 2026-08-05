@@ -11,7 +11,12 @@
       name="description"
       content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility."
     />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind v4 browser build. v3's Play CDN declared its internal
+         --tw-* state vars on `*, ::before, ::after`, so DevTools repeated
+         that block for every ancestor in the inspector; v4 registers them
+         via @property instead. Site-only — the Tyrell library itself does
+         not depend on Tailwind. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,7 +40,7 @@
       :root {
         --ty-brand-hue: 45;
         --ty-brand-chroma: 0.125;
-        --ty-secondary-offset: 74;
+        --ty-secondary-offset: -25;
       }
     </style>
 

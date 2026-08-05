@@ -1,6 +1,6 @@
 {
   "name": "tyrell-components",
-  "version": "1.0.0-TC34",
+  "version": "1.0.0-TC35",
   "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
   "sideEffects": [
@@ -142,10 +142,13 @@
     "prepublishOnly": "npm run build",
     "preview": "vite preview",
     "test": "npm run build:lib && wtr",
-    "test:watch": "wtr --watch"
+    "test:watch": "wtr --watch",
+    "test:e2e": "npm run build:cdn && playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "devDependencies": {
     "@open-wc/testing": "^4.0.0",
+    "@playwright/test": "^1.61.1",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/mocha": "^10.0.10",
     "@web/dev-server-esbuild": "^1.0.5",

@@ -33,9 +33,9 @@ const tokenRef = (prefix: string, f: string, suffix: string, fb?: string) =>
 const solidFlavor = (f: string, fb?: string) => {
   const solid = (suffix: string) => tokenRef('--ty-solid', f, suffix, fb)
   return `
-button.solid.${f} { --_ring: ${tokenRef('--ty-color', f, '', fb)}; background: var(--ty-button-bg, ${solid('')}); color: var(--ty-button-color, ${solid('-fg')}); }
-button.solid.${f}.tone-plus  { background: var(--ty-button-bg, ${solid('-strong')}); }
-button.solid.${f}.tone-minus { background: var(--ty-button-bg, ${solid('-soft')}); }
+button.solid.${f} { --_ring: ${tokenRef('--ty-color', f, '', fb)}; background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-fg')})); }
+button.solid.${f}.tone-plus  { background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-strong')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-strong-fg')})); }
+button.solid.${f}.tone-minus { background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-soft')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-soft-fg')})); }
 button.solid.${f}:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${solid('-hover')}); }
 button.solid.${f}:active:not(:disabled) { background: ${solid('-active')}; }
 `
@@ -45,16 +45,16 @@ const outlinedFlavor = (f: string, fb?: string) => {
   const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
   return `
 button.outlined.${f} {
-  color:        var(--ty-button-color,  ${color('')});
-  border-color: var(--ty-button-border, ${color('')});
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('')}));
 }
 button.outlined.${f}.tone-plus {
-  color:        var(--ty-button-color,  ${color('-strong')});
-  border-color: var(--ty-button-border, ${color('-strong')});
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('-strong')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('-strong')}));
 }
 button.outlined.${f}.tone-minus {
-  color:        var(--ty-button-color,  ${color('-soft')});
-  border-color: var(--ty-button-border, ${color('-soft')});
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('-soft')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('-soft')}));
 }
 button.outlined.${f}:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
@@ -65,9 +65,9 @@ button.outlined.${f}:hover:not(:disabled) {
 const ghostFlavor = (f: string, fb?: string) => {
   const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
   return `
-button.ghost.${f}            { color: var(--ty-button-color, ${color('')}); }
-button.ghost.${f}.tone-plus  { color: var(--ty-button-color, ${color('-strong')}); }
-button.ghost.${f}.tone-minus { color: var(--ty-button-color, ${color('-soft')}); }
+button.ghost.${f}            { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('')})); }
+button.ghost.${f}.tone-plus  { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('-strong')})); }
+button.ghost.${f}.tone-minus { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('-soft')})); }
 button.ghost.${f}:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
 }
@@ -262,6 +262,49 @@ button.action.lg ::slotted(ty-icon) { height: 1.125rem; width: 1.125rem; }
 button.action.xl { height: 2.5rem; width: 2.5rem; }
 button.action.xl ::slotted(ty-icon) { height: 1.25rem; width: 1.25rem; }
 
+/* ===== MUTED =====
+   Show the neutral tokens at rest instead of the flavor color; reveal the
+   real flavor on interaction. Implemented as a fallback tier the flavor
+   rules above already read (--_muted-*), which sits behind the public
+   --ty-button-{bg,color,border} override slots and ahead of the flavor's
+   own token — so a custom brand color still wins, muted or not. Unsetting
+   --_muted-* on interaction falls the var() chain through to whatever's
+   next (the user's override, or the real flavor color).
+   Hover reveal is gated to real pointers (touch has no hover); :active /
+   :focus-visible cover the tap case so touch still gets the color on press. */
+
+button.muted {
+  --_muted-solid-bg: var(--ty-solid-neutral);
+  --_muted-solid-fg: var(--ty-solid-neutral-fg);
+  --_muted-outlined-line: var(--ty-color-neutral);
+  --_muted-ghost-fg: var(--ty-color-neutral);
+}
+button.muted.tone-plus {
+  --_muted-solid-bg: var(--ty-solid-neutral-strong);
+  --_muted-outlined-line: var(--ty-color-neutral-strong);
+  --_muted-ghost-fg: var(--ty-color-neutral-strong);
+}
+button.muted.tone-minus {
+  --_muted-solid-bg: var(--ty-solid-neutral-soft);
+  --_muted-outlined-line: var(--ty-color-neutral-soft);
+  --_muted-ghost-fg: var(--ty-color-neutral-soft);
+}
+@media (hover: hover) and (pointer: fine) {
+  button.muted:hover:not(:disabled) {
+    --_muted-solid-bg: unset;
+    --_muted-solid-fg: unset;
+    --_muted-outlined-line: unset;
+    --_muted-ghost-fg: unset;
+  }
+}
+button.muted:active:not(:disabled),
+button.muted:focus-visible:not(:disabled) {
+  --_muted-solid-bg: unset;
+  --_muted-solid-fg: unset;
+  --_muted-outlined-line: unset;
+  --_muted-ghost-fg: unset;
+}
+
 /* ===== PILL ===== */
 
 button.pill {
@@ -303,8 +346,8 @@ button.solid {
   background: var(--ty-button-bg, var(--ty-solid-neutral));
   color:      var(--ty-button-color, var(--ty-solid-neutral-fg));
 }
-button.solid.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); }
-button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); }
+button.solid.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); color: var(--ty-button-color, var(--ty-solid-neutral-strong-fg)); }
+button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); color: var(--ty-button-color, var(--ty-solid-neutral-soft-fg)); }
 button.solid:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
 button.solid:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
 

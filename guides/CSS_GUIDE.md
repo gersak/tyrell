@@ -341,6 +341,27 @@ Effect on the formula: `L = L-curve[shade] × flavor-l-factor`. Set warning's fa
 
 ---
 
+#### Auto-contrast foregrounds (solid buttons)
+
+Solid button text is **not** a fixed color — each fill derives its own foreground from its lightness, so rebranding can't strand white text on a pale fill:
+
+```css
+--ty-solid-primary-soft-fg: oklch(from var(--ty-solid-primary-soft)
+                                  clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+```
+
+Fills darker than the threshold get white, lighter get black. One token per *fill* — `-fg`, `-soft-fg` (tone `-`), `-strong-fg` (tone `+`) — because each tone sits at a different lightness.
+
+```css
+:root {
+  --ty-solid-fg-threshold: 0.6;   /* crossover. Higher = prefers white, lower = prefers black. */
+}
+```
+
+Opt out per flavor by pinning the token (`--ty-solid-primary-fg: white`), or globally with `--ty-solid-fg-threshold: 1` to force white everywhere.
+
+---
+
 #### Per-mode overrides
 
 Any tier can be overridden separately for dark mode by repeating the declaration inside `html.dark`:

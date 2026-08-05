@@ -625,12 +625,107 @@ html:root {
       var(--ty-neutral-hue)
   );
 
-  --ty-solid-primary-fg: white;
-  --ty-solid-secondary-fg: white;
-  --ty-solid-success-fg: white;
-  --ty-solid-danger-fg: white;
-  --ty-solid-warning-fg: white;
-  --ty-solid-neutral-fg: white;
+  /* ----------------------------------------------------------------
+   * SOLID FOREGROUNDS — auto-contrast.
+   *
+   * Each fill gets a foreground picked from its OWN lightness, so a
+   * rebrand (--ty-brand-hue / --ty-brand-chroma / any L-curve override)
+   * can't strand white text on a pale fill. Branchless, no JS:
+   *
+   *   clamp(0, (threshold - l) * 1000, 1)  ->  1 (white) when the fill
+   *   is darker than the threshold, 0 (black) when it's lighter.
+   *
+   * One token per FILL, not per flavor — base / -soft (tone-) / -strong
+   * (tone+) each carry a different L, so each needs its own decision.
+   * Declared once: the oklch(from ...) formulas re-resolve per mode,
+   * because html.dark redefines the fills these read.
+   *
+   * TO REVERT to the old fixed-white behaviour, override in your app:
+   *   :root { --ty-solid-primary-fg: white; ... }
+   * or set --ty-solid-fg-threshold: 1 to force white everywhere.
+   * --------------------------------------------------------------*/
+
+  /* Crossover point. Fills lighter than this get black text. ~0.58-0.62
+     is the sRGB break-even; higher = prefers white, lower = prefers black. */
+  --ty-solid-fg-threshold: 0.6;
+
+  --ty-solid-primary-fg: oklch(
+    from var(--ty-solid-primary)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-primary-soft-fg: oklch(
+    from var(--ty-solid-primary-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-primary-strong-fg: oklch(
+    from var(--ty-solid-primary-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-secondary-fg: oklch(
+    from var(--ty-solid-secondary)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-secondary-soft-fg: oklch(
+    from var(--ty-solid-secondary-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-secondary-strong-fg: oklch(
+    from var(--ty-solid-secondary-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-success-fg: oklch(
+    from var(--ty-solid-success)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-success-soft-fg: oklch(
+    from var(--ty-solid-success-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-success-strong-fg: oklch(
+    from var(--ty-solid-success-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-danger-fg: oklch(
+    from var(--ty-solid-danger)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-danger-soft-fg: oklch(
+    from var(--ty-solid-danger-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-danger-strong-fg: oklch(
+    from var(--ty-solid-danger-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-warning-fg: oklch(
+    from var(--ty-solid-warning)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-warning-soft-fg: oklch(
+    from var(--ty-solid-warning-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-warning-strong-fg: oklch(
+    from var(--ty-solid-warning-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-neutral-fg: oklch(
+    from var(--ty-solid-neutral)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-neutral-soft-fg: oklch(
+    from var(--ty-solid-neutral-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-neutral-strong-fg: oklch(
+    from var(--ty-solid-neutral-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
 
   /* derived states — axis 2 offsets on each base fill */
   --ty-solid-primary-hover: oklch(

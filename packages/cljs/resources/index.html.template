@@ -7,7 +7,11 @@
     <title>Tyrell Components - Professional Web Components Showcase</title>
     <meta name="description"
         content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind v4 browser build. v3's Play CDN declared its internal --tw-*
+         state vars on `*, ::before, ::after`, which DevTools then repeated for
+         every ancestor when inspecting any element; v4 registers them via
+         @property instead. Site-only — Tyrell has no Tailwind dependency. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,8 +29,8 @@
          playground sliders + Reset button agree with first-paint values. -->
     <style>
         :root {
-            --ty-brand-hue: 47;
-            --ty-brand-chroma: 0.135;
+            --ty-brand-hue: 45;
+            --ty-brand-chroma: 0.125;
             --ty-secondary-offset: -25;
         }
     </style>

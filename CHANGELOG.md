@@ -5,6 +5,37 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC35] - 2026-08-05
+
+Headline: **auto-contrast solid foregrounds** — solid button text is now derived from its own fill's lightness instead of being hardcoded `white`, closing a contrast hole that affected every `flavor-` button out of the box. Also new: `muted` on `ty-button`.
+
+### Added
+
+- **`muted` attribute on `ty-button`** — suppresses the flavor color at rest (the button renders in neutral tokens) and reveals it on interaction. Hover reveal is gated behind `@media (hover: hover) and (pointer: fine)` so touch devices, which have no hover, aren't left with a permanently grey button; `:active` and `:focus-visible` reveal unconditionally, so a tap still shows the real color on press. Works across all three appearances (`solid`/`outlined`/`ghost`) and honors `+`/`-` tones via `--ty-*-neutral-strong`/`-soft`. Orthogonal to `flavor` and `appearance` — it's a separate axis, not a fourth appearance.
+- **Auto-contrast foreground tokens** — `--ty-solid-{flavor}-fg` is now computed rather than literal, and gains per-tone siblings `--ty-solid-{flavor}-soft-fg` / `-strong-fg`. Each derives black or white from the lightness of the fill it actually sits on, using the same `oklch(from …)` relative-color syntax the solid fills already use:
+
+  ```css
+  --ty-solid-primary-soft-fg: oklch(from var(--ty-solid-primary-soft)
+                                    clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+  ```
+
+  One token per *fill*, not per flavor: `base` / `-soft` / `-strong` sit at three different lightnesses, so each needs its own decision.
+- **`--ty-solid-fg-threshold`** (default `0.6`) — the lightness crossover at which foregrounds flip from white to black. Raise it to prefer white, lower it to prefer black, or set it to `1` to restore the old fixed-white behavior globally.
+
+### Fixed
+
+- **Every `flavor-` (tone-minus) solid button failed WCAG AA** — `--ty-solid-soft-l: 0.1` lightens the fill for the `-` tone, but the foreground was pinned to `white`, so contrast collapsed. Measured across 6 flavors × 3 tones × 8 brand hues, 48 of 144 combinations fell below 4.5:1 (worst: `warning-` at **2.53:1**) — on the shipped defaults, with no rebranding involved. Now 0 of 144 fail, in both light and dark; worst case 4.61:1. The `.tone-plus`/`.tone-minus` button rules also set `color` now, not just `background`.
+- **`ty-wizard` step circles failed WCAG AA in dark mode** (completed 3.48:1, active 3.79:1, error 3.93:1) — the circles paint `--ty-wizard-{state}-accent` (which defaults to `--ty-color-{flavor}`) but took their text color from `--ty-solid-{flavor}-fg`. Those two coincide in light mode but diverge by 0.25 L in dark, where `--ty-solid-l` dims solid fills against the dark canvas — so white text sat on a fill 0.25 lighter than the one the color was chosen for. Each circle now derives its foreground from the accent it actually paints (6.04 / 5.54 / 5.34:1 in dark; light unchanged).
+
+### Changed
+
+- **Solid button text is no longer always white.** On pale fills — the `-` tone, high `--ty-l-*` curves, light brand hues — labels now render black. This is the intended fix, but it is a visible change for anyone who was relying on white. Opt out per flavor with `--ty-solid-primary-fg: white`, or globally with `--ty-solid-fg-threshold: 1`.
+
+### Docs
+
+- **Docs site moved to Tailwind v4** (`@tailwindcss/browser@4`, replacing the v3 Play CDN). v3 declared its internal `--tw-*` state vars on `*, ::before, ::after`, so DevTools repeated that block once per ancestor when inspecting any element; v4 registers them via `@property` instead (its universal-selector fallback is gated behind an `@supports` that only matches engines without `@property` support). Visible `--tw-*` on a given element dropped from 51 to 11. Site-only — the Tyrell library itself has no Tailwind dependency.
+- `TY_GUIDE.md` documents `muted`; `CSS_GUIDE.md` gains an "Auto-contrast foregrounds" section covering the threshold dial and the opt-out paths.
+
 ## [1.0.0-TC34] - 2026-07-22
 
 Headline: **`ty-select` mobile-mode fixes** — stale hidden options, focus/keyboard, and external-search results not appearing.

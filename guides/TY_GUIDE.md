@@ -153,6 +153,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 | `pill` | boolean | `false` | Rounded shape |
 | `action` | boolean | `false` | Square icon-only button |
 | `wide` | boolean | `false` | Full width |
+| `muted` | boolean | `false` | Desaturates the flavor to neutral at rest; reveals real color on hover (pointer only, gated via `(hover: hover)`) and on `:active`/`:focus-visible` so touch still gets it on tap. Works across all three appearances and respects `+`/`-` tone. |
 
 **Slots:** `start`, (default), `end` | **Events:** `click` -> `{ originalEvent }`
 
