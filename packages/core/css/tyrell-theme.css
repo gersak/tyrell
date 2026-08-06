@@ -1371,3 +1371,31 @@ html:root,
     transition-timing-function: ease;
   }
 }
+
+/* Interactive components (button, input, switch, tabs, …) each carry their
+ * OWN short transition — background-color/border-color/color at 0.15–0.2s —
+ * for snappy hover/focus/active feedback. CSS transitions fire on ANY
+ * computed-value change, not just interaction, so a theme switch also
+ * (re-)triggers every one of those, racing the coordinated 0.45s dial
+ * crossfade above at a different speed on every element — hundreds of
+ * mistimed transitions instead of one wash, which reads as jittery rather
+ * than smooth.
+ *
+ * `.ty-theme-switching` is an opt-in escape hatch: add it to `<html>` (or
+ * a scoped `[data-ty-theme]` root) for the duration of a theme switch to
+ * silence local transitions on its descendants — NOT on the switching
+ * element itself, so the dial crossfade above is untouched. Five lines of
+ * JS around your theme toggle:
+ *
+ *   root.classList.add('ty-theme-switching');
+ *   root.classList.toggle('dark');            // or flip the theme pack
+ *   setTimeout(() => root.classList.remove('ty-theme-switching'),
+ *              parseFloat(getComputedStyle(root)
+ *                .getPropertyValue('--ty-theme-transition')) * 1000 || 450);
+ *
+ * Purely additive — nothing here runs unless you add the class yourself. */
+.ty-theme-switching *,
+.ty-theme-switching *::before,
+.ty-theme-switching *::after {
+  transition: none !important;
+}

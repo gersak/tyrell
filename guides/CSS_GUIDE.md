@@ -419,6 +419,17 @@ Every dial in the brand layer is a typed, `@property`-registered number — and 
 
 Reduced-motion users never get the animation. Browsers without `@property` fall back to instant switching.
 
+**Jittery instead of smooth?** Interactive components (`ty-button`, `ty-input`, `ty-switch`, …) each carry their own short hover/focus transition (~0.15–0.2s on `background-color`/`border-color`/`color`). CSS transitions fire on any computed-value change, not just interaction, so a theme switch also retriggers every one of those at once — hundreds of elements racing the coordinated dial crossfade at a different speed, which reads as jitter rather than one smooth wash. Add the `ty-theme-switching` class to whatever you toggle (`<html>`, or a scoped `[data-ty-theme]` root) for the duration of the switch to silence those local transitions:
+
+```js
+root.classList.add('ty-theme-switching')
+root.classList.toggle('dark')   // or swap in a theme pack
+setTimeout(() => root.classList.remove('ty-theme-switching'),
+  parseFloat(getComputedStyle(root).getPropertyValue('--ty-theme-transition')) * 1000 || 450)
+```
+
+Purely additive — nothing changes unless you add the class yourself.
+
 ---
 
 #### Per-mode overrides

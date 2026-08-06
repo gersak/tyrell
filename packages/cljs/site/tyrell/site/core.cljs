@@ -88,12 +88,20 @@
                          (update :segment (fn [segment] (str "guides/" segment))))) guide-routes)))
 
 (defn toggle-theme! []
-  (swap! state update :theme #(if (= % "light") "dark" "light"))
-  (let [theme (:theme @state)]
-    (if (= theme "dark")
-      (.add (.-classList js/document.documentElement) "dark")
-      (.remove (.-classList js/document.documentElement) "dark"))
-    (.setItem js/localStorage "theme" theme)))
+  (let [root (.-documentElement js/document)]
+    ;; Silences every component's own hover/focus transition for the
+    ;; duration of the swap so only the coordinated dial crossfade (in
+    ;; tyrell-theme.css) is visible — see .ty-theme-switching there.
+    (.add (.-classList root) "ty-theme-switching")
+    (swap! state update :theme #(if (= % "light") "dark" "light"))
+    (let [theme (:theme @state)]
+      (if (= theme "dark")
+        (.add (.-classList root) "dark")
+        (.remove (.-classList root) "dark"))
+      (.setItem js/localStorage "theme" theme))
+    (let [raw (js/parseFloat (.getPropertyValue (js/getComputedStyle root) "--ty-theme-transition"))
+          ms (if (js/isNaN raw) 450 (* 1000 raw))]
+      (js/setTimeout #(.remove (.-classList root) "ty-theme-switching") ms))))
 
 ;; ============================================================================
 ;; Navigation Section Management

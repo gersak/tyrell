@@ -5,6 +5,12 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC40] - 2026-08-06
+
+### Added
+
+- **`.ty-theme-switching` opt-in escape hatch for smooth theme toggles.** Interactive components (`ty-button`, `ty-input`, `ty-switch`, `ty-tabs`, …) each carry their own short hover/focus transition (~0.15–0.2s on `background-color`/`border-color`/`color`), which CSS also fires on any non-interactive value change — so a theme switch retriggered all of them at once, racing the coordinated 0.45s dial crossfade at a different speed on every element. Measured on our own docs site: a single theme toggle fired ~1,548 separate `transitionrun` events with finish times scattered across a 449ms window, which read as jitter rather than one smooth wash. Add `ty-theme-switching` to whatever you toggle (`<html>` or a scoped `[data-ty-theme]` root) for the duration of the switch to silence local transitions on its descendants only — the dial crossfade itself is untouched. Purely additive; needs a few lines of JS around the toggle (documented in CSS_GUIDE.md → Animated theme transitions). Applied to our own docs site's theme toggle: same swap now fires 193 events (mostly the legitimate dial properties themselves) with finish times inside a 184ms window.
+
 ## [1.0.0-TC39] - 2026-08-06
 
 Headline: **`ty-select` gets a real `display`** (fixes a `ty-selected-tags` layout bug), and the chip display is renamed to **`ty-selected-options`** (old tag kept forever).
