@@ -5,6 +5,12 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC41] - 2026-08-06
+
+### Fixed
+
+- **`.ty-theme-switching` (TC40) didn't actually reach `ty-*` components.** Its suppression rule was a universal selector (`.ty-theme-switching *`) in a document-level stylesheet — Shadow DOM style encapsulation blocks that from ever matching inside a component's own shadow root, so every `ty-tag`, `ty-input`, `ty-button`, `ty-switch`, etc. kept running its local hover-transition through every theme swap, completely unaffected by TC40's fix. Confirmed live: with `.ty-theme-switching` present, `ty-tag` and `ty-input`'s internal elements still reported `transitionDuration: 0.15s` and fired `transitionrun` events. Fixed with the mechanism that actually crosses that boundary: `.ty-theme-switching` now also sets an inheriting custom property, `--ty-local-transition: none` — custom properties inherit through Shadow DOM by default, so this reaches every component for free. Every component's own local transition (`ty-button`, `ty-input`, `ty-textarea`, `ty-radio`, `ty-switch`, `ty-tabs`, `ty-checkbox`, `ty-copy`, `ty-file-upload`, `ty-calendar-month`, `ty-calendar-navigation`, `ty-date-picker`, `ty-wizard`/`ty-step`, `ty-scroll-container`'s scrollbar) now routes its existing duration/easing through `var(--ty-local-transition, <original value>)` — a fallback, so nothing changes outside a theme switch. Four shared tokens already used by several components (`--ty-transition-all`, `--ty-transition-colors`, `--ty-transition-shadow`, `--ty-transition-transform`, defined once in `tyrell.css`) got the same treatment centrally, covering `ty-tag`, `ty-option`, `ty-modal`, and several `ty-select` internals without touching those files individually. Re-verified: the same repro that showed 0 suppressed events on `ty-tag`/`ty-input` in TC40 now shows 0 `transitionrun` events during the switch and correct restoration (`0s` mid-switch → `0.15s` after) for both.
+
 ## [1.0.0-TC40] - 2026-08-06
 
 ### Added

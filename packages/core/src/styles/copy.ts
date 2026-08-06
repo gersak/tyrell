@@ -95,7 +95,7 @@ export const copyStyles = `
 /* Hover state — flavor-soft background (primary by default) */
 .input-wrapper:not(.disabled):hover {
   background: var(--copy-bg-hover, var(--ty-bg-primary-soft));
-  transition: background 0.2s ease;
+  transition: var(--ty-local-transition, background 0.2s ease);
 }
 
 /* Copy button */
@@ -110,7 +110,7 @@ export const copyStyles = `
   border: none;
   background: transparent;
   color: var(--copy-color, var(--ty-text-soft));
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: var(--ty-local-transition, color 0.2s ease, transform 0.2s ease);
   padding: 0;
   margin: 0;
 }

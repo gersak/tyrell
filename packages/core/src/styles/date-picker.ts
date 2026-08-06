@@ -236,7 +236,7 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   color: var(--ty-color-neutral-soft);
   cursor: pointer;
   border-radius: var(--ty-radius-sm);
-  transition: all 0.15s ease;
+  transition: var(--ty-local-transition, all 0.15s ease);
   pointer-events: auto;
 }
 

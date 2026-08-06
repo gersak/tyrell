@@ -428,7 +428,7 @@ setTimeout(() => root.classList.remove('ty-theme-switching'),
   parseFloat(getComputedStyle(root).getPropertyValue('--ty-theme-transition')) * 1000 || 450)
 ```
 
-Purely additive — nothing changes unless you add the class yourself.
+Purely additive — nothing changes unless you add the class yourself. Works through Shadow DOM too: every `ty-*` component's own local transition is wired to an inheriting custom property that `.ty-theme-switching` sets, not to a selector that Shadow DOM encapsulation would block.
 
 ---
 

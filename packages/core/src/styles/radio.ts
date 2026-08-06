@@ -123,7 +123,7 @@ ${inputStyles}
   border: 2px solid var(--ty-input-border);
   background: var(--ty-input-bg);
   box-sizing: border-box;
-  transition: border-color 0.15s ease-in-out;
+  transition: var(--ty-local-transition, border-color 0.15s ease-in-out);
 }
 
 /* Default (no flavor attribute) is primary — defaults don't reflect to the

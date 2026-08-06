@@ -54,7 +54,7 @@ export const customScrollbarStyles = `
   min-height: var(--ty-scrollbar-thumb-min-height, 30px);
   background: var(--ty-scrollbar-thumb, color-mix(in oklab, var(--ty-color-neutral-bold) 40%, transparent));
   border-radius: var(--ty-scrollbar-radius, 4px);
-  transition: background 0.15s ease-out;
+  transition: var(--ty-local-transition, background 0.15s ease-out);
   box-sizing: border-box;
   border: 1px solid transparent;
 }
@@ -119,7 +119,7 @@ export const customScrollbarStyles = `
   min-width: var(--ty-scrollbar-thumb-min-height, 30px);
   background: var(--ty-scrollbar-thumb, color-mix(in oklab, var(--ty-color-neutral-bold) 40%, transparent));
   border-radius: var(--ty-scrollbar-radius, 4px);
-  transition: background 0.15s ease-out;
+  transition: var(--ty-local-transition, background 0.15s ease-out);
   box-sizing: border-box;
   border: 1px solid transparent;
 }

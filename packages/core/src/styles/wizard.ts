@@ -188,7 +188,7 @@ export const wizardStyles = `
   justify-content: center;
   position: relative;
   z-index: 10;
-  transition: all var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing);
+  transition: var(--ty-local-transition, all var(--ty-wizard-transition-duration) var(--ty-wizard-transition-easing));
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -251,7 +251,7 @@ export const wizardStyles = `
   font-size: var(--ty-font-sm, 14px);
   font-weight: var(--ty-font-semibold, 600);
   color: var(--ty-color-neutral);
-  transition: color 200ms;
+  transition: var(--ty-local-transition, color 200ms);
 }
 
 .step-indicator[aria-selected="true"] .step-label {
@@ -270,7 +270,7 @@ export const wizardStyles = `
   font-size: var(--ty-font-xs, 12px);
   font-weight: var(--ty-font-normal, 400);
   color: var(--ty-color-neutral);
-  transition: color 200ms;
+  transition: var(--ty-local-transition, color 200ms);
   text-align: center;
   max-width: 120px;
 }

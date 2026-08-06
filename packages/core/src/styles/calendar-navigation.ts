@@ -88,7 +88,7 @@ export const calendarNavigationStyles = `
   background-color: transparent;
   color: var(--ty-calendar-nav-color, var(--ty-color-neutral));
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: var(--ty-local-transition, all 0.15s ease);
   outline: none;
 }
 

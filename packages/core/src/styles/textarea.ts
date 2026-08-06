@@ -30,7 +30,7 @@ export const textareaStyles = `
   border: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: var(--ty-radius-base);
   background: var(--input-bg, var(--ty-input-bg));
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition: var(--ty-local-transition, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out);
 }
 
 /* Active ring tied to the TEXTAREA specifically (not :focus-within) so tabbing
@@ -359,20 +359,20 @@ textarea:focus-visible {
 
 /* Smooth height transitions for auto-resize */
 textarea {
-  transition:
+  transition: var(--ty-local-transition,
     border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out,
     background-color 0.15s ease-in-out,
-    height 0.1s ease-out;
+    height 0.1s ease-out);
   /* Smooth height changes */
 }
 
 /* Disable height transition on focus to avoid jarring effect */
 textarea:focus {
-  transition:
+  transition: var(--ty-local-transition,
     border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out,
-    background-color 0.15s ease-in-out;
+    background-color 0.15s ease-in-out);
 }
 
 /* For users who prefer reduced motion, disable height transitions */

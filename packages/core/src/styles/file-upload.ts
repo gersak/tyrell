@@ -41,7 +41,7 @@ export const fileUploadStyles = `
   padding: 2rem 1.5rem;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: var(--ty-local-transition, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease);
   outline: none;
   display: flex;
   flex-direction: column;
@@ -101,7 +101,7 @@ export const fileUploadStyles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.15s ease, transform 0.15s ease;
+  transition: var(--ty-local-transition, color 0.15s ease, transform 0.15s ease);
   pointer-events: none;
 }
 
@@ -191,7 +191,7 @@ export const fileUploadStyles = `
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  transition: color 0.15s ease, background-color 0.15s ease;
+  transition: var(--ty-local-transition, color 0.15s ease, background-color 0.15s ease);
   border: none;
   background: none;
   padding: 0;

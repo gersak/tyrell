@@ -108,7 +108,7 @@ export const tabsStyles = `
   cursor: pointer;
   font: inherit;
   color: var(--ty-text-soft);
-  transition: color 200ms, background-color 200ms;
+  transition: var(--ty-local-transition, color 200ms, background-color 200ms);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;

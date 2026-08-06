@@ -66,7 +66,7 @@ ${inputStyles}
   height: 20px;
   border-radius: 999px;
   background: var(--ty-color-neutral-soft, var(--ty-input-border));
-  transition: background-color 0.18s ease-in-out;
+  transition: var(--ty-local-transition, background-color 0.18s ease-in-out);
   box-sizing: border-box;
 }
 
@@ -80,7 +80,7 @@ ${inputStyles}
   border-radius: 50%;
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  transition: transform 0.18s ease-in-out, background-color 0.18s ease-in-out;
+  transition: var(--ty-local-transition, transform 0.18s ease-in-out, background-color 0.18s ease-in-out);
 }
 
 /* ===== CHECKED STATE ===== */

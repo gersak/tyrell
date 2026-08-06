@@ -42,7 +42,7 @@ export const checkboxStyles = `
   display: inline-flex;
   align-items: center;
   outline: none;
-  transition: all 0.15s ease-in-out;
+  transition: var(--ty-local-transition, all 0.15s ease-in-out);
   user-select: none;
   cursor: pointer;
   border-radius: 6px;
@@ -69,7 +69,7 @@ export const checkboxStyles = `
   align-items: center;
   justify-content: center;
   color: inherit;
-  transition: color 0.15s ease-in-out;
+  transition: var(--ty-local-transition, color 0.15s ease-in-out);
   pointer-events: none;
   /* Let the container handle the click */
 }

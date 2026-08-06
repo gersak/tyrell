@@ -1393,7 +1393,20 @@ html:root,
  *              parseFloat(getComputedStyle(root)
  *                .getPropertyValue('--ty-theme-transition')) * 1000 || 450);
  *
- * Purely additive — nothing here runs unless you add the class yourself. */
+ * Two mechanisms, because Shadow DOM blocks the first from reaching the
+ * second: the `*` rule below only matches LIGHT-DOM elements (your own
+ * markup, Tailwind-transitioned nav items, etc.) — it cannot reach inside
+ * any ty-* component's shadow root, style encapsulation blocks a document
+ * stylesheet's universal selector from crossing that boundary. Every ty-*
+ * component's OWN local transition is instead wired to the inheriting
+ * custom property `--ty-local-transition` (unset by default; components
+ * fall back to their normal value) — custom properties DO inherit through
+ * shadow boundaries, so setting it once here reaches every component's
+ * internal styles for free. Purely additive — nothing here runs unless you
+ * add the class yourself. */
+.ty-theme-switching {
+  --ty-local-transition: none;
+}
 .ty-theme-switching *,
 .ty-theme-switching *::before,
 .ty-theme-switching *::after {

@@ -116,7 +116,7 @@ button {
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: var(--ty-local-transition, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease);
   background: transparent;
   color: var(--ty-color-neutral);
   border: 1px solid transparent;

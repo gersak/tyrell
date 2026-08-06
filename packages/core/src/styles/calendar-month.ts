@@ -146,7 +146,7 @@ export const calendarMonthStyles = `
   background-color: var(--ty-calendar-day-bg, transparent);
   color: var(--ty-calendar-day-color, var(--ty-calendar-muted, var(--ty-text)));
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: var(--ty-local-transition, background-color 0.15s ease, color 0.15s ease);
 
   /* Typography */
   font-weight: 400;

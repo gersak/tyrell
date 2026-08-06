@@ -115,8 +115,8 @@ export const inputStyles = `
   border: 1px solid var(--input-accent, var(--input-border, var(--ty-input-border)));
   border-radius: var(--ty-radius-base);
   background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
-  transition: all 0.15s ease-in-out;
-  
+  transition: var(--ty-local-transition, all 0.15s ease-in-out);
+
   /* Default size (md) */
   min-height: var(--ty-size-md);
   padding: 0 12px;
@@ -171,7 +171,7 @@ export const inputStyles = `
   background: none;
   cursor: pointer;
   color: var(--input-placeholder, var(--ty-input-placeholder));
-  transition: color 0.15s ease-in-out;
+  transition: var(--ty-local-transition, color 0.15s ease-in-out);
 }
 .password-toggle:hover {
   color: var(--input-color, var(--ty-input-color));
