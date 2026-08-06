@@ -1,5 +1,5 @@
 (ns tyrell.site.docs.select
-  "Documentation for ty-select + ty-selected-tags components"
+  "Documentation for ty-select + ty-selected-options components"
   (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
                                              doc-section docs-page component-header section-label demo-area]]))
 
@@ -24,7 +24,7 @@
       {:name "compact"
        :type "boolean"
        :default "false"
-       :description "Compact content-hugging trigger (toolbars, filter bars) instead of the default full-width form-field look. Single shows the selected label; multiple shows placeholder + count badge (pair with ty-selected-tags)."}
+       :description "Compact content-hugging trigger (toolbars, filter bars) instead of the default full-width form-field look. Single shows the selected label; multiple shows placeholder + count badge (pair with ty-selected-options)."}
       {:name "value"
        :type "string"
        :default "\"\""
@@ -63,7 +63,7 @@
        :description "Size variant: sm, md, lg"}])]
 
    [:div.mb-6
-    (section-label "ty-selected-tags Attributes")
+    (section-label "ty-selected-options Attributes")
     (attribute-table
      [{:name "for"
        :type "string"
@@ -87,7 +87,7 @@
      "selected option into the field, so it displays intact. A "
      [:code.ty-text "label"] " attribute (native <option label> semantics) provides clean display "
      "text for multi-select summaries and chips; " [:code.ty-text "data-*"]
-     " attributes feed ty-selected-tags templates."]]
+     " attributes feed ty-selected-options templates."]]
 
    [:div
     (section-label "Events (ty-select)")
@@ -169,7 +169,7 @@
     "Add " [:code.ty-text "multiple"] " for native <select multiple> semantics: options "
     "toggle on click and the popup stays open. Add " [:code.ty-text "compact"]
     " for the compact trigger skin with a count badge, and pair with "
-    [:code.ty-text "ty-selected-tags"] " to render the selection as dismissible chips — "
+    [:code.ty-text "ty-selected-options"] " to render the selection as dismissible chips — "
     "anywhere in the layout, decoupled from the picker."]
    (demo-area
     [:div.space-y-3
@@ -185,7 +185,7 @@
       [:ty-option {:value "pdf"} "Generate PDF microservice"]
       [:ty-option {:value "ppz"} "Generate PPZ"]]
      [:div.flex.flex-wrap.gap-2
-      [:ty-selected-tags {:for "basic-select"}]]])
+      [:ty-selected-options {:for "basic-select"}]]])
    (code-block "<ty-select multiple compact id=\"robots\" label=\"Robots\" name=\"robots\" placeholder=\"Select robots\">
   <ty-option value=\"bobo\" flavor=\"primary\">Bobo Robot Name</ty-option>
   <ty-option value=\"email\" flavor=\"info\">Email klijent za KnowledBase</ty-option>
@@ -193,7 +193,7 @@
 </ty-select>
 
 <!-- anywhere else in the layout -->
-<ty-selected-tags for=\"robots\"></ty-selected-tags>")])
+<ty-selected-options for=\"robots\"></ty-selected-options>")])
 
 (defn example-custom-trigger []
   [:div.ty-content.rounded-lg.p-5
@@ -216,7 +216,7 @@
       [:ty-option {:value "eywa"} "EYWA Dataset Example with Reacher"]
       [:ty-option {:value "pdf"} "Generate PDF microservice"]]
      [:div.flex.flex-wrap.gap-2
-      [:ty-selected-tags {:for "trigger-select"}]]])
+      [:ty-selected-options {:for "trigger-select"}]]])
    (code-block "<ty-select multiple name=\"robots\" id=\"robots\">
   <!-- your trigger, your styling -->
   <ty-button slot=\"trigger\" flavor=\"primary\" outlined pill>
@@ -227,13 +227,13 @@
   <ty-option value=\"bobo\">Bobo Robot Name</ty-option>
   <ty-option value=\"email\">Email klijent za KnowledBase</ty-option>
 </ty-select>
-<ty-selected-tags for=\"robots\"></ty-selected-tags>")])
+<ty-selected-options for=\"robots\"></ty-selected-options>")])
 
 (defn example-template []
   [:div.ty-content.rounded-lg.p-5
    (section-label "Custom Chip Template")
    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Drop a " [:code.ty-text "<template>"] " inside ty-selected-tags to control the chip markup. "
+    "Drop a " [:code.ty-text "<template>"] " inside ty-selected-options to control the chip markup. "
     "Placeholders " [:code.ty-text "{value}"] ", " [:code.ty-text "{label}"] ", "
     [:code.ty-text "{flavor}"] " and any " [:code.ty-text "{data-*}"]
     " attribute from the matching option are interpolated — plain HTML, no JS, "
@@ -250,7 +250,7 @@
       [:ty-option {:value "auth" :flavor "danger" :data-icon "lock"} "Auth Provider"]
       [:ty-option {:value "cron" :data-icon "clock"} "Scheduler"]]
      [:div.flex.flex-wrap.gap-2
-      [:ty-selected-tags {:for "template-select"}
+      [:ty-selected-options {:for "template-select"}
        [:template
         [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
          [:ty-icon {:slot "start" :name "{data-icon}" :size "xs"}]
@@ -260,14 +260,14 @@
   <ty-option value=\"mail\" flavor=\"success\" data-icon=\"mail\">Mail Service</ty-option>
 </ty-select>
 
-<ty-selected-tags for=\"services\">
+<ty-selected-options for=\"services\">
   <template>
     <ty-tag flavor=\"{flavor}\" dismissible pill>
       <ty-icon slot=\"start\" name=\"{data-icon}\" size=\"xs\"></ty-icon>
       {label}
     </ty-tag>
   </template>
-</ty-selected-tags>")])
+</ty-selected-options>")])
 
 (defn example-preselected []
   [:div.ty-content.rounded-lg.p-5
@@ -288,7 +288,7 @@
       [:ty-option {:value "node" :flavor "success"} "Node.js"]
       [:ty-option {:value "python" :flavor "warning"} "Python"]]
      [:div.flex.flex-wrap.gap-2
-      [:ty-selected-tags {:for "preselected-select"}]]])
+      [:ty-selected-options {:for "preselected-select"}]]])
    (code-block "<ty-select multiple value=\"react,clojure\" label=\"Tech Stack\">
   <ty-option value=\"react\" flavor=\"info\">React</ty-option>
   <ty-option value=\"clojure\" flavor=\"primary\">Clojure</ty-option>
@@ -317,7 +317,7 @@
        [:ty-option {:value "clj"} "Clojure"]
        [:ty-option {:value "py"} "Python"]]
       [:div.flex.flex-wrap.gap-2
-       [:ty-selected-tags {:for "form-select"}]]
+       [:ty-selected-options {:for "form-select"}]]
       [:ty-button {:type "submit" :flavor "primary"} "Submit form"]]
      [:div.ty-elevated.rounded.px-3.py-2 {:style {:font-size "0.8125rem"}}
       [:span.ty-text-- "FormData: "]
@@ -339,7 +339,7 @@
     <ty-option value=\"js\">JavaScript</ty-option>
     <ty-option value=\"ts\">TypeScript</ty-option>
   </ty-select>
-  <ty-selected-tags></ty-selected-tags> <!-- previous-sibling fallback -->
+  <ty-selected-options></ty-selected-options> <!-- previous-sibling fallback -->
   <button type=\"submit\">Filter</button>
 </form>
 
@@ -486,7 +486,7 @@
       "ty-select replaces both: it IS a single select by default (like ty-dropdown), "
       "and " [:code.ty-text "multiple"] " gives multi-select. Unlike ty-multiselect it "
       "renders no chips inside the field — options are ty-option children, and chips "
-      "render out-of-band via ty-selected-tags (or your own code)."]
+      "render out-of-band via ty-selected-options (or your own code)."]
      (code-block "<!-- Before: ty-dropdown (single) -->
 <ty-dropdown name=\"skill\">
   <ty-option value=\"js\">JavaScript</ty-option>
@@ -506,7 +506,7 @@
 <ty-select multiple name=\"skills\">
   <ty-option value=\"js\">JavaScript</ty-option>
 </ty-select>
-<ty-selected-tags for=\"...\"></ty-selected-tags>")]))
+<ty-selected-options for=\"...\"></ty-selected-options>")]))
 
 ;; ============================================================================
 ;; Page

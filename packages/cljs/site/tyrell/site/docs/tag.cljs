@@ -236,7 +236,7 @@
       [:div.ty-content.rounded-lg.p-5
        (section-label "Select Integration")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Tags render the selection of a ty-select via ty-selected-tags — option flavors carry through to the chips."]
+        "Tags render the selection of a ty-select via ty-selected-options — option flavors carry through to the chips."]
        (demo-area
         [:div.space-y-2 {:style {:min-width "300px"}}
          [:ty-select {:placeholder "Select skills..."
@@ -249,12 +249,12 @@
           [:ty-option {:value "vue" :flavor "success"} "🟢 Vue.js"]
           [:ty-option {:value "python" :flavor "neutral"} "🐍 Python"]]
          [:div.flex.flex-wrap.gap-2
-          [:ty-selected-tags {:for "tag-select-demo"}]]])
+          [:ty-selected-options {:for "tag-select-demo"}]]])
        (code-block "<ty-select placeholder=\"Select skills...\" multiple id=\"skills\" value=\"javascript,react\">
   <ty-option value=\"javascript\" flavor=\"warning\">📜 JavaScript</ty-option>
   <ty-option value=\"react\" flavor=\"success\">⚛️ React</ty-option>
 </ty-select>
-<ty-selected-tags for=\"skills\"></ty-selected-tags>")]])
+<ty-selected-options for=\"skills\"></ty-selected-options>")]])
 
    ;; Common Use Cases
    (doc-section "Common Use Cases"

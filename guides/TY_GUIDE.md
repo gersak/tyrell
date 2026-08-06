@@ -134,7 +134,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 | Parent | Children | Example |
 |--------|----------|---------|
 | `ty-select` | `<ty-option>` (rich HTML; `label` attr = clean display text) | `<ty-option value="us">US</ty-option>` |
-| `ty-selected-tags` | optional `<template>` with `{value}`/`{label}`/`{flavor}`/`{data-*}` placeholders | `<template><ty-tag flavor="{flavor}">{label}</ty-tag></template>` |
+| `ty-selected-options` | optional `<template>` with `{value}`/`{label}`/`{flavor}`/`{data-*}` placeholders | `<template><ty-tag flavor="{flavor}">{label}</ty-tag></template>` |
 
 ---
 
@@ -289,13 +289,13 @@ THE select control. Single select by default with a form-field look matching `ty
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
-**Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-tags` templates.
+**Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-options` templates.
 
 **Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
 
 **Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` includes `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
 
-**Companion:** `<ty-selected-tags for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup.
+**Companion:** `<ty-selected-options for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup. Also registered as **`ty-selected-tags`** — original tag name, kept working indefinitely.
 
 **Full keyboard + ARIA combobox pattern:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="combobox"` / `aria-haspopup="listbox"` / `aria-expanded` / `aria-controls` (the popup's `role="listbox"`, `aria-multiselectable` when `multiple`) / `aria-labelledby` (when `label` is set — the visible label text, programmatically associated, not just nearby). Each `<ty-option>` gets `role="option"` + a live `aria-selected`. `Enter`/`Space`/`ArrowDown` open the closed, focused field — not just a mouse click.
 
@@ -305,7 +305,7 @@ THE select control. Single select by default with a form-field look matching `ty
 
 ### ty-option
 
-Rich HTML option for `<ty-select>`. Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content; `data-*` attributes feed `ty-selected-tags` chip templates.
+Rich HTML option for `<ty-select>`. Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `highlighted`, `hidden`. Default slot for content; `data-*` attributes feed `ty-selected-options` chip templates.
 
 ---
 

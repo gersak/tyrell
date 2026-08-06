@@ -228,7 +228,7 @@
         [:ty-option {:value "recording" :flavor "neutral" :data-icon "video" :data-price "+$75"} "Recording"]
         [:ty-option {:value "translation" :flavor "danger" :data-icon "globe" :data-price "+$100"} "Translation"]]
        [:div.flex.flex-wrap.gap-2.mt-3
-        [:ty-selected-tags {:for "booking-addons"}
+        [:ty-selected-options {:for "booking-addons"}
          [:template
           [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
            [:ty-icon {:slot "start" :name "{data-icon}" :size "xs"}]

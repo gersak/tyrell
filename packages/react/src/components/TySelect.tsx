@@ -251,7 +251,9 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
 TySelect.displayName = 'TySelect';
 
 // ============================================================================
-// TySelectedTags — out-of-band chip display for a TySelect
+// TySelectedOptions — out-of-band chip display for a TySelect
+// (ty-selected-tags below is the same element under its original tag name,
+// kept for backward compatibility.)
 // ============================================================================
 
 export interface TySelectedTagsProps extends React.HTMLAttributes<HTMLElement> {
@@ -261,9 +263,8 @@ export interface TySelectedTagsProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-selected-tags web component
-export const TySelectedTags = React.forwardRef<HTMLElement, TySelectedTagsProps>(
-  ({ htmlFor, children, ...props }, ref) => {
+const selectedChipsComponent = (tag: 'ty-selected-options' | 'ty-selected-tags') =>
+  React.forwardRef<HTMLElement, TySelectedTagsProps>(({ htmlFor, children, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -276,8 +277,13 @@ export const TySelectedTags = React.forwardRef<HTMLElement, TySelectedTagsProps>
     const webComponentProps: Record<string, any> = { ...hostProps(props), ref: elementRef };
     if (htmlFor) webComponentProps.for = htmlFor;
 
-    return React.createElement('ty-selected-tags', webComponentProps, children);
-  }
-);
+    return React.createElement(tag, webComponentProps, children);
+  });
 
+/** React wrapper for the ty-selected-options web component. */
+export const TySelectedOptions = selectedChipsComponent('ty-selected-options');
+TySelectedOptions.displayName = 'TySelectedOptions';
+
+/** @deprecated Use `TySelectedOptions` — kept for backward compatibility. */
+export const TySelectedTags = selectedChipsComponent('ty-selected-tags');
 TySelectedTags.displayName = 'TySelectedTags';

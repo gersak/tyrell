@@ -59,7 +59,7 @@ export type { TyModalProps as TyDialogProps, TyModalEventDetail as TyDialogEvent
 export { TyTooltip } from './TyTooltip';
 export type { TyTooltipProps } from './TyTooltip';
 
-export { TySelect, TySelectedTags } from './TySelect';
+export { TySelect, TySelectedOptions, TySelectedTags } from './TySelect';
 export type { TySelectProps, TySelectEventDetail, TySelectItem, TySelectedTagsProps } from './TySelect';
 
 export { TyCalendar } from './TyCalendar';

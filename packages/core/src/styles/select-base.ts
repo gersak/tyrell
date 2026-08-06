@@ -49,8 +49,19 @@ export const selectBaseStyles = `
 /* Select-field-specific styles extending dropdown base styles */
 
 :host {
+  display: block;
+  width: 100%;
   font-family: var(--ty-font-sans);
   --mobile-border-color: var(--ty-border, #5858587d);
+}
+
+/* compact is a toolbar/filter-bar trigger — it must hug its own content so
+   it can sit inline next to other toolbar items, not claim a full row.
+   inline-block (not plain inline): a block box still ignores width and
+   collapses vertical margin, which is what we're fixing above. */
+:host([compact]) {
+  display: inline-block;
+  width: auto;
 }
 
 /* ===== DIALOG POSITIONING SUPPORT ===== */

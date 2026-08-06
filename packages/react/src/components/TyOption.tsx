@@ -8,12 +8,12 @@ export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
 
   /**
    * Clean display text (native <option label> semantics) — used by ty-select
-   * for field summaries and by ty-selected-tags chips when the option's
+   * for field summaries and by ty-selected-options chips when the option's
    * children are rich HTML. data-* attributes feed chip templates.
    */
   label?: string;
 
-  /** Semantic flavor — carried onto ty-selected-tags chips */
+  /** Semantic flavor — carried onto ty-selected-options chips */
   flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral' | 'info';
 
   disabled?: boolean;

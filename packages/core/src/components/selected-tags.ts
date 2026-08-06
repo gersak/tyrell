@@ -1,5 +1,5 @@
 /**
- * TySelectedTags Web Component
+ * TySelectedOptions Web Component
  *
  * Out-of-band chip display for a picker (ty-select).
  * The picker owns the value + form submission; this element just renders the
@@ -9,12 +9,22 @@
  * bubbling `change` event. Labels/flavors are read from the picker's matching
  * option (`[value="..."]`), so chips stay rich without duplicating data.
  *
+ * If the picker also emits `open`/`close` (ty-select does), the chips hide
+ * for the duration — the picker's own popup is independently sized/
+ * positioned and can otherwise visually collide with this row.
+ *
+ * Also registered as `ty-selected-tags` — the original tag name, kept
+ * working indefinitely for backward compatibility. `ty-selected-options` is
+ * the name going forward: it names the element by what it's driven by
+ * (a picker's selected `ty-option`s), not by the chip primitive it happens
+ * to render with.
+ *
  * @example
  * ```html
  * <ty-select id="robots">
  *   <ty-option value="bobo" flavor="primary">Bobo Robot</ty-option>
  * </ty-select>
- * <ty-selected-tags for="robots"></ty-selected-tags>
+ * <ty-selected-options for="robots"></ty-selected-options>
  * ```
  *
  * Custom chips via a <template> child. Placeholders {value}, {label}, {flavor}
@@ -26,14 +36,14 @@
  * <ty-select id="team">
  *   <ty-option value="ivan" data-avatar="/avatars/ivan.png">Ivan</ty-option>
  * </ty-select>
- * <ty-selected-tags for="team">
+ * <ty-selected-options for="team">
  *   <template>
  *     <ty-tag flavor="{flavor}" dismissible>
  *       <img slot="start" src="{data-avatar}" class="w-4 h-4 rounded-full">
  *       {label}
  *     </ty-tag>
  *   </template>
- * </ty-selected-tags>
+ * </ty-selected-options>
  * ```
  */
 
@@ -52,7 +62,7 @@ function interpolate(text: string, ctx: Record<string, string>): string {
   return text.replace(/\{([\w-]+)\}/g, (match, key) => ctx[key] ?? match)
 }
 
-export class TySelectedTags extends HTMLElement {
+export class TySelectedOptions extends HTMLElement {
   static get observedAttributes(): string[] {
     return ['for']
   }
@@ -62,6 +72,21 @@ export class TySelectedTags extends HTMLElement {
   private _childObserver: MutationObserver | null = null
   private _pickerObserver: MutationObserver | null = null
   private _lastTemplate: HTMLTemplateElement | null = null
+
+  // While the linked picker's own popup is open, its independently-sized,
+  // independently-positioned dropdown can visually collide with this chip
+  // row (it's a separate element, placed wherever the consumer wants it —
+  // there's no layout relationship to enforce). Hiding the chips for the
+  // duration sidesteps that instead of trying to out-z-index or reflow
+  // around an overlay whose size/position we don't control.
+  private _restoreDisplay = 'contents'
+  private _onPickerOpen = (): void => {
+    this._restoreDisplay = this.style.display || 'contents'
+    this.style.display = 'none'
+  }
+  private _onPickerClose = (): void => {
+    this.style.display = this._restoreDisplay
+  }
 
   connectedCallback(): void {
     // Chips participate directly in the parent layout (flex gap, wrap, etc.)
@@ -109,6 +134,8 @@ export class TySelectedTags extends HTMLElement {
     this.unbind()
     this._picker = next
     this._picker?.addEventListener('change', this._onChange)
+    this._picker?.addEventListener('open', this._onPickerOpen)
+    this._picker?.addEventListener('close', this._onPickerClose)
 
     // The picker stamps `selected` onto its options ASYNC after connect
     // (rAF init) and on external option swaps — neither fires `change`.
@@ -126,9 +153,13 @@ export class TySelectedTags extends HTMLElement {
 
   private unbind(): void {
     this._picker?.removeEventListener('change', this._onChange)
+    this._picker?.removeEventListener('open', this._onPickerOpen)
+    this._picker?.removeEventListener('close', this._onPickerClose)
     this._pickerObserver?.disconnect()
     this._pickerObserver = null
     this._picker = null
+    // Don't leave chips hidden if the picker is swapped/removed mid-open.
+    this.style.display = this._restoreDisplay
   }
 
   private values(): string[] {
@@ -259,6 +290,12 @@ export class TySelectedTags extends HTMLElement {
   }
 }
 
+if (!customElements.get('ty-selected-options')) {
+  customElements.define('ty-selected-options', TySelectedOptions)
+}
+
+// Original tag name — kept working indefinitely. A constructor can only
+// register once, hence the subclass (see ty-modal/ty-dialog for precedent).
 if (!customElements.get('ty-selected-tags')) {
-  customElements.define('ty-selected-tags', TySelectedTags)
+  customElements.define('ty-selected-tags', class TySelectedTags extends TySelectedOptions { })
 }

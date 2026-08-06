@@ -200,7 +200,7 @@
         [:div.flex.items-center.gap-1.5
          [:span.font-bold.text-xs glyph] [:span label]]])]
     [:div.flex.flex-wrap.gap-2.mt-2
-     [:ty-selected-tags {:for "profile-skills"}
+     [:ty-selected-options {:for "profile-skills"}
       [:template
        [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
         [:span.font-bold.text-xs {:slot "start"} "{data-glyph}"]

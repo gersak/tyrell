@@ -13,7 +13,7 @@
  *   shows the selected label(s) inline
  * - `compact`: content-hugging trigger for toolbars/filter bars; single shows
  *   the selected label, multiple shows placeholder + count badge (pair with
- *   <ty-selected-tags>)
+ *   <ty-selected-options>)
  * - slot="trigger": consumer skin — replaces field/compact chrome entirely,
  *   behavior/ARIA/form participation unchanged
  *
@@ -35,7 +35,7 @@
  *
  * <!-- Multi select, compact skin + out-of-band chips -->
  * <ty-select multiple compact label="Robots" name="robots" id="robots">...</ty-select>
- * <ty-selected-tags for="robots"></ty-selected-tags>
+ * <ty-selected-options for="robots"></ty-selected-options>
  * ```
  */
 
@@ -731,7 +731,7 @@ export class TySelect extends TyComponent<SelectState> {
 
   /**
    * Select an option - attribute only. The option stays in the list with
-   * selected styling; chips are rendered out-of-band (ty-selected-tags).
+   * selected styling; chips are rendered out-of-band (ty-selected-options).
    */
   private selectTag(tag: HTMLElement): void {
     tag.setAttribute("selected", "");
@@ -2274,7 +2274,7 @@ export class TySelect extends TyComponent<SelectState> {
 
   /**
    * Deselect a value programmatically WITH a change event.
-   * Used by out-of-band chip displays (ty-selected-tags) so dismissing a chip
+   * Used by out-of-band chip displays (ty-selected-options) so dismissing a chip
    * fires change like any in-popup interaction (HTMX hx-trigger="change" etc.).
    */
   deselectValue(value: string): void {

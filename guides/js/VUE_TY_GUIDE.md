@@ -187,7 +187,7 @@ const countries = [
 ```
 
 For multi-select add `multiple` — children stay `ty-option`, and
-`$event.detail.values` is the selected array. Pair with `<ty-selected-tags>`
+`$event.detail.values` is the selected array. Pair with `<ty-selected-options>`
 for dismissible chips anywhere in the layout:
 
 ```vue
@@ -199,7 +199,7 @@ for dismissible chips anywhere in the layout:
 >
   <ty-option v-for="t in tags" :key="t" :value="t">{{ t }}</ty-option>
 </ty-select>
-<ty-selected-tags for="tags"></ty-selected-tags>
+<ty-selected-options for="tags"></ty-selected-options>
 ```
 
 ## Icons

@@ -245,7 +245,7 @@
         [:ty-option {:value "partnership" :flavor "neutral"}   "Partnerships"]]]
       ;; Dismissible chips for the selection — default template, flavors carry
       [:div.flex.flex-wrap.gap-2.mt-2
-       [:ty-selected-tags {:for "contact-departments"}]]
+       [:ty-selected-options {:for "contact-departments"}]]
 
       (section-divider "Message")
       [:ty-textarea {:label "Message" :value (:message form-data)

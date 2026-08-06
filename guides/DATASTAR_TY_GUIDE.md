@@ -25,7 +25,7 @@ The result: **a full interactive UI driven entirely by server-rendered HTML**. T
 Two minimal single-file Go servers (standard library only, no external Go deps) that exercise the full primitive surface against the latest TC build:
 
 - [`examples/datastar-go/`](../examples/datastar-go/) — support-ticket form. Covers `ty-input`, `ty-textarea`, `ty-select` + `ty-option`, `ty-radio-group`, `ty-date-picker`, `ty-switch`, `ty-checkbox`, `ty-button`, `ty-modal`, `ty-scroll-container`, `ty-icon`, plus debounced server-side validation and a keep-alive SSE feed.
-- [`examples/datastar-go-workspace/`](../examples/datastar-go-workspace/) — workspace dashboard covering everything the first example doesn't: `ty-tabs`, `ty-select` (`multiple`) + `ty-selected-tags` + `ty-tag`, `ty-copy`, `ty-file-upload`, `ty-calendar`, `ty-wizard` + `ty-step`, `ty-popup`, `ty-tooltip`, `ty-resize-observer`, with server-driven wizard transitions and SSE upload progress.
+- [`examples/datastar-go-workspace/`](../examples/datastar-go-workspace/) — workspace dashboard covering everything the first example doesn't: `ty-tabs`, `ty-select` (`multiple`) + `ty-selected-options` + `ty-tag`, `ty-copy`, `ty-file-upload`, `ty-calendar`, `ty-wizard` + `ty-step`, `ty-popup`, `ty-tooltip`, `ty-resize-observer`, with server-driven wizard transitions and SSE upload progress.
 
 Both pin the CDN to `tyrell-components@tc` (the dist tag that follows the latest TC build) so they track the version under active development. They also demonstrate **server-rendered icons** — inline `<svg>` slotted into `<ty-icon>` so icons paint with zero client-side JS.
 

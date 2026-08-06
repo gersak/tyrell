@@ -46,7 +46,7 @@ ty-date-picker.js (loaded when <ty-date-picker> is used)
     {:entries [tyrell.components.date-picker]
      :depends-on #{:ty-calendar}}
 
-    :ty-selected-tags
+    :ty-selected-options
     {:entries [tyrell.components.selected-tags]
      :depends-on #{:ty-select}}}}}}
 ```

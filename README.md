@@ -216,7 +216,7 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 | `ty-switch` | Toggle switch primitive |
 | `ty-radio-group` / `ty-radio` | Exclusive single-choice selection |
 | `ty-select` / `ty-option` | THE select control — single by default, `multiple` for multi-select, searchable popup |
-| `ty-selected-tags` | Out-of-band dismissible chips for a `ty-select` selection |
+| `ty-selected-options` | Out-of-band dismissible chips for a `ty-select` selection |
 | `ty-calendar` | Full calendar with date selection and form integration |
 | `ty-date-picker` | Calendar dropdown for date input |
 | `ty-tabs` / `ty-tab` | Carousel tabs with smooth animations |

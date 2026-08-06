@@ -92,6 +92,21 @@
             [:ty-option {:value "b"} "Option B"]]
            [:ty-button {:flavor f :size btn-size} "Button"]]])]]
 
+     ;; Input + select, both with labels, forced into the same row — checks
+     ;; that both fields' :host block boxes (label above field) stay flush
+     ;; and don't collapse/stretch oddly when placed side by side.
+     [:div.space-y-2
+      [:h2.text-lg.font-semibold.ty-text "Input + Select with labels — same row"]
+      [:p.ty-text-.text-sm
+       "Both fields are block-level; an explicit width on each keeps them"
+       " side by side with labels aligned."]
+      [:div.ty-elevated.p-6.rounded-lg
+       [:div.flex.flex-wrap.items-start.gap-3
+        [:ty-input {:flavor f :label "Name" :placeholder "Jane Doe" :style {:width "14rem"}}]
+        [:ty-select {:flavor f :label "Role" :placeholder "Select role" :style {:width "14rem"}}
+         [:ty-option {:value "admin"} "Admin"]
+         [:ty-option {:value "user"} "User"]]]]]
+
      ;; Button in the input's end slot — same size name, ~4px margin.
      [:div.space-y-2
       [:h2.text-lg.font-semibold.ty-text "Button in an input's end slot — same size name"]

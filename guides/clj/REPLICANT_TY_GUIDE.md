@@ -146,7 +146,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
  [:ty-option {:value "de"} "Germany"]]
 
 ;; Multi-select (ty-select with :multiple — children are
-;; ty-option, chips render via ty-selected-tags)
+;; ty-option, chips render via ty-selected-options)
 [:ty-select
  {:multiple true
   :id "skills"
@@ -156,7 +156,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
   :on {:change (fn [^js e] (on-skills-change (vec (-> e .-detail .-values))))}}
  [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
  [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]]
-[:ty-selected-tags {:for "skills"}]
+[:ty-selected-options {:for "skills"}]
 
 ;; Checkbox
 [:ty-checkbox
@@ -516,7 +516,7 @@ Single select clones the selected option into the field, so rich HTML displays i
 
 ### Multi-select with Chips
 
-`ty-select multiple` + `ty-selected-tags` — options are `ty-option` children,
+`ty-select multiple` + `ty-selected-options` — options are `ty-option` children,
 dismissible chips render out-of-band wherever you put them:
 
 ```clojure
@@ -533,7 +533,7 @@ dismissible chips render out-of-band wherever you put them:
  [:ty-option {:value "react" :flavor "neutral"} "React"]]
 
 [:div.flex.flex-wrap.gap-2
- [:ty-selected-tags {:for "skills-select"}]]
+ [:ty-selected-options {:for "skills-select"}]]
 ```
 
 ---

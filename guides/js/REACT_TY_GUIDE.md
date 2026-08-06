@@ -241,7 +241,7 @@ function ContactForm() {
 ## Multi-select — `<TySelect multiple>`
 
 > With `multiple`, options are `<TyOption>` children (not `<TyTag>`), and selected
-> chips render out-of-band via `<TySelectedTags>` wherever you want them.
+> chips render out-of-band via `<TySelectedOptions>` wherever you want them.
 
 ```tsx
 const [selected, setSelected] = useState<string[]>([])
@@ -260,11 +260,11 @@ const [selected, setSelected] = useState<string[]>([])
 </TySelect>
 
 {/* dismissible chips — anywhere in the layout */}
-<TySelectedTags htmlFor="tags" />
+<TySelectedOptions htmlFor="tags" />
 ```
 
 `TyOption` supports rich HTML children; give it a `label` prop for clean display
-text in summaries/chips, and `data-*` attributes to feed `TySelectedTags`
+text in summaries/chips, and `data-*` attributes to feed `TySelectedOptions`
 `<template>` chips.
 
 ## Select with Data
@@ -938,7 +938,7 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyTextarea` | `value` | `onChange` / `onChangeCommit` | -- |
 | `TyCheckbox` | `checked` | `onChange` | -- |
 | `TySelect` | `value` (string, or array when `multiple`) | `onChange` / `onSearch` / `onOpen` / `onClose` | -- |
-| `TySelectedTags` | `htmlFor` | -- | -- |
+| `TySelectedOptions` | `htmlFor` | -- | -- |
 | `TyDatePicker` | `value` (ISO) | `onChange` / `onOpen` / `onClose` | -- |
 | `TyCalendar` | `value` (ISO) | `onChange` / `onNavigate` | -- |
 | `TyTabs` | `active` | `onChange` | -- |

@@ -5,6 +5,19 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC39] - 2026-08-06
+
+Headline: **`ty-select` gets a real `display`** (fixes a `ty-selected-tags` layout bug), and the chip display is renamed to **`ty-selected-options`** (old tag kept forever).
+
+### Fixed
+
+- **`ty-select` never declared `:host { display }`**, so it defaulted to the browser's `display: inline` for every skin (default field, `compact`, `slot="trigger"`). Inline boxes ignore vertical margin entirely, which is why pairing a select with `ty-selected-options`/`ty-selected-tags` below it (the documented pattern) rendered the chips flush against the select instead of the intended gap — not a symptom of the earlier label-gap fix, a separate pre-existing bug that just became visible. Now `:host { display: block; width: 100% }`, matching `ty-input`'s existing convention; `:host([compact]) { display: inline-block; width: auto }` keeps the documented "content-hugging toolbar trigger" skin actually content-hugging. Verified: margin-driven gaps now render (was 0px, now the declared value), compact still sizes to its own label, and an input+label sits flush in the same row as a select+label.
+- **The picker's popup could visually collide with its own out-of-band chip row.** `ty-select`'s popup is intentionally independently sized/positioned from the trigger (documented), so when it's wider or narrower than the chip row beneath it, part of that row stayed visible, peeking out beside or through the open popup. `ty-selected-options`/`ty-selected-tags` now listens for the picker's `open`/`close` events (already emitted by `ty-select`) and hides itself for the duration — cheaper and more correct than trying to out-z-index or reflow around an overlay whose footprint it doesn't control.
+
+### Changed
+
+- **`ty-selected-tags` renamed to `ty-selected-options`.** The old name described the chip primitive it happens to render with (`ty-tag`); the new one describes what drives it — a picker's selected `ty-option`s — matching how the rest of the library names things. `ty-selected-tags` is re-registered as a subclass and kept working indefinitely (same convention as `ty-modal`/`ty-dialog`); the JS class `TySelectedTags` (core and React packages) is likewise kept as an alias export of `TySelectedOptions`. No migration required — this is additive, not a removal.
+
 ## [1.0.0-TC38] - 2026-08-06
 
 Headline: **`tyrell-brand.css` renamed to `tyrell-theme.css`** (BREAKING path change), and the static `tyrell.css` fallback path is now correct-by-default instead of quietly shipping pre-TC35 contrast bugs.

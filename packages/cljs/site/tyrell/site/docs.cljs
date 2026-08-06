@@ -240,7 +240,7 @@
     [:ty-option {:value "node-js" :flavor "success"} "Node.js"]
     [:ty-option {:value "python" :flavor "warning"} "Python"]]
    [:div.flex.flex-wrap.gap-2
-    [:ty-selected-tags {:for "select-preview"}]]])
+    [:ty-selected-options {:for "select-preview"}]]])
 
 ;; --- Date & time ---
 
