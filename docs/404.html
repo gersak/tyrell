@@ -7,7 +7,11 @@
     <title>Tyrell Components - Professional Web Components Showcase</title>
     <meta name="description"
         content="Explore professional, framework-agnostic web components through real-world scenarios. Tyrell Components provides a semantic design system with comprehensive theming and accessibility.">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind v4 browser build. v3's Play CDN declared its internal --tw-*
+         state vars on `*, ::before, ::after`, which DevTools then repeated for
+         every ancestor when inspecting any element; v4 registers them via
+         @property instead. Site-only — Tyrell has no Tailwind dependency. -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
     <!-- Web fonts: Inter (UI) + JetBrains Mono (code) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,23 +20,22 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
     <!-- Tyrell Complete CSS System (Variables + Utilities) from CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC34/css/tyrell.css">
-    <!-- Opt-in OKLCH brand layer. Demoed at /docs/theming. -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC34/css/tyrell-brand.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC38/css/tyrell.css">
+    <!-- OKLCH theme engine. Demoed at /docs/theming. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC38/css/tyrell-theme.css">
 
-    <!-- Site brand seeds: override the brand-layer defaults for this site only.
+    <!-- Site brand seeds: override the theme-engine defaults for this site only.
          Mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
          playground sliders + Reset button agree with first-paint values. -->
     <style>
         :root {
-            --ty-brand-hue: 47;
-            --ty-brand-chroma: 0.135;
-            --ty-secondary-offset: -25;
+            --ty-brand-hue: 45;
+            --ty-brand-chroma: 0.125;
         }
     </style>
 
     <!-- Tyrell Web Components (TypeScript) from CDN -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC34/dist/tyrell.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC38/dist/tyrell.js"></script>
 
     <!-- Highlight.js for code syntax highlighting -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
@@ -267,7 +270,7 @@
     <div id="app"></div>
 
     <!-- Load site app after DOM is ready -->
-    <script defer src="/tyrell/js/site.snc7z.js"></script>
+    <script defer src="/tyrell/js/site.KEpig.js"></script>
 </body>
 
 </html>

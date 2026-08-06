@@ -44,7 +44,7 @@
       {:name "flavor"
        :type "string"
        :default "\"neutral\""
-       :description "Semantic color: primary, secondary, success, danger, warning, neutral"}])]
+       :description "Semantic color: primary, success, danger, warning, neutral"}])]
 
    [:div
     (section-label "Events")
@@ -206,7 +206,7 @@
       [:p.ty-text-- {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em"
                              :text-transform "uppercase" :margin-bottom "0.5rem"}} "Development"]
       [:div.space-y-2
-       [:ty-copy {:size "sm" :flavor "secondary" :label "Test Public Key" :value "pk_test_public_key_def456"}]
+       [:ty-copy {:size "sm" :flavor "neutral" :label "Test Public Key" :value "pk_test_public_key_def456"}]
        [:ty-copy {:size "sm" :flavor "warning" :label "Test Secret Key"
                   :value "sk_test_secret_key_uvw321" :format "code"}]]]])
    (code-block "<ty-copy size=\"sm\" flavor=\"success\" label=\"Public Key\" value=\"pk_live_...\"></ty-copy>

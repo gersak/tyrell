@@ -175,7 +175,7 @@
            [:div [:div.font-medium "Conference Room"] [:div.text-xs.ty-text- "$100/hr"]]]]
          [:ty-option {:value "event"}
           [:div.flex.items-center.gap-2
-           [:div.w-6.h-6.ty-bg-secondary.rounded.flex.items-center.justify-center
+           [:div.w-6.h-6.ty-bg-neutral.rounded.flex.items-center.justify-center
             [:ty-icon {:name "star" :size "xs"}]]
            [:div [:div.font-medium "Special Event"] [:div.text-xs.ty-text- "$200/hr"]]]]]
 
@@ -225,7 +225,7 @@
         [:ty-option {:value "wifi-upgrade" :flavor "warning" :data-icon "satellite-dish" :data-price "+$10"} "Premium Wi-Fi"]
         [:ty-option {:value "parking" :flavor "warning" :data-icon "car" :data-price "+$5/spot"} "Parking"]
         [:ty-option {:value "security" :flavor "danger" :data-icon "shield" :data-price "+$50/hr"} "Security"]
-        [:ty-option {:value "recording" :flavor "secondary" :data-icon "video" :data-price "+$75"} "Recording"]
+        [:ty-option {:value "recording" :flavor "neutral" :data-icon "video" :data-price "+$75"} "Recording"]
         [:ty-option {:value "translation" :flavor "danger" :data-icon "globe" :data-price "+$100"} "Translation"]]
        [:div.flex.flex-wrap.gap-2.mt-3
         [:ty-selected-tags {:for "booking-addons"}
@@ -366,7 +366,7 @@
         [:ty-button {:flavor "neutral" :size "sm"
                      :on {:click #(swap! state assoc-in [:event-booking :confirmation-modal-open] false)}}
          "Close"]
-        [:ty-button {:flavor "secondary" :size "sm"}
+        [:ty-button {:flavor "neutral" :size "sm"}
          [:ty-icon.mr-1 {:name "download" :size "xs"}] "Receipt"]
         [:ty-button {:flavor "primary" :size "sm"}
          [:ty-icon.mr-1 {:name "calendar" :size "xs"}] "Add to Cal"]]]]]))

@@ -47,20 +47,26 @@ npm install tyrell-react
 ```html
 <!-- A. CDN <link> -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
 
 ```bash
 # B. Fetch into your public/ once (offline-friendly)
 curl -o public/css/tyrell.css \
   https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css
+curl -o public/css/tyrell-theme.css \
+  https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css
 
 # Or copy from the version shadow-cljs already installed
 cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css
 ```
 
 ```css
 /* C. Tailwind / PostCSS — add to your input.css */
 @import "../node_modules/tyrell-components/css/tyrell.css";
+@import "../node_modules/tyrell-components/css/tyrell-theme.css";
 @import "tailwindcss";
 ```
 

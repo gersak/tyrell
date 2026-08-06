@@ -41,7 +41,7 @@
        {:name "flavor"
         :type "string"
         :default "-"
-        :description "Semantic color: primary, secondary, success, danger, warning"}
+        :description "Semantic color: primary, success, danger, warning"}
        {:name "locale"
         :type "string"
         :default "\"en-US\""

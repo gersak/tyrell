@@ -52,7 +52,7 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
       type: "string" as const,
       visual: true,
       default: "neutral",
-      // Built-in: primary | secondary | success | danger | warning | neutral.
+      // Built-in: primary | success | danger | warning | neutral.
       // Append `+` for stronger or `-` for softer shade (e.g. "primary+",
       // "danger-"). Any other string is a custom flavor: if you define the
       // design tokens (--ty-bg-X, --ty-color-X, --ty-border-X) it just works

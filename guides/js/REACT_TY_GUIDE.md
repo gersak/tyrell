@@ -46,6 +46,8 @@ Skip the bundler — load Tyrell from a `<script>` tag in your HTML head:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 
@@ -481,7 +483,7 @@ Semantic text colors follow the same five-variant pattern:
 <p className="ty-text-primary-">Softer primary</p>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+Available colors: `primary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Border Classes
 
@@ -503,7 +505,7 @@ Semantic borders:
 <div className="border ty-border-success">Success border</div>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`. 
+Available colors: `primary`, `success`, `danger`, `warning`, `neutral`. 
 
 ## Background Colors
 
@@ -527,7 +529,7 @@ Three variants per color — stronger (`+`), base, softer (`-`):
 <div className="ty-bg-primary-">Softer</div>
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+Available colors: `primary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Dark Mode
 
@@ -870,6 +872,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css" />
         <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js" />
       </head>
       <body className="ty-canvas">{children}</body>

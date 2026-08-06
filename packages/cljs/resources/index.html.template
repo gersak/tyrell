@@ -21,17 +21,16 @@
 
     <!-- Tyrell Complete CSS System (Variables + Utilities) from CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{version}}/css/tyrell.css">
-    <!-- Opt-in OKLCH brand layer. Demoed at /docs/theming. -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{version}}/css/tyrell-brand.css">
+    <!-- OKLCH theme engine. Demoed at /docs/theming. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{version}}/css/tyrell-theme.css">
 
-    <!-- Site brand seeds: override the brand-layer defaults for this site only.
+    <!-- Site brand seeds: override the theme-engine defaults for this site only.
          Mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
          playground sliders + Reset button agree with first-paint values. -->
     <style>
         :root {
             --ty-brand-hue: 45;
             --ty-brand-chroma: 0.125;
-            --ty-secondary-offset: -25;
         }
     </style>
 

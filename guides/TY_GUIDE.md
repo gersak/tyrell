@@ -120,7 +120,6 @@ FormData: submits raw number, not formatted string.
 | Flavor | Intent | Examples |
 |--------|--------|---------|
 | `primary` | Main action | Submit, Save, Confirm |
-| `secondary` | Alternative action | Export, Import |
 | `success` | Positive | Income, completed, "Added!" |
 | `danger` | Destructive/negative | Delete, expenses, errors |
 | `warning` | Caution | Unsaved changes, limits |
@@ -145,7 +144,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `flavor` | string | `'neutral'` | Built-in: `primary` \| `secondary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is a custom flavor: define `--ty-solid-X`(`-fg/-hover/...`), `--ty-color-X-*`, `--ty-bg-X-soft` tokens and it themes like a built-in (missing tokens fall back to neutral); `--ty-button-*` variables still override per instance. `ty-tag` works the same way via `--ty-bg-X` / `--ty-color-X` / `--ty-border-X`. |
+| `flavor` | string | `'neutral'` | Built-in: `primary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is a custom flavor: define `--ty-solid-X`(`-fg/-hover/...`), `--ty-color-X-*`, `--ty-bg-X-soft` tokens and it themes like a built-in (missing tokens fall back to neutral); `--ty-button-*` variables still override per instance. `ty-tag` works the same way via `--ty-bg-X` / `--ty-color-X` / `--ty-border-X`. |
 | `appearance` | string | `'solid'` | `solid` (saturated brand fill) \| `outlined` (transparent bg, text === border) \| `ghost` (text only with hover bg) |
 | `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
 | `type` | string | `'submit'` | `button` \| `submit` \| `reset` |
@@ -543,7 +542,14 @@ npm install tyrell-react
 <!-- CDN -->
 <script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast text, seed-based rebranding, named/
+     scoped themes, animated theme transitions. Loads AFTER tyrell.css and
+     overrides its static colors — add it unless you specifically need the
+     static-color fallback below. See CSS_GUIDE.md → Color Customization. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
+
+`tyrell.css` alone still renders everything correctly — it's the maximum-compatibility path (no relative-color-syntax requirement, works on older browsers) — but its colors are static hex values with no theming API. Use it alone only if you've made that trade-off deliberately.
 
 ```clojure
 ;; ClojureScript (Clojars)

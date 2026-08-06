@@ -1,0 +1,1373 @@
+/* =====================================================================
+ * tyrell-theme.css — the OKLCH theme engine for Tyrell Components
+ * =====================================================================
+ *
+ * Opt-in. Load AFTER `tyrell.css`. Override a few variables to rebrand —
+ * or seed a color directly, declare a named theme, scope one to a
+ * subtree. `tyrell.css` alone is correct and accessible without this
+ * file; this is what turns it into a theming ENGINE rather than a fixed
+ * palette: auto-contrast text, seed ingestion, named/scoped themes,
+ * animated theme transitions. See CSS_GUIDE.md → Color Customization.
+ *
+ *   <link rel="stylesheet" href=".../tyrell.css">
+ *   <link rel="stylesheet" href=".../tyrell-theme.css">
+ *
+ *   :root {
+ *     --ty-brand-hue: 200;        // teal. Try 260 indigo, 30 orange, 145 emerald.
+ *     --ty-brand-chroma: 0.13;
+ *   }
+ *
+ * =====================================================================
+ * THE FORMULA
+ * =====================================================================
+ *
+ * Every color in the library is one formula on five axes:
+ *
+ *     oklch(
+ *       L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
+ *       C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
+ *       H = flavor-hue                                  ← Tier 2
+ *     )
+ *
+ * Pick a flavor (primary / success / warning / danger /
+ * neutral). Pick a shade (strong / bold / base / soft / faint). That's
+ * the cell; the formula gives you its color.
+ *
+ *     FLAVOR axis  — which semantic role (carries its own hue, chroma,
+ *                    l-factor seeds)
+ *     SHADE axis   — 5 emphasis stops shared across flavors
+ *                    (strong / bold / base / soft / faint)
+ *     HUE axis     — what color family (0°–360°)
+ *     CHROMA axis  — how saturated (0 = grey, ~0.4 = max vivid)
+ *     L axis       — how dark or light (0 = black, 1 = white)
+ *                    Light mode: low L = more emphasis.
+ *                    Dark  mode: high L = more emphasis (curve flips).
+ *
+ * Worked example — `--ty-color-warning-bold` in LIGHT mode:
+ *
+ *     L = 0.46 × 1     = 0.46     ← l-bold × warning-l-factor
+ *     C = 0.26 × 1.00  = 0.26     ← warning-chroma × c-bold-mult
+ *     H = 75°                     ← warning-hue
+ *     → oklch(0.46 0.26 75)       (a punchy amber for +1 emphasis text)
+ *
+ * Want warning a notch darker without touching anything else? Set
+ * `--ty-warning-l-factor: 0.85` and the new L becomes 0.46 × 0.85 =
+ * 0.39. Every warning shade shifts in step; primary / success / danger
+ * are untouched.
+ *
+ * =====================================================================
+ * FILE LAYOUT
+ * =====================================================================
+ *
+ *   SECTION 1 — KNOBS
+ *     The variables you might want to override. Six tiers from drop-in
+ *     rebrand (Tier 1) to surgical per-flavor tweak (Tier 5) plus solid
+ *     buttons (Tier 6).
+ *
+ *   SECTION 2 — IMPLEMENTATION
+ *     The oklch() expressions that wire the knobs through to the actual
+ *     color tokens. Rarely needs editing — Section 1 is the contract.
+ *
+ * Browser support: oklch() is in every evergreen browser since mid-2023.
+ * Tier 6 (solid) additionally uses OKLCH relative color — oklch(from …) —
+ * which lands later: Chrome 119, Safari 16.4, Firefox 128 (mid-2024).
+ * Solid fills have no fallback below those versions.
+ *
+ * ===================================================================== */
+
+/* =====================================================================
+ * SECTION 1 — KNOBS
+ * =====================================================================
+ *
+ * Five tiers, ordered by how often you'd touch them. Override any of
+ * these in your own `:root` (or `html.dark` for per-mode tuning) —
+ * your declaration wins by source order.
+ *
+ *   Tier 1 — SEEDS                 brand-hue + chroma. Rebrand in 2 lines.
+ *   Tier 2 — PER-FLAVOR ANCHORS    each flavor's hue + chroma.
+ *   Tier 3 — L-CURVE               5 lightness stops for the emphasis ramp.
+ *   Tier 4 — SATURATION CURVE      per-shade chroma multipliers.
+ *   Tier 5 — PER-FLAVOR L-FACTOR   per-flavor lightness multiplier — push
+ *                                  one flavor up or down without touching
+ *                                  the others. Default 1.
+ *   Tier 6 — SOLID FILLS           solid-button system: hover/active/tone
+ *                                  L offsets + per-theme dim/desaturate.
+ * ===================================================================== */
+
+:root {
+  /* ----------------------------------------------------------------
+   * Tier 1 — SEEDS
+   * Brand-hue + chroma drive primary, neutral, surfaces, inputs,
+   * solid buttons. One slider rebrands the page.
+   * --------------------------------------------------------------*/
+
+  --ty-brand-hue: 45;
+  --ty-brand-chroma: 0.125; /* restrained default; the loud 0.2 read as "bollywood" */
+
+  /* Surface tint. 0 = monochrome surfaces (default, no brand leak).
+   * Bump to ~0.005 (light) / ~0.012 (dark) to warm surfaces toward brand. */
+  --ty-surface-chroma: 0;
+
+
+  /* ----------------------------------------------------------------
+   * Tier 2 — PER-FLAVOR ANCHORS
+   * Semantic colors (success/warning/danger/neutral) have their own
+   * hue + chroma seeds so they keep meaning across brand changes.
+   * Override any individually:
+   *   --ty-success-hue: 160;     (more teal)
+   *   --ty-warning-chroma: 0.2;  (more vivid)
+   * --------------------------------------------------------------*/
+
+
+  --ty-success-hue: 145;
+  --ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08);
+
+  --ty-warning-hue: 75;
+  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 2);
+
+  --ty-danger-hue: 25;
+  --ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.31);
+
+  /* Neutral is ACHROMATIC by default — greys do not follow the brand.
+   * Most of an interface is monochrome; a rebrand should not drift it.
+   * To warm greys toward the brand (the pre-2026-08 behavior), opt in:
+   *   --ty-neutral-hue: var(--ty-brand-hue);
+   *   --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04); */
+  --ty-neutral-hue: 0;
+  --ty-neutral-chroma: 0;
+
+  /* ----------------------------------------------------------------
+   * Tier 3 — L-CURVE (light mode)
+   * 5 lightness stops per flavor for the emphasis ramp.
+   * Lower L = darker = more emphasis in light mode.
+   * Plus 3 bg L stops for the soft-tint backgrounds.
+   * --------------------------------------------------------------*/
+
+  --ty-l-strong: 0.38; /* ++ max emphasis */
+  --ty-l-bold: 0.46; /* +  high emphasis */
+  --ty-l-base: 0.54; /*    body */
+  --ty-l-soft: 0.72; /* -  low emphasis */
+  --ty-l-faint: 0.88; /* -- min emphasis */
+
+  --ty-l-bg-base: 0.96;
+  --ty-l-bg-bold: 0.92;
+  --ty-l-bg-soft: 0.98;
+
+  /* Text ladder (--ty-text-*) and surface borders — historically
+   * hardcoded hexes in tyrell.css that a rebrand never touched; now
+   * engine-wired at the SAME lightness the hexes had (measured via
+   * oklch(from #hex l c h)), tinted by the neutral seeds. At the
+   * default --ty-neutral-chroma (≈0.005) the tint is imperceptible. */
+  --ty-l-text-strong: 0; /* was #000 */
+  --ty-l-text-bold: 0; /* was #000 */
+  --ty-l-text-base: 0.21; /* was #111827 */
+  --ty-l-text-soft: 0.37; /* was #374151 */
+  --ty-l-text-faint: 0.71; /* was #9ca3af */
+
+  --ty-l-border-content: 0.93; /* was #e5e7eb */
+  --ty-l-border-elevated: 0.93;
+  --ty-l-border-floating: 0.93;
+
+  /* Generic border ladder — borders are their OWN family, not ink.
+   * Historically --ty-border-* aliased the neutral text ramp; that tied
+   * app chrome to the text emphasis curve (and to --ty-neutral-l-factor),
+   * so tuning text moved every border. Defaults preserve the exact L the
+   * aliases produced. Borders sit relative to the surfaces they separate;
+   * tune them here without touching text. */
+  --ty-l-border-strong: 0.46; /* was color-neutral-bold */
+  --ty-l-border-bold: 0.64;
+  --ty-l-border: 0.76; /* was color-neutral-soft */
+  --ty-l-border-soft: 0.88; /* was color-neutral-faint */
+  --ty-l-border-faint: 0.92;
+
+  /* Surface ladder + remaining per-mode absolutes, as L dials. These were
+   * whole oklch() declarations swapped per mode; as numeric dials they are
+   * (a) consistent with every other family and (b) interpolable — which is
+   * what lets theme/mode switches ANIMATE (see THEME TRANSITIONS at the
+   * end of this file). */
+  --ty-l-surface-canvas: 0.985;
+  --ty-l-surface-content: 1;
+  --ty-l-surface-elevated: 1;
+  --ty-l-surface-floating: 1;
+  --ty-l-surface-input: 1;
+
+  --ty-l-solid-neutral: 0.4; /* the neutral "ink" fill — dark in BOTH modes */
+  --ty-l-bg-neutral-strong: 0.25; /* opposes the mode: dark bg on light page */
+  --ty-l-bg-neutral-faint: 0.99; /* follows the mode */
+  --ty-c-bg-neutral-faint-mult: 0.4;
+
+  --ty-focus-ring-alpha: 5%; /* focus ring mix strength (dark needs more) */
+
+  /* ----------------------------------------------------------------
+   * Tier 4 — SATURATION CURVE
+   * Per-shade chroma multipliers. Each shade's chroma =
+   * flavor-chroma × multiplier. Drops near the extremes so
+   * near-white and near-black can hold their tint.
+   * --------------------------------------------------------------*/
+
+  --ty-c-strong-mult: 0.77;
+  --ty-c-bold-mult: 1;
+  --ty-c-base-mult: 0.92;
+  --ty-c-soft-mult: 0.77;
+  --ty-c-faint-mult: 0.46;
+
+  --ty-c-bg-base-mult: 0.15;
+  --ty-c-bg-bold-mult: 0.38;
+  --ty-c-bg-soft-mult: 0.08;
+
+  /* ----------------------------------------------------------------
+   * Tier 5 — PER-FLAVOR L-FACTOR
+   * Multiplies the L-curve values for that flavor only. Default 1 =
+   * no change. Useful when one flavor's brand-default sits too close
+   * to brand-hue on the wheel and the buttons blend.
+   *
+   * Example: brand-hue: 47° (gold). Warning sits at 75° (amber).
+   * Both render as similar warm browns at brand-chroma. Drop warning
+   * a notch and it darkens enough to stand apart:
+   *   --ty-warning-l-factor: 0.85;
+   *
+   * NOTE: the L-curve flips between light and dark mode, so a factor
+   * < 1 darkens in light mode but DIMS in dark mode. If you want
+   * symmetric "more emphatic" in both modes, set the factor here for
+   * light AND set its inverse (1 / factor, roughly) in `html.dark`.
+   * --------------------------------------------------------------*/
+
+  --ty-primary-l-factor: 1;
+  --ty-success-l-factor: 1;
+  --ty-warning-l-factor: 1.15;
+  --ty-danger-l-factor: 1;
+  --ty-neutral-l-factor: 1;
+
+  /* ----------------------------------------------------------------
+   * Tier 6 — SOLID FILLS
+   * Solid buttons are their OWN system, not the emphasis ramp. Each
+   * flavor's fill defaults to --ty-color-{flavor}; the knobs below
+   * derive its hover / active / tone+ / tone- and per-theme adjust.
+   * Math lives in SECTION 2 (search "Tier 6 — SOLID"); these are the
+   * dials.
+   *
+   * Axis A — interaction & tone, OKLCH L offsets on the fill.
+   * Axis B — per-theme adjust applied to the base fill (dim/desaturate).
+   *
+   * NOTE: like Tier 5, the emphasis curve flips for dark, so these L
+   * offsets are sign-flipped in `html.dark` below (darken in light =
+   * lighten in dark). Keep the two blocks in sync.
+   * --------------------------------------------------------------*/
+
+  /* Axis A — interaction (light: darken on press, so offsets are negative) */
+  --ty-solid-hover-l: -0.04; /* :hover */
+  --ty-solid-active-l: -0.08; /* :active */
+  --ty-solid-strong-l: -0.06; /* tone+ */
+  --ty-solid-soft-l: 0.1; /* tone- */
+
+  /* Axis B — per-theme adjust (light reads fine → identity) */
+  --ty-solid-l: 0; /* lightness offset — negative dims */
+  --ty-solid-c: 1; /* chroma multiplier — <1 desaturates */
+  --ty-solid-h: 0; /* hue offset (deg) */
+}
+
+/* Dark mode overrides for the L-curve and saturation curve. Tier 1 + 2
+ * seeds and Tier 5 L-factors carry through unchanged from :root. */
+html.dark,
+html[data-theme="dark"],
+[data-ty-theme].dark,
+[data-ty-theme][data-theme="dark"] {
+  /* Tier 3 dark — inverted curve. Higher L = lighter text = more
+   * emphasis on a dark background. */
+  --ty-l-strong: 0.72;
+  --ty-l-bold: 0.66;
+  --ty-l-base: 0.62;
+  --ty-l-soft: 0.46;
+  --ty-l-faint: 0.3;
+
+  --ty-l-bg-base: 0.22;
+  --ty-l-bg-bold: 0.26;
+  --ty-l-bg-soft: 0.19;
+
+  /* Text ladder + surface borders dark — L matched to the hexes
+   * tyrell.css used to hardcode (#fff/#f9fafb/#d6d6d6/#7f8590/#555a63,
+   * borders #030712/#414141/#494949). */
+  --ty-l-text-strong: 1;
+  --ty-l-text-bold: 0.985;
+  --ty-l-text-base: 0.88;
+  --ty-l-text-soft: 0.62;
+  --ty-l-text-faint: 0.47;
+
+  --ty-l-border-content: 0.13;
+  --ty-l-border-elevated: 0.375;
+  --ty-l-border-floating: 0.41;
+
+  --ty-l-border-strong: 0.66;
+  --ty-l-border-bold: 0.46;
+  --ty-l-border: 0.38;
+  --ty-l-border-soft: 0.3;
+  --ty-l-border-faint: 0.3;
+
+  /* Surface ladder + absolutes dark — hand-tuned values, now as dials. */
+  --ty-l-surface-canvas: 0.12;
+  --ty-l-surface-content: 0.16;
+  --ty-l-surface-elevated: 0.19;
+  --ty-l-surface-floating: 0.22;
+  --ty-l-surface-input: 0.18;
+
+  --ty-l-solid-neutral: 0.23;
+  --ty-l-bg-neutral-strong: 0.95;
+  --ty-l-bg-neutral-faint: 0.15;
+  --ty-c-bg-neutral-faint-mult: 2;
+
+  /* Tier 5 dark — neutral inks pulled down a notch against dark surfaces. */
+  --ty-neutral-l-factor: 0.8;
+
+  --ty-focus-ring-alpha: 20%;
+
+  /* Tier 4 dark — dim shades hold more chroma so they don't grey out;
+   * strong shades trim chroma so bright tones don't over-pop. */
+  --ty-c-strong-mult: 0.77;
+  --ty-c-bold-mult: 1;
+  --ty-c-base-mult: 0.92;
+  --ty-c-soft-mult: 0.77;
+  --ty-c-faint-mult: 0.5;
+
+  --ty-c-bg-base-mult: 0.38;
+  --ty-c-bg-bold-mult: 0.54;
+  --ty-c-bg-soft-mult: 0.23;
+
+  /* Tier 6 dark — interaction offsets flip sign (press LIGHTENS on dark),
+   * and the per-theme adjust dims + desaturates the fills against the
+   * dark canvas. (Computed solid tokens are declared once at html:root.) */
+  --ty-solid-hover-l: 0.04; /* :hover */
+  --ty-solid-active-l: 0.08; /* :active */
+  --ty-solid-strong-l: 0.06; /* tone+ */
+  --ty-solid-soft-l: -0.1; /* tone- */
+
+  --ty-solid-l: -0.2; /* dim against dark canvas */
+  --ty-solid-c: 0.7; /* desaturate against dark canvas */
+  --ty-solid-h: 0; /* hue offset */
+}
+
+/* =====================================================================
+ * SECTION 2 — IMPLEMENTATION
+ * =====================================================================
+ *
+ * The oklch() expressions that turn Section 1's knobs into the actual
+ * --ty-color-*, --ty-bg-*, --ty-border-*, --ty-surface-*, --ty-input-*,
+ * and --ty-solid-* tokens that components read.
+ *
+ * Pattern for each flavor's 5-shade fg ramp + 3-shade bg ramp:
+ *
+ *   --ty-color-{flavor}-{shade}: oklch(
+ *     calc(var(--ty-l-{shade}) * var(--ty-{flavor}-l-factor))    ← L
+ *       calc(var(--ty-{flavor}-chroma) * var(--ty-c-{shade}-mult))   ← C
+ *       var(--ty-{flavor}-hue)                                       ← H
+ *   );
+ *
+ * Formulas are declared ONCE, at `html:root` (specificity 0,1,1 — NOT
+ * plain `:root` (0,1,0)): they out-rank tyrell.css's hardcoded light
+ * tokens by specificity and its hardcoded `html.dark` hexes (0,1,1) by
+ * source order, since the brand layer loads after. Dark mode needs no
+ * formula duplicates — the dials they read (Tier 3/4, SECTION 1) are
+ * what flip per mode. The `html.dark` block at the END of this file
+ * holds only genuine per-mode DATA (surface ladder, hand-pinned
+ * absolutes) — never formulas. If you add a token here, do NOT mirror
+ * it there unless its VALUE is mode-specific.
+ * ===================================================================== */
+
+html:root,
+[data-ty-theme] {
+  /* ----------------------------------------------------------------
+   * Flavor color ramps (fg + bg + border)
+   *
+   * SEED INGESTION — every flavor resolves ONE seed color, and every
+   * ramp formula reads that seed's c + h channels via relative color
+   * syntax; L always comes from the mode-flipped curve. Two ways in:
+   *
+   *   numbers (default) — the Tier 1/2 hue+chroma dials construct the
+   *   seed:      --ty-brand-hue: 200; --ty-brand-chroma: 0.13;
+   *
+   *   a color   — set the seed directly and the dials are bypassed:
+   *              --ty-primary-seed: #76467c;
+   *              --ty-danger-seed: crimson;
+   *
+   * The seed's LIGHTNESS is discarded by design: a color's identity
+   * here is hue + chroma; where each shade sits per mode is the
+   * L-curve's job. That is what makes dark mode, tones and contrast
+   * correct for ANY seed — light or dark. (Your exact pixel may
+   * appear nowhere; pin --ty-solid-X etc. if you need it literally.)
+   * --------------------------------------------------------------*/
+  --ty-primary-seed-resolved: var(
+    --ty-primary-seed,
+    oklch(0.5 var(--ty-brand-chroma) var(--ty-brand-hue))
+  );
+  --ty-success-seed-resolved: var(
+    --ty-success-seed,
+    oklch(0.5 var(--ty-success-chroma) var(--ty-success-hue))
+  );
+  --ty-warning-seed-resolved: var(
+    --ty-warning-seed,
+    oklch(0.5 var(--ty-warning-chroma) var(--ty-warning-hue))
+  );
+  --ty-danger-seed-resolved: var(
+    --ty-danger-seed,
+    oklch(0.5 var(--ty-danger-chroma) var(--ty-danger-hue))
+  );
+  --ty-neutral-seed-resolved: var(
+    --ty-neutral-seed,
+    oklch(0.5 var(--ty-neutral-chroma) var(--ty-neutral-hue))
+  );
+
+  /* Primary */
+  --ty-color-primary-strong: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-strong) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+  --ty-color-primary-bold: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-bold) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-bold-mult)) h
+  );
+  --ty-color-primary: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-base) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-base-mult)) h
+  );
+  --ty-color-primary-soft: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-soft) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-soft-mult)) h
+  );
+  --ty-color-primary-faint: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-faint) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-faint-mult)) h
+  );
+  --ty-bg-primary: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-bg-base) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-bg-base-mult)) h
+  );
+  --ty-bg-primary-bold: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-bg-bold) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-bg-bold-mult)) h
+  );
+  --ty-bg-primary-soft: oklch(
+    from var(--ty-primary-seed-resolved)
+      calc(var(--ty-l-bg-soft) * var(--ty-primary-l-factor))
+      calc(c * var(--ty-c-bg-soft-mult)) h
+  );
+  --ty-border-primary: var(--ty-color-primary-soft);
+
+  /* Success */
+  --ty-color-success-strong: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-strong) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+  --ty-color-success-bold: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-bold) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-bold-mult)) h
+  );
+  --ty-color-success: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-base) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-base-mult)) h
+  );
+  --ty-color-success-soft: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-soft) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-soft-mult)) h
+  );
+  --ty-color-success-faint: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-faint) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-faint-mult)) h
+  );
+  --ty-bg-success: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-bg-base) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-bg-base-mult)) h
+  );
+  --ty-bg-success-bold: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-bg-bold) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-bg-bold-mult)) h
+  );
+  --ty-bg-success-soft: oklch(
+    from var(--ty-success-seed-resolved)
+      calc(var(--ty-l-bg-soft) * var(--ty-success-l-factor))
+      calc(c * var(--ty-c-bg-soft-mult)) h
+  );
+  --ty-border-success: var(--ty-color-success-soft);
+
+  /* Danger */
+  --ty-color-danger-strong: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-strong) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+  --ty-color-danger-bold: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-bold) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-bold-mult)) h
+  );
+  --ty-color-danger: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-base) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-base-mult)) h
+  );
+  --ty-color-danger-soft: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-soft) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-soft-mult)) h
+  );
+  --ty-color-danger-faint: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-faint) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-faint-mult)) h
+  );
+  --ty-bg-danger: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-bg-base) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-bg-base-mult)) h
+  );
+  --ty-bg-danger-bold: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-bg-bold) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-bg-bold-mult)) h
+  );
+  --ty-bg-danger-soft: oklch(
+    from var(--ty-danger-seed-resolved)
+      calc(var(--ty-l-bg-soft) * var(--ty-danger-l-factor))
+      calc(c * var(--ty-c-bg-soft-mult)) h
+  );
+  --ty-border-danger: var(--ty-color-danger-soft);
+
+  /* Warning */
+  --ty-color-warning-strong: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-strong) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+  --ty-color-warning-bold: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-bold) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-bold-mult)) h
+  );
+  --ty-color-warning: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-base) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-base-mult)) h
+  );
+  --ty-color-warning-soft: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-soft) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-soft-mult)) h
+  );
+  --ty-color-warning-faint: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-faint) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-faint-mult)) h
+  );
+  --ty-bg-warning: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-bg-base) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-bg-base-mult)) h
+  );
+  --ty-bg-warning-bold: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-bg-bold) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-bg-bold-mult)) h
+  );
+  --ty-bg-warning-soft: oklch(
+    from var(--ty-warning-seed-resolved)
+      calc(var(--ty-l-bg-soft) * var(--ty-warning-l-factor))
+      calc(c * var(--ty-c-bg-soft-mult)) h
+  );
+  --ty-border-warning: var(--ty-color-warning-soft);
+
+  /* Neutral — same L curve, near-zero chroma so the grey scale stays grey. */
+  --ty-color-neutral-strong: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-strong) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+  --ty-color-neutral-bold: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-bold) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-bold-mult)) h
+  );
+  --ty-color-neutral: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-base) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-base-mult)) h
+  );
+  --ty-color-neutral-soft: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-soft) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-soft-mult)) h
+  );
+  --ty-color-neutral-faint: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-faint) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-faint-mult)) h
+  );
+  --ty-bg-neutral: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-bg-base) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-bg-base-mult)) h
+  );
+  --ty-bg-neutral-bold: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-bg-bold) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-bg-bold-mult)) h
+  );
+  --ty-bg-neutral-soft: oklch(
+    from var(--ty-neutral-seed-resolved)
+      calc(var(--ty-l-bg-soft) * var(--ty-neutral-l-factor))
+      calc(c * var(--ty-c-bg-soft-mult)) h
+  );
+  --ty-bg-neutral-strong: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-bg-neutral-strong)
+      calc(c * 2) h
+  );
+  --ty-bg-neutral-faint: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-bg-neutral-faint)
+      calc(c * var(--ty-c-bg-neutral-faint-mult)) h
+  );
+
+  /* ----------------------------------------------------------------
+   * Global neutral borders — own family, own L ladder (Tier 3).
+   * Tinted by the neutral seeds like everything grey, but NOT tied to
+   * the text emphasis curve or --ty-neutral-l-factor. Per-flavor
+   * accent borders (--ty-border-{flavor}) stay ink aliases — a colored
+   * border SHOULD track its flavor's ink.
+   * --------------------------------------------------------------*/
+  --ty-border-strong: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-strong) c h
+  );
+  --ty-border: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border) c h
+  );
+  --ty-border-bold: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-bold) c h
+  );
+  --ty-border-soft: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-soft) c h
+  );
+  --ty-border-faint: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-faint) c h
+  );
+
+  /* ----------------------------------------------------------------
+   * Text ladder + surface borders — engine-wired versions of tokens
+   * tyrell.css hardcodes as hexes. Own L dials (Tier 3), neutral
+   * hue/chroma tint. These out-rank the base hexes the same way every
+   * other token here does; a rebrand now reaches body text too.
+   * --------------------------------------------------------------*/
+  --ty-text-strong: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-text-strong) c h
+  );
+  --ty-text-bold: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-text-bold) c h
+  );
+  --ty-text: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-text-base) c h
+  );
+  --ty-text-soft: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-text-soft) c h
+  );
+  --ty-text-faint: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-text-faint) c h
+  );
+
+  --ty-content-border: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-content) c h
+  );
+  --ty-elevated-border: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-elevated) c h
+  );
+  --ty-floating-border: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-border-floating) c h
+  );
+
+  /* ----------------------------------------------------------------
+   * Surfaces — monochrome by default; --ty-surface-chroma warms them.
+   * --------------------------------------------------------------*/
+  --ty-surface-canvas: oklch(
+    from var(--ty-primary-seed-resolved) var(--ty-l-surface-canvas)
+      var(--ty-surface-chroma) h
+  );
+  --ty-surface-content: oklch(
+    from var(--ty-primary-seed-resolved) var(--ty-l-surface-content)
+      var(--ty-surface-chroma) h
+  );
+  --ty-surface-elevated: oklch(
+    from var(--ty-primary-seed-resolved) var(--ty-l-surface-elevated)
+      var(--ty-surface-chroma) h
+  );
+  --ty-surface-floating: oklch(
+    from var(--ty-primary-seed-resolved) var(--ty-l-surface-floating)
+      var(--ty-surface-chroma) h
+  );
+  --ty-surface-input: oklch(
+    from var(--ty-primary-seed-resolved) var(--ty-l-surface-input)
+      var(--ty-surface-chroma) h
+  );
+
+  /* ----------------------------------------------------------------
+   * Inputs — tied to neutral ramp so form controls retint with brand.
+   * --------------------------------------------------------------*/
+  --ty-input-bg: var(--ty-surface-input);
+  --ty-input-color: var(--ty-color-neutral-strong);
+  --ty-input-border: var(--ty-color-neutral-faint);
+  --ty-input-border-hover: var(--ty-color-neutral-soft);
+  --ty-input-border-focus: var(--ty-color-primary);
+  --ty-input-placeholder: var(--ty-color-neutral-soft);
+  --ty-input-disabled-bg: var(--ty-color-neutral-faint);
+  --ty-input-disabled-border: var(--ty-color-neutral-faint);
+  --ty-input-disabled-color: var(--ty-color-neutral-bold);
+  --ty-input-shadow-focus: color-mix(
+    in oklab,
+    var(--ty-color-primary) var(--ty-focus-ring-alpha),
+    transparent
+  );
+}
+
+/* ----------------------------------------------------------------
+ * Tier 6 — SOLID (implementation)
+ * Solid is its OWN system, NOT the text/emphasis ramp. The dials
+ * (--ty-solid-hover-l / -active-l / -strong-l / -soft-l and
+ * --ty-solid-l / -c / -h) live in SECTION 1, Tier 6. Below is the
+ * derivation only: base fill bakes in the per-theme adjust (Axis B);
+ * hover/active/strong/soft offset the base by Axis A. Override any
+ * single --ty-solid-{flavor}-{state} to recolor just that segment.
+ *
+ * Declared at `html:root` (specificity 0,1,1) — NOT plain `:root` (0,1,0) —
+ * on purpose: it must out-rank tyrell.css's hardcoded dark solids at
+ * `html.dark` (0,1,1). It wins light by specificity over base's `html{}`,
+ * and wins dark by source order over base's `html.dark` (brand loads after).
+ * That's what lets dark solids re-tint with --ty-brand-hue. Declared ONCE —
+ * the oklch(from var(--ty-color-*)) formulas resolve per-mode automatically,
+ * so no dark duplicate is needed.
+ * --------------------------------------------------------------*/
+html:root,
+[data-ty-theme] {
+  /* base fill per flavor (= flavor color, theme-adjusted by Axis B) */
+  --ty-solid-primary: oklch(
+    from var(--ty-color-primary) calc(l + var(--ty-solid-l))
+      calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h))
+  );
+  --ty-solid-success: oklch(
+    from var(--ty-color-success) calc(l + var(--ty-solid-l))
+      calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h))
+  );
+  --ty-solid-danger: oklch(
+    from var(--ty-color-danger) calc(l + var(--ty-solid-l))
+      calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h))
+  );
+  --ty-solid-warning: oklch(
+    from var(--ty-color-warning) calc(l + var(--ty-solid-l))
+      calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h))
+  );
+  /* neutral is a deliberate dark grey fill, not the neutral text color */
+  --ty-solid-neutral: oklch(
+    from var(--ty-neutral-seed-resolved) var(--ty-l-solid-neutral)
+      calc(c * var(--ty-c-strong-mult)) h
+  );
+
+  /* ----------------------------------------------------------------
+   * SOLID FOREGROUNDS — auto-contrast.
+   *
+   * Each fill gets a foreground picked from its OWN lightness, so a
+   * rebrand (--ty-brand-hue / --ty-brand-chroma / any L-curve override)
+   * can't strand white text on a pale fill. Branchless, no JS:
+   *
+   *   clamp(0, (threshold - l) * 1000, 1)  ->  1 (white) when the fill
+   *   is darker than the threshold, 0 (black) when it's lighter.
+   *
+   * One token per FILL, not per flavor — base / -soft (tone-) / -strong
+   * (tone+) each carry a different L, so each needs its own decision.
+   * Declared once: the oklch(from ...) formulas re-resolve per mode,
+   * because html.dark redefines the fills these read.
+   *
+   * TO REVERT to the old fixed-white behaviour, override in your app:
+   *   :root { --ty-solid-primary-fg: white; ... }
+   * or set --ty-solid-fg-threshold: 1 to force white everywhere.
+   * --------------------------------------------------------------*/
+
+  /* Crossover point. Fills lighter than this get black text. ~0.58-0.62
+     is the sRGB break-even; higher = prefers white, lower = prefers black. */
+  --ty-solid-fg-threshold: 0.62;
+
+  --ty-solid-primary-fg: oklch(
+    from var(--ty-solid-primary)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-primary-soft-fg: oklch(
+    from var(--ty-solid-primary-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-primary-strong-fg: oklch(
+    from var(--ty-solid-primary-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+
+  --ty-solid-success-fg: oklch(
+    from var(--ty-solid-success)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-success-soft-fg: oklch(
+    from var(--ty-solid-success-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-success-strong-fg: oklch(
+    from var(--ty-solid-success-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-danger-fg: oklch(
+    from var(--ty-solid-danger)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-danger-soft-fg: oklch(
+    from var(--ty-solid-danger-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-danger-strong-fg: oklch(
+    from var(--ty-solid-danger-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-warning-fg: oklch(
+    from var(--ty-solid-warning)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-warning-soft-fg: oklch(
+    from var(--ty-solid-warning-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-warning-strong-fg: oklch(
+    from var(--ty-solid-warning-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  --ty-solid-neutral-fg: oklch(
+    from var(--ty-solid-neutral)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-neutral-soft-fg: oklch(
+    from var(--ty-solid-neutral-soft)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+  --ty-solid-neutral-strong-fg: oklch(
+    from var(--ty-solid-neutral-strong)
+      clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0
+  );
+
+  /* derived states — axis 2 offsets on each base fill */
+  --ty-solid-primary-hover: oklch(
+    from var(--ty-solid-primary) calc(l + var(--ty-solid-hover-l)) c h
+  );
+  --ty-solid-primary-active: oklch(
+    from var(--ty-solid-primary) calc(l + var(--ty-solid-active-l)) c h
+  );
+  --ty-solid-primary-strong: oklch(
+    from var(--ty-solid-primary) calc(l + var(--ty-solid-strong-l)) c h
+  );
+  --ty-solid-primary-soft: oklch(
+    from var(--ty-solid-primary) calc(l + var(--ty-solid-soft-l)) c h
+  );
+
+
+  --ty-solid-success-hover: oklch(
+    from var(--ty-solid-success) calc(l + var(--ty-solid-hover-l)) c h
+  );
+  --ty-solid-success-active: oklch(
+    from var(--ty-solid-success) calc(l + var(--ty-solid-active-l)) c h
+  );
+  --ty-solid-success-strong: oklch(
+    from var(--ty-solid-success) calc(l + var(--ty-solid-strong-l)) c h
+  );
+  --ty-solid-success-soft: oklch(
+    from var(--ty-solid-success) calc(l + var(--ty-solid-soft-l)) c h
+  );
+
+  --ty-solid-danger-hover: oklch(
+    from var(--ty-solid-danger) calc(l + var(--ty-solid-hover-l)) c h
+  );
+  --ty-solid-danger-active: oklch(
+    from var(--ty-solid-danger) calc(l + var(--ty-solid-active-l)) c h
+  );
+  --ty-solid-danger-strong: oklch(
+    from var(--ty-solid-danger) calc(l + var(--ty-solid-strong-l)) c h
+  );
+  --ty-solid-danger-soft: oklch(
+    from var(--ty-solid-danger) calc(l + var(--ty-solid-soft-l)) c h
+  );
+
+  --ty-solid-warning-hover: oklch(
+    from var(--ty-solid-warning) calc(l + var(--ty-solid-hover-l)) c h
+  );
+  --ty-solid-warning-active: oklch(
+    from var(--ty-solid-warning) calc(l + var(--ty-solid-active-l)) c h
+  );
+  --ty-solid-warning-strong: oklch(
+    from var(--ty-solid-warning) calc(l + var(--ty-solid-strong-l)) c h
+  );
+  --ty-solid-warning-soft: oklch(
+    from var(--ty-solid-warning) calc(l + var(--ty-solid-soft-l)) c h
+  );
+
+  --ty-solid-neutral-hover: oklch(
+    from var(--ty-solid-neutral) calc(l + var(--ty-solid-hover-l)) c h
+  );
+  --ty-solid-neutral-active: oklch(
+    from var(--ty-solid-neutral) calc(l + var(--ty-solid-active-l)) c h
+  );
+  --ty-solid-neutral-strong: oklch(
+    from var(--ty-solid-neutral) calc(l + var(--ty-solid-strong-l)) c h
+  );
+  --ty-solid-neutral-soft: oklch(
+    from var(--ty-solid-neutral) calc(l + var(--ty-solid-soft-l)) c h
+  );
+}
+
+
+/* =====================================================================
+ * SECTION 3 — THEME TRANSITIONS
+ * =====================================================================
+ *
+ * Every dial above is a plain number (or percentage) — and every color
+ * in the system is a pure function of those dials. Registering the
+ * dials as typed custom properties makes them INTERPOLABLE, so a theme
+ * or mode switch (html.dark, html.love, a [data-ty-theme] pack) does
+ * not snap: the dials animate, and every derived color — buttons,
+ * borders, surfaces, text, focus rings — crossfades through OKLCH
+ * space frame by frame. No JS, no repaint tricks; it falls out of the
+ * dials-not-colors architecture.
+ *
+ * Opt out (or retune) per app:
+ *   :root { --ty-theme-transition: 0s; }      no animation
+ *   :root { --ty-theme-transition: 1.2s; }    slower crossfade
+ * Reduced-motion users never get the animation.
+ *
+ * Browsers without @property simply skip registration — themes still
+ * work, switches just snap (the pre-TC37 behavior).
+ * ===================================================================== */
+
+@property --ty-brand-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 45;
+}
+@property --ty-brand-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.125;
+}
+@property --ty-surface-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-success-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 145;
+}
+@property --ty-success-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.135;
+}
+@property --ty-warning-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 75;
+}
+@property --ty-warning-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.25;
+}
+@property --ty-danger-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 25;
+}
+@property --ty-danger-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.164;
+}
+@property --ty-neutral-hue {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-neutral-chroma {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-l-strong {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.38;
+}
+@property --ty-l-bold {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.46;
+}
+@property --ty-l-base {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.54;
+}
+@property --ty-l-soft {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.72;
+}
+@property --ty-l-faint {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.88;
+}
+@property --ty-l-bg-base {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.96;
+}
+@property --ty-l-bg-bold {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.92;
+}
+@property --ty-l-bg-soft {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.98;
+}
+@property --ty-l-text-strong {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-l-text-bold {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-l-text-base {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.21;
+}
+@property --ty-l-text-soft {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.37;
+}
+@property --ty-l-text-faint {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.71;
+}
+@property --ty-l-border-content {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.93;
+}
+@property --ty-l-border-elevated {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.93;
+}
+@property --ty-l-border-floating {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.93;
+}
+@property --ty-l-border-strong {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.46;
+}
+@property --ty-l-border-bold {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.64;
+}
+@property --ty-l-border {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.76;
+}
+@property --ty-l-border-soft {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.88;
+}
+@property --ty-l-border-faint {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.92;
+}
+@property --ty-l-surface-canvas {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.985;
+}
+@property --ty-l-surface-content {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-l-surface-elevated {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-l-surface-floating {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-l-surface-input {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-l-solid-neutral {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.4;
+}
+@property --ty-l-bg-neutral-strong {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.25;
+}
+@property --ty-l-bg-neutral-faint {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.99;
+}
+@property --ty-c-bg-neutral-faint-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.4;
+}
+@property --ty-c-strong-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.77;
+}
+@property --ty-c-bold-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-c-base-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.92;
+}
+@property --ty-c-soft-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.77;
+}
+@property --ty-c-faint-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.46;
+}
+@property --ty-c-bg-base-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.15;
+}
+@property --ty-c-bg-bold-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.38;
+}
+@property --ty-c-bg-soft-mult {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.08;
+}
+@property --ty-primary-l-factor {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-success-l-factor {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-warning-l-factor {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1.15;
+}
+@property --ty-danger-l-factor {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-neutral-l-factor {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-solid-hover-l {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: -0.04;
+}
+@property --ty-solid-active-l {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: -0.08;
+}
+@property --ty-solid-strong-l {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: -0.06;
+}
+@property --ty-solid-soft-l {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.1;
+}
+@property --ty-solid-l {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-solid-c {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+@property --ty-solid-h {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --ty-solid-fg-threshold {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0.62;
+}
+@property --ty-focus-ring-alpha {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 5%;
+}
+
+@property --ty-primary-seed-resolved {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #808080;
+}
+@property --ty-success-seed-resolved {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #808080;
+}
+@property --ty-warning-seed-resolved {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #808080;
+}
+@property --ty-danger-seed-resolved {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #808080;
+}
+@property --ty-neutral-seed-resolved {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #808080;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html,
+  [data-ty-theme] {
+    transition-property:
+    --ty-brand-hue,
+    --ty-brand-chroma,
+    --ty-surface-chroma,
+    --ty-success-hue,
+    --ty-success-chroma,
+    --ty-warning-hue,
+    --ty-warning-chroma,
+    --ty-danger-hue,
+    --ty-danger-chroma,
+    --ty-neutral-hue,
+    --ty-neutral-chroma,
+    --ty-l-strong,
+    --ty-l-bold,
+    --ty-l-base,
+    --ty-l-soft,
+    --ty-l-faint,
+    --ty-l-bg-base,
+    --ty-l-bg-bold,
+    --ty-l-bg-soft,
+    --ty-l-text-strong,
+    --ty-l-text-bold,
+    --ty-l-text-base,
+    --ty-l-text-soft,
+    --ty-l-text-faint,
+    --ty-l-border-content,
+    --ty-l-border-elevated,
+    --ty-l-border-floating,
+    --ty-l-border-strong,
+    --ty-l-border-bold,
+    --ty-l-border,
+    --ty-l-border-soft,
+    --ty-l-border-faint,
+    --ty-l-surface-canvas,
+    --ty-l-surface-content,
+    --ty-l-surface-elevated,
+    --ty-l-surface-floating,
+    --ty-l-surface-input,
+    --ty-l-solid-neutral,
+    --ty-l-bg-neutral-strong,
+    --ty-l-bg-neutral-faint,
+    --ty-c-bg-neutral-faint-mult,
+    --ty-c-strong-mult,
+    --ty-c-bold-mult,
+    --ty-c-base-mult,
+    --ty-c-soft-mult,
+    --ty-c-faint-mult,
+    --ty-c-bg-base-mult,
+    --ty-c-bg-bold-mult,
+    --ty-c-bg-soft-mult,
+    --ty-primary-l-factor,
+    --ty-success-l-factor,
+    --ty-warning-l-factor,
+    --ty-danger-l-factor,
+    --ty-neutral-l-factor,
+    --ty-solid-hover-l,
+    --ty-solid-active-l,
+    --ty-solid-strong-l,
+    --ty-solid-soft-l,
+    --ty-solid-l,
+    --ty-solid-c,
+    --ty-solid-h,
+    --ty-solid-fg-threshold,
+    --ty-focus-ring-alpha;
+    transition-duration: var(--ty-theme-transition, 0.45s);
+    transition-timing-function: ease;
+  }
+}

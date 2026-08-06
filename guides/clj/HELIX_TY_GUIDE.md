@@ -31,6 +31,8 @@ Load the CSS:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css">
 ```
 
 ## Mount

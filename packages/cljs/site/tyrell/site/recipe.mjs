@@ -1,0 +1,15 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch();
+const p = await b.newPage({viewport:{width:1000,height:1000}});
+const errs=[]; p.on('pageerror', e=>errs.push(e.message));
+await p.goto('http://localhost:8010/');
+await p.waitForTimeout(2000);
+await p.locator('nav').getByText('theming', {exact:true}).click();
+await p.waitForTimeout(1200);
+const h = p.getByText('Recipes', {exact:true}).first();
+await h.scrollIntoViewIfNeeded();
+await p.waitForTimeout(400);
+const hasSeed = await p.evaluate(() => document.body.innerText.includes('--ty-primary-seed'));
+console.log('shows seed recipe:', hasSeed, ' errors:', errs.length?errs.slice(0,3):'none');
+await p.screenshot({path:'/tmp/recipes.png'});
+await b.close();

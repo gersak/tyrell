@@ -21,7 +21,7 @@
       [{:name "flavor"
         :type "string"
         :default "\"neutral\""
-        :description "Semantic color theme: primary, secondary, success, danger, warning, neutral"}
+        :description "Semantic color theme: primary, success, danger, warning, neutral"}
        {:name "size"
         :type "string"
         :default "\"md\""
@@ -84,13 +84,13 @@
        (demo-area
         [:div.flex.flex-wrap.gap-3
          [:ty-tag {:flavor "primary"} "Primary"]
-         [:ty-tag {:flavor "secondary"} "Secondary"]
+         [:ty-tag {:flavor "neutral"} "Secondary"]
          [:ty-tag {:flavor "success"} "Success"]
          [:ty-tag {:flavor "danger"} "Danger"]
          [:ty-tag {:flavor "warning"} "Warning"]
          [:ty-tag {:flavor "neutral"} "Neutral"]])
        (code-block "<ty-tag flavor=\"primary\">Primary</ty-tag>
-<ty-tag flavor=\"secondary\">Secondary</ty-tag>
+<ty-tag flavor=\"neutral\">Secondary</ty-tag>
 <ty-tag flavor=\"success\">Success</ty-tag>
 <ty-tag flavor=\"danger\">Danger</ty-tag>
 <ty-tag flavor=\"warning\">Warning</ty-tag>
@@ -102,7 +102,7 @@
        [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
                                   :line-height "1.6"}}
         "Every flavor × tone combination. Six flavors — "
-        [:code.font-mono "primary"] ", " [:code.font-mono "secondary"] ", "
+        [:code.font-mono "primary"] ", "
         [:code.font-mono "success"] ", " [:code.font-mono "danger"] ", "
         [:code.font-mono "warning"] ", " [:code.font-mono "neutral"]
         " — each with three tones via the flavor suffix: "
@@ -114,7 +114,7 @@
         [:div.text-xs.ty-text-.font-medium "Soft (–)"]
         [:div.text-xs.ty-text-.font-medium "Base"]
         [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-        (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+        (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
           (list
            [:div.text-sm.font-mono.ty-text {:key (str "tag-" flavor "-label")} flavor]
            [:ty-tag {:key (str "tag-" flavor "-soft") :flavor (str flavor "-")} flavor]
@@ -278,7 +278,7 @@
        (section-label "Category Labels")
        [:div.flex.flex-wrap.gap-2
         [:ty-tag {:flavor "primary" :size "sm" :pill "false"} "Technology"]
-        [:ty-tag {:flavor "secondary" :size "sm" :pill "false"} "Design"]
+        [:ty-tag {:flavor "neutral" :size "sm" :pill "false"} "Design"]
         [:ty-tag {:flavor "success" :size "sm" :pill "false"} "Marketing"]
         [:ty-tag {:flavor "warning" :size "sm" :pill "false"} "Sales"]]]
 

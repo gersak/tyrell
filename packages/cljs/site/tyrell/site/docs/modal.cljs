@@ -213,7 +213,7 @@ modalRef.current?.hide({ force: true });" "tsx")]
                                :value "frontend"}
               [:ty-option {:value "frontend" :flavor "success"} "frontend"]
               [:ty-option {:value "backend" :flavor "warning"} "backend"]
-              [:ty-option {:value "design" :flavor "secondary"} "design"]
+              [:ty-option {:value "design" :flavor "neutral"} "design"]
               [:ty-option {:value "infra" :flavor "neutral"} "infra"]
               [:ty-option {:value "research" :flavor "info"} "research"]]]
 

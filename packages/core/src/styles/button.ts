@@ -4,7 +4,7 @@
  * Three appearance variants × six semantic flavors × three tones (+/base/-).
  * Each variant uses ONE token system:
  *   - solid    → flat per-segment tokens --ty-solid-{flavor}{,-hover,-active,
- *               -strong,-soft,-fg}. Derived in tyrell-brand.css via OKLCH on
+ *               -strong,-soft,-fg}. Derived in tyrell-theme.css via OKLCH on
  *               3 axes (color / hover-active / theme chroma-hue); literal in
  *               tyrell.css. The component does no color math.
  *   - outlined → --ty-color-{flavor}-{strong|base|soft}  (text === border)
@@ -30,6 +30,16 @@ const tokenRef = (prefix: string, f: string, suffix: string, fb?: string) =>
     ? `var(${prefix}-${f}${suffix}, var(${prefix}-${fb}${suffix}))`
     : `var(${prefix}-${f}${suffix})`
 
+/* Nudge a fill by an interaction offset (hover/active), tone-aware: each
+   tone's states derive from the TONE's own fill, not the base fill —
+   otherwise tone- hover jumps from the soft fill to near-base darkness.
+   States deliberately do NOT re-derive the text color: fg is decided by
+   the tone's REST fill and stays stable through interaction — the ±0.04/
+   0.08 L nudges keep AA for any rest-passing fill, and re-deriving would
+   flicker black↔white whenever a nudge crosses the fg threshold. */
+const nudged = (fillExpr: string, offsetDial: string) =>
+  `oklch(from ${fillExpr} calc(l + var(--ty-${offsetDial})) c h)`
+
 const solidFlavor = (f: string, fb?: string) => {
   const solid = (suffix: string) => tokenRef('--ty-solid', f, suffix, fb)
   return `
@@ -38,6 +48,10 @@ button.solid.${f}.tone-plus  { background: var(--ty-button-bg, var(--_muted-soli
 button.solid.${f}.tone-minus { background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-soft')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-soft-fg')})); }
 button.solid.${f}:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${solid('-hover')}); }
 button.solid.${f}:active:not(:disabled) { background: ${solid('-active')}; }
+button.solid.${f}.tone-plus:hover:not(:disabled)   { background: var(--ty-button-bg-hover, ${nudged(solid('-strong'), 'solid-hover-l')}); }
+button.solid.${f}.tone-plus:active:not(:disabled)  { background: ${nudged(solid('-strong'), 'solid-active-l')}; }
+button.solid.${f}.tone-minus:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${nudged(solid('-soft'), 'solid-hover-l')}); }
+button.solid.${f}.tone-minus:active:not(:disabled) { background: ${nudged(solid('-soft'), 'solid-active-l')}; }
 `
 }
 
@@ -335,7 +349,7 @@ button.pill.xl:has(ty-icon:only-child) { min-width: 2.5rem; min-height: 2.5rem; 
 /* ============================================================
    SOLID — flat: one variable per segment. No color math here; all the
    --ty-solid-{flavor}-{hover,active,strong,soft} tokens are DERIVED in
-   tyrell-brand.css (OKLCH) or set literally in tyrell.css. Override any
+   tyrell-theme.css (OKLCH) or set literally in tyrell.css. Override any
    single token to recolor that one segment. Bare .solid = custom-flavor
    fallback, themable via --ty-button-{bg,bg-hover,color}.
    ============================================================ */
@@ -350,6 +364,18 @@ button.solid.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral
 button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); color: var(--ty-button-color, var(--ty-solid-neutral-soft-fg)); }
 button.solid:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
 button.solid:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
+button.solid.tone-plus:hover:not(:disabled) {
+  background: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-strong) calc(l + var(--ty-solid-hover-l)) c h));
+}
+button.solid.tone-plus:active:not(:disabled) {
+  background: oklch(from var(--ty-solid-neutral-strong) calc(l + var(--ty-solid-active-l)) c h);
+}
+button.solid.tone-minus:hover:not(:disabled) {
+  background: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-hover-l)) c h));
+}
+button.solid.tone-minus:active:not(:disabled) {
+  background: oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-active-l)) c h);
+}
 
 ${FLAVORS.map((f) => solidFlavor(f)).join('')}
 button.solid:focus-visible {

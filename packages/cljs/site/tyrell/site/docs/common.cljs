@@ -84,7 +84,7 @@
   (let [[bg fg] (case t
                   "boolean"  ["ty-bg-primary-"    "ty-text-primary+"]
                   "number"   ["ty-bg-primary-"   "ty-text-primary+"]
-                  "function" ["ty-bg-secondary-" "ty-text-secondary+"]
+                  "function" ["ty-bg-primary-" "ty-text-primary+"]
                   nil)]
     (if bg
       [:span {:class [bg fg "text-xs" "font-mono" "rounded" "px-1" "py-px"]} t]
@@ -214,6 +214,6 @@
      [:button.ty-bg-primary.ty-text++.px-4.py-2.rounded.hover:opacity-90
       {:on {:click #(js/window.open "https://github.com/gersak/tyrell" "_blank")}}
       "View Repository"]
-     [:button.ty-bg-secondary.ty-text++.px-4.py-2.rounded.hover:opacity-90
+     [:button.ty-bg-neutral.ty-text++.px-4.py-2.rounded.hover:opacity-90
       {:on {:click #(-> js/window .-location .-href (set! "/docs/css"))}}
       "CSS System Guide"]]]))

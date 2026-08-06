@@ -131,7 +131,7 @@
        [:ty-icon.mr-2 {:name "rocket"
                        :size "sm"}]
        "Getting Started"]
-      [:a.ty-bg-neutral.ty-text++.px-6.py-3.rounded-lg.font-semibold.flex.items-center.gap-1.hover:ty-bg-secondary+.cursor-pointer.border.ty-border++
+      [:a.ty-bg-neutral.ty-text++.px-6.py-3.rounded-lg.font-semibold.flex.items-center.gap-1.hover:ty-bg-neutral+.cursor-pointer.border.ty-border++
        {:href "https://github.com/gersak/tyrell"}
        [:ty-icon.mr-2 {:name "github"
                        :size "sm"}]

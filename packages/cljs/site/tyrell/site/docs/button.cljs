@@ -19,7 +19,7 @@
       [{:name "flavor"
         :type "string"
         :default "\"neutral\""
-        :description "Semantic color. Built-in: primary, secondary, success, danger, warning, neutral. Append '+' for a stronger shade or '-' for a softer one (e.g. \"primary+\", \"danger-\"). Any other string is also accepted — theme custom flavors via --ty-button-* CSS variables."}
+        :description "Semantic color. Built-in: primary, success, danger, warning, neutral. Append '+' for a stronger shade or '-' for a softer one (e.g. \"primary+\", \"danger-\"). Any other string is also accepted — theme custom flavors via --ty-button-* CSS variables."}
        {:name "appearance"
         :type "string"
         :default "\"solid\""
@@ -102,14 +102,14 @@
                    [:div.flex.flex-wrap.gap-3
                     [:ty-button "Default"]
                     [:ty-button {:flavor "primary"} "Primary"]
-                    [:ty-button {:flavor "secondary"} "Secondary"]
+                    [:ty-button {:flavor "neutral"} "Secondary"]
                     [:ty-button {:flavor "danger"} "Danger"]
                     [:ty-button {:flavor "success"} "Success"]
                     [:ty-button {:flavor "warning"} "Warning"]
                     [:ty-button {:flavor "neutral"} "Neutral"]])
                   (code-block "<ty-button>Default</ty-button>
 <ty-button flavor=\"primary\">Primary</ty-button>
-<ty-button flavor=\"secondary\">Secondary</ty-button>
+<ty-button flavor=\"neutral\">Secondary</ty-button>
 <ty-button flavor=\"danger\">Danger</ty-button>
 <ty-button flavor=\"success\">Success</ty-button>
 <ty-button flavor=\"warning\">Warning</ty-button>
@@ -138,7 +138,7 @@
                      [:div.text-xs.ty-text-.font-medium "Soft (–)"]
                      [:div.text-xs.ty-text-.font-medium "Base"]
                      [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
                        (list
                         [:div.text-sm.font-mono.ty-text {:key (str "solid-" flavor "-label")} flavor]
                         [:ty-button {:key (str "solid-" flavor "-soft") :flavor (str flavor "-")} flavor]
@@ -156,7 +156,7 @@
                      [:div.text-xs.ty-text-.font-medium "Soft (–)"]
                      [:div.text-xs.ty-text-.font-medium "Base"]
                      [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
                        (list
                         [:div.text-sm.font-mono.ty-text {:key (str "outlined-" flavor "-label")} flavor]
                         [:ty-button {:key (str "outlined-" flavor "-soft") :flavor (str flavor "-") :appearance "outlined"} flavor]
@@ -174,7 +174,7 @@
                      [:div.text-xs.ty-text-.font-medium "Soft (–)"]
                      [:div.text-xs.ty-text-.font-medium "Base"]
                      [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
                        (list
                         [:div.text-sm.font-mono.ty-text {:key (str "ghost-" flavor "-label")} flavor]
                         [:ty-button {:key (str "ghost-" flavor "-soft") :flavor (str flavor "-") :appearance "ghost"} flavor]
@@ -203,7 +203,7 @@
                     [:ty-button {:flavor "primary" :muted true} "Primary muted"]
                     [:ty-button {:flavor "danger" :appearance "outlined" :muted true} "Danger outlined muted"]
                     [:ty-button {:flavor "success" :appearance "ghost" :muted true} "Success ghost muted"]
-                    [:ty-button {:action true :flavor "secondary" :muted true}
+                    [:ty-button {:action true :flavor "neutral" :muted true}
                      [:ty-icon {:name "more-vertical" :size "sm"}]]])
                   (code-block "<ty-button flavor=\"primary\" muted>Primary muted</ty-button>
 <ty-button flavor=\"danger\" appearance=\"outlined\" muted>Danger outlined muted</ty-button>
@@ -256,26 +256,29 @@
                   [:p.ty-text-.mb-4
                    {:style {:font-size "0.8125rem"
                             :line-height "1.6"}}
-                   "Pass any string as " [:code.font-mono "flavor"] " — even if it's not built-in. The button picks up the class so you can theme all buttons of a flavor in a single CSS rule. Combine with the CSS variables above for global brand flavors."]
+                   "Pass any string as " [:code.font-mono "flavor"] " — even if it's not built-in. Define the flavor's " [:em "tokens"] " and every appearance follows: solid reads " [:code.font-mono "--ty-solid-X"] ", outlined/ghost read " [:code.font-mono "--ty-color-X"] " for ink + border and " [:code.font-mono "--ty-bg-X-soft"] " for their hover tint. (The " [:code.font-mono "--ty-button-*"] " variables above are per-instance overrides that apply to " [:em "every"] " appearance — don't use them to define a flavor, or solid's white text and saturated hover will leak into outlined.)"]
                   (demo-area
                    [:div.flex.flex-wrap.gap-3
                     [:style "ty-button[flavor=\"brand\"] {
-   --ty-button-bg: #7c3aed;
-   --ty-button-color: white;
-   --ty-button-bg-hover: #6d28d9;
-   --ty-button-border: #5b21b6;
+   --ty-solid-brand: #7c3aed;
+   --ty-solid-brand-hover: #6d28d9;
+   --ty-solid-brand-fg: white;
+   --ty-color-brand: #7c3aed;
+   --ty-bg-brand-soft: #f3e8ff;
  }
  ty-button[flavor=\"teal\"] {
-   --ty-button-bg: #0d9488;
-   --ty-button-color: white;
-   --ty-button-bg-hover: #0f766e;
-   --ty-button-border: #115e59;
+   --ty-solid-teal: #0d9488;
+   --ty-solid-teal-hover: #0f766e;
+   --ty-solid-teal-fg: white;
+   --ty-color-teal: #0d9488;
+   --ty-bg-teal-soft: #ccfbf1;
  }
  ty-button[flavor=\"sunset\"] {
-   --ty-button-bg: #f97316;
-   --ty-button-color: white;
-   --ty-button-bg-hover: #ea580c;
-   --ty-button-border: #c2410c;
+   --ty-solid-sunset: #f97316;
+   --ty-solid-sunset-hover: #ea580c;
+   --ty-solid-sunset-fg: white;
+   --ty-color-sunset: #c2410c;
+   --ty-bg-sunset-soft: #ffedd5;
  }"]
                     [:ty-button {:flavor "brand"} "Brand"]
                     [:ty-button {:flavor "teal"} "Teal"]
@@ -283,16 +286,23 @@
                     [:ty-button {:flavor "brand" :appearance "outlined"} "Brand outlined"]
                     [:ty-button {:flavor "teal" :pill true} "Teal pill"]])
                   (code-block "<style>
+  /* Flavor TOKENS — appearance-aware. Solid reads --ty-solid-*,
+     outlined/ghost read --ty-color-* (ink+border) and
+     --ty-bg-*-soft (hover tint). */
   ty-button[flavor=\"brand\"] {
-    --ty-button-bg: #7c3aed;
-    --ty-button-color: white;
-    --ty-button-bg-hover: #6d28d9;
-    --ty-button-border: #5b21b6;
+    --ty-solid-brand: #7c3aed;
+    --ty-solid-brand-hover: #6d28d9;
+    --ty-solid-brand-fg: white;
+    --ty-color-brand: #7c3aed;
+    --ty-bg-brand-soft: #f3e8ff;
   }
 </style>
 
 <ty-button flavor=\"brand\">Brand</ty-button>
-<ty-button flavor=\"brand\" appearance=\"outlined\">Brand outlined</ty-button>")]
+<ty-button flavor=\"brand\" appearance=\"outlined\">Brand outlined</ty-button>")
+                  [:p.ty-text--.mt-3 {:style {:font-size "0.8125rem"}}
+                   "Loading " [:code.font-mono "tyrell-theme.css"] "? Then one line replaces all of this — "
+                   [:code.font-mono "--ty-brand-seed: #7c3aed"] " derives the full ramp, dark mode included. See the Theming page's Flavor pack builder."]]
 
       ;; Button Sizes
                  [:div.ty-content.rounded-lg.p-5
@@ -320,7 +330,7 @@
                    [:div.flex.flex-wrap.items-center.gap-3
                     [:ty-button {:action true :flavor "primary" :size "lg"}
                      [:ty-icon {:name "plus" :size "md"}]]
-                    [:ty-button {:action true :flavor "secondary"}
+                    [:ty-button {:action true :flavor "neutral"}
                      [:ty-icon {:name "edit" :size "sm"}]]
                     [:ty-button {:action true :flavor "danger"}
                      [:ty-icon {:name "trash" :size "sm"}]]
@@ -334,7 +344,7 @@
 </ty-button>
 
 <!-- Regular Action Buttons -->
-<ty-button action=\"true\" flavor=\"secondary\">
+<ty-button action=\"true\" flavor=\"neutral\">
   <ty-icon name=\"edit\" size=\"sm\"></ty-icon>
 </ty-button>
 
@@ -355,7 +365,7 @@
                     [:ty-button {:flavor "primary"}
                      [:ty-icon {:slot "start" :name "save" :size "sm"}]
                      "Save"]
-                    [:ty-button {:flavor "secondary"}
+                    [:ty-button {:flavor "neutral"}
                      [:ty-icon {:slot "start" :name "download" :size "sm"}]
                      "Download"]
                     [:ty-button {:flavor "danger"}
@@ -381,13 +391,13 @@
                    [:div.flex.flex-wrap.gap-3
                     [:ty-button {:disabled true} "Disabled"]
                     [:ty-button {:flavor "primary" :loading ""} "Saving"]
-                    [:ty-button {:flavor "secondary" :loading ""} "Processing"]
+                    [:ty-button {:flavor "neutral" :loading ""} "Processing"]
                     [:ty-button {:flavor "success" :disabled true} "Success Disabled"]])
                   (code-block "<ty-button disabled>Disabled</ty-button>
 
 <!-- Built-in loading state — see the dedicated section below for details -->
 <ty-button flavor=\"primary\" loading>Saving</ty-button>
-<ty-button flavor=\"secondary\" loading>Processing</ty-button>
+<ty-button flavor=\"neutral\" loading>Processing</ty-button>
 
 <ty-button flavor=\"success\" disabled>Success Disabled</ty-button>")]
 
@@ -422,7 +432,7 @@
                       [:ty-button {:wide true :flavor "primary"}
                        [:ty-icon {:slot "start" :name "check" :size "sm"}]
                        "Confirm"]
-                      [:ty-button {:wide true :flavor "secondary"}
+                      [:ty-button {:wide true :flavor "neutral"}
                        [:ty-icon {:slot "start" :name "x" :size "sm"}]
                        "Cancel"]])
                     (code-block "<div class=\"grid grid-cols-2 gap-3\">
@@ -430,7 +440,7 @@
     <ty-icon slot=\"start\" name=\"check\" size=\"sm\"></ty-icon>
     Confirm
   </ty-button>
-  <ty-button wide=\"true\" flavor=\"secondary\">
+  <ty-button wide=\"true\" flavor=\"neutral\">
     <ty-icon slot=\"start\" name=\"x\" size=\"sm\"></ty-icon>
     Cancel
   </ty-button>
@@ -445,7 +455,7 @@
                       [:ty-button {:wide true :flavor "success"}
                        [:ty-icon {:slot "start" :name "download" :size "sm"}]
                        "Download"]
-                      [:ty-button {:wide true :flavor "secondary"}
+                      [:ty-button {:wide true :flavor "neutral"}
                        [:ty-icon {:slot "start" :name "share-2" :size "sm"}]
                        "Share"]
                       [:ty-button {:wide true :flavor "danger"}
@@ -453,7 +463,7 @@
                        "Delete"]])
                     (code-block "<div class=\"grid grid-cols-3 gap-2\">
   <ty-button wide=\"true\" flavor=\"success\">Download</ty-button>
-  <ty-button wide=\"true\" flavor=\"secondary\">Share</ty-button>
+  <ty-button wide=\"true\" flavor=\"neutral\">Share</ty-button>
   <ty-button wide=\"true\" flavor=\"danger\">Delete</ty-button>
 </div>")]
 
@@ -466,10 +476,10 @@
                       [:ty-button {:wide true :flavor "primary" :size "lg"}
                        [:ty-icon {:slot "start" :name "log-in" :size "sm"}]
                        "Sign In with Email"]
-                      [:ty-button {:wide true :flavor "secondary" :size "lg"}
+                      [:ty-button {:wide true :flavor "neutral" :size "lg"}
                        [:ty-icon {:slot "start" :name "github" :size "sm"}]
                        "Sign In with GitHub"]
-                      [:ty-button {:wide true :flavor "secondary" :size "lg"}
+                      [:ty-button {:wide true :flavor "neutral" :size "lg"}
                        [:ty-icon {:slot "start" :name "mail" :size "sm"}]
                        "Sign In with Google"]])
                     (code-block "<div class=\"space-y-2\">
@@ -477,11 +487,11 @@
     <ty-icon slot=\"start\" name=\"log-in\" size=\"sm\"></ty-icon>
     Sign In with Email
   </ty-button>
-  <ty-button wide=\"true\" flavor=\"secondary\" size=\"lg\">
+  <ty-button wide=\"true\" flavor=\"neutral\" size=\"lg\">
     <ty-icon slot=\"start\" name=\"github\" size=\"sm\"></ty-icon>
     Sign In with GitHub
   </ty-button>
-  <ty-button wide=\"true\" flavor=\"secondary\" size=\"lg\">
+  <ty-button wide=\"true\" flavor=\"neutral\" size=\"lg\">
     <ty-icon slot=\"start\" name=\"mail\" size=\"sm\"></ty-icon>
     Sign In with Google
   </ty-button>
@@ -520,10 +530,10 @@
                         [:ty-button {:type "submit" :flavor "primary"}
                          [:ty-icon {:slot "start" :name "check" :size "sm"}]
                          "Submit"]
-                        [:ty-button {:type "reset" :flavor "secondary"}
+                        [:ty-button {:type "reset" :flavor "neutral"}
                          [:ty-icon {:slot "start" :name "x" :size "sm"}]
                          "Reset"]
-                        [:ty-button {:type "button" :flavor "secondary"}
+                        [:ty-button {:type "button" :flavor "neutral"}
                          "Cancel"]]]])
                     (code-block "<form>
   <input name=\"username\" required>
@@ -533,10 +543,10 @@
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 
   <!-- type=\"reset\" - clears the form -->
-  <ty-button type=\"reset\" flavor=\"secondary\">Reset</ty-button>
+  <ty-button type=\"reset\" flavor=\"neutral\">Reset</ty-button>
 
   <!-- type=\"button\" - does nothing, for custom JS -->
-  <ty-button type=\"button\" flavor=\"secondary\">Cancel</ty-button>
+  <ty-button type=\"button\" flavor=\"neutral\">Cancel</ty-button>
 </form>")]
 
         ;; Named submit buttons
@@ -556,13 +566,13 @@
                         [:textarea#comment.ty-input.ty-border.border.rounded.px-3.py-2.w-full
                          {:name "comment" :rows 3 :required true :placeholder "Enter your comment"}]]
                        [:div.flex.flex-wrap.gap-2
-                        [:ty-button {:type "submit" :name "action" :value "save_draft" :flavor "secondary"}
+                        [:ty-button {:type "submit" :name "action" :value "save_draft" :flavor "neutral"}
                          [:ty-icon {:slot "start" :name "save" :size "sm"}]
                          "Save Draft"]
                         [:ty-button {:type "submit" :name "action" :value "publish" :flavor "primary"}
                          [:ty-icon {:slot "start" :name "send" :size "sm"}]
                          "Publish"]
-                        [:ty-button {:type "submit" :name "action" :value "schedule" :flavor "secondary"}
+                        [:ty-button {:type "submit" :name "action" :value "schedule" :flavor "neutral"}
                          [:ty-icon {:slot "start" :name "clock" :size "sm"}]
                          "Schedule"]]]])
                     (code-block "<form>
@@ -632,12 +642,12 @@
                     (demo-area
                      [:div.flex.flex-wrap.gap-3
                       [:ty-button {:flavor "primary" :loading ""} "Save"]
-                      [:ty-button {:flavor "secondary" :loading ""} "Syncing"]
+                      [:ty-button {:flavor "neutral" :loading ""} "Syncing"]
                       [:ty-button {:flavor "danger" :appearance "outlined" :loading ""} "Delete"]
                       [:ty-button {:action true :flavor "primary" :loading ""}
                        [:ty-icon {:name "save" :size "md"}]]])
                     (code-block "<ty-button flavor=\"primary\" loading>Save</ty-button>
-<ty-button flavor=\"secondary\" loading>Syncing</ty-button>
+<ty-button flavor=\"neutral\" loading>Syncing</ty-button>
 <ty-button flavor=\"danger\" appearance=\"outlined\" loading>Delete</ty-button>
 
 <!-- Action (icon-only) buttons too -->

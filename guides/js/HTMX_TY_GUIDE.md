@@ -13,6 +13,8 @@ Single CDN script tag, single stylesheet:
 <html>
 <head>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css">
+  <!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css">
   <script src="https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js"></script>
   <script src="https://unpkg.com/htmx.org@2"></script>
 </head>

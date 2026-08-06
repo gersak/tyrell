@@ -1,5 +1,5 @@
 (ns tyrell.site.docs.theming
-  "Interactive playground for the OKLCH brand layer (tyrell-brand.css)."
+  "Interactive playground for the OKLCH brand layer (tyrell-theme.css)."
   (:require
    [clojure.string :as str]
    [tyrell.router :as router]
@@ -18,16 +18,12 @@
    ;; packages/cljs/public/index.html so first paint matches before CLJS boots).
    :brand-hue 45
    :brand-chroma 0.125
-   :secondary-offset -25       ;; degrees; secondary-hue = brand-hue + offset
-   :secondary-detached? false
-   :secondary-hue 22
-   :secondary-chroma 0.135
    ;; PER-FLAVOR HUES — semantic anchors. Defaults match the brand layer's
    ;; CSS fallbacks. Chroma stays bound to the per-flavor multipliers in
-   ;; tyrell-brand.css (success ×1.08, warning ×1.15, danger ×1.31) so
+   ;; tyrell-theme.css (success ×1.08, warning ×1.15, danger ×1.31) so
    ;; the emphasis hierarchy survives any hue change. Neutral isn't tweakable
-   ;; here — it's defined as var(--ty-brand-hue) in the brand layer, so it
-   ;; tracks brand automatically.
+   ;; here — it's achromatic by default in the brand layer (hue 0, chroma 0),
+   ;; independent of brand-hue.
    :success-hue 145
    :warning-hue 75
    :danger-hue  25
@@ -59,7 +55,7 @@
   #{:l-strong :l-bold :l-base :l-soft :l-faint
     :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult})
 
-;; Mirror of the html.dark block in tyrell-brand.css.
+;; Mirror of the html.dark block in tyrell-theme.css.
 (def ^:private dark-curve-defaults
   {:l-strong 0.72 :l-bold 0.66 :l-base 0.62 :l-soft 0.46 :l-faint 0.30
    :c-strong-mult 0.77 :c-bold-mult 1.00 :c-base-mult 0.92 :c-soft-mult 0.77
@@ -86,9 +82,6 @@
   (case k
     :brand-hue        "--ty-brand-hue"
     :brand-chroma     "--ty-brand-chroma"
-    :secondary-offset "--ty-secondary-offset"
-    :secondary-hue    "--ty-secondary-hue"
-    :secondary-chroma "--ty-secondary-chroma"
     :success-hue      "--ty-success-hue"
     :warning-hue      "--ty-warning-hue"
     :danger-hue       "--ty-danger-hue"
@@ -129,7 +122,7 @@
 
 (defn- sync-curve-style!
   "Write curve overrides into <style id=ty-playground-curves> appended to
-   <head> — later in document order than tyrell-brand.css, so equal-specificity
+   <head> — later in document order than tyrell-theme.css, so equal-specificity
    :root / html.dark rules win, each theme independently."
   []
   (let [el (or (.getElementById js/document "ty-playground-curves")
@@ -162,21 +155,6 @@
     (swap! state/state assoc-in [:brand-playground :brand-chroma] v)
     (apply-seed! :brand-chroma v)))
 
-(defn- toggle-secondary-detached! [_]
-  (let [{:keys [secondary-detached? secondary-hue secondary-chroma]} (get-seeds)
-        next-detached? (not secondary-detached?)]
-    (swap! state/state assoc-in [:brand-playground :secondary-detached?] next-detached?)
-    (if next-detached?
-      (do (apply-seed! :secondary-hue secondary-hue)
-          (apply-seed! :secondary-chroma secondary-chroma))
-      (do (clear-seed! :secondary-hue)
-          (clear-seed! :secondary-chroma)))))
-
-(defn- set-secondary-hue! [^js e]
-  (let [v (js/parseFloat (.. e -target -value))]
-    (swap! state/state assoc-in [:brand-playground :secondary-hue] v)
-    (apply-seed! :secondary-hue v)))
-
 (defn- preset! [hue chroma]
   (swap! state/state update :brand-playground assoc
          :brand-hue hue
@@ -187,8 +165,9 @@
 (defn- reset-all! [_]
   (swap! state/state assoc :brand-playground default-seeds)
   ;; Curve keys included for hygiene: older builds wrote them inline on <html>.
-  (doseq [k [:brand-hue :brand-chroma :secondary-offset
-             :secondary-hue :secondary-chroma
+  (doseq [k [:brand-hue :brand-chroma
+             ;; secondary-* kept for hygiene: pre-TC37 builds wrote them inline
+             :secondary-offset :secondary-hue :secondary-chroma
              :success-hue :warning-hue :danger-hue
              :l-strong :l-bold :l-base :l-soft :l-faint
              :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult]]
@@ -228,24 +207,16 @@
              :border "1px solid var(--ty-border-soft)"}}]
    [:span.ty-text-- {:style {:font-size "0.6875rem"}} label]])
 
-(defn- build-theme-css
-  "Render the current seed state as a paste-ready :root block. Only emits
-   values that differ from the brand-layer defaults — users get the minimal
-   override snippet, not noise."
+(defn- theme-dial-lines
+  "Seed + curve dials that differ from brand-layer defaults, as CSS lines.
+   Returns {:light [...] :dark [...]}."
   [seeds]
   (let [{:keys [brand-hue brand-chroma
-                secondary-detached? secondary-hue secondary-offset
                 success-hue warning-hue danger-hue]} seeds
         lines (cond-> []
                 :always
                 (conj (str "  --ty-brand-hue: " (int brand-hue) ";")
                       (str "  --ty-brand-chroma: " (.toFixed brand-chroma 3) ";"))
-
-                secondary-detached?
-                (conj (str "  --ty-secondary-hue: " (int secondary-hue) ";"))
-
-                (and (not secondary-detached?) (not= (int secondary-offset) 60))
-                (conj (str "  --ty-secondary-offset: " (int secondary-offset) ";"))
 
                 (not= (int success-hue) 145)
                 (conj (str "  --ty-success-hue: " (int success-hue) ";"))
@@ -260,11 +231,34 @@
                                        (= theme :dark) (merge dark-curve-defaults))]
                         (for [[k v] (get-in @state/state [:brand-playground :curves theme])
                               :when (not= v (get defaults k))]
-                          (str "  " (key->var k) ": " (.toFixed v 2) ";"))))
-        dark-lines (curve-lines :dark)]
-    (str ":root {\n" (str/join "\n" (concat lines (curve-lines :light))) "\n}"
-         (when (seq dark-lines)
-           (str "\nhtml.dark {\n" (str/join "\n" dark-lines) "\n}")))))
+                          (str "  " (key->var k) ": " (.toFixed v 2) ";"))))]
+    {:light (concat lines (curve-lines :light))
+     :dark (curve-lines :dark)}))
+
+(defn- build-theme-css
+  "Render the current seed state as a paste-ready :root block. Only emits
+   values that differ from the brand-layer defaults — users get the minimal
+   override snippet, not noise."
+  [seeds]
+  (let [{:keys [light dark]} (theme-dial-lines seeds)]
+    (str ":root {\n" (str/join "\n" light) "\n}"
+         (when (seq dark)
+           (str "\nhtml.dark {\n" (str/join "\n" dark) "\n}")))))
+
+(defn- build-named-theme-css
+  "Same dials, exported as a NAMED theme pack. A theme is just a class that
+   sets Section 1 dials; [data-ty-theme] makes the engine recompute on that
+   element, so the pack works on <html> AND on any subtree. Because the
+   dials are @property-registered numbers, applying/removing the class
+   crossfades instead of snapping."
+  [seeds theme-name]
+  (let [{:keys [light dark]} (theme-dial-lines seeds)
+        cls (str "." theme-name)]
+    (str "/* apply on <html class=\"" theme-name "\">, or scope to a subtree:\n"
+         "   <section data-ty-theme class=\"" theme-name "\"> */\n"
+         cls " {\n" (str/join "\n" light) "\n}"
+         (when (seq dark)
+           (str "\n" cls ".dark,\n.dark " cls " {\n" (str/join "\n" dark) "\n}")))))
 
 (defn seeds-panel
   "Interactive brand-seeds widget. Exported so the CSS Guide page can embed it
@@ -272,7 +266,6 @@
    watch every swatch/ramp retint in place."
   []
   (let [{:keys [brand-hue brand-chroma
-                secondary-detached? secondary-hue
                 success-hue warning-hue danger-hue
                 show-anchors? show-ladder? show-curve?]} (get-seeds)]
     [:div.ty-elevated.rounded-xl.p-5
@@ -346,30 +339,11 @@
           :on {:click #(preset! hue chroma)}}
          label])]
 
-     ;; Compact detach-secondary toggle
-     [:label.flex.items-center.gap-2.cursor-pointer
-      {:style {:margin-bottom "0.5rem"}}
-      [:input {:type "checkbox" :checked secondary-detached?
-               :on {:change toggle-secondary-detached!}}]
-      [:span.ty-text- {:style {:font-size "0.75rem"}}
-       "Detach secondary (otherwise rotates with brand)"]]
-     (when secondary-detached?
-       [:div {:style {:margin-bottom "0.75rem"}}
-        [:div.flex.justify-between.items-center.mb-1
-         [:label.ty-text- {:style {:font-size "0.6875rem"}}
-          [:code "--ty-secondary-hue"]]
-         [:code.ty-text {:style {:font-size "0.6875rem"}}
-          (str (int secondary-hue) "°")]]
-        [:input
-         {:type "range" :min 0 :max 360 :step 1
-          :value secondary-hue
-          :on {:input set-secondary-hue!}
-          :style {:width "100%" :height "6px"}}]])
-
      ;; Per-flavor hue anchors — collapsible. Power-user surface for
-     ;; retinting semantic colors (success/warning/danger/neutral). Chroma
-     ;; stays bound to brand-chroma multipliers in tyrell-brand.css so the
-     ;; emphasis hierarchy survives any hue change.
+     ;; retinting semantic colors (success/warning/danger). Chroma stays
+     ;; bound to brand-chroma multipliers in tyrell-theme.css so the
+     ;; emphasis hierarchy survives any hue change. Neutral has no slider
+     ;; here — it's achromatic by default, not a hue to retint.
      [:div {:style {:padding "0.5rem 0.75rem"
                     :background "var(--ty-bg-neutral-soft)"
                     :border-radius "8px"
@@ -411,8 +385,8 @@
          [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
                                 :margin "0.5rem 0 0"}}
           "Chroma stays bound to the brand-chroma multipliers (success ×1.08, "
-          "warning ×1.15, danger ×1.31). Only the hue changes. Neutral tracks "
-          "brand automatically."]])]
+          "warning ×1.15, danger ×1.31). Only the hue changes. Neutral is "
+          "achromatic by default — it does not track the brand hue."]])]
 
      ;; L-curve — 5 lightness stops. Collapsed by default; matches the
      ;; floating-widget pattern.
@@ -504,12 +478,160 @@
        :on {:click reset-all!}}
       "Reset to defaults"]
 
-     ;; Theme export — paste-ready :root override snippet.
-     [:div {:style {:margin-top "0.75rem"}}
-      [:ty-copy {:label "Theme snippet — paste into your :root"
-                 :value (build-theme-css (get-seeds))
-                 :format "code"
-                 :multiline true}]]]))
+     ;; Theme export — paste-ready snippet, either as global :root overrides
+     ;; or as a NAMED theme pack (usable on <html> or any [data-ty-theme]
+     ;; subtree; switches crossfade thanks to the @property-typed dials).
+     (let [named? (get-in @state/state [:brand-playground :export-named?] false)
+           theme-name (get-in @state/state [:brand-playground :export-name] "my-theme")]
+       [:div {:style {:margin-top "0.75rem"}}
+        [:div.flex.items-center.gap-2.mb-2
+         [:ty-button {:size "xs" :flavor "neutral"
+                      :appearance (if named? "outlined" "solid")
+                      :on {:click (fn [_] (swap! state/state assoc-in
+                                                 [:brand-playground :export-named?] false))}}
+          ":root"]
+         [:ty-button {:size "xs" :flavor "neutral"
+                      :appearance (if named? "solid" "outlined")
+                      :on {:click (fn [_] (swap! state/state assoc-in
+                                                 [:brand-playground :export-named?] true))}}
+          "named theme"]
+         (when named?
+           [:input {:type "text" :value theme-name
+                    :placeholder "theme name"
+                    :style {:flex 1 :min-width "0" :font-size "0.75rem"
+                            :padding "0.25rem 0.5rem"
+                            :border "1px solid var(--ty-border-soft)"
+                            :border-radius "6px"
+                            :background "var(--ty-surface-input)"
+                            :color "var(--ty-text)"}
+                    :on {:input (fn [^js e]
+                                  (swap! state/state assoc-in
+                                         [:brand-playground :export-name]
+                                         (.. e -target -value)))}}])]
+        [:ty-copy {:label (if named?
+                            "Theme pack — a class usable on <html> or any subtree"
+                            "Theme snippet — paste into your :root")
+                   :value (if named?
+                            (build-named-theme-css (get-seeds) theme-name)
+                            (build-theme-css (get-seeds)))
+                   :format "code"
+                   :multiline true}]])]))
+
+;; ----------------------------------------------------------------------------
+;; Flavor pack builder — the CSS_GUIDE "flavor pack" template, generated live.
+;; A custom flavor declared this way gets FULL engine parity: shared L-curve,
+;; saturation curve, dark mode via the same dial flips (no dark block of its
+;; own), solid interaction states, auto-contrast foregrounds, theme scoping.
+;; ----------------------------------------------------------------------------
+
+(defn- fpb-name []  (get-in @state/state [:flavor-pack :name] "love"))
+(defn- fpb-color [] (get-in @state/state [:flavor-pack :color] "#76467c"))
+
+(defn- fpb-set! [k]
+  (fn [^js e]
+    (let [raw (.. e -target -value)
+          v (if (= k :name) (str/replace raw #"[^a-zA-Z0-9_-]" "") raw)]
+      (swap! state/state assoc-in [:flavor-pack k] v))))
+
+(defn flavor-pack-ramp-lines
+  "The ramp declarations for a seed-driven flavor NAME — every formula reads
+   the seed's c+h channels; L comes from the shared, mode-flipped curve.
+   That is the ingestion rule: a color's identity is hue+chroma, its
+   lightness is the CURVE's job — which is why any seed (light or dark)
+   gets correct dark mode, tones and auto-contrast."
+  [nm]
+  (let [seed (str "var(--ty-" nm "-seed)")
+        ink (fn [tok l-stop c-mult]
+              (str "  --ty-color-" nm tok ": oklch(from " seed
+                   " calc(var(--ty-l-" l-stop ") * var(--ty-" nm "-l-factor, 1))"
+                   " calc(c * var(--ty-c-" c-mult "-mult)) h);"))
+        bg (fn [tok l-stop c-mult]
+             (str "  --ty-bg-" nm tok ": oklch(from " seed
+                  " calc(var(--ty-l-bg-" l-stop ") * var(--ty-" nm "-l-factor, 1))"
+                  " calc(c * var(--ty-c-bg-" c-mult "-mult)) h);"))
+        solid-state (fn [state dial]
+                      (str "  --ty-solid-" nm "-" state ": oklch(from var(--ty-solid-" nm
+                           ") calc(l + var(--ty-solid-" dial ")) c h);"))
+        fg (fn [suffix fill]
+             (str "  --ty-solid-" nm suffix
+                  "-fg: oklch(from var(--ty-solid-" nm fill
+                  ") clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);"))]
+    [(ink "-strong" "strong" "strong") (ink "-bold" "bold" "bold")
+     (ink "" "base" "base") (ink "-soft" "soft" "soft")
+     (ink "-faint" "faint" "faint")
+     (bg "" "base" "base") (bg "-bold" "bold" "bold") (bg "-soft" "soft" "soft")
+     (str "  --ty-border-" nm ": var(--ty-color-" nm "-soft);")
+     (str "  --ty-solid-" nm ": oklch(from var(--ty-color-" nm
+          ") calc(l + var(--ty-solid-l)) calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h)));")
+     (solid-state "hover" "hover-l") (solid-state "active" "active-l")
+     (solid-state "strong" "strong-l") (solid-state "soft" "soft-l")
+     (fg "" "") (fg "-soft" "-soft") (fg "-strong" "-strong")]))
+
+(defn flavor-pack-css
+  "The full pack for flavor NAME seeded by one COLOR — the same template
+   CSS_GUIDE documents. The exported seed line is the entire per-project
+   surface; the ramp is engine boilerplate."
+  [nm color]
+  (str ":root {\n"
+       "  --ty-" nm "-seed: " color "; /* the one color you pick */\n"
+       "}\n\n"
+       "html:root,\n[data-ty-theme] {\n"
+       (str/join "\n" (flavor-pack-ramp-lines nm))
+       "\n}"))
+
+(defn flavor-pack-builder []
+  (let [nm (fpb-name) color (fpb-color)
+        css (flavor-pack-css nm color)]
+    [:div.ty-content.rounded-lg.p-5
+     ;; LIVE: the generated pack applies to the real page via this style tag,
+     ;; so the preview row below is the actual engine at work — dark toggle,
+     ;; theme scopes and animated transitions all reach it.
+     [:style css]
+     [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height 1.6}}
+      "The built-in flavors are pre-installed instances of one template. A name and "
+      [:strong "one color"] " in, a full flavor out. The seed contributes hue + chroma; "
+      "every shade's lightness comes from the shared, mode-flipped curve — which is why "
+      "any seed, light or dark, gets correct dark mode, correct " [:code "+"] "/" [:code "−"]
+      " tones and auto-contrast text, with " [:strong "no dark block of its own"]
+      ". Everything below is LIVE — the generated CSS is applied to this page."]
+     [:div.grid.gap-6 {:style {:grid-template-columns "minmax(260px, 340px) 1fr"
+                               :align-items "start"}}
+      [:div
+       [:div {:style {:margin-bottom "0.75rem"}}
+        [:label.ty-text-.block.mb-1 {:style {:font-size "0.6875rem"}} "flavor name"]
+        [:input {:type "text" :value nm
+                 :style {:width "100%" :font-size "0.8125rem" :padding "0.375rem 0.5rem"
+                         :border "1px solid var(--ty-border-soft)" :border-radius "6px"
+                         :background "var(--ty-surface-input)" :color "var(--ty-text)"}
+                 :on {:input (fpb-set! :name)}}]]
+       [:div {:style {:margin-bottom "0.75rem"}}
+        [:div.flex.justify-between.items-center.mb-1
+         [:label.ty-text- {:style {:font-size "0.6875rem"}}
+          [:code (str "--ty-" nm "-seed")]]
+         [:code.ty-text {:style {:font-size "0.6875rem"}} color]]
+        [:input {:type "color" :value color
+                 :style {:width "100%" :height "2rem" :padding 0 :border "none"
+                         :border-radius "6px" :cursor "pointer" :background "none"}
+                 :on {:input (fpb-set! :color)}}]]
+       ;; live preview — real components using the generated flavor
+       (when (seq nm)
+         [:div.space-y-3.mt-4
+          ;; − base + — ascending emphasis, matching the matrix column order
+          [:div.flex.flex-wrap.gap-2
+           [:ty-button {:flavor (str nm "-")} (str nm "-")]
+           [:ty-button {:flavor nm} nm]
+           [:ty-button {:flavor (str nm "+")} (str nm "+")]]
+          [:div.flex.flex-wrap.gap-2
+           [:ty-button {:flavor nm :appearance "outlined"} "outlined"]
+           [:ty-button {:flavor nm :appearance "ghost"} "ghost"]
+           [:ty-tag {:flavor nm} nm]]
+          [:ty-input {:flavor nm :placeholder (str "themed " nm " input")}]])]
+      [:div
+       (when (seq nm)
+         [:ty-copy {:label "The pack — paste anywhere tyrell-theme.css loads"
+                    :value css
+                    :format "code"
+                    :multiline true}])]]]))
 
 (defn floating-seeds
   "Compact always-on widget pinned to the bottom-right corner. Collapses to a
@@ -598,25 +720,6 @@
                                     " oklch(0.6 0.3 " brand-hue "))")
                    :border-radius "4px" :height "6px"
                    :appearance "none" :outline "none"}}]]
-
-        ;; Secondary offset — how far secondary rotates from brand hue.
-        (let [{:keys [secondary-offset]} (get-seeds)]
-          [:div {:style {:margin-bottom "0.75rem"}}
-           [:div.flex.justify-between.items-center.mb-1
-            [:label.ty-text- {:style {:font-size "0.6875rem"}}
-             [:code "--ty-secondary-offset"]]
-            [:code.ty-text {:style {:font-size "0.6875rem"}}
-             (str (if (pos? secondary-offset) "+" "") (int secondary-offset) "°")]]
-           [:input
-            {:type "range" :min -180 :max 180 :step 5 :value secondary-offset
-             :on {:input (set-by-key! :secondary-offset)}
-             :style {:width "100%"
-                     :background (str "linear-gradient(to right,"
-                                      " oklch(0.6 0.18 " (mod (- brand-hue 180) 360) "),"
-                                      " oklch(0.6 0.18 " brand-hue "),"
-                                      " oklch(0.6 0.18 " (mod (+ brand-hue 180) 360) "))")
-                     :border-radius "4px" :height "6px"
-                     :appearance "none" :outline "none"}}]])
 
         ;; Preset row (compact)
         [:div.flex.flex-wrap.gap-1 {:style {:margin-bottom "0.75rem"}}
@@ -723,14 +826,12 @@
    (section-label "Buttons — solid / outlined / flavors")
    [:div.flex.flex-wrap.gap-2
     [:ty-button {:flavor "primary"}   "Primary"]
-    [:ty-button {:flavor "secondary"} "Secondary"]
     [:ty-button {:flavor "success"}   "Success"]
     [:ty-button {:flavor "danger"}    "Danger"]
     [:ty-button {:flavor "warning"}   "Warning"]
     [:ty-button {:flavor "neutral"}   "Neutral"]]
    [:div.flex.flex-wrap.gap-2 {:style {:margin-top "0.75rem"}}
     [:ty-button {:flavor "primary"   :outlined ""} "Primary"]
-    [:ty-button {:flavor "secondary" :outlined ""} "Secondary"]
     [:ty-button {:flavor "success"   :outlined ""} "Success"]
     [:ty-button {:flavor "danger"    :outlined ""} "Danger"]
     [:ty-button {:flavor "warning"   :outlined ""} "Warning"]
@@ -741,7 +842,6 @@
    (section-label "Tags / chips")
    [:div.flex.flex-wrap.gap-2
     [:ty-tag {:flavor "primary"   :pill ""} "primary"]
-    [:ty-tag {:flavor "secondary" :pill ""} "secondary"]
     [:ty-tag {:flavor "success"   :pill ""} "success"]
     [:ty-tag {:flavor "danger"    :pill ""} "danger"]
     [:ty-tag {:flavor "warning"   :pill ""} "warning"]
@@ -751,7 +851,7 @@
   [:div.ty-content.rounded-lg.p-5
    (section-label "Text emphasis ramps (--ty-text-{flavor}-*)")
    [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(160px, 1fr))"}}
-    (for [flavor ["primary" "secondary" "success" "danger" "warning" "neutral"]]
+    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
       [:div {:key flavor}
        [:p {:class (str "ty-text-" flavor "++") :style {:font-weight 600}} flavor "++"]
        [:p {:class (str "ty-text-" flavor "+")}  flavor "+"]
@@ -800,7 +900,7 @@
     [:div.mb-3
      (section-label "30-second start")]
     (code-block "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
-<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-brand.css\">
+<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css\">
 
 <style>
   :root {
@@ -810,7 +910,7 @@
 </style>")
     [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
      "That's the whole rebrand. Via npm: "
-     [:code "import 'tyrell-components/css/tyrell-brand.css'"] " after tyrell.css."]]
+     [:code "import 'tyrell-components/css/tyrell-theme.css'"] " after tyrell.css."]]
 
     ;; Playground
    (doc-section "Playground"
@@ -835,6 +935,11 @@
                    (preview-surfaces)]
         ;; Row 3: full-width — needs horizontal room
                   (preview-text-ramps)]])
+
+    ;; Flavor pack builder — name + two seeds in, a full engine-parity
+    ;; flavor out, applied LIVE via an injected <style>.
+   (doc-section "Flavor pack builder"
+                (flavor-pack-builder))
 
     ;; The formula — how every color is computed
    (doc-section "The formula"
@@ -867,12 +972,24 @@
   --ty-brand-hue: 200;
   --ty-brand-chroma: 0.13;
 
-  /* detach secondary (default: brand-hue + 60) */
-  --ty-secondary-hue: 30;
+  /* semantic anchors are independent seeds */
+  --ty-danger-chroma: 0.2;
 
   /* pull a semantic flavor toward the brand */
   --ty-success-hue: var(--ty-brand-hue);
 
   /* pin one derived token — cascade still wins */
   --ty-color-primary-strong: #003344;
+}" "css")
+                 [:p.ty-text-.mt-4.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
+                  "Have a color instead of a hue/chroma pair? Skip the split — seed any flavor "
+                  "directly, in any format. The dials above are still read; a seed just bypasses "
+                  "them for that one flavor."]
+                 (code-block ":root {
+  /* one hex, done — hue + chroma read from it,
+     lightness still comes from the L-curve */
+  --ty-primary-seed: #76467c;
+
+  /* any CSS color works */
+  --ty-danger-seed: crimson;
 }" "css")])))

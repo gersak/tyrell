@@ -46,6 +46,7 @@ Always loads the latest version:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js"></script>
 ```
 
@@ -53,19 +54,17 @@ Pin to a specific version (recommended for production):
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/css/tyrell-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/dist/tyrell.js"></script>
 ```
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
 
-### Opt-in OKLCH brand layer (new in RC10)
+### The OKLCH brand layer
 
-Drop one more `<link>` and rebrand the whole library coherently in light AND dark mode with a single CSS variable:
+`tyrell-theme.css` loads after `tyrell.css` and replaces its static colors with a computed OKLCH engine: correct-contrast button text on any color, seed-based rebranding, named/scoped themes, animated theme transitions. Rebrand the whole library coherently in light AND dark mode with a single CSS variable:
 
 ```html
-<!-- After tyrell.css. Opt-in — load only if you want to retint. -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC10/css/tyrell-brand.css">
-
 <style>
   :root {
     --ty-brand-hue: 200;        /* teal */
@@ -73,6 +72,8 @@ Drop one more `<link>` and rebrand the whole library coherently in light AND dar
   }
 </style>
 ```
+
+`tyrell.css` alone still renders correctly and needs no relative-color-syntax support — keep it brand-layer-free only if that older-browser compatibility matters more than theming to you.
 
 Every component — buttons, inputs, dropdowns, calendars, focus rings, scrollbars — retints together. Drag the sliders at [`/docs/theming`](https://gersak.github.io/tyrell/docs/theming) to preview, then copy the `:root` snippet straight to your app.
 

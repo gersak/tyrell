@@ -49,7 +49,7 @@
        {:name "flavor"
         :type "string"
         :default "\"neutral\""
-        :description "Semantic color: primary, secondary, success, danger, warning, neutral"}])]
+        :description "Semantic color: primary, success, danger, warning, neutral"}])]
 
     [:div
      (section-label "Events")
@@ -130,7 +130,7 @@
        (section-label "Semantic Flavors")
        (demo-area
         [:div.flex.flex-wrap.gap-4
-         (for [[flavor label] [["primary" "Primary"] ["secondary" "Secondary"] ["success" "Success"]
+         (for [[flavor label] [["primary" "Primary"] ["success" "Success"]
                                ["danger" "Danger"] ["warning" "Warning"] ["neutral" "Neutral"]]]
            [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
             [:ty-checkbox {:flavor flavor :checked ""}]

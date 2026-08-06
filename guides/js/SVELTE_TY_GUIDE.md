@@ -18,6 +18,7 @@ In your app entry (`src/app.js`, `src/main.ts`, or a layout):
 
 ```js
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css' // auto-contrast, seed rebranding, themes — see TY_GUIDE.md#quick-start
 import 'tyrell-components'   // or specific subpaths
 ```
 
@@ -153,6 +154,7 @@ Register at app startup:
 ```js
 // src/app.js or src/main.ts
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 
 import { registerIcons } from 'tyrell-components/icons/registry'
@@ -533,7 +535,7 @@ Add JSX-style type augmentation for Svelte's HTML element map:
 declare namespace svelteHTML {
   interface IntrinsicElements {
     'ty-button': {
-      flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral'
+      flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral'
       size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
       disabled?: boolean
       pill?: boolean
@@ -579,6 +581,7 @@ let btn: TyButton
   onMount(async () => {
     if (browser) {
       await import('tyrell-components/css/tyrell.css')
+      await import('tyrell-components/css/tyrell-theme.css')
       await import('tyrell-components')
       const { registerIcons } = await import('tyrell-components/icons/registry')
       const { check, x } = await import('tyrell-components/icons/lucide')
@@ -596,6 +599,7 @@ Create `src/lib/tyrell.client.ts`:
 
 ```ts
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 import { registerIcons } from 'tyrell-components/icons/registry'
 import { check, x } from 'tyrell-components/icons/lucide'

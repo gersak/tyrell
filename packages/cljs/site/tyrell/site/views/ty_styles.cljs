@@ -1,9 +1,10 @@
 (ns tyrell.site.views.ty-styles
   "Site view showcasing ty CSS classes and design system"
   (:require
-   [clojure.string]
+   [clojure.string :as str]
    [tyrell.router :as router]
    [tyrell.site.state :as state]
+   [tyrell.site.docs.theming :as theming]
    [tyrell.site.docs.common :as common :refer [docs-page]]))
 
 (defn theme-toggle
@@ -55,7 +56,6 @@
 
    [:div.grid.gap-6.md:grid-cols-2.lg:grid-cols-3
     (text-ramp "primary")
-    (text-ramp "secondary")
     (text-ramp "success")
     (text-ramp "danger")
     (text-ramp "warning")
@@ -81,19 +81,6 @@
      [:div.ty-bg-primary-.p-4.rounded-lg.text-center
       [:div.ty-text-primary++.font-medium "ty-bg-primary-"]
       [:div.ty-text-primary.text-sm "Softer background"]]]
-
-    ;; Secondary backgrounds
-    [:div.space-y-3
-     [:h4.text-sm.font-medium.ty-text "Secondary Backgrounds"]
-     [:div.ty-bg-secondary+.p-4.rounded-lg.text-center
-      [:div.ty-text-secondary++.font-medium "ty-bg-secondary+"]
-      [:div.ty-text-secondary.text-sm "Stronger background"]]
-     [:div.ty-bg-secondary.p-4.rounded-lg.text-center
-      [:div.ty-text-secondary++.font-medium "ty-bg-secondary"]
-      [:div.ty-text-secondary.text-sm "Base background"]]
-     [:div.ty-bg-secondary-.p-4.rounded-lg.text-center
-      [:div.ty-text-secondary++.font-medium "ty-bg-secondary-"]
-      [:div.ty-text-secondary.text-sm "Softer background"]]]
 
     ;; Success backgrounds
     [:div.space-y-3
@@ -203,6 +190,123 @@
       [:div "• " [:strong.ty-text++ "ty-floating"] " - Modals, dropdowns, tooltips - highest elevation"]]]]])
 
 ;; ----------------------------------------------------------------------------
+;; Borders — own family, own L ladder (2026-08 restructure). Used to alias
+;; --ty-color-neutral-*, which meant tuning the text emphasis curve or
+;; --ty-neutral-l-factor silently dragged every card/divider border with it.
+;; --ty-l-border-* are independent dials now; same public class names.
+;; ----------------------------------------------------------------------------
+
+(def ^:private layer-flavors
+  ["primary" "success" "danger" "warning" "neutral"])
+
+;; NOTE: surface utility classes (.ty-content/.ty-elevated/...) set their own
+;; `border: ... !important` shorthand, which beats .ty-border-{flavor}/-soft/
+;; -faint (plain border-color, no !important — a real inconsistency with
+;; .ty-border/-+/-++, which DO carry !important). Using inline background
+;; here instead of the .ty-content CLASS sidesteps that collision entirely.
+(defn- border-swatch [suffix token]
+  [:div.flex.flex-col.items-center.gap-2 {:key (str "border" suffix)}
+   [:div.w-16.h-16.rounded-lg {:class (str "ty-border" suffix)
+                               :style {:background "var(--ty-surface-content)"
+                                       :border-width "var(--ty-border-width, 1px)"
+                                       :border-style "solid"}}]
+   [:code.ty-text-.text-xs.font-mono (str "ty-border" suffix)]
+   [:code.ty-text--.text-xs.font-mono (str "--ty-l-border" (when (seq token) (str "-" token)))]])
+
+(defn borders-demo
+  "Generic border ladder — independent lightness dials, not a text-ramp alias."
+  []
+  [:div.ty-elevated.p-6.rounded-lg
+   [:h3.text-lg.font-semibold.ty-text.mb-4 "Borders"]
+   [:p.ty-text-.mb-2
+    "Borders are their own family, not a shade of text. " [:code "ty-border"] " through "
+    [:code "ty-border--"] " share the same 5-step suffix as the text ladder, but resolve from "
+    "independent " [:code "--ty-l-border-*"] " dials — reshaping text emphasis, or "
+    "tuning " [:code "--ty-neutral-l-factor"] ", no longer moves app chrome along with it."]
+   [:div.flex.flex-wrap.gap-6.my-6
+    (for [[suffix token] [["++" "strong"] ["+" "bold"] ["" ""] ["-" "soft"] ["--" "faint"]]]
+      (border-swatch suffix token))]
+   [:p.ty-text-.mb-2.mt-6 "Per-flavor accent borders still track that flavor's own ink:"]
+   [:div.flex.flex-wrap.gap-4
+    (for [f layer-flavors]
+      [:div.flex.flex-col.items-center.gap-2 {:key f}
+       [:div.w-16.h-16.rounded-lg {:class (str "ty-border-" f)
+                                   :style {:background "var(--ty-surface-content)"
+                                           :border-width "var(--ty-border-width, 1px)"
+                                           :border-style "solid"}}]
+       [:code.ty-text-.text-xs.font-mono (str "ty-border-" f)]])]])
+
+;; ----------------------------------------------------------------------------
+;; Solid fills + muted — this session's headline changes. Solid is its own
+;; color system (not the text ramp); its foreground is now COMPUTED per fill
+;; via --ty-solid-fg-threshold, not fixed white. `muted` is a fourth axis,
+;; orthogonal to flavor/appearance: suppress to neutral until hovered/pressed.
+;; ----------------------------------------------------------------------------
+
+(defn solid-muted-demo
+  "Solid fills (auto-contrast foreground) + the muted attribute."
+  []
+  [:div.ty-elevated.p-6.rounded-lg
+   [:h3.text-lg.font-semibold.ty-text.mb-4 "Solid Fills & Muted"]
+   [:p.ty-text-.mb-2
+    "Solid text is computed, not fixed white: each fill picks black or white from its OWN "
+    "lightness (" [:code "--ty-solid-fg-threshold"] ", default " [:code "0.6"] "), so a pale "
+    [:code "flavor=\"…-\""] " tone can't end up with unreadable text by accident. Watch the "
+    "soft (−) column below flip to dark text on the lighter fills."]
+   [:div.grid.gap-3.mb-2 {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
+    [:div] [:div.text-xs.ty-text-.font-medium "Soft (−)"] [:div.text-xs.ty-text-.font-medium "Base"]
+    [:div.text-xs.ty-text-.font-medium "Strong (+)"]
+    (for [f layer-flavors]
+      (list
+       [:div.text-sm.font-mono.ty-text {:key (str f "-label")} f]
+       [:ty-button {:key (str f "-soft") :flavor (str f "-")} f]
+       [:ty-button {:key (str f "-base") :flavor f} f]
+       [:ty-button {:key (str f "-strong") :flavor (str f "+")} f]))]
+   [:p.ty-text-.mt-6.mb-2
+    [:code "muted"] " suppresses the flavor to neutral at rest, revealing it on hover "
+    "(pointer devices only — " [:code "@media (hover: hover)"] ") or on press, so touch "
+    "still gets the real color on tap:"]
+   [:div.flex.flex-wrap.gap-3
+    (for [f layer-flavors]
+      [:ty-button {:key f :flavor f :muted true} f])]])
+
+;; ----------------------------------------------------------------------------
+;; Input — a composite of the families above, not a fifth color system.
+;; ----------------------------------------------------------------------------
+
+(defn input-demo
+  "ty-input/ty-select assemble surface + border + ink — they define nothing new."
+  []
+  [:div.ty-elevated.p-6.rounded-lg
+   [:h3.text-lg.font-semibold.ty-text.mb-4 "Input"]
+   [:p.ty-text-.mb-4
+    [:code "ty-input"] " / " [:code "ty-select"] " read " [:code "--ty-surface-input"] " for "
+    "background, the border ladder above for their edge, and a flavor's ink ramp for focus — "
+    "they don't define their own colors, they assemble the families above."]
+   [:div.grid.gap-3.sm:grid-cols-2.lg:grid-cols-3
+    [:ty-input {:placeholder "Default"}]
+    [:ty-input {:flavor "primary" :placeholder "Primary"}]
+    [:ty-input {:flavor "danger" :placeholder "Danger" :error "Required"}]]])
+
+;; ----------------------------------------------------------------------------
+;; Scrollbars — deliberately outside the OKLCH engine: alpha overlays, no
+;; hue/chroma to retint, just an opacity to tune.
+;; ----------------------------------------------------------------------------
+
+(defn scrollbar-demo
+  "The one layer left unwired to the color engine on purpose."
+  []
+  [:div.ty-elevated.p-6.rounded-lg
+   [:h3.text-lg.font-semibold.ty-text.mb-4 "Scrollbars"]
+   [:p.ty-text-.mb-4
+    [:code "--ty-scrollbar-thumb"] " / " [:code "-track"] " are plain alpha overlays, not "
+    "hue/chroma tokens — there's no color to retint here, just an opacity to tune."]
+   [:ty-scroll-container {:max-height "140px" :custom-scrollbar ""}
+    [:div.space-y-2.pr-2
+     (for [i (range 1 9)]
+       [:p.ty-text-.text-sm {:key i} (str "Scrollable line " i)])]]])
+
+;; ----------------------------------------------------------------------------
 ;; Brand flavor — THE showcase. One attribute (flavor="brand"), one design
 ;; token (the color picker), and every component follows: hover, focus,
 ;; tones, light/dark. Built-in chips prove the same axis drives stock
@@ -211,11 +315,11 @@
 ;; ----------------------------------------------------------------------------
 
 (def ^:private built-in-flavors
-  ["primary" "secondary" "success" "danger" "warning" "neutral"])
+  ["primary" "success" "danger" "warning" "neutral"])
 
 (defn- fp-flavor [] (get-in @state/state [:flavor-picker :flavor] "brand"))
 (defn- fp-tone []   (get-in @state/state [:flavor-picker :tone] ""))
-(defn- fp-hex []    (get-in @state/state [:flavor-picker :hex] "#7c3aed"))
+(defn- fp-hex []    (get-in @state/state [:flavor-picker :hex] "#6b3d71"))
 (defn- fp-value []  (str (fp-flavor) (fp-tone)))
 
 (defn- fp-set-flavor! [f] (swap! state/state assoc-in [:flavor-picker :flavor] f))
@@ -223,40 +327,18 @@
 (defn- fp-set-hex!    [^js e]
   (swap! state/state assoc-in [:flavor-picker :hex] (.. e -target -value)))
 
-;; One custom flavor, "brand", entirely derived from a single base color via
-;; color-mix() — the CSS text never changes; only --fp-brand-base does. This
-;; is the "one color in, full ramp out" pattern for custom flavors: built-ins
-;; get their ramp from the OKLCH brand layer, a custom flavor can get the
-;; same shape from color-mix() in three lines per token.
-;;
-;; The -soft/-faint/-bg tokens mix toward white for light-mode tints; in dark
-;; mode that reads as a near-white patch against dark surfaces (worst on
-;; ty-tag, which fills a real background with --ty-bg-brand), so html.dark
-;; flips those same tokens to mix toward black instead. -strong/solid tokens
-;; already mix toward black and read fine in both themes.
+;; One custom flavor, "brand", seeded by a single COLOR and run through the
+;; ENGINE — the same seed-ingestion path every user takes (see the Theming
+;; page's Flavor pack builder; the ramp lines are shared code). The seed
+;; contributes hue + chroma only; every shade's lightness comes from the
+;; mode-flipped L-curve. That's why any picked color — light or dark —
+;; gets correct dark mode, correct +/− tones, correct input state ladder
+;; and auto-contrast text, with NO dark block here at all.
 (def ^:private flavor-picker-scope-css
-  ".flavor-picker-scope {
-  --ty-color-brand: var(--fp-brand-base);
-  --ty-color-brand-strong: color-mix(in oklab, var(--fp-brand-base) 80%, black);
-  --ty-color-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, white);
-  --ty-color-brand-faint: color-mix(in oklab, var(--fp-brand-base) 30%, white);
-  --ty-bg-brand: color-mix(in oklab, var(--fp-brand-base) 12%, white);
-  --ty-bg-brand-bold: color-mix(in oklab, var(--fp-brand-base) 24%, white);
-  --ty-bg-brand-soft: color-mix(in oklab, var(--fp-brand-base) 6%, white);
-  --ty-solid-brand: var(--fp-brand-base);
-  --ty-solid-brand-hover: color-mix(in oklab, var(--fp-brand-base) 85%, black);
-  --ty-solid-brand-active: color-mix(in oklab, var(--fp-brand-base) 70%, black);
-  --ty-solid-brand-strong: color-mix(in oklab, var(--fp-brand-base) 80%, black);
-  --ty-solid-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, white);
-  --ty-solid-brand-fg: white;
-}
-html.dark .flavor-picker-scope {
-  --ty-color-brand-soft: color-mix(in oklab, var(--fp-brand-base) 55%, black);
-  --ty-color-brand-faint: color-mix(in oklab, var(--fp-brand-base) 25%, black);
-  --ty-bg-brand: color-mix(in oklab, var(--fp-brand-base) 18%, black);
-  --ty-bg-brand-bold: color-mix(in oklab, var(--fp-brand-base) 30%, black);
-  --ty-bg-brand-soft: color-mix(in oklab, var(--fp-brand-base) 10%, black);
-}")
+  (str ".flavor-picker-scope {\n"
+       "  --ty-brand-seed: var(--fp-brand-base);\n"
+       (str/join "\n" (theming/flavor-pack-ramp-lines "brand"))
+       "\n}"))
 
 (defn- flavor-chip [flavor label]
   [:ty-tag (cond-> {:flavor flavor :clickable "true"
@@ -299,24 +381,29 @@ html.dark .flavor-picker-scope {
       [:ty-button {:flavor "mystery" :appearance "outlined"} "flavor=\"mystery\""]
       [:span.ty-text--.text-xs "← undefined flavors degrade to neutral"]]]))
 
-;; Shown, not run — the live demo derives the same ramp from the color
-;; picker via flavor-picker-scope-css. Keep the two in sync.
+;; Shown, not run — the live demo runs the identical ramp via
+;; flavor-picker-scope-css (shared generator, so they can't drift).
 (def ^:private brand-integration-css
   ":root {
-  /* the one color you pick */
-  --brand: #7c3aed;
+  /* the one color you pick — its hue+chroma
+     seed the flavor; every shade's LIGHTNESS
+     comes from the engine's mode-flipped
+     curve, so dark mode, +/− tones and
+     auto-contrast text are correct for any
+     seed. No dark block needed. */
+  --ty-brand-seed: #6b3d71;
+}
 
-  --ty-color-brand: var(--brand);
-  --ty-solid-brand: var(--brand);
-  --ty-solid-brand-fg: white;
-  --ty-solid-brand-hover:
-    color-mix(in oklab,
-      var(--brand) 85%, black);
-  --ty-bg-brand:
-    color-mix(in oklab,
-      var(--brand) 12%, white);
+html:root, [data-ty-theme] {
+  --ty-color-brand:
+    oklch(from var(--ty-brand-seed)
+      calc(var(--ty-l-base)
+           * var(--ty-brand-l-factor, 1))
+      calc(c * var(--ty-c-base-mult)) h);
 
-  /* …remaining tokens: same pattern */
+  /* …remaining tokens: same pattern —
+     copy the full pack from the Theming
+     page's Flavor pack builder */
 }")
 
 (defn brand-flavor-demo
@@ -362,8 +449,8 @@ html.dark .flavor-picker-scope {
 
    [:p.ty-text--.mt-4 {:style {:font-size "0.8125rem"}}
     "Note: " [:code "neutral"] " renders as unstyled default chrome for input/date-picker — "
-    "correct, not a bug. The " [:code "color-mix()"] " ramp here is the quick path; the "
-    "production per-flavor OKLCH ramp lives on the "
+    "correct, not a bug. This demo runs the real seed-ingestion engine — build your own "
+    "pack on the "
     [:a.ty-text-primary {:href "#"
                          :on {:click (fn [^js e]
                                        (.preventDefault e)
@@ -502,6 +589,10 @@ html.dark .flavor-picker-scope {
    (text-variants-demo)
    (background-variants-demo)
    (surface-classes-demo)
+   (borders-demo)
+   (solid-muted-demo)
+   (input-demo)
+   (scrollbar-demo)
    (brand-flavor-demo)
    (typography-shape-demo)
    (css-architecture-explanation)

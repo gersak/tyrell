@@ -447,7 +447,10 @@ export const selectBaseStyles = `
 .select-container {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  /* No gap here — label→field spacing comes from .ty-field-label's
+     margin-bottom (6px), same as ty-input/ty-date-picker/ty-textarea.
+     A flex gap would STACK on that margin (flex margins don't collapse),
+     which is exactly the 4px misalignment this used to cause. */
 }
 
 /* ===== DROPDOWN WRAPPER & LABEL ===== */

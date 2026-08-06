@@ -7,4 +7,4 @@
    published. For dev (`npm run dev:site`) the committed defaults are used.")
 
 (def TYRELL_VERSION "1.0.0-RC12")
-(def TYRELL_COMPONENTS_VERSION "1.0.0-TC34")
+(def TYRELL_COMPONENTS_VERSION "1.0.0-TC38")

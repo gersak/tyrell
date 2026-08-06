@@ -85,7 +85,7 @@
          [:ty-icon.ty-text-success {:name "check-circle" :size "lg"}]
          [:ty-icon.ty-text-danger {:name "x-circle" :size "lg"}]
          [:ty-icon.ty-text-warning {:name "alert-triangle" :size "lg"}]
-         [:ty-icon.ty-text-secondary {:name "info" :size "lg"}]
+         [:ty-icon.ty-text-primary {:name "info" :size "lg"}]
          [:ty-icon.ty-text-- {:name "circle" :size "lg"}]])
        (code-block "<ty-icon class=\"ty-text-primary\" name=\"check-circle\" size=\"lg\"></ty-icon>
 <ty-icon class=\"ty-text-success\" name=\"check-circle\" size=\"lg\"></ty-icon>

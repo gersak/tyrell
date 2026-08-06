@@ -7,9 +7,11 @@
  * for a softer shade — e.g. `primary`, `primary+`, `primary-`. Matches the
  * design system's `ty-bg-primary+` / `ty-text-primary-` class convention.
  */
+/* `secondary` was removed in TC37 — the built-in set is semantic-only.
+ * An aesthetic second accent is one flavor-pack away (see CSS_GUIDE →
+ * Custom Flavors); markup using flavor="secondary" degrades to neutral. */
 export const FLAVORS = [
   'primary',
-  'secondary',
   'success',
   'danger',
   'warning',

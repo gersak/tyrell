@@ -187,7 +187,7 @@
                  :value "clojurescript,react"}
      (for [[value flavor glyph label] [["clojurescript" "primary" "λ" "ClojureScript"]
                                        ["react" "neutral" "⚛" "React"]
-                                       ["typescript" "secondary" "TS" "TypeScript"]
+                                       ["typescript" "neutral" "TS" "TypeScript"]
                                        ["nodejs" "success" "JS" "Node.js"]
                                        ["postgresql" "neutral" "🐘" "PostgreSQL"]
                                        ["python" nil "🐍" "Python"]
@@ -328,7 +328,7 @@
     [:ty-button {:type "button" :flavor "neutral" :size "sm"
                  :on {:click on-cancel}}
      "Cancel"]
-    [:ty-button {:type "button" :flavor "secondary" :size "sm"
+    [:ty-button {:type "button" :flavor "neutral" :size "sm"
                  :on {:click on-export}}
      [:ty-icon {:name "download" :size "xs" :class "mr-1"}]
      "Export"]

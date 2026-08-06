@@ -5,6 +5,64 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC38] - 2026-08-06
+
+Headline: **`tyrell-brand.css` renamed to `tyrell-theme.css`** (BREAKING path change), and the static `tyrell.css` fallback path is now correct-by-default instead of quietly shipping pre-TC35 contrast bugs.
+
+### Changed (BREAKING)
+
+- **`packages/core/css/tyrell-brand.css` renamed to `tyrell-theme.css`.** "Brand" undersold what the file does since TC35–37 — it's the auto-contrast engine, the seed-ingestion engine, the named/scoped-theme engine, and the animated-transition engine, not a cosmetic color skin. "Theme" is also the term every comparable library (Radix, Material, Web Awesome) already uses for this concept. `--ty-brand-hue`/`--ty-brand-chroma` and the rest of the Tier 1 seed *variable names* are unchanged — only the file path moved. Consumers on a pinned CDN URL for a prior TC version are unaffected (those releases keep serving the old filename); anyone updating to this version needs to update their `<link>`/`import` path. Updated everywhere in this repo: build scripts, e2e fixture, all framework guides, README, and the docs-site symlink.
+
+### Fixed
+
+- **`tyrell.css` alone (no theme engine loaded) no longer ships broken contrast.** This was worse than a missing enhancement: the single `--ty-solid-{flavor}-fg` per flavor was already wrong for success/danger/warning at *base* tone in both modes (as low as 1.58:1, no customization required to trigger it — the exact bug class TC35 fixed, still live in the fallback path), and `tone-plus`/`tone-minus` buttons had **no fg token at all**, which resolves to CSS's `initial` value rather than failing safe — measured as black text on a dark navy `primary+` fill. Added the missing per-tone `-soft-fg`/`-strong-fg` tokens and corrected the existing base tokens; every one of the 29 static solid fills hand-verified against both black and white, worst case now 4.66:1. `tyrell-theme.css`'s computed auto-contrast is unaffected and still wins by source order when loaded.
+
+### Docs
+
+- **Every "load Tyrell" snippet across the guides, README, and framework docs now shows `tyrell-theme.css` alongside `tyrell.css` by default** — 17 files. `README.md`'s prior framing ("Opt-in — load only if you want to retint") was actively wrong given what's gated behind that file; rewritten to state the trade-off honestly. `tyrell.css`-only remains fully supported and correct (per the fix above) for consumers who deliberately want the static-color, older-browser-compatible path.
+- **Docs site's own GitHub Pages CDN template** (`packages/cljs/resources/index.html.template`) still linked `tyrell-brand.css` and set a dead `--ty-secondary-offset` seed override — both leftover from before this rename/removal. Fixed so the published docs site (gersak.github.io/tyrell) loads correctly on this and future releases.
+
+## [1.0.0-TC37] - 2026-08-06
+
+Headline: **flavors and themes become user-declarable axes** — `secondary` removed (BREAKING), color seed ingestion (`--ty-primary-seed: #hex`), named/scoped themes via `[data-ty-theme]`, animated theme transitions, and a flavor-pack template giving custom flavors full engine parity.
+
+### Removed (BREAKING)
+
+- **The `secondary` flavor** — from the brand engine, the base stylesheet (tokens + `ty-text-secondary*`/`ty-bg-secondary*`/`ty-border-secondary`/selection utilities), and the components' built-in `FLAVORS` list. The built-in set is now semantic-only: `primary` / `success` / `danger` / `warning` / `neutral`. Rationale: secondary was the only non-semantic built-in — an aesthetic slot defined as `brand + 60°` that most projects had to re-tune anyway. Markup using `flavor="secondary"` degrades gracefully to neutral; a real second accent is one flavor pack away (see below). Verified surgical: 21 tokens removed, zero other computed-token changes vs TC36.
+
+### Added
+
+- **Named + scoped themes** — a theme is a dial pack: any class/attribute that overrides SECTION 1 dials (`html.love { --ty-brand-hue: 340 }`). New `[data-ty-theme]` scope selector makes the engine recompute all derived tokens on that element, so a subtree can carry its own full theme — including dark-inside-light via `<div data-ty-theme class="dark">`. `dark` is now just the built-in reference theme pack.
+- **Color seed ingestion — the engine now accepts colors, not just numbers.** Every flavor resolves one seed color (`--ty-{flavor}-seed: <any color>`); ramp formulas read the seed's chroma + hue channels via relative color syntax, while every shade's lightness still comes from the mode-flipped L-curve. The number dials remain the default (the seed falls back to a color constructed from them — verified 0 pixel differences at defaults, both modes). The ingestion rule is explicit: a seed's lightness is discarded by design — shade placement is the curve's job, which is what makes dark mode, `+`/`-` tones, the input state ladder and auto-contrast correct for ANY seed, light or dark (verified with a dark seed `#76467c`: dark-mode emphasis direction correct, solid fg 8.7:1). This replaces the `color-mix()` approximation as the custom-flavor path: the flavor pack template, the Theming page's pack builder (now name + one color) and the CSS System brand showcase all run the same seed-ingestion engine — the showcase's hand-tuned `color-mix()` ramp (which inverted emphasis in dark mode) is gone. Browser floor for the brand layer rises to relative-color support (Chrome 119 / Safari 16.4 / Firefox 128).
+- **Animated theme transitions** — all 63 brand-layer dials are now registered via `@property` as typed numbers, which makes them interpolable: switching mode (`html.dark`) or applying any theme pack no longer snaps — every derived color (buttons, borders, surfaces, text, focus rings) crossfades through OKLCH space, frame by frame, with zero JS. Tune or disable with `--ty-theme-transition` (default `0.45s`; set `0s` to opt out); reduced-motion users never get the animation; browsers without `@property` simply snap as before. Enabled by converting the last per-mode absolutes (surface ladder, `--ty-solid-neutral`, bg-neutral extremes, focus-ring alpha) into numeric dials — which also deleted the dark data block entirely: dark mode is now *purely* dial overrides. Verified: 0 pixel differences vs TC36 at rest in both modes; mid-transition frames measured strictly between endpoints for both mode toggles and brand-hue changes.
+- **Theming playground is now a theme builder** — the export panel emits either `:root` overrides (as before) or a **named theme pack** (`.my-theme { … }`, usable on `<html>` or any `[data-ty-theme]` subtree), and a new **Flavor pack builder** section generates the full flavor-pack template live from a name + two seeds, applying it to the page as you drag so the preview row (solid/outlined/ghost buttons, tones, tag, input — auto-contrast included) is the real engine at work.
+- **Flavor pack template** (CSS_GUIDE → Custom Flavors) — the per-flavor formula block published as a copy-paste template. A custom flavor declared this way gets full engine parity: shared L-curve (equal perceived weight with built-ins per shade), saturation curve, dark mode via the same dial flips with **no dark block of its own**, solid interaction states, auto-contrast foregrounds, and theme-scope support. Verified end-to-end from the documented text: light AA 5.5–7.2:1, dark 7.0–13.4:1, scoped recompute working.
+
+### Fixed
+
+- **Solid buttons: tone-aware hover/active fills** — the `-hover`/`-active` states always derived from the *base* fill, so hovering a `flavor-` (tone-minus) button abandoned its soft fill and jumped ~0.14 L darker while keeping the soft tone's (black) text — black-on-dark, unreadable. Tone-plus/-minus states now nudge their **own** fill by the same `±0.04/0.08` interaction dials via relative color (no new tokens; packs and custom flavors get it automatically). Text color deliberately stays pinned to the tone's rest fill through interaction — re-deriving per state was measured to flicker black↔white when a nudge crossed the fg threshold (worst measured state ≥ 4.5:1 either way; stable text wins).
+- **`ty-input`: hover no longer overrides focus** — `.input-wrapper:hover` out-ranked `.focused` by specificity, so hovering a focused unflavored input swapped its primary focus border for the dimmer neutral hover border (ring stayed, border dimmed — read as a glitch). Gated with `:not(.focused)`, matching `ty-date-picker`'s existing `:hover:not(.open)` pattern.
+- **`ty-select`: label→field gap now matches `ty-input`** — `.select-container` carried a `gap: 0.25rem` that stacked on the shared label's `margin-bottom: 6px` (flex gaps don't collapse with margins), making select fields 4px taller with a visibly looser label. Removed; select/input/date-picker now measure pixel-identical (6px gap, 63px total).
+
+### Docs
+
+- **Button page "Custom Flavors" demo taught the wrong tool** — it defined flavors via the `--ty-button-*` per-instance overrides (chosen for solid), which leak into every appearance: the outlined example rendered invisible white-on-transparent text at rest and turned fully solid on hover (`--ty-button-bg-hover` is top of outlined's hover chain too). The demo now defines flavors through the appearance-aware token layer (`--ty-solid-X*` for solid, `--ty-color-X` + `--ty-bg-X-soft` for outlined/ghost) and the prose explains the instance-override vs token distinction, plus the one-line `--ty-X-seed` path when the brand layer is loaded.
+
+## [1.0.0-TC36] - 2026-08-05
+
+Headline: **brand-layer restructure** — formulas declared once (dark mode keeps only hand-tuned data), text/borders finally engine-wired, and greys decoupled from the brand.
+
+### Changed
+
+- **Neutral is achromatic by default** — `--ty-neutral-hue`/`--ty-neutral-chroma` are now `0`/`0` instead of tracking the brand seeds (`brand-hue` / `brand-chroma × 0.04`). Greys — text hierarchy, borders, neutral buttons, muted buttons, dividers — no longer drift when the brand is re-hued. Opt back in to brand-warmed greys with `--ty-neutral-hue: var(--ty-brand-hue); --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04)`.
+- **`--ty-text-*` and surface borders now go through the brand engine** — the 5-stop text ladder (`--ty-text-strong/bold/base/soft/faint`) and `--ty-content/elevated/floating-border` were hardcoded Tailwind hexes in tyrell.css that a rebrand never touched. New Tier 3 dials (`--ty-l-text-*`, `--ty-l-border-*`) hold their measured lightness; the brand layer overrides the hexes like every other token. Visible shift: text loses Tailwind's cool blue cast (max ~17/255 per channel) and follows the neutral seeds — pure grey at the new defaults.
+
+- **Generic borders are their own family** — `--ty-border`/`-strong`/`-bold`/`-soft`/`-faint` no longer alias the neutral text ramp; they compute from a dedicated L ladder (`--ty-l-border-*`, per-mode values preserving the exact colors the aliases produced — verified 0 pixel diffs). Consequence: tuning the text emphasis curve or `--ty-neutral-l-factor` no longer moves app borders, and borders are tunable without touching text. Per-flavor accent borders (`--ty-border-{flavor}`) intentionally remain ink aliases.
+
+### Internal
+
+- **`tyrell-brand.css` dark-mode formula mirror deleted (~250 lines)** — SECTION 2 formulas are now declared once at `html:root` (out-ranking tyrell.css's light tokens by specificity and its `html.dark` hexes by source order), and the `html.dark` block holds only genuine per-mode data: the surface ladder, focus-ring alpha, the `--ty-bg-neutral-strong/-faint` pins, and the `--ty-solid-neutral` ink pin. Verified byte-equivalent before the neutral change: 323 computed tokens × 2 modes, zero differences.
+
 ## [1.0.0-TC35] - 2026-08-05
 
 Headline: **auto-contrast solid foregrounds** — solid button text is now derived from its own fill's lightness instead of being hardcoded `white`, closing a contrast hole that affected every `flavor-` button out of the box. Also new: `muted` on `ty-button`.

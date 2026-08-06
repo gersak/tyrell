@@ -64,6 +64,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css' // auto-contrast, seed rebranding, themes — see TY_GUIDE.md#quick-start
 import 'tyrell-components'   // or specific subpaths: 'tyrell-components/button', etc.
 
 createApp(App).mount('#app')
@@ -211,6 +212,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 
 import { registerIcons } from 'tyrell-components/icons/registry'
@@ -617,7 +619,7 @@ import type { DefineComponent } from 'vue'
 declare module 'vue' {
   interface GlobalComponents {
     'ty-button': DefineComponent<{
-      flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral'
+      flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral'
       size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
       disabled?: boolean
       pill?: boolean
@@ -654,6 +656,7 @@ const btn = ref<TyButton>()
 ```ts
 // plugins/tyrell.client.ts
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 import { registerIcons } from 'tyrell-components/icons/registry'
 import { check, x } from 'tyrell-components/icons/lucide'

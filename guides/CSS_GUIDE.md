@@ -69,7 +69,7 @@ The divider color is **contextual** — each surface points `--ty-divide-color` 
 <div class="ty-bg-primary-">    <!-- Softer -->
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+Available colors: `primary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Text Colors (5-Variant System)
 
@@ -93,7 +93,7 @@ Semantic text colors — same 5 variants per color:
 <p class="ty-text-primary--">   <!-- Minimal primary -->
 ```
 
-Available colors: `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+Available colors: `primary`, `success`, `danger`, `warning`, `neutral`.
 
 ## Border Colors
 
@@ -111,7 +111,6 @@ Semantic borders — base only:
 
 ```html
 <div class="ty-border-primary">
-<div class="ty-border-secondary">
 <div class="ty-border-success">
 <div class="ty-border-danger">
 <div class="ty-border-warning">
@@ -175,11 +174,11 @@ Tyrell ships **two layered theming systems**. Pick the one you need.
 
 ### Option 1 — OKLCH brand layer (recommended)
 
-Load `tyrell-brand.css` after `tyrell.css`, then rebrand with one variable:
+Load `tyrell-theme.css` after `tyrell.css`, then rebrand with one variable:
 
 ```html
 <link rel="stylesheet" href=".../tyrell.css">
-<link rel="stylesheet" href=".../tyrell-brand.css">
+<link rel="stylesheet" href=".../tyrell-theme.css">
 ```
 
 ```css
@@ -188,7 +187,7 @@ Load `tyrell-brand.css` after `tyrell.css`, then rebrand with one variable:
 }
 ```
 
-That's it. Primary, secondary, neutral, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Defaults to Tyrell blue (`230°`).
+That's it. Primary, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Greys stay pure by design (see the neutral row below) — set `--ty-neutral-hue`/`--ty-neutral-chroma` to warm them toward the brand.
 
 #### How it builds colors
 
@@ -202,7 +201,7 @@ oklch(
 )
 ```
 
-Pick a flavor (primary / secondary / success / warning / danger / neutral) and a shade (strong / bold / base / soft / faint). The formula gives you that cell's color. Five axes:
+Pick a flavor (primary / success / warning / danger / neutral) and a shade (strong / bold / base / soft / faint). The formula gives you that cell's color. Five axes:
 
 - **FLAVOR** — which semantic role. Each flavor carries its own hue, chroma, and l-factor seeds.
 - **SHADE** — 5 emphasis stops shared across flavors. Same shade across flavors = same perceptual weight.
@@ -246,28 +245,35 @@ Each semantic flavor has a hue and a chroma you can pin independently:
 :root {
   --ty-brand-hue: 200;
 
-  /* Secondary rotates from brand by an offset. Override the offset or the hue directly. */
-  --ty-secondary-offset: 30;            /* close sibling (default 60°) */
-  /* OR: --ty-secondary-hue: 320;       /* fully detached */
 
   /* Semantic anchors. Override hue and/or chroma. */
   --ty-success-hue: 165;                /* brand-coherent green */
   --ty-danger-chroma: 0.20;             /* louder errors */
 
-  /* Neutral tracks brand-hue at very low chroma by default; pin to detach. */
-  --ty-neutral-hue: 230;
-  --ty-neutral-chroma: 0.01;
+  /* Neutral is ACHROMATIC by default — greys do NOT follow the brand.
+     Opt in to brand-warmed greys: */
+  --ty-neutral-hue: var(--ty-brand-hue);
+  --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04);
 }
 ```
 
 | Flavor   | Hue var                 | Chroma var                | Default        |
 |----------|-------------------------|---------------------------|----------------|
 | primary  | `--ty-brand-hue`        | `--ty-brand-chroma`       | `230°` / `0.13` |
-| secondary| `--ty-secondary-hue`    | `--ty-secondary-chroma`   | brand + 60° / brand chroma |
 | success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / brand × 1.08 |
 | danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `25°` / brand × 1.31 |
 | warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `75°` / brand × 2 |
-| neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | brand-hue / brand × 0.04 |
+| neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | `0` / `0` — pure grey, brand-independent |
+
+**Or skip the numbers entirely — seed any flavor with a color.** Every flavor also accepts `--ty-{flavor}-seed: <any color>`; its hue + chroma are read via relative color syntax and the number dials are bypassed. The seed's *lightness is discarded by design* — shade placement per mode is the L-curve's job, which is what keeps dark mode, tones and contrast correct for any seed:
+
+```css
+:root {
+  --ty-primary-seed: #76467c;   /* brand from one hex — done */
+  --ty-danger-seed: crimson;
+}
+```
+
 
 ---
 
@@ -288,10 +294,17 @@ The 5-shade text ramp (`strong / bold / base / soft / faint`) is computed from s
   --ty-l-bg-base: 0.96;
   --ty-l-bg-bold: 0.92;
   --ty-l-bg-soft: 0.98;
+
+  /* Text ladder (--ty-text-*) and generic borders (--ty-border-*) are
+     separate families with their own L dials — tuning the emphasis
+     curve above does NOT move them. */
+  --ty-l-text-base: 0.21;       /* body text */
+  --ty-l-border: 0.72;          /* default border */
+  --ty-l-border-elevated: 0.93; /* card/panel border */
 }
 ```
 
-Use cases: compress the ladder for an "all-soft" muted palette; expand it for higher-contrast accessibility-first themes.
+Use cases: compress the ladder for an "all-soft" muted palette; expand it for higher-contrast accessibility-first themes. Full dial list: `--ty-l-text-{strong,bold,base,soft,faint}`, `--ty-l-border{,-strong,-bold,-soft,-faint}`, `--ty-l-border-{content,elevated,floating}` — each with independent dark-mode values (override inside `html.dark`).
 
 ---
 
@@ -328,7 +341,6 @@ The full set:
 
 ```css
 --ty-primary-l-factor:   1;
---ty-secondary-l-factor: 1;
 --ty-success-l-factor:   1;
 --ty-warning-l-factor:   1;
 --ty-danger-l-factor:    1;
@@ -359,6 +371,53 @@ Fills darker than the threshold get white, lighter get black. One token per *fil
 ```
 
 Opt out per flavor by pinning the token (`--ty-solid-primary-fg: white`), or globally with `--ty-solid-fg-threshold: 1` to force white everywhere.
+
+---
+
+#### Named + scoped themes
+
+A theme is nothing more than a class that overrides Section 1 dials — `html.dark` is just the built-in reference theme, not a special case. Any name works the same way:
+
+```css
+html.love {
+  --ty-brand-hue: 340;
+  --ty-brand-chroma: 0.18;
+  --ty-l-base: 0.5;
+  /* any Section 1 dial */
+}
+```
+
+```html
+<html class="love">
+```
+
+That's a complete named theme — every derived token recomputes because the formulas read these dials, not literal colors.
+
+**Scope one to a subtree** with `[data-ty-theme]`, which the brand layer's formulas already match alongside `html:root`:
+
+```html
+<section data-ty-theme class="love">
+  <!-- everything in here re-themes, independent of the page around it -->
+</section>
+
+<!-- dark card inside a light page, or vice versa -->
+<aside data-ty-theme class="dark">…</aside>
+```
+
+Combine with a flavor pack (below) for a theme that also carries its own custom flavors — the Theming page's playground has a "named theme" export mode that generates this shape from the live sliders.
+
+---
+
+#### Animated theme transitions
+
+Every dial in the brand layer is a typed, `@property`-registered number — and every color is a pure function of the dials. So theme and mode switches don't snap: the dials interpolate, and the whole page crossfades through OKLCH space. This applies to `html.dark`, named theme packs, `[data-ty-theme]` subtree switches, and even live seed changes.
+
+```css
+:root { --ty-theme-transition: 0s; }    /* opt out */
+:root { --ty-theme-transition: 1.2s; }  /* slower crossfade */
+```
+
+Reduced-motion users never get the animation. Browsers without `@property` fall back to instant switching.
 
 ---
 
@@ -404,7 +463,7 @@ html.dark {
 }
 ```
 
-**Pattern:** `--ty-color-{flavor}-{strong | bold | soft | faint}`, `--ty-bg-{flavor}-{bold | soft}`, `--ty-border-{flavor}`. Flavors are `primary`, `secondary`, `success`, `danger`, `warning`, `neutral`.
+**Pattern:** `--ty-color-{flavor}-{strong | bold | soft | faint}`, `--ty-bg-{flavor}-{bold | soft}`, `--ty-border-{flavor}`. Flavors are `primary`, `success`, `danger`, `warning`, `neutral`.
 
 Use this when:
 - You have a fixed brand palette and don't need the OKLCH math
@@ -417,7 +476,57 @@ The brand layer (Option 1) is strictly more powerful — anything you can do wit
 
 ## Custom Flavors (add your own)
 
-The six flavors are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by **every flavored component**: `ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group` (and its `ty-radio` children), `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar` (and its `ty-calendar-month`).
+The built-in flavors (`primary` / `success` / `danger` / `warning` / `neutral` — semantic-only; `secondary` was removed in TC37) are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by **every flavored component**: `ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group` (and its `ty-radio` children), `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar` (and its `ty-calendar-month`).
+
+### The flavor pack: full engine parity
+
+The built-ins are nothing more than pre-installed instances of this template. Substitute your name for `love`, pick ONE seed color, and the flavor gets everything a built-in gets — the shared L-curve (equal perceived weight with every other flavor at each shade), the saturation curve, dark mode via the same dial flips, solid interaction states, and **auto-contrast foregrounds** (text derives from each fill's own lightness — no white-on-pale accidents):
+
+```css
+:root {
+  /* ── the ONE value you must pick — any color format ── */
+  --ty-love-seed: #76467c;
+  --ty-love-l-factor: 1;      /* optional per-flavor push, like Tier 5 */
+}
+
+html:root,
+[data-ty-theme] {
+  /* ── ink ramp — seed contributes c+h; L comes from the curve ── */
+  --ty-color-love-strong: oklch(from var(--ty-love-seed) calc(var(--ty-l-strong) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-strong-mult)) h);
+  --ty-color-love-bold:   oklch(from var(--ty-love-seed) calc(var(--ty-l-bold)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bold-mult))   h);
+  --ty-color-love:        oklch(from var(--ty-love-seed) calc(var(--ty-l-base)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-base-mult))   h);
+  --ty-color-love-soft:   oklch(from var(--ty-love-seed) calc(var(--ty-l-soft)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-soft-mult))   h);
+  --ty-color-love-faint:  oklch(from var(--ty-love-seed) calc(var(--ty-l-faint)  * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-faint-mult))  h);
+
+  /* ── background tints ── */
+  --ty-bg-love:      oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-base) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-base-mult)) h);
+  --ty-bg-love-bold: oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-bold) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-bold-mult)) h);
+  --ty-bg-love-soft: oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-soft) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-soft-mult)) h);
+
+  /* ── accent border — tracks the flavor's own ink ── */
+  --ty-border-love: var(--ty-color-love-soft);
+
+  /* ── solid fills + interaction states ── */
+  --ty-solid-love: oklch(from var(--ty-color-love) calc(l + var(--ty-solid-l)) calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h)));
+  --ty-solid-love-hover:  oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-hover-l))  c h);
+  --ty-solid-love-active: oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-active-l)) c h);
+  --ty-solid-love-strong: oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-strong-l)) c h);
+  --ty-solid-love-soft:   oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-soft-l))   c h);
+
+  /* ── auto-contrast foregrounds — one per FILL ── */
+  --ty-solid-love-fg:        oklch(from var(--ty-solid-love)        clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+  --ty-solid-love-soft-fg:   oklch(from var(--ty-solid-love-soft)   clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+  --ty-solid-love-strong-fg: oklch(from var(--ty-solid-love-strong) clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+}
+```
+
+```html
+<ty-button flavor="love">Love</ty-button>
+<ty-button flavor="love-" appearance="outlined">Softer</ty-button>
+<ty-tag flavor="love+">stronger chip</ty-tag>
+```
+
+Because every value routes through the shared dials, the pack inherits everything automatically: dark mode (the `html.dark` dial flips reach it), theme scopes (`[data-ty-theme]` recomputes it), L-curve reshaping, `--ty-solid-fg-threshold`. **No `html.dark` block of your own is needed.** That is the difference between this and the `color-mix()` quick path below — the quick path approximates the shape; the pack *is* the engine.
 
 Most components need only the `--ty-color-X` ramp (`ty-tag` and `ty-tooltip` also read `--ty-bg-X` / `--ty-border-X`; solid buttons read `--ty-solid-X`):
 
@@ -482,7 +591,9 @@ Hand-picking 14 values gives you full control over every shade, but it's not the
   --ty-solid-brand-active: color-mix(in oklab, var(--brand-base) 70%, black);
   --ty-solid-brand-strong: color-mix(in oklab, var(--brand-base) 80%, black);
   --ty-solid-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
-  --ty-solid-brand-fg: white;
+  /* auto-contrast, not hardcoded white — a pale seed gets black text */
+  --ty-solid-brand-fg: oklch(from var(--brand-base)
+    clamp(0, (var(--ty-solid-fg-threshold, 0.62) - l) * 1000, 1) 0 0);
 }
 ```
 
@@ -622,7 +733,6 @@ Per-flavor border overrides (apply when the `flavor` attribute is set):
 | Variable | Used by |
 |---|---|
 | `--ty-input-primary-border` | `flavor="primary"` |
-| `--ty-input-secondary-border` | `flavor="secondary"` |
 | `--ty-input-success-border` | `flavor="success"` |
 | `--ty-input-danger-border` | `flavor="danger"` |
 | `--ty-input-warning-border` | `flavor="warning"` |
@@ -662,7 +772,7 @@ Three aliases drive the most-visible colors. Override any of these and selected/
 | Variable | Drives |
 |---|---|
 | `--ty-calendar-accent` | Selected day border + nav focus outline (default: `--ty-color-primary`) |
-| `--ty-calendar-today-accent` | Today's border (default: `--ty-color-secondary`) |
+| `--ty-calendar-today-accent` | Today's border (default: `--ty-color-primary`) |
 | `--ty-calendar-muted` | Default day text (default: `--ty-color-neutral`) |
 
 ```html

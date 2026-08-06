@@ -56,7 +56,7 @@
       {:name "flavor"
        :type "string"
        :default "'neutral'"
-       :description "Semantic flavor: primary, secondary, success, danger, warning, neutral"}
+       :description "Semantic flavor: primary, success, danger, warning, neutral"}
       {:name "currency"
        :type "string"
        :default "'USD'"
@@ -304,14 +304,14 @@ document.querySelector('ty-input').addEventListener('input', (e) => {
      [:ty-input {:name "salary" :type "currency" :label "Expected Salary" :currency "USD"}]
      [:div.flex.gap-2.pt-1
       [:ty-button {:type "submit" :flavor "primary"} "Submit"]
-      [:ty-button {:type "reset" :flavor "secondary"} "Reset"]]])
+      [:ty-button {:type "reset" :flavor "neutral"} "Reset"]]])
    (code-block "<form>
   <ty-input name=\"fullname\" label=\"Full Name\" required=\"true\"></ty-input>
   <ty-input name=\"email\" type=\"email\" label=\"Email\" required=\"true\"></ty-input>
   <ty-input name=\"salary\" type=\"currency\" label=\"Salary\" currency=\"USD\"></ty-input>
 
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-  <ty-button type=\"reset\" flavor=\"secondary\">Reset</ty-button>
+  <ty-button type=\"reset\" flavor=\"neutral\">Reset</ty-button>
 </form>
 
 <script>

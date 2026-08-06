@@ -150,11 +150,11 @@
                            :multiple ""}]
          [:div.flex.gap-2
           [:ty-button {:type "submit" :flavor "primary"} "Submit"]
-          [:ty-button {:type "reset" :flavor "secondary"} "Reset"]]])
+          [:ty-button {:type "reset" :flavor "neutral"} "Reset"]]])
        (code-block "<form>
   <ty-file-upload name=\"attachment\" label=\"Attachment\" multiple></ty-file-upload>
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-  <ty-button type=\"reset\" flavor=\"secondary\">Reset</ty-button>
+  <ty-button type=\"reset\" flavor=\"neutral\">Reset</ty-button>
 </form>")]
 
       [:div.ty-content.rounded-lg.p-5

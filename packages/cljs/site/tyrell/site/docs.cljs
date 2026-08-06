@@ -72,7 +72,7 @@
      [:ty-icon {:name "plus"
                 :size "sm"}]]
     [:ty-button {:action true
-                 :flavor "secondary"
+                 :flavor "neutral"
                  :size "sm"}
      [:ty-icon {:name "edit"
                 :size "sm"}]]

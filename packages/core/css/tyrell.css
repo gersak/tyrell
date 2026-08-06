@@ -130,7 +130,7 @@ Simplified from 7 variants to 5 practical variants:
 -strong = Strong emphasis - active states, strong borders
 -bold = Moderate emphasis - hover states, focus rings  
 = Base color - default appearance
--soft = Reduced emphasis - muted backgrounds, secondary
+-soft = Reduced emphasis - muted backgrounds, de-emphasis
 -faint = Minimal emphasis - subtle hints, disabled states
 ================================================================= */
 
@@ -140,13 +140,6 @@ Simplified from 7 variants to 5 practical variants:
   --ty-color-primary: #466bce;
   --ty-color-primary-soft: #60a5fa;
   --ty-color-primary-faint: #93c5fd;
-
-  /* Secondary */
-  --ty-color-secondary-strong: #7442c2;
-  --ty-color-secondary-bold: #8153cf;
-  --ty-color-secondary: #9774e7;
-  --ty-color-secondary-soft: #a78bfa;
-  --ty-color-secondary-faint: #c4b5fd;
 
   /* Success */
   --ty-color-success-strong: #177858;
@@ -200,11 +193,6 @@ BACKGROUND COLORS
   --ty-bg-primary-bold: #d5e4f8;
   --ty-bg-primary-soft: #eff6ff;
 
-  /* Secondary backgrounds */
-  --ty-bg-secondary: #e9d5ff;
-  --ty-bg-secondary-bold: #ddd6fe;
-  --ty-bg-secondary-soft: #f3e8ff;
-
   /* Success backgrounds */
   --ty-bg-success: #d1fae5;
   --ty-bg-success-bold: #a7f3d0;
@@ -241,7 +229,6 @@ BORDER COLORS
 
   /* Semantic borders */
   --ty-border-primary: var(--ty-color-primary);
-  --ty-border-secondary: var(--ty-color-secondary);
   --ty-border-success: var(--ty-color-success);
   --ty-border-danger: var(--ty-color-danger);
   --ty-border-warning: var(--ty-color-warning);
@@ -354,8 +341,8 @@ COMPONENT TOKENS
   /* =================================================================
   SOLID BUTTON FILLS — plain default values (the contract). The smart
   per-state derivation (hover/active/tone via OKLCH) lives in the theme
-  engines (tyrell-brand.css / tyrell-simple.css), not here. hover/active
-  alias to -strong as a simple default; a theme overrides them.
+  engine (tyrell-theme.css), not here. hover/active alias to -strong as
+  a simple default; a theme overrides them.
   ================================================================= */
 
   /* Primary */
@@ -364,15 +351,14 @@ COMPONENT TOKENS
   --ty-solid-primary-soft: #7ea7d9;
   --ty-solid-primary-hover: var(--ty-solid-primary-strong);
   --ty-solid-primary-active: var(--ty-solid-primary-strong);
+  /* Per-fill fg, hand-picked (max contrast, tie→white) — this file has no
+     computed auto-contrast (that needs tyrell-theme.css's relative color
+     support), so each fill's correct fg is a literal, verified value.
+     Do NOT collapse back to one --ty-solid-X-fg per flavor: soft/strong
+     sit at different lightness and several fail WCAG AA against white. */
   --ty-solid-primary-fg: white;
-
-  /* Secondary */
-  --ty-solid-secondary: #7e67b4;
-  --ty-solid-secondary-strong: #7d58d1;
-  --ty-solid-secondary-soft: #9f8ec5;
-  --ty-solid-secondary-hover: var(--ty-solid-secondary-strong);
-  --ty-solid-secondary-active: var(--ty-solid-secondary-strong);
-  --ty-solid-secondary-fg: white;
+  --ty-solid-primary-strong-fg: white;
+  --ty-solid-primary-soft-fg: black;
 
   /* Success */
   --ty-solid-success: #3bb68d;
@@ -380,7 +366,9 @@ COMPONENT TOKENS
   --ty-solid-success-soft: #69b99e;
   --ty-solid-success-hover: var(--ty-solid-success-strong);
   --ty-solid-success-active: var(--ty-solid-success-strong);
-  --ty-solid-success-fg: white;
+  --ty-solid-success-fg: black;
+  --ty-solid-success-strong-fg: black;
+  --ty-solid-success-soft-fg: black;
 
   /* Danger */
   --ty-solid-danger: #df5b5b;
@@ -388,7 +376,9 @@ COMPONENT TOKENS
   --ty-solid-danger-soft: #d57a7a;
   --ty-solid-danger-hover: var(--ty-solid-danger-strong);
   --ty-solid-danger-active: var(--ty-solid-danger-strong);
-  --ty-solid-danger-fg: white;
+  --ty-solid-danger-fg: black;
+  --ty-solid-danger-strong-fg: white;
+  --ty-solid-danger-soft-fg: black;
 
   /* Warning */
   --ty-solid-warning: #e1a644;
@@ -396,7 +386,9 @@ COMPONENT TOKENS
   --ty-solid-warning-soft: #fbc56d;
   --ty-solid-warning-hover: var(--ty-solid-warning-strong);
   --ty-solid-warning-active: var(--ty-solid-warning-strong);
-  --ty-solid-warning-fg: white;
+  --ty-solid-warning-fg: black;
+  --ty-solid-warning-strong-fg: black;
+  --ty-solid-warning-soft-fg: black;
 
   /* Neutral */
   --ty-solid-neutral: #414141;
@@ -405,6 +397,8 @@ COMPONENT TOKENS
   --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-fg: white;
+  --ty-solid-neutral-strong-fg: white;
+  --ty-solid-neutral-soft-fg: white;
 
   /* =================================================================
 DESIGN SYSTEM TOKENS
@@ -616,13 +610,6 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-color-primary-soft: #4b698b;
   --ty-color-primary-faint: #445b77;
 
-  /* Secondary */
-  --ty-color-secondary-strong: #ddd6fe;
-  --ty-color-secondary-bold: #c4b5fd;
-  --ty-color-secondary: #a78bfa;
-  --ty-color-secondary-soft: #8269bc;
-  --ty-color-secondary-faint: #76619f;
-
   /* Success */
   --ty-color-success-strong: #c2f0df;
   --ty-color-success-bold: #6ee7b7;
@@ -667,9 +654,6 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-bg-primary: #394159;
   --ty-bg-primary-soft: #323a4f;
 
-  --ty-bg-secondary-bold: #58368e;
-  --ty-bg-secondary: #4a3c65;
-  --ty-bg-secondary-soft: #3b3645;
 
   --ty-bg-success: #3a4442;
   --ty-bg-success-bold: #405752;
@@ -738,35 +722,40 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-solid-primary-soft: #343f4c;
   --ty-solid-primary-hover: var(--ty-solid-primary-strong);
   --ty-solid-primary-active: var(--ty-solid-primary-strong);
+  /* Hand-picked per-fill fg — see the light-mode comment above. Dark-mode
+     lightness ordering differs from light (soft/strong swap direction),
+     so these are independently verified, not mirrored. */
   --ty-solid-primary-fg: white;
+  --ty-solid-primary-strong-fg: white;
+  --ty-solid-primary-soft-fg: white;
 
-  --ty-solid-secondary: #7e67b4;
-  --ty-solid-secondary-strong: #8269bc;
-  --ty-solid-secondary-soft: #52466a;
-  --ty-solid-secondary-hover: var(--ty-solid-secondary-strong);
-  --ty-solid-secondary-active: var(--ty-solid-secondary-strong);
-  --ty-solid-secondary-fg: white;
 
   --ty-solid-success: #3bb68d;
   --ty-solid-success-strong: #459679;
   --ty-solid-success-soft: #285748;
   --ty-solid-success-hover: var(--ty-solid-success-strong);
   --ty-solid-success-active: var(--ty-solid-success-strong);
-  --ty-solid-success-fg: white;
+  --ty-solid-success-fg: black;
+  --ty-solid-success-strong-fg: black;
+  --ty-solid-success-soft-fg: white;
 
   --ty-solid-danger: #df5b5b;
   --ty-solid-danger-strong: #cc3e3e;
   --ty-solid-danger-soft: #875656;
   --ty-solid-danger-hover: var(--ty-solid-danger-strong);
   --ty-solid-danger-active: var(--ty-solid-danger-strong);
-  --ty-solid-danger-fg: white;
+  --ty-solid-danger-fg: black;
+  --ty-solid-danger-strong-fg: white;
+  --ty-solid-danger-soft-fg: white;
 
   --ty-solid-warning: #e1a644;
   --ty-solid-warning-strong: #f59e0b;
   --ty-solid-warning-soft: #8b6334;
   --ty-solid-warning-hover: var(--ty-solid-warning-strong);
   --ty-solid-warning-active: var(--ty-solid-warning-strong);
-  --ty-solid-warning-fg: white;
+  --ty-solid-warning-fg: black;
+  --ty-solid-warning-strong-fg: black;
+  --ty-solid-warning-soft-fg: white;
 
   --ty-solid-neutral: #414141;
   --ty-solid-neutral-strong: #4c4c4c;
@@ -774,6 +763,8 @@ Emphasis logic inverts: lighter = more emphasis
   --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
   --ty-solid-neutral-fg: white;
+  --ty-solid-neutral-strong-fg: white;
+  --ty-solid-neutral-soft-fg: white;
 
   /* Input component tokens - dark mode */
   --ty-input-bg: #1b1b1b;
@@ -872,11 +863,6 @@ html.dark textarea::-moz-selection {
   color: var(--ty-color-primary-strong);
 }
 
-.ty-selection-secondary ::selection,
-.ty-selection-secondary::-moz-selection {
-  background-color: var(--ty-color-secondary-soft);
-  color: var(--ty-color-secondary-strong);
-}
 
 .ty-selection-success ::selection,
 .ty-selection-success::-moz-selection {
@@ -909,11 +895,6 @@ html.dark .ty-selection-primary::-moz-selection {
   color: white;
 }
 
-html.dark .ty-selection-secondary ::selection,
-html.dark .ty-selection-secondary::-moz-selection {
-  background-color: var(--ty-color-secondary);
-  color: white;
-}
 
 html.dark .ty-selection-success ::selection,
 html.dark .ty-selection-success::-moz-selection {
@@ -1070,17 +1051,8 @@ SEMANTIC BACKGROUND UTILITIES
   background-color: var(--ty-bg-primary-soft);
 }
 
-.ty-bg-secondary {
-  background-color: var(--ty-bg-secondary);
-}
 
-.ty-bg-secondary\+ {
-  background-color: var(--ty-bg-secondary-bold);
-}
 
-.ty-bg-secondary- {
-  background-color: var(--ty-bg-secondary-soft);
-}
 
 .ty-bg-success {
   background-color: var(--ty-bg-success);
@@ -1180,26 +1152,9 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
   color: var(--ty-color-primary-faint) !important;
 }
 
-/* Secondary text colors */
-.ty-text-secondary\+\+ {
-  color: var(--ty-color-secondary-strong) !important;
-}
 
-.ty-text-secondary\+ {
-  color: var(--ty-color-secondary-bold) !important;
-}
 
-.ty-text-secondary {
-  color: var(--ty-color-secondary) !important;
-}
 
-.ty-text-secondary- {
-  color: var(--ty-color-secondary-soft) !important;
-}
-
-.ty-text-secondary-- {
-  color: var(--ty-color-secondary-faint) !important;
-}
 
 /* Success text colors */
 .ty-text-success\+\+ {
@@ -1315,9 +1270,6 @@ BORDER UTILITIES
   border-color: var(--ty-border-primary);
 }
 
-.ty-border-secondary {
-  border-color: var(--ty-border-secondary);
-}
 
 .ty-border-success {
   border-color: var(--ty-border-success);
@@ -1404,13 +1356,7 @@ INTERACTIVE STATES
   background-color: var(--ty-bg-primary-bold) !important;
 }
 
-.hover\:ty-bg-secondary:hover {
-  background-color: var(--ty-bg-secondary) !important;
-}
 
-.hover\:ty-bg-secondary\+:hover {
-  background-color: var(--ty-bg-secondary-bold) !important;
-}
 
 .hover\:ty-bg-success:hover {
   background-color: var(--ty-bg-success) !important;
@@ -1475,26 +1421,9 @@ INTERACTIVE STATES
   color: var(--ty-color-primary-faint) !important;
 }
 
-/* Secondary text hover states */
-.hover\:ty-text-secondary\+\+:hover {
-  color: var(--ty-color-secondary-strong) !important;
-}
 
-.hover\:ty-text-secondary\+:hover {
-  color: var(--ty-color-secondary-bold) !important;
-}
 
-.hover\:ty-text-secondary:hover {
-  color: var(--ty-color-secondary) !important;
-}
 
-.hover\:ty-text-secondary-:hover {
-  color: var(--ty-color-secondary-soft) !important;
-}
-
-.hover\:ty-text-secondary--:hover {
-  color: var(--ty-color-secondary-faint) !important;
-}
 
 /* Success text hover states */
 .hover\:ty-text-success\+\+:hover {
@@ -1607,9 +1536,6 @@ INTERACTIVE STATES
   border-color: var(--ty-border-primary) !important;
 }
 
-.hover\:ty-border-secondary:hover {
-  border-color: var(--ty-border-secondary) !important;
-}
 
 .hover\:ty-border-success:hover {
   border-color: var(--ty-border-success) !important;
@@ -1652,9 +1578,6 @@ INTERACTIVE STATES
   border-color: var(--ty-border-primary) !important;
 }
 
-.focus\:ty-border-secondary:focus {
-  border-color: var(--ty-border-secondary) !important;
-}
 
 .focus\:ty-border-success:focus {
   border-color: var(--ty-border-success) !important;

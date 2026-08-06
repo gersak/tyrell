@@ -240,7 +240,7 @@
                                      (handle-department-change (set values))))}}
         [:ty-option {:value "sales"       :flavor "primary"}   "Sales"]
         [:ty-option {:value "support"     :flavor "success"}   "Support"]
-        [:ty-option {:value "technical"   :flavor "secondary"} "Engineering"]
+        [:ty-option {:value "technical"   :flavor "neutral"} "Engineering"]
         [:ty-option {:value "billing"     :flavor "warning"}   "Billing"]
         [:ty-option {:value "partnership" :flavor "neutral"}   "Partnerships"]]]
       ;; Dismissible chips for the selection — default template, flavors carry

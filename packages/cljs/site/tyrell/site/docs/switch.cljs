@@ -45,7 +45,7 @@
        {:name "flavor"
         :type "string"
         :default "\"primary\""
-        :description "Semantic color when checked: primary, secondary, success, danger, warning, neutral"}])]
+        :description "Semantic color when checked: primary, success, danger, warning, neutral"}])]
 
     [:div
      (section-label "Events")
@@ -98,7 +98,7 @@
         "Flavor applies when checked — use it to reinforce the meaning of the setting."]
        (demo-area
         [:div.flex.flex-wrap.gap-x-6.gap-y-3
-         (for [[flavor label] [["primary" "Primary"] ["secondary" "Secondary"] ["success" "Success"]
+         (for [[flavor label] [["primary" "Primary"] ["success" "Success"]
                                ["danger" "Danger"] ["warning" "Warning"] ["neutral" "Neutral"]]]
            [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium
             [:ty-switch {:flavor flavor :checked ""}]
@@ -135,7 +135,7 @@
          (for [[label desc flavor checked?]
                [["Email notifications" "Receive updates about your account" "primary" true]
                 ["Push notifications" "Get alerts on your mobile device" "primary" false]
-                ["Marketing emails" "Offers and product news" "secondary" false]
+                ["Marketing emails" "Offers and product news" "neutral" false]
                 ["Two-factor auth" "Require a code when signing in" "success" true]
                 ["Auto-delete inactive" "Remove data after 90 days of inactivity" "danger" false]]]
            [:div.flex.items-center.justify-between

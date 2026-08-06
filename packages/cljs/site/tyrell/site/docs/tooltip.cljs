@@ -25,7 +25,7 @@
        {:name "flavor"
         :type "string"
         :default "\"dark\""
-        :description "Visual style: dark, light, primary, secondary, success, danger, warning, info, neutral"}
+        :description "Visual style: dark, light, primary, success, danger, warning, info, neutral"}
        {:name "delay"
         :type "number"
         :default "600"
@@ -105,7 +105,7 @@
           [:ty-tooltip {:flavor "danger"} "Destructive — cannot be undone"]]
          [:ty-button {:flavor "warning"} "Warning"
           [:ty-tooltip {:flavor "warning"} "Proceed with caution"]]
-         [:ty-button {:flavor "secondary"} "Info"
+         [:ty-button {:flavor "neutral"} "Info"
           [:ty-tooltip {:flavor "info"} "Additional information"]]])
        (code-block "<ty-button flavor=\"success\">
   Confirm

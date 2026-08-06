@@ -54,12 +54,15 @@ Component classes only work once the stylesheet is loaded. shadow-cljs doesn't p
 ```html
 <!-- A. CDN <link> -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
 
 ```bash
 # B. Fetch into your public/ once
 cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
-# Then <link rel="stylesheet" href="/css/tyrell.css"> in your HTML
+cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css
+# Then <link> both in your HTML, brand.css after tyrell.css
 ```
 
 ```css
@@ -282,32 +285,37 @@ Shadow-cljs doesn't process CSS imports from CLJS — `tyrell.css` lives outside
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
 
-For offline-friendly local dev, fetch the file once into your static directory:
+For offline-friendly local dev, fetch the files once into your static directory:
 
 ```bash
 # Pin a version, no npm install required (use the version from the badge or your package.json)
 curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css
+curl -o public/css/tyrell-theme.css https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css
 
 # Or copy from the version shadow-cljs already installed (after first build)
 cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css
 ```
 
-Wire the second form as a `postinstall` script in `package.json` to keep the file in sync with whatever shadow-cljs installs:
+Wire the second form as a `postinstall` script in `package.json` to keep the files in sync with whatever shadow-cljs installs:
 
 ```json
 "scripts": {
-  "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css"
+  "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell*.css public/css/"
 }
 ```
 
-Then reference it with `<link rel="stylesheet" href="/css/tyrell.css">`. The `cp` form auto-tracks whatever version is installed by your deps.
+Then reference both with `<link>`, brand.css after tyrell.css. The `cp` form auto-tracks whatever version is installed by your deps.
 
-Projects with a CSS pipeline (Tailwind, PostCSS) can import the file directly into their entrypoint instead:
+Projects with a CSS pipeline (Tailwind, PostCSS) can import the files directly into their entrypoint instead:
 
 ```css
 @import "../node_modules/tyrell-components/css/tyrell.css";
+@import "../node_modules/tyrell-components/css/tyrell-theme.css";
 @import "tailwindcss";
 ```
 

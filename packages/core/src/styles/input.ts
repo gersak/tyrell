@@ -125,7 +125,12 @@ export const inputStyles = `
 /* Wrapper states — --input-accent* are set by the flavor rules below;
    without a flavor attribute they're unset and the default chrome chain
    (per-instance --input-* var, then --ty-input-* token) applies. */
-.input-wrapper:hover:not(.disabled) {
+/* :not(.focused) — hover must never override focus. Without the guard this
+   rule out-ranks .focused by specificity, so hovering a FOCUSED unflavored
+   input swapped its primary focus border for the dimmer neutral hover
+   border (focus ring stayed, border dimmed — read as a glitch). Same
+   pattern as date-picker's :hover:not(.open). */
+.input-wrapper:hover:not(.disabled):not(.focused) {
   border-color: var(--input-accent-bold, var(--input-border-hover, var(--ty-input-border-hover)));
 }
 

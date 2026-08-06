@@ -22,19 +22,23 @@ Component classes only work once `tyrell.css` is loaded. Easiest is a CDN `<link
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<!-- tyrell-theme.css: auto-contrast, seed-based rebranding, themes. See TY_GUIDE.md#quick-start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
 
-For offline dev, fetch the file once and serve it from your `public/`:
+For offline dev, fetch the files once and serve them from your `public/`:
 
 ```bash
 # Pin a version
 curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css
+curl -o public/css/tyrell-theme.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell-theme.css
 
 # Or copy from the version shadow-cljs already installed (after first build)
 cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css
 ```
 
-Then `<link rel="stylesheet" href="/css/tyrell.css">`. See [`CLOJURESCRIPT_GUIDE.md`](CLOJURESCRIPT_GUIDE.md#css-handling) for the Tailwind/PostCSS pipeline variant.
+Then `<link>` both in your HTML, brand.css after tyrell.css. See [`CLOJURESCRIPT_GUIDE.md`](CLOJURESCRIPT_GUIDE.md#css-handling) for the Tailwind/PostCSS pipeline variant.
 
 ---
 
@@ -180,7 +184,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
  [:ty-icon {:slot "end" :name "chevron-right" :size "sm"}]]
 
 ;; Icon-only button
-[:ty-button {:flavor "secondary" :size "sm"}
+[:ty-button {:flavor "neutral" :size "sm"}
  [:ty-icon {:name "settings" :size "sm"}]]
 
 ;; Input with icon slots
@@ -426,7 +430,7 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
  "Save"]
 
 ;; Icon-only button
-[:ty-button {:flavor "secondary" :size "sm"}
+[:ty-button {:flavor "neutral" :size "sm"}
  [:ty-icon {:name "settings" :size "sm"}]]
 ```
 
@@ -526,7 +530,7 @@ dismissible chips render out-of-band wherever you put them:
 
  [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
  [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]
- [:ty-option {:value "react" :flavor "secondary"} "React"]]
+ [:ty-option {:value "react" :flavor "neutral"} "React"]]
 
 [:div.flex.flex-wrap.gap-2
  [:ty-selected-tags {:for "skills-select"}]]

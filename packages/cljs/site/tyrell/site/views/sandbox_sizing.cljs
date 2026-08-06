@@ -14,7 +14,7 @@
 
 (def ^:private field-sizes ["sm" "md" "lg"])
 (def ^:private button-sizes ["xs" "sm" "md" "lg" "xl"])
-(def ^:private flavors ["primary" "secondary" "success" "danger" "warning" "neutral"])
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
 
 ;; The three exact flush pairs, sharing a height: [field-size button-size px]
 (def ^:private alongside-pairs

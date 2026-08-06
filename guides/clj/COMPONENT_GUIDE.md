@@ -67,7 +67,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
   [:div.ty-elevated.p-6.rounded-lg.space-y-4
    [:div.ty-text++.text-4xl.text-center count]
    [:div.flex.gap-2.justify-center
-    [:ty-button {:flavor "secondary" :on {:click #(on-click dec)}} "-"]
+    [:ty-button {:flavor "neutral" :on {:click #(on-click dec)}} "-"]
     [:ty-button {:flavor "primary" :on {:click #(on-click inc)}} "+"]]])
 
 (defn render! [^js el]
@@ -108,7 +108,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
     ($ :div.ty-elevated.p-6.rounded-lg.space-y-4
       ($ :div.ty-text++.text-4xl.text-center count)
       ($ :div.flex.gap-2.justify-center
-        ($ :ty-button {:flavor "secondary" :on-click #(set-count dec)} "-")
+        ($ :ty-button {:flavor "neutral" :on-click #(set-count dec)} "-")
         ($ :ty-button {:flavor "primary" :on-click #(set-count inc)} "+")))))
 
 (defn render! [^js el]
@@ -144,7 +144,7 @@ Turn any ClojureScript render function into a standards-compliant Web Component.
       [:div.ty-elevated.p-6.rounded-lg.space-y-4
        [:div.ty-text++.text-4xl.text-center @count]
        [:div.flex.gap-2.justify-center
-        [:ty-button {:flavor "secondary" :on-click #(swap! count dec)} "-"]
+        [:ty-button {:flavor "neutral" :on-click #(swap! count dec)} "-"]
         [:ty-button {:flavor "primary" :on-click #(swap! count inc)} "+"]]])))
 
 (defn render! [^js el]
