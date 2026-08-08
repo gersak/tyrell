@@ -24,6 +24,7 @@ Add to your `index.html`:
   <!-- Tyrell Web Components & Styles via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 </head>
 <body>
   <div id="root"></div>

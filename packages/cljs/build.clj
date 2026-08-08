@@ -218,6 +218,7 @@
     (println (format "  - docs/js/site.%s.js (ClojureScript app)" salt))
     (println "\nCDN Resources:")
     (println (format "  - https://cdn.jsdelivr.net/npm/tyrell-components@%s/css/tyrell.css" ty-version))
+    (println (format "  - https://cdn.jsdelivr.net/npm/tyrell-components@%s/css/tyrell-theme.css" ty-version))
     (println (format "  - https://cdn.jsdelivr.net/npm/tyrell-components@%s/dist/tyrell.js" ty-version))
     (println "\nNext steps:")
     (println "  1. Ensure tyrell-components is published to NPM:")

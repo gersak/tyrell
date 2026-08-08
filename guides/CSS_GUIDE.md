@@ -170,7 +170,12 @@ if (theme === 'dark') document.documentElement.classList.add('dark');
 
 ## Color Customization
 
-Tyrell ships **two layered theming systems**. Pick the one you need.
+`tyrell.css` on its own has **no color tokens** — spacing, radius, typography, shadows, z-index and component structure only. Pair it with exactly one color layer:
+
+- **`tyrell-theme.css`** — OKLCH brand layer, dynamic, retintable, recommended (Option 1 below).
+- **`tyrell-colors-static.css`** — the plain hardcoded hex fallback (light + dark), for consumers who don't want the theme engine at all.
+
+Loading both is harmless (`tyrell-theme.css` always wins the cascade) but redundant — pick one.
 
 ### Option 1 — OKLCH brand layer (recommended)
 
@@ -351,6 +356,13 @@ Effect on the formula: `L = L-curve[shade] × flavor-l-factor`. Set warning's fa
 
 > **Note about dark mode.** The L-curve flips between modes (light: low L = emphatic; dark: high L = emphatic). A factor `< 1` darkens warning in light mode but **dims** it in dark mode. If you want symmetric "more emphatic" in both modes, set the factor in `:root` for light AND set its inverse (roughly `1 / factor`) in `html.dark`. See "Per-mode overrides" below.
 
+**Per-flavor solid anchor lift** (`--ty-{flavor}-solid-l`, default `0`) — a companion set for the *solid button* ladder specifically: an additive L shift applied to the flavor's base fill before tones and hover/active derive from it. Exists because "darker = stronger" is false for the yellow family — darkened hue-75 is brown — so warning ships with `+0.1` in light mode (`0` in dark), lifting its whole solid ladder into the orange zone with black text throughout. Use it for any flavor whose solid fills land in a bad lightness zone:
+
+```css
+:root { --ty-warning-solid-l: 0.1; }   /* shipped default */
+html.dark { --ty-warning-solid-l: 0; } /* dim fills don't brown out */
+```
+
 ---
 
 #### Auto-contrast foregrounds (solid buttons)
@@ -371,6 +383,69 @@ Fills darker than the threshold get white, lighter get black. One token per *fil
 ```
 
 Opt out per flavor by pinning the token (`--ty-solid-primary-fg: white`), or globally with `--ty-solid-fg-threshold: 1` to force white everywhere.
+
+---
+
+#### Typography weight dials (mode-flipped)
+
+Button and tag text weight is a themable dial, not a hardcode — and it flips with the mode, because light text on dark surfaces optically blooms (halation) and reads heavier than the same weight on white:
+
+```css
+:root {
+  --ty-weight-action: 510;   /* buttons, interactive chrome (light mode) */
+  --ty-weight-label: 440;    /* tags, chips, badges (light mode) */
+}
+html.dark {
+  --ty-weight-action: 400;   /* bloom compensation */
+  --ty-weight-label: 400;
+}
+```
+
+Override at any scope — `:root`, a theme pack, one element. Old semibold look back in one line: `--ty-weight-action: var(--ty-font-semibold)`. Both dials are `@property`-registered numbers, so with a variable font, weight **crossfades during theme transitions** along with the colors.
+
+---
+
+#### Solid-button depth (`--ty-button-depth`)
+
+Solid buttons derive a 1px border and a soft drop shadow from their **own current fill** via relative color, scaled by one dial:
+
+```css
+:root { --ty-button-depth: 0.35; }  /* default: subtle */
+html.love { --ty-button-depth: 1; } /* stronger border + shadow for one theme */
+ty-button.flat { --ty-button-depth: 0; }  /* pixel-flat — border color matches the fill exactly */
+```
+
+Border color is `oklch(from <resting fill> calc(l + border-l × depth) c h)` — the fill with only its lightness shifted, chroma/hue kept. **Resting** fill, not current: on hover/active only the fill steps up (via `--ty-solid-hover-l`/`-active-l`) while the border stays put, so the fill visibly rises *toward* the border instead of dragging it along.
+
+`--ty-button-border-l` sets the offset direction/magnitude and is mode-flipped — colored solids get no border at all in dark mode (`0`; the fill's own hue/saturation already separates it from the page) and a subtle darkening in light (`-0.08`). Neutral is different — no hue to lean on, so it needs a real lit edge to read as a shape against a near-black canvas — and gets its own stronger dial, `--ty-button-border-l-neutral` (`-0.25` light / `0.5` dark).
+
+Direct escape hatches outrank the derivation entirely:
+
+```css
+ty-button.custom {
+  --ty-solid-border-color: oklch(0.7 0.1 300);  /* pin ANY color — dials stop mattering */
+  --ty-solid-border-width: 2px;                 /* thickness (≠1px shifts geometry) */
+}
+```
+
+---
+
+#### Neutral+ — full-contrast ink, in every appearance
+
+`flavor="neutral+"` is the monochrome max-emphasis CTA: near-black ink in light mode, **inverted white ink with black text in dark mode** — the Geist/shadcn primary-button pattern. Unlike other tones it's an absolute, not "anchor + offset", and unlike every other flavor's `-strong` it's the same dial across all three appearances (solid/outlined/ghost) rather than each reading its own token:
+
+```css
+--ty-l-solid-neutral-strong: 0.15;   /* light */
+html.dark { --ty-l-solid-neutral-strong: 0.88; }  /* inverted ink */
+```
+
+Base and soft neutral (all appearances) stay on the regular per-flavor text ladder — bare text needs page contrast, which is what that ladder is for; the ink ramp doesn't invert for readability the way it does, so pointing weaker tones at it would make them illegible. `+` alone reads the ink dial, giving outlined/ghost `neutral+` the same loud identity as the solid button next to it. `button.muted` follows the same split. Hover/active on `neutral+` move *toward mid-lightness* (fill-relative, not mode-directional) — at an L extreme the normal interaction dials would clip and vanish.
+
+---
+
+#### Outlined/ghost hover — always escalates to peak
+
+Whatever tone you set (`-`/base/`+`), outlined and ghost buttons resolve their text (and outlined's border) to the `-strong` tier on `:hover`/`:active`/`:focus-visible` — soft and base both rise to the same peak color on interaction; `+` is already there at rest. `muted` composes with this correctly: hover keeps muted's own contract (reveal the plain button's resting color), while press/focus lands muted on the same escalated color as a pressed plain button.
 
 ---
 
@@ -454,7 +529,12 @@ The brand layer's `html.dark` block already redefines the L-curve with inverted 
 
 ### Option 2 — direct token override (legacy / fine-grained)
 
-If you don't load the brand layer, or you want to override individual derived tokens, you can still write hex values directly. The brand layer doesn't block this — the cascade resolves consumer overrides past the formula's output.
+If you don't load the brand layer, load `tyrell-colors-static.css` alongside `tyrell.css` for the base tokens, then override individual shades on top — or, if you're already on the brand layer and just want to override individual derived tokens, write hex values directly; the brand layer doesn't block this, the cascade resolves consumer overrides past the formula's output.
+
+```html
+<link rel="stylesheet" href=".../tyrell.css">
+<link rel="stylesheet" href=".../tyrell-colors-static.css">
+```
 
 ```css
 :root {

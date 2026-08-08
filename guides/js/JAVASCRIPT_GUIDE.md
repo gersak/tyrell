@@ -26,7 +26,8 @@ npm install tyrell-components
 ```
 
 ```js
-import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell.css'        // structure — no color tokens
+import 'tyrell-components/css/tyrell-theme.css'  // colors — auto-contrast, seed-based rebranding
 import 'tyrell-components'   // registers everything
 ```
 
@@ -96,19 +97,21 @@ Webpack, Rollup, Vite, esbuild, and Parcel all honor subpath exports. Bun and De
 
 ## CSS distribution
 
-A single file: `css/tyrell.css`. Two consumption modes — pick whichever fits your build:
+Two files, both required: `css/tyrell.css` (structure — spacing, typography, shadows, component CSS; zero color tokens) and `css/tyrell-theme.css` (every color, via an OKLCH engine — auto-contrast, seed-based rebranding, themes). Load `tyrell-theme.css` after `tyrell.css`. Don't want the theme engine? Swap it for `css/tyrell-colors-static.css` — a plain hardcoded hex fallback, no theming API. Two consumption modes — pick whichever fits your build:
 
 ```js
 // Bundler picks it up (Vite, Webpack, Next.js, etc.)
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 ```
 
 ```html
 <!-- Or load directly -->
 <link rel="stylesheet" href="/node_modules/tyrell-components/css/tyrell.css">
+<link rel="stylesheet" href="/node_modules/tyrell-components/css/tyrell-theme.css">
 ```
 
-The CSS is intentionally **not** split per-component. The file is small enough that splitting would cost more in HTTP overhead than it saves, and the design tokens (colors, surfaces, text classes) need to be globally available regardless of which components are loaded.
+Neither file is split per-component. Both are small enough that splitting would cost more in HTTP overhead than it saves, and the design tokens (colors, surfaces, text classes) need to be globally available regardless of which components are loaded.
 
 ## Icon tree-shaking
 
@@ -399,6 +402,7 @@ If you load Tyrell via NPM and have hundreds of `<ty-*>` elements in initial HTM
 ```js
 // main.js — register first, paint second
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 
 import { registerIcons } from 'tyrell-components/icons/registry'
@@ -431,7 +435,8 @@ For framework-specific JSX types, see the framework guides. Plain TypeScript wit
 | Register everything | `import 'tyrell-components'` |
 | Register one component | `import 'tyrell-components/button'` |
 | Multiple components | One import line per component |
-| Stylesheet (bundler) | `import 'tyrell-components/css/tyrell.css'` |
+| Stylesheet — structure (bundler) | `import 'tyrell-components/css/tyrell.css'` |
+| Stylesheet — colors (bundler) | `import 'tyrell-components/css/tyrell-theme.css'` |
 | Icon registry function | `import { registerIcons } from 'tyrell-components/icons/registry'` |
 | Specific icons | `import { check, heart } from 'tyrell-components/icons/lucide'` |
 | Component class (typing) | `import type { TyButton } from 'tyrell-components/button'` |

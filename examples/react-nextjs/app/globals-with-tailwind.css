@@ -7,6 +7,7 @@
 
 /* Import Ty CSS first - foundation for our semantic system */
 @import url('https://unpkg.com/tyrell-components@latest/css/tyrell.css');
+@import url('https://unpkg.com/tyrell-components@latest/css/tyrell-theme.css');
 
 /* Tailwind CSS directives - will be processed by PostCSS */
 @tailwind base;

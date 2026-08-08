@@ -56,7 +56,10 @@ export const tagStyles = `
   gap: var(--ty-spacing-1);
   /* Default pill shape - can be overridden */
   border-radius: var(--ty-radius-full);
-  font-weight: var(--ty-font-medium);
+  /* Mode-flipped weight dial (tyrell.css): 440 light / 400 dark. Chips are
+     labels, not actions — they run lighter than buttons. Override with
+     --ty-weight-label at any scope. */
+  font-weight: var(--ty-weight-label, 440);
   text-align: center;
   white-space: nowrap;
   user-select: none;

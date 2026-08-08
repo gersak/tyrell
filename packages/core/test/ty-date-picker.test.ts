@@ -1,4 +1,4 @@
-import { fixture, html, expect, nextFrame } from '@open-wc/testing';
+import { fixture, html, expect, nextFrame, oneEvent } from '@open-wc/testing';
 import '../lib/components/date-picker.js';
 
 // date-picker normalizes to a UTC ISO timestamp; the exact day is timezone-
@@ -78,6 +78,34 @@ describe('ty-date-picker stub icon', () => {
     expect(hoverRule, '.stub-clear:hover rule exists').to.exist;
     expect(hoverRule.style.color).to.equal('var(--ty-color-danger)');
     expect(hoverRule.cssText).to.not.include('negative');
+  });
+});
+
+describe('ty-date-picker clear()', () => {
+  it('clears the value programmatically and fires change with source "clear"', async () => {
+    const el = (await fixture(html`<ty-date-picker value="${ISO}"></ty-date-picker>`)) as any;
+    await nextFrame();
+    expect(el.value).to.not.be.null;
+
+    setTimeout(() => el.clear());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.source).to.equal('clear');
+    expect(el.value).to.be.null;
+  });
+
+  it('clicking .stub-clear clears the value and fires change (same effect as clear())', async () => {
+    const el = (await fixture(html`<ty-date-picker value="${ISO}" clearable></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const clearBtn = el.shadowRoot.querySelector('.stub-clear') as HTMLButtonElement;
+    expect(clearBtn, 'clear button rendered when clearable + has value').to.exist;
+
+    setTimeout(() => clearBtn.click());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.source).to.equal('clear');
+    expect(el.value).to.be.null;
   });
 });
 

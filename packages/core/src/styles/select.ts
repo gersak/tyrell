@@ -23,6 +23,7 @@ export const selectStyles = `
 /* Consumer-provided trigger (slot="trigger"): no chrome at all */
 .select-stub.custom-trigger {
   display: inline-block;
+  width: auto;
   border: none;
   background: none;
   padding: 0;
@@ -53,10 +54,51 @@ export const selectStyles = `
 .select-count[hidden] {
   display: none;
 }
-/* Selection text (field skin): single line, ellipsis, input colors */
+
+/* Clear (x) button — normal flex child of .select-stub, not absolutely
+   positioned like .dropdown-chevron: it just takes its own space in the
+   row, no padding-right gutter math needed. Lives in the trigger slot's
+   fallback content, so it's automatically absent under slot="trigger". */
+.select-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--input-placeholder, var(--ty-input-placeholder));
+  cursor: pointer;
+  border-radius: var(--ty-radius-sm);
+  transition: var(--ty-local-transition, all 0.15s ease);
+}
+.select-clear[hidden] {
+  display: none;
+}
+.select-clear:hover {
+  /* Destructive utility action — neutral at rest, warns danger-red on
+     hover regardless of the field's own flavor. */
+  color: var(--ty-color-danger);
+  background-color: var(--ty-bg-danger-soft);
+}
+.select-clear svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Selection text (field skin): single line, ellipsis, input colors.
+   flex-basis 0, not auto — .select-stub is flex-wrap:wrap, and auto's
+   hypothetical size is the FULL untruncated text width (wrap-line
+   assignment happens before shrinking), which pushed fixed-size siblings
+   (.select-clear) onto a second line even though the text visibly had
+   room after truncating. 0 makes this item contribute ~nothing to the
+   line-fit check up front; grow/shrink + overflow:hidden still truncate
+   it identically. */
 .select-stub .dropdown-placeholder {
   font-style: normal;
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -96,9 +138,12 @@ export const selectStyles = `
   color: var(--ty-text-soft);
 }
 
-/* Compact skin: the text IS the trigger label — no grow, regular text color */
+/* Compact skin: the text IS the trigger label — no grow, regular text color.
+   flex-basis: auto (not the field skin's 0%) — content-hugging needs its
+   natural content width as the starting point; 0% would collapse it since
+   grow is also 0 here (nothing left to expand it back out). */
 .select-stub.compact .dropdown-placeholder {
-  flex-grow: 0;
+  flex: 0 1 auto;
   color: var(--ty-text);
 }
 
@@ -117,10 +162,14 @@ export const selectStyles = `
 
 /* Card-style header: the search input keeps its own bordered-field look
    (base styles) and sits inset in the panel, TagPicker-style — no divider,
-   whitespace separates it from the list. */
+   whitespace separates it from the list. The header's OWN surface/border is
+   part of the floating panel's chrome, not a form field — --ty-surface-
+   floating/--ty-floating-border, matching .dropdown-options below it (same
+   reasoning as the base-panel fix: --ty-input-* is deliberately faint for
+   resting form fields and read as a missing/mismatched edge here). */
 .dropdown-header {
-  background: var(--input-bg, var(--ty-input-bg));
-  border: 1px solid var(--input-border, var(--ty-input-border));
+  background: var(--ty-surface-floating);
+  border: 1px solid var(--ty-floating-border);
   border-bottom: none;
   border-radius: var(--ty-radius-lg) var(--ty-radius-lg) 0 0;
   padding: var(--ty-spacing-2) var(--ty-spacing-2) var(--ty-spacing-1);
@@ -131,7 +180,7 @@ export const selectStyles = `
 .dropdown-dialog.position-above .dropdown-header {
   margin-top: 0;
   border-top: none;
-  border-bottom: 1px solid var(--input-border, var(--ty-input-border));
+  border-bottom: 1px solid var(--ty-floating-border);
   border-radius: 0 0 var(--ty-radius-lg) var(--ty-radius-lg);
   padding: var(--ty-spacing-1) var(--ty-spacing-2) var(--ty-spacing-2);
 }
@@ -201,7 +250,7 @@ export const selectStyles = `
   display: none;
 }
 .dropdown-header[hidden] ~ .dropdown-options-wrapper .dropdown-options {
-  border-top: 1px solid var(--input-border, var(--ty-input-border));
+  border-top: 1px solid var(--ty-floating-border);
   border-radius: var(--ty-radius-lg);
 }
 .mobile-search-input[hidden],
@@ -230,7 +279,7 @@ export const selectStyles = `
   box-shadow: none;
 }
 .dropdown-dialog.position-above .dropdown-options {
-  border-top: 1px solid var(--input-border, var(--ty-input-border));
+  border-top: 1px solid var(--ty-floating-border);
   border-bottom: none;
   border-radius: var(--ty-radius-lg) var(--ty-radius-lg) 0 0;
 }
@@ -244,7 +293,7 @@ export const selectStyles = `
   box-shadow: none;
 }
 .dropdown-dialog.position-above .dropdown-loading {
-  border-top: 1px solid var(--input-border, var(--ty-input-border));
+  border-top: 1px solid var(--ty-floating-border);
   border-bottom: none;
   border-radius: var(--ty-radius-lg) var(--ty-radius-lg) 0 0;
 }

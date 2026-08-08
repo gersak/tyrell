@@ -62,7 +62,7 @@ Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-comp
 
 ### The OKLCH brand layer
 
-`tyrell-theme.css` loads after `tyrell.css` and replaces its static colors with a computed OKLCH engine: correct-contrast button text on any color, seed-based rebranding, named/scoped themes, animated theme transitions. Rebrand the whole library coherently in light AND dark mode with a single CSS variable:
+`tyrell.css` alone has no color tokens — spacing, typography, shadows, component structure only. `tyrell-theme.css`, loaded after it, supplies every color via a computed OKLCH engine: correct-contrast button text on any color, seed-based rebranding, named/scoped themes, animated theme transitions. Rebrand the whole library coherently in light AND dark mode with a single CSS variable:
 
 ```html
 <style>
@@ -73,7 +73,7 @@ Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-comp
 </style>
 ```
 
-`tyrell.css` alone still renders correctly and needs no relative-color-syntax support — keep it brand-layer-free only if that older-browser compatibility matters more than theming to you.
+Don't want the theme engine? Load `tyrell-colors-static.css` instead of `tyrell-theme.css` for a plain hardcoded fallback palette — no relative-color-syntax requirement, works on older browsers, no theming API.
 
 Every component — buttons, inputs, dropdowns, calendars, focus rings, scrollbars — retints together. Drag the sliders at [`/docs/theming`](https://gersak.github.io/tyrell/docs/theming) to preview, then copy the `:root` snippet straight to your app.
 

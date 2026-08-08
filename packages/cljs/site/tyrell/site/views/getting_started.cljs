@@ -306,11 +306,12 @@
     [:div.flex-1.min-w-0
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1 "Or skip the build entirely"]
      [:p.text-sm.ty-text-.mb-3.leading-relaxed
-      "Paste these two tags into "
+      "Paste these three tags into "
       [:code "<head>"]
       " — works in any HTML page, server template, or HTMX project."]
      (common/code-block
       "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
+<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css\">
 <script src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>"
       "html")
      [:div.flex.items-center.gap-1.5.mt-2.text-sm.font-semibold.ty-text-primary

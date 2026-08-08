@@ -14,6 +14,7 @@ Tyrell provides a complete set of UI components that work seamlessly with Reagen
 ```html
 <!-- Load components via CDN -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 

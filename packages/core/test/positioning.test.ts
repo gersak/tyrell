@@ -54,6 +54,28 @@ describe('computeAnchoredPosition', () => {
     });
     expect(nearLeft.x).to.equal(8);
   });
+
+  it('align "end" anchors to the trigger right edge instead of left', () => {
+    const anchor = rect(100, 500, 60, 40); // right edge at 560
+    const pos = computeAnchoredPosition({
+      anchorRect: anchor,
+      popupWidth: 320,
+      popupHeight: 100,
+      align: 'end',
+    });
+    expect(pos.x).to.equal(anchor.right - 320);
+  });
+
+  it('align "end" still clamps into the viewport', () => {
+    const anchor = rect(100, 10, 20, 40); // right edge at 30 — way less than popupWidth
+    const pos = computeAnchoredPosition({
+      anchorRect: anchor,
+      popupWidth: 320,
+      popupHeight: 100,
+      align: 'end',
+    });
+    expect(pos.x).to.equal(8);
+  });
 });
 
 describe('anchored popup integration', () => {
@@ -109,6 +131,27 @@ describe('anchored popup integration', () => {
     if (below) {
       expect(y).to.be.closeTo(stubRect.bottom + 4 - 20, 1);
     }
+  });
+
+  it('ty-select align="end" anchors the dropdown to the trigger right edge', async () => {
+    const el = (await fixture(html`
+      <ty-select align="end">
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b">B</ty-option>
+      </ty-select>
+    `)) as any;
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+
+    const stubRect = stub.getBoundingClientRect();
+    const width = parseFloat(el.style.getPropertyValue('--dropdown-width'));
+    const x = parseFloat(el.style.getPropertyValue('--dropdown-x'));
+    // popupWidth is --dropdown-width minus the 20px wrap padding on each side
+    const popupWidth = width - 40;
+    const expectedRawX = Math.max(8, Math.min(stubRect.right - popupWidth, window.innerWidth - popupWidth - 8));
+    expect(x).to.be.closeTo(expectedRawX - 20, 1);
   });
 });
 

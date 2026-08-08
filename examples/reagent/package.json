@@ -4,7 +4,7 @@
   "private": true,
   "description": "Simple Reagent example with Tyrell Web Components",
   "scripts": {
-    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css && cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css",
     "dev": "shadow-cljs -A:dev watch app",
     "build": "shadow-cljs release app",
     "clean": "shadow-cljs clean",

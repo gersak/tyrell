@@ -1,0 +1,316 @@
+/* =================================================================
+Tyrell Static Colors — hardcoded fallback color tokens
+
+Every --ty-color-*, --ty-bg-{flavor}-*, --ty-border-*, --ty-surface-*,
+--ty-text-*, --ty-input-{color-related}-* and --ty-solid-* token tyrell.css
+used to hardcode directly, now split out here. Load this file alongside
+tyrell.css if you want static, no-theme-engine colors.
+
+If you want dynamic theming (custom seeds, live theme switching, per-flavor
+tuning), load tyrell-theme.css INSTEAD — it defines the same token names via
+oklch() formulas and, loaded after tyrell.css, wins by source order. Loading
+both is harmless (tyrell-theme.css always wins) but redundant.
+================================================================= */
+
+html {
+  /* Primary */
+  --ty-color-primary-strong: #163793;
+  --ty-color-primary-bold: #304c9f;
+  --ty-color-primary: #466bce;
+  --ty-color-primary-soft: #60a5fa;
+  --ty-color-primary-faint: #93c5fd;
+
+  /* Success */
+  --ty-color-success-strong: #177858;
+  --ty-color-success-bold: #3e9779;
+  --ty-color-success: #3eaa86;
+  --ty-color-success-soft: #64b399;
+  --ty-color-success-faint: #7fd4b2;
+
+  /* Danger */
+  --ty-color-danger-strong: #b91c1c;
+  --ty-color-danger-bold: #dc2626;
+  --ty-color-danger: #ef4444;
+  --ty-color-danger-soft: #f87171;
+  --ty-color-danger-faint: #fca5a5;
+
+  /* Warning */
+  --ty-color-warning-strong: #e86400;
+  --ty-color-warning-bold: #ee7f00;
+  --ty-color-warning: #f59e0b;
+  --ty-color-warning-soft: #fbbf24;
+  --ty-color-warning-faint: #fcd34d;
+
+  /* Neutral */
+  --ty-color-neutral-strong: #000000;
+  --ty-color-neutral-bold: #000000;
+  --ty-color-neutral: #111827;
+  --ty-color-neutral-soft: #374151;
+  --ty-color-neutral-faint: #9ca3af;
+
+  /* Semantic backgrounds */
+  --ty-bg-primary: #e3eefc;
+  --ty-bg-primary-bold: #d5e4f8;
+  --ty-bg-primary-soft: #eff6ff;
+  --ty-bg-success: #d1fae5;
+  --ty-bg-success-bold: #a7f3d0;
+  --ty-bg-success-soft: #ecfdf5;
+  --ty-bg-danger: #fee2e2;
+  --ty-bg-danger-bold: #fecaca;
+  --ty-bg-danger-soft: #fef2f2;
+  --ty-bg-warning: #fef3c7;
+  --ty-bg-warning-bold: #fde68a;
+  --ty-bg-warning-soft: #fffbeb;
+  --ty-bg-neutral: #e0e0e0;
+  --ty-bg-neutral-bold: #cecece;
+  --ty-bg-neutral-soft: #ededed;
+
+  /* Borders */
+  --ty-border: #e5e7eb;
+  --ty-border-bold: #d1d5db;
+  --ty-border-strong: #6b7280;
+  --ty-border-soft: #f3f4f6;
+  --ty-border-faint: #fafafa;
+
+  /* Semantic borders */
+  --ty-border-primary: var(--ty-color-primary);
+  --ty-border-success: var(--ty-color-success);
+  --ty-border-danger: var(--ty-color-danger);
+  --ty-border-warning: var(--ty-color-warning);
+  --ty-border-neutral: var(--ty-color-neutral);
+
+  /* Surfaces */
+  --ty-surface-canvas: #fcfcfc;
+  --ty-surface-content: #ffffff;
+  --ty-surface-elevated: #ffffff;
+  --ty-surface-floating: #ffffff;
+  --ty-surface-input: #ffffff;
+
+  /* Surface borders */
+  --ty-elevated-border: #e5e7eb;
+  --ty-floating-border: #e5e7eb;
+  --ty-content-border: #e5e7eb;
+
+  /* Text hierarchy */
+  --ty-text: #111827;
+  --ty-text-bold: #000000;
+  --ty-text-strong: #000000;
+  --ty-text-soft: #374151;
+  --ty-text-faint: #9ca3af;
+
+  /* Input component tokens */
+  --ty-input-bg: #ffffff;
+  --ty-input-color: #111827;
+  --ty-input-border: #e5e7eb;
+  --ty-input-border-hover: #d1d5db;
+  --ty-input-border-focus: var(--ty-color-primary);
+  --ty-input-shadow-focus: rgba(59, 130, 246, 0.1);
+  --ty-input-placeholder: #9ca3af;
+  --ty-input-disabled-bg: #f9fafb;
+  --ty-input-disabled-border: #e5e7eb;
+  --ty-input-disabled-color: #9ca3af;
+
+  /* Input semantic state borders */
+  --ty-input-success-border: var(--ty-color-success-soft);
+  --ty-input-danger-border: var(--ty-color-danger-soft);
+  --ty-input-warning-border: var(--ty-color-warning-soft);
+
+  /* Solid button fills — Primary */
+  --ty-solid-primary: #4076b9;
+  --ty-solid-primary-strong: var(--ty-color-primary-bold);
+  --ty-solid-primary-soft: #7ea7d9;
+  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
+  --ty-solid-primary-active: var(--ty-solid-primary-strong);
+  --ty-solid-primary-fg: white;
+  --ty-solid-primary-strong-fg: white;
+  --ty-solid-primary-soft-fg: black;
+
+  /* Solid button fills — Success */
+  --ty-solid-success: #3bb68d;
+  --ty-solid-success-strong: #27956e;
+  --ty-solid-success-soft: #69b99e;
+  --ty-solid-success-hover: var(--ty-solid-success-strong);
+  --ty-solid-success-active: var(--ty-solid-success-strong);
+  --ty-solid-success-fg: black;
+  --ty-solid-success-strong-fg: black;
+  --ty-solid-success-soft-fg: black;
+
+  /* Solid button fills — Danger */
+  --ty-solid-danger: #df5b5b;
+  --ty-solid-danger-strong: #cc3e3e;
+  --ty-solid-danger-soft: #d57a7a;
+  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
+  --ty-solid-danger-active: var(--ty-solid-danger-strong);
+  --ty-solid-danger-fg: black;
+  --ty-solid-danger-strong-fg: white;
+  --ty-solid-danger-soft-fg: black;
+
+  /* Solid button fills — Warning */
+  --ty-solid-warning: #e1a644;
+  --ty-solid-warning-strong: #f59e0b;
+  --ty-solid-warning-soft: #fbc56d;
+  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
+  --ty-solid-warning-active: var(--ty-solid-warning-strong);
+  --ty-solid-warning-fg: black;
+  --ty-solid-warning-strong-fg: black;
+  --ty-solid-warning-soft-fg: black;
+
+  /* Solid button fills — Neutral */
+  --ty-solid-neutral: #414141;
+  --ty-solid-neutral-strong: #000000;
+  --ty-solid-neutral-soft: #6e6e6e;
+  --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
+  --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
+  --ty-solid-neutral-fg: white;
+  --ty-solid-neutral-strong-fg: white;
+  --ty-solid-neutral-soft-fg: white;
+
+}
+
+/* =================================================================
+DARK THEME OVERRIDES
+================================================================= */
+
+html.dark,
+html[data-theme="dark"] {
+  /* Primary */
+  --ty-color-primary-strong: #9cbde5;
+  --ty-color-primary-bold: #6c9bd5;
+  --ty-color-primary: #4976ae;
+  --ty-color-primary-soft: #4b698b;
+  --ty-color-primary-faint: #445b77;
+
+  /* Success */
+  --ty-color-success-strong: #c2f0df;
+  --ty-color-success-bold: #6ee7b7;
+  --ty-color-success: #3aba8b;
+  --ty-color-success-soft: #459679;
+  --ty-color-success-faint: #1b795c;
+
+  /* Danger */
+  --ty-color-danger-strong: #ffabab;
+  --ty-color-danger-bold: #e58787;
+  --ty-color-danger: #d06f6f;
+  --ty-color-danger-soft: #b06666;
+  --ty-color-danger-faint: #aa6e6e;
+
+  /* Warning */
+  --ty-color-warning-strong: #fde68a;
+  --ty-color-warning-bold: #fcd34d;
+  --ty-color-warning: #fbbf24;
+  --ty-color-warning-soft: #f59e0b;
+  --ty-color-warning-faint: #a06726;
+
+  /* Neutral */
+  --ty-color-neutral-strong: #ffffff;
+  --ty-color-neutral-bold: #f9fafb;
+  --ty-color-neutral: #d6d6d6;
+  --ty-color-neutral-soft: #696969;
+  --ty-color-neutral-faint: #474747;
+
+  /* Semantic backgrounds */
+  --ty-bg-primary: #394159;
+  --ty-bg-primary-bold: #43517a;
+  --ty-bg-primary-soft: #323a4f;
+  --ty-bg-success: #3a4442;
+  --ty-bg-success-bold: #405752;
+  --ty-bg-success-soft: #2f3b38;
+  --ty-bg-danger: #522828;
+  --ty-bg-danger-bold: #853535;
+  --ty-bg-danger-soft: #483c3c;
+  --ty-bg-warning: #694555;
+  --ty-bg-warning-bold: #743953;
+  --ty-bg-warning-soft: #45333b;
+  --ty-bg-neutral: #323232;
+  --ty-bg-neutral-bold: #414141;
+  --ty-bg-neutral-soft: #242424;
+
+  /* Borders */
+  --ty-border: #3e3e3e;
+  --ty-border-bold: #666666;
+  --ty-border-strong: #8c8c8c;
+  --ty-border-soft: #1f2937;
+  --ty-border-faint: #030712;
+
+  /* Surfaces */
+  --ty-surface-canvas: black;
+  --ty-surface-content: #1a1a1a;
+  --ty-surface-elevated: #282828;
+  --ty-surface-floating: #343434;
+  --ty-surface-input: #1f2937;
+
+  /* Surface borders */
+  --ty-elevated-border: #414141;
+  --ty-floating-border: #494949;
+  --ty-content-border: #030712;
+
+  /* Text hierarchy */
+  --ty-text: #d6d6d6;
+  --ty-text-bold: #f9fafb;
+  --ty-text-strong: #ffffff;
+  --ty-text-soft: #7f8590;
+  --ty-text-faint: #555a63;
+
+  /* Input component tokens */
+  --ty-input-bg: #1b1b1b;
+  --ty-input-color: #f9fafb;
+  --ty-input-border: #3a3a3a;
+  --ty-input-border-hover: #505050;
+  --ty-input-border-focus: var(--ty-color-primary);
+  --ty-input-shadow-focus: rgba(96, 165, 250, 0.1);
+  --ty-input-placeholder: #717171;
+  --ty-input-disabled-bg: #282828;
+  --ty-input-disabled-border: #2e2e2e;
+  --ty-input-disabled-color: #717171;
+
+  /* Solid button fills — Primary */
+  --ty-solid-primary: #3e536c;
+  --ty-solid-primary-strong: #426084;
+  --ty-solid-primary-soft: #343f4c;
+  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
+  --ty-solid-primary-active: var(--ty-solid-primary-strong);
+  --ty-solid-primary-fg: white;
+  --ty-solid-primary-strong-fg: white;
+  --ty-solid-primary-soft-fg: white;
+
+  /* Solid button fills — Success */
+  --ty-solid-success: #3bb68d;
+  --ty-solid-success-strong: #459679;
+  --ty-solid-success-soft: #285748;
+  --ty-solid-success-hover: var(--ty-solid-success-strong);
+  --ty-solid-success-active: var(--ty-solid-success-strong);
+  --ty-solid-success-fg: black;
+  --ty-solid-success-strong-fg: black;
+  --ty-solid-success-soft-fg: white;
+
+  /* Solid button fills — Danger */
+  --ty-solid-danger: #df5b5b;
+  --ty-solid-danger-strong: #cc3e3e;
+  --ty-solid-danger-soft: #875656;
+  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
+  --ty-solid-danger-active: var(--ty-solid-danger-strong);
+  --ty-solid-danger-fg: black;
+  --ty-solid-danger-strong-fg: white;
+  --ty-solid-danger-soft-fg: white;
+
+  /* Solid button fills — Warning */
+  --ty-solid-warning: #e1a644;
+  --ty-solid-warning-strong: #f59e0b;
+  --ty-solid-warning-soft: #8b6334;
+  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
+  --ty-solid-warning-active: var(--ty-solid-warning-strong);
+  --ty-solid-warning-fg: black;
+  --ty-solid-warning-strong-fg: black;
+  --ty-solid-warning-soft-fg: white;
+
+  /* Solid button fills — Neutral */
+  --ty-solid-neutral: #414141;
+  --ty-solid-neutral-strong: #f5f5f5;
+  --ty-solid-neutral-soft: #2a2a2a;
+  --ty-solid-neutral-hover: #4c4c4c;
+  --ty-solid-neutral-active: #4c4c4c;
+  --ty-solid-neutral-fg: white;
+  --ty-solid-neutral-strong-fg: black;
+  --ty-solid-neutral-soft-fg: white;
+
+}

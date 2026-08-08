@@ -2,10 +2,11 @@ import './globals.css'
 // Bundler-only setup (TC6 sideEffects fix) — no script tag, no public/ty/ copy.
 // tyrell-components CSS imported here in the Server Component (safe on the server).
 import 'tyrell-components/css/tyrell.css'
-// Opt-in OKLCH brand layer. Loaded AFTER tyrell.css so source order resolves
-// dark-mode overrides. Set --ty-brand-hue + --ty-brand-chroma on :root in
-// globals.css (or anywhere later in the cascade) to rebrand the whole UI.
-import 'tyrell-components/css/tyrell-brand.css'
+// Colors — tyrell.css alone has none. Loaded AFTER tyrell.css so source order
+// resolves dark-mode overrides. Set --ty-brand-hue + --ty-brand-chroma on
+// :root in globals.css (or anywhere later in the cascade) to rebrand the
+// whole UI.
+import 'tyrell-components/css/tyrell-theme.css'
 import type { Metadata } from 'next'
 import { ThemeProvider } from '../lib/theme-provider'
 import { TyRegistry } from '../components/TyRegistry'

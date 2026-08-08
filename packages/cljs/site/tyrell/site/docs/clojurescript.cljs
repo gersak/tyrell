@@ -282,11 +282,13 @@
      [:h3.text-base.font-bold.ty-text++.tracking-tight.mb-1 "Don't forget the CSS"]
      [:p.text-sm.ty-text-.mb-3.leading-relaxed
       "Component classes only work once " [:code.font-mono.text-xs "tyrell.css"]
-      " is loaded. shadow-cljs doesn't process CSS imports from CLJS — you load it separately. Pick one:"]
+      " and " [:code.font-mono.text-xs "tyrell-theme.css"]
+      " are loaded. shadow-cljs doesn't process CSS imports from CLJS — you load them separately. Pick one:"]
 
      [:div.text-xs.font-bold.ty-text--.tracking-widest.uppercase.mb-2 "A · CDN <link>"]
      (common/code-block
-      (str "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css\">")
+      (str "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css\">
+<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell-theme.css\">")
       "html")
 
      [:div.text-xs.font-bold.ty-text--.tracking-widest.uppercase.mb-2.mt-3 "B · Fetch into your public/ once"]
@@ -294,13 +296,17 @@
       (str "# Pin a version, no install needed
 curl -o public/css/tyrell.css \\
   https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css
+curl -o public/css/tyrell-theme.css \\
+  https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell-theme.css
 
 # Or copy from the version shadow-cljs already installed
-cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
+cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css
+cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css")
       "bash")
      [:p.text-xs.ty-text--.mt-2.leading-relaxed
-      "Then " [:code.font-mono.text-xs "<link rel=\"stylesheet\" href=\"/css/tyrell.css\">"]
-      " in your HTML. Wire as a " [:code.font-mono.text-xs "postinstall"]
+      "Then " [:code.font-mono.text-xs "<link>"] " both in your HTML, "
+      [:code.font-mono.text-xs "tyrell-theme.css"] " after " [:code.font-mono.text-xs "tyrell.css"]
+      ". Wire as a " [:code.font-mono.text-xs "postinstall"]
       " hook in " [:code.font-mono.text-xs "package.json"]
       " to keep it in sync with installed versions automatically."]
 
@@ -308,6 +314,7 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
      (common/code-block
       "/* in your input.css */
 @import \"../node_modules/tyrell-components/css/tyrell.css\";
+@import \"../node_modules/tyrell-components/css/tyrell-theme.css\";
 @import \"tailwindcss\";"
       "css")]]])
 
@@ -338,10 +345,12 @@ cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css")
      {:eyebrow "Zero build"
       :icon "zap"
       :title "CDN script tag"
-      :tagline ["Paste two tags into " [:code.font-mono.text-xs "<head>"]
+      :tagline ["Paste three tags into " [:code.font-mono.text-xs "<head>"]
                 " — works for prototypes, static hosting, or any non-shadow build."]
       :snippet (str "<link rel=\"stylesheet\"
       href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell.css\">
+<link rel=\"stylesheet\"
+      href=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/css/tyrell-theme.css\">
 <script type=\"module\"
         src=\"https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION "/dist/tyrell.js\"></script>")
       :snippet-lang "html"})]

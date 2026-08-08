@@ -33,7 +33,7 @@ The shadow-cljs nREPL is on port 7890.
 |------|---------|
 | `src/hello/core.cljs` | The demo: app, signup-form, badge — all `defnc` Helix components |
 | `src/hello/icons.cljs` | Icon registration — only the icons used in the demo |
-| `public/index.html` | Loads `tyrell-components` + `tyrell.css` via CDN, then mounts the compiled CLJS |
+| `public/index.html` | Loads `tyrell.css` + `tyrell-theme.css` (copied by `postinstall`), then mounts the compiled CLJS |
 | `shadow-cljs.edn` | dev-http on 3003, nREPL on 7890 |
 | `deps.edn` | `lilactown/helix 0.2.0` + paths to the local `dev.gersak/tyrell` source |
 

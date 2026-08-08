@@ -1,17 +1,47 @@
 /**
  * Button Component Styles
  *
- * Three appearance variants × six semantic flavors × three tones (+/base/-).
+ * Three appearance variants × five semantic flavors × three tones (+/base/-).
  * Each variant uses ONE token system:
+ *
  *   - solid    → flat per-segment tokens --ty-solid-{flavor}{,-hover,-active,
  *               -strong,-soft,-fg}. Derived in tyrell-theme.css via OKLCH on
  *               3 axes (color / hover-active / theme chroma-hue); literal in
- *               tyrell.css. The component does no color math.
- *   - outlined → --ty-color-{flavor}-{strong|base|soft}  (text === border)
- *   - ghost    → --ty-color-{flavor}-{strong|base|soft}  (text), --ty-bg-{flavor}-soft (hover)
+ *               tyrell.css. The component does no color math for the fill.
+ *               Depth chrome (border + drop shadow) IS computed here, from
+ *               the fill, via relative color — see "Depth chrome" below.
+ *   - outlined → --ty-color-{flavor}-{strong|base|soft} (text === border at
+ *               rest); hover/active/focus always resolve to -strong,
+ *               whatever the resting tone was — see "Hover escalation".
+ *   - ghost    → same as outlined, text only (no border), --ty-bg-{flavor}-soft
+ *               background on hover.
+ *
+ * Neutral is the exception in both outlined and ghost: its `+` tone reads
+ * --ty-solid-neutral-strong (the ink dial solid buttons use — the only
+ * value that actually inverts light↔dark for full contrast) instead of the
+ * generic --ty-color-neutral-strong text-emphasis token. Base/soft neutral
+ * stay on the generic token like every other flavor.
+ *
+ * Depth chrome (solid only): a 1px border + soft drop shadow, both derived
+ * from the fill via oklch(from …), scaled by --ty-button-depth (0–1). The
+ * border reads the TONE'S RESTING fill (not the current/hover one) so it
+ * stays stationary while the fill rises toward it on interaction. Offset
+ * direction/magnitude is --ty-button-border-l (mode-flipped: no border at
+ * all for colored solids in dark, a lit edge in light) with its own
+ * stronger dial for neutral, --ty-button-border-l-neutral (ink has no hue
+ * to separate it from the canvas). Escape hatches --ty-solid-border-color
+ * / --ty-solid-border-width outrank the derivation entirely.
+ *
+ * Hover escalation (outlined/ghost): :hover/:active/:focus-visible always
+ * resolve to the -strong tier regardless of starting tone — soft and base
+ * both rise to the same peak on interaction. Composes with `muted` rather
+ * than fighting it (see the escalation rules themselves for the exact
+ * split) — a pressed muted button lands on the same color as a pressed
+ * plain one of the same flavor.
  *
  * Per-instance overrides via host CSS variables:
- *   --ty-button-bg, --ty-button-bg-hover, --ty-button-color, --ty-button-border
+ *   --ty-button-bg, --ty-button-bg-hover, --ty-button-color, --ty-button-border,
+ *   --ty-solid-border-color, --ty-solid-border-width
  */
 
 import { FLAVORS } from '../types/common.js'
@@ -40,50 +70,115 @@ const tokenRef = (prefix: string, f: string, suffix: string, fb?: string) =>
 const nudged = (fillExpr: string, offsetDial: string) =>
   `oklch(from ${fillExpr} calc(l + var(--ty-${offsetDial})) c h)`
 
+/* Fill-relative nudge: moves TOWARD mid-lightness by the dial's magnitude,
+   whatever the fill. Needed for neutral+ — full-contrast ink sits at an L
+   extreme in both modes (near-black light / near-white dark), where the
+   MODE-directional dials clip into the L ceiling/floor and vanish. */
+const nudgedMid = (fillExpr: string, offsetDial: string) =>
+  `oklch(from ${fillExpr} calc(l + sign(0.5 - l) * abs(var(--ty-${offsetDial}))) c h)`
+
+/* Solid rules assign --_solid-bg (the CURRENT fill — swapped by hover/
+   active) and --_solid-rest (the tone's RESTING fill — set only by rest/
+   tone rules, never by state rules). The base button.solid rule holds the
+   single set of formulas that consume them: background follows --_solid-bg;
+   the depth border derives from --_solid-rest so it stays STATIONARY while
+   the fill steps up on hover — the fill rises toward the lit edge instead
+   of dragging the edge along with it. */
 const solidFlavor = (f: string, fb?: string) => {
   const solid = (suffix: string) => tokenRef('--ty-solid', f, suffix, fb)
+  // Neutral reads its own, stronger border offset (no hue separates ink
+  // from the canvas — see --ty-button-border-l-neutral in tyrell.css).
+  // Colored flavors must RESET to the plain dial: the bare button.solid
+  // rule (which matches every solid button) sets the neutral chain.
+  const borderL =
+    f === 'neutral'
+      ? ' --_border-l: var(--ty-button-border-l-neutral, var(--ty-button-border-l, -0.15));'
+      : ' --_border-l: var(--ty-button-border-l, -0.15);'
+  // Neutral+ is full-contrast ink at an L extreme — its hover/active must
+  // move toward mid (fill-relative), not in the mode's direction.
+  const plusNudge = f === 'neutral' ? nudgedMid : nudged
   return `
-button.solid.${f} { --_ring: ${tokenRef('--ty-color', f, '', fb)}; background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-fg')})); }
-button.solid.${f}.tone-plus  { background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-strong')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-strong-fg')})); }
-button.solid.${f}.tone-minus { background: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-soft')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-soft-fg')})); }
-button.solid.${f}:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${solid('-hover')}); }
-button.solid.${f}:active:not(:disabled) { background: ${solid('-active')}; }
-button.solid.${f}.tone-plus:hover:not(:disabled)   { background: var(--ty-button-bg-hover, ${nudged(solid('-strong'), 'solid-hover-l')}); }
-button.solid.${f}.tone-plus:active:not(:disabled)  { background: ${nudged(solid('-strong'), 'solid-active-l')}; }
-button.solid.${f}.tone-minus:hover:not(:disabled)  { background: var(--ty-button-bg-hover, ${nudged(solid('-soft'), 'solid-hover-l')}); }
-button.solid.${f}.tone-minus:active:not(:disabled) { background: ${nudged(solid('-soft'), 'solid-active-l')}; }
+button.solid.${f} { --_ring: ${tokenRef('--ty-color', f, '', fb)}; --_solid-bg: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('')})); --_solid-rest: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('')}));${borderL} color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-fg')})); }
+button.solid.${f}.tone-plus  { --_solid-bg: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-strong')})); --_solid-rest: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-strong')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-strong-fg')})); }
+button.solid.${f}.tone-minus { --_solid-bg: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-soft')})); --_solid-rest: var(--ty-button-bg, var(--_muted-solid-bg, ${solid('-soft')})); color: var(--ty-button-color, var(--_muted-solid-fg, ${solid('-soft-fg')})); }
+button.solid.${f}:hover:not(:disabled)  { --_solid-bg: var(--ty-button-bg-hover, ${solid('-hover')}); }
+button.solid.${f}:active:not(:disabled) { --_solid-bg: ${solid('-active')}; }
+button.solid.${f}.tone-plus:hover:not(:disabled)   { --_solid-bg: var(--ty-button-bg-hover, ${plusNudge(solid('-strong'), 'solid-hover-l')}); }
+button.solid.${f}.tone-plus:active:not(:disabled)  { --_solid-bg: ${plusNudge(solid('-strong'), 'solid-active-l')}; }
+button.solid.${f}.tone-minus:hover:not(:disabled)  { --_solid-bg: var(--ty-button-bg-hover, ${nudged(solid('-soft'), 'solid-hover-l')}); }
+button.solid.${f}.tone-minus:active:not(:disabled) { --_solid-bg: ${nudged(solid('-soft'), 'solid-active-l')}; }
 `
 }
 
 const outlinedFlavor = (f: string, fb?: string) => {
   const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
+  // Neutral+ only: bare text/border need page contrast, which the
+  // per-flavor ladder is FOR (it deliberately inverts per mode) — pointing
+  // base/soft at the solid ink ramp was a real bug (dark-mode contrast
+  // against the canvas measured 1.01/1.20 — invisible; WCAG minimum is
+  // 4.5). Strong stays on ink: at 0.93 dark / 0.15 light it's still 16.5:1,
+  // and matches solid's "+" for the loud-CTA identity that was the ask.
+  const textInk = (suffix: string) => (f === 'neutral' && suffix === '-strong' ? `var(--ty-solid-neutral${suffix})` : color(suffix))
   return `
 button.outlined.${f} {
-  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('')}));
-  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('')}));
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${textInk('')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${textInk('')}));
 }
 button.outlined.${f}.tone-plus {
-  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('-strong')}));
-  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('-strong')}));
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${textInk('-strong')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${textInk('-strong')}));
 }
 button.outlined.${f}.tone-minus {
-  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${color('-soft')}));
-  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${color('-soft')}));
+  color:        var(--ty-button-color,  var(--_muted-outlined-line, ${textInk('-soft')}));
+  border-color: var(--ty-button-border, var(--_muted-outlined-line, ${textInk('-soft')}));
 }
 button.outlined.${f}:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
+}
+/* Rest is whatever tone you picked; hover/active/focus always escalates to
+   the SAME peak — most-emphasized ("+") color, regardless of starting
+   tone. tone-plus is already there at rest, so this is a no-op for it.
+   :hover only, :not(.muted) — muted's hover-reveal is a DIFFERENT contract
+   (reveal the plain button's RESTING color, tested directly against it);
+   this rule would outrank that fallback and show strong instead.
+   :active/:focus-visible apply to muted too (no exclusion) — muted's own
+   reveal-on-press mechanism has much lower specificity than this rule, so
+   it simply wins outright, landing muted and plain on the same escalated
+   color when both are pressed — which is what muted's OWN test expects. */
+button.outlined.${f}:not(.muted):hover:not(:disabled),
+button.outlined.${f}:active:not(:disabled),
+button.outlined.${f}:focus-visible {
+  color:        var(--ty-button-color, ${textInk('-strong')});
+  border-color: var(--ty-button-border, ${textInk('-strong')});
 }
 `
 }
 
 const ghostFlavor = (f: string, fb?: string) => {
   const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
+  // Neutral+ only: bare text needs page contrast, which is what the
+  // per-flavor text ladder is FOR (it deliberately inverts per mode) — the
+  // solid ink ramp doesn't need to invert for readability, a fill reads as
+  // a shape regardless of its own lightness. Pointing base/soft neutral
+  // text at ink was a real bug: dark-mode contrast against the canvas
+  // measured 1.01/1.20 (WCAG minimum is 4.5), i.e. invisible. Strong stays
+  // on ink — at 0.93 dark / 0.15 light it's still far above threshold
+  // (16.5:1), and matches solid's "+" for the loud-CTA identity that was
+  // the actual ask.
+  const ink = (suffix: string) => (f === 'neutral' && suffix === '-strong' ? `var(--ty-solid-neutral${suffix})` : color(suffix))
   return `
-button.ghost.${f}            { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('')})); }
-button.ghost.${f}.tone-plus  { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('-strong')})); }
-button.ghost.${f}.tone-minus { color: var(--ty-button-color, var(--_muted-ghost-fg, ${color('-soft')})); }
+button.ghost.${f}            { color: var(--ty-button-color, var(--_muted-ghost-fg, ${ink('')})); }
+button.ghost.${f}.tone-plus  { color: var(--ty-button-color, var(--_muted-ghost-fg, ${ink('-strong')})); }
+button.ghost.${f}.tone-minus { color: var(--ty-button-color, var(--_muted-ghost-fg, ${ink('-soft')})); }
 button.ghost.${f}:hover:not(:disabled) {
   background: var(--ty-button-bg-hover, ${tokenRef('--ty-bg', f, '-soft', fb)});
+}
+/* See outlinedFlavor above — same escalation-to-peak, same :hover-only
+   :not(.muted) split, text only. */
+button.ghost.${f}:not(.muted):hover:not(:disabled),
+button.ghost.${f}:active:not(:disabled),
+button.ghost.${f}:focus-visible {
+  color: var(--ty-button-color, ${ink('-strong')});
 }
 `
 }
@@ -112,7 +207,10 @@ button {
   font-size: var(--ty-font-xs);
   line-height: var(--ty-leading-xs);
   letter-spacing: var(--ty-tracking-xs);
-  font-weight: var(--ty-font-semibold);
+  /* Mode-flipped weight dial (tyrell.css): medium in light, normal in dark —
+     light-on-dark text blooms, a fixed semibold read heavy there. Override
+     with --ty-weight-action at any scope. */
+  font-weight: var(--ty-weight-action, var(--ty-font-medium));
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
@@ -287,6 +385,13 @@ button.action.xl ::slotted(ty-icon) { height: 1.25rem; width: 1.25rem; }
    Hover reveal is gated to real pointers (touch has no hover); :active /
    :focus-visible cover the tap case so touch still gets the color on press. */
 
+/* --_muted-solid-* reads the SOLID neutral ink tokens — a fill's L doesn't
+   need page contrast. --_muted-outlined-line / --_muted-ghost-fg are bare
+   text/border and DO — they stay on the regular text ladder (it already
+   inverts correctly per mode), except tone-plus, which is legible AND
+   loud on the ink dial (16.5:1 dark, matches solid's "+" identity). Base/
+   soft on ink measured 1.01/1.20 dark contrast against the canvas —
+   invisible; WCAG minimum is 4.5. */
 button.muted {
   --_muted-solid-bg: var(--ty-solid-neutral);
   --_muted-solid-fg: var(--ty-solid-neutral-fg);
@@ -295,11 +400,16 @@ button.muted {
 }
 button.muted.tone-plus {
   --_muted-solid-bg: var(--ty-solid-neutral-strong);
-  --_muted-outlined-line: var(--ty-color-neutral-strong);
-  --_muted-ghost-fg: var(--ty-color-neutral-strong);
+  /* fg must track the tone's fill: neutral+ is inverted ink in dark mode
+     (white fill), so inheriting base neutral's white fg would be
+     white-on-white. */
+  --_muted-solid-fg: var(--ty-solid-neutral-strong-fg);
+  --_muted-outlined-line: var(--ty-solid-neutral-strong);
+  --_muted-ghost-fg: var(--ty-solid-neutral-strong);
 }
 button.muted.tone-minus {
   --_muted-solid-bg: var(--ty-solid-neutral-soft);
+  --_muted-solid-fg: var(--ty-solid-neutral-soft-fg);
   --_muted-outlined-line: var(--ty-color-neutral-soft);
   --_muted-ghost-fg: var(--ty-color-neutral-soft);
 }
@@ -355,26 +465,51 @@ button.pill.xl:has(ty-icon:only-child) { min-width: 2.5rem; min-height: 2.5rem; 
    ============================================================ */
 
 button.solid {
-  border: none;
   --_ring: var(--ty-color-neutral);
-  background: var(--ty-button-bg, var(--ty-solid-neutral));
-  color:      var(--ty-button-color, var(--ty-solid-neutral-fg));
+  --_solid-bg: var(--ty-button-bg, var(--ty-solid-neutral));
+  --_solid-rest: var(--ty-button-bg, var(--ty-solid-neutral));
+  /* Bare .solid is the flavorless default = neutral ink, so it takes the
+     neutral border offset; colored flavor rules reset this to the plain
+     dial. */
+  --_border-l: var(--ty-button-border-l-neutral, var(--ty-button-border-l, -0.15));
+  background: var(--_solid-bg);
+  color: var(--ty-button-color, var(--ty-solid-neutral-fg));
+  /* Depth chrome — border + drop shadow, both scaled by --ty-button-depth.
+     (A top-edge sheen — inset 0 1px 0 <lightened fill> — used to live here
+     too; dropped, it read as a dizzying bright line rather than a subtle
+     highlight.) depth 0 = border matches fill exactly and the shadow goes
+     transparent — pixel-flat, but the 1px border stays in the layout so
+     toggling depth never shifts geometry (and solid now shares the same
+     box as outlined/ghost, which always had a 1px border).
+     --ty-button-border-l flips sign with the mode (tyrell.css): dark mode
+     runs a LIGHTER-than-fill hairline (fills read washed-out against dark
+     surfaces without a lit edge), light mode a slightly darker one.
+     Direct escape hatches outrank the derivation: --ty-solid-border-color
+     pins the border to ANY color (the L-offset dials stop mattering), and
+     --ty-solid-border-width changes thickness (widths ≠ 1px do shift
+     geometry — that's inherent).
+     Browsers without relative color drop these declarations: border falls
+     back to the base button's 1px transparent, shadows to none. */
+  border: var(--ty-solid-border-width, 1px) solid
+    var(--ty-solid-border-color,
+        oklch(from var(--_solid-rest, var(--_solid-bg)) calc(l + var(--_border-l, -0.15) * var(--ty-button-depth, 0.35)) c h));
+  box-shadow: 0 1px 2px oklch(0 0 0 / calc(0.4 * var(--ty-button-depth, 0.35)));
 }
-button.solid.tone-plus  { background: var(--ty-button-bg, var(--ty-solid-neutral-strong)); color: var(--ty-button-color, var(--ty-solid-neutral-strong-fg)); }
-button.solid.tone-minus { background: var(--ty-button-bg, var(--ty-solid-neutral-soft)); color: var(--ty-button-color, var(--ty-solid-neutral-soft-fg)); }
-button.solid:hover:not(:disabled)  { background: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
-button.solid:active:not(:disabled) { background: var(--ty-solid-neutral-active); }
+button.solid.tone-plus  { --_solid-bg: var(--ty-button-bg, var(--ty-solid-neutral-strong)); --_solid-rest: var(--ty-button-bg, var(--ty-solid-neutral-strong)); color: var(--ty-button-color, var(--ty-solid-neutral-strong-fg)); }
+button.solid.tone-minus { --_solid-bg: var(--ty-button-bg, var(--ty-solid-neutral-soft)); --_solid-rest: var(--ty-button-bg, var(--ty-solid-neutral-soft)); color: var(--ty-button-color, var(--ty-solid-neutral-soft-fg)); }
+button.solid:hover:not(:disabled)  { --_solid-bg: var(--ty-button-bg-hover, var(--ty-solid-neutral-hover)); }
+button.solid:active:not(:disabled) { --_solid-bg: var(--ty-solid-neutral-active); }
 button.solid.tone-plus:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-strong) calc(l + var(--ty-solid-hover-l)) c h));
+  --_solid-bg: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-strong) calc(l + sign(0.5 - l) * abs(var(--ty-solid-hover-l))) c h));
 }
 button.solid.tone-plus:active:not(:disabled) {
-  background: oklch(from var(--ty-solid-neutral-strong) calc(l + var(--ty-solid-active-l)) c h);
+  --_solid-bg: oklch(from var(--ty-solid-neutral-strong) calc(l + sign(0.5 - l) * abs(var(--ty-solid-active-l))) c h);
 }
 button.solid.tone-minus:hover:not(:disabled) {
-  background: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-hover-l)) c h));
+  --_solid-bg: var(--ty-button-bg-hover, oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-hover-l)) c h));
 }
 button.solid.tone-minus:active:not(:disabled) {
-  background: oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-active-l)) c h);
+  --_solid-bg: oklch(from var(--ty-solid-neutral-soft) calc(l + var(--ty-solid-active-l)) c h);
 }
 
 ${FLAVORS.map((f) => solidFlavor(f)).join('')}

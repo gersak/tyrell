@@ -24,14 +24,16 @@ Import `tyrell-components` once at your app's entry point. Each component file r
 
 ```tsx
 // app/layout.tsx (Next.js) or src/main.tsx (Vite)
-import 'tyrell-components/css/tyrell.css'   // CSS via your bundler
-import 'tyrell-components'               // registers all <ty-*> components
+import 'tyrell-components/css/tyrell.css'        // structure — no color tokens
+import 'tyrell-components/css/tyrell-theme.css'  // colors — auto-contrast, seed-based rebranding
+import 'tyrell-components'                       // registers all <ty-*> components
 ```
 
 For smaller bundles, register only the components you use:
 
 ```tsx
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components/button'
 import 'tyrell-components/input'
 import 'tyrell-components/select'
@@ -51,7 +53,7 @@ Skip the bundler — load Tyrell from a `<script>` tag in your HTML head:
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 
-Or self-host by copying `node_modules/tyrell-components/dist/tyrell.js` and `node_modules/tyrell-components/css/tyrell.css` into your `public/` directory and pointing the tags there.
+Or self-host by copying `node_modules/tyrell-components/dist/tyrell.js`, `node_modules/tyrell-components/css/tyrell.css`, and `node_modules/tyrell-components/css/tyrell-theme.css` into your `public/` directory and pointing the tags there.
 
 #### Which should I pick?
 
@@ -696,6 +698,7 @@ Import this file once from your app entry to execute the registration:
 ```tsx
 // app/layout.tsx (Next.js)
 import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'
 import '@/lib/icons'   // runs registerIcons at module-eval time
 ```

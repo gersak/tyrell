@@ -71,8 +71,13 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
   onClose?: (event: CustomEvent<{}>) => void;
 }
 
+/** The underlying custom element, typed with its imperative clear() method. */
+export interface TyDatePickerElement extends HTMLElement {
+  clear(): void;
+}
+
 // React wrapper for ty-date-picker web component
-export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
+export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerProps>(
   ({ 
     value,
     size,
@@ -93,7 +98,7 @@ export const TyDatePicker = React.forwardRef<HTMLElement, TyDatePickerProps>(
     onClose,
     ...props 
   }, ref) => {
-    const elementRef = useRef<HTMLElement>(null);
+    const elementRef = useRef<TyDatePickerElement>(null);
 
     // Handle ref forwarding
     useEffect(() => {

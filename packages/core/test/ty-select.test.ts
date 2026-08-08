@@ -200,6 +200,9 @@ describe('ty-select', () => {
 
       const text = stub.querySelector('.dropdown-placeholder') as HTMLElement;
       expect(text.textContent).to.equal('Robots'); // placeholder, not labels
+      // Regression: compact relies on flex-basis:auto (content-hugging) —
+      // textContent alone doesn't catch a collapsed-to-0-width element.
+      expect(text.getBoundingClientRect().width, 'placeholder text is actually visible, not 0-width').to.be.greaterThan(0);
     });
 
     it('field skin (default) hides the badge and shows joined labels', async () => {
@@ -216,6 +219,173 @@ describe('ty-select', () => {
       expect((stub.querySelector('.dropdown-placeholder') as HTMLElement).textContent)
         .to.equal('Bobo, EYWA');
     });
+  });
+});
+
+describe('ty-select clearable', () => {
+  it('clear() empties a single selection and fires change with action "clear"', async () => {
+    const el = (await fixture(html`
+      <ty-select name="robot" value="bobo">
+        <ty-option value="bobo">Bobo</ty-option>
+        <ty-option value="eywa">EYWA</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    setTimeout(() => el.clear());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.action).to.equal('clear');
+    expect(ev.detail.value).to.equal(null);
+    expect(ev.detail.values).to.deep.equal([]);
+    expect(el.value).to.equal('');
+  });
+
+  it('clear() empties a multiple selection: value is [] not null', async () => {
+    const el = (await fixture(html`
+      <ty-select multiple value="bobo,eywa">
+        <ty-option value="bobo">Bobo</ty-option>
+        <ty-option value="eywa">EYWA</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    setTimeout(() => el.clear());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.action).to.equal('clear');
+    expect(ev.detail.value).to.deep.equal([]);
+    expect(el.value).to.equal('');
+  });
+
+  it('clear() on an already-empty select is a no-op (no change event)', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    let fired = false;
+    el.addEventListener('change', () => { fired = true; });
+    el.clear();
+    await new Promise((r) => setTimeout(r, 100));
+
+    expect(fired).to.be.false;
+  });
+
+  it('clicking .select-clear clears the selection and fires change', async () => {
+    const el = (await fixture(html`
+      <ty-select value="bobo">
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    const clearBtn = el.shadowRoot.querySelector('.select-clear') as HTMLButtonElement;
+    expect(clearBtn.hidden, 'visible: selected + clearable default true').to.be.false;
+
+    setTimeout(() => clearBtn.click());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.action).to.equal('clear');
+    expect(el.value).to.equal('');
+    // clicking clear must not also open the dropdown (stopPropagation)
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.false;
+  });
+
+  it('.select-clear is hidden when nothing is selected', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const clearBtn = el.shadowRoot.querySelector('.select-clear') as HTMLButtonElement;
+    expect(clearBtn.hidden).to.be.true;
+  });
+
+  it('not-clearable keeps the button hidden despite a selection', async () => {
+    const el = (await fixture(html`
+      <ty-select value="bobo" not-clearable>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const clearBtn = el.shadowRoot.querySelector('.select-clear') as HTMLButtonElement;
+    expect(clearBtn.hidden).to.be.true;
+  });
+
+  it('disabled and readonly keep the button hidden despite a selection', async () => {
+    const disabledEl = (await fixture(html`
+      <ty-select value="bobo" disabled>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    expect((disabledEl.shadowRoot.querySelector('.select-clear') as HTMLButtonElement).hidden).to.be.true;
+
+    const readonlyEl = (await fixture(html`
+      <ty-select value="bobo" readonly>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    expect((readonlyEl.shadowRoot.querySelector('.select-clear') as HTMLButtonElement).hidden).to.be.true;
+  });
+
+  it('clear() still works imperatively under slot="trigger", where the built-in button is not rendered', async () => {
+    const el = (await fixture(html`
+      <ty-select value="bobo">
+        <span slot="trigger">Custom trigger</span>
+        <ty-option value="bobo">Bobo</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    setTimeout(() => el.clear());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+    expect(ev.detail.action).to.equal('clear');
+    expect(el.value).to.equal('');
+  });
+
+  it('regression: a long joined-label selection stays single-line — clear button does not wrap to a second row', async () => {
+    // .dropdown-placeholder previously used flex: 1 1 auto. .select-stub is
+    // flex-wrap: wrap, and flex-wrap's line-assignment uses each item's
+    // HYPOTHETICAL (pre-shrink) size — for flex-basis:auto that's the full
+    // untruncated text width, not its visually-truncated width. With only
+    // the chevron (absolutely positioned, exempt from flex flow) as a
+    // sibling this never mattered; adding .select-clear as a real flex
+    // sibling exposed it — long text pushed the clear button onto a second
+    // line, growing the stub's height, even though the text was already
+    // truncating with ellipsis and there was visibly room on one line.
+    const el = (await fixture(html`
+      <ty-select multiple value="typescript,clojure,python,javascript" style="width:220px;">
+        <ty-option value="typescript">TypeScript</ty-option>
+        <ty-option value="clojure">Clojure</ty-option>
+        <ty-option value="python">Python</ty-option>
+        <ty-option value="javascript">JavaScript</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const clearBtn = stub.querySelector('.select-clear') as HTMLElement;
+    const chevron = stub.querySelector('.dropdown-chevron') as HTMLElement;
+    const placeholder = stub.querySelector('.dropdown-placeholder') as HTMLElement;
+
+    // The regression: clear button's top wraps below the text's top (a
+    // whole line lower). Same row = same top, regardless of the test
+    // harness's actual font-size/line-height (no design tokens loaded here).
+    expect(
+      clearBtn.getBoundingClientRect().top,
+      'clear button sits on the same row as the chevron, not wrapped below it',
+    ).to.be.closeTo(chevron.getBoundingClientRect().top, 2);
+    expect(
+      clearBtn.getBoundingClientRect().top,
+      'clear button sits on the same row as the truncated text, not wrapped below it',
+    ).to.be.closeTo(placeholder.getBoundingClientRect().top, 2);
   });
 });
 

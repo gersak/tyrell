@@ -127,6 +127,15 @@ const SEARCH_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentCol
 </svg>`;
 
 /**
+ * Clear (X) icon SVG — .select-clear button, shown in the trigger's fallback
+ * chrome (default/compact skins) when clearable and something is selected.
+ */
+const CLEAR_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <line x1="18" y1="6" x2="6" y2="18"></line>
+  <line x1="6" y1="6" x2="18" y2="18"></line>
+</svg>`;
+
+/**
  * Tag data structure
  */
 interface TagData {
@@ -253,6 +262,16 @@ export class TySelect extends TyComponent<SelectState> {
       visual: true,
       default: false,
     },
+    // Built-in × clear button in the default/compact trigger, shown once
+    // something is selected. Automatically absent under slot="trigger" —
+    // it lives in the slot's fallback content, same mechanism that already
+    // hides the chevron there. Default true matches ty-date-picker.
+    clearable: {
+      type: "boolean" as const,
+      visual: true,
+      default: true,
+      aliases: { "not-clearable": false },
+    },
     externalSearch: {
       type: "boolean" as const,
       visual: true,
@@ -289,6 +308,18 @@ export class TySelect extends TyComponent<SelectState> {
         if (v === false || v === "false") return "never";
         return "auto";
       },
+    },
+    // Horizontal anchor for the popup: "start" (default) matches the
+    // trigger's left edge, "end" matches its right edge — either way
+    // clamped into the viewport. Useful with slot="trigger" custom
+    // triggers whose own position makes left-anchoring look wrong (e.g.
+    // an icon button at the right edge of a toolbar).
+    align: {
+      type: "string" as const,
+      visual: true,
+      default: "start",
+      validate: (v: any) => ["start", "end"].includes(v),
+      coerce: (v: any) => (v === "end" ? "end" : "start"),
     },
     size: {
       type: "string" as const,
@@ -352,6 +383,7 @@ export class TySelect extends TyComponent<SelectState> {
   private _disabled = false;
   private _readonly = false;
   private _required = false;
+  private _clearable = true;
   private _externalSearch = false;
   private _allowCreate = false;
   private _createTransform: "none" | "slug" = "none";
@@ -567,6 +599,10 @@ export class TySelect extends TyComponent<SelectState> {
           break;
         case "required":
           this._required = newValue;
+          break;
+        case "clearable":
+          this._clearable = newValue;
+          if (this.isConnected && this.shadowRoot) this.updateSelectionDisplay();
           break;
         case "externalSearch":
           this._externalSearch = newValue;
@@ -895,6 +931,7 @@ export class TySelect extends TyComponent<SelectState> {
       anchorRect: stubRect,
       popupWidth,
       popupHeight: estimatedHeight,
+      align: this.getProperty("align") as "start" | "end",
     });
     const positionBelow = pos.below;
 
@@ -1225,6 +1262,21 @@ export class TySelect extends TyComponent<SelectState> {
     }
 
     this.openDropdown();
+  }
+
+  /**
+   * .select-clear click — must stop propagation before it bubbles to the
+   * stub's own click handler (which would otherwise also open the dropdown).
+   */
+  private handleClearClick(e: Event): void {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (this._disabled || this._readonly) {
+      return;
+    }
+
+    this.clear();
   }
 
   /**
@@ -1766,6 +1818,9 @@ export class TySelect extends TyComponent<SelectState> {
       stub.addEventListener("keydown", this.handleStubKeydown.bind(this) as EventListener);
     }
 
+    const clearBtn = shadow.querySelector(".select-clear");
+    clearBtn?.addEventListener("click", this.handleClearClick.bind(this));
+
     this.setupTriggerSlot();
 
     // Add tag click handler to slot
@@ -1853,6 +1908,9 @@ export class TySelect extends TyComponent<SelectState> {
                 <span class="dropdown-placeholder">${this._placeholder}</span>
                 <span class="select-count" hidden></span>
                 <slot name="end"></slot>
+                <button class="select-clear" type="button" aria-label="Clear selection" hidden>
+                  ${CLEAR_ICON_SVG}
+                </button>
                 <div class="dropdown-chevron">
                   ${CHEVRON_DOWN_SVG}
                 </div>
@@ -1973,6 +2031,9 @@ export class TySelect extends TyComponent<SelectState> {
                 <span class="dropdown-placeholder">${this._placeholder}</span>
                 <span class="select-count" hidden></span>
                 <slot name="end"></slot>
+                <button class="select-clear" type="button" aria-label="Clear selection" hidden>
+                  ${CLEAR_ICON_SVG}
+                </button>
                 <div class="dropdown-chevron">
                   ${CHEVRON_DOWN_SVG}
                 </div>
@@ -2036,6 +2097,9 @@ export class TySelect extends TyComponent<SelectState> {
       stub.addEventListener("click", (e) => this.handleMobileStubClick(e));
       stub.addEventListener("keydown", (e) => this.handleMobileStubKeydown(e as KeyboardEvent));
     }
+
+    const clearBtn = shadow.querySelector(".select-clear");
+    clearBtn?.addEventListener("click", this.handleClearClick.bind(this));
 
     this.setupTriggerSlot();
 
@@ -2202,6 +2266,11 @@ export class TySelect extends TyComponent<SelectState> {
       badge.hidden = count === 0 || !this._multiple || !this._compact;
     }
 
+    const clearBtn = stub.querySelector(".select-clear") as HTMLElement | null;
+    if (clearBtn) {
+      clearBtn.hidden = !(count > 0 && this._clearable && !this._disabled && !this._readonly);
+    }
+
     // Single select: project the selected option into the stub as a clone
     // (rich HTML content survives — same mechanism as ty-dropdown).
     const wantClone = !this._multiple && count > 0 ? values[0] : null;
@@ -2288,6 +2357,16 @@ export class TySelect extends TyComponent<SelectState> {
     );
   }
 
+  /**
+   * Clear the entire selection programmatically WITH a change event
+   * (action: 'clear'). No-op if nothing is selected. Exists so slot="trigger"
+   * consumers (custom chrome, built-in clear UI hidden by design) can wire
+   * their own clear icon's click handler to it.
+   */
+  clear(): void {
+    this.updateComponentValue([], true, "clear", null);
+  }
+
   get value(): string {
     // Always read from DOM - tags with 'selected' attribute are source of truth
     return this.getSelectedValues().join(",");
@@ -2361,6 +2440,14 @@ export class TySelect extends TyComponent<SelectState> {
     this.setProperty("readonly", value);
   }
 
+  get clearable(): boolean {
+    return this.getProperty("clearable");
+  }
+
+  set clearable(value: boolean) {
+    this.setProperty("clearable", value);
+  }
+
   get required(): boolean {
     return this.getProperty("required");
   }
@@ -2400,6 +2487,14 @@ export class TySelect extends TyComponent<SelectState> {
 
   set size(value: Size) {
     this.setProperty("size", value);
+  }
+
+  get align(): "start" | "end" {
+    return this.getProperty("align") as "start" | "end";
+  }
+
+  set align(value: "start" | "end") {
+    this.setProperty("align", value);
   }
 
   get flavor(): Flavor {

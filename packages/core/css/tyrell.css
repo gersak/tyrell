@@ -124,51 +124,10 @@ CSS VARIABLES - DESIGN TOKENS
 
 /* Default theme (light) */
 html {
-  /* =================================================================
-5-VARIANT COLOR SYSTEM
-Simplified from 7 variants to 5 practical variants:
--strong = Strong emphasis - active states, strong borders
--bold = Moderate emphasis - hover states, focus rings  
-= Base color - default appearance
--soft = Reduced emphasis - muted backgrounds, de-emphasis
--faint = Minimal emphasis - subtle hints, disabled states
-================================================================= */
-
-  /* Primary */
-  --ty-color-primary-strong: #163793;
-  --ty-color-primary-bold: #304c9f;
-  --ty-color-primary: #466bce;
-  --ty-color-primary-soft: #60a5fa;
-  --ty-color-primary-faint: #93c5fd;
-
-  /* Success */
-  --ty-color-success-strong: #177858;
-  --ty-color-success-bold: #3e9779;
-  --ty-color-success: #3eaa86;
-  --ty-color-success-soft: #64b399;
-  --ty-color-success-faint: #7fd4b2;
-
-  /* Danger */
-  --ty-color-danger-strong: #b91c1c;
-  --ty-color-danger-bold: #dc2626;
-  --ty-color-danger: #ef4444;
-  --ty-color-danger-soft: #f87171;
-  --ty-color-danger-faint: #fca5a5;
-
-  /* Warning */
-  --ty-color-warning-strong: #e86400;
-  --ty-color-warning-bold: #ee7f00;
-  --ty-color-warning: #f59e0b;
-  --ty-color-warning-soft: #fbbf24;
-  --ty-color-warning-faint: #fcd34d;
-
-  /* Neutral */
-  --ty-color-neutral-strong: #000000;
-  --ty-color-neutral-bold: #000000;
-  --ty-color-neutral: #111827;
-  --ty-color-neutral-soft: #374151;
-  --ty-color-neutral-faint: #9ca3af;
-
+  /* Color tokens (--ty-color-*, --ty-bg-{flavor}-*, --ty-border-*,
+     --ty-surface-*, --ty-text-*, --ty-input-{color}-*, --ty-solid-*) live
+     in tyrell-colors-static.css or tyrell-theme.css — load one of those
+     alongside this file. See CSS_GUIDE.md. */
 
   /* =================================================================
 BACKGROUND COLORS
@@ -188,51 +147,12 @@ BACKGROUND COLORS
   /* Focus ring gap - matches page background for button focus ring effect */
   --ty-focus-ring-gap: #ffffff;
 
-  /* Primary backgrounds */
-  --ty-bg-primary: #e3eefc;
-  --ty-bg-primary-bold: #d5e4f8;
-  --ty-bg-primary-soft: #eff6ff;
-
-  /* Success backgrounds */
-  --ty-bg-success: #d1fae5;
-  --ty-bg-success-bold: #a7f3d0;
-  --ty-bg-success-soft: #ecfdf5;
-
-  /* Danger backgrounds */
-  --ty-bg-danger: #fee2e2;
-  --ty-bg-danger-bold: #fecaca;
-  --ty-bg-danger-soft: #fef2f2;
-
-  /* Warning backgrounds */
-  --ty-bg-warning: #fef3c7;
-  --ty-bg-warning-bold: #fde68a;
-  --ty-bg-warning-soft: #fffbeb;
-
-  /* Neutral backgrounds */
-  --ty-bg-neutral: #e0e0e0;
-  --ty-bg-neutral-bold: #cecece;
-  --ty-bg-neutral-soft: #ededed;
-
-
   /* =================================================================
 BORDER COLORS
 ================================================================= */
 
-  --ty-border: #e5e7eb;
-  --ty-border-bold: #d1d5db;
-  --ty-border-strong: #6b7280;
-  --ty-border-soft: #f3f4f6;
-  --ty-border-faint: #fafafa;
-
   /* Border width — used as fallback by surface utilities (--ty-{surface}-border-width) */
   --ty-border-width: 1px;
-
-  /* Semantic borders */
-  --ty-border-primary: var(--ty-color-primary);
-  --ty-border-success: var(--ty-color-success);
-  --ty-border-danger: var(--ty-color-danger);
-  --ty-border-warning: var(--ty-color-warning);
-  --ty-border-neutral: var(--ty-color-neutral);
 
   /* =================================================================
 SCROLLBAR
@@ -248,19 +168,11 @@ SCROLLBAR
 SURFACE SYSTEM
 ================================================================= */
 
-  --ty-surface-canvas: #fcfcfc;
-  --ty-surface-content: #ffffff;
-  --ty-surface-elevated: #ffffff;
-  --ty-surface-floating: #ffffff;
-  --ty-surface-input: #ffffff;
-
   /* Surface borders — opt-in. Set color to make a surface's border visible.
      Width and style fall back to --ty-border-width and `solid` if unset. */
-  --ty-elevated-border: #e5e7eb;
   --ty-elevated-border-width: var(--ty-border-width);
   --ty-elevated-border-style: solid;
 
-  --ty-floating-border: #e5e7eb;
   --ty-floating-border-width: var(--ty-border-width);
   --ty-floating-border-style: solid;
 
@@ -268,12 +180,12 @@ SURFACE SYSTEM
   --ty-canvas-border-width: var(--ty-border-width);
   --ty-canvas-border-style: solid;
 
-  --ty-content-border: #e5e7eb;
   --ty-content-border-width: var(--ty-border-width);
   --ty-content-border-style: solid;
 
-  /* --ty-input-border is already declared above as a color token used by
-     <ty-input> shadow DOM; .ty-input utility reuses it. Width/style still here. */
+  /* --ty-input-border is a color token (tyrell-colors-static.css /
+     tyrell-theme.css) used by <ty-input> shadow DOM and .ty-input utility.
+     Width/style live here. */
   --ty-input-border-width: var(--ty-border-width);
   --ty-input-border-style: solid;
 
@@ -283,17 +195,6 @@ SURFACE SYSTEM
      dividers inside it. Inherits down the tree via CSS variable inheritance. */
   --ty-divide-color: var(--ty-border);
   --ty-divide-width: var(--ty-border-width);
-
-  /* =================================================================
-TEXT HIERARCHY
-================================================================= */
-
-  /* Text hierarchy - emphasis based, not semantic */
-  --ty-text: #111827;
-  --ty-text-bold: #000000;
-  --ty-text-strong: #000000;
-  --ty-text-soft: #374151;
-  --ty-text-faint: #9ca3af;
 
   /* =================================================================
 COMPONENT TOKENS
@@ -319,86 +220,7 @@ COMPONENT TOKENS
   --ty-modal-full-height: 95vh;
 
   /* Input component tokens */
-  --ty-input-bg: #ffffff;
-  --ty-input-color: #111827;
-  --ty-input-border: #e5e7eb;
-  --ty-input-border-hover: #d1d5db;
-  --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-shadow-focus: rgba(59, 130, 246, 0.1);
-  --ty-input-placeholder: #9ca3af;
-  --ty-input-disabled-bg: #f9fafb;
-  --ty-input-disabled-border: #e5e7eb;
-  --ty-input-disabled-color: #9ca3af;
   --ty-label-color: #374151;
-
-  /* Input semantic states — RESTING border for a flavored field. Soft on
-     purpose: the full-strength color is reserved for hover/focus, so the
-     emphasis ladder (rest → hover → focus+ring) reads like neutral's. */
-  --ty-input-success-border: var(--ty-color-success-soft);
-  --ty-input-danger-border: var(--ty-color-danger-soft);
-  --ty-input-warning-border: var(--ty-color-warning-soft);
-
-  /* =================================================================
-  SOLID BUTTON FILLS — plain default values (the contract). The smart
-  per-state derivation (hover/active/tone via OKLCH) lives in the theme
-  engine (tyrell-theme.css), not here. hover/active alias to -strong as
-  a simple default; a theme overrides them.
-  ================================================================= */
-
-  /* Primary */
-  --ty-solid-primary: #4076b9;
-  --ty-solid-primary-strong: var(--ty-color-primary-bold);
-  --ty-solid-primary-soft: #7ea7d9;
-  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
-  --ty-solid-primary-active: var(--ty-solid-primary-strong);
-  /* Per-fill fg, hand-picked (max contrast, tie→white) — this file has no
-     computed auto-contrast (that needs tyrell-theme.css's relative color
-     support), so each fill's correct fg is a literal, verified value.
-     Do NOT collapse back to one --ty-solid-X-fg per flavor: soft/strong
-     sit at different lightness and several fail WCAG AA against white. */
-  --ty-solid-primary-fg: white;
-  --ty-solid-primary-strong-fg: white;
-  --ty-solid-primary-soft-fg: black;
-
-  /* Success */
-  --ty-solid-success: #3bb68d;
-  --ty-solid-success-strong: #27956e;
-  --ty-solid-success-soft: #69b99e;
-  --ty-solid-success-hover: var(--ty-solid-success-strong);
-  --ty-solid-success-active: var(--ty-solid-success-strong);
-  --ty-solid-success-fg: black;
-  --ty-solid-success-strong-fg: black;
-  --ty-solid-success-soft-fg: black;
-
-  /* Danger */
-  --ty-solid-danger: #df5b5b;
-  --ty-solid-danger-strong: #cc3e3e;
-  --ty-solid-danger-soft: #d57a7a;
-  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
-  --ty-solid-danger-active: var(--ty-solid-danger-strong);
-  --ty-solid-danger-fg: black;
-  --ty-solid-danger-strong-fg: white;
-  --ty-solid-danger-soft-fg: black;
-
-  /* Warning */
-  --ty-solid-warning: #e1a644;
-  --ty-solid-warning-strong: #f59e0b;
-  --ty-solid-warning-soft: #fbc56d;
-  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
-  --ty-solid-warning-active: var(--ty-solid-warning-strong);
-  --ty-solid-warning-fg: black;
-  --ty-solid-warning-strong-fg: black;
-  --ty-solid-warning-soft-fg: black;
-
-  /* Neutral */
-  --ty-solid-neutral: #414141;
-  --ty-solid-neutral-strong: #000000;
-  --ty-solid-neutral-soft: #6e6e6e;
-  --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
-  --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
-  --ty-solid-neutral-fg: white;
-  --ty-solid-neutral-strong-fg: white;
-  --ty-solid-neutral-soft-fg: white;
 
   /* =================================================================
 DESIGN SYSTEM TOKENS
@@ -498,6 +320,39 @@ DESIGN SYSTEM TOKENS
   --ty-font-semibold: 590;
   --ty-font-bold: 680;
   --ty-font-extrabold: 800;
+
+  /* Semantic weight dials — MODE-FLIPPED (see the html.dark block).
+     Light text on dark surfaces optically blooms (halation), so dark mode
+     wants genuinely lighter weights than light mode; a single fixed weight
+     can't be right in both. Components consume these instead of the raw
+     scale above:
+       --ty-weight-action  buttons, interactive chrome
+       --ty-weight-label   tags, chips, badges
+     Theme these like any other token — per :root, html.dark, a named theme
+     pack, or one element. The theme layer registers them as typed numbers,
+     so with a variable font, weight crossfades during theme transitions
+     along with the colors. */
+  --ty-weight-action: var(--ty-font-medium);
+  --ty-weight-label: 440;
+
+  /* Solid-button depth chrome (consumed in button.ts):
+       --ty-button-depth     master intensity 0–1. 0 = pixel-flat (the old
+                             look), 1 = full tactile gloss. Scales the
+                             derived border offset, top sheen and drop
+                             shadow together. Themable per mode / theme
+                             pack / element like any other dial.
+       --ty-button-border-l  L-offset of the fill-derived 1px border,
+                             mode-flipped below: dark mode needs a LIGHTER-
+                             than-fill hairline (solids wash out against
+                             dark surfaces without a lit edge), light mode
+                             a slightly darker one. */
+  --ty-button-depth: 0.35;
+  --ty-button-border-l: -0.08;
+  /* Neutral (ink) gets its own, stronger edge: it has no hue separating it
+     from the canvas, so the same offset that reads fine on colored fills
+     nearly vanishes on it — especially in dark mode, where the ink fill
+     sits close to the page. */
+  --ty-button-border-l-neutral: -0.25;
 
   --ty-line-height-none: 1;
   --ty-line-height-tight: 1.25;
@@ -603,46 +458,20 @@ DARK THEME OVERRIDES
 
 html.dark,
 html[data-theme="dark"] {
-  /* =================================================================
-5-VARIANT COLOR SYSTEM - DARK THEME
-Emphasis logic inverts: lighter = more emphasis
-================================================================= */
+  /* Weight dials flip with the mode — light-on-dark text blooms, so dark
+     mode runs genuinely lighter. See the :root definitions. */
+  --ty-weight-action: var(--ty-font-normal);
+  --ty-weight-label: var(--ty-font-normal);
 
-  /* Primary */
-  --ty-color-primary-strong: #9cbde5;
-  --ty-color-primary-bold: #6c9bd5;
-  --ty-color-primary: #4976ae;
-  --ty-color-primary-soft: #4b698b;
-  --ty-color-primary-faint: #445b77;
-
-  /* Success */
-  --ty-color-success-strong: #c2f0df;
-  --ty-color-success-bold: #6ee7b7;
-  --ty-color-success: #3aba8b;
-  --ty-color-success-soft: #459679;
-  --ty-color-success-faint: #1b795c;
-
-  /* Danger */
-  --ty-color-danger-strong: #ffabab;
-  --ty-color-danger-bold: #e58787;
-  --ty-color-danger: #d06f6f;
-  --ty-color-danger-soft: #b06666;
-  --ty-color-danger-faint: #aa6e6e;
-
-  /* Warning */
-  --ty-color-warning-strong: #fde68a;
-  --ty-color-warning-bold: #fcd34d;
-  --ty-color-warning: #fbbf24;
-  --ty-color-warning-soft: #f59e0b;
-  --ty-color-warning-faint: #a06726;
-
-  /* Neutral */
-  --ty-color-neutral-strong: #ffffff;
-  --ty-color-neutral-bold: #f9fafb;
-  --ty-color-neutral: #d6d6d6;
-  --ty-color-neutral-soft: #696969;
-  --ty-color-neutral-faint: #474747;
-
+  /* Colored solid buttons: no border in dark mode — border color equals
+     the fill exactly, so it's geometrically present (depth 0 keeps
+     geometry stable) but invisible. Neutral keeps its own separate,
+     stronger dial (below) since its dark ink fill needs the lit edge to
+     read as a shape at all against a near-black canvas; colored fills
+     don't have that problem (their own hue/saturation already separates
+     them from the page), so no border reads as cleaner. */
+  --ty-button-border-l: 0;
+  --ty-button-border-l-neutral: 0.5;
 
   /* Backgrounds for dark mode */
   --ty-bg-faint: #0f1419;
@@ -654,59 +483,12 @@ Emphasis logic inverts: lighter = more emphasis
   /* Focus ring gap */
   --ty-focus-ring-gap: #1f2937;
 
-  /* Semantic backgrounds - much darker in dark mode */
-  --ty-bg-primary-bold: #43517a;
-  --ty-bg-primary: #394159;
-  --ty-bg-primary-soft: #323a4f;
-
-
-  --ty-bg-success: #3a4442;
-  --ty-bg-success-bold: #405752;
-  --ty-bg-success-soft: #2f3b38;
-
-  --ty-bg-danger-bold: #853535;
-  --ty-bg-danger: #522828;
-  --ty-bg-danger-soft: #483c3c;
-
-  --ty-bg-warning-bold: #743953;
-  --ty-bg-warning: #694555;
-  --ty-bg-warning-soft: #45333b;
-
-  --ty-bg-neutral-bold: #414141;
-  --ty-bg-neutral: #323232;
-  --ty-bg-neutral-soft: #242424;
-
-
-  /* Borders for dark mode */
-  --ty-border-strong: #8c8c8c;
-  --ty-border-bold: #666666;
-  --ty-border: #535353;
-  --ty-border-soft: #1f2937;
-  --ty-border-faint: #030712;
-
   /* Scrollbar - dark mode */
   --ty-scrollbar-thumb: rgba(255, 255, 255, 0.13);
   --ty-scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
   --ty-scrollbar-thumb-active: rgba(255, 255, 255, 0.3);
   --ty-scrollbar-track: transparent;
   --ty-scrollbar-track-hover: rgba(255, 255, 255, 0.04);
-
-  --ty-surface-canvas: black;
-  --ty-surface-content: #1a1a1a;
-  --ty-surface-elevated: #282828;
-  --ty-surface-floating: #343434;
-  --ty-surface-input: #1f2937;
-
-  --ty-content-border: #030712;
-  --ty-elevated-border: #414141;
-  --ty-border: #3e3e3e;
-  --ty-floating-border: #494949;
-
-  --ty-text-bold: #f9fafb;
-  --ty-text-strong: #ffffff;
-  --ty-text: #d6d6d6;
-  --ty-text-soft: #7f8590;
-  --ty-text-faint: #555a63;
 
   /* Shadows need to be darker/more prominent in dark mode */
   --ty-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
@@ -720,68 +502,7 @@ Emphasis logic inverts: lighter = more emphasis
     0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   --ty-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
-  /* Solid button fills — plain dark defaults. hover/active alias -strong;
-     theme engines override with smart per-state derivation. */
-  --ty-solid-primary: #3e536c;
-  --ty-solid-primary-strong: #426084;
-  --ty-solid-primary-soft: #343f4c;
-  --ty-solid-primary-hover: var(--ty-solid-primary-strong);
-  --ty-solid-primary-active: var(--ty-solid-primary-strong);
-  /* Hand-picked per-fill fg — see the light-mode comment above. Dark-mode
-     lightness ordering differs from light (soft/strong swap direction),
-     so these are independently verified, not mirrored. */
-  --ty-solid-primary-fg: white;
-  --ty-solid-primary-strong-fg: white;
-  --ty-solid-primary-soft-fg: white;
-
-
-  --ty-solid-success: #3bb68d;
-  --ty-solid-success-strong: #459679;
-  --ty-solid-success-soft: #285748;
-  --ty-solid-success-hover: var(--ty-solid-success-strong);
-  --ty-solid-success-active: var(--ty-solid-success-strong);
-  --ty-solid-success-fg: black;
-  --ty-solid-success-strong-fg: black;
-  --ty-solid-success-soft-fg: white;
-
-  --ty-solid-danger: #df5b5b;
-  --ty-solid-danger-strong: #cc3e3e;
-  --ty-solid-danger-soft: #875656;
-  --ty-solid-danger-hover: var(--ty-solid-danger-strong);
-  --ty-solid-danger-active: var(--ty-solid-danger-strong);
-  --ty-solid-danger-fg: black;
-  --ty-solid-danger-strong-fg: white;
-  --ty-solid-danger-soft-fg: white;
-
-  --ty-solid-warning: #e1a644;
-  --ty-solid-warning-strong: #f59e0b;
-  --ty-solid-warning-soft: #8b6334;
-  --ty-solid-warning-hover: var(--ty-solid-warning-strong);
-  --ty-solid-warning-active: var(--ty-solid-warning-strong);
-  --ty-solid-warning-fg: black;
-  --ty-solid-warning-strong-fg: black;
-  --ty-solid-warning-soft-fg: white;
-
-  --ty-solid-neutral: #414141;
-  --ty-solid-neutral-strong: #4c4c4c;
-  --ty-solid-neutral-soft: #2a2a2a;
-  --ty-solid-neutral-hover: var(--ty-solid-neutral-strong);
-  --ty-solid-neutral-active: var(--ty-solid-neutral-strong);
-  --ty-solid-neutral-fg: white;
-  --ty-solid-neutral-strong-fg: white;
-  --ty-solid-neutral-soft-fg: white;
-
   /* Input component tokens - dark mode */
-  --ty-input-bg: #1b1b1b;
-  --ty-input-color: #f9fafb;
-  --ty-input-border: #3a3a3a;
-  --ty-input-border-hover: #505050;
-  --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-shadow-focus: rgba(96, 165, 250, 0.1);
-  --ty-input-placeholder: #717171;
-  --ty-input-disabled-bg: #282828;
-  --ty-input-disabled-border: #2e2e2e;
-  --ty-input-disabled-color: #717171;
   --ty-label-color: #d1d5db;
 
   /* Modal - dark mode */

@@ -12,7 +12,7 @@
     "shadow-cljs": "^2.28.10"
   },
   "scripts": {
-    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css && cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css",
     "dev": "shadow-cljs -A:dev watch dev"
   }
 }

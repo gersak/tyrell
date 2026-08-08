@@ -387,6 +387,10 @@ export interface AnchoredPopupOptions {
   gap?: number;
   /** Minimum distance from viewport edges (px, default 8) */
   padding?: number;
+  /** Horizontal anchor edge: trigger's left edge ("start", default) or
+   *  right edge ("end"). Either way the result is clamped into the
+   *  viewport, same as before. */
+  align?: "start" | "end";
 }
 
 export interface AnchoredPopupPosition {
@@ -414,11 +418,11 @@ export function computeAnchoredPosition(o: AnchoredPopupOptions): AnchoredPopupP
   const below =
     spaceBelow >= o.popupHeight + gap + padding || spaceBelow >= spaceAbove;
 
-  // Anchor to the trigger's left edge, clamped into the viewport
-  const x = Math.max(
-    padding,
-    Math.min(o.anchorRect.left, vw - o.popupWidth - padding),
-  );
+  // Anchor to the trigger's left edge ("start") or right edge ("end"),
+  // clamped into the viewport either way.
+  const rawX =
+    o.align === "end" ? o.anchorRect.right - o.popupWidth : o.anchorRect.left;
+  const x = Math.max(padding, Math.min(rawX, vw - o.popupWidth - padding));
 
   return {
     x,

@@ -36,6 +36,7 @@ import 'tyrell-components/input'
 <html>
 <head>
   <link rel="stylesheet" href="path/to/tyrell.css">
+  <link rel="stylesheet" href="path/to/tyrell-theme.css">
 </head>
 <body class="ty-canvas">
   

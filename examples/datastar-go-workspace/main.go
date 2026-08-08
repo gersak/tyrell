@@ -428,6 +428,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
 
   <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@tc/dist/tyrell.js"></script>
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@tc/css/tyrell.css">
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@tc/css/tyrell-theme.css">
   <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-RC.8/bundles/datastar.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 

@@ -547,22 +547,23 @@ html:root, [data-ty-theme] {
      (common/code-block (typography-integration-css) "css")]]])
 
 (defn css-architecture-explanation
-  "Critical warning: components render unstyled without tyrell.css"
+  "Critical warning: components render unstyled without tyrell.css + tyrell-theme.css"
   []
   [:div.ty-bg-primary-.border.ty-border-primary.p-6.rounded-xl
    [:div.flex.items-start.gap-4
     [:ty-icon.ty-text-primary++.flex-shrink-0.mt-1 {:name "alert-triangle"
                                                     :size "lg"}]
     [:div
-     [:h3.text-xl.font-bold.ty-text-primary++.mb-3 "tyrell.css is REQUIRED"]
+     [:h3.text-xl.font-bold.ty-text-primary++.mb-3 "tyrell.css + tyrell-theme.css are REQUIRED"]
      [:p.ty-text-primary.mb-3
-      "Every setup below requires " [:code.ty-bg-primary.px-2.py-1.rounded.font-mono "tyrell.css"]
-      ". Components depend on CSS variables defined in this stylesheet. Without it, components "
+      "Every setup below requires both " [:code.ty-bg-primary.px-2.py-1.rounded.font-mono "tyrell.css"]
+      " (structure) and " [:code.ty-bg-primary.px-2.py-1.rounded.font-mono "tyrell-theme.css"]
+      " (every color token — tyrell.css itself has none). Without both, components "
       [:strong "render but have no styling"] "."]
      [:div.p-4.rounded-lg
-      [:p.text-sm.ty-text-primary++.font-medium.mb-2 "What breaks without tyrell.css:"]
+      [:p.text-sm.ty-text-primary++.font-medium.mb-2 "What breaks without them:"]
       [:ul.space-y-1.text-sm.ty-text-primary
-       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No colors (CSS variables undefined)"]
+       [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No colors (CSS variables undefined without tyrell-theme.css)"]
        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No layout (surface hierarchy missing)"]
        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] "No theme switching"]
        [:li.flex.items-center.gap-1 [:ty-icon.ty-text-danger.flex-shrink-0 {:name "x-circle" :size "xs"}] [:span "Utility classes (" [:code.font-mono "ty-bg-primary"] ") don't work"]]]]]]])

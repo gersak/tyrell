@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Reagent + UIx + Replicant coexisting via tyrell.shim web components",
   "scripts": {
-    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css && cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css",
     "dev": "shadow-cljs -A:dev watch dev",
     "release": "shadow-cljs -A:dev release release"
   },

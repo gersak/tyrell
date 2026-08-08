@@ -21,7 +21,7 @@ export interface TySelectEventDetail {
   /** Rich info per selected value — enough to render chips out-of-band */
   items: TySelectItem[];
   /** Action that triggered the change */
-  action: 'add' | 'remove' | 'clear' | 'set';
+  action: 'add' | 'remove' | 'clear' | 'set' | 'create';
   /** The specific value that changed */
   item: string | null;
 }
@@ -93,6 +93,12 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
   size?: 'sm' | 'md' | 'lg';
 
+  /** Horizontal popup anchor: "start" (default, trigger's left edge) or "end" (trigger's right edge) — clamped into the viewport either way. Useful with a custom slot="trigger" element. */
+  align?: 'start' | 'end';
+
+  /** Built-in x clear button in the default/compact trigger, shown once something is selected. Default true. Not shown with slot="trigger" — use the ref's clear() method there instead. */
+  clearable?: boolean;
+
   /** Visual flavor for the field border — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens */
   flavor?: ShadedFlavor | (string & {});
 
@@ -115,8 +121,13 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   children?: React.ReactNode;
 }
 
+/** The underlying custom element, typed with its imperative clear() method — useful with a ref, e.g. for slot="trigger" custom triggers that call it directly instead of relying on the built-in clear button. */
+export interface TySelectElement extends HTMLElement {
+  clear(): void;
+}
+
 // React wrapper for ty-select web component
-export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
+export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
   ({
     value,
     multiple,
@@ -134,6 +145,8 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     createTransform,
     loading,
     size,
+    align,
+    clearable,
     flavor,
     onChange,
     onSearch,
@@ -143,7 +156,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     children,
     ...props
   }, ref) => {
-    const elementRef = useRef<HTMLElement>(null);
+    const elementRef = useRef<TySelectElement>(null);
 
     // Handle ref forwarding
     useEffect(() => {
@@ -212,6 +225,7 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     const isLoading = useBooleanProperty(elementRef, 'loading', loading);
     const isExternalSearch = useBooleanProperty(elementRef, 'externalSearch', externalSearch);
     const isAllowCreate = useBooleanProperty(elementRef, 'allowCreate', allowCreate);
+    const isClearable = useBooleanProperty(elementRef, 'clearable', clearable);
 
     // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
@@ -237,6 +251,8 @@ export const TySelect = React.forwardRef<HTMLElement, TySelectProps>(
     if (label) webComponentProps.label = label;
     if (name) webComponentProps.name = name;
     if (size) webComponentProps.size = size;
+    if (align) webComponentProps.align = align;
+    if (isClearable) webComponentProps.clearable = '';
     if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();
     if (createTransform) webComponentProps['create-transform'] = createTransform;

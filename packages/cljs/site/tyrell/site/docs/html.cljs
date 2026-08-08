@@ -207,6 +207,8 @@
         "<head>
   <link rel=\"stylesheet\"
         href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
+  <link rel=\"stylesheet\"
+        href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css\">
   <script type=\"module\"
           src=\"https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js\"></script>
 </head>

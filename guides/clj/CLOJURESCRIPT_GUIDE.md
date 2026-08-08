@@ -68,6 +68,7 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
 ```css
 /* C. Tailwind / PostCSS pipeline — add to your CSS entrypoint */
 @import "../node_modules/tyrell-components/css/tyrell.css";
+@import "../node_modules/tyrell-components/css/tyrell-theme.css";
 @import "tailwindcss";
 ```
 
@@ -102,6 +103,7 @@ For server-rendered apps or when you don't want NPM in the loop:
 
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 

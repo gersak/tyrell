@@ -60,7 +60,15 @@
       {:name "size"
        :type "string"
        :default "\"md\""
-       :description "Size variant: sm, md, lg"}])]
+       :description "Size variant: sm, md, lg"}
+      {:name "align"
+       :type "string"
+       :default "\"start\""
+       :description "Horizontal popup anchor: start (default, trigger's left edge) or end (trigger's right edge) — clamped into the viewport either way. Useful with slot=\"trigger\" when the custom trigger sits near the right edge of its container."}
+      {:name "clearable"
+       :type "boolean"
+       :default "true"
+       :description "Show a built-in × clear button when there's a selection. Not shown with slot=\"trigger\" — that skin replaces all built-in chrome; call the clear() method on the element instead. Use not-clearable (or clearable=\"false\") to suppress it."}])]
 
    [:div.mb-6
     (section-label "ty-selected-options Attributes")
@@ -378,7 +386,7 @@
   e.detail.value   // 'a' (single) or ['a', 'b'] (multiple)
   e.detail.values  // ['a', 'b'] — always the array form
   e.detail.items   // [{value:'a', label:'Alpha', flavor:'danger'}, ...]
-  e.detail.action  // 'add' | 'remove' | 'set'
+  e.detail.action  // 'add' | 'remove' | 'set' | 'clear' | 'create'
   e.detail.item    // the value that changed
 });" "javascript")])
 

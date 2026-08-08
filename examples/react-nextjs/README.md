@@ -237,6 +237,7 @@ Make sure to import Ty CSS in your global styles:
 ```css
 /* app/globals.css */
 @import 'tyrell-components/css/tyrell.css';
+@import 'tyrell-components/css/tyrell-theme.css';
 
 /* Your custom styles */
 ```
@@ -252,6 +253,10 @@ export default function RootLayout({ children }) {
         <link 
           rel="stylesheet" 
           href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css"
+        />
+        <link 
+          rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css"
         />
       </head>
       <body>{children}</body>

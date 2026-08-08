@@ -16,7 +16,7 @@
     "tailwindcss": "4.1"
   },
   "scripts": {
-    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css",
+    "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css && cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css",
     "css:build": "@tailwindcss/cli -i src/input.css -o public/css/app.css",
     "css:watch": "@tailwindcss/cli -i src/input.css -o public/css/app.css --watch",
     "dev": "shadow-cljs -A:dev watch dev"

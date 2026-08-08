@@ -277,8 +277,16 @@ export const selectBaseStyles = `
 
 /* Open state — same escalation as ty-input's .focused: bolder border + ring.
    Applies whenever the stub stays visible while open (field skin without
-   the opacity-hide above kicking in — e.g. single-select with no tags). */
-.dropdown-wrapper:has(.dropdown-chevron.open) .select-stub,
+   the opacity-hide above kicking in — e.g. single-select with no tags).
+   :not(.custom-trigger) — that skin has its own unconditional box-shadow:
+   none reset below; excluding it here keeps the two rules from competing
+   on specificity (:has()/:not() here would otherwise outrank it).
+   :not(:has(search:focus)) — the search row auto-focuses on open, which
+   already carries its own real :focus ring (below); without this guard the
+   stub's "fake" open-ring stacks on top of it, and the field reads as two
+   simultaneously-focused controls. Real focus wins; the stub ring is only
+   for select skins that have nothing else to show it. */
+.dropdown-wrapper:has(.dropdown-chevron.open):not(:has(.dropdown-search-input:focus)) .select-stub:not(.custom-trigger),
 .select-stub:focus,
 .select-stub:focus-visible {
   border-color: var(--select-accent-bold, var(--input-border-focus, var(--ty-input-border-focus)));
@@ -373,8 +381,14 @@ export const selectBaseStyles = `
 /* Options area styling - Override for select */
 .dropdown-options {
   opacity: 0;
-  background: var(--input-bg, var(--ty-input-bg));
-  border: 1px solid var(--input-border, var(--ty-input-border));
+  /* Floating surface/border, not --input-* — this is a popup panel over
+     arbitrary page content, not a form field. --ty-input-border resolves to
+     the deliberately-faint resting-state input border (barely visible by
+     design, escalates on hover/focus); reused here it made the popup's own
+     edge nearly invisible against the page behind it. --ty-floating-border
+     is the token tuned for exactly this: floating panels over content. */
+  background: var(--ty-surface-floating);
+  border: 1px solid var(--ty-floating-border);
   border-radius: var(--ty-radius-lg);
   max-height: 16rem;
   width: 100%;
@@ -878,8 +892,8 @@ export const selectBaseStyles = `
   font-size: var(--ty-font-sm);
   min-height: 4rem;
   /* Match the .dropdown-options popup look — same background, border, radius, shadow */
-  background: var(--ty-loader-bg, var(--input-bg, var(--ty-input-bg)));
-  border: 1px solid var(--ty-loader-border, var(--input-border, var(--ty-input-border)));
+  background: var(--ty-loader-bg, var(--ty-surface-floating));
+  border: 1px solid var(--ty-loader-border, var(--ty-floating-border));
   border-radius: var(--ty-loader-radius, var(--ty-radius-lg));
   box-shadow: var(--ty-loader-shadow, 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04));
   box-sizing: border-box;

@@ -297,6 +297,7 @@ npm install tyrell-react"
       "Skip the all-in-one import; pull in just the components your app renders."]
      (common/code-block
       "import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components/button'
 import 'tyrell-components/input'
 import 'tyrell-components/dropdown'
@@ -326,6 +327,7 @@ import 'tyrell-components/modal'"
       :tagline [(fw "Vite") " · " (fw "Webpack") " · " (fw "Next") " · " (fw "Astro") " · "
                 (fw "Rollup") " · " (fw "Bun") " — standard ESM, honours " [:code.font-mono.text-xs "sideEffects"] "."]
       :snippet "import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'
 import 'tyrell-components'"
       :snippet-lang "typescript"
       :cta "Skim subpath imports"
@@ -337,9 +339,10 @@ import 'tyrell-components'"
      {:eyebrow "Zero build"
       :icon "zap"
       :title "CDN script tag"
-      :tagline [(fw "HTMX") " · " (fw "Flask") " · " (fw "Rails") " · " (fw "PHP") " — paste two tags into "
+      :tagline [(fw "HTMX") " · " (fw "Flask") " · " (fw "Rails") " · " (fw "PHP") " — paste three tags into "
                 [:code.font-mono.text-xs "<head>"] " and you're done."]
       :snippet "<link rel=\"stylesheet\" href=\"…/tyrell.css\">
+<link rel=\"stylesheet\" href=\"…/tyrell-theme.css\">
 <script type=\"module\"
         src=\"…/tyrell.js\"></script>"
       :snippet-lang "html"

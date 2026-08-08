@@ -33,7 +33,7 @@ If `../datastar-go/` is already running on `:8080`, both can coexist.
 
 ## Patterns worth noting
 
-- **`@tc` dist tag.** Both `dist/tyrell.js` and `css/tyrell.css` are pulled from
+- **`@tc` dist tag.** `dist/tyrell.js`, `css/tyrell.css`, and `css/tyrell-theme.css` are all pulled from
   `tyrell-components@tc` on jsDelivr — that tag tracks the latest TC build
   (e.g. `1.0.0-TC15`). `@latest` would pin to RC6.
 - **Server-rendered icons.** Same trick as the first example: a `tyIcon()`

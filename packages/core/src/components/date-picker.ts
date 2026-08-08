@@ -1245,6 +1245,16 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     }
   }
 
+  /**
+   * Clear the date value programmatically WITH a change event (source:
+   * 'clear'). Works regardless of the `clearable` attribute — lets any
+   * external trigger (e.g. a button elsewhere in the page) clear the value
+   * without needing the built-in clear button. Mirrors ty-select's clear().
+   */
+  clear(): void {
+    this.clearValue();
+  }
+
   // ==========================================================================
   // Rendering & DOM Management
   // ==========================================================================

@@ -287,13 +287,17 @@ THE select control. Single select by default with a form-field look matching `ty
 | `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
 | `disabled` / `readonly` / `required` | boolean | `false` | |
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
+| `align` | string | `'start'` | Horizontal popup anchor: `'start'` (trigger's left edge) or `'end'` (trigger's right edge) — clamped into the viewport either way. Useful with `slot="trigger"` when the custom trigger sits near the right edge of its container |
+| `clearable` | boolean | `true` | Built-in × clear button in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. `not-clearable` (or `clearable="false"`) opts out |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
 **Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-options` templates.
 
 **Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
 
-**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` includes `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
+**Methods:** `clear()` — empties the entire selection and fires `change` (`action: 'clear'`); no-op if nothing is selected. Works regardless of `clearable`/skin, so `slot="trigger"` consumers can wire their own clear icon's click handler to it directly. `deselectValue(value)` — removes one value and fires `change` (`action: 'remove'`); used internally by `ty-selected-options` chip dismissal.
+
+**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` is `'set' | 'add' | 'remove' | 'clear' | 'create'` — `'clear'` from the clear button or `clear()`, `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
 
 **Companion:** `<ty-selected-options for="id">` renders the selection as dismissible chips anywhere in the layout; optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup. Also registered as **`ty-selected-tags`** — original tag name, kept working indefinitely.
 
@@ -405,9 +409,12 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 | `required` | boolean | `false` | |
 | `locale` | string | `'en-US'` | |
 | `size` | string | `'md'` | |
+| `clearable` | boolean | `true` | Built-in × clear button in the stub, shown once a date is selected. Suppressed while `disabled`. Use `not-clearable` (or `clearable="false"`) to opt out. |
 | `flavor` | string | `'default'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the stub border + focus ring (override via `--date-picker-accent` / `--date-picker-accent-bold` / `--date-picker-ring`) and the popup calendar's selected/today day (forwarded to the nested `ty-calendar`). |
 
-**Events:** `change` | **Form value:** UTC ISO `2024-09-21T08:30:00.000Z`
+**Methods:** `clear()` — clears the value programmatically and fires `change` (`detail.source: 'clear'`); works regardless of `clearable`, for any external trigger that wants to clear the field without the built-in button.
+
+**Events:** `change` -> `{ value, localValue, milliseconds, formatted, source }` (`source` is `'selection' | 'time-change' | 'clear' | 'external'`) | **Form value:** UTC ISO `2024-09-21T08:30:00.000Z`
 
 **Keyboard + ARIA:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="button"` (it's a trigger, not editable text) / `aria-haspopup="dialog"` / `aria-expanded` / `aria-labelledby` (when `label` is set). `Enter`/`Space` open the closed, focused field, not just a mouse click. The popup itself is a native `<dialog>` opened via `showModal()`, so it already gets `role="dialog"` + focus-trap semantics from the browser for free.
 
@@ -542,14 +549,13 @@ npm install tyrell-react
 <!-- CDN -->
 <script src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell.css">
-<!-- tyrell-theme.css: auto-contrast text, seed-based rebranding, named/
-     scoped themes, animated theme transitions. Loads AFTER tyrell.css and
-     overrides its static colors — add it unless you specifically need the
-     static-color fallback below. See CSS_GUIDE.md → Color Customization. -->
+<!-- tyrell.css alone has no color tokens. tyrell-theme.css supplies them via
+     auto-contrast text, seed-based rebranding, named/scoped themes, animated
+     theme transitions. See CSS_GUIDE.md → Color Customization. -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@latest/css/tyrell-theme.css">
 ```
 
-`tyrell.css` alone still renders everything correctly — it's the maximum-compatibility path (no relative-color-syntax requirement, works on older browsers) — but its colors are static hex values with no theming API. Use it alone only if you've made that trade-off deliberately.
+Don't want the theme engine? Swap `tyrell-theme.css` for `tyrell-colors-static.css` — a plain hardcoded hex fallback palette, maximum-compatibility (no relative-color-syntax requirement, works on older browsers), no theming API. Use it only if you've made that trade-off deliberately.
 
 ```clojure
 ;; ClojureScript (Clojars)
