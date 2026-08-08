@@ -29,8 +29,8 @@
          playground sliders + Reset button agree with first-paint values. -->
     <style>
         :root {
-            --ty-brand-hue: 45;
-            --ty-brand-chroma: 0.125;
+            --ty-brand-hue: 52;
+            --ty-brand-chroma: 0.170;
         }
     </style>
 

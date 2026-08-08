@@ -16,8 +16,8 @@
 (def ^:private default-seeds
   {;; SEEDS — site defaults (also mirrored as :root overrides in
    ;; packages/cljs/public/index.html so first paint matches before CLJS boots).
-   :brand-hue 45
-   :brand-chroma 0.125
+   :brand-hue 52
+   :brand-chroma 0.170
    ;; PER-FLAVOR HUES — semantic anchors. Defaults match the brand layer's
    ;; CSS fallbacks. Chroma stays bound to the per-flavor multipliers in
    ;; tyrell-theme.css (success ×1.08, warning ×1.15, danger ×1.31) so
