@@ -3,4 +3,4 @@
 // Run 'npm run generate:version' to regenerate.
 
 /** Current version of tyrell-react. Synced with package.json on build. */
-export const VERSION = '1.0.0-TC45'
+export const VERSION = '1.0.0-RC13'

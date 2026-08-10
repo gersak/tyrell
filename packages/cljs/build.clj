@@ -7,12 +7,8 @@
    [deps-deploy.deps-deploy :as deploy]
    [tyrell.template :as template]))
 
-;; Clojars versions (dev.gersak/tyrell, dev.gersak/tyrell-icons).
-;; NOT the NPM version — the docs site pins tyrell-components from
-;; packages/core/package.json via read-ty-version, which shadows this
-;; inside github-pages. These two have diverged and that is fine.
-(def ty-version "1.0.0-RC12")
-(def ty-icons-version "1.0.0-RC12")
+(def ty-version "1.0.0-RC13")
+(def ty-icons-version "1.0.0-RC13")
 (def class-dir "target/classes")
 
 ;; Library configurations
@@ -232,9 +228,20 @@
     (println "  5. GitHub Actions will deploy automatically")
     (println "")))
 
+(defn- sync-npm-deps!
+  "Pin resources/tyrell/deps.cljs to the current tyrell-components npm version
+   so the jar always requests what packages/core/package.json publishes."
+  []
+  (let [npm-version (read-ty-version)]
+    (spit "resources/tyrell/deps.cljs"
+          (str "{:npm-deps {\"tyrell-components\" \"" npm-version "\"}\n"
+               " :npm-deps/keep-versions true}\n"))
+    (println "Pinned tyrell-components npm dep to" npm-version)))
+
 (defn build-ty [_]
   (println "Building dev.gersak/tyrell...")
   (clean nil)
+  (sync-npm-deps!)
   (create-pom ty-lib)
   (create-jar ty-lib)
   (println "Built:" (:jar-file ty-lib)))
