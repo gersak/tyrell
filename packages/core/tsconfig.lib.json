@@ -1,32 +1,25 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    // Output to lib/ directory for NPM
     "outDir": "./lib",
     "rootDir": "./src",
-    
-    // Generate declarations
-    "declaration": true,
-    "declarationMap": true,
-    
-    // Source maps for debugging
-    "sourceMap": true,
-    
-    // ES2020 modules (tree-shakeable)
+
+    // JS pass only — declarations are emitted by tsconfig.lib.dts.json, which
+    // keeps JSDoc so consumers still get hover docs. Comments are stripped here
+    // because nobody reads the shipped .js.
+    "declaration": false,
+    "declarationMap": false,
+    "removeComments": true,
+
+    // No source maps: they resolved to ../../src/*.ts, which `files` never
+    // publishes, and sourcesContent was not embedded — dead weight for consumers.
+    "sourceMap": false,
+
     "target": "ES2020",
     "module": "ES2020",
     "moduleResolution": "node",
-    
-    // Preserve JSX (if needed in future)
     "jsx": "preserve",
-    
-    // Emit everything individually (no bundling)
-    "outDir": "./lib",
-    
-    // Keep file structure
-    "declarationMap": true,
-    
-    // Strict type checking
+
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,

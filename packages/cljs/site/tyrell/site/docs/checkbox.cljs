@@ -112,9 +112,9 @@
            "."]]
          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
           [:ty-checkbox {:flavor "success"}]
-          [:span.whitespace-nowrap
+          [:span.whitespace-nowrap.inline-flex.items-center.gap-1
            [:ty-icon.ty-text-success {:name "shield-check" :size "14"}]
-           " Enable two-factor authentication"]]])
+           "Enable two-factor authentication"]]])
        (code-block "<label>
   <ty-checkbox required></ty-checkbox>
   I agree to the <a href=\"/terms\">Terms</a> and <a href=\"/privacy\">Privacy</a>.
@@ -187,7 +187,7 @@
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
         "Fully form-associated — participates in FormData, submit, reset, and constraint validation like a native checkbox."]
        (demo-area
-        [:form.space-y-3
+        [:form.flex.flex-wrap.items-center.gap-4
          {:on {:submit (fn [e]
                          (.preventDefault e)
                          (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
@@ -199,7 +199,7 @@
           [:ty-checkbox {:name "terms" :required ""}]
           [:span "I accept the terms "
            [:span.ty-text-danger "*"]]]
-         [:button.ty-bg-primary.ty-text++.rounded {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
        (code-block "<form>
   <label>
     <ty-checkbox name=\"newsletter\" value=\"yes\"></ty-checkbox>
@@ -209,7 +209,7 @@
     <ty-checkbox name=\"terms\" required></ty-checkbox>
     I accept the terms
   </label>
-  <button type=\"submit\">Submit</button>
+  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>")]
 
       [:div.ty-content.rounded-lg.p-5

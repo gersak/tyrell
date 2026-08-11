@@ -156,12 +156,11 @@
                          (let [data (js/FormData. (.-target e))]
                            (js/alert (str "Date: " (.get data "start-date")))))}}
          [:ty-date-picker {:name "start-date" :label "Start date" :required ""}]
-         [:button.ty-bg-primary.ty-text++.rounded
-          {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
        (code-block "<form>
   <ty-date-picker name=\"start-date\" label=\"Start date\" required>
   </ty-date-picker>
-  <button type=\"submit\">Submit</button>
+  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>
 <!-- FormData: start-date=2025-06-15 -->")]
 

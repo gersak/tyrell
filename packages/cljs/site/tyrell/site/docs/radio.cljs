@@ -206,14 +206,14 @@
            [:ty-radio {:value "phone"}] [:span "Phone"]]
           [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
            [:ty-radio {:value "sms"}] [:span "SMS"]]]
-         [:button.ty-bg-primary.ty-text++.rounded {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
        (code-block "<form>
   <ty-radio-group name=\"contact\" label=\"Preferred contact\" required value=\"email\">
     <label><ty-radio value=\"email\"></ty-radio> Email</label>
     <label><ty-radio value=\"phone\"></ty-radio> Phone</label>
     <label><ty-radio value=\"sms\"></ty-radio> SMS</label>
   </ty-radio-group>
-  <button type=\"submit\">Submit</button>
+  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>")]
 
       [:div.ty-content.rounded-lg.p-5

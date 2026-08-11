@@ -219,9 +219,7 @@
            :max-height "150px"}]
          [:div.flex.justify-between.items-center {:style {:margin-top "0.5rem"}}
           [:span.ty-text-- {:id "tweet-count" :style {:font-size "0.75rem"}} "0 / 280"]
-          [:button.ty-bg-primary.ty-text++.rounded
-           {:id "tweet-btn" :disabled true :style {:padding "0.25rem 0.75rem" :font-size "0.8125rem"}}
-           "Post"]]
+          [:ty-button {:id "tweet-btn" :flavor "primary" :size "sm" :disabled true} "Post"]]
          [:script
           "(function() {
   const ta = document.getElementById('tweet-textarea');
@@ -321,13 +319,11 @@ textarea.addEventListener('input', () => {
                            (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
          [:ty-textarea {:label "Message" :name "message" :placeholder "Write your message..." :required true}]
          [:ty-textarea {:label "Notes (optional)" :name "notes" :placeholder "Additional info..." :rows "2"}]
-         [:button.ty-bg-primary.ty-text++.rounded
-          {:type "submit" :style {:padding "0.375rem 1rem"}}
-          "Submit"]])
+         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
        (code-block "<form>
   <ty-textarea name=\"message\" label=\"Message\" required></ty-textarea>
   <ty-textarea name=\"notes\" label=\"Notes\"></ty-textarea>
-  <button type=\"submit\">Submit</button>
+  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>")]])
 
    ;; Best Practices

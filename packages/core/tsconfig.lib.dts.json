@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.lib.json",
+  "compilerOptions": {
+    // Declarations keep their JSDoc — this is the API documentation consumers
+    // see on hover. Only the .js pass strips comments.
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "removeComments": false,
+
+    // declarationMap would point at unpublished src/, same dead weight as sourceMap.
+    "declarationMap": false
+  }
+}

@@ -66,19 +66,17 @@
     [:pre
      [:code.text-xs
       {:replicant/on-render (fn [{^js el :replicant/node}]
-                              (when (and el js/window.hljs (.-highlightElement js/window.hljs))
-                                (let [already-highlighted? (and (.-dataset el) (.-highlighted (.-dataset el)))]
-                                  (when-not already-highlighted?
-                                    (set! (.-textContent el) code)
-                                    (js/setTimeout
-                                     (fn []
-                                       (try
-                                         (when-not (and (.-dataset el) (.-highlighted (.-dataset el)))
-                                           (js/window.hljs.highlightElement el)
-                                           (add-code-enhancements! el lang))
-                                         (catch js/Error e
-                                           (js/console.warn "Failed to highlight code block:" e))))
-                                     50)))))}]]]))
+                              (when (and el js/window.hljs (.-highlight js/window.hljs)
+                                         (not= (.. el -dataset -code) code))
+                                (set! (.. el -dataset -code) code)
+                                (try
+                                  (let [result (.highlight js/window.hljs code #js {:language lang})]
+                                    (set! (.-innerHTML el) (.-value result))
+                                    (set! (.-className el) "text-xs hljs")
+                                    (.add (.-classList el) (str "language-" lang)))
+                                  (add-code-enhancements! el lang)
+                                  (catch js/Error e
+                                    (js/console.warn "Failed to highlight code block:" e)))))}]]]))
 
 (defn- type-badge [t]
   (let [[bg fg] (case t

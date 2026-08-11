@@ -170,6 +170,7 @@
   :lock lucide/lock
   :unlock lucide/unlock
   :shield lucide/shield
+  :shield-check lucide/shield-check
   :key lucide/key
   :log-in lucide/log-in
   :log-out lucide/log-out

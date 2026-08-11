@@ -345,7 +345,26 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     if (text) roleEl.setAttribute('aria-label', text)
     else roleEl.removeAttribute('aria-label')
   }
-  
+
+  private _handlingActivationClick = false
+
+  /**
+   * Guard for click-driven toggle handlers (checkbox/switch) on components
+   * whose whole host is the click target AND that expect a wrapping
+   * <label> to delegate to them. Some browsers still forward a label's own
+   * synthetic click to the associated control even when the original click
+   * already targeted that control directly, firing 'click' twice for one
+   * user gesture. Both arrive synchronously in the same task, so a flag
+   * cleared on the next microtask catches only the spurious duplicate —
+   * two genuinely separate clicks are always in different tasks.
+   */
+  protected isDuplicateActivationClick(): boolean {
+    if (this._handlingActivationClick) return true
+    this._handlingActivationClick = true
+    queueMicrotask(() => { this._handlingActivationClick = false })
+    return false
+  }
+
   /**
    * Form reset callback - called when form.reset() is invoked
    * Resets component to its default value

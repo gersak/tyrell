@@ -258,6 +258,7 @@ export class TyCheckbox
    */
   private handleCheckboxClick(e: Event): void {
     if (this.disabled) return;
+    if (this.isDuplicateActivationClick()) return;
 
     // Native semantics: clicking an indeterminate checkbox resolves to checked
     const newValue = this.indeterminate ? true : !this.checked;

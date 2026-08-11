@@ -16,6 +16,29 @@ describe('ty-switch', () => {
     expect(changed).to.equal(true);
   });
 
+  it('suppresses a same-task duplicate click (label double-forward on Firefox/Safari), but not a later genuine one', async () => {
+    const el = (await fixture(html`<ty-switch></ty-switch>`)) as any;
+    await nextFrame();
+
+    let changes = 0;
+    el.addEventListener('change', () => { changes++; });
+
+    // Two clicks dispatched synchronously in the same task simulate a
+    // browser forwarding a label's synthetic click even though the first
+    // click already targeted the switch directly.
+    el.click();
+    el.click();
+    await nextFrame();
+    expect(changes).to.equal(1);
+    expect(el.checked).to.equal(true);
+
+    // A later, genuinely separate click (its own task) must still register.
+    el.click();
+    await nextFrame();
+    expect(changes).to.equal(2);
+    expect(el.checked).to.equal(false);
+  });
+
   it('contributes its value to FormData when on', async () => {
     const form = (await fixture<HTMLFormElement>(html`
       <form><ty-switch name="n" value="on" checked></ty-switch></form>

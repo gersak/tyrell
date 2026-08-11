@@ -6,7 +6,7 @@
 export const iconStyles = `
 :host {
   /* Display & Layout - CRITICAL: No containment to prevent paint deferral */
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 0;
@@ -57,11 +57,6 @@ export const iconStyles = `
   width: 100%;
   height: 100%;
   display: block;
-}
-
-/* When used in slots, ensure proper display */
-:host([slot]) {
-  display: inline-flex;
 }
 
 /* Size variants via CSS classes on the host */

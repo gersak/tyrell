@@ -173,11 +173,10 @@ cal.addEventListener('navigate', (e) => {
                                date (.get data "event-date")]
                            (js/alert (str "Selected: " date))))}}
          [:ty-calendar {:name "event-date" :value "2025-06-15"}]
-         [:button.ty-bg-primary.ty-text++.rounded
-          {:type "submit" :style {:padding "0.375rem 1rem"}} "Submit"]])
+         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
        (code-block "<form>
   <ty-calendar name=\"event-date\"></ty-calendar>
-  <button type=\"submit\">Submit</button>
+  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>
 <!-- FormData: event-date=2025-06-15 -->")]])
 

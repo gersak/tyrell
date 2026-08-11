@@ -18,6 +18,29 @@ describe('ty-checkbox', () => {
     expect(changed).to.equal(true);
   });
 
+  it('suppresses a same-task duplicate click (label double-forward on Firefox/Safari), but not a later genuine one', async () => {
+    const el = (await fixture(html`<ty-checkbox></ty-checkbox>`)) as any;
+    await nextFrame();
+
+    let changes = 0;
+    el.addEventListener('change', () => { changes++; });
+
+    // Two clicks dispatched synchronously in the same task simulate a
+    // browser forwarding a label's synthetic click even though the first
+    // click already targeted the checkbox directly.
+    el.click();
+    el.click();
+    await nextFrame();
+    expect(changes).to.equal(1);
+    expect(el.checked).to.equal(true);
+
+    // A later, genuinely separate click (its own task) must still register.
+    el.click();
+    await nextFrame();
+    expect(changes).to.equal(2);
+    expect(el.checked).to.equal(false);
+  });
+
   it('a wrapping <label> click toggles the checkbox (delegation)', async () => {
     const label = (await fixture(html`
       <label>I agree <ty-checkbox name="a"></ty-checkbox></label>

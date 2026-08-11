@@ -144,6 +144,7 @@ export class TySwitch
 
   private handleSwitchClick(e: Event): void {
     if (this.disabled) return;
+    if (this.isDuplicateActivationClick()) return;
     const newValue = !this.checked;
     this.checked = newValue;
 
