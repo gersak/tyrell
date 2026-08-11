@@ -8,7 +8,6 @@
    (component-header "ty-date-picker"
                      "Date input with integrated calendar popup, ISO date string value, form participation, and optional time selection. The input shows a formatted display; the value is always ISO (YYYY-MM-DD or YYYY-MM-DDTHH:mm).")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -77,11 +76,9 @@
         :payload "{}"
         :when-fired "Fires when the calendar popup opens"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -93,7 +90,6 @@
        (code-block "<ty-date-picker label=\"Appointment date\"></ty-date-picker>
 <ty-date-picker label=\"Pre-selected\" value=\"2025-06-15\"></ty-date-picker>")]
 
-      ;; With time
       [:div.ty-content.rounded-lg.p-5
        (section-label "With Time")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -102,7 +98,6 @@
         [:ty-date-picker {:label "Meeting time" :with-time ""}])
        (code-block "<ty-date-picker label=\"Meeting time\" with-time></ty-date-picker>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -116,7 +111,6 @@
 <ty-date-picker size=\"md\"></ty-date-picker>
 <ty-date-picker size=\"lg\"></ty-date-picker>")]
 
-      ;; Locale and format
       [:div.ty-content.rounded-lg.p-5
        (section-label "Locale and Format")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -129,7 +123,6 @@
        (code-block "<ty-date-picker locale=\"de-DE\" value=\"2025-06-15\"></ty-date-picker>
 <ty-date-picker locale=\"fr-FR\" format=\"short\"></ty-date-picker>")]
 
-      ;; States
       [:div.ty-content.rounded-lg.p-5
        (section-label "States")
        (demo-area
@@ -141,7 +134,6 @@
 <ty-date-picker label=\"Disabled\" disabled value=\"2025-06-15\"></ty-date-picker>
 <ty-date-picker label=\"No clear button\" clearable=\"false\"></ty-date-picker>")]])
 
-   ;; Form Integration
    (doc-section "Form Integration"
      [:div.space-y-5
 
@@ -180,11 +172,9 @@ picker.addEventListener('change', (e) => {
   console.log(source);     // 'selection' | 'clear' | 'external'
 });" "javascript")]])
 
-   ;; Theming
    (doc-section "Theming"
      [:div.space-y-6
 
-      ;; Accent retheming
       [:div.ty-content.rounded-lg.p-5
        (section-label "Accent retheming")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -200,7 +190,6 @@ picker.addEventListener('change', (e) => {
   value=\"2025-06-15\">
 </ty-date-picker>")]
 
-      ;; Distinct stub
       [:div.ty-content.rounded-lg.p-5
        (section-label "Distinct trigger styling")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -222,7 +211,6 @@ picker.addEventListener('change', (e) => {
   placeholder=\"Pick a date\">
 </ty-date-picker>")]
 
-      ;; Surface theming
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom popup surface")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -244,7 +232,6 @@ picker.addEventListener('change', (e) => {
        [:p.ty-text--.mb-0 {:style {:font-size "0.75rem" :line-height "1.5"}}
         "Tokens for the day grid (" [:code "--ty-calendar-*"] ") are shared across " [:code "<ty-calendar>"] ", " [:code "<ty-calendar-month>"] ", and the popup inside " [:code "<ty-date-picker>"] " — set them on a parent element to theme all three at once."]]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

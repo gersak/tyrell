@@ -2,10 +2,6 @@
   (:require [tyrell.router :as router]
             [tyrell.site.docs.common :as common]))
 
-;; =============================================================================
-;; Hero
-;; =============================================================================
-
 (defn hero []
   [:div.text-center.mb-12
    [:div.inline-flex.items-center.gap-3.mb-4
@@ -19,10 +15,6 @@
    [:p.text-xl.ty-text.mb-3.font-normal "Pick the stack you're working with."]
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold
     "22 components · 3000+ icons · framework-agnostic"]])
-
-;; =============================================================================
-;; Hero stack card — JavaScript / TypeScript
-;; =============================================================================
 
 (defn feature-pill
   "Small chip with mini icon + label, sits on ty-content surface."
@@ -84,13 +76,11 @@
      ;; LEFT — message
      [:div.flex.flex-col
 
-      ;; Eyebrow
       [:div.flex.items-center.gap-2.mb-5
        [:span.text-xs.font-bold.ty-text-primary.tracking-widest.uppercase "Recommended"]
        [:span.h-1.w-1.rounded-full.ty-bg-neutral]
        [:span.text-xs.font-medium.ty-text--.tracking-widest.uppercase "Most popular"]]
 
-      ;; Title + icon
       [:div.flex.items-start.gap-4.mb-5
        [:div.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.flex-shrink-0
         {:style {:width "56px"
@@ -103,7 +93,6 @@
         [:p.text-base.ty-text.font-normal.leading-relaxed
          "Web components for every framework. Typed React wrappers when you want them."]]]
 
-      ;; Feature pills
       [:div.flex.flex-wrap.gap-2.mb-6
        (feature-pill {:icon "code"
                       :label "TypeScript types"})
@@ -117,7 +106,6 @@
       ;; Spacer pushes CTA to the bottom on md+
       [:div.flex-1]
 
-      ;; CTA
       [:div.flex.items-center.gap-2.text-base.font-semibold.ty-text-primary
        [:span "Read the JS / TypeScript guide"]
        [:ty-icon {:name "arrow-right"
@@ -131,7 +119,6 @@
       ;; Live component preview on ty-floating (highest surface)
       [:div.ty-floating.rounded-xl.p-5
        {:style {:border "1px solid var(--ty-border-)"}}
-       ;; "PREVIEW · live" header
        [:div.flex.items-center.justify-between.mb-4
         [:span.text-xs.font-bold.ty-text--.tracking-widest.uppercase "Preview"]
         [:div.flex.items-center.gap-1.5
@@ -139,7 +126,6 @@
           {:style {:width "6px"
                    :height "6px"}}]
          [:span.text-xs.ty-text--.font-medium.tracking-wide.uppercase "live"]]]
-       ;; Actual live components
        [:div.flex.flex-col.gap-3
         [:ty-input {:label "Email"
                     :placeholder "you@example.com"}
@@ -189,9 +175,7 @@
      (brand-glyph {:icon "css3"
                    :title "CSS"})]]])
 
-;; =============================================================================
 ;; Compact stack cards — HTMX, Replicant, CLJS + React
-;; =============================================================================
 
 (defn fw
   "Inline framework name — heavier weight + brighter text color than surrounding tagline.
@@ -206,7 +190,6 @@
     :on (merge {:click #(router/navigate! route-id)}
                (lift-card-handlers))}
 
-   ;; Eyebrow + icon row
    [:div.flex.items-start.justify-between.mb-4
     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0
      {:class (str "ty-bg-" flavor "-")
@@ -219,7 +202,6 @@
      {:class (str "ty-text-" flavor)}
      eyebrow]]
 
-   ;; Title
    [:h3.text-lg.font-bold.ty-text++.leading-tight.mb-2.tracking-tight title]
 
    ;; Tagline — min-height reserves 3 lines so the code chip starts at the
@@ -249,11 +231,9 @@
    [:p.ty-text-.mb-6.font-normal.text-sm
     "Each guide covers install, setup, and the patterns specific to that stack."]
 
-   ;; Hero card — JS/TS, full width
    [:div.mb-4
     (js-hero-card)]
 
-   ;; Compact cards row
    [:div.grid.grid-cols-1.md:grid-cols-2.gap-4
     (compact-stack-card
      {:route-id :tyrell.site.docs/clojurescript
@@ -288,9 +268,7 @@
 </ty-button>"
       :snippet-lang "html"})]])
 
-;; =============================================================================
 ;; CDN — compact callout (the icon section's Pattern 2 covers production setup)
-;; =============================================================================
 
 (defn cdn-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -322,9 +300,7 @@
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
 
-;; =============================================================================
 ;; Icons — three concrete patterns, one per audience
-;; =============================================================================
 
 (defn icon-pattern-header
   "Shared header for an icon-registration pattern card."
@@ -353,7 +329,6 @@
 
 (defn icon-system []
   [:div
-   ;; Section heading
    [:div.flex.items-center.gap-2.mb-2
     [:ty-icon.ty-text-primary {:name "sparkles"
                               :size "sm"}]
@@ -361,7 +336,6 @@
    [:p.ty-text-.mb-6.font-normal
     "Tyrell ships 3000+ icons (Lucide, Heroicons, Material Design, FontAwesome). They live in a runtime registry — you decide which ones get bundled. Same pattern, three audiences:"]
 
-   ;; Three pattern cards
    [:div.space-y-4
 
     ;; Pattern 1 — Bundler
@@ -426,7 +400,6 @@ registerIcons({ check, heart, save })"
 </a>"
       "html")
 
-     ;; Outcome callout
      [:div.mt-4.flex.items-center.gap-3.p-4.rounded-lg.ty-bg-success-
       {:style {:border "1px solid var(--ty-border-success)"}}
       [:ty-icon.ty-text-success.flex-shrink-0 {:name "zap"
@@ -436,7 +409,6 @@ registerIcons({ check, heart, save })"
        " No npm, no build, no JS registry. Same pattern across Jinja, ERB, EEx, Twig, "
        [:code.font-mono.text-xs.ty-bg-success.px-1.rounded "echo include"] " — anything that emits HTML."]]
 
-     ;; Sub-callout — graduate to bundling
      [:div.mt-4.flex.items-start.gap-3.p-4.rounded-lg.ty-bg-info-
       {:style {:border "1px solid var(--ty-border-info)"}}
       [:ty-icon.ty-text-info.flex-shrink-0.mt-0.5 {:name "package"
@@ -462,7 +434,6 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
        [:p.text-xs.ty-text-info.font-normal.mt-2.leading-relaxed
         "~6 KB icons.js · vs ~820 KB minified / ~125 KB gzipped if you ship every Lucide icon. Slot mode covers the rest."]]]]]
 
-;; Footnote — sandbox / CodePen path
    [:div.mt-4.ty-bg-info-.rounded-xl.p-4.flex.items-start.gap-3
     {:style {:border "1px solid var(--ty-border-info)"}}
     [:ty-icon.ty-text-info.flex-shrink-0.mt-0.5 {:name "info"
@@ -483,10 +454,6 @@ esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
   })
 </script>"
        "html")]]]])
-
-;; =============================================================================
-;; Main view
-;; =============================================================================
 
 (defn view []
   (common/docs-page

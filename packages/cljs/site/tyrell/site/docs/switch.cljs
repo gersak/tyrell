@@ -8,7 +8,6 @@
    (component-header "ty-switch"
                      "Just the toggle. Track + thumb visual with role=\"switch\" ARIA. Wrap in a <label> for click-on-text behavior. Use for immediate-effect settings, not for form submissions.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -57,11 +56,9 @@
         :payload "{value: boolean, checked: boolean, formValue: string | null}"
         :when-fired "Fires on every interaction (same as change for switches)"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -91,7 +88,6 @@
   Cannot change (admin only)
 </label>")]
 
-      ;; Flavors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Flavors")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -108,7 +104,6 @@
 <ty-switch flavor=\"danger\" checked></ty-switch>
 <ty-switch flavor=\"warning\" checked></ty-switch>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -125,7 +120,6 @@
 <ty-switch size=\"lg\"></ty-switch>
 <ty-switch size=\"xl\"></ty-switch>")]
 
-      ;; Settings Panel
       [:div.ty-content.rounded-lg.p-5
        (section-label "Settings Panel")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -162,7 +156,6 @@
   </label>
 </div>")]])
 
-   ;; vs Checkbox
    (doc-section "Switch vs Checkbox"
      [:div.ty-content.rounded-lg.p-5
       [:div.grid.gap-6
@@ -192,7 +185,6 @@
             [:ty-icon.ty-text-primary+.mt-px {:name "check" :size "14"}]
             [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

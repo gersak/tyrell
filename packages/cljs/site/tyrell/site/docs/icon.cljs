@@ -8,7 +8,6 @@
    (component-header "ty-icon"
                      "SVG icon renderer with registry-based loading. Icons inherit the current text color automatically — color them with ty-text-* classes. Supports spin, pulse, and tempo animations.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -40,11 +39,9 @@
         :default "\"normal\""
         :description "Animation speed: slow, normal, fast"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -59,7 +56,6 @@
 <ty-icon name=\"plus\" size=\"md\"></ty-icon>
 <ty-icon name=\"trash\" size=\"lg\"></ty-icon>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -74,7 +70,6 @@
 <ty-icon name=\"star\" size=\"lg\"></ty-icon>
 <ty-icon name=\"star\" size=\"xl\"></ty-icon>")]
 
-      ;; Semantic Colors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Colors")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -92,7 +87,6 @@
 <ty-icon class=\"ty-text-danger\" name=\"x-circle\" size=\"lg\"></ty-icon>
 <ty-icon class=\"ty-text-warning\" name=\"alert-triangle\" size=\"lg\"></ty-icon>")]
 
-      ;; Inline with text
       [:div.ty-content.rounded-lg.p-5
        (section-label "Inline with Text")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -113,7 +107,6 @@
   <span>Payment confirmed</span>
 </div>")]
 
-      ;; Animations
       [:div.ty-content.rounded-lg.p-5
        (section-label "Animations")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -142,7 +135,6 @@
 <ty-icon name=\"circle\" pulse></ty-icon>
 <ty-icon name=\"circle\" pulse tempo=\"slow\"></ty-icon>")]
 
-      ;; Inline SVG (BFF / SSR / no registry)
       [:div.ty-content.rounded-lg.p-5
        (section-label "Inline SVG — no registry needed")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -190,7 +182,6 @@
         " whose fallback content is driven by the registry. When light-DOM children are present, the browser shows them instead — same CSS classes (" [:code "icon-lg"] ", " [:code "icon-spin"]
         ", color via " [:code "currentColor"] ") apply to whichever wins. Set " [:code "fill"] " or " [:code "stroke"] " to " [:code "currentColor"] " on your SVG so " [:code "ty-text-*"] " classes still tint it."]]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

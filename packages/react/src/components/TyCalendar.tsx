@@ -6,7 +6,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty Calendar component
 export interface TyCalendarChangeEventDetail {
   /** Selected month (1-12) */
   month: number;
@@ -98,7 +97,6 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   onDayClick?: (event: CustomEvent) => void;
 }
 
-// React wrapper for ty-calendar web component
 export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
   ({ 
     year,
@@ -126,7 +124,6 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -137,7 +134,6 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       }
     }, [ref]);
 
-    // Handle change events (date selection)
     const handleChange = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyCalendarChangeEventDetail>;
       if (onChange) {
@@ -145,7 +141,6 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       }
     }, [onChange]);
 
-    // Handle navigate events (month/year navigation)
     const handleNavigate = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyCalendarNavigateEventDetail>;
       if (onNavigate) {
@@ -157,7 +152,6 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       if (onDayClick) onDayClick(event as CustomEvent);
     }, [onDayClick]);
 
-    // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -208,7 +202,6 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
         (element as any).dayClassesFn = null;
       }
 
-      // Custom CSS property
       if (customCSS) {
         (element as any).customCSS = customCSS;
       } else {
@@ -216,13 +209,11 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       }
     }, [dayContentFn, dayClassesFn, customCSS]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add optional attributes only if they have values
     if (year !== undefined) {
       webComponentProps.year = year.toString();
     }

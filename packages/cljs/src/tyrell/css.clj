@@ -1,10 +1,6 @@
 (ns tyrell.css
   (:require [clojure.string :as str]))
 
-;; =============================================================================
-;; Macros for compile-time CSS loading
-;; =============================================================================
-
 (defn- resolve-css-path
   "Resolve CSS file path relative to namespace or as absolute resource path."
   [current-ns path]
@@ -33,10 +29,6 @@
            (str/replace #"\." "/")
            (str/replace #"-" "_"))
        ".css"))
-
-;; =============================================================================
-;; defcss - Document-level styles (auto-inject or conditional)
-;; =============================================================================
 
 (defn- sanitize-css-id
   "Convert namespace/name to valid CSS identifier.
@@ -84,21 +76,15 @@
          css-content (load-css-file (str *ns*) resolved-path)
          style-id (sanitize-css-id (str *ns* "/" name))]
      (if conditional
-       ;; Conditional: define a function that injects when called
        `(def ~name
           (fn []
             (tyrell.css/ensure-document-styles! ~css-content ~style-id)))
-       ;; Default: auto-inject on load
        `(do
           (def ~name ~css-content)
           (when (cljs.core/exists? js/document)
             (tyrell.css/ensure-document-styles! ~name ~style-id))))))
   ([name]
    `(defcss ~name ~(infer-css-filename (str *ns*)))))
-
-;; =============================================================================
-;; defstyles - CSSStyleSheet (for shadow DOM)
-;; =============================================================================
 
 (defmacro defstyles
   "Loads CSS file at compile time and returns a CSSStyleSheet object.

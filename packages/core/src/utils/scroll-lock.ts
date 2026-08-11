@@ -1,30 +1,16 @@
 /**
- * CSS-based scroll prevention using position: fixed.
- * 
- * Prevents body/page scrolling by temporarily fixing the body position
- * while preserving scroll position. Much more reliable than event prevention.
- * 
- * Key benefits:
- * - No event manipulation complexity
- * - No interference with component keyboard navigation
- * - Preserves scroll position perfectly
- * - Standard industry technique
- * - Multiple component support with proper cleanup
+ * CSS-based scroll prevention.
+ *
+ * Prevents page scrolling via CSS rather than event cancellation — no event
+ * manipulation, no interference with component keyboard navigation, scroll
+ * position preserved. Reference-counted so multiple components can lock at once.
  */
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface LockState {
   locked: boolean;
   scrollY: number;
   activeLocks: Set<string>;
 }
-
-// ============================================================================
-// Global State Management
-// ============================================================================
 
 const lockState: LockState = {
   locked: false,
@@ -39,42 +25,21 @@ declare global {
   }
 }
 
-// ============================================================================
-// DOM Helper Functions
-// ============================================================================
-
-/**
- * Get the document body element
- */
 function getBodyEl(): HTMLElement {
   return document.body;
 }
 
-/**
- * Get the document element (html)
- */
 function getDocEl(): HTMLElement {
   return document.documentElement;
 }
 
-/**
- * Get current vertical scroll position
- */
 function getScrollY(): number {
   return window.scrollY || getDocEl().scrollTop || 0;
 }
 
-/**
- * Calculate the width of the browser's scrollbar
- */
 function getScrollbarWidth(): number {
-  // window.innerWidth - documentElement.clientWidth
   return window.innerWidth - getDocEl().clientWidth;
 }
-
-// ============================================================================
-// Core Lock/Unlock Functions
-// ============================================================================
 
 /**
  * Lock body scrolling using overflow: hidden on <html>.
@@ -125,10 +90,6 @@ function unlockBodyFixed(): void {
   lockState.locked = false;
 }
 
-// ============================================================================
-// Public API
-// ============================================================================
-
 /**
  * Lock scrolling for a specific component.
  * 
@@ -140,10 +101,8 @@ function unlockBodyFixed(): void {
 export function lockScroll(componentId: string): void {
   if (lockState.activeLocks.has(componentId)) return;
 
-  // Add this component to active locks
   lockState.activeLocks.add(componentId);
 
-  // Lock body if this is the first lock
   if (lockState.activeLocks.size === 1) {
     lockBodyFixed();
   }
@@ -159,10 +118,8 @@ export function lockScroll(componentId: string): void {
 export function unlockScroll(componentId: string): void {
   if (!lockState.activeLocks.has(componentId)) return;
 
-  // Remove this component from active locks
   lockState.activeLocks.delete(componentId);
 
-  // Unlock body if this was the last lock
   if (lockState.activeLocks.size === 0) {
     unlockBodyFixed();
   }
@@ -177,10 +134,6 @@ export function forceUnlockAll(): void {
   lockState.activeLocks.clear();
   unlockBodyFixed();
 }
-
-// ============================================================================
-// Debug API
-// ============================================================================
 
 /**
  * Enable scroll lock debugging - useful for testing and development
@@ -197,10 +150,6 @@ export function disableDebug(): void {
   console.log('🔍 CSS Scroll lock debugging disabled');
   window.tyScrollDebug = false;
 }
-
-// ============================================================================
-// State Inspection
-// ============================================================================
 
 /**
  * Get the set of currently active component locks.

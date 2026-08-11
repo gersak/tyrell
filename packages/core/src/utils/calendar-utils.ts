@@ -1,30 +1,10 @@
 /**
- * Calendar Utilities
- * 
- * Pure TypeScript utilities for calendar month generation and localization.
- * Ported from ClojureScript ty/date/core.cljs
- * 
- * Key Features:
- * - 42-day calendar grid generation (6 weeks × 7 days)
- * - Monday-first week ordering
- * - Rich day context with metadata
- * - Localized weekday names
- * - No external dependencies (native Date API only)
- * 
- * Note on Timestamps:
- * - `value`: UTC timestamp at midnight UTC (timezone-independent, use for storage/server)
- * - `localValue`: Local timestamp at midnight local time (use for display/local calculations)
- * - `year/month/dayInMonth`: Calendar date components (user's mental model)
- * 
- * Example for October 13, 2025:
- * - value = Date.UTC(2025, 9, 13) = consistent worldwide
- * - localValue = new Date(2025, 9, 13).getTime() = varies by timezone
- * - Both represent the same calendar date, different moments in time
+ * Calendar month generation and localization (native Date API only).
+ *
+ * Timestamps: `value` is UTC midnight (timezone-independent, for storage/server),
+ * `localValue` is local midnight (for display/local math). Both denote the same
+ * calendar date but are different moments in time.
  */
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Rich context for a single calendar day
@@ -77,54 +57,31 @@ export interface DayContext {
   selectedDay?: number;
 }
 
-// ============================================================================
-// Validation Functions
-// ============================================================================
-
-/**
- * Validate month value (1-12)
- */
 function validateMonth(month: number): void {
   if (!Number.isInteger(month) || month < 1 || month > 12) {
     throw new RangeError(`Invalid month: ${month}. Must be an integer between 1 and 12.`);
   }
 }
 
-/**
- * Validate year value (reasonable range)
- */
 function validateYear(year: number): void {
   if (!Number.isInteger(year) || year < 1 || year > 9999) {
     throw new RangeError(`Invalid year: ${year}. Must be an integer between 1 and 9999.`);
   }
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Check if two dates are on the same day (ignoring time)
- * Works in local timezone
- */
+/** Same calendar day (ignoring time), in local timezone. */
 function isSameDay(date1: Date, date2: Date): boolean {
   return date1.getFullYear() === date2.getFullYear()
     && date1.getMonth() === date2.getMonth()
     && date1.getDate() === date2.getDate();
 }
 
-/**
- * Create a date at midnight local time
- * This ensures consistent behavior across the application
- */
+/** Create a date at midnight local time. */
 function createMidnightDate(year: number, month: number, day: number): Date {
   return new Date(year, month - 1, day, 0, 0, 0, 0);
 }
 
-/**
- * Get today's date at midnight local time
- * Used for consistent "today" detection
- */
+/** Today at midnight local time. */
 function getTodayMidnight(): Date {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
@@ -149,11 +106,9 @@ function createDayContext(
   const month = date.getMonth() + 1; // Convert to 1-based
   const dayInMonth = date.getDate();
   const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
-  
-  // Check if this day is from a different month
+
   const isOtherMonth = year !== targetYear || month !== targetMonth;
-  
-  // Determine if previous or next month
+
   let isPrevMonth = false;
   let isNextMonth = false;
   
@@ -165,16 +120,14 @@ function createDayContext(
     }
   }
   
-  // Check if today (compare dates at midnight for consistency)
+  // Compare at midnight for consistency
   const todayMidnight = getTodayMidnight();
   const isToday = isSameDay(date, todayMidnight);
-  
-  // Check if this day is selected
-  const isSelected = selection?.year === year 
-    && selection?.month === month 
+
+  const isSelected = selection?.year === year
+    && selection?.month === month
     && selection?.day === dayInMonth;
-  
-  // Calculate both UTC and local timestamps
+
   // value: UTC midnight (consistent worldwide for the same date)
   // localValue: Local midnight (respects user's timezone)
   const utcValue = Date.UTC(year, month - 1, dayInMonth, 0, 0, 0, 0);
@@ -207,15 +160,10 @@ function createDayContext(
  */
 function getMondayOfWeek(date: Date): Date {
   const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-  
-  // Calculate days to subtract to get to Monday
-  // Sunday (0) → go back 6 days
-  // Monday (1) → go back 0 days
-  // Tuesday (2) → go back 1 day
-  // ...
+
+  // Days to subtract to reach Monday; Sunday (0) wraps back 6 days
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  
-  // Create new date at Monday midnight
+
   const monday = new Date(date);
   monday.setDate(date.getDate() - daysToMonday);
   monday.setHours(0, 0, 0, 0); // Ensure midnight
@@ -232,10 +180,8 @@ function getMondayOfWeek(date: Date): Date {
  * @returns The Monday that starts the calendar grid
  */
 function getMonthGridStart(year: number, month: number): Date {
-  // Get first day of month at midnight (month is 1-based, Date constructor is 0-based)
+  // month is 1-based, Date constructor is 0-based
   const firstDay = createMidnightDate(year, month, 1);
-  
-  // Get the Monday of that week
   return getMondayOfWeek(firstDay);
 }
 
@@ -280,10 +226,6 @@ function generateDays(
   return days;
 }
 
-// ============================================================================
-// Main Calendar Functions
-// ============================================================================
-
 /**
  * Generate a 42-day calendar grid for a given month
  * 
@@ -308,7 +250,6 @@ export function getCalendarMonthDays(
   month: number,
   selection?: { year?: number; month?: number; day?: number }
 ): DayContext[] {
-  // Validate inputs
   validateYear(year);
   validateMonth(month);
   
@@ -339,10 +280,10 @@ export function getLocalizedWeekdays(
 ): string[] {
   const formatter = new Intl.DateTimeFormat(locale, { weekday: style });
   
-  // Create a Sunday (base date) - January 7, 2024 is a Sunday
+  // January 7, 2024 is a Sunday
   const sunday = new Date(2024, 0, 7);
-  
-  // Generate Sunday-first array: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+
+  // Sunday-first array: [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
   const sundayFirst = Array.from({ length: 7 }, (_, i) => {
     const date = addDays(sunday, i);
     return formatter.format(date);
@@ -352,10 +293,6 @@ export function getLocalizedWeekdays(
   const [firstDay, ...rest] = sundayFirst;
   return [...rest, firstDay];
 }
-
-// ============================================================================
-// Utility Functions (for testing and debugging)
-// ============================================================================
 
 /**
  * Get month name in specified locale
@@ -397,7 +334,6 @@ export function parseISODate(isoString: string): { year: number; month: number; 
   const month = parseInt(match[2], 10);
   const day = parseInt(match[3], 10);
   
-  // Validate ranges
   if (year < 1 || year > 9999) return null;
   if (month < 1 || month > 12) return null;
   if (day < 1 || day > 31) return null;

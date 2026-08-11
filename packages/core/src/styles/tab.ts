@@ -43,7 +43,6 @@ export const tabStyles = `
   display: none;
 }
 
-/* Show scrollbar on hover */
 .tab-wrapper:hover .ty-scrollbar-track-y.has-overflow {
   opacity: 1;
 }

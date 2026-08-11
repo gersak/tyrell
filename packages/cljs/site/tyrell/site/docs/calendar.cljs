@@ -8,7 +8,6 @@
    (component-header "ty-calendar"
                      "Complete date picker combining navigation and a month grid with date selection, form integration, and ISO date API. Can be stateless for full external control.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -73,11 +72,9 @@
         :payload "{month, year, action: 'navigate', source: 'navigation'}"
         :when-fired "Fires when navigating between months or years"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -90,7 +87,6 @@
 <!-- Pre-select a date -->
 <ty-calendar value=\"2025-06-15\"></ty-calendar>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -110,7 +106,6 @@
 <ty-calendar size=\"md\"></ty-calendar>
 <ty-calendar size=\"lg\"></ty-calendar>")]
 
-      ;; Locale
       [:div.ty-content.rounded-lg.p-5
        (section-label "Locale")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -126,7 +121,6 @@
        (code-block "<ty-calendar locale=\"de-DE\"></ty-calendar>
 <ty-calendar locale=\"ja-JP\"></ty-calendar>")]
 
-      ;; Without navigation
       [:div.ty-content.rounded-lg.p-5
        (section-label "Without Navigation")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -136,11 +130,9 @@
          [:ty-calendar {:show-navigation "false"}]])
        (code-block "<ty-calendar show-navigation=\"false\"></ty-calendar>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Stateless / controlled
       [:div.ty-content.rounded-lg.p-5
        (section-label "Stateless / Controlled Mode")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -160,7 +152,6 @@ cal.addEventListener('navigate', (e) => {
   cal.setAttribute('month', month);
 });" "javascript")]
 
-      ;; Form integration
       [:div.ty-content.rounded-lg.p-5
        (section-label "Form Integration")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -180,7 +171,6 @@ cal.addEventListener('navigate', (e) => {
 </form>
 <!-- FormData: event-date=2025-06-15 -->")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

@@ -1,7 +1,4 @@
-/**
- * Tag Component Styles
- * PORTED FROM: clj/ty/components/tag.css
- */
+/** Tag Component Styles */
 
 import { FLAVORS } from '../types/common.js'
 
@@ -10,7 +7,6 @@ import { FLAVORS } from '../types/common.js'
 const COLOR_FLAVORS = FLAVORS.filter((f) => f !== 'neutral')
 
 const tagFlavor = (f: string) => `
-/* ----- ${f.toUpperCase()} ----- */
 :host([flavor="${f}"]) {
   --tag-bg: var(--ty-bg-${f});
   --tag-color: var(--ty-color-${f});
@@ -39,22 +35,15 @@ const tagFlavor = (f: string) => `
 `
 
 export const tagStyles = `
-/* Tag Component Styles using centralized ty.variables.css */
-
-/* Host element */
-
-/* Hidden attribute support */
 :host([hidden]) {
   display: none !important;
 }
 
-/* Main container */
 .tag-container {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--ty-spacing-1);
-  /* Default pill shape - can be overridden */
   border-radius: var(--ty-radius-full);
   /* Mode-flipped weight dial (tyrell.css): 440 light / 400 dark. Chips are
      labels, not actions — they run lighter than buttons. Override with
@@ -72,7 +61,6 @@ export const tagStyles = `
   letter-spacing: var(--ty-tracking-xs);          /* -0.013em */
   min-height: 28px;
 
-  /* Transitions using centralized values */
   transition: var(--ty-transition-all);
 
   /* Colors via custom properties — override on :host for full control */
@@ -82,7 +70,6 @@ export const tagStyles = `
   border-color: var(--tag-border-color, var(--ty-border));
 }
 
-/* Non-pill variant - rectangular with rounded corners */
 :host([pill="false"]) .tag-container,
 :host([not-pill]) .tag-container {
   border-radius: var(--ty-radius-md);
@@ -113,14 +100,12 @@ export const tagStyles = `
   outline: none;
 }
 
-/* Disabled state */
 .tag-container[aria-disabled="true"] {
   opacity: 0.6;
   cursor: not-allowed;
   pointer-events: none;
 }
 
-/* Slot containers */
 .tag-start,
 .tag-content,
 .tag-end {
@@ -135,7 +120,6 @@ export const tagStyles = `
   min-width: 0;
 }
 
-/* Dismiss button */
 .tag-dismiss {
   display: inline-flex;
   align-items: center;
@@ -149,7 +133,6 @@ export const tagStyles = `
   transition: var(--ty-transition-all);
   opacity: 0.7;
   flex-shrink: 0;
-  /* Default MD dismiss button size */
   width: var(--ty-spacing-4);
   /* 16px */
   height: var(--ty-spacing-4);
@@ -165,7 +148,6 @@ export const tagStyles = `
   height: 100%;
 }
 
-/* Size variants - override defaults */
 :host([size="xs"]) .tag-container {
   padding: 0 0.375rem;                            /* 0 6px */
   font-size: var(--ty-font-xs);                   /* 12px */
@@ -194,8 +176,7 @@ export const tagStyles = `
   margin-left: var(--ty-spacing-2);
 }
 
-/* MD is now the default - no need for explicit [size="md"] selector */
-/* All default styles above apply to MD size (min-height: 24px) */
+/* MD is the default — no explicit [size="md"] selector needed */
 
 :host([size="lg"]) .tag-container {
   padding: 0 var(--ty-spacing-3);                 /* 0 12px */
@@ -225,15 +206,13 @@ export const tagStyles = `
   margin-left: var(--ty-spacing-4);
 }
 
-/* ===== FLAVOR VARIANTS =====
-   Each flavor sets --tag-bg / --tag-color / --tag-border-color on :host.
+/* Each flavor sets --tag-bg / --tag-color / --tag-border-color on :host.
    Append '+' to flavor for a stronger shade (mild background, strong color),
    or '-' for a softer shade (soft background, base color).
    Generated per flavor above; neutral diverges (text/border tokens) and
    stays hand-written below. */
 
 ${COLOR_FLAVORS.map(tagFlavor).join('')}
-/* ----- NEUTRAL ----- */
 :host([flavor="neutral"]) {
   --tag-color: var(--ty-text-bold);
   --tag-bg: var(--ty-bg-neutral-soft);
@@ -261,7 +240,6 @@ ${COLOR_FLAVORS.map(tagFlavor).join('')}
   box-shadow: 0 0 0 3px var(--ty-border-soft);
 }
 
-/* Slotted content styling */
 .tag-start ::slotted(*),
 .tag-content ::slotted(*),
 .tag-end ::slotted(*) {
@@ -269,7 +247,6 @@ ${COLOR_FLAVORS.map(tagFlavor).join('')}
   align-items: center;
 }
 
-/* Icon sizing for slotted icons */
 .tag-start ::slotted(ty-icon),
 .tag-end ::slotted(ty-icon) {
   width: 1em;
@@ -277,7 +254,6 @@ ${COLOR_FLAVORS.map(tagFlavor).join('')}
   flex-shrink: 0;
 }
 
-/* Count/badge styling using centralized spacing */
 .tag-end ::slotted(.count) {
   display: inline-flex;
   align-items: center;
@@ -296,7 +272,6 @@ ${COLOR_FLAVORS.map(tagFlavor).join('')}
   flex-shrink: 0;
 }
 
-/* Special handling for long text content */
 .tag-content {
   overflow: hidden;
   text-overflow: ellipsis;

@@ -1,50 +1,8 @@
 /**
- * TySelectedOptions Web Component
- *
- * Out-of-band chip display for a picker (ty-select).
- * The picker owns the value + form submission; this element just renders the
- * selected values as dismissible <ty-tag> chips, anywhere in the layout.
- *
- * Pairs with any element that exposes a comma-joined `value` string and emits a
- * bubbling `change` event. Labels/flavors are read from the picker's matching
- * option (`[value="..."]`), so chips stay rich without duplicating data.
- *
- * If the picker also emits `open`/`close` (ty-select does), the chips hide
- * for the duration — the picker's own popup is independently sized/
- * positioned and can otherwise visually collide with this row.
- *
- * Also registered as `ty-selected-tags` — the original tag name, kept
- * working indefinitely for backward compatibility. `ty-selected-options` is
- * the name going forward: it names the element by what it's driven by
- * (a picker's selected `ty-option`s), not by the chip primitive it happens
- * to render with.
- *
- * @example
- * ```html
- * <ty-select id="robots">
- *   <ty-option value="bobo" flavor="primary">Bobo Robot</ty-option>
- * </ty-select>
- * <ty-selected-options for="robots"></ty-selected-options>
- * ```
- *
- * Custom chips via a <template> child. Placeholders {value}, {label}, {flavor}
- * and any {data-*} attribute of the matching option are interpolated into
- * attributes and text — on cloned DOM nodes, never via innerHTML (no injection).
- *
- * @example
- * ```html
- * <ty-select id="team">
- *   <ty-option value="ivan" data-avatar="/avatars/ivan.png">Ivan</ty-option>
- * </ty-select>
- * <ty-selected-options for="team">
- *   <template>
- *     <ty-tag flavor="{flavor}" dismissible>
- *       <img slot="start" src="{data-avatar}" class="w-4 h-4 rounded-full">
- *       {label}
- *     </ty-tag>
- *   </template>
- * </ty-selected-options>
- * ```
+ * TySelectedOptions - out-of-band dismissible <ty-tag> chips for a picker's selection.
+ * Pairs with any element exposing a comma-joined `value` + bubbling `change`; labels
+ * and flavors are read from the picker's matching option (`[value="..."]`). Custom chips
+ * come from an optional <template> child, stamped onto cloned nodes (never innerHTML).
  */
 
 /** Minimal shape of a picker this element can drive. */

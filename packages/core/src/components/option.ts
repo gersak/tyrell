@@ -1,31 +1,12 @@
 /**
- * TyOption Web Component
- * PORTED FROM: clj/ty/components/option.cljs
- * 
- * Ty Option Web Component - Rich HTML alternative to native <option>
- * Enhanced with robust property-attribute synchronization for framework compatibility.
+ * TyOption Web Component - rich HTML alternative to native <option>.
+ * Property-attribute synchronization keeps it compatible with frameworks.
  */
 
 import type { TyOptionElement } from '../types/common.js'
 import { ensureStyles } from '../utils/styles.js'
 import { optionStyles } from '../styles/option.js'
 
-/**
- * Ty Option Component
- * 
- * Rich HTML alternative to native <option> element.
- * Supports HTML content, styling, and framework property binding.
- * 
- * @example
- * ```html
- * <ty-option value="1">Simple Option</ty-option>
- * <ty-option value="2" selected>Selected Option</ty-option>
- * <ty-option value="3" disabled>Disabled Option</ty-option>
- * <ty-option value="4">
- *   <strong>Rich</strong> <em>HTML</em> Content
- * </ty-option>
- * ```
- */
 /** Lucide `check` — shown on selected options (kept inline: shadow DOM can't rely on the icon registry) */
 const CHECK_SVG = `
   <svg class="option-check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -113,7 +94,6 @@ export class TyOption extends HTMLElement implements TyOptionElement {
     return this.textContent?.trim() || ''
   }
 
-  // Public API - Getters/Setters
   // NOTE: All setters trigger re-render to support property changes from frameworks like React
 
   get value(): string | undefined {
@@ -197,9 +177,6 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
 
-  /**
- * Render the option component with rich HTML content and property sync
- */
   private render(): void {
     const shadow = this.shadowRoot!
 
@@ -210,31 +187,26 @@ export class TyOption extends HTMLElement implements TyOptionElement {
       shadow.innerHTML = `<div class="option-content"><slot></slot>${CHECK_SVG}</div>`
     }
 
-    // Update content wrapper attributes
     const content = shadow.querySelector('.option-content')
     if (content) {
-      // Disabled state
       if (this._disabled) {
         content.setAttribute('disabled', '')
       } else {
         content.removeAttribute('disabled')
       }
 
-      // Selected state
       if (this._selected) {
         content.setAttribute('selected', '')
       } else {
         content.removeAttribute('selected')
       }
 
-      // Highlighted state
       if (this._highlighted) {
         content.setAttribute('highlighted', '')
       } else {
         content.removeAttribute('highlighted')
       }
 
-      // Hidden state
       if (this._hidden) {
         content.setAttribute('hidden', '')
       } else {
@@ -244,7 +216,6 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-option')) {
   customElements.define('ty-option', TyOption)
 }

@@ -89,27 +89,20 @@ export class PropertyManager<T = any> {
       return null
     }
     
-    // Get old value
     const oldValue = this._props.get(name)
-    
-    // Coerce value to correct type
     const coercedValue = this._coerceValue(name, value, config)
-    
-    // Validate value
+
     if (!this._validateValue(name, coercedValue, config)) {
       console.warn(`[PropertyManager] Invalid value for ${name}:`, coercedValue)
       return null
     }
-    
-    // Check if value actually changed
+
     if (this._valuesEqual(oldValue, coercedValue)) {
       return null
     }
-    
-    // Update internal map
+
     this._props.set(name, coercedValue)
-    
-    // Create change object
+
     const change: PropertyChange = {
       name,
       oldValue,
@@ -124,21 +117,17 @@ export class PropertyManager<T = any> {
    * Coerce value to the correct type
    */
   private _coerceValue(name: string, value: any, config: PropertyConfig): any {
-    // Custom coercion
     if (config.coerce) {
       return config.coerce(value)
     }
-    
-    // Null/undefined handling
+
     if (value === null || value === undefined) {
       return config.default ?? null
     }
-    
-    // Type coercion
+
     switch (config.type) {
       case 'boolean':
         // HTML Standard: attribute present (even empty) = true, absent = false
-        // String handling:
         if (typeof value === 'string') {
           // Empty string = true (HTML boolean attribute: <input checked>)
           if (value === '') return true
@@ -189,12 +178,10 @@ export class PropertyManager<T = any> {
    * Check if two values are equal
    */
   private _valuesEqual(a: any, b: any): boolean {
-    // Simple equality for primitives
     if (typeof a !== 'object' || typeof b !== 'object') {
       return a === b
     }
-    
-    // Null checks
+
     if (a === null || b === null) {
       return a === b
     }
@@ -254,7 +241,6 @@ export class PropertyManager<T = any> {
    * Handle property aliases (e.g., not-clearable → clearable: false)
    */
   handleAlias(aliasName: string, value: any): PropertyChange | null {
-    // Find property with this alias
     for (const [propName, config] of Object.entries(this._config)) {
       if (config.aliases && aliasName in config.aliases) {
         const aliasedValue = config.aliases[aliasName]

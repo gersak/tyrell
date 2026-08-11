@@ -8,7 +8,6 @@
    (component-header "ty-tag"
                      "Versatile tag component for labels, badges, and removable chips. Supports semantic flavors, multiple sizes, and interactive click/dismiss events.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -74,11 +73,9 @@
        {:name "end"
         :description "Content after the main text — badges, counts"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Semantic Flavors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Flavors")
        (demo-area
@@ -96,7 +93,6 @@
 <ty-tag flavor=\"warning\">Warning</ty-tag>
 <ty-tag flavor=\"neutral\">Neutral</ty-tag>")]
 
-      ;; Complete Matrix
       [:div.ty-content.rounded-lg.p-5
        (section-label "Complete Matrix")
        [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
@@ -127,7 +123,6 @@
 <ty-tag flavor=\"primary-\">Softer</ty-tag>
 <ty-tag flavor=\"primary+\">Stronger</ty-tag>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -143,7 +138,6 @@
 <ty-tag size=\"lg\" flavor=\"primary\">Large</ty-tag>
 <ty-tag size=\"xl\" flavor=\"primary\">Extra Large</ty-tag>")]
 
-      ;; Shape Variants
       [:div.ty-content.rounded-lg.p-5
        (section-label "Shape Variants")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -160,7 +154,6 @@
 <ty-tag flavor=\"primary\" pill=\"false\">Rectangular</ty-tag>
 <ty-tag flavor=\"success\" not-pill=\"true\">Also Rectangular</ty-tag>")]
 
-      ;; Interactive Tags
       [:div.ty-content.rounded-lg.p-5
        (section-label "Interactive Tags")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -194,7 +187,6 @@
 <!-- Disabled -->
 <ty-tag flavor=\"warning\" clickable disabled>Disabled</ty-tag>")]
 
-      ;; With Icons and Slots
       [:div.ty-content.rounded-lg.p-5
        (section-label "Icons and Slots")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -232,7 +224,6 @@
   Error
 </ty-tag>")]
 
-      ;; Select Integration
       [:div.ty-content.rounded-lg.p-5
        (section-label "Select Integration")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -256,7 +247,6 @@
 </ty-select>
 <ty-selected-options for=\"skills\"></ty-selected-options>")]])
 
-   ;; Common Use Cases
    (doc-section "Common Use Cases"
      [:div.grid.gap-5
       {:style {:grid-template-columns "repeat(auto-fill, minmax(280px, 1fr))"}}
@@ -297,7 +287,6 @@
         [:ty-tag {:flavor "primary" :dismissible "true" :size "sm"} "In Stock"]
         [:ty-tag {:flavor "primary" :dismissible "true" :size "sm"} "Free Shipping"]]]])
 
-   ;; JavaScript API
    (doc-section "JavaScript API"
      [:div.ty-elevated.rounded-lg.p-5
       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -324,7 +313,6 @@ document.body.appendChild(tag);
 // Enter/Space → click  |  Delete/Backspace → dismiss"
        "javascript")])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6
@@ -358,7 +346,6 @@ document.body.appendChild(tag);
             [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
             [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
 
-   ;; Accessibility
    (doc-section "Accessibility"
      [:div.ty-content.rounded-lg.p-5
       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}

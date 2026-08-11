@@ -1,12 +1,6 @@
 /**
- * TyButton Web Component
- *
- * Three appearance variants × six flavors × three tones (+/base/-).
- *   appearance="solid"     saturated brand fill (default)
- *   appearance="outlined"  transparent bg, text === border
- *   appearance="ghost"     text only, hover bg
- *
- * Append `+` or `-` to a flavor for stronger/softer tone (e.g. "primary+").
+ * TyButton Web Component — three appearances (solid/outlined/ghost) × six
+ * flavors × three tones. Append `+`/`-` to a flavor for stronger/softer tone.
  */
 
 import type { Flavor, Size, TyButtonElement } from "../types/common.js";
@@ -35,13 +29,6 @@ interface ButtonState {
 
 /**
  * Ty Button Component
- *
- * @example
- * ```html
- * <ty-button flavor="primary">Default solid</ty-button>
- * <ty-button appearance="outlined" flavor="danger">Outlined</ty-button>
- * <ty-button appearance="ghost" flavor="success+">Ghost stronger</ty-button>
- * ```
  */
 export class TyButton
   extends TyComponent<ButtonState>
@@ -162,10 +149,6 @@ export class TyButton
     );
   }
 
-  // ============================================================================
-  // PROPERTY ACCESSORS
-  // ============================================================================
-
   get flavor(): Flavor {
     return this.getProperty("flavor") as Flavor;
   }
@@ -249,10 +232,6 @@ export class TyButton
   set value(value: string) {
     this.setProperty("value", value);
   }
-
-  // ============================================================================
-  // INTERNAL
-  // ============================================================================
 
   /** Parse the optional `+`/`-` shade suffix from a flavor string. */
   private parseFlavor(): { base: string; tone: "" | "+" | "-" } {

@@ -91,8 +91,6 @@ export const textareaStyles = `
   border-top: 1px solid var(--ty-textarea-divider, var(--input-border, var(--ty-input-border)));
 }
 
-/* ===== LABEL STYLING ===== */
-
 .ty-field-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
@@ -103,7 +101,6 @@ export const textareaStyles = `
   padding-left: 12px;
 }
 
-/* Required indicator - using SVG icon instead of CSS */
 .required-icon {
   display: inline-flex;
   align-items: center;
@@ -112,8 +109,6 @@ export const textareaStyles = `
   height: 12px;
   vertical-align: middle;
 }
-
-/* ===== ERROR MESSAGE STYLING ===== */
 
 .error-message {
   font-size: var(--ty-font-xs);
@@ -125,8 +120,6 @@ export const textareaStyles = `
 }
 
 /* Error state is reflected on .textarea-wrapper (see above). */
-
-/* ===== TEXTAREA BASE STYLING ===== */
 
 textarea {
   /* Borderless — the .textarea-wrapper owns the border/background now. */
@@ -144,19 +137,13 @@ textarea {
   font-weight: var(--ty-font-normal);
   outline: none;
 
-  /* Default size (md) - refined spacing */
   min-height: 80px;
-  /* Larger than input for multiline */
   padding: 12px 12px;
-  /* Slightly larger padding for text areas */
 
-  /* Auto-resize specific styles */
   overflow: hidden;
   /* Hide scrollbars since we're auto-resizing */
   resize: none;
-  /* Disable manual resize by default */
 
-  /* Ensure consistent text wrapping */
   white-space: pre-wrap;
   word-wrap: break-word;
 }
@@ -173,15 +160,11 @@ textarea:disabled {
   color: var(--input-disabled-color, var(--ty-input-disabled-color));
 }
 
-/* Placeholder styling - subtle and elegant */
 textarea::placeholder {
   color: var(--input-placeholder, var(--ty-input-placeholder));
   font-weight: 400;
 }
 
-/* ===== RESIZE CONTROL OPTIONS ===== */
-
-/* Allow manual resizing */
 textarea.resize-both {
   resize: both;
 }
@@ -203,8 +186,6 @@ textarea:not(.resize-both):not(.resize-horizontal):not(.resize-vertical) {
   resize: none;
 }
 
-/* ===== DUMMY ELEMENT FOR AUTO-RESIZE ===== */
-
 .textarea-dummy {
   /* Hidden element that measures text height */
   position: absolute !important;
@@ -218,14 +199,10 @@ textarea:not(.resize-both):not(.resize-horizontal):not(.resize-vertical) {
   pointer-events: none !important;
   z-index: -1 !important;
 
-  /* Ensure it has the same text behavior as textarea */
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
 }
 
-/* ===== SIZE MODIFIERS ===== */
-
-/* Extra Small */
 textarea.xs {
   min-height: 64px;
   padding: 8px 10px;
@@ -234,7 +211,6 @@ textarea.xs {
   letter-spacing: var(--ty-tracking-xs);
 }
 
-/* Small */
 textarea.sm {
   min-height: 72px;
   padding: 10px 10px;
@@ -243,7 +219,6 @@ textarea.sm {
   letter-spacing: var(--ty-tracking-sm);
 }
 
-/* Medium (default) */
 textarea.md {
   min-height: 80px;
   padding: 12px 12px;
@@ -252,7 +227,6 @@ textarea.md {
   letter-spacing: var(--ty-tracking-sm);
 }
 
-/* Large */
 textarea.lg {
   min-height: 96px;
   padding: 14px 14px;
@@ -261,7 +235,6 @@ textarea.lg {
   letter-spacing: var(--ty-tracking-base);
 }
 
-/* Extra Large */
 textarea.xl {
   min-height: 112px;
   padding: 16px 16px;
@@ -270,21 +243,17 @@ textarea.xl {
   letter-spacing: var(--ty-tracking-lg);
 }
 
-/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
-
 textarea:focus-visible {
   outline: none;
   /* We use box-shadow instead */
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   textarea {
     border-width: 2px;
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   textarea {
     transition: none;
@@ -295,9 +264,6 @@ textarea:focus-visible {
   }
 }
 
-/* ===== CONTAINER-AWARE RESPONSIVE BEHAVIOR ===== */
-
-/* Scale down on smaller containers using container queries */
 @container (max-width: 480px) {
   textarea.lg {
     font-size: var(--ty-font-sm);
@@ -355,16 +321,12 @@ textarea:focus-visible {
   }
 }
 
-/* ===== ANIMATION AND TRANSITIONS ===== */
-
-/* Smooth height transitions for auto-resize */
 textarea {
   transition: var(--ty-local-transition,
     border-color 0.15s ease-in-out,
     box-shadow 0.15s ease-in-out,
     background-color 0.15s ease-in-out,
     height 0.1s ease-out);
-  /* Smooth height changes */
 }
 
 /* Disable height transition on focus to avoid jarring effect */
@@ -375,7 +337,6 @@ textarea:focus {
     background-color 0.15s ease-in-out);
 }
 
-/* For users who prefer reduced motion, disable height transitions */
 @media (prefers-reduced-motion: reduce) {
   textarea {
     transition: none;

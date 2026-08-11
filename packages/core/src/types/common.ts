@@ -82,7 +82,6 @@ export interface TyButtonElement extends TyBaseElement {
   type?: 'button' | 'submit' | 'reset'
 }
 
-/** CSS style content */
 /** Icon size variants */
 export type IconSize =
   | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl'  // Relative sizes
@@ -166,7 +165,7 @@ export interface TyInputElement extends TyBaseElement {
   /** Associated form */
   readonly form?: HTMLFormElement | null
 
-  // Numeric formatting properties (NEW)
+  // Numeric formatting properties
   /** Currency code for currency type (e.g., 'USD', 'EUR', 'HRK') */
   currency?: string
   /** Locale for formatting (e.g., 'en-US', 'hr-HR') */
@@ -174,7 +173,6 @@ export interface TyInputElement extends TyBaseElement {
   /** Number of decimal places */
   precision?: number | string
 
-  // Debounce property (Phase D)
   /** Debounce in milliseconds before firing input/change events (0-5000ms) */
   debounce?: number | string
 }

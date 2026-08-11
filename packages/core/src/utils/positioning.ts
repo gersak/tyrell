@@ -1,15 +1,10 @@
 /**
  * Core positioning engine for floating elements
- * Adapted from ty.positioning ClojureScript implementation
- * 
+ *
  * Handles smart positioning of tooltips, dropdowns, popups, and other
  * floating elements relative to anchor elements with automatic overflow
  * detection and placement fallback.
  */
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Placement orientation - how the floating element is positioned
@@ -120,10 +115,6 @@ export interface CalculatePlacementOptions {
  */
 export type CleanupFn = () => void;
 
-// ============================================================================
-// Placement Definitions
-// ============================================================================
-
 /**
  * Map of all placement configurations
  */
@@ -202,10 +193,6 @@ export const placementPreferences = {
   ] as Placement[],
 };
 
-// ============================================================================
-// DOM Measurement Helpers
-// ============================================================================
-
 /**
  * Get element dimensions relative to viewport with calculated center points
  */
@@ -235,10 +222,6 @@ function getViewportRect(): ViewportRect {
   };
 }
 
-// ============================================================================
-// Position Calculation
-// ============================================================================
-
 /**
  * Calculate position for a specific placement
  * Returns x, y coordinates and overflow information
@@ -258,7 +241,6 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
   const { vertical, horizontal, orientation } = config;
   const viewport = getViewportRect();
 
-  // Calculate X position
   let x: number;
   if (orientation === 'vertical') {
     // Left/right placements
@@ -278,7 +260,6 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
     }
   }
 
-  // Calculate Y position
   let y: number;
   if (orientation === 'vertical') {
     // Left/right placements
@@ -298,7 +279,6 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
     }
   }
 
-  // Calculate overflow for each edge
   const overflow: OverflowData = {
     top: Math.min(0, y - padding),
     left: Math.min(0, x - padding),
@@ -340,7 +320,6 @@ export function findBestPosition(options: PositionOptions): PositionResult {
   const floatingRect = getElementRect(floatingEl);
   const scrollbarWidth = 15;
 
-  // Calculate all candidate positions
   const candidates = preferences.map(placement =>
     calculatePlacement({
       targetRect,
@@ -367,9 +346,7 @@ export function findBestPosition(options: PositionOptions): PositionResult {
   return bestPosition;
 }
 
-// ============================================================================
 // Anchored modal popups (select, date-picker)
-// ============================================================================
 
 /**
  * Below/above placement for trigger-anchored `<dialog>` popups.

@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
-// Type definitions for Ty Step component
 export interface TyStepProps extends React.HTMLAttributes<HTMLElement> {
   /** Required unique identifier for the step */
   id: string;
@@ -22,7 +21,6 @@ export interface TyStepProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-step web component
 export const TyStep = React.forwardRef<HTMLElement, TyStepProps>(
   ({
     children,
@@ -35,7 +33,6 @@ export const TyStep = React.forwardRef<HTMLElement, TyStepProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -46,19 +43,16 @@ export const TyStep = React.forwardRef<HTMLElement, TyStepProps>(
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
       id,
     };
 
-    // Add string attributes
     if (label) webComponentProps.label = label;
     if (description) webComponentProps.description = description;
     if (status) webComponentProps.status = status;
 
-    // Add boolean attributes
     if (disabled) webComponentProps.disabled = true;
 
     return React.createElement(

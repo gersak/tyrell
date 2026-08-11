@@ -144,7 +144,6 @@
   "Protocol for locale-specific information"
   (locale [this key] "Returns locale definition for given key"))
 
-;; Extend string to just return itself (no translation)
 (extend-type string
   Translator
   (translate
@@ -152,7 +151,6 @@
     ([this _] this)
     ([this _ _] this)))
 
-;; Extend nil to return nil
 (extend-type nil
   Translator
   (translate
@@ -160,7 +158,6 @@
     ([_ _] nil)
     ([_ _ _] nil)))
 
-;; Public API functions that will be used throughout the system
 (defn t
   "Translate helper function. Shorthand for translate."
   ([item]

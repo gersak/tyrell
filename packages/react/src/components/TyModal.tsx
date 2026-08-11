@@ -3,7 +3,6 @@ import { hostProps } from '../utils/host-props';
 import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
 import { needsPropertyBridge } from '../utils/react-version';
 
-// Event detail structure for modal events
 export interface TyModalEventDetail {
   reason?: 'programmatic' | 'native' | 'backdrop' | 'escape' | 'close-button';
   returnValue?: string;
@@ -19,7 +18,6 @@ export interface TyModalBeforeCloseDetail {
   reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native';
 }
 
-// Type definitions for Ty Modal component
 export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** Controls modal visibility */
   open?: boolean;
@@ -52,7 +50,6 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
-// Ref interface for imperative methods
 export interface TyModalRef {
   show: () => void;
   /**
@@ -64,7 +61,6 @@ export interface TyModalRef {
   element: HTMLElement | null;
 }
 
-// React wrapper for ty-modal web component
 export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
   ({
     open,
@@ -80,7 +76,6 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Expose imperative methods through ref
     useImperativeHandle(ref, () => ({
       show: () => {
         if (elementRef.current && typeof (elementRef.current as any).show === 'function') {
@@ -95,8 +90,6 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
       element: elementRef.current,
     }), []);
 
-    // Handle modal events.
-    //
     // ty-dropdown, ty-multiselect, ty-date-picker etc. dispatch their own
     // `open`/`close` custom events with `bubbles: true, composed: true` when
     // their internal popups toggle. Those events bubble up through the
@@ -125,7 +118,6 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
         if (onBeforeClose) onBeforeClose(event);
       };
 
-      // Listen for custom modal events
       if (onOpen) {
         element.addEventListener('open', handleOpen as EventListener);
       }
@@ -172,7 +164,6 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
       setIf('closeOnEscape', closeOnEscape);
     }, [backdrop, closeOnOutsideClick, closeOnEscape]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,

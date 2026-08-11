@@ -6,9 +6,6 @@
  */
 
 export const popupStyles = `
-/* Popup component with dropdown-like behavior and tooltip positioning */
-/* Uses dialog element for top layer rendering like dropdown and date-picker */
-
 .popup-dialog {
   position: fixed;
   top: 0;
@@ -29,7 +26,6 @@ export const popupStyles = `
   opacity: 0;
   /* NO TRANSFORM here - apply only when animating to avoid measurement errors! */
 
-  /* Smooth transitions */
   transition:
     opacity 150ms ease-out,
     visibility 150ms ease-out,
@@ -50,7 +46,6 @@ export const popupStyles = `
   transform: scale(0.95);
 }
 
-/* When open - smooth entrance animation */
 .popup-dialog.open {
   visibility: visible;
   opacity: 1;
@@ -63,28 +58,19 @@ export const popupStyles = `
   background: transparent;
 }
 
-/* Inner container - neutral structural container */
+/* Neutral structural container — users control all visuals via slotted content */
 .popup-container {
-  /* No default styling - just provides structure */
-  /* Users control all visual aspects via slotted content */
   display: contents;
 }
 
-/* Content slot styling */
+/* Slotted content defines its own styling */
 #popup-content {
-  /* Allow slotted content to define its own styling */
   display: contents;
 }
 
-/* Remove default styling from slotted content - users have full control */
+/* Users have complete control over the popup's appearance; only essential
+   positioning is imposed here. */
 #popup-content ::slotted(*) {
-  /* Remove default styling that conflicts with user styling */
-  /* Users now have complete control over popup appearance */
-  /* background: unset; */
-  /* border: unset; */
-  /* box-shadow: unset; */
-
-  /* Only maintain essential positioning */
   position: relative;
 
   /* Prevent content from being too wide - still helpful */

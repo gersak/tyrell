@@ -1,73 +1,11 @@
 /**
- * Tabs Component
- * 
- * A carousel-based tabs component with smooth animations and fixed container dimensions.
- * Features horizontal sliding transitions, smart positioning marker, and independent panel scrolling.
- * 
- * Features:
- * - Carousel animation with smooth sliding transitions
- * - Fixed dimensions prevent layout shift between tabs
- * - Animated marker that follows active tab button
- * - Rich label support via slots (icons, badges, custom content)
- * - Custom marker slot for complete active tab styling control
- * - Independent panel scrolling with scroll position reset
- * - ResizeObserver for responsive percentage widths
- * - Smart rendering - only updates DOM when necessary
- * - Accessibility with ARIA roles and attributes
- * - Top/bottom placement for tab buttons
- * 
- * @example
- * <!-- Basic tabs with text labels -->
- * <ty-tabs width="800px" height="600px" active="general">
- *   <ty-tab id="general" label="General Settings">
- *     <div class="p-6">General content...</div>
- *   </ty-tab>
- *   <ty-tab id="advanced" label="Advanced Settings">
- *     <div class="p-6">Advanced content...</div>
- *   </ty-tab>
- * </ty-tabs>
- * 
- * @example
- * <!-- Rich labels with icons and badges -->
- * <ty-tabs width="800px" height="600px">
- *   <!-- Rich label as direct child -->
- *   <span slot="label-profile" class="flex items-center gap-2">
- *     <ty-icon name="user" size="sm"></ty-icon>
- *     Profile
- *   </span>
- *   
- *   <span slot="label-notifications" class="flex items-center gap-2">
- *     <ty-icon name="bell" size="sm"></ty-icon>
- *     Notifications
- *     <span class="ty-bg-danger ty-text-danger++ px-2 py-0.5 rounded-full text-xs">5</span>
- *   </span>
- *   
- *   <!-- Tab panels -->
- *   <ty-tab id="profile">...</ty-tab>
- *   <ty-tab id="notifications">...</ty-tab>
- * </ty-tabs>
- * 
- * @example
- * <!-- Custom marker styling -->
- * <ty-tabs width="100%" height="400px">
- *   <!-- Gradient marker slot -->
- *   <div slot="marker" style="
- *     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
- *     border-radius: 0.5rem;
- *     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
- *   "></div>
- *   
- *   <ty-tab id="tab1" label="Dashboard">...</ty-tab>
- *   <ty-tab id="tab2" label="Analytics">...</ty-tab>
- * </ty-tabs>
+ * Tabs Component — carousel-based tabs with sliding transitions, an animated
+ * active marker, and fixed container dimensions. Expects `ty-tab` children;
+ * rich labels come from `slot="label-{tab-id}"` children of `ty-tabs` itself.
  */
 
 import { ensureStyles } from '../utils/styles.js';
 import { tabsStyles } from '../styles/tabs.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Tabs container attributes configuration
@@ -89,19 +27,13 @@ export interface TabChangeDetail {
   previousIndex: number | null; // Index of previously active tab
 }
 
-/**
- * Marker position for animated indicator
- */
+/** Marker position for the animated indicator. */
 interface MarkerPosition {
   left: number;   // Left offset in pixels
   top: number;    // Top offset in pixels
   width: number;  // Width in pixels
   height: number; // Height in pixels
 }
-
-// ============================================================================
-// WeakMaps for State Management
-// ============================================================================
 
 const eventHandlers = new WeakMap<TyTabs, {
   tabClickHandlers: Map<string, (e: Event) => void>;
@@ -110,13 +42,6 @@ const eventHandlers = new WeakMap<TyTabs, {
 
 const resizeObservers = new WeakMap<TyTabs, ResizeObserver>();
 
-// ============================================================================
-// Helper Functions - Attribute Parsing
-// ============================================================================
-
-/**
- * Extract tabs configuration from element attributes
- */
 function getTabsAttributes(el: TyTabs): TabsAttributes {
   return {
     width: el.getAttribute('width') || '100%',
@@ -126,16 +51,10 @@ function getTabsAttributes(el: TyTabs): TabsAttributes {
   };
 }
 
-/**
- * Get all ty-tab child elements
- */
 function getChildTabs(el: TyTabs): HTMLElement[] {
   return Array.from(el.querySelectorAll('ty-tab'));
 }
 
-/**
- * Get ID from a ty-tab element
- */
 function getTabId(tab: HTMLElement): string | null {
   return tab.getAttribute('id');
 }
@@ -160,35 +79,20 @@ function getTabLabelType(tabsEl: TyTabs, tab: HTMLElement): 'slot' | 'text' {
   return 'text';
 }
 
-/**
- * Check if tab is disabled
- */
 function isTabDisabled(tab: HTMLElement): boolean {
   return tab.hasAttribute('disabled');
 }
 
-/**
- * Check if user provided custom marker content via slot
- */
 function hasCustomMarker(el: TyTabs): boolean {
   return el.querySelector('[slot="marker"]') !== null;
 }
 
-// ============================================================================
-// Helper Functions - Active Tab Management
-// ============================================================================
-
-/**
- * Find index of tab with given ID
- */
 function findTabIndex(tabs: HTMLElement[], tabId: string): number | undefined {
   const index = tabs.findIndex(tab => getTabId(tab) === tabId);
   return index >= 0 ? index : undefined;
 }
 
-/**
- * Get the active tab ID, defaulting to first tab if not specified
- */
+/** Active tab ID, defaulting to the first tab if not specified. */
 function getActiveTabId(el: TyTabs, tabs: HTMLElement[]): string | null {
   const activeAttr = el.getAttribute('active');
   
@@ -204,16 +108,10 @@ function getActiveTabId(el: TyTabs, tabs: HTMLElement[]): string | null {
   return null;
 }
 
-/**
- * Set the active tab by ID
- */
 function setActiveTab(el: TyTabs, tabId: string): void {
   el.setAttribute('active', tabId);
 }
 
-/**
- * Dispatch ty-tab-change event
- */
 function dispatchTabChangeEvent(
   el: TyTabs,
   activeId: string,
@@ -234,13 +132,6 @@ function dispatchTabChangeEvent(
   el.dispatchEvent(event);
 }
 
-// ============================================================================
-// Event Handlers - Tab Button Click
-// ============================================================================
-
-/**
- * Handle tab button click
- */
 function handleTabClick(el: TyTabs, tabId: string, event: Event): void {
   event.preventDefault();
   event.stopPropagation();
@@ -249,9 +140,6 @@ function handleTabClick(el: TyTabs, tabId: string, event: Event): void {
   setActiveTab(el, tabId);
 }
 
-/**
- * Cleanup existing event listeners
- */
 function cleanupEventListeners(el: TyTabs): void {
   const handlers = eventHandlers.get(el);
   if (!handlers) return;
@@ -259,7 +147,6 @@ function cleanupEventListeners(el: TyTabs): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
   
-  // Remove all tab click handlers
   handlers.tabClickHandlers.forEach((handler, tabId) => {
     const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-tab-id='${tabId}']`);
     if (button) {
@@ -277,20 +164,14 @@ function cleanupEventListeners(el: TyTabs): void {
   handlers.tabKeyClickHandlers.clear();
 }
 
-/**
- * Setup event listeners for tab button clicks
- */
 function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLElement[]): void {
-  // Clean up any existing listeners first
   cleanupEventListeners(el);
-  
-  // Initialize handlers storage
+
   const handlers = {
     tabClickHandlers: new Map<string, (e: Event) => void>(),
     tabKeyClickHandlers: new Map<string, (e: Event) => void>(),
   };
 
-  // Add click listener for each tab button
   tabs.forEach((tab) => {
     const tabId = getTabId(tab);
     if (!tabId) return;
@@ -314,18 +195,10 @@ function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLEleme
       handlers.tabKeyClickHandlers.set(tabId, keyClickHandler);
     }
   });
-  
-  // Store handlers for cleanup
+
   eventHandlers.set(el, handlers);
 }
 
-// ============================================================================
-// Transform & Positioning Updates
-// ============================================================================
-
-/**
- * Update the transform on panels-wrapper based on active index and measured width
- */
 function updateTransform(el: TyTabs, activeIndex: number): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
@@ -333,17 +206,13 @@ function updateTransform(el: TyTabs, activeIndex: number): void {
   const panelsWrapper = shadowRoot.querySelector<HTMLElement>('.panels-wrapper');
   if (!panelsWrapper) return;
   
-  // Measure the actual width of the container
   const containerWidth = el.offsetWidth;
   const offsetPx = activeIndex * containerWidth;
-  
-  // Apply transform directly in pixels
+
   panelsWrapper.style.transform = `translateX(-${offsetPx}px)`;
 }
 
-/**
- * Update ARIA attributes on tab buttons without re-rendering
- */
+/** Update ARIA attributes on tab buttons without re-rendering. */
 function updateAriaAttributes(el: TyTabs, shadowRoot: ShadowRoot, activeId: string): void {
   const tabs = getChildTabs(el);
   
@@ -357,10 +226,9 @@ function updateAriaAttributes(el: TyTabs, shadowRoot: ShadowRoot, activeId: stri
     if (button) {
       button.setAttribute('aria-selected', String(isActive));
       button.setAttribute('tabindex', isActive ? '0' : '-1');
-      // Add data-active attribute for styling slotted content
+      // data-active lets consumers style slotted label content
       button.setAttribute('data-active', String(isActive));
-      
-      // Also set data-active on the slotted label element in light DOM
+
       const slottedLabel = el.querySelector(`[slot='label-${tabId}']`);
       if (slottedLabel) {
         slottedLabel.setAttribute('data-active', String(isActive));
@@ -369,9 +237,7 @@ function updateAriaAttributes(el: TyTabs, shadowRoot: ShadowRoot, activeId: stri
   });
 }
 
-/**
- * Update pointer-events, opacity, and data-active on tab panels without re-rendering
- */
+/** Update pointer-events, opacity and data-active on tab panels without re-rendering. */
 function updatePanelInteraction(el: TyTabs, activeId: string): void {
   const tabs = getChildTabs(el);
   
@@ -380,8 +246,8 @@ function updatePanelInteraction(el: TyTabs, activeId: string): void {
     if (!tabId) return;
     
     const isActive = tabId === activeId;
-    
-    // Set data-active attribute for framework conditional rendering
+
+    // data-active drives framework conditional rendering
     tab.setAttribute('data-active', String(isActive));
     
     if (isActive) {
@@ -394,10 +260,7 @@ function updatePanelInteraction(el: TyTabs, activeId: string): void {
   });
 }
 
-/**
- * Calculate marker position and dimensions based on active tab button.
- * Returns position object with left, top, width, height in pixels, or null if button not found.
- */
+/** Marker position in pixels for the active tab button, or null if not found. */
 function calculateMarkerPosition(
   el: TyTabs,
   shadowRoot: ShadowRoot,
@@ -422,9 +285,6 @@ function calculateMarkerPosition(
   };
 }
 
-/**
- * Update marker wrapper position and dimensions to match active tab button
- */
 function updateMarker(el: TyTabs, activeId: string): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
@@ -472,29 +332,19 @@ function updateActiveTabState(el: TyTabs, tabId: string, previousId: string | nu
 
   // Only update if different tab and valid
   if (previousId === tabId || newIndex === undefined) return;
-  
-  // Update CSS variable for transform
+
   el.style.setProperty('--active-index', String(newIndex));
-  
-  // Update transform directly
   updateTransform(el, newIndex);
-  
-  // Update ARIA attributes on buttons
   updateAriaAttributes(el, shadowRoot, tabId);
-  
-  // Update pointer-events on panels
   updatePanelInteraction(el, tabId);
-  
-  // Update marker position to match new active tab
   updateMarker(el, tabId);
-  
+
   // Reset scroll position of new active panel
   const newPanel = tabs[newIndex] as any;
   if (newPanel?.resetScroll) {
     newPanel.resetScroll();
   }
-  
-  // Dispatch change event
+
   dispatchTabChangeEvent(
     el,
     tabId,
@@ -504,15 +354,7 @@ function updateActiveTabState(el: TyTabs, tabId: string, previousId: string | nu
   );
 }
 
-// ============================================================================
-// ResizeObserver for Responsive Width
-// ============================================================================
-
-/**
- * Setup ResizeObserver for percentage widths and marker updates
- */
 function setupResizeObserver(el: TyTabs): void {
-  // Clean up old observer
   const oldObserver = resizeObservers.get(el);
   if (oldObserver) {
     oldObserver.disconnect();
@@ -549,9 +391,6 @@ function setupResizeObserver(el: TyTabs): void {
   resizeObservers.set(el, observer);
 }
 
-/**
- * Cleanup ResizeObserver
- */
 function cleanupResizeObserver(el: TyTabs): void {
   const observer = resizeObservers.get(el);
   if (observer) {
@@ -559,10 +398,6 @@ function cleanupResizeObserver(el: TyTabs): void {
     resizeObservers.delete(el);
   }
 }
-
-// ============================================================================
-// Rendering Functions
-// ============================================================================
 
 /**
  * Generate HTML for tab buttons using slots for rich labels.
@@ -633,10 +468,7 @@ function renderButtonsOnly(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string
   }).join('');
 }
 
-// ============================================================================
-// Overflow Handling (collapse tabs that don't fit into a "more" menu)
-// ============================================================================
-
+// Overflow handling: collapse tabs that don't fit into a "more" menu.
 const OVERFLOW_TRIGGER_WIDTH = 40;
 
 /** Build a display label for a hidden tab's overflow-menu entry. */
@@ -790,15 +622,12 @@ function render(el: TyTabs): void {
     tab.setAttribute('tabindex', '0');
   });
 
-  // Check if structure already exists
   const existingContainer = shadowRoot.querySelector('.tabs-container');
   const existingButtons = shadowRoot.querySelector('.tab-buttons');
   const existingViewport = shadowRoot.querySelector('.panels-viewport');
-  
-  // Ensure styles are loaded
+
   ensureStyles(shadowRoot, { css: tabsStyles, id: 'ty-tabs' });
-  
-  // Dev warning for too many tabs
+
   if (tabs.length > 7) {
     console.warn(
       `[ty-tabs] More than 7 tabs detected (${tabs.length} tabs). ` +
@@ -807,23 +636,20 @@ function render(el: TyTabs): void {
     );
   }
   
-  // Set CSS variables for dimensions
   el.style.setProperty('--tabs-width', width.includes('%') ? '100%' : width);
   el.style.setProperty('--tabs-height', height);
   el.style.setProperty('--active-index', String(activeIndex));
   
   if (existingContainer && existingButtons && existingViewport) {
     // === SMART UPDATE: Structure exists, only update what changed ===
-    
-    // Update placement if changed
+
     existingContainer.setAttribute('data-placement', placement);
-    
-    // SMART UPDATE: Preserve marker wrapper, only update buttons
+
+    // Preserve the marker wrapper; only the buttons are recreated.
     existingButtons.querySelector('.tab-overflow-trigger')?.remove();
     const allButtons = existingButtons.querySelectorAll('.tab-button');
     allButtons.forEach(button => button.remove());
-    
-    // Generate and append new buttons after the marker wrapper
+
     const buttonsHtml = renderButtonsOnly(el, tabs, activeId);
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = buttonsHtml;
@@ -831,14 +657,11 @@ function render(el: TyTabs): void {
     Array.from(tempDiv.children).forEach(button => {
       existingButtons.appendChild(button);
     });
-    
+
     // Re-setup event listeners (buttons were recreated)
     setupEventListeners(el, shadowRoot, tabs);
-    
-    // Update ARIA and data-active attributes on initial render
     updateAriaAttributes(el, shadowRoot, activeId || '');
-    
-    // Measure button height and update marker after update
+
     requestAnimationFrame(() => {
       const buttons = shadowRoot.querySelector('.tab-buttons');
       if (buttons) {
@@ -883,11 +706,9 @@ function render(el: TyTabs): void {
         const buttonsHeight = (buttons as HTMLElement).offsetHeight;
         el.style.setProperty('--buttons-height', `${buttonsHeight}px`);
       }
-      
-      // Update transform with measured width
+
       updateTransform(el, activeIndex);
 
-      // Update marker position to match active tab
       if (activeId) {
         updateMarker(el, activeId);
       }
@@ -895,21 +716,15 @@ function render(el: TyTabs): void {
       updateOverflow(el);
     });
 
-    // Setup event listeners
     setupEventListeners(el, shadowRoot, tabs);
-
-    // Update ARIA and data-active attributes on initial render
     updateAriaAttributes(el, shadowRoot, activeId || '');
-
-    // Setup ResizeObserver for responsive width
     setupResizeObserver(el);
 
-    // Update tab panel states
     if (activeId) {
       updatePanelInteraction(el, activeId);
     }
 
-    // Listen for marker slot changes to hide default marker
+    // Hide the default marker whenever a custom one is slotted in.
     const markerSlot = shadowRoot.querySelector('slot[name="marker"]') as HTMLSlotElement;
     if (markerSlot) {
       const updateDefaultMarkerVisibility = () => {
@@ -926,23 +741,15 @@ function render(el: TyTabs): void {
   }
 }
 
-/**
- * Cleanup when tabs component is disconnected
- */
 function cleanup(el: TyTabs): void {
   cleanupEventListeners(el);
   cleanupResizeObserver(el);
 }
 
-// ============================================================================
-// Component Definition
-// ============================================================================
-
 /**
  * TyTabs Web Component
  */
 export class TyTabs extends HTMLElement {
-  /** Observed attributes */
   static get observedAttributes() {
     return ['width', 'height', 'active', 'placement'];
   }
@@ -963,7 +770,6 @@ export class TyTabs extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     // Smart rendering: only full render when structural attributes change
     if (name === 'active') {
-      // Active tab changed - update state, then do smart render
       if (newValue) {
         // Pass `oldValue` explicitly so the change-detection inside
         // `updateActiveTabState` compares against the previous value
@@ -979,7 +785,6 @@ export class TyTabs extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-tabs')) {
   customElements.define('ty-tabs', TyTabs);
 }

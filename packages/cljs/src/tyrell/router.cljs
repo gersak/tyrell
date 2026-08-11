@@ -11,7 +11,6 @@
 (defonce ^:dynamic *user* (atom nil))
 (defonce ^:dynamic *permissions* nil)
 
-;; Core router state
 (defonce ^:dynamic *router*
   (atom {:tree {:id ::root
                 :segment ""
@@ -21,7 +20,6 @@
          :known #{} ; Track registered components
          :unknown []})) ; Queue for components with missing parents
 
-;; Zipper functions
 (defn component-tree-zipper
   "Returns routing tree zipper"
   [root]
@@ -52,7 +50,6 @@
           segments (cond-> (mapv :segment parents)
                      (not-empty segment) (conj segment))
           path (str "/" (str/join "/" (remove empty? segments)))]
-      ;; Append hash fragment if present
       (if (not-empty hash)
         (str path "#" hash)
         path))))
@@ -79,7 +76,6 @@
                  :parent parent
                  :tree tree})))))
 
-;; Base path functions
 (defn maybe-add-base
   "For given base and url will add base prefix
   if it exists to url. If base is nil than URL
@@ -106,7 +102,6 @@
         url
         (str "/" url)))))
 
-;; Query params functions
 (defn clj->query
   "Convert clojure map to URLSearchParams string"
   [data]
@@ -146,7 +141,6 @@
        :replace (.replaceState js/history nil "" updated))
      (swap! *router* assoc :query params))))
 
-;; Path checking functions
 (defn on-path?
   "For given path and component id function will get
   component path and check if given path starts with
@@ -195,7 +189,6 @@
            (on-path? tree url (:id node)) (recur (zip/next position) (conj result (dissoc node :children)))
            :else (recur (zip/next position) result)))))))
 
-;; Internal add-components implementation
 (defn- add-components
   "Add components to router state with proper tracking"
   [{:keys [known tree unknown]
@@ -252,7 +245,6 @@
                       (recur new-state new-unknown-count))))))
       state)))
 
-;; Public API
 (defn link
   "Add component(s) to router tree under parent.
   Parent should be a component id.
@@ -289,10 +281,8 @@
          full-url (str url query)]
      (when component-url
        (.pushState js/history nil "" full-url)
-       ;; Store the component URL (with hash) in router state
        (swap! *router* assoc :current component-url)
 
-       ;; Handle scrolling to fragment if present
        (when-let [url-parts (parse-url component-url)]
          (when-let [hash (:hash url-parts)]
            (when (not-empty hash)
@@ -303,17 +293,14 @@
                   (.scrollIntoView element #js {:behavior "smooth"})))
               100))))))))
 
-;; Landing functionality
 (defn- find-landing-candidates
   "Find all components with :landing property that user can access,
   sorted by priority (highest first)"
   []
   (let [{:keys [tree]} @*router*
         candidates (volatile! [])]
-    ;; Collect all components with :landing
     (loop [position (component-tree-zipper tree)]
       (if (zip/end? position)
-        ;; Filter by authorization and sort by priority
         (->> @candidates
              (filter #(authorized? (:id %)))
              (sort-by :landing >)
@@ -350,20 +337,16 @@
         clean-path (maybe-remove-base base pathname)
         full-url (str clean-path hash)]
     (swap! *router* assoc :current full-url)
-    ;; Always check for landing redirect after navigation
     (handle-landing!)))
 
 (defn init!
   "Initialize router with browser events and smart landing redirects"
   ([] (init! ""))
   ([base]
-   ;; Set base path
    (swap! *router* assoc :base base)
 
-   ;; Set initial URL (including hash) and check for landing redirect
    (update-router-from-browser! base)
 
-   ;; Handle initial fragment scroll if URL has hash
    (when-let [hash (.-hash js/location)]
      (when (not-empty hash)
        (let [hash-id (.substring hash 1)] ;; Remove leading #
@@ -374,12 +357,10 @@
               (.scrollIntoView element #js {:behavior "smooth"})))
           200))))
 
-   ;; Listen to browser navigation (back/forward)
    (.addEventListener js/window "popstate"
                       (fn [_]
                         (update-router-from-browser! base)))
 
-   ;; Listen to hash changes
    (.addEventListener js/window "hashchange"
                       (fn [_]
                         (update-router-from-browser! base)))))

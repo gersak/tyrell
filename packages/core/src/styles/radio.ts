@@ -43,7 +43,6 @@ ${inputStyles}
   width: 100%;
 }
 
-/* ===== RADIO GROUP ===== */
 .radio-group-container {
   display: flex;
   flex-direction: column;
@@ -95,7 +94,7 @@ ${inputStyles}
   height: 100%;
 }
 
-/* ===== RADIO ITEM (just the circle) ===== */
+/* A radio item is just the circle */
 .radio-container {
   display: inline-block;
   cursor: pointer;
@@ -149,7 +148,6 @@ ${inputStyles}
   transform: translate(-50%, -50%) scale(1);
 }
 
-/* Size variants */
 .radio-container.xs .radio-circle { width: 14px; height: 14px; }
 .radio-container.xs .radio-circle::after { width: 6px; height: 6px; }
 

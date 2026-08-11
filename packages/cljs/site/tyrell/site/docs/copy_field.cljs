@@ -3,10 +3,6 @@
   (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
                                              doc-section docs-page component-header section-label demo-area]]))
 
-;; ============================================================================
-;; API Reference
-;; ============================================================================
-
 (defn api-reference []
   [:div.ty-elevated.rounded-lg.p-6
    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
@@ -55,10 +51,6 @@
       {:name "copy-error"
        :payload "{error: Error}"
        :when-fired "Copy operation failed — handle for fallback UX"}])]])
-
-;; ============================================================================
-;; Examples
-;; ============================================================================
 
 (defn example-basic []
   [:div.ty-content.rounded-lg.p-5
@@ -146,10 +138,6 @@
                 (example-multiline)
                 (example-horizontal-scroll)]))
 
-;; ============================================================================
-;; Sizes
-;; ============================================================================
-
 (defn sizes []
   (doc-section "Sizes"
                [:div.ty-content.rounded-lg.p-5
@@ -163,10 +151,6 @@
 <ty-copy size=\"md\" label=\"Medium (default)\" value=\"...\"></ty-copy>
 <ty-copy size=\"lg\" label=\"Large\" value=\"...\"></ty-copy>
 <ty-copy size=\"xl\" label=\"Extra Large\" value=\"...\"></ty-copy>")]))
-
-;; ============================================================================
-;; Semantic Flavors
-;; ============================================================================
 
 (defn semantic-flavors []
   (doc-section "Semantic Flavors"
@@ -183,10 +167,6 @@
                 (code-block "<ty-copy flavor=\"success\" label=\"Production URL\" value=\"https://prod.example.com\"></ty-copy>
 <ty-copy flavor=\"warning\" label=\"Staging\" value=\"https://staging.example.com\"></ty-copy>
 <ty-copy flavor=\"danger\" label=\"Delete Token\" value=\"delete_token_abc\"></ty-copy>")]))
-
-;; ============================================================================
-;; Advanced Examples
-;; ============================================================================
 
 (defn advanced-api-keys-dashboard []
   [:div.ty-content.rounded-lg.p-5
@@ -256,10 +236,6 @@ copy.addEventListener('copy-error', (e) => {
                 (advanced-api-keys-dashboard)
                 (advanced-event-handling)]))
 
-;; ============================================================================
-;; Best Practices
-;; ============================================================================
-
 (defn- practice-column [flavor icon-circle icon-item title items]
   [:div
    [:div.flex.items-center.gap-2.mb-3
@@ -289,10 +265,6 @@ copy.addEventListener('copy-error', (e) => {
                                    "Skip copy-error handling — clipboard API can fail"
                                    "Rely on color alone to distinguish fields — add clear labels"
                                    "Use for interactive actions — that's what ty-button is for"])]]))
-
-;; ============================================================================
-;; Page
-;; ============================================================================
 
 (defn view []
   (docs-page

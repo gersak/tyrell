@@ -19,7 +19,6 @@ export const scrollContainerStyles = `
   overflow-x: hidden;
 }
 
-/* Allow horizontal scrolling when enabled */
 :host([overflow-x]) .scroll-wrapper {
   overflow-x: auto;
 }
@@ -28,10 +27,7 @@ export const scrollContainerStyles = `
   max-height: var(--scroll-max-height);
 }
 
-/* ===================================== */
 /* hide-scrollbar: hides native, no custom */
-/* ===================================== */
-
 :host([hide-scrollbar]) .scroll-wrapper {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -47,10 +43,7 @@ export const scrollContainerStyles = `
   overflow-anchor: none;
 }
 
-/* ===================================== */
 /* custom-scrollbar: hides native */
-/* ===================================== */
-
 :host([custom-scrollbar]) .scroll-wrapper {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -60,7 +53,6 @@ export const scrollContainerStyles = `
   display: none;
 }
 
-/* Show scrollbar tracks on host hover */
 :host([custom-scrollbar]:hover) .ty-scrollbar-track-y.has-overflow,
 :host([custom-scrollbar]:hover) .ty-scrollbar-track-x.has-overflow {
   opacity: 1;
@@ -74,10 +66,6 @@ export const scrollContainerStyles = `
 :host([custom-scrollbar]) .ty-scrollbar-track-x {
   right: var(--ty-scrollbar-width, 8px);
 }
-
-/* ===================================== */
-/* Shadow Indicators                     */
-/* ===================================== */
 
 .shadow-overlay {
   position: absolute;
@@ -190,7 +178,6 @@ export const scrollContainerStyles = `
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .shadow-top,
   .shadow-bottom,
@@ -200,6 +187,5 @@ export const scrollContainerStyles = `
   }
 }
 
-/* Shared scrollbar styles */
 ${customScrollbarStyles}
 `;

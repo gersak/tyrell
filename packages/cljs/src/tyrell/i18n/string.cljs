@@ -64,7 +64,6 @@
         (get translations :default) ; Try default locale
         text))) ; Fallback to original text
 
-;; Extend the Translator protocol for strings
 (extend-protocol i18n/Translator
   string
   (translate
@@ -76,7 +75,6 @@
      ;; For now, ignore options - no interpolation
      (get-string-translation this locale))))
 
-;; Helper functions for common datepicker strings
 (defn load-datepicker-translations!
   "Load common datepicker translations into the system"
   []
@@ -192,7 +190,6 @@
                  :zh "下一年"
                  :ko "다음 년도"}}))
 
-;; Async loading support for string translations
 (defn load-string-translations!
   "Load string translations from a URL.
   Expected format: {\"English text\" {:locale \"translation\"}}

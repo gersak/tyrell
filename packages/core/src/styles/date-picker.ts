@@ -1,7 +1,4 @@
-/**
- * Date Picker Component Styles
- * PORTED FROM: cljs/ty/components/date_picker.css
- */
+/** Date Picker Component Styles */
 
 import { FLAVORS } from "../types/common.js";
 
@@ -43,18 +40,14 @@ const datePickerFlavor = (f: string, fb?: string) => {
 export const datePickerCustomFlavorCss = (base: string) => datePickerFlavor(base, "neutral");
 
 export const datePickerStyles = `
-/* Date Picker Component Styles */
 :host {
   display: block;
   width: auto;
   min-width: 200px;
   font-family: var(--ty-font-sans);
 
-  /* ==========================================================================
-     Theming Tokens — Date Picker Stub
-     Thin shim over --ty-input-*. Override these to retheme just the date-picker
-     trigger without affecting other inputs.
-     ========================================================================== */
+  /* Theming tokens — date-picker stub. Thin shim over --ty-input-*: override
+     these to retheme just the date-picker trigger, not other inputs. */
   --ty-date-picker-bg: var(--ty-input-bg);
   --ty-date-picker-color: var(--ty-input-color);
   --ty-date-picker-placeholder: var(--ty-input-placeholder);
@@ -66,18 +59,14 @@ export const datePickerStyles = `
   --ty-date-picker-disabled-color: var(--ty-input-disabled-color);
   --ty-date-picker-radius: var(--ty-radius-md);
 
-  /* ==========================================================================
-     Theming Tokens — Calendar Popup Surface
-     Shared with ty-calendar / ty-calendar-month theming.
-     ========================================================================== */
+  /* Theming tokens — calendar popup surface. Shared with ty-calendar /
+     ty-calendar-month theming. */
   --ty-calendar-surface-bg: var(--ty-surface-floating);
   --ty-calendar-surface-border: var(--ty-input-border);
   --ty-calendar-surface-shadow: var(--ty-shadow-lg, 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.1));
   --ty-calendar-surface-radius: var(--ty-radius-lg);
 
-  /* ==========================================================================
-     Theming Tokens — Time Section
-     ========================================================================== */
+  /* Theming tokens — time section */
   --ty-calendar-time-bg: transparent;
   --ty-calendar-time-border: var(--ty-border-faint);
   --ty-calendar-time-label-color: var(--ty-color-neutral);
@@ -122,7 +111,6 @@ export const datePickerStyles = `
   width: 100%;
 }
 
-/* Start-slot icon (leading content inside the date-picker stub) */
 .date-picker-stub ::slotted([slot="start"]) {
   display: flex;
   align-items: center;
@@ -137,7 +125,6 @@ export const datePickerStyles = `
   height: 1em;
 }
 
-/* Date picker stub (styled like dropdown) */
 .date-picker-stub {
   width: 100%;
   cursor: pointer;
@@ -177,7 +164,6 @@ export const datePickerStyles = `
   box-shadow: 0 0 0 3px var(--date-picker-ring, var(--ty-date-picker-shadow-focus));
 }
 
-/* Size variants */
 .date-picker-stub.sm {
   min-height: var(--ty-size-sm);
   font-size: var(--ty-font-xs);
@@ -195,7 +181,6 @@ export const datePickerStyles = `
 /* Flavor variants — set --date-picker-accent*, consumed by the stub rules above */
 ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join("")}
 
-/* Text content */
 .stub-text {
   flex: 1;
   white-space: nowrap;
@@ -210,7 +195,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   color: var(--ty-date-picker-placeholder);
 }
 
-/* Icons */
 .stub-icons {
   display: flex;
   align-items: center;
@@ -280,7 +264,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   box-sizing: border-box;
   padding: var(--calendar-padding, 8px);
 
-  /* Hidden by default */
   opacity: 0;
   transition: opacity 200ms ease;
 
@@ -289,7 +272,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   left: -1000px;
 }
 
-/* Direction-based positioning with CSS classes */
 .calendar-dialog.position-below {
   left: var(--calendar-x);
   top: var(--calendar-y);
@@ -310,7 +292,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   background: transparent
 }
 
-/* Calendar content container */
 .calendar-content {
   background-color: var(--ty-calendar-surface-bg);
   border: 1px solid var(--ty-calendar-surface-border);
@@ -322,7 +303,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   align-items: center;
 }
 
-/* Native date input for mobile */
 /* Native input is invisible — used only to trigger the OS picker */
 .native-date-input {
   position: absolute;
@@ -347,7 +327,6 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   cursor: pointer;
 }
 
-/* Time input section */
 .time-section {
   display: flex;
   min-height: 2.5rem;

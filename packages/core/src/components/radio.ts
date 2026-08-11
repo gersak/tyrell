@@ -1,20 +1,7 @@
 /**
- * TyRadio + TyRadioGroup Web Components
- *
- * Exclusive selection within a group. ty-radio-group manages the selection
- * value and form integration; ty-radio is the individual choice element.
- *
- * Composition (container + children, like ty-select + ty-option):
- *   <ty-radio-group name="plan" value="pro" label="Plan">
- *     <ty-radio value="free">Free</ty-radio>
- *     <ty-radio value="pro">Pro</ty-radio>
- *     <ty-radio value="team">Team</ty-radio>
- *   </ty-radio-group>
- *
- * Keyboard:
- * - Tab focuses the group's currently-selected (or first) radio
- * - Arrow keys move focus AND selection within the group (per W3C ARIA)
- * - Space/Enter selects the focused radio
+ * TyRadio + TyRadioGroup Web Components - exclusive selection within a group.
+ * ty-radio-group owns the value and form integration; ty-radio is one choice.
+ * Keyboard follows W3C ARIA: arrow keys move focus AND selection together.
  */
 
 import type { Flavor, Size } from "../types/common.js";
@@ -26,9 +13,7 @@ import { radioStyles, radioCustomFlavorCss } from "../styles/radio.js";
 
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
 
-// ============================================================================
 // TyRadio — individual radio button
-// ============================================================================
 
 interface RadioState {
   listenersSetup: boolean;
@@ -209,7 +194,6 @@ export class TyRadio
     this.applyLabelName(radioEl);
   }
 
-  // Property accessors
   get value(): string { return this.getProperty("value"); }
   set value(v: string) { this.setProperty("value", v); }
 
@@ -230,9 +214,7 @@ if (!customElements.get("ty-radio")) {
   customElements.define("ty-radio", TyRadio);
 }
 
-// ============================================================================
 // TyRadioGroup — manages exclusive selection
-// ============================================================================
 
 interface RadioGroupState {
   listenersSetup: boolean;
@@ -329,9 +311,6 @@ export class TyRadioGroup
     return Array.from(this.querySelectorAll("ty-radio")) as TyRadio[];
   }
 
-  /**
-   * Push group state down to each radio child.
-   */
   private syncChildren(): void {
     const radios = this.getRadios();
     for (const radio of radios) {
@@ -343,9 +322,6 @@ export class TyRadioGroup
     }
   }
 
-  /**
-   * Handle a child's select request — update value, sync, emit change.
-   */
   private handleRadioSelect(e: Event): void {
     if (this.disabled) return;
     const detail = (e as CustomEvent).detail;
@@ -467,7 +443,6 @@ export class TyRadioGroup
       container.setAttribute("role", "radiogroup");
       container.setAttribute("aria-disabled", String(this.disabled));
 
-      // Label
       if (this.label) {
         const labelEl = document.createElement("div");
         labelEl.className = "radio-group-label";
@@ -498,7 +473,6 @@ export class TyRadioGroup
       shadow.appendChild(container);
       this.setupEventListeners();
     } else {
-      // Update label
       let labelEl = container.querySelector(".radio-group-label") as HTMLElement;
       if (this.label) {
         if (!labelEl) {
@@ -519,11 +493,9 @@ export class TyRadioGroup
         labelEl.remove();
       }
 
-      // Update orientation
       const list = container.querySelector(".radio-group-list") as HTMLElement;
       if (list) list.className = "radio-group-list " + this.orientation;
 
-      // Update error
       let errorEl = container.querySelector(".radio-group-error") as HTMLElement;
       if (this.error) {
         if (!errorEl) {
@@ -543,7 +515,6 @@ export class TyRadioGroup
     this.syncChildren();
   }
 
-  // Property accessors
   get value(): string { return this.getProperty("value"); }
   set value(v: string) { this.setProperty("value", v); }
 

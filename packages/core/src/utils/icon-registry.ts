@@ -1,7 +1,6 @@
 /**
  * Icon Registry System
  * Simple icon storage and retrieval with Cache API persistence
- * PORTED FROM: clj/ty/icons.cljs
  */
 
 import { VERSION } from '../version.js'
@@ -83,13 +82,11 @@ async function cacheIcon(name: string, svg: string): Promise<void> {
  * @returns Promise<string | null> - SVG string from cache or null
  */
 export async function getCachedIcon(name: string): Promise<string | null> {
-  // Check if we already have a read in progress for this icon
   const existingPromise = cacheReadPromises.get(name)
   if (existingPromise) {
     return existingPromise
   }
 
-  // Create new read promise
   const readPromise = (async () => {
     try {
       // Clear old caches on first cache access
@@ -111,7 +108,6 @@ export async function getCachedIcon(name: string): Promise<string | null> {
   // Store promise to avoid duplicate work
   cacheReadPromises.set(name, readPromise)
 
-  // Clean up promise after completion
   readPromise.finally(() => {
     cacheReadPromises.delete(name)
   })
@@ -129,29 +125,11 @@ export function registerIcons(icons: Record<string, string>): void {
   const changedIcons = new Set<string>()
 
   Object.entries(icons).forEach(([name, svg]) => {
-    // Always set in memory registry (fast, synchronous)
+    // Memory registry is the fast, synchronous source of truth
     iconRegistry.set(name, svg)
     changedIcons.add(name)
-
-    // Compare with cache in background to avoid unnecessary cache writes
-    /*getCachedIcon(name).then(cachedSvg => {
-      // Only write to cache if content actually changed
-      if (cachedSvg !== svg) {
-        cacheIcon(name, svg).catch(() => {
-          // Error already logged in cacheIcon
-        })
-      }
-      // If cachedSvg === svg, skip cache write (already up to date)
-    }).catch(() => {
-      // No cached version or error reading cache - write new icon
-      cacheIcon(name, svg).catch(() => {
-        // Error already logged in cacheIcon
-      })
-    })
-    */
   })
 
-  // Notify watchers immediately (synchronous)
   if (changedIcons.size > 0) {
     scheduleNotification(changedIcons)
   }
@@ -184,7 +162,6 @@ export async function clearIcons(): Promise<void> {
   const allIcons = new Set(iconRegistry.keys())
   iconRegistry.clear()
 
-  // Clear cache
   if ('caches' in window) {
     try {
       await caches.delete(CACHE_NAME)
@@ -227,19 +204,16 @@ export function removeWatcher(id: string): void {
  * Schedule notification for changed icons (batched and deferred)
  */
 function scheduleNotification(changedIcons: Set<string>): void {
-  // Accumulate changed icons
   if (!pendingNotifications) {
     pendingNotifications = new Set()
   }
 
   changedIcons.forEach(name => pendingNotifications!.add(name))
 
-  // Cancel existing timer
   if (notificationTimer !== null) {
     clearTimeout(notificationTimer)
   }
 
-  // Schedule notification using requestIdleCallback or setTimeout
   const scheduleCallback = typeof requestIdleCallback !== 'undefined'
     ? requestIdleCallback
     : (cb: IdleRequestCallback) => setTimeout(cb, 0)
@@ -249,7 +223,6 @@ function scheduleNotification(changedIcons: Set<string>): void {
     pendingNotifications = null
     notificationTimer = null
 
-    // Only notify if we have icons to notify about
     if (toNotify && toNotify.size > 0) {
       notifyWatchers(toNotify)
     }
@@ -263,7 +236,7 @@ function notifyWatchers(changedIcons: Set<string>): void {
   watchers.forEach((callback, watcherId) => {
     const watchedIcon = watcherIconNames.get(watcherId)
 
-    // If watcher is watching a specific icon, only notify if that icon changed
+    // Watching a specific icon: only notify when that icon changed
     if (watchedIcon) {
       if (changedIcons.has(watchedIcon)) {
         callback(new Set([watchedIcon]))

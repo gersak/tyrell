@@ -6,7 +6,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty Select component
 export interface TySelectItem {
   value: string;
   label: string;
@@ -126,7 +125,6 @@ export interface TySelectElement extends HTMLElement {
   clear(): void;
 }
 
-// React wrapper for ty-select web component
 export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
   ({
     value,
@@ -158,7 +156,6 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
   }, ref) => {
     const elementRef = useRef<TySelectElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -181,7 +178,6 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
       }
     }, [value]);
 
-    // Handle events
     const handleChange = useCallback((event: Event) => {
       if (onChange) onChange(event as CustomEvent<TySelectEventDetail>);
     }, [onChange]);
@@ -196,7 +192,6 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
       if (onCreate) onCreate(event as CustomEvent<{ value: string; label: string }>);
     }, [onCreate]);
 
-    // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -227,13 +222,11 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     const isAllowCreate = useBooleanProperty(elementRef, 'allowCreate', allowCreate);
     const isClearable = useBooleanProperty(elementRef, 'clearable', clearable);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Handle value conversion (array to comma-separated string)
     if (value !== undefined) {
       webComponentProps.value = Array.isArray(value) ? value.join(',') : value;
     }
@@ -266,11 +259,9 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
 
 TySelect.displayName = 'TySelect';
 
-// ============================================================================
 // TySelectedOptions — out-of-band chip display for a TySelect
 // (ty-selected-tags below is the same element under its original tag name,
 // kept for backward compatibility.)
-// ============================================================================
 
 export interface TySelectedTagsProps extends React.HTMLAttributes<HTMLElement> {
   /** id of the ty-select to display. Falls back to the previous element sibling. */

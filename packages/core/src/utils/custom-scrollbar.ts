@@ -1,23 +1,10 @@
 /**
- * CustomScrollbar - Reusable scrollbar utility
- *
- * Attaches a custom rendered scrollbar (vertical and/or horizontal) to any
- * scrollable element. Uses the overlay approach: native overflow:auto is
- * preserved for scroll physics, native scrollbar is hidden via CSS,
- * and custom track/thumb elements are synced on top.
- *
- * Usage:
- *   const scrollbar = new CustomScrollbar(scrollEl, { vertical: true })
- *   // scrollbar.trackY, scrollbar.thumbY — append these to your DOM
- *   // scrollbar.trackX, scrollbar.thumbX — for horizontal
- *   scrollbar.destroy()  // cleanup
- *
- * CSS classes applied:
- *   .ty-scrollbar-track-y / .ty-scrollbar-track-x
- *   .ty-scrollbar-thumb-y / .ty-scrollbar-thumb-x
- *   .has-overflow — when content overflows
- *   .dragging — during thumb drag
- *   .scrolling — briefly after scroll (auto-hide)
+ * CustomScrollbar - attaches a rendered scrollbar (vertical and/or horizontal)
+ * to any scrollable element. Overlay approach: native overflow:auto is kept for
+ * scroll physics, the native scrollbar is hidden via CSS, and custom track/thumb
+ * elements are synced on top. Append `trackY`/`trackX` to your DOM; `destroy()`
+ * cleans up. Classes: `.ty-scrollbar-{track,thumb}-{y,x}` plus state classes
+ * `.has-overflow`, `.dragging`, `.scrolling` (brief auto-hide after scroll).
  */
 
 export interface CustomScrollbarOptions {
@@ -41,13 +28,11 @@ export class CustomScrollbar {
   private _horizontal: boolean
   private _autoHideDelay: number
 
-  // Elements
   readonly trackY: HTMLElement | null = null
   readonly thumbY: HTMLElement | null = null
   readonly trackX: HTMLElement | null = null
   readonly thumbX: HTMLElement | null = null
 
-  // State
   private _isDragging = false
   private _dragAxis: 'x' | 'y' = 'y'
   private _dragStartPos = 0
@@ -56,7 +41,6 @@ export class CustomScrollbar {
   private _hideTimeout: ReturnType<typeof setTimeout> | null = null
   private _resizeObserver: ResizeObserver | null = null
 
-  // Bound handlers
   private _onScroll: () => void
   private _onThumbYDown: (e: PointerEvent) => void
   private _onThumbXDown: (e: PointerEvent) => void
@@ -71,7 +55,6 @@ export class CustomScrollbar {
     this._horizontal = options.horizontal ?? false
     this._autoHideDelay = options.autoHideDelay ?? 1000
 
-    // Bind handlers
     this._onScroll = this._handleScroll.bind(this)
     this._onThumbYDown = this._handleThumbYDown.bind(this)
     this._onThumbXDown = this._handleThumbXDown.bind(this)
@@ -80,7 +63,6 @@ export class CustomScrollbar {
     this._onDragMove = this._handleDragMove.bind(this)
     this._onDragEnd = this._handleDragEnd.bind(this)
 
-    // Create elements
     if (this._vertical) {
       this.trackY = this._createTrack('y')
       this.thumbY = this._createThumb('y')
@@ -93,7 +75,6 @@ export class CustomScrollbar {
       this.trackX.appendChild(this.thumbX)
     }
 
-    // Attach listeners
     this._scrollEl.addEventListener('scroll', this._onScroll, { passive: true })
 
     if (this.thumbY) {
@@ -109,15 +90,11 @@ export class CustomScrollbar {
       this.trackX.addEventListener('pointerdown', this._onTrackXDown)
     }
 
-    // ResizeObserver
     this._resizeObserver = new ResizeObserver(() => this.update())
     this._resizeObserver.observe(this._scrollEl)
 
-    // Initial update
     this.update()
   }
-
-  // ============ Element Creation ============
 
   private _createTrack(axis: 'x' | 'y'): HTMLElement {
     const el = document.createElement('div')
@@ -130,8 +107,6 @@ export class CustomScrollbar {
     el.className = `ty-scrollbar-thumb-${axis}`
     return el
   }
-
-  // ============ Public API ============
 
   /** Force update thumb size and position */
   update(): void {
@@ -189,8 +164,6 @@ export class CustomScrollbar {
     }
   }
 
-  // ============ Scroll Handler ============
-
   private _handleScroll(): void {
     if (this._rafId !== null) return
 
@@ -200,8 +173,6 @@ export class CustomScrollbar {
       this._showScrollbars()
     })
   }
-
-  // ============ Update Logic ============
 
   private _updateVertical(): void {
     if (!this.trackY || !this.thumbY) return
@@ -270,8 +241,6 @@ export class CustomScrollbar {
     this.thumbX.style.left = `${scrollRatio * maxThumbLeft}px`
   }
 
-  // ============ Auto-hide ============
-
   private _showScrollbars(): void {
     if (this._isDragging) return
 
@@ -288,8 +257,6 @@ export class CustomScrollbar {
       this._hideTimeout = null
     }, this._autoHideDelay)
   }
-
-  // ============ Thumb Drag ============
 
   private _handleThumbYDown(e: PointerEvent): void {
     if (e.button !== 0) return
@@ -366,8 +333,6 @@ export class CustomScrollbar {
 
     this._showScrollbars()
   }
-
-  // ============ Track Click ============
 
   private _handleTrackYDown(e: PointerEvent): void {
     if (e.target === this.thumbY || e.button !== 0) return

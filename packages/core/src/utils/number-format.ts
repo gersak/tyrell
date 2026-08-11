@@ -1,7 +1,6 @@
 /**
  * Number Formatting Utilities
- * PORTED FROM: clj/ty/i18n/number.cljs
- * 
+ *
  * Uses native Intl.NumberFormat for locale-aware number formatting
  * Supports currency, percent, compact notation, and custom precision
  */
@@ -38,13 +37,11 @@ export function formatNumber(
   
   const options: Intl.NumberFormatOptions = {}
   
-  // Add precision if specified
   if (precision !== undefined) {
     options.minimumFractionDigits = precision
     options.maximumFractionDigits = precision
   }
-  
-  // Configure based on type
+
   switch (type) {
     case 'currency':
       options.style = 'currency'
@@ -71,9 +68,8 @@ export function formatNumber(
   const formatter = new Intl.NumberFormat(locale, options)
   const formatted = formatter.format(value)
   
-  // Normalize Unicode spaces for better HTML input compatibility
-  // Replace narrow no-break space (U+202F) and thin space (U+2009) with regular non-breaking space (U+00A0)
-  // This ensures proper rendering in HTML input elements
+  // Normalize Unicode spaces (U+202F narrow no-break, U+2009 thin) to U+00A0 —
+  // HTML input elements don't render the exotic ones reliably
   return formatted
     .replace(/\u202F/g, '\u00A0')  // Narrow no-break space → non-breaking space
     .replace(/\u2009/g, '\u00A0')  // Thin space → non-breaking space
@@ -119,7 +115,6 @@ export function parseNumericValue(value: string): number | null {
     return isNaN(parsed) ? null : parsed
   }
 
-  // Split at the last separator
   const intPart = stripped.slice(0, lastSep).replace(/[.,]/g, '')
   const decPart = stripped.slice(lastSep + 1)
 

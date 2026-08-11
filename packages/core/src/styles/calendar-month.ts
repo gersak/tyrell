@@ -1,7 +1,4 @@
-/**
- * Calendar Month Styles
- * Improved design with better visual hierarchy and size variants
- */
+/** Calendar Month Styles */
 
 import { FLAVORS } from "../types/common.js";
 
@@ -46,21 +43,11 @@ const calendarMonthFlavor = (f: string, fb?: string) => {
 export const calendarMonthCustomFlavorCss = (base: string) => calendarMonthFlavor(base, "neutral");
 
 export const calendarMonthStyles = `
-/* ============================================================================
-   Theming Tokens
-   Override these to retheme the calendar without touching the global palette.
-   Defaults chain back to the global --ty-color-* / --ty-bg-* / --ty-border tokens.
-   ============================================================================ */
-
 /* Theming tokens are applied as var(--ty-calendar-*, <default>) at point
    of use (not declared on :host) so consumers can override any of them
    from outside the shadow root. The 3 accent aliases — --ty-calendar-accent,
    --ty-calendar-today-accent, --ty-calendar-muted — still cascade into the
    derived defaults, so overriding one retints the related cells. */
-
-/* ============================================================================
-   Base Calendar Container
-   ============================================================================ */
 
 .calendar-flex-container {
   display: flex;
@@ -76,10 +63,7 @@ export const calendarMonthStyles = `
   max-width: var(--calendar-max-width, none);
 }
 
-/* ============================================================================
-   Rows (Header + 6 Day Rows)
-   ============================================================================ */
-
+/* Rows: header + 6 day rows */
 .calendar-row {
   display: flex;
   flex: 1;
@@ -97,10 +81,6 @@ export const calendarMonthStyles = `
   margin-bottom: 0.125rem;
 }
 
-/* ============================================================================
-   Base Cell Styles
-   ============================================================================ */
-
 .calendar-cell {
   flex: 1;
   display: flex;
@@ -111,10 +91,6 @@ export const calendarMonthStyles = `
   box-sizing: border-box;
 }
 
-/* ============================================================================
-   Header Cells
-   ============================================================================ */
-
 .calendar-header-cell {
   text-align: center;
   font-weight: 500;
@@ -123,21 +99,14 @@ export const calendarMonthStyles = `
   letter-spacing: 0.05em;
 }
 
-/* ============================================================================
-   Day Cells - Square with Better Visual Hierarchy
-   ============================================================================ */
-
 .calendar-day-cell {
-  /* Square cells */
   aspect-ratio: 1;
 
-  /* Layout */
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
 
-  /* Spacing */
   margin: 0.125rem;
 
   /* Visual: ghost cells — no boxes; the border is a theming hook only */
@@ -148,7 +117,6 @@ export const calendarMonthStyles = `
   cursor: pointer;
   transition: var(--ty-local-transition, background-color 0.15s ease, color 0.15s ease);
 
-  /* Typography */
   font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
@@ -167,10 +135,6 @@ export const calendarMonthStyles = `
   outline: none;
   box-shadow: 0 0 0 2px var(--calendar-month-accent, var(--ty-color-primary));
 }
-
-/* ============================================================================
-   Day States
-   ============================================================================ */
 
 /* Today: accent number, no slab — never collides with hover, and the
    selected pill wins when today is picked */
@@ -228,11 +192,6 @@ export const calendarMonthStyles = `
   opacity: 0.7;
 }
 
-/* ============================================================================
-   Size Variants
-   ============================================================================ */
-
-/* Small - Compact (240px min-width) */
 .calendar-size-sm {
   padding: 0.5rem;
   min-width: 240px;
@@ -252,7 +211,6 @@ export const calendarMonthStyles = `
   min-height: 1.5rem;
 }
 
-/* Medium - Default (280px min-width) */
 .calendar-size-md {
   padding: 0.75rem;
   min-width: 280px;
@@ -272,7 +230,6 @@ export const calendarMonthStyles = `
   min-height: 2rem;
 }
 
-/* Large - Spacious (360px min-width) */
 .calendar-size-lg {
   padding: 1rem;
   min-width: 360px;
@@ -292,10 +249,7 @@ export const calendarMonthStyles = `
   min-height: 2.5rem;
 }
 
-/* ============================================================================
-   Backwards Compatibility
-   ============================================================================ */
-
+/* Kept for backwards compatibility */
 .calendar-day {
   width: 100%;
   height: 100%;
@@ -306,8 +260,6 @@ export const calendarMonthStyles = `
   box-sizing: border-box;
 }
 
-/* ============================================================================
-   Flavor Variants (set --calendar-month-*, consumed above)
-   ============================================================================ */
+/* Flavor variants set --calendar-month-*, consumed above */
 ${FLAVORS.map((f) => calendarMonthFlavor(f)).join("")}
 `;

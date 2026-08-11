@@ -65,7 +65,6 @@
   []
   (reset! translations {}))
 
-;; Extend the Translator protocol for keywords
 (extend-protocol i18n/Translator
   cljs.core/Keyword
   (translate
@@ -90,7 +89,6 @@
      ;; For now, ignore options - no interpolation
      (i18n/translate this locale))))
 
-;; Async loading support
 (defn load-translations!
   "Asynchronously load translations from a URL.
   Returns a promise.

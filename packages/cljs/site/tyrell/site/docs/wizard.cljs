@@ -3,7 +3,6 @@
   (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
                                              doc-section docs-page component-header section-label demo-area]]))
 
-;; ── Demo helpers ─────────────────────────────────────────────────────────────
 ;; The wizard is fully controlled — we set the `active` and `completed`
 ;; attributes directly from event handlers. Replicant doesn't re-render the
 ;; web component on attribute changes, but ty-wizard observes its own
@@ -56,7 +55,6 @@
    (component-header "ty-wizard"
                      "Multi-step wizard with progress line, step indicators, completion tracking, and horizontal/vertical orientation. Uses ty-step children — each step is a panel with id, label, and optional description.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -115,11 +113,9 @@
         :payload "{activeId, activeIndex, previousId, previousIndex, direction}"
         :when-fired "Fires when the active step changes"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic — full polished four-step onboarding wizard
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -128,7 +124,6 @@
         [:ty-wizard {:id "demo-wizard" :width "100%" :height "560px"
                      :active "step-1" :completed ""}
 
-         ;; ── Step 1 — Welcome ─────────────────────────────────────────────
          [:ty-step {:id "step-1" :label "Welcome" :description "Quick intro"}
           [:div.flex.flex-col.items-center.gap-5.text-center
            {:style {:padding "2rem 1.5rem" :max-width "32rem" :margin "0 auto"}}
@@ -165,7 +160,6 @@
                         :on {:click (go-to-step "demo-wizard" "step-2" "step-1")}}
             "Get started"]]]
 
-         ;; ── Step 2 — Profile ─────────────────────────────────────────────
          [:ty-step {:id "step-2" :label "Profile" :description "About you"}
           [:div.flex.flex-col.gap-4
            {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
@@ -203,7 +197,6 @@
                          :on {:click (go-to-step "demo-wizard" "step-3" "step-1,step-2")}}
              "Continue"]]]]
 
-         ;; ── Step 3 — Preferences ─────────────────────────────────────────
          [:ty-step {:id "step-3" :label "Preferences" :description "Theme & alerts"}
           [:div.flex.flex-col.gap-5
            {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
@@ -241,7 +234,6 @@
                                        ((go-to-step "demo-wizard" "step-4" "step-1,step-2,step-3")))}}
              "Continue"]]]]
 
-         ;; ── Step 4 — Done ────────────────────────────────────────────────
          [:ty-step {:id "step-4" :label "Done" :description "All set"}
           [:div.flex.flex-col.gap-5
            {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
@@ -328,11 +320,9 @@
 
 </ty-wizard>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; JavaScript API
       [:div.ty-content.rounded-lg.p-5
        (section-label "JavaScript API")
        (code-block "const wizard = document.querySelector('ty-wizard');
@@ -347,7 +337,6 @@ wizard.addEventListener('ty-wizard-step-change', (e) => {
   console.log('moved', direction, 'to', activeId);
 });" "javascript")]
 
-      ;; Framework integration
       [:div.ty-content.rounded-lg.p-5
        (section-label "Framework Integration")
        (code-block ";; ClojureScript — maintain active/completed in a local atom
@@ -362,7 +351,6 @@ wizard.addEventListener('ty-wizard-step-change', (e) => {
    [:ty-step {:id \"step-1\" :label \"Account\"} ...]
    [:ty-step {:id \"step-2\" :label \"Profile\"} ...]])")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

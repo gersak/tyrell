@@ -4,7 +4,6 @@ import { hostProps } from '../utils/host-props';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty Calendar Month component
 export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> {
   /** Display year */
   displayYear?: number;
@@ -52,7 +51,6 @@ export interface DayClickDetail {
   isOtherMonth: boolean;
 }
 
-// React wrapper for ty-calendar-month web component
 export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProps>(
   ({ 
     displayYear,
@@ -70,7 +68,6 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle day click events
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -88,7 +85,6 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
       };
     }, [onDayClick]);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -99,13 +95,11 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add attributes
     if (displayYear !== undefined) webComponentProps['display-year'] = displayYear;
     if (displayMonth !== undefined) webComponentProps['display-month'] = displayMonth;
     if (locale) webComponentProps.locale = locale;

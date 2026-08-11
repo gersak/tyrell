@@ -3,11 +3,9 @@
   (:require [tyrell.router :as router]
             [tyrell.site.docs.common :as common]))
 
-;; =============================================================================
 ;; Local layout helpers (duplicated from views/getting_started.cljs).
 ;; Two callsites is below the threshold for extraction; revisit when the CLJS
 ;; and HTMX docs pages get the same treatment.
-;; =============================================================================
 
 (defn- feature-pill
   "Small chip with mini icon + label, sits on ty-content surface."
@@ -114,7 +112,6 @@
     :on (merge {:click on-click}
                (lift-card-handlers))}
 
-   ;; Eyebrow + icon row
    [:div.flex.items-start.justify-between.mb-4
     [:div.flex.items-center.justify-center.rounded-lg.flex-shrink-0.ty-bg-neutral-
      {:style {:width "40px"
@@ -125,28 +122,23 @@
      {:class (str "ty-text-" eyebrow-flavor)}
      eyebrow]]
 
-   ;; Title
    [:h3.text-lg.font-bold.ty-text++.leading-tight.mb-2.tracking-tight title]
 
    ;; Tagline — min-h-16 reserves space so code chips align across cards.
    (into [:p.text-sm.ty-text-.leading-relaxed.mb-3.min-h-16]
          (if (string? tagline) [tagline] tagline))
 
-   ;; Code-chip signature
    (common/code-block snippet snippet-lang)
 
    ;; Spacer pushes CTA to the bottom
    [:div.flex-1]
 
-   ;; CTA
    [:div.flex.items-center.gap-1.5.text-sm.font-semibold.ty-text-primary
     [:span cta]
     [:ty-icon {:name "arrow-right"
                :size "xs"}]]])
 
-;; =============================================================================
 ;; Section 1 — Hero
-;; =============================================================================
 
 (defn- hero []
   [:div.text-center.mb-12
@@ -165,7 +157,6 @@
    [:p.text-xs.ty-text--.tracking-widest.uppercase.font-semibold.mb-6
     "22 components · ESM · CDN · framework-agnostic"]
 
-   ;; Brand strip
    [:div.flex.flex-wrap.items-center.justify-center.gap-4.max-w-xl.mx-auto
     (brand-glyph {:icon "react"      :title "React"})
     (brand-glyph {:icon "vuejs"      :title "Vue"})
@@ -175,9 +166,7 @@
     (brand-glyph {:icon "js"         :title "JavaScript"})
     (brand-glyph {:icon "node-js"    :title "Node.js"})]])
 
-;; =============================================================================
 ;; Section 2 — What you install
-;; =============================================================================
 
 (defn- pkg-row
   "Single row inside the install preview — package name + role tag.
@@ -238,7 +227,6 @@
          "The substrate is one package. React is the only framework with a typed-wrapper add-on — "
          (fw "Vue") ", " (fw "Svelte") ", and " (fw "Astro") " use the web components directly."]]]
 
-      ;; Feature pills
       [:div.flex.flex-wrap.gap-2.mb-6
        (feature-pill {:icon "layers"     :label "Tree-shakeable icons"})
        (feature-pill {:icon "code"       :label "TypeScript types"})
@@ -255,7 +243,6 @@
      ;; RIGHT — package preview + install command
      [:div.flex.flex-col.gap-4
 
-      ;; Stacked package rows on ty-floating
       [:div.ty-floating.rounded-xl.p-5
        {:style {:border "1px solid var(--ty-border-)"}}
        [:div.flex.items-center.justify-between.mb-4
@@ -269,7 +256,6 @@
                   :always? false
                   :subtitle "Typed React wrappers"})]]
 
-      ;; Install command
       [:div
        (common/code-block
         "npm install tyrell-components
@@ -277,9 +263,7 @@
 npm install tyrell-react"
         "bash")]]]]])
 
-;; =============================================================================
 ;; Section 3 — Two ways to load
-;; =============================================================================
 
 (defn- subpath-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -352,9 +336,7 @@ import 'tyrell-components'"
    [:div {:id "subpath"}
     (subpath-callout)]])
 
-;; =============================================================================
 ;; Section 4 — Your framework
-;; =============================================================================
 
 (defn- framework-card
   [opts]
@@ -435,9 +417,7 @@ import 'tyrell-components'"
       :cta "Open JS guide"
       :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/js/JAVASCRIPT_GUIDE.md" "_blank")})]])
 
-;; =============================================================================
 ;; Section 5 — React deep-dive (full-width hero card with live preview)
-;; =============================================================================
 
 (defn- react-deep-dive []
   [:div {:id "react-deep-dive"}
@@ -536,9 +516,7 @@ import 'tyrell-components'"
 </TyButton>"
          "tsx")]]]]]])
 
-;; =============================================================================
 ;; Section 6 — Two things every framework user needs to know
-;; =============================================================================
 
 (defn- gotcha-card
   [{:keys [eyebrow icon title body code code-lang]}]
@@ -597,9 +575,7 @@ import 'tyrell-components'
 // Astro         → use client:load on islands"
       :code-lang "typescript"})]])
 
-;; =============================================================================
 ;; Section 7 — Bundle size mental model
-;; =============================================================================
 
 (defn- bundle-size-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -625,10 +601,6 @@ import 'tyrell-components'
        "See the three icon-registration patterns on Getting Started"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Main view
-;; =============================================================================
 
 (defn view
   "JavaScript / TypeScript guide — substrate for every framework, deep-dive on React."

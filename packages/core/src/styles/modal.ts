@@ -6,16 +6,12 @@
  */
 
 export const modalStyles = `
-/* Modal Host Styling */
 :host {
   display: contents;
   /* Don't interfere with layout */
-  /* CSS variables are now auto-generated via the with-vars? option */
 }
 
-/* ===== CLOSE BUTTON STYLING ===== */
-/* This is part of the modal wrapper functionality, not user content styling */
-
+/* Part of the modal wrapper functionality, not user content styling */
 .close-button {
   position: absolute;
   top: -8px;
@@ -71,9 +67,7 @@ export const modalStyles = `
   visibility: hidden;
 }
 
-/* ===== DIALOG ELEMENT - PURE WRAPPER ===== */
-/* Modal dialog - provides only essential modal functionality without styling user content */
-
+/* Pure wrapper: only essential modal functionality, no styling of user content */
 .ty-modal-dialog {
   /* Reset default dialog styles */
   padding: 18px;
@@ -81,13 +75,12 @@ export const modalStyles = `
   margin: 0;
   background: transparent;
 
-  /* Modal positioning - centered */
+  /* Centered */
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 
-  /* Layer management */
   z-index: 1000;
   overflow: hidden;
 
@@ -98,9 +91,7 @@ export const modalStyles = `
   outline: none;
 }
 
-/* ===== BACKDROP STYLING ===== */
 /* Backdrop is part of modal functionality, not user content */
-
 .ty-modal-dialog::backdrop {
   background: var(--ty-modal-backdrop, rgba(0, 0, 0, 0.5));
   backdrop-filter: var(--ty-modal-backdrop-blur, blur(2px));
@@ -113,14 +104,10 @@ export const modalStyles = `
   backdrop-filter: none;
 }
 
-/* ===== MODAL CONTENT CONTAINER ===== */
 /* Minimal container - no styling imposed on user content */
-
 .modal-content {
   color: var(--ty-text);
 }
-
-/* ===== ANIMATION KEYFRAMES ===== */
 
 @keyframes ty-modal-backdrop-enter {
   from {

@@ -30,7 +30,6 @@ const copyFlavor = (f: string, fb?: string) => {
 export const copyCustomFlavorCss = (base: string) => copyFlavor(base, "neutral");
 
 export const copyStyles = `
-/* Copy field value display */
 .copy-field-value {
   flex: 1;
   overflow: hidden;
@@ -47,7 +46,6 @@ export const copyStyles = `
   line-height: inherit;
 }
 
-/* Multiline variant */
 .copy-field-value.multiline {
   white-space: pre-wrap;
   word-break: break-word;
@@ -62,7 +60,7 @@ export const copyStyles = `
   padding-bottom: 8px;
 }
 
-/* Horizontal scroll variant - scroll long content instead of clipping with ellipsis */
+/* Scroll long content instead of clipping with an ellipsis */
 .copy-field-value.horizontal-scroll {
   overflow-x: auto;
   overflow-y: hidden;
@@ -87,7 +85,6 @@ export const copyStyles = `
   display: none; /* Chrome/Safari */
 }
 
-/* Code format */
 .copy-field-value {
   font-size: 0.8em;
 }
@@ -98,7 +95,6 @@ export const copyStyles = `
   transition: var(--ty-local-transition, background 0.2s ease);
 }
 
-/* Copy button */
 .copy-button {
   flex-shrink: 0;
   display: flex;
@@ -149,6 +145,6 @@ export const copyStyles = `
   cursor: not-allowed;
 }
 
-/* ===== SEMANTIC FLAVORS (set --copy-*, consumed above) ===== */
+/* Semantic flavors set --copy-*, consumed above */
 ${FLAVORS.map((f) => copyFlavor(f)).join("")}
 `

@@ -1,13 +1,6 @@
-/**
- * Calendar Navigation Styles
- * Clean, modern design with proper visual hierarchy and size variants
- */
+/** Calendar Navigation Styles */
 
 export const calendarNavigationStyles = `
-/* ============================================================================
-   Size Variants (CSS Custom Properties)
-   ============================================================================ */
-
 /* Theming tokens applied as var(--ty-calendar-nav-*, <default>) at point of
    use (NOT on :host) so consumers can override them from outside — this
    component is nested inside ty-calendar's shadow, so a :host default would
@@ -37,10 +30,6 @@ export const calendarNavigationStyles = `
   --nav-default-width: 360px;
 }
 
-/* ============================================================================
-   Main Navigation Header
-   ============================================================================ */
-
 .calendar-navigation-header {
   display: flex;
   align-items: center;
@@ -52,10 +41,7 @@ export const calendarNavigationStyles = `
   box-sizing: border-box;
 }
 
-/* ============================================================================
-   Navigation Groups (Left, Center, Right)
-   ============================================================================ */
-
+/* Navigation groups: left, center, right */
 .nav-group {
   display: flex;
   align-items: center;
@@ -71,10 +57,6 @@ export const calendarNavigationStyles = `
   flex: 1;
   justify-content: center;
 }
-
-/* ============================================================================
-   Navigation Buttons
-   ============================================================================ */
 
 .nav-btn {
   display: inline-flex;
@@ -113,16 +95,11 @@ export const calendarNavigationStyles = `
   outline-offset: 2px;
 }
 
-/* SVG sizing */
 .nav-btn svg {
   width: var(--nav-btn-icon-size);
   height: var(--nav-btn-icon-size);
   display: block;
 }
-
-/* ============================================================================
-   Month/Year Display (Center)
-   ============================================================================ */
 
 .month-year-display {
   font-size: var(--nav-font-size);

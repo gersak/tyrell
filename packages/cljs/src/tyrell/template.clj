@@ -22,7 +22,6 @@
      (assert (some? content) (str source-file " file doesn't exist!"))
      (let [;; Find all {{variable}} patterns in the template
            template-vars (distinct (re-seq #"(?<=\{\{)\w+[\w\d\-\_]*(?=\}\})" content))
-           ;; Replace each variable with its value
            new-content (reduce
                          (fn [result variable]
                            (let [value (get variables (keyword variable) "")]
@@ -33,7 +32,6 @@
                          template-vars)]
        (println (format "Processing template: %s -> %s" source-file target-file))
        (io/make-parents target-file)
-       ;; Delete existing file if it exists
        (when (.exists (io/file target-file))
          (io/delete-file target-file))
        (spit target-file new-content)

@@ -7,7 +7,6 @@
     [tyrell.site.state :refer [state]])
   (:require-macros [tyrell.css :refer [defstyles]]))
 
-;; Load custom CSS styles for calendar
 (def ^:private service-config
   {:stripe {:public-key (or (get js/window "STRIPE_PUBLIC_KEY")
                             (get (.-dataset (.-documentElement js/document)) "stripePublicKey")
@@ -15,7 +14,6 @@
    :api {:booking-endpoint "/api/bookings/create"
          :timeout 30000}})
 
-;; Date helper functions
 (defn date->context
   "Extract year/month/day from a JavaScript Date object.
   Returns a map with :year, :month (1-indexed), and :day."
@@ -296,7 +294,6 @@
            "Confirm Booking"]
           [:p.text-xs.ty-text--.text-center.mt-1 "Free cancellation up to 24 hours before event"]])]]
 
-     ;; Feature Showcase
      [:div.grid.grid-cols-2.gap-3
       {:style {:margin-top "1.5rem"}}
       (for [[icon color label desc]
@@ -312,7 +309,6 @@
          [:p.text-sm.font-semibold.ty-text.mb-1 label]
          [:p.text-xs.ty-text- desc]])]
 
-     ;; Confirmation Modal
      [:ty-modal {:open (get-in @state [:event-booking :confirmation-modal-open] false)
                  :on {:close #(swap! state assoc-in [:event-booking :confirmation-modal-open] false)}}
       [:div.p-5.ty-elevated.rounded-lg

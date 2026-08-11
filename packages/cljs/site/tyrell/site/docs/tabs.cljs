@@ -8,7 +8,6 @@
    (component-header "ty-tabs"
                      "Carousel-based tab container with smooth slide animations and an animated active marker. Uses ty-tab children for panels — tab buttons are generated automatically from each tab's label.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -61,11 +60,9 @@
         :payload "{activeId, activeIndex, previousId, previousIndex}"
         :when-fired "Fires when the active tab changes (at animation start)"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -93,7 +90,6 @@
   </ty-tab>
 </ty-tabs>")]
 
-      ;; Bottom placement
       [:div.ty-content.rounded-lg.p-5
        (section-label "Bottom Placement")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -114,7 +110,6 @@
   <ty-tab id=\"videos\" label=\"Videos\">...</ty-tab>
 </ty-tabs>")]
 
-      ;; Disabled tab
       [:div.ty-content.rounded-lg.p-5
        (section-label "Disabled Tab")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -134,7 +129,6 @@
   ...
 </ty-tab>")]
 
-      ;; Controlled active tab
       [:div.ty-content.rounded-lg.p-5
        (section-label "Controlled Active Tab")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -149,11 +143,9 @@
  [:ty-tab {:id \"overview\" :label \"Overview\"} ...]
  [:ty-tab {:id \"details\" :label \"Details\"} ...]]")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; JavaScript API
       [:div.ty-content.rounded-lg.p-5
        (section-label "JavaScript API")
        (code-block "const tabs = document.querySelector('ty-tabs');
@@ -170,7 +162,6 @@ console.log(tabs.active);  // current active tab id
 // Switch programmatically — set the active attribute
 tabs.setAttribute('active', 'details');" "javascript")]
 
-      ;; Rich tab labels
       [:div.ty-content.rounded-lg.p-5
        (section-label "Rich Tab Labels")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -192,7 +183,6 @@ tabs.setAttribute('active', 'details');" "javascript")]
   <ty-tab id=\"settings\" label=\"Settings\">...</ty-tab>
 </ty-tabs>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

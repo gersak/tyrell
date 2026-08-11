@@ -1,11 +1,6 @@
-/**
- * Option Component Styles
- * PORTED FROM: clj/ty/components/option.css
- */
+/** Option Component Styles */
 
 export const optionStyles = `
-/* Ty Option Component Styles */
-
 .option-content {
   display: flex;
   align-items: center;
@@ -14,14 +9,12 @@ export const optionStyles = `
   box-sizing: border-box;
   width: 100%;
 
-  /* Ensure content is clickable */
   cursor: pointer;
   user-select: none;
 
-  /* Smooth transitions */
   transition: var(--ty-transition-all);
 
-  /* Text styling — Linear-paired typography */
+  /* Linear-paired typography */
   color: var(--ty-text);
   font-family: var(--ty-font-sans);
   font-size: var(--ty-font-sm);
@@ -82,7 +75,6 @@ export const optionStyles = `
 
 .option-content[hidden] {}
 
-/* Ensure nested elements inherit proper styling */
 .option-content * {
   pointer-events: none;
 }

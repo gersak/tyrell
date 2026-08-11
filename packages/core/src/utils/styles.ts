@@ -21,17 +21,14 @@ export function ensureStyles(
 ): void {
   const { css, id } = styleContent
   
-  // Check cache first
   let sheet: CSSStyleSheet
-  
+
   if (id && styleCache.has(id)) {
     sheet = styleCache.get(id)!
   } else {
-    // Create new stylesheet
     sheet = new CSSStyleSheet()
     sheet.replaceSync(css)
-    
-    // Cache it if ID provided
+
     if (id) {
       styleCache.set(id, sheet)
     }

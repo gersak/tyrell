@@ -3,10 +3,6 @@
   (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
                                              doc-section docs-page component-header section-label demo-area]]))
 
-;; ============================================================================
-;; API Reference
-;; ============================================================================
-
 (defn api-reference []
   [:div.ty-elevated.rounded-lg.p-6
    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
@@ -109,10 +105,6 @@
       {:name "open / close"
        :payload "{mode: 'desktop'|'mobile', element}"
        :when-fired "Popup lifecycle"}])]])
-
-;; ============================================================================
-;; Examples
-;; ============================================================================
 
 (defn example-single []
   [:div.ty-content.rounded-lg.p-5
@@ -483,10 +475,6 @@
      (example-form)
      (example-events)]))
 
-;; ============================================================================
-;; Migration
-;; ============================================================================
-
 (defn migration []
   (doc-section "Migrating from ty-dropdown / ty-multiselect"
     [:div.ty-content.rounded-lg.p-5
@@ -515,10 +503,6 @@
   <ty-option value=\"js\">JavaScript</ty-option>
 </ty-select>
 <ty-selected-options for=\"...\"></ty-selected-options>")]))
-
-;; ============================================================================
-;; Page
-;; ============================================================================
 
 (defn view []
   (docs-page

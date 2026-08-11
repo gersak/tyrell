@@ -2,10 +2,6 @@
   (:require [clojure.string :as str]
             [tyrell.site.state :as state]))
 
-;; ============================================================================
-;; Validation Functions
-;; ============================================================================
-
 (defn validate-email [email]
   (let [email-regex #"^[^\s@]+@[^\s@]+\.[^\s@]+$"]
     (and (not-empty email) (re-matches email-regex email))))
@@ -48,10 +44,6 @@
        (map (fn [[k v]] [k (validate-field k v)]))
        (filter (fn [[_ v]] v))
        (into {})))
-
-;; ============================================================================
-;; Event Handlers
-;; ============================================================================
 
 (defn handle-field-change [field-key]
   (fn [event]
@@ -97,10 +89,6 @@
   (swap! state/state assoc-in [:user-profile :touched-fields] #{})
   (swap! state/state assoc-in [:user-profile :validation-errors] {}))
 
-;; ============================================================================
-;; UI Helpers
-;; ============================================================================
-
 (defn- section-divider [label]
   [:div.flex.items-center.gap-3.mb-3
    {:style {:margin-top "1.25rem"}}
@@ -108,10 +96,6 @@
    [:div.flex-1
     {:style {:height "1px"
              :background "var(--ty-border)"}}]])
-
-;; ============================================================================
-;; Personal Information
-;; ============================================================================
 
 (defn personal-info-section [{:keys [form-data errors touched on-change]}]
   [:div
@@ -145,10 +129,6 @@
                 :required true
                 :error (when (contains? touched :phone) (:phone errors))
                 :on {:input (on-change :phone)}}]]])
-
-;; ============================================================================
-;; Professional Information
-;; ============================================================================
 
 (defn professional-info-section [{:keys [form-data errors touched on-change]}]
   [:div
@@ -205,10 +185,6 @@
        [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
         [:span.font-bold.text-xs {:slot "start"} "{data-glyph}"]
         "{label}"]]]]]])
-
-;; ============================================================================
-;; Location & Preferences
-;; ============================================================================
 
 (defn location-preferences-section []
   [:div
@@ -271,10 +247,6 @@
        [:div.flex.items-center.gap-2
         [:ty-icon {:name "settings" :size "xs"}] [:span "System"]]]]]]])
 
-;; ============================================================================
-;; Security & Preferences
-;; ============================================================================
-
 (defn security-section []
   [:div
    (section-divider "Security & Preferences")
@@ -310,10 +282,6 @@
      [:ty-checkbox {:name "account-autosave" :checked ""}]
      [:span "Auto-save drafts"]]]])
 
-;; ============================================================================
-;; Form Actions
-;; ============================================================================
-
 (defn form-actions [{:keys [is-submitting has-errors on-export on-cancel]}]
   [:div.flex.items-center.justify-between.pt-4.border-t.ty-border
    {:style {:margin-top "1.25rem"}}
@@ -342,10 +310,6 @@
         [:ty-icon {:name "save" :size "xs"}]
         "Save"])]]])
 
-;; ============================================================================
-;; Avatar Upload Modal
-;; ============================================================================
-
 (defn avatar-upload-modal [{:keys [open on-close]}]
   [:ty-modal {:open open :on {:close on-close}}
    [:div.p-6.max-w-md.ty-elevated.rounded-lg
@@ -364,10 +328,6 @@
      [:ty-button {:flavor "primary" :size "sm"}
       [:ty-icon {:name "save" :size "xs" :class "mr-1"}]
       "Save Photo"]]]])
-
-;; ============================================================================
-;; Success Modal
-;; ============================================================================
 
 (defn success-modal [{:keys [open on-close saved-data]}]
   [:ty-modal {:open open :on {:close on-close}}
@@ -389,10 +349,6 @@
       [:p.ty-text (:company saved-data)]]]
     [:div.flex.justify-end
      [:ty-button {:flavor "primary" :size "sm" :on {:click on-close}} "Done"]]]])
-
-;; ============================================================================
-;; Export Modal
-;; ============================================================================
 
 (defn export-modal [{:keys [open on-close exported-data]}]
   [:ty-modal {:open open :on {:close on-close}}
@@ -420,10 +376,6 @@
       [:ty-icon {:name "download" :size "xs" :class "mr-1"}]
       "Download"]]]])
 
-;; ============================================================================
-;; Main View
-;; ============================================================================
-
 (defn view []
   (let [{:keys [avatar-modal-open success-modal-open export-modal-open
                 form-data validation-errors touched-fields is-submitting saved-data exported-data]}
@@ -445,7 +397,6 @@
               :exported-data nil})
         has-errors (not (empty? validation-errors))]
     [:div
-     ;; Compact profile header
      [:div.flex.items-center.gap-3.pb-4.border-b.ty-border
       [:div.relative.cursor-pointer
        {:on {:click #(swap! state/state assoc-in [:user-profile :avatar-modal-open] true)}}

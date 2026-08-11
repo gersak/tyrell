@@ -9,10 +9,10 @@
  *               3 axes (color / hover-active / theme chroma-hue); literal in
  *               tyrell.css. The component does no color math for the fill.
  *               Depth chrome (border + drop shadow) IS computed here, from
- *               the fill, via relative color — see "Depth chrome" below.
+ *               the fill, via relative color — see the button.solid rule.
  *   - outlined → --ty-color-{flavor}-{strong|base|soft} (text === border at
  *               rest); hover/active/focus always resolve to -strong,
- *               whatever the resting tone was — see "Hover escalation".
+ *               whatever the resting tone was — see outlinedFlavor().
  *   - ghost    → same as outlined, text only (no border), --ty-bg-{flavor}-soft
  *               background on hover.
  *
@@ -22,23 +22,6 @@
  * generic --ty-color-neutral-strong text-emphasis token. Base/soft neutral
  * stay on the generic token like every other flavor.
  *
- * Depth chrome (solid only): a 1px border + soft drop shadow, both derived
- * from the fill via oklch(from …), scaled by --ty-button-depth (0–1). The
- * border reads the TONE'S RESTING fill (not the current/hover one) so it
- * stays stationary while the fill rises toward it on interaction. Offset
- * direction/magnitude is --ty-button-border-l (mode-flipped: no border at
- * all for colored solids in dark, a lit edge in light) with its own
- * stronger dial for neutral, --ty-button-border-l-neutral (ink has no hue
- * to separate it from the canvas). Escape hatches --ty-solid-border-color
- * / --ty-solid-border-width outrank the derivation entirely.
- *
- * Hover escalation (outlined/ghost): :hover/:active/:focus-visible always
- * resolve to the -strong tier regardless of starting tone — soft and base
- * both rise to the same peak on interaction. Composes with `muted` rather
- * than fighting it (see the escalation rules themselves for the exact
- * split) — a pressed muted button lands on the same color as a pressed
- * plain one of the same flavor.
- *
  * Per-instance overrides via host CSS variables:
  *   --ty-button-bg, --ty-button-bg-hover, --ty-button-color, --ty-button-border,
  *   --ty-solid-border-color, --ty-solid-border-width
@@ -46,10 +29,7 @@
 
 import { FLAVORS } from '../types/common.js'
 
-/* One block per flavor, per appearance. Selectors and tokens are formulaic —
-   see the section comments below for which token system each appearance uses.
-
-   Each generator takes an optional fallback flavor `fb`: token references
+/* Each generator takes an optional fallback flavor `fb`: token references
    then become var(--ty-*-f, var(--ty-*-fb)). Built-ins pass no fallback
    (their tokens always exist); buttonCustomFlavorCss() passes 'neutral' so a
    custom flavor with missing tokens degrades to neutral instead of an
@@ -156,15 +136,10 @@ button.outlined.${f}:focus-visible {
 
 const ghostFlavor = (f: string, fb?: string) => {
   const color = (suffix: string) => tokenRef('--ty-color', f, suffix, fb)
-  // Neutral+ only: bare text needs page contrast, which is what the
-  // per-flavor text ladder is FOR (it deliberately inverts per mode) — the
-  // solid ink ramp doesn't need to invert for readability, a fill reads as
-  // a shape regardless of its own lightness. Pointing base/soft neutral
-  // text at ink was a real bug: dark-mode contrast against the canvas
-  // measured 1.01/1.20 (WCAG minimum is 4.5), i.e. invisible. Strong stays
-  // on ink — at 0.93 dark / 0.15 light it's still far above threshold
-  // (16.5:1), and matches solid's "+" for the loud-CTA identity that was
-  // the actual ask.
+  // Neutral+ only: bare text needs page contrast — same reasoning and same
+  // measured bug as outlinedFlavor above (base/soft on the solid ink ramp
+  // read 1.01/1.20 against the dark canvas; WCAG minimum is 4.5). Strong
+  // stays on ink: still 16.5:1, and matches solid's "+" loud-CTA identity.
   const ink = (suffix: string) => (f === 'neutral' && suffix === '-strong' ? `var(--ty-solid-neutral${suffix})` : color(suffix))
   return `
 button.ghost.${f}            { color: var(--ty-button-color, var(--_muted-ghost-fg, ${ink('')})); }
@@ -243,10 +218,8 @@ button:disabled {
   opacity: 0.6;
 }
 
-/* ===== LOADING STATE =====
-   Spinner overlays the button center; original content kept in flow but
-   hidden via visibility so width/height are preserved (no layout shift).
-*/
+/* Spinner overlays the button center; original content kept in flow but
+   hidden via visibility so width/height are preserved (no layout shift). */
 .loader-icon {
   display: none;
   align-items: center;
@@ -297,8 +270,7 @@ button.loading > .loader-icon {
   flex-grow: 1;
 }
 
-/* ===== SIZES =====
-   Buttons run a 4px ladder (24-40px). Shared scale with fields
+/* Buttons run a 4px ladder (24-40px). Shared scale with fields
    (--ty-size-sm/md/lg — see tyrell.css): field sm = button md (32px),
    field md = button lg (36px), field lg = button xl (40px) — a button
    and a field of the paired size sit flush, same height, in a row. */
@@ -348,8 +320,7 @@ button.xl {
   height: 2.5rem; /* 40px — matches field lg */
 }
 
-/* ===== ACTION (icon-only square) ===== */
-
+/* Action = icon-only square */
 button.action {
   gap: 0px !important;
   height: 2rem;
@@ -374,8 +345,7 @@ button.action.lg ::slotted(ty-icon) { height: 1.125rem; width: 1.125rem; }
 button.action.xl { height: 2.5rem; width: 2.5rem; }
 button.action.xl ::slotted(ty-icon) { height: 1.25rem; width: 1.25rem; }
 
-/* ===== MUTED =====
-   Show the neutral tokens at rest instead of the flavor color; reveal the
+/* MUTED: show the neutral tokens at rest instead of the flavor color; reveal the
    real flavor on interaction. Implemented as a fallback tier the flavor
    rules above already read (--_muted-*), which sits behind the public
    --ty-button-{bg,color,border} override slots and ahead of the flavor's
@@ -429,8 +399,6 @@ button.muted:focus-visible:not(:disabled) {
   --_muted-ghost-fg: unset;
 }
 
-/* ===== PILL ===== */
-
 button.pill {
   border-radius: 9999px;
   padding-left: 1.25em;
@@ -456,13 +424,11 @@ button.pill.md:has(ty-icon:only-child) { min-width: 2rem; min-height: 2rem; }
 button.pill.lg:has(ty-icon:only-child) { min-width: 2.25rem; min-height: 2.25rem; }
 button.pill.xl:has(ty-icon:only-child) { min-width: 2.5rem; min-height: 2.5rem; }
 
-/* ============================================================
-   SOLID — flat: one variable per segment. No color math here; all the
+/* SOLID — flat: one variable per segment. No color math here; all the
    --ty-solid-{flavor}-{hover,active,strong,soft} tokens are DERIVED in
    tyrell-theme.css (OKLCH) or set literally in tyrell.css. Override any
    single token to recolor that one segment. Bare .solid = custom-flavor
-   fallback, themable via --ty-button-{bg,bg-hover,color}.
-   ============================================================ */
+   fallback, themable via --ty-button-{bg,bg-hover,color}. */
 
 button.solid {
   --_ring: var(--ty-color-neutral);
@@ -517,12 +483,10 @@ button.solid:focus-visible {
   box-shadow: 0 0 0 2px var(--ty-focus-ring-gap), 0 0 0 4px var(--_ring);
 }
 
-/* ============================================================
-   OUTLINED — transparent bg, text === border (uses --ty-color-*)
-   Bare .outlined rule = fallback for custom flavors. For outlined,
-   text is bound to border color (the rule "text === border"), so the
-   fallback chain prefers --ty-button-border, then --ty-button-color.
-   ============================================================ */
+/* OUTLINED — transparent bg, text === border (uses --ty-color-*).
+   Bare .outlined rule = fallback for custom flavors. Text is bound to
+   border color, so the fallback chain prefers --ty-button-border, then
+   --ty-button-color. */
 
 button.outlined {
   background: transparent;
@@ -535,10 +499,8 @@ button.outlined:hover:not(:disabled) {
 
 ${FLAVORS.map((f) => outlinedFlavor(f)).join('')}
 
-/* ============================================================
-   GHOST — text only, hover bg (uses --ty-color-* + --ty-bg-*-soft)
-   Bare .ghost rule = fallback for custom flavors.
-   ============================================================ */
+/* GHOST — text only, hover bg (uses --ty-color-* + --ty-bg-*-soft).
+   Bare .ghost rule = fallback for custom flavors. */
 
 button.ghost {
   background: transparent;

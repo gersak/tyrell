@@ -1,44 +1,9 @@
 /**
- * TySelect Web Component
- *
- * The select control — replaces ty-dropdown and ty-multiselect.
- *
- * Cardinality (native <select> semantics):
- * - default: SINGLE select — scalar value, picking an option closes the popup
- * - `multiple`: multi select — comma value / repeated FormData entries,
- *   options toggle and the popup stays open
- *
- * Skins:
- * - default: form FIELD — full width, --ty-input-* tokens, matches ty-input;
- *   shows the selected label(s) inline
- * - `compact`: content-hugging trigger for toolbars/filter bars; single shows
- *   the selected label, multiple shows placeholder + count badge (pair with
- *   <ty-selected-options>)
- * - slot="trigger": consumer skin — replaces field/compact chrome entirely,
- *   behavior/ARIA/form participation unchanged
- *
- * - ty-option children (ty-tag also accepted)
- * - Desktop popup with smart positioning, mobile full-screen modal
- * - Search / external-search / debounce, keyboard navigation
- * - Form association: single submits one entry, multiple submits repeated
- *   `name=` entries (HTMX-ready)
- * - change event detail: { value, values, items: [{value, label, flavor}], action, item }
- *   (`value` is a scalar for single, array for multiple)
- *
- * @example
- * ```html
- * <!-- Single select, field skin -->
- * <ty-select label="Robot" name="robot">
- *   <ty-option value="bobo">Bobo Robot</ty-option>
- *   <ty-option value="eywa">EYWA Dataset Example</ty-option>
- * </ty-select>
- *
- * <!-- Multi select, compact skin + out-of-band chips -->
- * <ty-select multiple compact label="Robots" name="robots" id="robots">...</ty-select>
- * <ty-selected-options for="robots"></ty-selected-options>
- * ```
+ * TySelect Web Component — THE select control (replaces ty-dropdown/ty-multiselect).
+ * Cardinality follows native <select>: default single (scalar value, picking closes
+ * the popup), `multiple` toggles options and submits repeated `name=` FormData entries.
+ * Skins: default form field, `compact` content-hugging trigger, slot="trigger" custom.
  */
-
 import type { Flavor, Size } from "../types/common.js";
 import { ensureStyles } from "../utils/styles.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
@@ -55,28 +20,14 @@ import {
   isCustomScrollbarEnabled,
 } from "../utils/custom-scrollbar.js";
 
-// ============================================================================
 // Element Hash Utility (for consistent scroll lock IDs)
-// ============================================================================
 
-/**
- * Counter for generating unique element IDs
- */
 let elementIdCounter = 0;
 
-/**
- * WeakMap to store consistent element hashes
- * Automatically garbage collects when element is destroyed
- */
+/** Element hashes; automatically garbage collects when the element is destroyed. */
 const elementIds = new WeakMap<object, number>();
 
-/**
- * Get a consistent unique ID for an element
- * Returns the same ID for the same element across multiple calls
- *
- * @param element - The element to hash
- * @returns A consistent numeric hash for the element
- */
+/** Consistent numeric hash for an element — same value across calls. */
 function getElementHash(element: object): number {
   let id = elementIds.get(element);
   if (id === undefined) {
@@ -86,15 +37,10 @@ function getElementHash(element: object): number {
   return id;
 }
 
-// ============================================================================
 // SVG Icons
-// ============================================================================
 
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
 
-/**
- * Chevron down icon SVG
- */
 const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
 </svg>`;
@@ -135,18 +81,12 @@ const CLEAR_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColo
   <line x1="6" y1="6" x2="18" y2="18"></line>
 </svg>`;
 
-/**
- * Tag data structure
- */
 interface TagData {
   value: string;
   text: string;
   element: HTMLElement;
 }
 
-/**
- * Component state structure
- */
 interface SelectState {
   open: boolean;
   search: string;
@@ -156,9 +96,6 @@ interface SelectState {
   mode: "desktop" | "mobile";
 }
 
-/**
- * Change event action types
- */
 type ChangeAction = "add" | "remove" | "clear" | "set" | "create";
 
 /**
@@ -197,9 +134,7 @@ interface ChangeEventDetail {
  * Ty Select Component
  */
 export class TySelect extends TyComponent<SelectState> {
-  // ============================================================================
   // PROPERTY CONFIGURATION - Declarative property lifecycle
-  // ============================================================================
   protected static properties = {
     value: {
       type: "string" as const,
@@ -212,11 +147,9 @@ export class TySelect extends TyComponent<SelectState> {
         if (Array.isArray(v)) {
           return v.join(",");
         }
-        // Handle null/undefined
         if (v === null || v === undefined) {
           return "";
         }
-        // String already
         return String(v);
       },
     },
@@ -372,9 +305,7 @@ export class TySelect extends TyComponent<SelectState> {
     },
   };
 
-  // ============================================================================
   // INTERNAL STATE
-  // ============================================================================
   private _name: string = "";
   private _multiple = false;
   private _compact = false;
@@ -394,7 +325,6 @@ export class TySelect extends TyComponent<SelectState> {
   private _availableLabel: string = "Available";
   private _noOptionsMessage: string = "No options available";
 
-  // Component state
   private _state: SelectState = {
     open: false,
     search: "",
@@ -404,18 +334,15 @@ export class TySelect extends TyComponent<SelectState> {
     mode: "desktop", // Updated dynamically on render via syncMode()
   };
 
-  // Event handler references for cleanup
   private _stubClickHandler: ((e: Event) => void) | null = null;
   private _tagClickHandler: ((e: Event) => void) | null = null;
   private _searchInputHandler: ((e: Event) => void) | null = null;
   private _blockSearchClick: ((e: Event) => void) | null = null;
   private _keyboardHandler: ((e: KeyboardEvent) => void) | null = null;
 
-  // Debounce properties for search event
   private _debounce: number = 0;
   private _searchDebounceTimer: number | null = null;
 
-  // Custom scrollbar for options list
   private _optionsScrollbar: CustomScrollbar | null = null;
 
   // MutationObserver for light-DOM children — re-syncs selected tags' visual
@@ -439,10 +366,7 @@ export class TySelect extends TyComponent<SelectState> {
     // This matches dropdown.ts pattern and prevents showing empty state
   }
 
-  /**
-   * Called when component is connected to DOM
-   * TyComponent handles property capture automatically
-   */
+  /** TyComponent handles property capture automatically. */
   protected onConnect(): void {
     // SAFETY: Close any open dialogs to prevent scroll locking
     const shadow = this.shadowRoot!;
@@ -506,10 +430,6 @@ export class TySelect extends TyComponent<SelectState> {
     );
   }
 
-  /**
-   * Called when component is disconnected from DOM
-   * Clean up event listeners and timers
-   */
   protected onDisconnect(): void {
     // CRITICAL: Close all dialogs to prevent scroll locking
     const shadow = this.shadowRoot!;
@@ -520,32 +440,25 @@ export class TySelect extends TyComponent<SelectState> {
       }
     });
 
-    // Clean up document-level listeners
     if (this._keyboardHandler) {
       document.removeEventListener("keydown", this._keyboardHandler);
       this._keyboardHandler = null;
     }
 
-    // Clear any pending debounce timer
     if (this._searchDebounceTimer !== null) {
       clearTimeout(this._searchDebounceTimer);
       this._searchDebounceTimer = null;
     }
 
-    // Cleanup custom scrollbar
     this._destroyOptionsScrollbar();
 
-    // Disconnect children observer
     if (this._childObserver) {
       this._childObserver.disconnect();
       this._childObserver = null;
     }
   }
 
-  /**
-   * Called when properties change
-   * Handle state synchronization BEFORE render
-   */
+  /** Handle state synchronization BEFORE render. */
   protected onPropertiesChanged(changes: PropertyChange[]): void {
     for (const { name, newValue } of changes) {
       switch (name) {
@@ -662,10 +575,7 @@ export class TySelect extends TyComponent<SelectState> {
     });
   }
 
-  /**
-   * Get the form value for this component
-   * Returns FormData with multiple entries (HTMX standard)
-   */
+  /** Form value: a plain entry for single, FormData with repeated entries for multiple (HTMX standard). */
   protected getFormValue(): FormDataEntryValue | FormData | null {
     const selectedValues = this._state.selectedValues;
 
@@ -684,9 +594,6 @@ export class TySelect extends TyComponent<SelectState> {
     return null;
   }
 
-  /**
-   * Parse select value (comma-separated string to array)
-   */
   private parseValue(value: string | null): string[] {
     // Defensive check: ensure value is actually a string before calling .trim()
     if (!value || typeof value !== "string" || value.trim() === "") return [];
@@ -696,10 +603,7 @@ export class TySelect extends TyComponent<SelectState> {
       .filter((v) => v !== "");
   }
 
-  /**
-   * Initialize component state from attributes
-   * Reads from both property and attribute (like ClojureScript version)
-   */
+  /** Initialize component state from the value property / pre-selected children. */
   private initializeState(): void {
     const initialValue = this.getProperty("value") || "";
 
@@ -708,13 +612,10 @@ export class TySelect extends TyComponent<SelectState> {
       // DON'T use updateComponentValue() because the property is already set!
       const selectedValues = this.parseValue(initialValue);
 
-      // Update internal state
       this._state.selectedValues = selectedValues;
 
-      // Sync the tags to match the property value
       this.syncSelectedTags(selectedValues);
 
-      // Update the visual display
       this.updateSelectionDisplay();
       this.updateMobileSelectedState();
     } else {
@@ -732,9 +633,7 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  // ============================================================================
-  // TAG MANAGEMENT METHODS (Phase 2)
-  // ============================================================================
+  // TAG MANAGEMENT METHODS
 
   /**
    * Get all option elements from the component (ty-option preferred, ty-tag accepted)
@@ -747,11 +646,7 @@ export class TySelect extends TyComponent<SelectState> {
     ) as HTMLElement[];
   }
 
-  /**
-   * Extract value and text from a ty-tag element
-   */
   private getTagData(element: HTMLElement): TagData {
-    // Get value from either property or attribute
     const value =
       (element as any).value ||
       element.getAttribute("value") ||
@@ -790,9 +685,6 @@ export class TySelect extends TyComponent<SelectState> {
       .filter((value) => value !== "");
   }
 
-  /**
-   * Sync tag selection states with desired values
-   */
   private syncSelectedTags(selectedValues: string[]): void {
     const selectedSet = new Set(selectedValues);
     const tags = this.getTagElements();
@@ -827,10 +719,7 @@ export class TySelect extends TyComponent<SelectState> {
     });
   }
 
-  /**
-   * Central update function - synchronizes everything
-   * Uses TyComponent's property system for proper lifecycle
-   */
+  /** Central update function — synchronizes everything via TyComponent's property system. */
   private updateComponentValue(
     newValues: string[],
     dispatchChange: boolean = false,
@@ -841,7 +730,6 @@ export class TySelect extends TyComponent<SelectState> {
 
     const valueStr = newValues.join(",");
 
-    // Only update if changed
     if (JSON.stringify(newValues.sort()) !== JSON.stringify(oldValues.sort())) {
       // Use TyComponent's property system - this will trigger:
       // 1. onPropertiesChanged() → syncs tags via syncSelectedTags()
@@ -887,13 +775,8 @@ export class TySelect extends TyComponent<SelectState> {
     });
   }
 
-  // ============================================================================
-  // DROPDOWN METHODS (Phase 3 & 4)
-  // ============================================================================
+  // DROPDOWN METHODS
 
-  /**
-   * Calculate and set dropdown position with smart direction detection
-   */
   private calculatePosition(): void {
     const shadow = this.shadowRoot!;
     const stub = shadow.querySelector(".select-stub") as HTMLElement;
@@ -940,7 +823,6 @@ export class TySelect extends TyComponent<SelectState> {
     const y = (positionBelow ? pos.topY : pos.bottomY) - wrapPadding;
     const width = popupWidth + wrapPadding + wrapPadding;
 
-    // Set CSS variables for positioning
     this.style.setProperty("--dropdown-x", `${x}px`);
     this.style.setProperty("--dropdown-y", `${y}px`);
     this.style.setProperty("--dropdown-width", `${width}px`);
@@ -948,7 +830,6 @@ export class TySelect extends TyComponent<SelectState> {
     this.style.setProperty("--dropdown-offset-y", "0px");
     this.style.setProperty("--dropdown-padding", `${wrapPadding}px`);
 
-    // Set direction classes for CSS styling
     if (positionBelow) {
       dialog.classList.add("position-below");
       dialog.classList.remove("position-above");
@@ -964,9 +845,7 @@ export class TySelect extends TyComponent<SelectState> {
     );
   }
 
-  // ============================================================================
   // CUSTOM SCROLLBAR FOR OPTIONS
-  // ============================================================================
 
   private _setupOptionsScrollbar(): void {
     if (!isCustomScrollbarEnabled()) return;
@@ -1022,24 +901,20 @@ export class TySelect extends TyComponent<SelectState> {
     this._scrollLockId = lockId;
     lockScroll(lockId);
 
-    // Show modal
     dialog.showModal();
     dialog.classList.add("open");
 
     // Position dropdown AFTER showing modal
     this.calculatePosition();
 
-    // Update component state
     this._state.open = true;
 
-    // Update visual states
     const chevron = shadow.querySelector(".dropdown-chevron");
     if (chevron) chevron.classList.add("open");
 
     const searchChevron = shadow.querySelector(".dropdown-search-chevron");
     if (searchChevron) searchChevron.classList.add("open");
 
-    // Initialize options state
     const tags = this.getTagElements().map((el) => this.getTagData(el));
     this._state.filteredTags = tags;
     this._state.highlightedIndex = -1;
@@ -1047,7 +922,6 @@ export class TySelect extends TyComponent<SelectState> {
     // Ensure options area is visible (may have been hidden from previous search)
     this.updateOptionsVisibility(true);
 
-    // Setup custom scrollbar on options
     this._setupOptionsScrollbar();
 
     // Focus search input (when the search row is shown)
@@ -1062,9 +936,6 @@ export class TySelect extends TyComponent<SelectState> {
     this.fireOpenEvent();
   }
 
-  /**
-   * Close dropdown dialog (desktop mode)
-   */
   private closeDropdown(): void {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(
@@ -1076,10 +947,8 @@ export class TySelect extends TyComponent<SelectState> {
     const stubEl = shadow.querySelector(".select-stub");
     if (stubEl) stubEl.setAttribute("aria-expanded", "false");
 
-    // Destroy custom scrollbar
     this._destroyOptionsScrollbar();
 
-    // Close dialog
     dialog.classList.remove("open");
     dialog.classList.remove("position-above");
     dialog.classList.remove("position-below");
@@ -1091,11 +960,9 @@ export class TySelect extends TyComponent<SelectState> {
       this._scrollLockId = null;
     }
 
-    // Update state
     this._state.open = false;
     this._state.highlightedIndex = -1;
 
-    // Update visual states
     const chevron = shadow.querySelector(".dropdown-chevron");
     if (chevron) chevron.classList.remove("open");
 
@@ -1136,10 +1003,7 @@ export class TySelect extends TyComponent<SelectState> {
     this.fireCloseEvent();
   }
 
-  /**
-   * Open mobile modal (mobile mode)
-   * Now using <dialog> element for native z-index management
-   */
+  /** Open mobile modal — <dialog> handles z-index natively. */
   private openMobileModal(): void {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
@@ -1157,7 +1021,6 @@ export class TySelect extends TyComponent<SelectState> {
     dialog.showModal();
     dialog.classList.add("open");
 
-    // Update component state
     this._state.open = true;
 
     // Initialize options state. Also ensure nothing stays hidden from a
@@ -1193,10 +1056,6 @@ export class TySelect extends TyComponent<SelectState> {
     this.fireOpenEvent();
   }
 
-  /**
-   * Close mobile modal (mobile mode)
-   * Now using <dialog> element for native management
-   */
   private closeMobileModal(): void {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
@@ -1215,11 +1074,9 @@ export class TySelect extends TyComponent<SelectState> {
       this._scrollLockId = null;
     }
 
-    // Update state
     this._state.open = false;
     this._state.highlightedIndex = -1;
 
-    // Reset search
     const hadQuery = this._state.search !== "";
     this._state.search = "";
     const searchInput = shadow.querySelector(
@@ -1249,9 +1106,7 @@ export class TySelect extends TyComponent<SelectState> {
     this.fireCloseEvent();
   }
 
-  // ============================================================================
-  // EVENT HANDLERS (Phase 5 & 6)
-  // ============================================================================
+  // EVENT HANDLERS
 
   private handleStubClick(e: Event): void {
     e.preventDefault();
@@ -1298,7 +1153,6 @@ export class TySelect extends TyComponent<SelectState> {
   private handleTagClick(e: Event): void {
     const target = e.target as HTMLElement;
 
-    // Find the option element (ty-option or ty-tag)
     const tag = target.closest("ty-option, ty-tag") as HTMLElement | null;
 
     if (!tag || tag.hasAttribute("disabled")) return;
@@ -1453,7 +1307,6 @@ export class TySelect extends TyComponent<SelectState> {
     const target = e.target as HTMLInputElement;
     const query = target.value;
 
-    // Update search state
     this._state.search = query;
 
     if (this._externalSearch) {
@@ -1468,11 +1321,9 @@ export class TySelect extends TyComponent<SelectState> {
     const allTags = this.getTagElements().map((el) => this.getTagData(el));
     const filtered = this.filterTags(allTags, query);
 
-    // Update state
     this._state.filteredTags = filtered;
     this._state.highlightedIndex = -1;
 
-    // Update visibility
     this.updateTagVisibility(filtered, allTags);
 
     // Hide options area if no results (desktop)
@@ -1481,7 +1332,6 @@ export class TySelect extends TyComponent<SelectState> {
     // Refresh mobile count + empty-state to reflect filtered visibility
     this.updateMobileSelectedState();
 
-    // Clear highlights
     this.clearHighlights(allTags);
   }
 
@@ -1502,7 +1352,6 @@ export class TySelect extends TyComponent<SelectState> {
 
     if (!shouldHandle) return;
 
-    // Get current state values
     const filteredTags = this._state.filteredTags;
     const tagsCount = filteredTags.length;
     const currentHighlightedIndex = this._state.highlightedIndex;
@@ -1575,13 +1424,8 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  // ============================================================================
-  // SEARCH & FILTERING HELPERS (Phase 6)
-  // ============================================================================
+  // SEARCH & FILTERING HELPERS
 
-  /**
-   * Filter tags based on search query
-   */
   private filterTags(tags: TagData[], query: string): TagData[] {
     if (!query || query.trim() === "") {
       return tags;
@@ -1591,9 +1435,6 @@ export class TySelect extends TyComponent<SelectState> {
     return tags.filter(({ text }) => text.toLowerCase().includes(searchLower));
   }
 
-  /**
-   * Update visibility of tags based on filtered list
-   */
   private updateTagVisibility(
     filteredTags: TagData[],
     allTags: TagData[],
@@ -1609,9 +1450,6 @@ export class TySelect extends TyComponent<SelectState> {
     });
   }
 
-  /**
-   * Show/hide the dropdown options area
-   */
   private updateOptionsVisibility(hasOptions: boolean): void {
     const shadow = this.shadowRoot!;
     const options = shadow.querySelector(".dropdown-options") as HTMLElement;
@@ -1620,18 +1458,12 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /**
-   * Clear all tag highlights
-   */
   private clearHighlights(tags: TagData[]): void {
     tags.forEach(({ element }) => {
       element.removeAttribute("highlighted");
     });
   }
 
-  /**
-   * Highlight tag at specific index
-   */
   private highlightTag(tags: TagData[], index: number): void {
     this.clearHighlights(tags);
 
@@ -1639,7 +1471,6 @@ export class TySelect extends TyComponent<SelectState> {
       const { element } = tags[index];
       element.setAttribute("highlighted", "");
 
-      // Scroll into view
       element.scrollIntoView({
         behavior: "smooth",
         block: "nearest",
@@ -1648,32 +1479,23 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /**
-   * Dispatch search event for external search handling
-   * With optional debounce support
-   */
+  /** Dispatch the search event for external search handling, with optional debounce. */
   private dispatchSearchEvent(query: string): void {
-    // Clear existing timer
     if (this._searchDebounceTimer !== null) {
       clearTimeout(this._searchDebounceTimer);
       this._searchDebounceTimer = null;
     }
 
-    // If debounce is set, debounce the event
     if (this._debounce > 0) {
       this._searchDebounceTimer = window.setTimeout(() => {
         this.fireSearchEvent(query);
         this._searchDebounceTimer = null;
       }, this._debounce);
     } else {
-      // Fire immediately if no debounce
       this.fireSearchEvent(query);
     }
   }
 
-  /**
-   * Fire the actual search event
-   */
   private fireSearchEvent(query: string): void {
     this.dispatchEvent(
       new CustomEvent("search", {
@@ -1715,13 +1537,8 @@ export class TySelect extends TyComponent<SelectState> {
     );
   }
 
-  // ============================================================================
-  // CHANGE EVENT DISPATCHING (Phase 5)
-  // ============================================================================
+  // CHANGE EVENT DISPATCHING
 
-  /**
-   * Dispatch custom change event
-   */
   private dispatchChangeEvent(detail: ChangeEventDetail): void {
     this.dispatchEvent(
       new CustomEvent("change", {
@@ -1732,14 +1549,8 @@ export class TySelect extends TyComponent<SelectState> {
     );
   }
 
-  // ============================================================================
   // RENDERING
-  // ============================================================================
 
-  /**
-   * Main render method (required by TyComponent)
-   * Delegates to mode-specific renderer
-   */
   protected render(): void {
     // Sync mode on every render so rotation/resize is picked up
     this._state.mode = isMobileTouch() ? "mobile" : "desktop";
@@ -1803,9 +1614,6 @@ export class TySelect extends TyComponent<SelectState> {
     sync();
   }
 
-  /**
-   * Setup event listeners
-   */
   private setupEventListeners(): void {
     const shadow = this.shadowRoot!;
     const stub = shadow.querySelector(".select-stub");
@@ -1823,23 +1631,19 @@ export class TySelect extends TyComponent<SelectState> {
 
     this.setupTriggerSlot();
 
-    // Add tag click handler to slot
     if (optionsSlot) {
       this._tagClickHandler = this.handleTagClick.bind(this);
       optionsSlot.addEventListener("click", this._tagClickHandler);
     }
 
-    // Add search input handlers
     if (searchInput) {
       this._searchInputHandler = this.handleSearchInput.bind(this);
       this._blockSearchClick = this.blockSearchClick.bind(this);
 
       searchInput.addEventListener("input", this._searchInputHandler);
       searchInput.addEventListener("click", this._blockSearchClick);
-      // searchInput.addEventListener('blur', this._searchBlurHandler)
     }
 
-    // Setup dialog backdrop click handler
     const dialog = shadow.querySelector(
       ".dropdown-dialog",
     ) as HTMLDialogElement;
@@ -1852,14 +1656,10 @@ export class TySelect extends TyComponent<SelectState> {
       });
     }
 
-    // Setup keyboard handler
     this._keyboardHandler = this.handleKeyboard.bind(this);
     document.addEventListener("keydown", this._keyboardHandler);
   }
 
-  /**
-   * Build CSS class list for stub
-   */
   private buildStubClasses(): string {
     const classes: string[] = [this._size];
     if (this._disabled) classes.push("disabled");
@@ -1867,9 +1667,6 @@ export class TySelect extends TyComponent<SelectState> {
     return classes.join(" ");
   }
 
-  /**
-   * Render desktop mode with dialog
-   */
   private renderDesktop(): void {
     const shadow = this.shadowRoot!;
 
@@ -1958,10 +1755,6 @@ export class TySelect extends TyComponent<SelectState> {
     this.updateSelectionDisplay();
   }
 
-  /**
-   * Render mobile mode with full-screen modal
-   * Following dropdown.ts mobile structure
-   */
   private renderMobile(): void {
     const shadow = this.shadowRoot!;
 
@@ -1980,7 +1773,6 @@ export class TySelect extends TyComponent<SelectState> {
       `
         : "";
 
-      // Close button SVG (X icon)
       const closeButtonSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2081,10 +1873,6 @@ export class TySelect extends TyComponent<SelectState> {
     this.updateSelectionDisplay();
   }
 
-  /**
-   * Setup event listeners for mobile mode
-   * Using <dialog> element - backdrop clicks handled natively
-   */
   private setupMobileEventListeners(): void {
     const shadow = this.shadowRoot!;
     const stub = shadow.querySelector(".select-stub");
@@ -2103,19 +1891,16 @@ export class TySelect extends TyComponent<SelectState> {
 
     this.setupTriggerSlot();
 
-    // Add tag click handler to slot
     if (optionsSlot) {
       optionsSlot.addEventListener("click", (e) =>
         this.handleMobileTagClick(e),
       );
     }
 
-    // Add search input handlers (if searchable)
     if (searchInput) {
       searchInput.addEventListener("input", (e) => this.handleSearchInput(e));
     }
 
-    // Close button click
     if (closeButton) {
       closeButton.addEventListener("click", () => this.closeMobileModal());
     }
@@ -2138,9 +1923,6 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /**
-   * Handle mobile stub click - open modal
-   */
   private handleMobileStubClick(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
@@ -2161,18 +1943,12 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /**
-   * Handle mobile tag click - select and potentially close
-   */
   private handleMobileTagClick(e: Event): void {
     // Use the same tag click handler as desktop
     // It already handles mobile mode for auto-close
     this.handleTagClick(e);
   }
 
-  /**
-   * Update mobile options section state (count, empty state)
-   */
   private updateMobileSelectedState(): void {
     if (this._state.mode !== "mobile") return;
 
@@ -2190,7 +1966,6 @@ export class TySelect extends TyComponent<SelectState> {
         String(visibleAvailable === 0),
       );
 
-      // Update available header count
       const availableTitleSpan = shadow.querySelector(
         ".mobile-available-section .section-title",
       );
@@ -2200,9 +1975,6 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /**
-   * Update selection display: count badge next to the placeholder
-   */
   /**
    * Should the popup show a search row? external-search always (the input is
    * the mechanism); searchable always/never wins otherwise; 'auto' shows it
@@ -2337,9 +2109,7 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  // ============================================================================
   // PUBLIC API - Getters/Setters
-  // ============================================================================
 
   /**
    * Deselect a value programmatically WITH a change event.
@@ -2510,7 +2280,6 @@ export class TySelect extends TyComponent<SelectState> {
   }
 }
 
-// Register the custom element
 if (!customElements.get("ty-select")) {
   customElements.define("ty-select", TySelect);
 }

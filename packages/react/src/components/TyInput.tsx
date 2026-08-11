@@ -6,7 +6,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Event detail structure for ty-input events
 export interface TyInputEventDetail {
   value: any; // shadow value (processed/parsed)
   formattedValue: string; // user-visible formatted value
@@ -27,7 +26,6 @@ export interface TyInputCSSProperties extends React.CSSProperties {
   '--input-disabled-color'?: string;
 }
 
-// Type definitions for Ty Input component
 export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onFocus' | 'onBlur' | 'style'> {
   style?: TyInputCSSProperties;
   /** Input type */
@@ -96,7 +94,6 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
 // One-time global warning flags so we don't spam the console.
 let _warnedOnInputProp = false;
 
-// React wrapper for ty-input web component
 export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
   ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, name, checked, debounce, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -150,18 +147,14 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
       const element = elementRef.current;
       if (!element) return;
 
-      // Listen for custom input/change events from ty-input
-      // Map onChange → input event (React convention)
       if (onChange) {
         element.addEventListener('input', handleInput as EventListener);
       }
 
-      // Map onChangeCommit → change event (blur behavior)
       if (onChangeCommit) {
         element.addEventListener('change', handleChangeCommit as EventListener);
       }
 
-      // Listen for standard focus/blur events
       if (onFocus) {
         element.addEventListener('focus', handleFocus as EventListener);
       }
@@ -186,7 +179,6 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
       };
     }, [handleInput, handleChangeCommit, handleFocus, handleBlur, onChange, onChangeCommit, onFocus, onBlur]);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -217,21 +209,17 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
     const isRequired = useBooleanProperty(elementRef, 'required', required);
     const isChecked = useBooleanProperty(elementRef, 'checked', checked);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add conditional attributes
     if (isDisabled) webComponentProps.disabled = '';
     if (isRequired) webComponentProps.required = '';
     if (isChecked) webComponentProps.checked = '';
 
-    // Add string attributes
     if (name) webComponentProps.name = name;
 
-    // Add debounce attribute
     if (debounce !== undefined) webComponentProps.debounce = debounce;
 
     return React.createElement(

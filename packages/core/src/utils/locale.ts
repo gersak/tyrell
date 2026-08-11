@@ -1,28 +1,8 @@
 /**
  * Locale Resolution Utilities
- * 
- * Provides a cascade system for resolving locale/language preferences:
- * 1. Component's explicit `locale` attribute (highest priority)
- * 2. Closest ancestor's `lang` attribute
- * 3. Document root's `lang` attribute
- * 4. Browser's language preference
- * 5. 'en-US' fallback (lowest priority)
- * 
- * This allows developers to set locale at any level:
- * - Per-component: <ty-input locale="fr-FR">
- * - Per-section: <div lang="de-DE"><ty-input></ty-input></div>
- * - Per-page: <html lang="es-ES">
- * - Browser default: Uses navigator.language
- * 
- * @example
- * ```typescript
- * // In a component
- * class TyInput extends HTMLElement {
- *   get locale(): string {
- *     return getEffectiveLocale(this, this.getAttribute('locale'));
- *   }
- * }
- * ```
+ *
+ * Cascade for resolving locale/language preferences, so developers can set it
+ * per-component, per-section, per-page, or fall back to the browser default.
  */
 
 /**
@@ -112,7 +92,6 @@ export function observeLocaleChanges(
 ): () => void {
   let currentLocale = getEffectiveLocale(element);
 
-  // Create observer for lang attribute changes on ancestors
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === 'attributes' && mutation.attributeName === 'lang') {
@@ -125,13 +104,12 @@ export function observeLocaleChanges(
     }
   });
 
-  // Observe document and all ancestors
+  // subtree: true so any ancestor's lang change is seen
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['lang'],
     subtree: true
   });
 
-  // Return cleanup function
   return () => observer.disconnect();
 }

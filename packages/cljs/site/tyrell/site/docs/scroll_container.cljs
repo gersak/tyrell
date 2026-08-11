@@ -8,7 +8,6 @@
    (component-header "ty-scroll-container"
                      "Scroll wrapper with edge shadow indicators, optional custom scrollbar overlay, and horizontal overflow control. Drop any content inside — the container manages scroll behavior.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -63,11 +62,9 @@
         :default "transparent"
         :description "Track background"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -82,7 +79,6 @@
   <!-- your content -->
 </ty-scroll-container>")]
 
-      ;; Custom scrollbar
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom Scrollbar")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -97,7 +93,6 @@
   <!-- your content -->
 </ty-scroll-container>")]
 
-      ;; No shadows
       [:div.ty-content.rounded-lg.p-5
        (section-label "Without Shadows")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -112,7 +107,6 @@
   <!-- your content -->
 </ty-scroll-container>")]
 
-      ;; Horizontal scroll
       [:div.ty-content.rounded-lg.p-5
        (section-label "Horizontal Scroll")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -129,11 +123,9 @@
   </div>
 </ty-scroll-container>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Infinite scroll (nearend/nearstart) + scroll anchoring
       [:div.ty-content.rounded-lg.p-5
        (section-label "Infinite Scroll + Anchoring")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -176,7 +168,6 @@ const sc = document.querySelector('ty-scroll-container');
 sc.addEventListener('nearend',   () => appendNewer());  // scroll down
 sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchored, no jump")]
 
-      ;; Custom scrollbar styling
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom Scrollbar Styling")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -188,7 +179,6 @@ sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchore
   <!-- your content -->
 </ty-scroll-container>")]
 
-      ;; Code block wrapper
       [:div.ty-content.rounded-lg.p-5
        (section-label "Code Block Wrapper")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -197,7 +187,6 @@ sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchore
   <pre><code>...long code line...</code></pre>
 </ty-scroll-container>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

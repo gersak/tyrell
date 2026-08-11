@@ -1,39 +1,6 @@
 /**
- * TyCalendarMonth Web Component
- * PORTED FROM: cljs/ty/components/calendar_month.cljs
- * 
- * A stateless, property-driven calendar month renderer with customizable
- * day content and styling.
- * 
- * Features:
- * - 42-day grid (6 weeks × 7 days) with Monday-first ordering
- * - Localized weekday headers
- * - Custom day content rendering via dayContentFn
- * - Custom day classes via dayClassesFn
- * - Custom CSS injection via customCSS
- * - Responsive width system (width, minWidth, maxWidth)
- * - Rich day-click events with full context
- * 
- * @example
- * ```html
- * <!-- Basic usage -->
- * <ty-calendar-month 
- *   display-year="2025" 
- *   display-month="10"
- *   locale="en-US">
- * </ty-calendar-month>
- * 
- * <!-- With custom rendering -->
- * <ty-calendar-month id="custom"></ty-calendar-month>
- * <script type="module">
- *   const cal = document.getElementById('custom');
- *   cal.dayContentFn = (ctx) => {
- *     const el = document.createElement('div');
- *     el.textContent = ctx.dayInMonth;
- *     return el;
- *   };
- * </script>
- * ```
+ * TyCalendarMonth Web Component — a stateless, property-driven calendar month
+ * renderer (42-day grid, Monday-first) with customizable day content/styling.
  */
 
 import { ensureStyles } from '../utils/styles.js';
@@ -46,10 +13,6 @@ import {
   type DayContext
 } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Calendar size variants
@@ -77,20 +40,10 @@ export interface DayClickDetail {
   isOtherMonth: boolean;
 }
 
-// ============================================================================
-// Default Render Functions
-// ============================================================================
-
-/**
- * Default day content renderer - just the day number
- */
 function defaultDayContent(dayContext: DayContext): string {
   return dayContext.dayInMonth.toString();
 }
 
-/**
- * Default day classes based on day context
- */
 function getDefaultDayClasses(dayContext: DayContext): string[] {
   const classes = ['calendar-day'];
 
@@ -102,13 +55,6 @@ function getDefaultDayClasses(dayContext: DayContext): string[] {
   return classes;
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Check if value is a DOM element
- */
 function isDOMElement(value: unknown): value is HTMLElement {
   return value instanceof HTMLElement;
 }
@@ -124,15 +70,11 @@ function isoToUTCTimestamp(iso: string | null | undefined): number | null {
   return Date.UTC(parsed.year, parsed.month - 1, parsed.day);
 }
 
-/**
- * Normalize size value - add 'px' if just a number
- */
 function normalizeSizeValue(value: string | number | null | undefined): string | null {
   if (!value || value === '') return null;
 
   const strValue = String(value);
 
-  // If it's just a number, add 'px'
   if (/^\d+(\.\d+)?$/.test(strValue)) {
     return `${strValue}px`;
   }
@@ -141,15 +83,10 @@ function normalizeSizeValue(value: string | number | null | undefined): string |
   return strValue;
 }
 
-// ============================================================================
-// Component Implementation
-// ============================================================================
-
 /**
  * TyCalendarMonth Web Component
  */
 export class TyCalendarMonth extends HTMLElement {
-  // Private properties (synced with attributes/properties)
   private _displayYear: number;
   private _displayMonth: number;
   private _locale: string = 'en-US';
@@ -185,7 +122,6 @@ export class TyCalendarMonth extends HTMLElement {
   constructor() {
     super();
 
-    // Initialize with current date
     const today = new Date();
     this._displayYear = today.getFullYear();
     this._displayMonth = today.getMonth() + 1; // 1-based month
@@ -193,12 +129,7 @@ export class TyCalendarMonth extends HTMLElement {
     this.attachShadow({ mode: 'open' });
   }
 
-  // ==========================================================================
-  // Lifecycle Methods
-  // ==========================================================================
-
   connectedCallback() {
-    // Set defaults if not already set
     if (!this._displayMonth) {
       this._displayMonth = new Date().getMonth() + 1;
     }
@@ -208,7 +139,6 @@ export class TyCalendarMonth extends HTMLElement {
     if (!this._locale) {
       this._locale = this.getAttribute('locale') || 'en-US';
     }
-    // Read size attribute if present
     const sizeAttr = this.getAttribute('size');
     if (sizeAttr && (sizeAttr === 'sm' || sizeAttr === 'md' || sizeAttr === 'lg')) {
       this._size = sizeAttr;
@@ -218,14 +148,14 @@ export class TyCalendarMonth extends HTMLElement {
     const plainDayContentFn = (this as any).dayContentFn;
     if (plainDayContentFn && !this._dayContentFn) {
       this._dayContentFn = plainDayContentFn;
-      delete (this as any).dayContentFn; // Clean up plain property
+      delete (this as any).dayContentFn;
     }
 
     // Check for customCSS set before upgrade
     const plainCustomCSS = (this as any).customCSS;
     if (plainCustomCSS && !this._customCSS) {
       this._customCSS = plainCustomCSS;
-      delete (this as any).customCSS; // Clean up plain property
+      delete (this as any).customCSS;
     }
 
     // Setup locale observer to watch for ancestor lang changes
@@ -238,7 +168,6 @@ export class TyCalendarMonth extends HTMLElement {
   }
 
   disconnectedCallback() {
-    // Cleanup locale observer
     if (this._localeObserver) {
       this._localeObserver();
       this._localeObserver = undefined;
@@ -275,10 +204,6 @@ export class TyCalendarMonth extends HTMLElement {
       ({ base }) => calendarMonthCustomFlavorCss(base),
     );
   }
-
-  // ==========================================================================
-  // Property Getters/Setters
-  // ==========================================================================
 
   get displayYear(): number {
     return this._displayYear;
@@ -424,10 +349,6 @@ export class TyCalendarMonth extends HTMLElement {
     }
   }
 
-  // ==========================================================================
-  // Width Property System
-  // ==========================================================================
-
   /**
    * Apply width-related properties as CSS custom properties
    */
@@ -455,9 +376,6 @@ export class TyCalendarMonth extends HTMLElement {
     }
   }
 
-  /**
-   * Apply custom CSS to shadow root
-   */
   private applyCustomCSS(): void {
     if (!this._customCSS || !this.shadowRoot) return;
 
@@ -467,10 +385,6 @@ export class TyCalendarMonth extends HTMLElement {
     }
   }
 
-  // ==========================================================================
-  // Public Methods
-  // ==========================================================================
-
   /**
    * Force re-render of the calendar month
    * Useful when external data changes (e.g., async event loading)
@@ -479,13 +393,6 @@ export class TyCalendarMonth extends HTMLElement {
     this.render();
   }
 
-  // ==========================================================================
-  // Event Dispatching
-  // ==========================================================================
-
-  /**
-   * Dispatch day-click custom event with day context
-   */
   private dispatchDayClick(dayContext: DayContext, _domEvent: Event): void {
     const detail: DayClickDetail = {
       dayContext,
@@ -510,13 +417,6 @@ export class TyCalendarMonth extends HTMLElement {
     }
   }
 
-  // ==========================================================================
-  // Rendering
-  // ==========================================================================
-
-  /**
-   * Render a single day cell
-   */
   /**
    * WAI-ARIA grid pattern: gridcell + roving tabindex (exactly one cell in
    * the whole grid is tabindex="0" at a time — the rest are -1, so Tab
@@ -526,12 +426,10 @@ export class TyCalendarMonth extends HTMLElement {
   private renderDayCell(dayContext: DayContext, disabled: boolean, isRoving: boolean): HTMLElement {
     const dayElement = document.createElement('div');
 
-    // Get content using custom or default function
     const content = this._dayContentFn
       ? this._dayContentFn(dayContext)
       : defaultDayContent(dayContext);
 
-    // STRICT DOM-ONLY CHECK for custom functions
     if (this._dayContentFn && content && !isDOMElement(content) && typeof content !== 'string') {
       throw new Error(
         `Custom dayContentFn must return a DOM element or string, got: ${typeof content}. ` +
@@ -539,12 +437,10 @@ export class TyCalendarMonth extends HTMLElement {
       );
     }
 
-    // Apply default classes
     const classes = getDefaultDayClasses(dayContext);
     if (disabled) classes.push('disabled');
     dayElement.className = classes.join(' ');
 
-    // Set content
     if (typeof content === 'string') {
       dayElement.textContent = content;
     } else if (isDOMElement(content)) {
@@ -582,23 +478,16 @@ export class TyCalendarMonth extends HTMLElement {
     return dayElement;
   }
 
-  /**
-   * Main render function - property-based approach
-   */
   private render(): void {
     const root = this.shadowRoot;
     if (!root) return;
 
-    // Ensure styles are loaded
     ensureStyles(root, { css: calendarMonthStyles, id: 'ty-calendar-month' });
 
-    // Apply custom CSS if provided
     this.applyCustomCSS();
 
-    // Apply width properties
     this.applyWidthProperties();
 
-    // Convert timestamp to selection info
     let selection: { year?: number; month?: number; day?: number } | undefined;
     if (this._value) {
       const date = new Date(this._value);
@@ -609,16 +498,12 @@ export class TyCalendarMonth extends HTMLElement {
       };
     }
 
-    // Generate calendar days with selection info
     const days = getCalendarMonthDays(this._displayYear, this._displayMonth, selection);
 
-    // Get localized weekday names
     const weekdays = getLocalizedWeekdays(this._locale, 'short');
 
-    // Clear and rebuild
     root.innerHTML = '';
 
-    // Create unified flex container
     const calendarContainer = document.createElement('div');
     calendarContainer.className = `calendar-flex-container calendar-size-${this._size}`;
     calendarContainer.setAttribute('role', 'grid');
@@ -628,7 +513,6 @@ export class TyCalendarMonth extends HTMLElement {
         .format(new Date(this._displayYear, this._displayMonth - 1, 1)),
     );
 
-    // Create header row with weekday names
     const headerRow = document.createElement('div');
     headerRow.className = 'calendar-row calendar-header-row';
     headerRow.setAttribute('role', 'row');
@@ -643,7 +527,6 @@ export class TyCalendarMonth extends HTMLElement {
 
     calendarContainer.appendChild(headerRow);
 
-    // Create day rows (6 weeks of 7 days each)
     const dayWeeks: DayContext[][] = [];
     for (let i = 0; i < 42; i += 7) {
       dayWeeks.push(days.slice(i, i + 7));
@@ -684,7 +567,6 @@ export class TyCalendarMonth extends HTMLElement {
           (minTs !== null && dayContext.value < minTs) ||
           (maxTs !== null && dayContext.value > maxTs);
         const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === this._focusedIndex);
-        // Add unified cell classes for flex layout
         dayCell.className = `${dayCell.className} calendar-cell calendar-day-cell`;
         dayRow.appendChild(dayCell);
         this._cellElements[flatIndex] = dayCell;
@@ -729,7 +611,6 @@ export class TyCalendarMonth extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-calendar-month')) {
   customElements.define('ty-calendar-month', TyCalendarMonth);
 }

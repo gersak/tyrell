@@ -49,12 +49,10 @@
    (format-number number locale {:notation "compact"
                                  :compactDisplay "short"})))
 
-;; Extend the Translator protocol for numbers
 (extend-protocol i18n/Translator
   number
   (translate
     ([this]
-     ;; Default number formatting for current locale
      (format-number this i18n/*locale*))
     ([this locale-or-currency]
      ;; If string, assume it's currency code
@@ -69,5 +67,4 @@
        :else
        (str this)))
     ([this locale options]
-     ;; Full control with locale and options
      (format-number this locale options))))

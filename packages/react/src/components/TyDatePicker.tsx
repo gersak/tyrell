@@ -6,7 +6,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty DatePicker component
 export interface TyDatePickerEventDetail {
   /** The selected date value (ISO string or formatted string based on format) */
   value: string | null;
@@ -76,7 +75,6 @@ export interface TyDatePickerElement extends HTMLElement {
   clear(): void;
 }
 
-// React wrapper for ty-date-picker web component
 export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerProps>(
   ({ 
     value,
@@ -100,7 +98,6 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
   }, ref) => {
     const elementRef = useRef<TyDatePickerElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -118,12 +115,10 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
       if (!needsPropertyBridge) return;
       const element = elementRef.current;
       if (element && value !== undefined) {
-        // Set the value property directly on the element
         (element as any).value = value || '';
       }
     }, [value]);
 
-    // Handle change events
     const handleChange = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyDatePickerEventDetail>;
       if (onChange) {
@@ -145,7 +140,6 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
       if (onClose) onClose(event as CustomEvent<{}>);
     }, [onClose]);
 
-    // Set up event listeners
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -174,13 +168,11 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
       };
     }, [handleChange, handleOpen, handleClose, onChange, onOpen, onClose]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add optional attributes only if they have values
     if (value !== undefined) {
       webComponentProps.value = value;
     }

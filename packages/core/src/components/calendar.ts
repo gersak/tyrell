@@ -1,53 +1,7 @@
 /**
- * TyCalendar Web Component
- * PORTED FROM: cljs/ty/components/calendar.cljs
- * 
- * A complete calendar orchestration component that combines navigation and month display.
- * Manages selection state, form participation, and event coordination.
- * 
- * Architecture:
- * - year/month/day HTML attributes for intuitive API
- * - Internal state management (private properties)
- * - Distributes properties to child components (navigation + month)
- * - Single 'change' event with complete day context
- * - Form participation via ElementInternals
- * 
- * Features:
- * - Combines ty-calendar-navigation + ty-calendar-month
- * - Date selection with visual feedback
- * - Form integration (works with FormData)
- * - Custom render functions (dayContentFn)
- * - Custom CSS injection
- * - Automatic date validation
- * - Event coordination between components
- * 
- * @example
- * ```html
- * <!-- Basic usage -->
- * <ty-calendar 
- *   year="2025" 
- *   month="10" 
- *   day="15">
- * </ty-calendar>
- * 
- * <!-- Form integration -->
- * <form>
- *   <ty-calendar name="booking-date"></ty-calendar>
- *   <button type="submit">Submit</button>
- * </form>
- * 
- * <!-- With custom rendering -->
- * <ty-calendar id="custom"></ty-calendar>
- * <script type="module">
- *   const cal = document.getElementById('custom');
- *   cal.dayContentFn = (ctx) => {
- *     const el = document.createElement('div');
- *     el.textContent = ctx.dayInMonth;
- *     if (ctx.today) el.style.fontWeight = 'bold';
- *     return el;
- *   };
- * </script>
- * ```
+ * TyCalendar Web Component — orchestrates ty-calendar-navigation +
+ * ty-calendar-month: owns selection state, distributes properties to the
+ * children, and participates in forms via ElementInternals.
  */
 
 import { ensureStyles } from '../utils/styles.js';
@@ -59,10 +13,6 @@ import type { DayContentFn, DayClickDetail, CalendarSize } from './calendar-mont
 import type { NavigationChangeDetail } from './calendar-navigation.js';
 import { parseISODate, type DayContext } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Internal calendar state
@@ -97,13 +47,6 @@ export interface CalendarNavigateDetail {
   source: 'navigation';
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Get current date for defaults
- */
 function getCurrentDate(): { year: number; month: number; day: number } {
   const now = new Date();
   return {
@@ -113,17 +56,11 @@ function getCurrentDate(): { year: number; month: number; day: number } {
   };
 }
 
-/**
- * Validate and parse year from string
- */
 function parseYear(yearStr: string | null): number | null {
   if (!yearStr || !/^\d{4}$/.test(yearStr)) return null;
   return parseInt(yearStr, 10);
 }
 
-/**
- * Validate and parse month from string (1-12)
- */
 function parseMonth(monthStr: string | null): number | null {
   if (!monthStr || !/^\d{1,2}$/.test(monthStr)) return null;
   const month = parseInt(monthStr, 10);
@@ -131,36 +68,28 @@ function parseMonth(monthStr: string | null): number | null {
 }
 
 /**
- * Validate and parse day from string (1-31, validated against month)
+ * Parse a day string, validated against the given month's length.
  */
 function parseDay(dayStr: string | null, year: number, month: number): number | null {
   if (!dayStr || !/^\d{1,2}$/.test(dayStr)) return null;
   const day = parseInt(dayStr, 10);
 
-  // Get days in month for validation
   const daysInMonth = new Date(year, month, 0).getDate();
 
   return day >= 1 && day <= daysInMonth ? day : null;
 }
 
-/**
- * Format date as ISO string (YYYY-MM-DD) for form submission
- */
+/** Format date as ISO string (YYYY-MM-DD) for form submission */
 function formatDateISO(year: number, month: number, day: number): string {
   const monthStr = month.toString().padStart(2, '0');
   const dayStr = day.toString().padStart(2, '0');
   return `${year}-${monthStr}-${dayStr}`;
 }
 
-// ============================================================================
-// Component Implementation
-// ============================================================================
-
 /**
  * TyCalendar Web Component
  */
 export class TyCalendar extends HTMLElement {
-  // Private state
   private _state: CalendarState;
   private _showNavigation: boolean = true;
   private _stateless: boolean = false;
@@ -172,24 +101,16 @@ export class TyCalendar extends HTMLElement {
   private _max?: string; // ISO date bound - passed to navigation + month
   private _flavor: string = 'primary'; // passed to month display only (nav stays neutral chrome)
 
-  // Child component references
   private _navigation?: HTMLElement;
   private _monthDisplay?: HTMLElement;
 
-  // Form integration
   private _internals?: ElementInternals;
   
   // Locale observer cleanup
   private _localeObserver?: () => void;
 
-  /**
-   * Form-associated custom element
-   */
   static formAssociated = true;
 
-  /**
-   * Observed attributes
-   */
   static get observedAttributes(): string[] {
     return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
   }
@@ -197,7 +118,6 @@ export class TyCalendar extends HTMLElement {
   constructor() {
     super();
 
-    // Initialize state with current date
     const current = getCurrentDate();
     this._state = {
       displayYear: current.year,
@@ -206,42 +126,35 @@ export class TyCalendar extends HTMLElement {
 
     this.attachShadow({ mode: 'open' });
 
-    // Attach ElementInternals for form participation
     if ('attachInternals' in this) {
       this._internals = this.attachInternals();
     }
   }
 
-  // ==========================================================================
-  // Lifecycle Methods
-  // ==========================================================================
-
   connectedCallback() {
-    // Parse initial attributes
     this.initializeFromAttributes();
 
-    // ✅ CHECK: Properties set before custom element upgrade
-    // When scripts run before element is fully upgraded, properties are set as plain properties
-    // without triggering setters. We need to migrate them to private fields.
+    // Properties set before custom element upgrade: when scripts run before
+    // the element is upgraded, properties are set as plain properties without
+    // triggering setters. We need to migrate them to private fields.
     
     // Check for dayContentFn set before upgrade
     const plainDayContentFn = (this as any).dayContentFn;
     if (plainDayContentFn && !this._dayContentFn) {
       this._dayContentFn = plainDayContentFn;
-      delete (this as any).dayContentFn; // Clean up plain property
+      delete (this as any).dayContentFn;
     }
 
     // Check for customCSS set before upgrade
     const plainCustomCSS = (this as any).customCSS;
     if (plainCustomCSS && !this._customCSS) {
       this._customCSS = plainCustomCSS;
-      delete (this as any).customCSS; // Clean up plain property
+      delete (this as any).customCSS;
     }
 
     // Check for value set before upgrade
     const plainValue = (this as any).value;
     if (plainValue && typeof plainValue === 'string' && plainValue !== this.value) {
-      // Parse and set the value properly
       const match = plainValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (match) {
         const year = parseInt(match[1], 10);
@@ -261,13 +174,11 @@ export class TyCalendar extends HTMLElement {
           this.setAttribute('day', day.toString());
         }
       }
-      delete (this as any).value; // Clean up plain property
+      delete (this as any).value;
     }
 
-    // Render the calendar
     this.render();
 
-    // Set initial form value if date is selected
     this.updateFormValue();
     
     // Setup locale observer to watch for ancestor lang changes
@@ -277,13 +188,11 @@ export class TyCalendar extends HTMLElement {
   }
 
   disconnectedCallback() {
-    // Cleanup locale observer
     if (this._localeObserver) {
       this._localeObserver();
       this._localeObserver = undefined;
     }
     
-    // Cleanup references
     this._navigation = undefined;
     this._monthDisplay = undefined;
   }
@@ -337,7 +246,6 @@ export class TyCalendar extends HTMLElement {
         break;
 
       case 'name':
-        // Name change triggers form value update
         this.updateFormValue();
         break;
 
@@ -354,10 +262,6 @@ export class TyCalendar extends HTMLElement {
         break;
     }
   }
-
-  // ==========================================================================
-  // Property Getters/Setters
-  // ==========================================================================
 
   get min(): string | undefined {
     return this._min;
@@ -551,7 +455,6 @@ export class TyCalendar extends HTMLElement {
 
   set value(isoDate: string) {
     if (!isoDate) {
-      // Clear selection
       delete this._state.selectedYear;
       delete this._state.selectedMonth;
       delete this._state.selectedDay;
@@ -563,14 +466,12 @@ export class TyCalendar extends HTMLElement {
         this.removeAttribute('day');
       }
     } else {
-      // Parse ISO date (YYYY-MM-DD)
       const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if (match) {
         const year = parseInt(match[1], 10);
         const month = parseInt(match[2], 10);
         const day = parseInt(match[3], 10);
 
-        // Update internal selection state
         this._state.selectedYear = year;
         this._state.selectedMonth = month;
         this._state.selectedDay = day;
@@ -589,16 +490,11 @@ export class TyCalendar extends HTMLElement {
       }
     }
     this.syncChildComponents();
-    
-    // In normal mode, update form value
+
     if (!this._stateless) {
       this.updateFormValue();
     }
   }
-
-  // ==========================================================================
-  // State Management
-  // ==========================================================================
 
   /**
    * Initialize state from HTML attributes on first load
@@ -612,17 +508,14 @@ export class TyCalendar extends HTMLElement {
     const sizeStr = this.getAttribute('size');
     const widthStr = this.getAttribute('width');
 
-    // Date bounds
     this._min = this.getAttribute('min') || undefined;
     this._max = this.getAttribute('max') || undefined;
 
-    // Parse year
     const year = parseYear(yearStr);
     if (year) {
       this._state.displayYear = year;
     }
 
-    // Parse month
     const month = parseMonth(monthStr);
     if (month) {
       this._state.displayMonth = month;
@@ -638,30 +531,23 @@ export class TyCalendar extends HTMLElement {
       }
     }
 
-    // Show navigation
     if (showNavStr) {
       this._showNavigation = showNavStr !== 'false';
     }
 
-    // Stateless mode
     if (statelessStr !== null) {
       this._stateless = statelessStr !== 'false';
     }
 
-    // Size
     if (sizeStr && (sizeStr === 'sm' || sizeStr === 'md' || sizeStr === 'lg')) {
       this._size = sizeStr;
     }
 
-    // Width
     if (widthStr) {
       this._width = widthStr;
     }
   }
 
-  /**
-   * Sync state from changed attributes
-   */
   private syncStateFromAttributes(): void {
     const yearStr = this.getAttribute('year');
     const monthStr = this.getAttribute('month');
@@ -670,7 +556,6 @@ export class TyCalendar extends HTMLElement {
     const year = parseYear(yearStr);
     const month = parseMonth(monthStr);
 
-    // Update display year/month
     if (year) this._state.displayYear = year;
     if (month) this._state.displayMonth = month;
 
@@ -695,11 +580,7 @@ export class TyCalendar extends HTMLElement {
     }
   }
 
-  /**
-   * Update child components with current state
-   */
   private syncChildComponents(): void {
-    // Update navigation
     if (this._navigation) {
       (this._navigation as any).displayMonth = this._state.displayMonth;
       (this._navigation as any).displayYear = this._state.displayYear;
@@ -711,7 +592,6 @@ export class TyCalendar extends HTMLElement {
       (this._navigation as any).width = this._width;
     }
 
-    // Update month display
     if (this._monthDisplay) {
       (this._monthDisplay as any).displayMonth = this._state.displayMonth;
       (this._monthDisplay as any).displayYear = this._state.displayYear;
@@ -723,12 +603,10 @@ export class TyCalendar extends HTMLElement {
       // Always sync width (set or clear)
       (this._monthDisplay as any).width = this._width;
 
-      // Pass render functions
       if (this._dayContentFn) {
         (this._monthDisplay as any).dayContentFn = this._dayContentFn;
       }
 
-      // Pass custom CSS
       if (this._customCSS) {
         (this._monthDisplay as any).customCSS = this._customCSS;
       }
@@ -744,9 +622,6 @@ export class TyCalendar extends HTMLElement {
     }
   }
 
-  /**
-   * Update form value using ElementInternals
-   */
   private updateFormValue(): void {
     // Skip form participation in stateless mode
     if (this._stateless) return;
@@ -798,27 +673,17 @@ export class TyCalendar extends HTMLElement {
     this._internals.setValidity({});
   }
 
-  // ==========================================================================
-  // Event Handlers
-  // ==========================================================================
-
-  /**
-   * Handle navigation change (month/year navigation)
-   */
   private handleNavigationChange(event: CustomEvent<NavigationChangeDetail>): void {
     event.preventDefault();
     event.stopPropagation();
 
     const { month, year } = event.detail;
 
-    // Update display state
     this._state.displayMonth = month;
     this._state.displayYear = year;
 
-    // Sync child components
     this.syncChildComponents();
 
-    // Emit navigate event
     const navigateDetail: CalendarNavigateDetail = {
       month,
       year,
@@ -834,9 +699,6 @@ export class TyCalendar extends HTMLElement {
     }));
   }
 
-  /**
-   * Handle day click (day selection)
-   */
   private handleDayClick(event: CustomEvent<DayClickDetail>): void {
     event.preventDefault();
     event.stopPropagation();
@@ -845,7 +707,6 @@ export class TyCalendar extends HTMLElement {
 
     // In stateless mode, just re-dispatch the event without updating internal state
     if (this._stateless) {
-      // Re-dispatch day-click event for parent to handle
       this.dispatchEvent(new CustomEvent('day-click', {
         detail: event.detail,
         bubbles: true,
@@ -862,18 +723,14 @@ export class TyCalendar extends HTMLElement {
     this._state.displayYear = year;
     this._state.displayMonth = month;
 
-    // Update HTML attributes
     this.setAttribute('year', year.toString());
     this.setAttribute('month', month.toString());
     this.setAttribute('day', day.toString());
 
-    // Update form value
     this.updateFormValue();
 
-    // Sync child components
     this.syncChildComponents();
 
-    // Emit change event
     const changeDetail: CalendarChangeDetail = {
       year,
       month,
@@ -891,10 +748,6 @@ export class TyCalendar extends HTMLElement {
     }));
   }
 
-  // ==========================================================================
-  // Public Methods
-  // ==========================================================================
-
   /**
    * Force re-render of the calendar
    * Useful after updating dayContentFn or other dynamic properties
@@ -908,17 +761,9 @@ export class TyCalendar extends HTMLElement {
     }
   }
 
-  // ==========================================================================
-  // Rendering
-  // ==========================================================================
-
-  /**
-   * Create navigation element
-   */
   private createNavigation(): HTMLElement {
     const nav = document.createElement('ty-calendar-navigation');
 
-    // Set properties
     (nav as any).displayMonth = this._state.displayMonth;
     (nav as any).displayYear = this._state.displayYear;
     (nav as any).locale = this.locale;
@@ -931,22 +776,16 @@ export class TyCalendar extends HTMLElement {
       (nav as any).width = this._width;
     }
 
-    // Listen for change events
     nav.addEventListener('change', (e) => this.handleNavigationChange(e as CustomEvent<NavigationChangeDetail>));
 
-    // Store reference
     this._navigation = nav;
 
     return nav;
   }
 
-  /**
-   * Create month display element
-   */
   private createMonthDisplay(): HTMLElement {
     const month = document.createElement('ty-calendar-month');
 
-    // Set properties
     (month as any).displayMonth = this._state.displayMonth;
     (month as any).displayYear = this._state.displayYear;
     (month as any).locale = this.locale;
@@ -960,56 +799,43 @@ export class TyCalendar extends HTMLElement {
       (month as any).width = this._width;
     }
 
-    // Set selection value if exists
     const { selectedYear, selectedMonth, selectedDay } = this._state;
     if (selectedYear && selectedMonth && selectedDay) {
       const date = new Date(selectedYear, selectedMonth - 1, selectedDay);
       (month as any).value = date.getTime();
     }
 
-    // Pass render functions
     if (this._dayContentFn) {
       (month as any).dayContentFn = this._dayContentFn;
     }
 
-    // Pass custom CSS
     if (this._customCSS) {
       (month as any).customCSS = this._customCSS;
     }
 
-    // Listen for day-click events
     month.addEventListener('day-click', (e) => this.handleDayClick(e as CustomEvent<DayClickDetail>));
 
-    // Store reference
     this._monthDisplay = month;
 
     return month;
   }
 
-  /**
-   * Main render function
-   */
   private render(): void {
     const root = this.shadowRoot;
     if (!root) return;
 
-    // Ensure styles are loaded
     ensureStyles(root, { css: calendarStyles, id: 'ty-calendar' });
 
-    // Clear and rebuild
     root.innerHTML = '';
 
-    // Create main container
     const container = document.createElement('div');
     container.className = 'calendar-container';
 
-    // Add navigation if requested
     if (this._showNavigation) {
       const nav = this.createNavigation();
       container.appendChild(nav);
     }
 
-    // Add month display
     const month = this.createMonthDisplay();
     container.appendChild(month);
 
@@ -1017,7 +843,6 @@ export class TyCalendar extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-calendar')) {
   customElements.define('ty-calendar', TyCalendar);
 }

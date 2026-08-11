@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [tyrell.site.state :as state]))
 
-;; Validation functions
 (defn validate-email [email]
   (let [email-regex #"^[^\s@]+@[^\s@]+\.[^\s@]+$"]
     (and (not-empty email) (re-matches email-regex email))))
@@ -36,13 +35,11 @@
        (filter (fn [[_ v]] v))
        (into {})))
 
-;; Event handlers
 (defn handle-field-change [field-key]
   (fn [event]
     (let [value (-> event .-detail .-value)]
       (swap! state/state update-in [:contact-form :form-data] assoc field-key value)
       (swap! state/state update-in [:contact-form :touched-fields] conj field-key)
-      ;; Real-time validation
       (let [error (validate-field field-key value)]
         (if error
           (swap! state/state assoc-in [:contact-form :validation-errors field-key] error)
@@ -61,7 +58,6 @@
 (defn handle-department-change [departments]
   (swap! state/state assoc-in [:contact-form :form-data :department] departments))
 
-;; Form submission
 (defn simulate-form-submission [_]
   (js/Promise.
    (fn [resolve reject]
@@ -80,13 +76,11 @@
   (let [form-data (get-in @state/state [:contact-form :form-data])
         errors (validate-form form-data)]
 
-    ;; Mark all fields as touched
     (swap! state/state assoc-in [:contact-form :touched-fields]
            #{:full-name :email :company :subject :message})
 
     (if (empty? errors)
       (do
-        ;; Start submission
         (swap! state/state assoc-in [:contact-form :is-submitting] true)
         (swap! state/state assoc-in [:contact-form :submission-status] nil)
 
@@ -96,10 +90,8 @@
                      (swap! state/state assoc-in [:contact-form :is-submitting] false)
                      (swap! state/state assoc-in [:contact-form :submission-status] :success)
                      (swap! state/state assoc-in [:contact-form :submission-message] (:message result))
-                     ;; Store submitted data and show modal
                      (swap! state/state assoc-in [:contact-form :submitted-data] form-data)
                      (swap! state/state assoc-in [:contact-form :success-modal-open] true)
-                     ;; Clear form on success
                      (swap! state/state assoc-in [:contact-form :form-data]
                             {:full-name ""
                              :email ""
@@ -115,7 +107,6 @@
                       (swap! state/state assoc-in [:contact-form :is-submitting] false)
                       (swap! state/state assoc-in [:contact-form :submission-status] :error)
                       (swap! state/state assoc-in [:contact-form :submission-message] (:message error))))))
-      ;; Set validation errors
       (swap! state/state assoc-in [:contact-form :validation-errors] errors))))
 
 (defn close-success-modal []

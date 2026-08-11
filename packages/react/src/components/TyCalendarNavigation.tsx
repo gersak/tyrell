@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
-// Type definitions for Ty Calendar Navigation component
 export interface TyCalendarNavigationProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Display month (1-12) */
   displayMonth?: number;
@@ -33,7 +32,6 @@ export interface NavigationChangeDetail {
   year: number;   // e.g., 2025
 }
 
-// React wrapper for ty-calendar-navigation web component
 export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavigationProps>(
   ({ 
     displayMonth,
@@ -48,7 +46,6 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle change events
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -66,7 +63,6 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
       };
     }, [onChange]);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -77,13 +73,11 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add attributes
     if (displayMonth !== undefined) webComponentProps['display-month'] = displayMonth;
     if (displayYear !== undefined) webComponentProps['display-year'] = displayYear;
     if (locale) webComponentProps.locale = locale;

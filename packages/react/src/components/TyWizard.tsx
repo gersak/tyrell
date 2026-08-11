@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
-// Type definitions for Ty Wizard component
 export interface TyWizardProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Content area width (accepts px or %) */
   width?: string;
@@ -33,7 +32,6 @@ export interface WizardStepChangeDetail {
   direction: 'forward' | 'backward' | 'none';
 }
 
-// React wrapper for ty-wizard web component
 export const TyWizard = React.forwardRef<HTMLElement, TyWizardProps>(
   ({
     children,
@@ -47,7 +45,6 @@ export const TyWizard = React.forwardRef<HTMLElement, TyWizardProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle step change events
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -65,7 +62,6 @@ export const TyWizard = React.forwardRef<HTMLElement, TyWizardProps>(
       };
     }, [onStepChange]);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -76,13 +72,11 @@ export const TyWizard = React.forwardRef<HTMLElement, TyWizardProps>(
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add string attributes
     if (width) webComponentProps.width = width;
     if (height) webComponentProps.height = height;
     if (active) webComponentProps.active = active;

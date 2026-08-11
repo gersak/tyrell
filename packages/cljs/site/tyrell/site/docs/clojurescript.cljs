@@ -4,9 +4,7 @@
             [tyrell.site.docs.common :as common]
             [tyrell.site.versions :as v]))
 
-;; =============================================================================
 ;; Local layout helpers — parallel to docs/js_react.cljs.
-;; =============================================================================
 
 (defn- feature-pill
   [{:keys [icon label]}]
@@ -123,9 +121,7 @@
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]])])
 
-;; =============================================================================
 ;; Section 1 — Hero
-;; =============================================================================
 
 (defn- hero []
   [:div.text-center.mb-12
@@ -151,9 +147,7 @@
     (brand-glyph {:icon "lambda"  :title "Replicant / Vanilla"})
     (brand-glyph {:icon "package" :title "shadow-cljs"})]])
 
-;; =============================================================================
 ;; Section 2 — What you install
-;; =============================================================================
 
 (defn- pkg-row
   [{:keys [pkg ecosystem ecosystem-flavor subtitle install-cmd link]}]
@@ -264,9 +258,7 @@
 {:deps {dev.gersak/tyrell {:mvn/version \"" v/TYRELL_VERSION "\"}}}")
         "clojure")]]]]])
 
-;; =============================================================================
 ;; Section 3 — Two ways to load
-;; =============================================================================
 
 (defn- css-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -358,9 +350,7 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
    [:div.mb-4
     (css-callout)]])
 
-;; =============================================================================
 ;; Section 4 — Your framework
-;; =============================================================================
 
 (defn- framework-card
   [opts]
@@ -479,9 +469,7 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
       :cta "Read Replicant guide"
       :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/clj/REPLICANT_TY_GUIDE.md" "_blank")})]])
 
-;; =============================================================================
 ;; Section 5 — React-libs deep-dive (full-width hero card with live preview)
-;; =============================================================================
 
 (defn- react-libs-deep-dive []
   [:div {:id "react-libs-deep-dive"}
@@ -587,9 +575,7 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
         \"Sign up\"]])))"
          "clojure")]]]]]])
 
-;; =============================================================================
 ;; Section 6 — Two gotchas
-;; =============================================================================
 
 (defn- gotcha-card
   [{:keys [eyebrow icon title body code code-lang]}]
@@ -693,9 +679,7 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
   [:> ty/Modal {:ref #(reset! modal-ref %)} …])"
       :code-lang "clojure"})]])
 
-;; =============================================================================
 ;; Section 7 — Bundle size mental model
-;; =============================================================================
 
 (defn- bundle-size-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -727,10 +711,6 @@ cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.c
        "See the three icon-registration patterns on Getting Started"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Main view
-;; =============================================================================
 
 (defn view
   "ClojureScript guide — substrate for every CLJS framework, deep-dive on React libs."

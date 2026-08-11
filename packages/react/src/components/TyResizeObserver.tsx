@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
-// Type definitions for Ty ResizeObserver component
 export interface TyResizeObserverProps extends React.HTMLAttributes<HTMLElement> {
   /** Required unique identifier for size registry */
   id: string;
@@ -13,7 +12,6 @@ export interface TyResizeObserverProps extends React.HTMLAttributes<HTMLElement>
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-resize-observer web component
 export const TyResizeObserver = React.forwardRef<HTMLElement, TyResizeObserverProps>(
   ({
     children,
@@ -23,7 +21,6 @@ export const TyResizeObserver = React.forwardRef<HTMLElement, TyResizeObserverPr
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -34,14 +31,12 @@ export const TyResizeObserver = React.forwardRef<HTMLElement, TyResizeObserverPr
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
       id,
     };
 
-    // Add number attributes
     if (debounce !== undefined) webComponentProps.debounce = debounce;
 
     return React.createElement(

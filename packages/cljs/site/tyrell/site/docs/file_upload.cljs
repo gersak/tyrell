@@ -8,7 +8,6 @@
    (component-header "ty-file-upload"
                      "Drop zone + file picker primitive. Replaces <input type=\"file\"> with a styleable, drag-and-drop-capable equivalent that works in any framework.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -58,7 +57,6 @@
         :payload "{value: File[], files: File[], names: string[]}"
         :when-fired "Fires when the selection changes — after browsing, drag-drop, or removing a file"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
@@ -125,7 +123,6 @@
                           :style {:max-width "480px"}}])
        (code-block "<ty-file-upload name=\"id\" label=\"ID document\" disabled></ty-file-upload>")]])
 
-   ;; Form Integration
    (doc-section "Form Integration"
      [:div.space-y-5
 
@@ -173,7 +170,6 @@ upload.addEventListener('change', (e) => {
 // Form reset clears selection
 document.querySelector('form').reset();" "javascript")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

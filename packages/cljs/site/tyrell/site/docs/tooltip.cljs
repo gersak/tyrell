@@ -8,7 +8,6 @@
    (component-header "ty-tooltip"
                      "Hover/focus-triggered tooltip using the Popover API with smart positioning, configurable delay, and flavor variants. Content is any HTML nested inside the ty-tooltip element.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -39,11 +38,9 @@
         :default "false"
         :description "Prevent the tooltip from showing"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -66,7 +63,6 @@
   <ty-tooltip>Click to save your changes (Ctrl+S)</ty-tooltip>
 </ty-button>")]
 
-      ;; Placement
       [:div.ty-content.rounded-lg.p-5
        (section-label "Placement")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -86,7 +82,6 @@
 <ty-tooltip placement=\"left\">Tooltip on left</ty-tooltip>
 <ty-tooltip placement=\"right\">Tooltip on right</ty-tooltip>")]
 
-      ;; Flavors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Flavors")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -117,7 +112,6 @@
   <ty-tooltip flavor=\"danger\">Destructive — cannot be undone</ty-tooltip>
 </ty-button>")]
 
-      ;; Icon buttons
       [:div.ty-content.rounded-lg.p-5
        (section-label "Icon Buttons")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -146,7 +140,6 @@
   <ty-tooltip flavor=\"danger\">Delete item</ty-tooltip>
 </ty-button>")]
 
-      ;; Delay
       [:div.ty-content.rounded-lg.p-5
        (section-label "Delay")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -163,7 +156,6 @@
 <ty-tooltip>Default 600ms delay</ty-tooltip>
 <ty-tooltip delay=\"1200\">1.2s delay</ty-tooltip>")]
 
-      ;; Rich content
       [:div.ty-content.rounded-lg.p-5
        (section-label "Rich Content")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -190,7 +182,6 @@
   </ty-tooltip>
 </ty-button>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

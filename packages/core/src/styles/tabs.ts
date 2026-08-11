@@ -1,13 +1,6 @@
 /**
- * Tabs Component Styles
- * 
- * Styles for the ty-tabs container component including:
- * - Flexbox layout with top/bottom placement
- * - Tab buttons with hover and active states
- * - Animated marker that follows active tab
- * - Carousel viewport with transform animations
- * - Responsive design with prefers-reduced-motion support
- * - Fully customizable via CSS Parts (::part)
+ * Tabs Component Styles — ty-tabs container: top/bottom placement, animated
+ * active marker, carousel viewport. Customizable via CSS Parts (::part).
  */
 
 export const tabsStyles = `
@@ -27,16 +20,11 @@ export const tabsStyles = `
   box-sizing: border-box;
 }
 
-/* Bottom placement reverses the order */
 .tabs-container[data-placement="bottom"] {
   flex-direction: column-reverse;
 }
 
-/* ===================================== */
-/* Tab Buttons Container */
-/* Expose as CSS Part for full styling control */
-/* ===================================== */
-
+/* Tab buttons container — exposed as a CSS Part for full styling control */
 .tab-buttons {
   display: flex;
   gap: 0;
@@ -49,17 +37,12 @@ export const tabsStyles = `
   background: transparent;
 }
 
-/* Bottom placement moves border to top */
 .tabs-container[data-placement="bottom"] .tab-buttons {
   border-bottom: none;
   border-top: 1px solid var(--ty-border);
 }
 
-/* ===================================== */
-/* Marker Wrapper */
-/* Expose as CSS Part for custom marker styling */
-/* ===================================== */
-
+/* Marker wrapper — exposed as a CSS Part for custom marker styling */
 .marker-wrapper {
   position: absolute;
   z-index: 0;
@@ -72,7 +55,6 @@ export const tabsStyles = `
     top var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
 }
 
-/* Default marker - simple underline */
 .default-marker {
   position: absolute;
   bottom: 0;
@@ -88,17 +70,12 @@ export const tabsStyles = `
   display: none;
 }
 
-/* User's marker element fills the wrapper */
 ::slotted([slot="marker"]) {
   display: block;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
 }
-
-/* ===================================== */
-/* Tab Buttons */
-/* ===================================== */
 
 .tab-button {
   min-width: 120px;
@@ -141,10 +118,7 @@ export const tabsStyles = `
   display: none;
 }
 
-/* ===================================== */
 /* Overflow "more" trigger + menu */
-/* ===================================== */
-
 .tab-overflow-trigger {
   flex-shrink: 0;
   width: 40px;
@@ -207,11 +181,7 @@ export const tabsStyles = `
   cursor: not-allowed;
 }
 
-/* ===================================== */
-/* Panels Viewport */
-/* Expose as CSS Part for panels container styling */
-/* ===================================== */
-
+/* Panels viewport — exposed as a CSS Part */
 .panels-viewport {
   position: relative;
   flex: 1;
@@ -221,17 +191,13 @@ export const tabsStyles = `
   /* Allows flex child to shrink */
 }
 
-/* ===================================== */
-/* Panels Wrapper (slides horizontally) */
-/* ===================================== */
-
+/* Panels wrapper slides horizontally */
 .panels-wrapper {
   display: flex;
   height: 100%;
   transition: transform var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
 }
 
-/* Respect user's motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .panels-wrapper {
     transition-duration: 0ms !important;
@@ -241,10 +207,6 @@ export const tabsStyles = `
     transition-duration: 0ms !important;
   }
 }
-
-/* ===================================== */
-/* Slotted Tab Panels */
-/* ===================================== */
 
 ::slotted(ty-tab) {
   width: var(--tabs-width, 100%);

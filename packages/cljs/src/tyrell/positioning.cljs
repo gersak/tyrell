@@ -2,10 +2,6 @@
   "Core positioning engine for floating elements.
    Adapted from toddler.popup positioning logic.")
 
-;; -----------------------------
-;; Placement definitions
-;; -----------------------------
-
 (def placements
   {:top-start {:vertical :top
                :horizontal :start}
@@ -46,10 +42,6 @@
    :dropdown [:bottom-start :bottom-end :top-start :top-end
               :bottom :top :right :left]})
 
-;; -----------------------------
-;; DOM measurement helpers
-;; -----------------------------
-
 (defn get-element-rect
   "Get element dimensions relative to viewport"
   [^js el]
@@ -69,10 +61,6 @@
    :scroll-x (.-scrollX js/window)
    :scroll-y (.-scrollY js/window)})
 
-;; -----------------------------
-;; Position calculation
-;; -----------------------------
-
 (defn calculate-placement
   "Calculate position for a specific placement"
   [{:keys [target-rect floating-rect placement offset padding scrollbar-width
@@ -80,7 +68,6 @@
   (let [{:keys [vertical horizontal orientation]} (get placements placement)
         viewport (get-viewport-rect)
 
-        ;; Calculate X position
         x (if (= orientation :vertical)
             ;; Left/right placements
             (if (= horizontal :start)
@@ -91,7 +78,6 @@
               :start (:left target-rect)
               :center (- (:center-x target-rect) (/ (:width floating-rect) 2))
               :end (- (:right target-rect) (:width floating-rect))))
-        ;; Calculate Y position
         y (if (= orientation :vertical)
             ;; Left/right placements
             (case vertical
@@ -103,7 +89,6 @@
               (+ (- (:top target-rect) (:height floating-rect) offset) container-padding)
               (- (+ (:bottom target-rect) offset) container-padding)))
 
-        ;; Calculate overflow
         overflow {:top (min 0 (- y padding))
                   :left (min 0 (- x padding))
                   :bottom (min 0 (- (:height viewport)
@@ -132,7 +117,6 @@
         floating-rect (get-element-rect floating-el)
         scrollbar-width 15
 
-        ;; Calculate all candidate positions
         candidates (map #(calculate-placement
                            {:target-rect target-rect
                             :floating-rect floating-rect
@@ -143,7 +127,6 @@
                             :scrollbar-width scrollbar-width})
                         preferences)
 
-        ;; Find first that fits, or one with least overflow
         best-position (or (first (filter :fits? candidates))
                           (apply min-key :overflow-amount candidates))]
 
@@ -151,10 +134,6 @@
     (if (neg? (get-in best-position [:overflow :right]))
       (update best-position :x + (get-in best-position [:overflow :right]))
       best-position)))
-
-;; -----------------------------
-;; Auto-update functionality
-;; -----------------------------
 
 (defn auto-update
   "Create auto-update system for position tracking.
@@ -179,22 +158,18 @@
                 (when @active?
                   (vreset! frame-id (js/requestAnimationFrame loop-fn))))]
 
-    ;; Start the loop
     (loop!)
 
-    ;; Observe size changes
     (vreset! resize-observer (js/ResizeObserver. update!))
     (.observe @resize-observer target-el)
     (.observe @resize-observer floating-el)
     (.observe @resize-observer js/document.body)
 
-    ;; Observe DOM changes
     (vreset! mutation-observer (js/MutationObserver. update!))
     (.observe @mutation-observer target-el
               #js {:attributes true
                    :attributeFilter #js ["class" "style"]})
 
-    ;; Return cleanup function
     (fn cleanup []
       (vreset! active? false)
       (when-let [fid @frame-id]

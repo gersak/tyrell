@@ -8,7 +8,6 @@
    (component-header "ty-calendar-month"
                      "Stateless month grid — 42 cells, 6 weeks, Monday-first ordering, localized day headers. Used internally by ty-calendar; reach for it directly when you need a bare month grid with custom day rendering.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -50,11 +49,9 @@
         :payload "{year, month, dayInMonth, value, localValue, today, selected, inMonth}"
         :when-fired "Fires when a day cell is clicked"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -65,7 +62,6 @@
        (code-block "<ty-calendar-month display-month=\"6\" display-year=\"2025\">
 </ty-calendar-month>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -82,7 +78,6 @@
        (code-block "<ty-calendar-month size=\"sm\" display-month=\"6\" display-year=\"2025\">
 </ty-calendar-month>")]
 
-      ;; Listening for day clicks
       [:div.ty-content.rounded-lg.p-5
        (section-label "Handling Day Clicks")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -97,7 +92,6 @@ grid.addEventListener('day-click', (e) => {
   grid.value = value;
 });" "javascript")]
 
-      ;; Custom day content
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom Day Content")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -119,7 +113,6 @@ grid.dayContentFn = (ctx) => {
   return el;
 };" "javascript")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

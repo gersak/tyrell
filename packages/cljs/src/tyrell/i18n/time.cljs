@@ -23,7 +23,6 @@
                      (->js options))]
      (.format formatter date))))
 
-;; Preset formatters for common use cases
 (defn format-date-short
   "Format date in short format (e.g., 12/31/2023)"
   ([date] (format-date-short date i18n/*locale*))
@@ -61,7 +60,6 @@
    (format-date date locale {:dateStyle "medium"
                              :timeStyle "short"})))
 
-;; Relative time formatting
 (defn format-relative
   "Format relative time using Intl.RelativeTimeFormat.
   Unit can be: 'year', 'quarter', 'month', 'week', 'day', 'hour', 'minute', 'second'"
@@ -72,7 +70,6 @@
                      #js {:numeric "auto"})]
      (.format formatter value unit))))
 
-;; Get locale-specific date/time information
 (defn get-weekday-names
   "Get localized weekday names"
   ([locale] (get-weekday-names locale "long"))
@@ -99,12 +96,10 @@
              (.format formatter (js/Date. 2024 month 1)))
            (range 12)))))
 
-;; Extend the Translator protocol for Date objects
 (extend-protocol i18n/Translator
   js/Date
   (translate
     ([this]
-     ;; Default to medium date format
      (format-date-medium this i18n/*locale*))
     ([this locale-or-style]
      ;; If keyword, assume it's locale
@@ -127,14 +122,12 @@
        :else
        (.toString this)))
     ([this locale options]
-     ;; Full control with locale and options
      (if (map? options)
        (format-date this locale options)
        ;; If options is a string, use as style
        (binding [i18n/*locale* locale]
          (i18n/translate this options))))))
 
-;; Extend Locale protocol to provide date/time symbols
 (extend-protocol i18n/Locale
   cljs.core/Keyword
   (locale [this key]

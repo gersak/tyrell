@@ -1,7 +1,3 @@
-// ===================================================================
-// VERSION
-// ===================================================================
-
 import { VERSION } from '../version';
 
 /** Current version of tyrell-react (auto-synced with package.json on build). */
@@ -19,18 +15,8 @@ if (typeof window !== 'undefined') {
   );
 }
 
-// ===================================================================
-// TYRELL REACT WRAPPER EXPORTS
-// ===================================================================
-// This file provides two export styles for maximum developer flexibility:
-// 1. Ty-prefixed exports (TyButton, TyInput) - explicit and backward compatible
-// 2. Short name exports (Button, Input) - clean and familiar to React developers
-//
-// Choose the style that fits your team's preferences!
-
-// ===================================================================
-// TY-PREFIXED EXPORTS (Explicit Style - Backward Compatible)
-// ===================================================================
+// Every component is exported twice: Ty-prefixed (TyButton) and short
+// (Button). Both names point at the same wrapper — pick one per project.
 
 export { TyButton } from './TyButton';
 export type { TyButtonProps, TyButtonCSSProperties } from './TyButton';
@@ -116,11 +102,6 @@ export type { TyResizeObserverProps } from './TyResizeObserver';
 export { TyScrollContainer } from './TyScrollContainer';
 export type { TyScrollContainerProps, TyScrollContainerRef } from './TyScrollContainer';
 
-
-// ===================================================================
-// SHORT NAME EXPORTS (Clean Style - Developer Choice)
-// ===================================================================
-
 export { TyButton as Button } from './TyButton';
 export { TyTag as Tag } from './TyTag';
 export { TyInput as Input } from './TyInput';
@@ -147,128 +128,52 @@ export { TyStep as Step } from './TyStep';
 export { TyResizeObserver as ResizeObserver } from './TyResizeObserver';
 export { TyScrollContainer as ScrollContainer } from './TyScrollContainer';
 
-// ===================================================================
-// TYPE ALIASES (Both Styles Supported)
-// ===================================================================
-
-// Button types
 export type { TyButtonProps as ButtonProps } from './TyButton';
 
-// Tag types
 export type { TyTagProps as TagProps } from './TyTag';
 
-// Input types
 export type { TyInputProps as InputProps, TyInputEventDetail as InputEventDetail } from './TyInput';
 
-// Textarea types
 export type { TyTextareaProps as TextareaProps, TyTextareaEventDetail as TextareaEventDetail } from './TyTextarea';
 
-// Option types
 export type { TyOptionProps as OptionProps } from './TyOption';
 
-// Icon types
 export type { TyIconProps as IconProps } from './TyIcon';
 
-// Modal types
 export type { TyModalProps as ModalProps, TyModalEventDetail as ModalEventDetail, TyModalRef as ModalRef } from './TyModal';
 
-// Tooltip types
 export type { TyTooltipProps as TooltipProps } from './TyTooltip';
 
-// Calendar types
 export type { TyCalendarProps as CalendarProps, TyCalendarChangeEventDetail as CalendarChangeEventDetail, TyCalendarNavigateEventDetail as CalendarNavigateEventDetail } from './TyCalendar';
 
-// DatePicker types
 export type { TyDatePickerProps as DatePickerProps, TyDatePickerEventDetail as DatePickerEventDetail } from './TyDatePicker';
 
-// Popup types
 export type { TyPopupProps as PopupProps, TyPopupElement as PopupElement } from './TyPopup';
 
-// Checkbox types
 export type { TyCheckboxProps as CheckboxProps, TyCheckboxEventDetail as CheckboxEventDetail } from './TyCheckbox';
 
-// Switch types
 export type { TySwitchProps as SwitchProps, TySwitchEventDetail as SwitchEventDetail } from './TySwitch';
 
-// Radio types
 export type { TyRadioProps as RadioProps } from './TyRadio';
 
-// RadioGroup types
 export type { TyRadioGroupProps as RadioGroupProps, TyRadioGroupEventDetail as RadioGroupEventDetail } from './TyRadioGroup';
 
-// Copy types
 export type { TyCopyProps as CopyProps } from './TyCopy';
 
-// FileUpload types
 export type { TyFileUploadProps as FileUploadProps, TyFileUploadEventDetail as FileUploadEventDetail } from './TyFileUpload';
 
-// Tabs types
 export type { TyTabsProps as TabsProps } from './TyTabs';
 
-// Tab types
 export type { TyTabProps as TabProps } from './TyTab';
 
-// CalendarMonth types
 export type { TyCalendarMonthProps as CalendarMonthProps } from './TyCalendarMonth';
 
-// CalendarNavigation types
 export type { TyCalendarNavigationProps as CalendarNavigationProps } from './TyCalendarNavigation';
 
-// Wizard types
 export type { TyWizardProps as WizardProps, WizardStepChangeDetail as StepChangeDetail } from './TyWizard';
 
-// Step types
 export type { TyStepProps as StepProps } from './TyStep';
 
-// ResizeObserver types
 export type { TyResizeObserverProps as ResizeObserverProps } from './TyResizeObserver';
 
-// ScrollContainer types
 export type { TyScrollContainerProps as ScrollContainerProps, TyScrollContainerRef as ScrollContainerRef } from './TyScrollContainer';
-
-// ===================================================================
-// USAGE EXAMPLES
-// ===================================================================
-
-/*
-
-// STYLE 1: Ty-prefixed (Explicit and backward compatible)
-import { TyButton, TyInput, TyModal } from 'tyrell-react';
-import type { TyButtonProps, TyInputProps } from 'tyrell-react';
-
-function MyComponent() {
-  return (
-    <TyModal>
-      <TyInput placeholder="Enter text..." />
-      <TyButton>Submit</TyButton>
-    </TyModal>
-  );
-}
-
-// STYLE 2: Short names (Clean and familiar)
-import { Button, Input, Modal } from 'tyrell-react';
-import type { ButtonProps, InputProps } from 'tyrell-react';
-
-function MyComponent() {
-  return (
-    <Modal>
-      <Input placeholder="Enter text..." />
-      <Button>Submit</Button>
-    </Modal>
-  );
-}
-
-// STYLE 3: Mixed (Team preferences)
-import { TyModal, Input, Button } from 'tyrell-react';
-import type { TyModalProps, InputProps } from 'tyrell-react';
-
-function MyComponent() {
-  return (
-    <TyModal>
-      <Input placeholder="Enter text..." />
-      <Button>Submit</Button>
-    </TyModal>
-  );
-}
-
-*/

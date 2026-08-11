@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-// Type definitions for Ty Option component
 export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
   value?: string;
 
@@ -22,12 +21,10 @@ export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-option web component
 export const TyOption = React.forwardRef<HTMLElement, TyOptionProps>(
   ({ children, label, flavor, disabled, selected, hidden, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {

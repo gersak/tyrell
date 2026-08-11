@@ -8,7 +8,6 @@
    (component-header "ty-checkbox"
                      "Just the tick. Boolean primitive rendered as a single checkmark — full flavor color when checked, faint when unchecked, grayscale when disabled. Wrap in a <label> for click-on-text behavior.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -61,11 +60,9 @@
         :payload "{value: boolean, checked: boolean, formValue: string | null}"
         :when-fired "Fires on every interaction (same as change for checkboxes)"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -95,7 +92,6 @@
   Indeterminate state
 </label>")]
 
-      ;; Rich Labels
       [:div.ty-content.rounded-lg.p-5
        (section-label "Rich Labels")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -125,7 +121,6 @@
   <ty-icon name=\"shield-check\"></ty-icon> Enable two-factor authentication
 </label>")]
 
-      ;; Flavors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Flavors")
        (demo-area
@@ -139,7 +134,6 @@
 <ty-checkbox flavor=\"success\" checked></ty-checkbox>
 <ty-checkbox flavor=\"danger\" checked></ty-checkbox>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -156,7 +150,6 @@
 <ty-checkbox size=\"lg\"></ty-checkbox>
 <ty-checkbox size=\"xl\"></ty-checkbox>")]
 
-      ;; Validation
       [:div.ty-content.rounded-lg.p-5
        (section-label "Validation States")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -178,7 +171,6 @@
 </label>
 <p class=\"ty-text-danger\">You must accept the terms to continue.</p>")]])
 
-   ;; Form Integration
    (doc-section "Form Integration"
      [:div.space-y-5
 
@@ -230,7 +222,6 @@ checkbox.addEventListener('change', (e) => {
   console.log(e.detail.formValue); // 'on' | null
 });" "javascript")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

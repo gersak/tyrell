@@ -26,10 +26,6 @@
      npm install tyrell-react"
   (:require ["tyrell-react" :as t]))
 
-;; -----------------------------------------------------------------------------
-;; Ty-prefixed exports (explicit, backward-compatible)
-;; -----------------------------------------------------------------------------
-
 (def TyButton              t/TyButton)
 (def TyCalendar            t/TyCalendar)
 (def TyCalendarMonth       t/TyCalendarMonth)
@@ -54,10 +50,6 @@
 (def TyTextarea            t/TyTextarea)
 (def TyTooltip             t/TyTooltip)
 (def TyWizard              t/TyWizard)
-
-;; -----------------------------------------------------------------------------
-;; Short-name exports (React-idiomatic)
-;; -----------------------------------------------------------------------------
 
 (def Button             t/Button)
 (def Calendar           t/Calendar)

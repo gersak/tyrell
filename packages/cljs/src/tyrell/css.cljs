@@ -1,10 +1,6 @@
 (ns tyrell.css
   (:require [clojure.string :as str]))
 
-;; =============================================================================
-;; Style Application Utilities
-;; =============================================================================
-
 (defn ensure-styles!
   "Applies styles to a shadow root. Handles duplicates and hot reload.
 
@@ -24,21 +20,18 @@
    (ensure-styles! shadow-root styles (str "ty-styles-" (hash styles))))
   ([shadow-root styles style-id]
    (cond
-     ;; CSSStyleSheet: use adoptedStyleSheets (efficient)
      (instance? js/CSSStyleSheet styles)
      (let [adopted (.-adoptedStyleSheets shadow-root)]
        (when-not (some #(identical? % styles) adopted)
          (set! (.-adoptedStyleSheets shadow-root)
                (.concat adopted #js [styles]))))
 
-     ;; String: create/update <style> element
      (string? styles)
      (let [existing (.querySelector shadow-root (str "style#" style-id))]
        (if existing
          ;; Update if content changed (hot reload)
          (when (not= (.-textContent existing) styles)
            (set! (.-textContent existing) styles))
-         ;; Create new
          (let [style-el (js/document.createElement "style")]
            (set! (.-id style-el) style-id)
            (set! (.-textContent style-el) styles)
@@ -65,14 +58,12 @@
   [styles style-id]
   (let [head (.-head js/document)
         css-content (cond
-                      ;; CSSStyleSheet - extract CSS text from rules
                       (instance? js/CSSStyleSheet styles)
                       (->> (.-cssRules styles)
                            (array-seq)
                            (map #(.-cssText %))
                            (str/join "\n"))
 
-                      ;; String - use directly
                       (string? styles)
                       styles
 
@@ -85,7 +76,6 @@
         ;; Update if content changed (hot reload support)
         (when (not= (.-textContent existing) css-content)
           (set! (.-textContent existing) css-content))
-        ;; Create new style element
         (let [style-el (js/document.createElement "style")]
           (set! (.-id style-el) style-id)
           (set! (.-textContent style-el) css-content)

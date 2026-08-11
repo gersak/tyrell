@@ -58,7 +58,6 @@
   [{:keys [id name description preview icon deprecated]}]
   [:button.group.w-full.text-left.flex.flex-col.md:flex-row.items-start.md:items-center.gap-4.md:gap-8.py-6.px-5.md:px-7.cursor-pointer.transition-colors.duration-150.hover:ty-bg-primary-
    {:on {:click #(router/navigate! id)}}
-   ;; Left: name + description + cta
    [:div.flex-shrink-0.w-full.md:w-64
     [:h3.text-base.md:text-lg.font-medium.transition-colors
      {:class (if deprecated "ty-text-danger" ["ty-text" "group-hover:ty-text-primary"])}
@@ -96,10 +95,8 @@
   [{:keys [title ids]} comp-map]
   [:section.ty-elevated.rounded-2xl.overflow-hidden
    {:id (category-slug title)}
-   ;; Section header — sits on the panel
    [:div.px-5.md:px-7.pt-5.pb-3
     [:h2.text-xs.font-semibold.uppercase.tracking-widest.ty-text-- title]]
-   ;; Rows divided by thin lines inside the panel
    [:div.ty-divide-y
     (for [id ids
           :let [item (get comp-map id)]

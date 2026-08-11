@@ -11,7 +11,6 @@ export interface ElementSize {
 
 export type ResizeCallback = (size: ElementSize) => void
 
-// Global registry (Map-based storage)
 const sizes = new Map<string, ElementSize>()
 const callbacks = new Map<string, Set<ResizeCallback>>()
 
@@ -46,7 +45,6 @@ export function onResize(id: string, callback: ResizeCallback): () => void {
   const current = sizes.get(id)
   if (current) callback(current)
 
-  // Return unsubscribe function
   return () => {
     callbacks.get(id)?.delete(callback)
     if (callbacks.get(id)?.size === 0) {
@@ -68,7 +66,6 @@ export function getAllSizes(): Record<string, ElementSize> {
 export function updateSize(id: string, width: number, height: number): void {
   sizes.set(id, { width, height })
 
-  // Notify all subscribers
   const cbs = callbacks.get(id)
   if (cbs) {
     const size = { width, height }

@@ -9,10 +9,6 @@
    4. Normalize for consistent attribute display"
   (:refer-clojure :exclude [parse-boolean]))
 
-;; =====================================================
-;; Multimethod Registry
-;; =====================================================
-
 (defmulti parse-value
   "Parse raw input to internal format based on element tag name.
    Components register their parsers via defmethod."
@@ -23,19 +19,12 @@
    Components register their normalizers via defmethod."
   (fn [el value] (.-tagName el)))
 
-;; Default implementations
 (defmethod parse-value :default [el value]
-  ;; Default: just return string value or nil
   (when (and value (not= value ""))
     (str value)))
 
 (defmethod normalize-value :default [el value]
-  ;; Default: convert to string
   (when value (str value)))
-
-;; =====================================================
-;; Core Functions
-;; =====================================================
 
 (defn get-value
   "Get current value from element, checking property first, then attribute.
@@ -73,23 +62,16 @@
   (let [parsed (parse-value el raw-value)
         normalized (when parsed (normalize-value el parsed))]
 
-    ;; 1. Property stores parsed internal value
     (set! (.-value el) parsed)
 
-    ;; 2. Attribute shows normalized string
     (if normalized
       (.setAttribute el "value" normalized)
       (.removeAttribute el "value"))
 
-    ;; 3. Update component state if it has state management
     (when-let [update-fn (.-tyUpdateState el)]
       (update-fn {:value parsed}))
 
     parsed))
-
-;; =====================================================
-;; Component Integration Helpers
-;; =====================================================
 
 (defn setup-component!
   "Initialize a component with its state update function.
@@ -97,7 +79,6 @@
    Call this in component's connected callback."
   [^js el update-state-fn]
   (set! (.-tyUpdateState el) update-state-fn)
-  ;; Always sync initial value (from property or attribute) to ensure attribute is visible
   (let [initial (get-value el)]
     (when initial
       (sync-value! el initial))))
@@ -112,9 +93,7 @@
       (when render-fn
         (render-fn el)))))
 
-;; =====================================================
 ;; Common Parsers (for reuse via delegate)
-;; =====================================================
 ;; 
 ;; Boolean Parsing Standard (matches TypeScript PropertyManager):
 ;; | Input          | Result  | Reason                              |
@@ -173,28 +152,22 @@
    (parse-boolean false)     => false"
   [value]
   (cond
-    ;; Absent attribute
     (nil? value) false
 
-    ;; Already a boolean
     (boolean? value) value
 
-    ;; String handling
     (string? value)
     (cond
       ;; Empty string = true (HTML boolean attribute standard)
       (= value "") true
 
-      ;; Explicit false values
       (contains? #{"false" "FALSE" "0" "no" "NO"} value) false
 
-      ;; Everything else is truthy
       :else true)
 
     ;; Numbers: 0 = false, everything else = true
     (number? value) (not (zero? value))
 
-    ;; Default: truthy
     :else (boolean value)))
 
 (defn parse-integer
@@ -278,10 +251,6 @@
     (or (parse-float-safe attr-value) default-value)
     default-value))
 
-;; =====================================================
-;; Property Setter Helper
-;; =====================================================
-
 (defn define-value-property!
   "Define a custom value property setter that triggers sync.
    This ensures programmatic updates also maintain transparency.
@@ -292,7 +261,6 @@
                         :set (fn [v]
                                (when (not= v (.-__tyValue el))
                                  (sync-value! el v)
-                                ;; Trigger render if component has render fn
                                  (when-let [render-fn (.-tyRender el)]
                                    (render-fn el))))
                         :enumerable true

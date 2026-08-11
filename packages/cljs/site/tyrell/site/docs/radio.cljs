@@ -8,7 +8,6 @@
    (component-header "ty-radio-group"
                      "Exclusive single-choice selection. The group owns the form field abstraction — label, error, value, form participation. ty-radio is just the circle; wrap each in a <label>.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -78,11 +77,9 @@
         :payload "{value: string, formValue: string}"
         :when-fired "Fires on every selection interaction"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -101,7 +98,6 @@
   <label><ty-radio value=\"team\"></ty-radio> Team</label>
 </ty-radio-group>")]
 
-      ;; Horizontal
       [:div.ty-content.rounded-lg.p-5
        (section-label "Horizontal Orientation")
        (demo-area
@@ -119,7 +115,6 @@
   <label><ty-radio value=\"auto\"></ty-radio> System</label>
 </ty-radio-group>")]
 
-      ;; Flavors
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Flavors")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -154,7 +149,6 @@
   <label><ty-radio value=\"high\"></ty-radio> High</label>
 </ty-radio-group>")]
 
-      ;; Error state + disabled options
       [:div.ty-content.rounded-lg.p-5
        (section-label "Error & Disabled Options")
        (demo-area
@@ -185,7 +179,6 @@
   <label><ty-radio value=\"team\" disabled></ty-radio> Team (coming soon)</label>
 </ty-radio-group>")]])
 
-   ;; Form Integration
    (doc-section "Form Integration"
      [:div.space-y-5
 
@@ -232,7 +225,6 @@ group.addEventListener('change', (e) => {
   console.log(e.detail.formValue); // same — what gets submitted
 });" "javascript")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

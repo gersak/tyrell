@@ -7,17 +7,14 @@
 
 (defn view []
   [:div.max-w-7xl.mx-auto {:id "top"}
-   ;; HERO
    [:div.text-center.mb-16.pt-12.pb-8
 
-    ;; Headline
     [:h1.text-4xl.lg:text-6xl.font-bold.ty-text.mb-6.max-w-4xl.mx-auto.leading-tight.tracking-tight
      "Interaction primitives."]
 
     [:p.text-lg.lg:text-xl.ty-text-.max-w-2xl.mx-auto.mb-6.leading-relaxed
      "Calendars, dropdowns, modals, multiselect — Web Components that fit any design system, framework, or vanilla HTML."]
 
-    ;; Hard numbers
     [:div.flex.flex-wrap.justify-center.gap-6.mb-8
      [:div.text-center
       [:p.text-2xl.font-bold.ty-text "0"]
@@ -29,7 +26,6 @@
       [:p.text-2xl.font-bold.ty-text "22"]
       [:p.text-xs.ty-text-- "primitives"]]]
 
-    ;; Component overview
     [:div.max-w-3xl.mx-auto.mb-8
      [:p.text-sm.ty-text-.mb-3 "22 primitives, fixed scope:"]
      [:div.flex.flex-wrap.gap-2.justify-center
@@ -55,7 +51,6 @@
       [:ty-tag {:flavor "primary" :size "sm"} "Resize Observer"]
       [:ty-tag {:flavor "primary" :size "sm"} "Scroll Container"]]]
 
-    ;; Why Tyrell?
     [:div.ty-elevated.p-4.sm:p-8.rounded-xl.max-w-4xl.mx-auto.mb-12
      [:h3.text-lg.font-semibold.ty-text.mb-4
       "Primitives, not a UI kit."]
@@ -105,7 +100,6 @@
          [:p.text-left.ty-text.text-sm.font-medium "Mobile-ready, accessible"]
          [:p.ty-text-.text-xs "Touch-optimized interactions, ARIA built into every primitive"]]]]]]
 
-    ;; The pragmatic pitch
     [:div.text-center.mb-12.max-w-3xl.mx-auto
      [:h3.text-2xl.font-bold.ty-text.mb-4
       "Frameworks change. Primitives don't."]
@@ -114,7 +108,6 @@
      [:p.ty-text--
       "Framework-optional, not anti-framework. Typed React wrappers included."]]
 
-    ;; Call to action
     [:div.flex.flex-col.gap-4.items-center
      [:div.flex.flex-col.sm:flex-row.gap-3
       [:button.ty-bg-primary.ty-text++.px-6.py-3.rounded-lg.font-semibold.border.ty-border-primary.cursor-pointer
@@ -139,7 +132,6 @@
      [:p.text-xs.ty-text-
       "CDN available • MIT licensed"]]]
 
-   ;; LIVE EXAMPLES - Interactive demonstrations
    [:div.mb-20
     [:div.text-center.mb-12
      [:h2.text-2xl.lg:text-3xl.font-bold.ty-text.mb-3
@@ -148,7 +140,6 @@
       "Real primitives solving real problems. Everything you see here is built with Tyrell. "
       "View source to see how simple it is."]]
 
-    ;; User Profile Example
     [:section.mb-16 {:id "user-profile"}
      [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
@@ -167,7 +158,6 @@
       [:div.p-2.sm:p-8
        (user-profile/view)]]]
 
-    ;; Event Booking Example
     [:section.mb-16 {:id "event-booking"}
      [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
@@ -186,7 +176,6 @@
       [:div.p-2.sm:p-8
        (event-booking/view)]]]
 
-    ;; Contact Form Example
     [:section.mb-16 {:id "contact-form"}
      [:div.ty-elevated.rounded-xl.overflow-hidden
       [:div.px-6.py-4.border-b.ty-border
@@ -205,7 +194,6 @@
       [:div.p-2.sm:p-8
        (contact-form/view)]]]]
 
-   ;; COMMUNITY & NEXT STEPS
    [:section.mb-20
     [:div.rounded-2xl.p-4.sm:p-8.lg:p-12
      [:div.text-center.mb-8
@@ -239,7 +227,6 @@
         [:h3.font-semibold.ty-text "Contribute"]]
        [:p.text-sm.ty-text- "PRs welcome. Documentation, components, examples - all contributions matter."]]]]]
 
-   ;; Final note
    [:div.text-center.py-12
     [:p.text-sm.ty-text-
      "Built for developers who believe in web standards."]

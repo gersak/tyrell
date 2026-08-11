@@ -1,29 +1,12 @@
 /**
- * Popup Component
- * 
- * Interactive popup component with dropdown-like behavior and tooltip positioning.
- * Uses parent-child relationship - popup opens on click, stays open for interaction,
- * closes on outside click or ESC key.
- * 
- * @example
- * <button>
- *   Click me
- *   <ty-popup placement="bottom" offset="8">
- *     <div class="ty-elevated p-4 rounded-lg">
- *       Popup content here
- *     </div>
- *   </ty-popup>
- * </button>
+ * Popup Component - click-triggered popup positioned against its PARENT element
+ * (the anchor). Stays open for interaction; closes on outside click or ESC.
  */
 
 import { findBestPosition, type Placement } from '../utils/positioning.js';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
 import { ensureStyles } from '../utils/styles.js';
 import { popupStyles } from '../styles/popup.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Popup attributes configuration
@@ -35,10 +18,7 @@ export interface PopupAttributes {
   offset: number;         // Spacing from anchor
 }
 
-// ============================================================================
-// WeakMaps for State Management
-// ============================================================================
-
+// WeakMaps for state management
 const anchorClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
 const anchorKeyClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
 const outsideClickHandlers = new WeakMap<TyPopup, (e: Event) => void>();
@@ -46,20 +26,10 @@ const escapeHandlers = new WeakMap<TyPopup, (e: KeyboardEvent) => void>();
 const closeRequestHandlers = new WeakMap<TyPopup, (e: CustomEvent) => void>();
 const popupIds = new WeakMap<TyPopup, string>(); // Store popup ID for scroll locking
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/**
- * Parse boolean attribute
- */
 function parseBoolAttr(el: Element, name: string): boolean {
   return el.hasAttribute(name);
 }
 
-/**
- * Parse integer attribute
- */
 function parseIntAttr(el: Element, name: string, defaultValue: number): number {
   const value = el.getAttribute(name);
   if (value === null) return defaultValue;
@@ -67,9 +37,6 @@ function parseIntAttr(el: Element, name: string, defaultValue: number): number {
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
-/**
- * Read popup attributes with simplified API
- */
 function getPopupAttributes(el: TyPopup): PopupAttributes {
   return {
     manual: parseBoolAttr(el, 'manual'),
@@ -86,9 +53,6 @@ function getAnchorElement(el: TyPopup): HTMLElement | null {
   return el.parentElement;
 }
 
-/**
- * Get the popup dialog element
- */
 function getPopupDialog(shadowRoot: ShadowRoot): HTMLDialogElement | null {
   return shadowRoot.querySelector<HTMLDialogElement>('.popup-dialog');
 }
@@ -105,9 +69,6 @@ function getPopupId(el: TyPopup): string {
   return id;
 }
 
-/**
- * Calculate and update popup position based on anchor (tooltip style)
- */
 function updatePosition(el: TyPopup): void {
   const { placement, offset } = getPopupAttributes(el);
   const shadowRoot = el.shadowRoot;
@@ -116,7 +77,6 @@ function updatePosition(el: TyPopup): void {
 
   if (!anchor || !dialog) return;
 
-  // Calculate preferred placements based on placement attribute (like tooltip)
   const preferences: Placement[] =
     placement === 'top' ? ['top', 'bottom', 'left', 'right'] :
       placement === 'bottom' ? ['bottom', 'top', 'left', 'right'] :
@@ -124,7 +84,6 @@ function updatePosition(el: TyPopup): void {
           placement === 'right' ? ['right', 'left', 'top', 'bottom'] :
             ['bottom', 'top', 'right', 'left']; // Default popup placement
 
-  // Use positioning engine to find best position
   const positionData = findBestPosition({
     targetEl: anchor,
     floatingEl: dialog,
@@ -134,7 +93,6 @@ function updatePosition(el: TyPopup): void {
     containerPadding: 16,
   });
 
-  // Update CSS variables with compensated coordinates
   el.style.setProperty('--popup-x', `${positionData.x}px`);
   el.style.setProperty('--popup-y', `${positionData.y}px`);
 
@@ -167,7 +125,6 @@ function closePopup(el: TyPopup, force = false): void {
     dialog.close(); // This will trigger 'close' event which unlocks scroll
   }, 150);
 
-  // Dispatch close event
   el.dispatchEvent(new CustomEvent('close', { bubbles: true }));
 }
 
@@ -203,15 +160,11 @@ function openPopup(el: TyPopup): void {
       // Now animate: scale(0.95) → scale(1) + opacity + visibility
       dialog.classList.add('open');
 
-      // Dispatch open event
       el.dispatchEvent(new CustomEvent('open', { bubbles: true }));
     });
   });
 }
 
-/**
- * Toggle popup visibility
- */
 function togglePopup(el: TyPopup): void {
   const shadowRoot = el.shadowRoot;
   const dialog = shadowRoot ? getPopupDialog(shadowRoot) : null;
@@ -224,18 +177,12 @@ function togglePopup(el: TyPopup): void {
   }
 }
 
-/**
- * Handle click on anchor element
- */
 function handleAnchorClick(el: TyPopup, event: Event): void {
   event.preventDefault();
   event.stopPropagation();
   togglePopup(el);
 }
 
-/**
- * Handle clicks on the dialog element (backdrop clicks)
- */
 function handleOutsideClick(el: TyPopup, event: Event): void {
   event.stopPropagation();
   const shadowRoot = el.shadowRoot;
@@ -248,9 +195,6 @@ function handleOutsideClick(el: TyPopup, event: Event): void {
   }
 }
 
-/**
- * Handle escape key press
- */
 function handleEscape(el: TyPopup, event: KeyboardEvent): void {
   event.stopPropagation();
   if (event.key === 'Escape') {
@@ -296,7 +240,6 @@ function setupAnchorEvents(el: TyPopup): void {
     anchor.removeEventListener('click', existingKeyHandler);
   }
 
-  // Create new handlers and store references
   const handler = (e: Event) => handleAnchorClick(el, e);
   anchorClickHandlers.set(el, handler);
   anchor.addEventListener('pointerdown', handler);
@@ -312,9 +255,6 @@ function setupAnchorEvents(el: TyPopup): void {
   anchor.addEventListener('click', keyHandler);
 }
 
-/**
- * Cleanup anchor event listeners
- */
 function cleanupAnchorEvents(el: TyPopup): void {
   const anchor = getAnchorElement(el);
   const handler = anchorClickHandlers.get(el);
@@ -332,19 +272,14 @@ function cleanupAnchorEvents(el: TyPopup): void {
   anchor?.removeAttribute('aria-expanded');
 }
 
-/**
- * Render the popup structure
- */
 function render(el: TyPopup): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
 
   const existingDialog = getPopupDialog(shadowRoot);
 
-  // Ensure styles are loaded
   ensureStyles(shadowRoot, { css: popupStyles, id: 'ty-popup' });
 
-  // Create structure if it doesn't exist
   if (!existingDialog) {
     const dialog = document.createElement('dialog');
     const container = document.createElement('div');
@@ -358,11 +293,9 @@ function render(el: TyPopup): void {
     dialog.appendChild(container);
     container.appendChild(content);
 
-    // Initialize position
     el.style.setProperty('--popup-x', '0px');
     el.style.setProperty('--popup-y', '0px');
 
-    // Setup event listeners
     const outsideHandler = (e: Event) => handleOutsideClick(el, e);
     outsideClickHandlers.set(el, outsideHandler);
     dialog.addEventListener('pointerdown', outsideHandler);
@@ -371,7 +304,6 @@ function render(el: TyPopup): void {
     escapeHandlers.set(el, escapeHandler);
     el.addEventListener('keydown', escapeHandler);
 
-    // Handle native dialog close event
     dialog.addEventListener('close', () => {
       const popupId = getPopupId(el);
       unlockScroll(popupId);
@@ -381,23 +313,17 @@ function render(el: TyPopup): void {
     });
   }
 
-  // Add close method to element for programmatic access
   el.closePopup = () => closePopup(el, true);
   el.openPopup = () => openPopup(el);
   el.togglePopup = () => togglePopup(el);
 
-  // Add event listener for close requests from content
   const closeRequestHandler = (e: CustomEvent) => handleCloseRequest(el, e);
   closeRequestHandlers.set(el, closeRequestHandler);
   el.addEventListener('ty:close-popup', closeRequestHandler as EventListener);
 
-  // Setup anchor events
   setupAnchorEvents(el);
 }
 
-/**
- * Cleanup all resources when component disconnects
- */
 function cleanup(el: TyPopup): void {
   // Force unlock scroll if popup is being removed
   const popupId = popupIds.get(el);
@@ -406,10 +332,8 @@ function cleanup(el: TyPopup): void {
     popupIds.delete(el);
   }
 
-  // Cleanup anchor events
   cleanupAnchorEvents(el);
 
-  // Cleanup dialog events
   const shadowRoot = el.shadowRoot;
   const dialog = shadowRoot ? getPopupDialog(shadowRoot) : null;
 
@@ -434,10 +358,6 @@ function cleanup(el: TyPopup): void {
   }
 }
 
-// ============================================================================
-// Component Definition
-// ============================================================================
-
 /**
  * TyPopup Web Component
  */
@@ -447,7 +367,6 @@ export class TyPopup extends HTMLElement {
   openPopup?: () => void;
   togglePopup?: () => void;
 
-  /** Observed attributes */
   static get observedAttributes() {
     return ['manual', 'disable-close', 'placement', 'offset'];
   }
@@ -466,10 +385,8 @@ export class TyPopup extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, _newValue: string | null) {
-    // Re-render on attribute changes
     render(this);
 
-    // Handle specific attribute changes
     switch (name) {
       case 'placement':
       case 'offset':
@@ -487,7 +404,6 @@ export class TyPopup extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-popup')) {
   customElements.define('ty-popup', TyPopup);
 }

@@ -1,32 +1,11 @@
 /**
  * Property Capture Utility
- * 
- * Solves the problem of frameworks (React, Reagent, etc.) setting properties
- * on custom elements BEFORE connectedCallback runs.
- * 
- * PROBLEM:
- * 1. Framework creates element: document.createElement('ty-dropdown')
- * 2. Framework sets properties: element.value = "foo"
- * 3. Constructor runs and defines getters/setters
- * 4. BUT properties were already set, creating instance properties
- * 5. Instance properties shadow the class getters/setters
- * 6. connectedCallback runs - too late!
- * 
- * SOLUTION:
- * In connectedCallback, capture any pre-set properties and apply them properly.
- * 
- * @example
- * ```typescript
- * connectedCallback(): void {
- *   const preSetProps = capturePreSetProperties(this, [
- *     'value', 'clearable', 'disabled'
- *   ])
- *   
- *   if (preSetProps.value !== undefined) {
- *     this._value = preSetProps.value
- *   }
- * }
- * ```
+ *
+ * Frameworks (React, Reagent, ...) set properties on a custom element before
+ * the constructor defines its getters/setters, so those assignments become
+ * *instance* properties that permanently shadow the class accessors — by the
+ * time connectedCallback runs, the setters have never been called.
+ * Fix: in connectedCallback, capture the pre-set values and re-apply them.
  */
 
 /**
@@ -159,7 +138,6 @@ export function applyPreSetProperties(
 
   for (const [name, data] of Object.entries(captured)) {
     if (data.hadProperty) {
-      // Determine the private field name
       const privateName = propertyMap?.[name] || `_${name}`
       element[privateName] = data.value
     }

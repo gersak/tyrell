@@ -3,9 +3,7 @@
   (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table slot-table
                                              doc-section docs-page component-header section-label demo-area]]))
 
-;; ---------------------------------------------------------------------------
 ;; API Reference (stands alone as a card, not in doc-section)
-;; ---------------------------------------------------------------------------
 
 (defn- api-reference []
   [:div.ty-elevated.rounded-lg.p-6
@@ -97,10 +95,6 @@
        :description "Content before the input field — typically an icon"}
       {:name "end"
        :description "Content after the input field — typically an icon"}])]])
-
-;; ---------------------------------------------------------------------------
-;; Section content helpers
-;; ---------------------------------------------------------------------------
 
 (defn- basic-usage-content []
   [:div.space-y-5
@@ -447,10 +441,6 @@ document.getElementById('usd').addEventListener('input', (e) => {
       [:div
        [:p.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :margin-bottom "0.25rem"}} title]
        [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} body]])]])
-
-;; ---------------------------------------------------------------------------
-;; View
-;; ---------------------------------------------------------------------------
 
 (defn view []
   (docs-page

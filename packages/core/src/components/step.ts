@@ -1,8 +1,4 @@
-/**
- * Step Component
- *
- * Individual wizard step panel with custom scrollbar via CustomScrollbar utility.
- */
+/** Individual wizard step panel with custom scrollbar via CustomScrollbar utility. */
 
 import { ensureStyles } from '../utils/styles.js';
 import { stepStyles } from '../styles/step.js';

@@ -10,7 +10,6 @@
    (component-header "ty-textarea"
                      "Auto-resizing textarea that grows with content. No scrollbars, no manual resizing — just a clean, form-associated input that fits your text.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -87,11 +86,9 @@
        [:span.text-xs.font-mono.ty-text-- "string"]]
       [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} "Get/set the current value programmatically"]]]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Auto Resize
       [:div.ty-content.rounded-lg.p-5
        (section-label "Auto Resize")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -105,7 +102,6 @@
   placeholder=\"Start typing and watch me grow...\">
 </ty-textarea>")]
 
-      ;; Height Constraints
       [:div.ty-content.rounded-lg.p-5
        (section-label "Height Constraints")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -130,7 +126,6 @@
 <ty-textarea max-height=\"120px\"></ty-textarea>
 <ty-textarea min-height=\"100px\" max-height=\"200px\"></ty-textarea>")]
 
-      ;; Sizes
       [:div.ty-content.rounded-lg.p-5
        (section-label "Sizes")
        (demo-area
@@ -143,7 +138,6 @@
 <ty-textarea size=\"lg\"></ty-textarea>
 <ty-textarea size=\"xl\"></ty-textarea>")]
 
-      ;; States
       [:div.ty-content.rounded-lg.p-5
        (section-label "States")
        (demo-area
@@ -159,7 +153,6 @@
 <ty-textarea label=\"With Error\" error=\"Please enter at least 10 characters\"></ty-textarea>
 <ty-textarea label=\"Disabled\" disabled></ty-textarea>")]
 
-      ;; Custom Scrollbar
       [:div.ty-content.rounded-lg.p-5
        (section-label "Custom Scrollbar")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -171,7 +164,6 @@
           :value "Line 1: The custom scrollbar appears when content overflows.\nLine 2: It auto-hides after you stop scrolling.\nLine 3: Drag the thumb to scroll.\nLine 4: Click the track to jump.\nLine 5: Works on all browsers consistently.\nLine 6: Hidden on touch devices — native scroll is better there.\nLine 7: Respects prefers-reduced-motion.\nLine 8: Try it by resizing this window."}])
        (code-block "<ty-textarea max-height=\"150px\" label=\"Scrollable\"></ty-textarea>")]
 
-      ;; Header / Footer slots (composer)
       [:div.ty-content.rounded-lg.p-5
        (section-label "Header / Footer slots")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -201,11 +193,9 @@
   <ty-button slot=\"footer\" flavor=\"success\" wide=\"true\">Submit feedback</ty-button>
 </ty-textarea>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Character Counter
       [:div.ty-content.rounded-lg.p-5
        (section-label "Character Counter")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -239,7 +229,6 @@
   btn.disabled = n === 0 || n > 280;
 });" "javascript")]
 
-      ;; Auto-save Draft
       [:div.ty-content.rounded-lg.p-5
        (section-label "Auto-save Draft")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -280,7 +269,6 @@ textarea.addEventListener('input', () => {
   }, 1000);
 });" "javascript")]
 
-      ;; Dynamic Validation
       [:div.ty-content.rounded-lg.p-5
        (section-label "Dynamic Validation")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -306,7 +294,6 @@ textarea.addEventListener('input', () => {
   else textarea.removeAttribute('error');
 });" "javascript")]
 
-      ;; Form Integration
       [:div.ty-content.rounded-lg.p-5
        (section-label "Form Integration")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -326,7 +313,6 @@ textarea.addEventListener('input', () => {
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

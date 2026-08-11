@@ -5,7 +5,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty Tooltip component
 export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
   /** Tooltip positioning relative to the parent element */
   placement?: 'top' | 'bottom' | 'left' | 'right';
@@ -26,7 +25,6 @@ export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-tooltip web component
 export const TyTooltip = React.forwardRef<HTMLElement, TyTooltipProps>(
   ({ 
     placement, 
@@ -39,7 +37,6 @@ export const TyTooltip = React.forwardRef<HTMLElement, TyTooltipProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -50,13 +47,11 @@ export const TyTooltip = React.forwardRef<HTMLElement, TyTooltipProps>(
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add optional attributes only if they have values
     if (placement) {
       webComponentProps.placement = placement;
     }

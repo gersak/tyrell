@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-// Type definitions for Ty Popup component
 export interface TyPopupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onClose'> {
   /** Preferred placement of the popup relative to anchor parent: "top" | "bottom" | "left" | "right" */
   placement?: 'top' | 'bottom' | 'left' | 'right';
@@ -26,14 +25,12 @@ export interface TyPopupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   children?: React.ReactNode;
 }
 
-// Programmatic API for popup control
 export interface TyPopupElement extends HTMLElement {
   openPopup(): void;
   closePopup(): void;
   togglePopup(): void;
 }
 
-// React wrapper for ty-popup web component
 export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
   ({
     placement,
@@ -47,7 +44,6 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
   }, ref) => {
     const elementRef = useRef<TyPopupElement>(null);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -85,13 +81,11 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
       };
     }, [onOpen, onClose]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add optional attributes only if they have values
     if (placement) {
       webComponentProps.placement = placement;
     }

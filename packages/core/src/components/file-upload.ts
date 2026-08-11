@@ -1,18 +1,7 @@
 /**
- * TyFileUpload Web Component
- *
- * Drop zone + file picker primitive. Replaces `<input type="file">` with
- * a styleable, drag-and-drop-capable equivalent that works everywhere.
- *
- * - Click to browse or drag-and-drop
- * - Multiple file support
- * - Accept filter passed to the underlying file input
- * - Emits `change` with `{ files, names }` on every selection
- * - Form-associated: participates in FormData and form.reset()
- *
- * @example
- * <ty-file-upload name="avatar" accept="image/*" label="Profile photo"></ty-file-upload>
- * <ty-file-upload name="docs" multiple accept=".pdf,.docx" label="Attachments"></ty-file-upload>
+ * TyFileUpload Web Component — drop zone + file picker primitive. Replaces
+ * `<input type="file">` with a styleable, drag-and-drop-capable equivalent.
+ * Form-associated: participates in FormData and form.reset().
  */
 
 import { TyComponent } from "../base/ty-component.js";
@@ -145,10 +134,6 @@ export class TyFileUpload
     return fd;
   }
 
-  // ============================================================================
-  // PUBLIC API
-  // ============================================================================
-
   get files(): File[] {
     return [...this._files];
   }
@@ -213,10 +198,6 @@ export class TyFileUpload
     return this._internals.form;
   }
 
-  // ============================================================================
-  // INTERNAL FILE MANAGEMENT
-  // ============================================================================
-
   private setFiles(newFiles: File[]): void {
     this._files = this.multiple ? newFiles : newFiles.slice(0, 1);
     this.updateFormValue();
@@ -245,10 +226,6 @@ export class TyFileUpload
     ) as HTMLInputElement | null;
     if (fileInput) fileInput.value = "";
   }
-
-  // ============================================================================
-  // EVENT LISTENERS
-  // ============================================================================
 
   private setupEventListeners(): void {
     if (this._listenersSetup) return;
@@ -371,10 +348,6 @@ export class TyFileUpload
     this._listenersSetup = false;
   }
 
-  // ============================================================================
-  // RENDERING
-  // ============================================================================
-
   private buildDropZoneClasses(): string {
     const classes = ["drop-zone"];
     if (this._isDragging) classes.push("drag-active");
@@ -476,7 +449,6 @@ export class TyFileUpload
       this.setupEventListeners();
     }
 
-    // Label
     const labelEl = container.querySelector(".upload-label") as HTMLElement;
     if (this.label) {
       labelEl.style.display = "";
@@ -493,14 +465,12 @@ export class TyFileUpload
       labelEl.style.display = "none";
     }
 
-    // Drop zone
     const dropZone = container.querySelector(".drop-zone") as HTMLElement;
     dropZone.className = this.buildDropZoneClasses();
     dropZone.tabIndex = this.disabled ? -1 : 0;
     dropZone.setAttribute("aria-disabled", String(this.disabled));
     dropZone.setAttribute("aria-label", this.placeholder || "Upload files");
 
-    // File input
     const fileInput = container.querySelector(
       ".file-input",
     ) as HTMLInputElement;
@@ -512,7 +482,6 @@ export class TyFileUpload
     const uploadIcon = container.querySelector(".upload-icon") as HTMLElement;
     uploadIcon.style.display = this._files.length > 0 ? "none" : "";
 
-    // Hint text
     const hintEl = container.querySelector(".upload-hint") as HTMLElement;
     if (this._files.length > 0) {
       hintEl.innerHTML = `<strong>${this._files.length} file${this._files.length !== 1 ? "s" : ""} selected</strong>`;
@@ -520,7 +489,6 @@ export class TyFileUpload
       hintEl.innerHTML = `Drop files here or <span class="browse-link">click to browse</span>`;
     }
 
-    // Sub-hint
     const subHintEl = container.querySelector(
       ".upload-sub-hint",
     ) as HTMLElement;
@@ -531,11 +499,9 @@ export class TyFileUpload
       subHintEl.style.display = "none";
     }
 
-    // File list
     const fileList = container.querySelector(".file-list") as HTMLElement;
     this.renderFileList(fileList);
 
-    // Error message
     const errorEl = container.querySelector(".error-message") as HTMLElement;
     errorEl.textContent = this.error;
     errorEl.style.display = this.error ? "" : "none";

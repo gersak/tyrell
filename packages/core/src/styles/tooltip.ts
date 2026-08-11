@@ -12,7 +12,6 @@ import type { StyleContent } from '../types/common.js';
 export const tooltipStyles: StyleContent = {
   id: 'ty-tooltip',
   css: `
-/* Tooltip host element - display contents to not affect layout */
 :host {
   display: contents;
 }

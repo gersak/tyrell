@@ -12,8 +12,6 @@ export const fileUploadStyles = `
   box-sizing: border-box;
 }
 
-/* ===== LABEL ===== */
-
 .upload-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
@@ -32,8 +30,6 @@ export const fileUploadStyles = `
   font-size: 0.75rem;
   line-height: 1;
 }
-
-/* ===== DROP ZONE ===== */
 
 .drop-zone {
   border: 2px dashed var(--ty-border);
@@ -92,8 +88,6 @@ export const fileUploadStyles = `
   background: var(--ty-bg-danger-);
 }
 
-/* ===== UPLOAD ICON ===== */
-
 .upload-icon {
   color: var(--ty-text-faint);
   width: 2.5rem;
@@ -109,8 +103,6 @@ export const fileUploadStyles = `
   width: 100%;
   height: 100%;
 }
-
-/* ===== HINT TEXT ===== */
 
 .upload-hint {
   color: var(--ty-text-soft);
@@ -130,8 +122,6 @@ export const fileUploadStyles = `
   line-height: var(--ty-leading-xs);
   pointer-events: none;
 }
-
-/* ===== FILE LIST ===== */
 
 .file-list {
   display: flex;
@@ -212,8 +202,6 @@ export const fileUploadStyles = `
   height: 12px;
 }
 
-/* ===== ERROR MESSAGE ===== */
-
 .error-message {
   font-size: var(--ty-font-xs);
   line-height: var(--ty-leading-xs);
@@ -221,8 +209,6 @@ export const fileUploadStyles = `
   margin-top: 4px;
   padding-left: 4px;
 }
-
-/* ===== ACCESSIBILITY ===== */
 
 @media (prefers-reduced-motion: reduce) {
   .drop-zone,

@@ -1,23 +1,13 @@
 /**
- * Tooltip Component
- * 
- * Shows helpful content on hover/focus with smart positioning.
- * Follows the same shadow DOM pattern as other components.
- * 
- * @example
- * <ty-tooltip placement="top" flavor="primary" delay="600">
- *   Helpful tooltip text
- * </ty-tooltip>
+ * Tooltip Component — shows content on hover/focus with smart positioning.
+ * The anchor is the tooltip's PARENT element; the popover itself lives in
+ * document.body (top layer), not in this element's shadow root.
  */
 
 import { findBestPosition, placementPreferences, type Placement, type CleanupFn } from '../utils/positioning.js';
 import { ensureStyles } from '../utils/styles.js';
 import { tooltipStyles } from '../styles/tooltip.js';
 import type { Flavor } from '../types/common.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Tooltip flavors: dark (default) / light / info plus any Flavor —
@@ -36,17 +26,11 @@ export interface TooltipAttributes {
   flavor: TooltipFlavor;
 }
 
-/**
- * Timeout state for show/hide delays
- */
+/** Timeout state for show/hide delays. */
 interface TimeoutState {
   showTimeout: number | null;
   hideTimeout: number | null;
 }
-
-// ============================================================================
-// WeakMaps for State Management
-// ============================================================================
 
 const autoUpdateCleanup = new WeakMap<TyTooltip, CleanupFn>();
 const eventCleanup = new WeakMap<TyTooltip, CleanupFn>();
@@ -57,10 +41,6 @@ const popoverElements = new WeakMap<TyTooltip, HTMLElement>();
 // DOM, so parentElement is null and cleanup() couldn't otherwise find the
 // anchor to strip its aria-describedby.
 const anchorElements = new WeakMap<TyTooltip, HTMLElement>();
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 /**
  * Normalize the flavor attribute. Any plain identifier (with optional +/-
@@ -74,9 +54,6 @@ function validateFlavor(flavor: string | null): TooltipFlavor {
   return /^[A-Za-z][A-Za-z0-9_-]*$/.test(base) ? (full as TooltipFlavor) : 'dark';
 }
 
-/**
- * Get timeout state for element
- */
 function getTimeoutState(el: TyTooltip): TimeoutState {
   let state = timeoutState.get(el);
   if (!state) {
@@ -86,16 +63,10 @@ function getTimeoutState(el: TyTooltip): TimeoutState {
   return state;
 }
 
-/**
- * Parse boolean attribute
- */
 function parseBoolAttr(el: Element, name: string): boolean {
   return el.hasAttribute(name);
 }
 
-/**
- * Parse integer attribute
- */
 function parseIntAttr(el: Element, name: string, defaultValue: number): number {
   const value = el.getAttribute(name);
   if (value === null) return defaultValue;
@@ -103,9 +74,6 @@ function parseIntAttr(el: Element, name: string, defaultValue: number): number {
   return isNaN(parsed) ? defaultValue : parsed;
 }
 
-/**
- * Read all tooltip attributes from element
- */
 function getTooltipAttributes(el: TyTooltip): TooltipAttributes {
   return {
     placement: (el.getAttribute('placement') || 'top') as Placement,
@@ -116,9 +84,7 @@ function getTooltipAttributes(el: TyTooltip): TooltipAttributes {
   };
 }
 
-/**
- * Get the parent element (anchor)
- */
+/** The anchor is the tooltip's parent element. */
 function getAnchorElement(el: TyTooltip): HTMLElement | null {
   return el.parentElement;
 }
@@ -154,7 +120,6 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
   let popover = popoverElements.get(el);
 
   if (!popover) {
-    // Create popover element
     popover = document.createElement('div');
     popover.id = `ty-tooltip-${Math.random().toString(36).slice(2, 11)}`;
     popover.setAttribute('popover', 'manual');
@@ -186,10 +151,7 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
 
     popover.style.cssText = styles;
 
-    // Append to body
     document.body.appendChild(popover);
-
-    // Store reference
     popoverElements.set(el, popover);
 
     const anchor = anchorElements.get(el);
@@ -262,9 +224,6 @@ function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
   }
 }
 
-/**
- * Update tooltip position based on current anchor/popover state
- */
 function updatePosition(el: TyTooltip): void {
   const { placement, offset } = getTooltipAttributes(el);
   const anchor = getAnchorElement(el);
@@ -275,14 +234,12 @@ function updatePosition(el: TyTooltip): void {
     return;
   }
 
-  // Calculate preferences based on placement
   const preferences = placement === 'top' ? placementPreferences.tooltip :
     placement === 'bottom' ? ['bottom', 'top', 'left', 'right'] as Placement[] :
       placement === 'left' ? ['left', 'right', 'top', 'bottom'] as Placement[] :
         placement === 'right' ? ['right', 'left', 'top', 'bottom'] as Placement[] :
           placementPreferences.tooltip;
 
-  // Use positioning engine to find best position
   const position = findBestPosition({
     targetEl: anchor,
     floatingEl: popover,
@@ -290,14 +247,10 @@ function updatePosition(el: TyTooltip): void {
     offset,
   });
 
-  // Apply position directly to popover
   popover.style.left = `${position.x}px`;
   popover.style.top = `${position.y}px`;
 }
 
-/**
- * Cleanup auto-update system
- */
 function cleanupAutoUpdate(el: TyTooltip): void {
   const cleanup = autoUpdateCleanup.get(el);
   if (cleanup) {
@@ -307,8 +260,8 @@ function cleanupAutoUpdate(el: TyTooltip): void {
 }
 
 /**
- * Setup auto-update system for position tracking
- * Note: This does NOT calculate initial position - call updatePosition() separately
+ * Setup auto-update for position tracking.
+ * Note: This does NOT calculate initial position — call updatePosition() separately.
  */
 function setupAutoUpdate(el: TyTooltip): void {
   const anchor = getAnchorElement(el);
@@ -319,7 +272,6 @@ function setupAutoUpdate(el: TyTooltip): void {
     return;
   }
 
-  // Debounced update function
   let timeoutId: number | null = null;
   const debouncedUpdate = () => {
     if (timeoutId !== null) {
@@ -331,12 +283,10 @@ function setupAutoUpdate(el: TyTooltip): void {
     }, 10);
   };
 
-  // Setup ResizeObserver for anchor and popover
   const resizeObserver = new ResizeObserver(debouncedUpdate);
   resizeObserver.observe(anchor);
   resizeObserver.observe(popover);
 
-  // Scroll handler with requestAnimationFrame
   let scrollRafId: number | null = null;
   const handleScroll = () => {
     if (scrollRafId === null) {
@@ -347,11 +297,9 @@ function setupAutoUpdate(el: TyTooltip): void {
     }
   };
 
-  // Listen for scroll and resize
   window.addEventListener('scroll', handleScroll, true);
   window.addEventListener('resize', debouncedUpdate);
 
-  // Store cleanup function
   const cleanup = () => {
     resizeObserver.disconnect();
     window.removeEventListener('scroll', handleScroll, true);
@@ -367,9 +315,6 @@ function setupAutoUpdate(el: TyTooltip): void {
   autoUpdateCleanup.set(el, cleanup);
 }
 
-/**
- * Clear all timeouts
- */
 function clearTimeouts(el: TyTooltip): void {
   const state = getTimeoutState(el);
   if (state.showTimeout !== null) {
@@ -382,22 +327,17 @@ function clearTimeouts(el: TyTooltip): void {
   }
 }
 
-/**
- * Show tooltip immediately using Popover API
- */
+/** Show immediately (no delay). */
 function showTooltip(el: TyTooltip): void {
   const { disabled } = getTooltipAttributes(el);
   if (disabled) return;
 
-  // Create popover if it doesn't exist
   const popover = getOrCreatePopover(el);
 
   try {
-    // Show using Popover API
     popover.showPopover();
     el._open = true;
 
-    // Position and setup observers
     updatePosition(el);
     setupAutoUpdate(el);
   } catch (e) {
@@ -405,9 +345,7 @@ function showTooltip(el: TyTooltip): void {
   }
 }
 
-/**
- * Hide tooltip immediately using Popover API
- */
+/** Hide immediately (no delay). */
 function hideTooltip(el: TyTooltip): void {
   const popover = popoverElements.get(el);
   if (!popover) return;
@@ -421,9 +359,6 @@ function hideTooltip(el: TyTooltip): void {
   }
 }
 
-/**
- * Schedule tooltip to show after delay
- */
 function scheduleShow(el: TyTooltip): void {
   const state = getTimeoutState(el);
   const { delay } = getTooltipAttributes(el);
@@ -432,9 +367,6 @@ function scheduleShow(el: TyTooltip): void {
   state.showTimeout = window.setTimeout(() => showTooltip(el), delay);
 }
 
-/**
- * Schedule tooltip to hide after delay
- */
 function scheduleHide(el: TyTooltip): void {
   const state = getTimeoutState(el);
 
@@ -442,9 +374,6 @@ function scheduleHide(el: TyTooltip): void {
   state.hideTimeout = window.setTimeout(() => hideTooltip(el), 200);
 }
 
-/**
- * Setup event listeners on anchor element
- */
 function setupEvents(el: TyTooltip): void {
   const anchor = getAnchorElement(el);
   if (!anchor) return;
@@ -455,13 +384,11 @@ function setupEvents(el: TyTooltip): void {
   const handleFocus = () => scheduleShow(el);
   const handleBlur = () => scheduleHide(el);
 
-  // Add event listeners
   anchor.addEventListener('mouseenter', handleEnter);
   anchor.addEventListener('mouseleave', handleLeave);
   anchor.addEventListener('focusin', handleFocus);
   anchor.addEventListener('focusout', handleBlur);
 
-  // Store cleanup function
   eventCleanup.set(el, () => {
     anchor.removeEventListener('mouseenter', handleEnter);
     anchor.removeEventListener('mouseleave', handleLeave);
@@ -470,9 +397,7 @@ function setupEvents(el: TyTooltip): void {
   });
 }
 
-/**
- * Cleanup all resources including popover element
- */
+/** Cleanup all resources, including the popover element. */
 function cleanup(el: TyTooltip): void {
   clearTimeouts(el);
   cleanupAutoUpdate(el);
@@ -500,10 +425,6 @@ function cleanup(el: TyTooltip): void {
   timeoutState.delete(el);
 }
 
-// ============================================================================
-// Component Definition
-// ============================================================================
-
 /**
  * TyTooltip Web Component
  */
@@ -511,7 +432,6 @@ export class TyTooltip extends HTMLElement {
   /** Internal open state */
   _open = false;
 
-  /** Observed attributes */
   static get observedAttributes() {
     return ['placement', 'offset', 'delay', 'disabled', 'flavor'];
   }
@@ -522,13 +442,11 @@ export class TyTooltip extends HTMLElement {
   }
 
   connectedCallback() {
-    // Initialize open state
     this._open = false;
 
-    // Inject styles (for :host display: contents)
+    // Styles are needed for :host { display: contents }
     ensureStyles(this.shadowRoot!, tooltipStyles);
 
-    // Setup events on anchor
     setupEvents(this);
 
     // Eagerly create the (hidden) popover so role="tooltip" + the anchor's
@@ -561,7 +479,6 @@ export class TyTooltip extends HTMLElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-tooltip')) {
   customElements.define('ty-tooltip', TyTooltip);
 }

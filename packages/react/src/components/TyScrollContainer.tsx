@@ -11,7 +11,6 @@ export interface TyScrollNearEdgeDetail {
   clientHeight: number;
 }
 
-// Type definitions for Ty ScrollContainer component
 export interface TyScrollContainerProps extends React.HTMLAttributes<HTMLElement> {
   /** Maximum height of the scroll container */
   maxHeight?: string;
@@ -44,7 +43,6 @@ export interface TyScrollContainerProps extends React.HTMLAttributes<HTMLElement
   children?: React.ReactNode;
 }
 
-// Ref interface for imperative methods
 export interface TyScrollContainerRef {
   /** Force update shadows (useful after dynamic content changes) */
   updateShadows: () => void;
@@ -64,7 +62,6 @@ export interface TyScrollContainerRef {
   element: HTMLElement | null;
 }
 
-// React wrapper for ty-scroll-container web component
 export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScrollContainerProps>(
   ({
     children,
@@ -81,7 +78,6 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Expose imperative methods via ref
     useImperativeHandle(ref, () => ({
       updateShadows: () => { (elementRef.current as any)?.updateShadows?.(); },
       scrollToTop: (smooth = true) => { (elementRef.current as any)?.scrollToTop?.(smooth); },
@@ -109,7 +105,6 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
     const isOverflowX = useBooleanProperty(elementRef, 'overflowX', overflowX);
     const isScrollAnchoring = useBooleanProperty(elementRef, 'scrollAnchoring', scrollAnchoring);
 
-    // Custom events → React callbacks
     useEffect(() => {
       const el = elementRef.current;
       if (!el) return;
@@ -125,17 +120,14 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
       return () => bound.forEach(([n, h]) => el.removeEventListener(n, h));
     }, [onNearEnd, onNearStart]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // String attributes
     if (maxHeight) webComponentProps['max-height'] = maxHeight;
     if (nearEdgeThreshold != null) webComponentProps['near-edge-threshold'] = String(nearEdgeThreshold);
 
-    // Boolean attributes
     if (shadow !== undefined && !coerceBool(shadow)) webComponentProps.shadow = 'false';
     if (isHideScrollbar) webComponentProps['hide-scrollbar'] = '';
     if (isCustomScrollbar) webComponentProps['custom-scrollbar'] = '';

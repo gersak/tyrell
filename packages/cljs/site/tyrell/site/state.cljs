@@ -17,17 +17,14 @@
          ;; CSS System page — interactive font/radius picker
          :typography-picker {:font "sans" :radius "8"}
 
-         ;; Command palette search state
          :search {:open false
                   :query ""
                   :results []
                   :selected-index 0}
 
-         ;; Table of Contents state
          :toc {:headings []      ;; [{:id "api" :text "API Reference" :level 2}]
                :active-id nil}   ;; Currently visible heading
 
-         ;; User profile state
          :user-profile {:avatar-modal-open false
                         :form-data {:first-name "John"
                                     :last-name "Doe"
@@ -42,32 +39,25 @@
                                     :language "en"
                                     :theme-preference "auto"}}
 
-         ;; Event booking state with comprehensive demo data
          :event-booking {:confirmation-modal-open false
                          ;; Pre-select a date 5 days from now to show calendar highlighting
                          :selected-date {:year 2024
                                          :month 12
                                          :day 28}
-                         ;; Pre-select a popular time slot
                          :selected-time "10:00 AM"
-                         ;; Pre-select some popular services to showcase multiselect
                          :selected-services #{"av-equipment" "catering"}
                          :service-quantities {} ; Map of service-id -> quantity
-                         ;; Set a realistic attendee count
                          :attendee-count 15
-                         ;; Comprehensive booking form data
                          :booking-data {:event-type "workshop"
                                         :duration "240" ; 4 hours for a workshop
                                         :contact-name "Alex Martinez"
                                         :contact-email "alex.martinez@techconference.org"
                                         :special-requests "We'll need extra power outlets for laptops and a presentation setup with dual screens. Please ensure the room has good natural lighting for our video recording. Also, we'd appreciate having a coffee station set up for the afternoon break.\n\nThis is a technical workshop on modern web development, so reliable high-speed internet is crucial. If possible, we'd like the room arranged in a U-shape to facilitate group discussions and hands-on exercises."}}
 
-         ;; Wizard prototype state
          :wizard-prototype {:active-step "welcome"
                             :completed-steps #{}}
          :wizard-linear false
 
-         ;; Contact form state
          :contact-form {:form-data {:full-name "Sarah Chen"
                                     :email "sarah.chen@designstudio.com"
                                     :company "Creative Design Studio"

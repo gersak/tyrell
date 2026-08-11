@@ -4,10 +4,7 @@
  */
 
 export const customScrollbarStyles = `
-/* ===================================== */
-/* Custom Scrollbar - Vertical Track     */
-/* ===================================== */
-
+/* Vertical track */
 .ty-scrollbar-track-y {
   position: absolute;
   top: 0;
@@ -69,10 +66,7 @@ export const customScrollbarStyles = `
   background: var(--ty-scrollbar-thumb-active, color-mix(in oklab, var(--ty-color-neutral-bold) 70%, transparent));
 }
 
-/* ===================================== */
-/* Custom Scrollbar - Horizontal Track   */
-/* ===================================== */
-
+/* Horizontal track */
 .ty-scrollbar-track-x {
   position: absolute;
   bottom: 0;
@@ -134,10 +128,7 @@ export const customScrollbarStyles = `
   background: var(--ty-scrollbar-thumb-active, color-mix(in oklab, var(--ty-color-neutral-bold) 70%, transparent));
 }
 
-/* ===================================== */
-/* Touch devices - hide custom scrollbar */
-/* ===================================== */
-
+/* Touch devices: hide the custom scrollbar */
 @media (pointer: coarse) and (hover: none) {
   .ty-scrollbar-track-y,
   .ty-scrollbar-track-x {
@@ -145,7 +136,6 @@ export const customScrollbarStyles = `
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .ty-scrollbar-track-y,
   .ty-scrollbar-track-x,

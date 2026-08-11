@@ -20,26 +20,20 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   // Subclasses must define their property configuration
   protected static properties: Record<string, PropertyConfig> = {}
   
-  // Property manager instance
   protected props: PropertyManager<T>
-  
-  // Form internals
+
   protected _internals: ElementInternals
-  
-  // Track if component is connected
+
   protected _connected = false
-  
-  // Track if initial render happened
+
   protected _rendered = false
-  
+
   constructor() {
     super()
-    
-    // Initialize property manager
+
     const ctor = this.constructor as typeof TyComponent
     this.props = new PropertyManager<T>(ctor.properties)
-    
-    // Form association
+
     this._internals = this.attachInternals()
     
     // Setup shadow DOM (subclasses can override by checking if shadowRoot exists)
@@ -75,10 +69,7 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     const change = this.props.updateProperty(name, value, 'property')
     
     if (change) {
-      // Sync to attribute (kebab-case)
       this._syncPropertyToAttribute(change)
-      
-      // Handle the change through unified lifecycle
       this._handlePropertyChanges([change])
     }
   }
@@ -99,11 +90,9 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     const config = this.props.getConfig(name)
     
     if (!config) return
-    
-    // Convert to kebab-case for attribute
+
     const attrName = this._toKebabCase(name)
-    
-    // Handle different types
+
     if (config.type === 'boolean') {
       if (newValue) {
         this.setAttribute(attrName, '')
@@ -119,16 +108,10 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     }
   }
   
-  /**
-   * Convert camelCase to kebab-case
-   */
   private _toKebabCase(str: string): string {
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
   }
-  
-  /**
-   * Convert kebab-case to camelCase
-   */
+
   private _toCamelCase(str: string): string {
     return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
   }
@@ -163,16 +146,13 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     
     // Capture pre-set properties (React/Vue/Reagent pattern)
     const preSetProps = this._capturePreSetProperties()
-    
-    // Batch process all pre-set properties
+
     if (preSetProps.length > 0) {
       this._handlePropertyChanges(preSetProps)
     }
-    
-    // Initialize component (subclass hook)
+
     this.onConnect()
-    
-    // Initial render
+
     if (!this._rendered) {
       this.render()
       this._rendered = true
@@ -196,7 +176,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     const ctor = this.constructor as typeof TyComponent
     
     for (const propName of Object.keys(ctor.properties)) {
-      // Check if property was set on the element before connection
       const descriptor = Object.getOwnPropertyDescriptor(this, propName)
       if (descriptor && descriptor.value !== undefined) {
         const change = this.props.updateProperty(propName, descriptor.value, 'property')
@@ -293,8 +272,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * internal state here and it will be reflected in the render
    */
   protected onPropertiesChanged(changes: PropertyChange[]): void {
-    // Default: no-op
-    // Subclasses can override to update _state, _config, etc.
   }
   
   /**
@@ -302,7 +279,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * Use this instead of overriding connectedCallback
    */
   protected onConnect(): void {
-    // Default: no-op
   }
   
   /**
@@ -310,7 +286,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * Use this for cleanup instead of overriding disconnectedCallback
    */
   protected onDisconnect(): void {
-    // Default: no-op
   }
   
   /**
@@ -370,7 +345,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * Resets component to its default value
    */
   formResetCallback(): void {
-    // Get the default value from property configuration
     const ctor = this.constructor as typeof TyComponent
     const valueConfig = ctor.properties['value']
     
@@ -380,8 +354,7 @@ export abstract class TyComponent<T = any> extends HTMLElement {
       // Reset the value property through setProperty to trigger lifecycle
       this.setProperty('value', defaultValue)
     }
-    
-    // Call subclass hook for custom reset behavior
+
     this.onFormReset()
   }
   
@@ -390,7 +363,5 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * Subclasses can override to perform additional reset actions
    */
   protected onFormReset(): void {
-    // Default: no-op
-    // Subclasses can override to reset additional state
   }
 }

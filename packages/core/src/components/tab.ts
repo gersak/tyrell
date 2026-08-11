@@ -1,8 +1,4 @@
-/**
- * Tab Component
- *
- * Individual tab panel with custom scrollbar via CustomScrollbar utility.
- */
+/** Individual tab panel with custom scrollbar via CustomScrollbar utility. */
 
 import { ensureStyles } from '../utils/styles.js';
 import { tabStyles } from '../styles/tab.js';

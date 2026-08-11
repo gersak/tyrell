@@ -12,7 +12,6 @@ export interface TyTagCSSProperties extends React.CSSProperties {
   '--tag-border-color'?: string;
 }
 
-// Type definitions for Ty Tag component
 export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'style' | 'onClick'> {
   flavor?: ShadedFlavor | (string & {});
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -29,7 +28,6 @@ export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'sty
   children?: React.ReactNode;
 }
 
-// React wrapper for ty-tag web component
 export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
   ({ children, onClick, onTagDismiss, notPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -51,7 +49,6 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
       };
     }, [handleDismiss, onTagDismiss]);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {

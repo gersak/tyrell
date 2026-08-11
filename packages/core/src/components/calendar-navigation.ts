@@ -1,36 +1,7 @@
 /**
- * TyCalendarNavigation Web Component
- * PORTED FROM: cljs/ty/components/calendar_navigation.cljs
- * 
- * A pure presentation component for calendar month/year navigation.
- * Stateless - all state comes from properties, changes emitted via events.
- * 
- * Features:
- * - Year/Month navigation (prev/next month, prev/next year)
- * - Localized month name display
- * - Custom event emission on navigation
- * - Property-driven API (no internal state)
- * - Inline SVG icons
- * - Shadow DOM encapsulation
- * 
- * @example
- * ```html
- * <!-- Basic usage -->
- * <ty-calendar-navigation 
- *   display-month="10" 
- *   display-year="2025"
- *   locale="en-US">
- * </ty-calendar-navigation>
- * 
- * <!-- Listen for changes -->
- * <script type="module">
- *   const nav = document.querySelector('ty-calendar-navigation');
- *   nav.addEventListener('change', (e) => {
- *     console.log('New month:', e.detail.month);
- *     console.log('New year:', e.detail.year);
- *   });
- * </script>
- * ```
+ * TyCalendarNavigation Web Component — pure presentation for calendar
+ * month/year navigation. Stateless: all state comes from properties,
+ * changes are emitted via events.
  */
 
 import { ensureStyles } from '../utils/styles.js';
@@ -39,10 +10,6 @@ import { getMonthName, parseISODate } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { TyComponent } from '../base/ty-component.js';
 import type { PropertyChange } from '../utils/property-manager.js';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 /**
  * Navigation change event detail
@@ -59,10 +26,6 @@ interface NavigationState {
   displayMonth: number;
   displayYear: number;
 }
-
-// ============================================================================
-// SVG Icons (Material Design)
-// ============================================================================
 
 const CHEVRON_LEFT_SVG = `<?xml version='1.0' encoding='UTF-8'?>
 <svg width='24' viewBox='0 0 24 24' height='24' xmlns='http://www.w3.org/2000/svg' stroke-width='0' stroke='currentColor' fill='currentColor'>
@@ -102,19 +65,11 @@ const CHEVRONS_RIGHT_SVG = `<?xml version='1.0' encoding='UTF-8'?>
 </g>
 </svg>`;
 
-// ============================================================================
-// Component Implementation
-// ============================================================================
-
 /**
  * TyCalendarNavigation Web Component
  */
 export class TyCalendarNavigation extends TyComponent<NavigationState> {
-  // ============================================================================
-  // PROPERTY CONFIGURATION - Single source of truth
-  // ============================================================================
   protected static properties = {
-    // Display properties
     'display-month': {
       type: 'number' as const,
       visual: true,
@@ -150,14 +105,12 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       }
     },
     
-    // Locale property
     locale: {
       type: 'string' as const,
       visual: true,
       default: 'en-US'
     },
     
-    // Size property
     size: {
       type: 'string' as const,
       visual: true,
@@ -172,7 +125,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       }
     },
     
-    // Width property
     width: {
       type: 'string' as const,
       visual: true,
@@ -193,36 +145,23 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     }
   };
   
-  // ============================================================================
-  // INTERNAL STATE
-  // ============================================================================
   private _state: NavigationState;
   private _localeObserver?: () => void; // Cleanup function for locale observer
   
   constructor() {
     super(); // TyComponent handles attachShadow
     
-    // Initialize state with current date
     const today = new Date();
     this._state = {
       displayMonth: today.getMonth() + 1,
       displayYear: today.getFullYear()
     };
     
-    // Initialize styles in shadow root
     const shadow = this.shadowRoot!;
     ensureStyles(shadow, { css: calendarNavigationStyles, id: 'ty-calendar-navigation' });
   }
   
-  // ==========================================================================
-  // Lifecycle Hooks (TyComponent)
-  // ==========================================================================
-  
-  /**
-   * Called when component connects to DOM
-   */
   protected onConnect(): void {
-    // Sync state from properties
     this._state.displayMonth = this.displayMonth;
     this._state.displayYear = this.displayYear;
     
@@ -231,15 +170,10 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       this.render();
     });
     
-    // Initial render
     this.render();
   }
   
-  /**
-   * Called when component disconnects from DOM
-   */
   protected onDisconnect(): void {
-    // Cleanup locale observer
     if (this._localeObserver) {
       this._localeObserver();
       this._localeObserver = undefined;
@@ -268,10 +202,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       }
     }
   }
-  
-  // ==========================================================================
-  // Property Accessors - Simple wrappers using TyComponent
-  // ==========================================================================
   
   get displayMonth(): number {
     return this.getProperty('display-month');
@@ -330,13 +260,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     this.setProperty('max', value ?? '');
   }
   
-  // ==========================================================================
-  // Event Dispatching
-  // ==========================================================================
-  
-  /**
-   * Emit change event with new month/year
-   */
   private emitChangeEvent(month: number, year: number): void {
     const detail: NavigationChangeDetail = {
       month,
@@ -352,10 +275,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     this.dispatchEvent(event);
   }
   
-  // ==========================================================================
-  // Navigation Logic
-  // ==========================================================================
-
   /**
    * Month index (year * 12 + month - 1) — flat, comparable month math.
    */
@@ -411,13 +330,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     return this.clampIndex(current + deltaMonths) === current;
   }
   
-  // ==========================================================================
-  // Rendering
-  // ==========================================================================
-  
-  /**
-   * Create navigation button
-   */
   private createButton(
     className: string,
     title: string,
@@ -434,21 +346,15 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     return button;
   }
   
-  /**
-   * Main render function
-   */
   protected render(): void {
     const root = this.shadowRoot;
     if (!root) return;
     
-    // Ensure styles are loaded
     ensureStyles(root, { css: calendarNavigationStyles, id: 'ty-calendar-navigation' });
     
-    // Apply size as data attribute for CSS targeting
     const size = this.size;
     this.setAttribute('data-size', size);
     
-    // Apply width property as CSS custom property
     const width = this.width;
     if (width) {
       this.style.setProperty('--nav-width', width);
@@ -456,13 +362,10 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       this.style.removeProperty('--nav-width');
     }
     
-    // Get localized month name using current state
     const monthName = getMonthName(this._state.displayMonth, this.locale, 'long');
     
-    // Clear and rebuild
     root.innerHTML = '';
     
-    // Create main header container
     const header = document.createElement('div');
     header.className = 'calendar-navigation-header';
     
@@ -523,7 +426,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       )
     );
     
-    // Assemble header
     header.appendChild(leftGroup);
     header.appendChild(centerGroup);
     header.appendChild(rightGroup);
@@ -532,7 +434,6 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-calendar-navigation')) {
   customElements.define('ty-calendar-navigation', TyCalendarNavigation);
 }

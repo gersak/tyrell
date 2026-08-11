@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-// Type definitions for Ty File Upload component
 export interface TyFileUploadProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Form field name — used as the FormData key */
   name?: string;
@@ -41,7 +40,6 @@ export interface TyFileUploadEventDetail {
   names: string[];
 }
 
-// React wrapper for ty-file-upload web component
 export const TyFileUpload = React.forwardRef<HTMLElement, TyFileUploadProps>(
   ({
     name,

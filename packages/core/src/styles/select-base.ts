@@ -46,8 +46,6 @@ const selectFlavor = (f: string, fb?: string) => {
 export const selectCustomFlavorCss = (base: string) => selectFlavor(base, "neutral");
 
 export const selectBaseStyles = `
-/* Select-field-specific styles extending dropdown base styles */
-
 :host {
   display: block;
   width: 100%;
@@ -64,8 +62,6 @@ export const selectBaseStyles = `
   width: auto;
 }
 
-/* ===== DIALOG POSITIONING SUPPORT ===== */
-
 .dropdown-dialog {
   position: fixed;
   width: var(--dropdown-width, 200px);
@@ -78,7 +74,6 @@ export const selectBaseStyles = `
   padding: var(--dropdown-padding, 20px);
   /* Modal handles z-index automatically */
 
-  /* Hidden by default */
   opacity: 0;
   transition: opacity 400ms ease;
 
@@ -93,7 +88,6 @@ export const selectBaseStyles = `
   flex-direction: column;
 }
 
-/* Direction-based positioning with CSS classes */
 .dropdown-dialog.position-below {
   left: var(--dropdown-x);
   top: var(--dropdown-y);
@@ -115,11 +109,9 @@ export const selectBaseStyles = `
 }
 
 .dropdown-dialog.position-below .dropdown-options {
-  /* Optional: Add upward-pointing shadow for below positioning */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), var(--ty-shadow-md);
 }
 
-/* Animate when .open class is added */
 .dropdown-dialog.open {
   opacity: 1;
 }
@@ -132,8 +124,6 @@ export const selectBaseStyles = `
 .dropdown-dialog::backdrop {
   background: transparent;
 }
-
-/* ===== DIALOG HEADER ===== */
 
 .dropdown-header {
   display: flex;
@@ -199,9 +189,6 @@ export const selectBaseStyles = `
   height: 100%;
 }
 
-/* ===== SELECT FIELD-SPECIFIC STYLES ===== */
-
-/* Select stub modifications */
 .select-stub {
   min-height: var(--ty-size-md);
   display: flex;
@@ -209,7 +196,6 @@ export const selectBaseStyles = `
   gap: 0.25rem;
   align-items: center;
   padding: 0 2.5rem 0 0.75rem;
-  /* Transitions - includes opacity for open state */
   transition: var(--ty-transition-all), opacity 0.2s ease;
   outline: none;
   background: var(--input-bg, var(--ty-input-bg));
@@ -226,8 +212,7 @@ export const selectBaseStyles = `
   box-sizing: border-box;
 }
 
-/* ===== SIZE MODIFIERS =====
-   buildStubClasses() always stamps exactly one size class on .select-stub.
+/* buildStubClasses() always stamps exactly one size class on .select-stub.
    min-height comes from the shared --ty-size-* tokens (same ones ty-input
    and ty-date-picker consume) so a given size is the same height on every
    field. Right padding stays 2.5rem for chevron room. Zero vertical
@@ -269,7 +254,6 @@ export const selectBaseStyles = `
   opacity: 0.6;
 }
 
-/* Hide stub when dropdown is open */
 .dropdown-wrapper:has(.dropdown-chevron.open) .select-stub {
   opacity: 0;
   pointer-events: none;
@@ -330,8 +314,6 @@ export const selectBaseStyles = `
   gap: 0.25rem;
 }
 
-/* ===== CHEVRON INDICATOR ===== */
-
 .dropdown-chevron {
   position: absolute;
   top: 50%;
@@ -354,7 +336,6 @@ export const selectBaseStyles = `
 }
 
 
-/* Tags container */
 .select-chips {
   display: flex;
   flex-wrap: wrap;
@@ -373,12 +354,10 @@ export const selectBaseStyles = `
   font-style: italic;
 }
 
-/* Placeholder styling when tags are present */
 .dropdown-placeholder.hidden {
   display: none;
 }
 
-/* Options area styling - Override for select */
 .dropdown-options {
   opacity: 0;
   /* Floating surface/border, not --input-* — this is a popup panel over
@@ -402,13 +381,11 @@ export const selectBaseStyles = `
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  /* Animation properties */
   transform: translateY(-8px) scale(0.95);
   transition:
     opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
     transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Select-specific: flex wrap for tags */
   display: flex;
   flex-wrap: wrap;
   padding: 0.5rem;
@@ -431,12 +408,10 @@ export const selectBaseStyles = `
   position: relative;
 }
 
-/* Show custom scrollbar on hover */
 .dropdown-options-wrapper:hover .ty-scrollbar-track-y.has-overflow {
   opacity: 1;
 }
 
-/* Make ty-tags in dropdown clickable with pointer cursor */
 .dropdown-options ty-tag {
   user-select: none;
   transition: transform 0.1s ease;
@@ -450,17 +425,14 @@ export const selectBaseStyles = `
   transform: scale(0.98);
 }
 
-/* Visual feedback for selected tags in options */
 .dropdown-options ty-tag[selected] {
   opacity: 0.5;
 }
 
-/* Ensure ty-tag components in the select field have proper sizing */
 .select-chips ty-tag {
   max-width: 150px;
 }
 
-/* Responsive adjustments */
 @media (max-width: 640px) {
   .select-chips ty-tag {
     max-width: 100px;
@@ -468,7 +440,6 @@ export const selectBaseStyles = `
 }
 
 
-/* Ensure proper spacing in container layouts */
 .select-container {
   display: flex;
   flex-direction: column;
@@ -477,8 +448,6 @@ export const selectBaseStyles = `
      A flex gap would STACK on that margin (flex margins don't collapse),
      which is exactly the 4px misalignment this used to cause. */
 }
-
-/* ===== DROPDOWN WRAPPER & LABEL ===== */
 
 .dropdown-wrapper {
   position: relative;
@@ -498,7 +467,6 @@ export const selectBaseStyles = `
   align-items: center;
 }
 
-/* Required indicator - using SVG icon */
 .required-icon {
   display: inline-flex;
   align-items: center;
@@ -517,10 +485,6 @@ export const selectBaseStyles = `
 :host([disabled]) .select-container {
   pointer-events: none;
 }
-
-/* ============================================================================
-   MOBILE MODAL STYLES
-   ============================================================================ */
 
 .dropdown-mode-mobile .mobile-dialog {
   position: fixed;
@@ -572,7 +536,7 @@ export const selectBaseStyles = `
   display: flex;
   flex-direction: column;
   width: calc(100% - 32px); /* Side margins */
-  max-width: 400px; /* Constrained width like dropdown */
+  max-width: 400px;
   min-height: 200px;
   max-height: 90dvh; /* leaves room below the 6dvh padding-top, shrinks with keyboard */
   opacity: 0;
@@ -676,7 +640,6 @@ export const selectBaseStyles = `
   height: 18px;
 }
 
-/* Mobile search input (matches dropdown.ts) */
 .dropdown-mode-mobile .mobile-search-input {
   flex: 1;
   min-width: 0;
@@ -705,10 +668,6 @@ export const selectBaseStyles = `
   border-color: var(--ty-border);
 }
 
-/* ============================================================================
-   MOBILE BODY & SECTIONS - UPDATED STRUCTURE
-   ============================================================================ */
-
 /* Mobile body - contains both sections */
 .dropdown-mode-mobile .mobile-body {
   position: relative;
@@ -726,7 +685,7 @@ export const selectBaseStyles = `
   border-color: var(--mobile-border-color);
 }
 
-/* ===== SECTION HEADERS - Labels, not buttons ===== */
+/* Section headers are labels, not buttons */
 
 .dropdown-mode-mobile .section-header {
   display: flex;
@@ -755,7 +714,7 @@ export const selectBaseStyles = `
   margin-left: 0.25rem;
 }
 
-/* ===== SELECTED STRIP - pinned, capped height, collapses when empty ===== */
+/* Selected strip: pinned, capped height, collapses when empty */
 
 .dropdown-mode-mobile .mobile-selected-section {
   display: flex;
@@ -788,7 +747,7 @@ export const selectBaseStyles = `
   mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
 }
 
-/* ===== AVAILABLE LIST - takes remaining space ===== */
+/* Available list takes the remaining space */
 
 .dropdown-mode-mobile .mobile-available-section {
   display: flex;
@@ -811,8 +770,7 @@ export const selectBaseStyles = `
   align-content: flex-start;
 }
 
-/* ===== EMPTY STATES =====
-   Selected strip collapses (no text needed).
+/* Selected strip collapses (no text needed).
    Available shows the empty message only when there are zero tags total. */
 
 .dropdown-mode-mobile .empty-state {
@@ -836,13 +794,11 @@ export const selectBaseStyles = `
   display: none;
 }
 
-/* ===== TAG STYLING IN MOBILE ===== */
-
 .dropdown-mode-mobile .section-content ::slotted(ty-tag) {
   cursor: pointer;
   user-select: none;
   transition: transform 0.1s ease;
-  margin: 2px 0; /* Vertical spacing like dropdown options */
+  margin: 2px 0;
   /* Fade + scale entry — replays on each (re)insertion when a tag moves
      between selected and available slots */
   animation: ty-select-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -858,7 +814,6 @@ export const selectBaseStyles = `
   transform: scale(0.96);
 }
 
-/* Dimmed appearance for hidden filtered tags */
 .dropdown-mode-mobile .section-content ::slotted(ty-tag[hidden]) {
   display: none !important;
 }
@@ -874,8 +829,7 @@ export const selectBaseStyles = `
   }
 }
 
-/* ==================== LOADING STATE ====================
-   Spinner overlay shown inside the options area while the parent
+/* Spinner overlay shown inside the options area while the parent
    (external-search mode) is fetching. Search input stays usable.
 
    Carries its own surface so it stays visible even when the host
@@ -969,10 +923,9 @@ export const selectBaseStyles = `
   }
 }
 
-/* Custom scrollbar styles */
 ${customScrollbarStyles}
 
-/* ===== FLAVOR VARIANTS (set --select-accent*, consumed above) ===== */
+/* Flavor variants set --select-accent*, consumed above */
 ${FLAVORS.filter((f) => f !== "neutral").map((f) => selectFlavor(f)).join("")}
 `;
 

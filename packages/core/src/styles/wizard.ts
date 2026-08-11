@@ -1,32 +1,15 @@
 /**
  * Wizard Component Styles
  *
- * CSS Parts (for styling via ::part):
- * - indicators-wrapper: The header containing step indicators
- * - progress-line: The background progress track
- * - step-circle: Individual step circle indicators
- * - panels-container: The content viewport
- *
- * Theming: four accent-alias knobs (one per state), four surface knobs
- * (container chrome), and a small set of geometry/motion overrides.
- *
- * Per-state circles read their colors directly from the matching accent
- * variable — no per-state `-bg` indirection. Override one of:
- *   --ty-wizard-active-accent     (default: --ty-color-primary)
- *   --ty-wizard-completed-accent  (default: --ty-color-success)
- *   --ty-wizard-error-accent      (default: --ty-color-danger)
- *   --ty-wizard-pending-accent    (default: --ty-color-neutral)
- *
- * For per-shade fine control, override the brand-layer's flavor seeds
- * (--ty-color-primary, --ty-color-success-strong, etc.) — they cascade
- * through here.
+ * CSS Parts (::part): indicators-wrapper, progress-line, step-circle,
+ * panels-container. Theming knobs are declared on :host below; per-state
+ * circles read the matching accent var directly (no `-bg` indirection), and
+ * the brand-layer flavor seeds cascade through for per-shade control.
  */
 
 export const wizardStyles = `
-/* ============================================================================
-   Theming Tokens — see file header for the override surface.
-   Every default chains back to the brand layer / global scale tokens.
-   ============================================================================ */
+/* Theming tokens — every default chains back to the brand layer / global
+   scale tokens. */
 
 :host {
   display: block;
@@ -49,12 +32,10 @@ export const wizardStyles = `
   --ty-wizard-radius: var(--ty-radius-lg, 12px);
   --ty-wizard-shadow: var(--ty-shadow-md, 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1));
 
-  /* Header strip */
   --ty-wizard-header-bg:      var(--ty-surface-content);
   --ty-wizard-header-border:  var(--ty-border-soft, var(--ty-border));
   --ty-wizard-header-padding: 24px 24px 16px;
 
-  /* Progress line */
   --ty-wizard-progress-track:  var(--ty-border);
   --ty-wizard-progress-fill:   var(--ty-wizard-completed-accent);
   --ty-wizard-progress-height: 2px;
@@ -63,14 +44,11 @@ export const wizardStyles = `
   --ty-wizard-transition-duration: var(--ty-transition-duration, 300ms);
   --ty-wizard-transition-easing:   var(--ty-transition-easing, ease-in-out);
 
-  /* Circle geometry */
   --ty-wizard-circle-size:         32px;
   --ty-wizard-circle-border-width: 2px;
 
-  /* Panels viewport */
   --ty-wizard-panels-bg: var(--ty-surface-elevated);
 
-  /* Focus */
   --ty-wizard-focus-outline: var(--ty-wizard-active-accent);
 }
 
@@ -88,10 +66,6 @@ export const wizardStyles = `
   overflow: hidden;
 }
 
-/* ===================================== */
-/* Step Indicators Wrapper               */
-/* ===================================== */
-
 .step-indicators-wrapper {
   display: flex;
   flex-direction: column;
@@ -102,10 +76,7 @@ export const wizardStyles = `
   background: var(--ty-wizard-header-bg);
 }
 
-/* ===================================== */
-/* Progress Line (behind step circles)   */
-/* ===================================== */
-
+/* Progress line, behind the step circles */
 .progress-line {
   position: absolute;
   /*
@@ -133,19 +104,11 @@ export const wizardStyles = `
   will-change: width;
 }
 
-/* ===================================== */
-/* Step Indicators Container             */
-/* ===================================== */
-
 .step-indicators {
   display: flex;
   align-items: flex-start;
   position: relative;
 }
-
-/* ===================================== */
-/* Individual Step Indicator             */
-/* ===================================== */
 
 .step-indicator {
   display: flex;
@@ -173,10 +136,6 @@ export const wizardStyles = `
   outline-offset: 4px;
   border-radius: 50%;
 }
-
-/* ===================================== */
-/* Step Circle                           */
-/* ===================================== */
 
 .step-circle {
   width: var(--ty-wizard-circle-size);
@@ -232,20 +191,12 @@ export const wizardStyles = `
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-error-accent) 12%, transparent);
 }
 
-/* ===================================== */
-/* Step Text Container                   */
-/* ===================================== */
-
 .step-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
   align-items: center;
 }
-
-/* ===================================== */
-/* Step Label                            */
-/* ===================================== */
 
 .step-label {
   font-size: var(--ty-font-sm, 14px);
@@ -262,10 +213,6 @@ export const wizardStyles = `
   color: var(--ty-color-neutral);
 }
 
-/* ===================================== */
-/* Step Description                      */
-/* ===================================== */
-
 .step-description {
   font-size: var(--ty-font-xs, 12px);
   font-weight: var(--ty-font-normal, 400);
@@ -279,10 +226,7 @@ export const wizardStyles = `
   color: var(--ty-color-neutral-bold);
 }
 
-/* ===================================== */
-/* Custom Indicator Content via Slots    */
-/* ===================================== */
-
+/* Custom indicator content via slots */
 ::slotted([slot^="indicator-"]) {
   display: flex;
   align-items: center;
@@ -290,10 +234,6 @@ export const wizardStyles = `
   width: 100%;
   height: 100%;
 }
-
-/* ===================================== */
-/* Panels Viewport                       */
-/* ===================================== */
 
 .panels-viewport {
   position: relative;
@@ -303,10 +243,7 @@ export const wizardStyles = `
   background: var(--ty-wizard-panels-bg);
 }
 
-/* ===================================== */
-/* Panels Wrapper (slides horizontally)  */
-/* ===================================== */
-
+/* Panels wrapper slides horizontally */
 .panels-wrapper {
   display: flex;
   height: 100%;
@@ -314,19 +251,11 @@ export const wizardStyles = `
   will-change: transform;
 }
 
-/* ===================================== */
-/* Slotted Step Panels                   */
-/* ===================================== */
-
 ::slotted(ty-step) {
   width: var(--ty-wizard-width, 100%);
   height: 100%;
   flex-shrink: 0;
 }
-
-/* ===================================== */
-/* Accessibility & Motion Preferences    */
-/* ===================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .panels-wrapper {

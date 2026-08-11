@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
-// Type definitions for Ty Tabs component
 export interface TyTabsProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Content area width (accepts px or %) */
   width?: string;
@@ -29,7 +28,6 @@ export interface TabChangeDetail {
   previousIndex: number | null;
 }
 
-// React wrapper for ty-tabs web component
 export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
   ({ 
     children, 
@@ -42,7 +40,6 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle change events
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -60,7 +57,6 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
       };
     }, [onChange]);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -71,13 +67,11 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
       }
     }, [ref]);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add string attributes
     if (width) webComponentProps.width = width;
     if (height) webComponentProps.height = height;
     if (active) webComponentProps.active = active;

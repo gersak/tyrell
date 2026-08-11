@@ -1,6 +1,5 @@
 (ns tyrell.layout)
 
-;; Main macro for binding container context
 (defmacro with-container
   "Bind new container dimensions with calculated metadata.
   Merges with existing container context."
@@ -29,9 +28,7 @@
       (my-component))"
   [& body]
   `(do
-     ;; Ensure we're tracking window resize
      (tyrell.layout/ensure-resize-listener!)
-     ;; Use current window dimensions
      (let [{width# :width
             height# :height} @window-size]
        (tyrell.layout/with-container {:width width#
@@ -55,5 +52,4 @@
            height# (.-height size#)]
        (tyrell.layout/with-container {:width width# :height height#}
          ~@body))
-     ;; If no size available, execute body without container binding
      (do ~@body)))

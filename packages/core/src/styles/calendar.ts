@@ -4,10 +4,6 @@
  */
 
 export const calendarStyles = `
-/* ============================================================================
-   Calendar Container
-   ============================================================================ */
-
 .calendar-container {
   display: flex;
   flex-direction: column;
@@ -15,10 +11,6 @@ export const calendarStyles = `
   box-sizing: border-box;
   font-family: system-ui, sans-serif;
 }
-
-/* ============================================================================
-   Responsive Adjustments
-   ============================================================================ */
 
 @media (max-width: 320px) {
   .calendar-container {

@@ -1,18 +1,7 @@
 /**
- * TyInput Web Component
- * PORTED FROM: clj/ty/components/input.cljs
- * Phase D: Complete with debounce feature for input and change events
- * 
- * Enhanced input component with:
- * - Label, error messages, semantic styling
- * - Icon slots (start/end)
- * - Numeric formatting with shadow values
- * - Currency, percent, compact notation
- * - Format-on-blur / raw-on-focus behavior
- * - Debounce (0-5000ms) for input/change events
- * - Immediate event firing on blur (cancels pending debounce)
- * 
- * NOTE: Checkbox functionality is in separate ty-checkbox component
+ * TyInput Web Component - text input with label, error, icon slots and
+ * locale-aware numeric formatting (format-on-blur / raw-on-focus via a parsed
+ * "shadow value"). Debounce 0-5000ms; blur flushes any pending debounced event.
  */
 
 import type { Flavor, Size, InputType, TyInputElement } from '../types/common.js'
@@ -35,48 +24,6 @@ import { REQUIRED_ICON_SVG } from '../utils/icons.js'
 const EYE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`
 const EYE_OFF_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`
 
-/**
- * Ty Input Component (Phase D - Complete with Debounce)
- * 
- * @example
- * ```html
- * <!-- Basic input -->
- * <ty-input label="Email" type="email" placeholder="Enter email" required></ty-input>
- * 
- * <!-- With icons -->
- * <ty-input label="Search">
- *   <ty-icon slot="start" name="search"></ty-icon>
- * </ty-input>
- * 
- * <!-- With debounce (500ms) -->
- * <ty-input
- *   label="Search"
- *   debounce="500"
- *   placeholder="Type to search...">
- * </ty-input>
- * 
- * <!-- Currency formatting -->
- * <ty-input 
- *   label="Price" 
- *   type="currency" 
- *   currency="USD"
- *   locale="en-US"
- *   value="1234.56">
- * </ty-input>
- * 
- * <!-- Percent formatting -->
- * <ty-input 
- *   label="Tax Rate" 
- *   type="percent"
- *   value="15"
- *   precision="2">
- * </ty-input>
- * ```
- */
-
-/**
- * Internal state interface for TyInput component
- */
 interface InputState {
   // Shadow value - parsed numeric value for formatting
   shadowValue: number | string | null
@@ -104,11 +51,8 @@ interface InputState {
 export class TyInput extends TyComponent<InputState> implements TyInputElement {
   static formAssociated = true
 
-  // ============================================================================
   // PROPERTY CONFIGURATION - Declarative property lifecycle
-  // ============================================================================
   protected static properties = {
-    // Core properties
     type: {
       type: 'string' as const,
       visual: true,
@@ -192,7 +136,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       visual: true,
       default: 'neutral'
     },
-    // Numeric formatting properties
     currency: {
       type: 'string' as const,
       visual: true,
@@ -218,7 +161,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
         return Math.max(0, Math.min(10, Math.floor(num)))
       }
     },
-    // Debounce property
     debounce: {
       type: 'number' as const,
       default: 0,
@@ -234,10 +176,8 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }
   }
 
-  // ============================================================================
   // INTERNAL STATE - Not managed by PropertyManager
   // NOTE: _internals provided by TyComponent base class
-  // ============================================================================
 
   // Shadow value - parsed numeric value for formatting
   private _shadowValue: number | string | null = null
@@ -270,17 +210,12 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   constructor() {
     super()  // TyComponent handles attachInternals() and attachShadow()
 
-    // Apply styles to shadow root
     const shadow = this.shadowRoot!
     ensureStyles(shadow, { css: inputStyles, id: 'ty-input' })
   }
 
-  /**
-   * Called when component connects to DOM
-   * TyComponent already handled pre-connection property capture
-   */
+  /** TyComponent already handled pre-connection property capture. */
   protected onConnect(): void {
-    // Initialize shadow value from current value property
     this.initializeShadowValue()
 
     // NOTE: Event listeners are set up in render() after input element is created
@@ -304,20 +239,14 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     )
   }
 
-  /**
-   * Called when component disconnects from DOM
-   */
   protected onDisconnect(): void {
-    // Clean up event listeners
     this.removeEventListeners()
 
-    // Cleanup locale observer
     if (this._localeObserver) {
       this._localeObserver()
       this._localeObserver = undefined
     }
 
-    // Clear any pending debounce timers
     if (this._inputDebounceTimer !== null) {
       clearTimeout(this._inputDebounceTimer)
       this._inputDebounceTimer = null
@@ -328,14 +257,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }
   }
 
-  // ============================================================================
   // TYCOMPONENT LIFECYCLE HOOKS
-  // ============================================================================
 
-  /**
-   * Handle property changes - called BEFORE render
-   * This replaces the old attributeChangedCallback logic
-   */
+  /** Handle property changes — called BEFORE render. */
   protected onPropertiesChanged(changes: PropertyChange[]): void {
     for (const { name, newValue } of changes) {
       switch (name) {
@@ -349,7 +273,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           break
 
         case 'type':
-          // Re-parse shadow value when type changes
           const currentValue = this.getProperty('value') || ''
           this._shadowValue = this.parseShadowValue(currentValue)
           break
@@ -374,18 +297,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }
   }
 
-  /**
-   * Hook: Called when form is reset
-   * Clear shadow value and focus state
-   */
   protected onFormReset(): void {
-    // Reset shadow value to default (empty)
     this._shadowValue = null
 
-    // Reset focus state
     this._isFocused = false
 
-    // Clear any pending debounce timers
     if (this._inputDebounceTimer !== null) {
       clearTimeout(this._inputDebounceTimer)
       this._inputDebounceTimer = null
@@ -406,28 +322,20 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     return formValue
   }
 
-  /**
-   * Initialize shadow value from the initial value attribute
-   */
   private initializeShadowValue(): void {
     const currentValue = this.getProperty('value')
     if (currentValue) {
       this._shadowValue = this.parseShadowValue(currentValue)
-      // Update form value
       this._internals.setFormValue(
         this._shadowValue !== null ? String(this._shadowValue) : null
       )
     }
   }
 
-  /**
-   * Parse a string value to the appropriate shadow value type
-   */
   private parseShadowValue(value: string): number | string | null {
     // Defensive check: ensure value is actually a string before calling .trim()
     if (!value || typeof value !== 'string' || value.trim() === '') return null
 
-    // For numeric types, parse to number
     if (shouldFormatType(this.type)) {
       const parsed = parseNumericValue(value)
       if (parsed !== null && this.precision === 0) {
@@ -436,13 +344,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       return parsed
     }
 
-    // For other types, keep as string
     return value
   }
 
-  /**
-   * Check if current input should format numbers
-   */
   private shouldFormat(): boolean {
     return shouldFormatType(this.type) &&
       !this._isFocused &&
@@ -450,9 +354,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       typeof this._shadowValue === 'number'
   }
 
-  /**
-   * Get the format configuration for current input
-   */
   private getFormatConfig(): FormatConfig {
     return {
       type: this.type as 'number' | 'currency' | 'percent' | 'compact',
@@ -462,15 +363,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }
   }
 
-  /**
-   * Get the display value (formatted or raw)
-   */
   private getDisplayValue(): string {
     if (this.shouldFormat()) {
       let valueToFormat = this._shadowValue as number
 
       // For percent: divide by 100 (user enters 15, displays as 15%)
-      // This matches ClojureScript behavior
       if (this.type === 'percent') {
         valueToFormat = valueToFormat / 100
       }
@@ -481,12 +378,8 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     return this._shadowValue !== null ? String(this._shadowValue) : ''
   }
 
-  // ============================================================================
-  // PROPERTY ACCESSORS - Simplified with TyComponent
-  // NOTE: validateFlavor removed - now handled by property configuration
-  // ============================================================================
+  // PROPERTY ACCESSORS
 
-  // Core properties - simple getProperty/setProperty pattern
   get type(): InputType { return this.getProperty('type') }
   set type(v: InputType) { this.setProperty('type', v) }
 
@@ -520,7 +413,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   get flavor(): Flavor { return this.getProperty('flavor') as Flavor }
   set flavor(v: Flavor) { this.setProperty('flavor', v) }
 
-  // Numeric formatting properties
   get currency(): string { return this.getProperty('currency') }
   set currency(v: string) { this.setProperty('currency', v) }
 
@@ -533,18 +425,13 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   get precision(): number | undefined { return this.getProperty('precision') }
   set precision(v: number | string | undefined) { this.setProperty('precision', v) }
 
-  // Debounce property
   get debounce(): number { return this.getProperty('debounce') }
   set debounce(v: number | string) { this.setProperty('debounce', v) }
 
-  // Form property
   get form(): HTMLFormElement | null {
     return this._internals.form
   }
 
-  /**
-   * Build CSS class list for input wrapper
-   */
   private buildClassList(): string {
     const classes: string[] = [this.size]
 
@@ -555,9 +442,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     return classes.join(' ')
   }
 
-  /**
-   * Dispatch input event (helper method for debouncing)
-   */
   private dispatchInputEvent(rawValue: string, originalEvent: Event): void {
     this.dispatchEvent(new CustomEvent('input', {
       detail: {
@@ -571,9 +455,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }))
   }
 
-  /**
-   * Dispatch change event (helper method for debouncing)
-   */
   private dispatchChangeEvent(rawValue: string, originalEvent: Event): void {
     this.dispatchEvent(new CustomEvent('change', {
       detail: {
@@ -587,9 +468,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }))
   }
 
-  /**
-   * Remove event listeners for cleanup
-   */
   private removeEventListeners(): void {
     if (!this._listenersSetup) return
 
@@ -599,7 +477,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     const inputEl = shadow.querySelector('input')
     if (!inputEl) return
 
-    // Remove all event listeners using stored handler references
     if (this._inputHandler) {
       inputEl.removeEventListener('input', this._inputHandler)
       this._inputHandler = null
@@ -623,10 +500,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     this._listenersSetup = false
   }
 
-  /**
- * Setup event listeners for input element
- * IMPORTANT: Only called ONCE, not on every render (like ClojureScript)
- */
+  /** IMPORTANT: Only called ONCE, not on every render. */
   private setupEventListeners(): void {
     if (this._listenersSetup) {
       return // Already setup
@@ -642,8 +516,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     }
 
 
-    // Create and store handler references for cleanup
-
     // Input event - update shadow value and form (with debounce support)
     this._inputHandler = (e: Event) => {
 
@@ -654,21 +526,17 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       const target = e.target as HTMLInputElement
       const rawValue = target.value
 
-      // Parse to shadow value
       this._shadowValue = this.parseShadowValue(rawValue)
 
-      // Update form value with shadow value
       this._internals.setFormValue(
         this._shadowValue !== null ? String(this._shadowValue) : null
       )
       this.updateValidity()
 
-      // Clear existing timer
       if (this._inputDebounceTimer !== null) {
         clearTimeout(this._inputDebounceTimer)
       }
 
-      // If debounce is set, debounce the event
       if (this.debounce > 0) {
         this._inputDebounceTimer = window.setTimeout(() => {
           // Use current value, not the captured rawValue
@@ -676,7 +544,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           this._inputDebounceTimer = null
         }, this.debounce)
       } else {
-        // Fire immediately if no debounce
         this.dispatchInputEvent(rawValue, e)
       }
     }
@@ -690,21 +557,17 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       const target = e.target as HTMLInputElement
       const rawValue = target.value
 
-      // Parse to shadow value
       this._shadowValue = this.parseShadowValue(rawValue)
 
-      // Update form value
       this._internals.setFormValue(
         this._shadowValue !== null ? String(this._shadowValue) : null
       )
       this.updateValidity()
 
-      // Clear existing timer
       if (this._changeDebounceTimer !== null) {
         clearTimeout(this._changeDebounceTimer)
       }
 
-      // If debounce is set, debounce the event
       if (this.debounce > 0) {
         this._changeDebounceTimer = window.setTimeout(() => {
           // Use current value, not the captured rawValue
@@ -712,7 +575,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           this._changeDebounceTimer = null
         }, this.debounce)
       } else {
-        // Fire immediately if no debounce
         this.dispatchChangeEvent(rawValue, e)
       }
     }
@@ -768,7 +630,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       }))
     }
 
-    // Add event listeners
     inputEl.addEventListener('input', this._inputHandler)
     inputEl.addEventListener('change', this._changeHandler)
     inputEl.addEventListener('focus', this._focusHandler)
@@ -777,11 +638,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     this._listenersSetup = true
   }
 
-  /**
-   * Render the input component with wrapper and slots
-   * Phase C: Uses getDisplayValue() for formatted output
-   * 
-   */
+  /** Render the input component with wrapper and slots. */
   render(): void {
 
     const shadow = this.shadowRoot!
@@ -803,10 +660,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       : this.type === 'url' ? 'url'
       : undefined
 
-    // Get display value (formatted or raw based on focus)
     const displayValue = this.getDisplayValue()
 
-    // If input exists, just update properties (like ClojureScript does)
+    // If input exists, just update properties
     if (existingInput && existingWrapper) {
 
       existingInput.type = inputType
@@ -816,7 +672,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       if (inputMode) existingInput.inputMode = inputMode
       else existingInput.removeAttribute('inputmode')
 
-      // Update wrapper classes
       existingWrapper.className = `input-wrapper ${classes}`
 
       // Set disabled property AND manage attribute
@@ -841,10 +696,8 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       else existingInput.removeAttribute('aria-label')
 
       // ===== BUG FIX: Dynamic label creation =====
-      // Update or CREATE label if needed
       if (this.label) {
         if (existingLabel) {
-          // Label exists, just update it
           existingLabel.innerHTML = `${this.label}${this.required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ''}`
             ; (existingLabel as HTMLElement).style.display = 'flex'
         } else {
@@ -860,11 +713,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           }
         }
       } else if (existingLabel) {
-        // No label text, hide existing label
         ; (existingLabel as HTMLElement).style.display = 'none'
       }
 
-      // Update error message
       if (this.error) {
         if (existingError) {
           existingError.textContent = this.error
@@ -879,7 +730,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       }
     } else {
 
-      // Create initial structure with wrapper and slots
       const labelHtml = this.label ? `
           <label class="ty-field-label">
             ${this.label}
@@ -914,7 +764,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           </div>
         `
 
-      // Set boolean properties after creating element
       const inputEl = shadow.querySelector('input')!
       inputEl.disabled = this.disabled
       inputEl.required = this.required
@@ -977,7 +826,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   }
 }
 
-// Register the custom element
 if (!customElements.get('ty-input')) {
   customElements.define('ty-input', TyInput)
 }

@@ -8,7 +8,6 @@
    (component-header "ty-resize-observer"
                      "Self-observing element that tracks its own dimensions in a global registry with debounce support. Used internally for responsive layouts — subscribe via the JS module API, not DOM events.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -43,11 +42,9 @@
        [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :white-space "nowrap"}} "getAllSizes()"]
        [:span.ty-text- {:style {:font-size "0.8125rem"}} "Returns all registered sizes as an object — useful for debugging"]]]]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic query
       [:div.ty-content.rounded-lg.p-5
        (section-label "One-Time Size Query")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -57,7 +54,6 @@
 const size = getSize('my-container');
 console.log(size); // { width: 480, height: 320 }" "javascript")]
 
-      ;; Reactive subscription
       [:div.ty-content.rounded-lg.p-5
        (section-label "Reactive Subscription")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -78,7 +74,6 @@ const unsubscribe = onResize('sidebar', ({ width, height }) => {
 // unsubscribe();
 </script>" "javascript")]
 
-      ;; Debounce
       [:div.ty-content.rounded-lg.p-5
        (section-label "Debounced for Expensive Operations")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -96,7 +91,6 @@ onResize('chart-area', ({ width, height }) => {
 });
 </script>" "javascript")]
 
-      ;; Global window API
       [:div.ty-content.rounded-lg.p-5
        (section-label "Window API (CDN / Script Tag)")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -119,11 +113,9 @@ const unsub = window.tyResizeObserver.onResize('panel', (size) => {
 console.log(window.tyResizeObserver.getAllSizes());
 </script>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Responsive container query
       [:div.ty-content.rounded-lg.p-5
        (section-label "Container-Based Responsive Layout")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -143,7 +135,6 @@ onResize('data-grid', ({ width }) => {
 });
 </script>" "javascript")]
 
-      ;; ClojureScript
       [:div.ty-content.rounded-lg.p-5
        (section-label "ClojureScript / Replicant")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -165,7 +156,6 @@ onResize('data-grid', ({ width }) => {
                           (set! (.-_unsub el) nil)))}
  [:div ...panel content...]]")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

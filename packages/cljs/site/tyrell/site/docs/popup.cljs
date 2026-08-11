@@ -8,7 +8,6 @@
    (component-header "ty-popup"
                      "Click-triggered popup with smart edge-aware positioning, scroll locking, ESC/backdrop close, and manual control mode. Nest ty-popup inside any trigger element — clicking the trigger opens the popup.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -60,11 +59,9 @@
         :payload "{}"
         :when-fired "Fires when the popup closes"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -84,7 +81,6 @@
   </ty-popup>
 </ty-button>")]
 
-      ;; Placement
       [:div.ty-content.rounded-lg.p-5
        (section-label "Placement")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -112,7 +108,6 @@
 <ty-popup placement=\"left\">...</ty-popup>
 <ty-popup placement=\"right\">...</ty-popup>")]
 
-      ;; Action menu
       [:div.ty-content.rounded-lg.p-5
        (section-label "Action Menu")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -143,7 +138,6 @@
   </ty-popup>
 </ty-button>")]
 
-      ;; Confirm dialog
       [:div.ty-content.rounded-lg.p-5
        (section-label "Confirm Dialog")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -178,11 +172,9 @@
   </ty-popup>
 </ty-button>")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Manual control
       [:div.ty-content.rounded-lg.p-5
        (section-label "Manual Control")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -198,7 +190,6 @@ popup.togglePopup();
 popup.addEventListener('open', () => console.log('opened'));
 popup.addEventListener('close', () => console.log('closed'));" "javascript")]
 
-      ;; Framework binding
       [:div.ty-content.rounded-lg.p-5
        (section-label "Framework Binding")
        (code-block ";; ClojureScript / Replicant
@@ -213,7 +204,6 @@ popup.addEventListener('close', () => console.log('closed'));" "javascript")]
   <div class=\"ty-elevated rounded-lg p-5\">...</div>
 </TyPopup>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

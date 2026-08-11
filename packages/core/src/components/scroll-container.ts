@@ -1,15 +1,6 @@
 /**
- * TyScrollContainer Web Component
- *
- * A scroll container with shadow indicators and an optional custom-rendered scrollbar.
- * Uses the CustomScrollbar utility internally.
- *
- * @example Custom scrollbar
- * ```html
- * <ty-scroll-container max-height="300px" custom-scrollbar>
- *   <div>Long content...</div>
- * </ty-scroll-container>
- * ```
+ * TyScrollContainer Web Component - scroll wrapper with edge shadow indicators
+ * and an optional custom-rendered scrollbar (CustomScrollbar utility).
  */
 
 import { ensureStyles } from '../utils/styles.js'
@@ -239,7 +230,6 @@ export class TyScrollContainer extends HTMLElement {
       horizontal: this.overflowX
     })
 
-    // Append track elements to shadow DOM
     const shadowRoot = this.shadowRoot!
     if (this._scrollbar.trackY) shadowRoot.appendChild(this._scrollbar.trackY)
     if (this._scrollbar.trackX) shadowRoot.appendChild(this._scrollbar.trackX)
@@ -247,7 +237,6 @@ export class TyScrollContainer extends HTMLElement {
 
   private _destroyScrollbar(): void {
     if (this._scrollbar) {
-      // Remove track elements from DOM
       this._scrollbar.trackY?.remove()
       this._scrollbar.trackX?.remove()
       this._scrollbar.destroy()
@@ -379,5 +368,4 @@ export class TyScrollContainer extends HTMLElement {
   }
 }
 
-// Register custom element
 customElements.define('ty-scroll-container', TyScrollContainer)

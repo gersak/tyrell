@@ -3,7 +3,6 @@
   Provides thread-local container dimensions and responsive utilities."
   (:require-macros [tyrell.layout :refer [with-container with-window with-resize-observer]]))
 
-;; Core dynamic var for container dimensions
 (def ^:dynamic *container*
   {:width nil
    :height nil
@@ -23,15 +22,12 @@
 
 (def breakpoint-order [:xs :sm :md :lg :xl :2xl])
 
-;; Window dimensions atom
 (defonce window-size
   (atom {:width (.-innerWidth js/window)
          :height (.-innerHeight js/window)}))
 
-;; Track if we're already listening to resize events
 (defonce ^:private resize-listener-registered? (volatile! false))
 
-;; Accessor functions
 (defn current-container
   "Get current container context"
   []
@@ -62,7 +58,6 @@
   []
   (:density *container*))
 
-;; Breakpoint utilities
 (defn width->breakpoint
   "Determine breakpoint from width"
   [width]
@@ -105,7 +100,6 @@
   (and (breakpoint>= min-bp)
        (breakpoint<= max-bp)))
 
-;; Orientation utilities
 (defn portrait? []
   (= :portrait (:orientation *container*)))
 
@@ -115,14 +109,12 @@
 (defn square? []
   (= :square (:orientation *container*)))
 
-;; Density utilities
 (defn compact? []
   (= :compact (:density *container*)))
 
 (defn comfortable? []
   (= :comfortable (:density *container*)))
 
-;; Calculation utilities
 (defn calculate-orientation
   "Calculate orientation from width and height"
   [width height]
@@ -140,7 +132,6 @@
     (< width 1280) :normal ; Tablet/small desktop
     :else :comfortable)) ; Large desktop
 
-;; Main macro for binding container context
 (defmacro with-container
   "Bind new container dimensions with calculated metadata.
   Merges with existing container context."
@@ -161,7 +152,6 @@
                                                 (:density *container*))})]
        ~@body)))
 
-;; Window tracking
 (defn- update-window-size! []
   (reset! window-size {:width (.-innerWidth js/window)
                        :height (.-innerHeight js/window)}))
@@ -177,7 +167,6 @@
     (.removeEventListener js/window "resize" update-window-size!)
     (vreset! resize-listener-registered? false)))
 
-;; Responsive value helpers
 (defn responsive-value
   "Get value based on current breakpoint.
   Values should be a map of breakpoint to value.
@@ -198,7 +187,6 @@
   [classes]
   (responsive-value classes))
 
-;; Container percentage helpers
 (defn container%
   "Calculate percentage of container dimension"
   [percentage dimension]
@@ -215,7 +203,6 @@
   [percentage]
   (container% percentage :height))
 
-;; Aspect ratio helpers
 (defn aspect-ratio
   "Get current aspect ratio"
   []
@@ -237,7 +224,6 @@
       {:width w
        :height (/ w target-ratio)})))
 
-;; Grid helpers
 (defn grid-columns
   "Get number of grid columns based on breakpoint"
   ([]
@@ -261,7 +247,6 @@
   ([gap-map]
    (responsive-value gap-map)))
 
-;; Element size observation
 (defn observe-element!
   "Observe element size changes. Returns cleanup function."
   [element on-resize]
@@ -275,26 +260,21 @@
       (.observe observer element)
       #(.disconnect observer))))
 
-;; Scrollbar width detection
 (defn get-scrollbar-width
   "Detect browser scrollbar width"
   []
   (let [outer (js/document.createElement "div")
         inner (js/document.createElement "div")]
-    ;; Setup outer
     (set! (.-visibility (.-style outer)) "hidden")
     (set! (.-overflow (.-style outer)) "scroll")
     (.appendChild js/document.body outer)
 
-    ;; Setup inner
     (.appendChild outer inner)
 
-    ;; Calculate
     (let [scrollbar-width (- (.-offsetWidth outer) (.-offsetWidth inner))]
       (.removeChild js/document.body outer)
       scrollbar-width)))
 
-;; Debug helpers
 (defn debug-container
   "Print current container context"
   []

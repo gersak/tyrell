@@ -74,8 +74,6 @@ export const checkboxStyles = `
   /* Let the container handle the click */
 }
 
-/* ===== SIZES ===== */
-
 .checkbox-container svg {
   width: 16px;
   height: 16px;
@@ -101,10 +99,8 @@ export const checkboxStyles = `
   height: 24px;
 }
 
-/* ===== SEMANTIC FLAVORS (set --checkbox-color[-off], consumed above) ===== */
+/* Semantic flavors set --checkbox-color[-off], consumed above */
 ${FLAVORS.map((f) => checkboxFlavor(f)).join("")}
-
-/* ===== STATES ===== */
 
 /* Clean tick: no box outline, just the checkmark. Inactive = faint tick. */
 .checkbox-container:not([aria-checked="true"]) {
@@ -129,7 +125,6 @@ ${FLAVORS.map((f) => checkboxFlavor(f)).join("")}
   opacity: 0.2;
 }
 
-/* Error state */
 .checkbox-container.error .checkbox-icon {
   color: var(--ty-color-danger);
 }

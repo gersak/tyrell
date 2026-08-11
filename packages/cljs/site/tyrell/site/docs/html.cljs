@@ -3,9 +3,7 @@
   (:require [tyrell.router :as router]
             [tyrell.site.docs.common :as common]))
 
-;; =============================================================================
 ;; Local layout helpers — parallel to docs/js_react.cljs and docs/clojurescript.cljs.
-;; =============================================================================
 
 (defn- feature-pill
   [{:keys [icon label]}]
@@ -93,9 +91,7 @@
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]])])
 
-;; =============================================================================
 ;; Section 1 — Hero
-;; =============================================================================
 
 (defn- hero []
   [:div.text-center.mb-12
@@ -124,9 +120,7 @@
     (brand-glyph {:icon "terminal" :title "Any backend that emits HTML"})
     (brand-glyph {:icon "github"   :title "Open source"})]])
 
-;; =============================================================================
 ;; Section 2 — Setup card (the install card equivalent — "two CDN tags")
-;; =============================================================================
 
 (defn- setup-card []
   [:div.ty-elevated.rounded-2xl.relative.overflow-hidden
@@ -225,9 +219,7 @@
 </form>"
         "html")]]]]])
 
-;; =============================================================================
 ;; Section 3 — Icons: two paths
-;; =============================================================================
 
 (defn- two-rule-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -313,9 +305,7 @@
 
    (two-rule-callout)])
 
-;; =============================================================================
 ;; Section 4 — Your stack (compact stack cards)
-;; =============================================================================
 
 (defn- frameworks []
   [:div
@@ -402,9 +392,7 @@
       :cta "Open component reference"
       :on-click #(js/window.open "https://github.com/gersak/ty/blob/master/guides/TY_GUIDE.md" "_blank")})]])
 
-;; =============================================================================
 ;; Section 5 — Slot-mode deep-dive (full-width hero card with live preview)
-;; =============================================================================
 
 (defn- slot-mode-deep-dive []
   [:div {:id "slot-mode-deep-dive"}
@@ -476,7 +464,6 @@
                     :height "6px"}}]
           [:span.text-xs.ty-text--.font-medium.tracking-wide.uppercase "live"]]]
         [:div.flex.flex-col.gap-3
-         ;; Slot-mode demo using a tiny inline heart SVG
          [:div.flex.items-center.gap-3
           [:ty-icon {:size "lg"
                      :class "ty-text-danger"}
@@ -523,9 +510,7 @@
 </ty-button>"
          "html")]]]]]])
 
-;; =============================================================================
 ;; Section 6 — Gotchas
-;; =============================================================================
 
 (defn- gotcha-card
   [{:keys [eyebrow icon title body code code-lang]}]
@@ -599,9 +584,7 @@ def inline_svg(path):
 {{ inline_svg('save.svg') | safe }}"
       :code-lang "python"})]])
 
-;; =============================================================================
 ;; Section 7 — Bundle size mental model
-;; =============================================================================
 
 (defn- bundle-size-callout []
   [:div.ty-elevated.rounded-xl.p-5
@@ -628,10 +611,6 @@ def inline_svg(path):
        "See Getting Started for the full picture"]
       [:ty-icon {:name "arrow-right"
                  :size "xs"}]]]]])
-
-;; =============================================================================
-;; Main view
-;; =============================================================================
 
 (defn view
   "HTML / Server-side guide — substrate for HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP."

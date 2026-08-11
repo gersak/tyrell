@@ -13,11 +13,9 @@
    that consumes the resulting variables (the (c \"...\") helper, etc.)."
   (:require [tyrell.css :as css]))
 
-;; -----------------------------------------------------------------------------
 ;; Inline <code> in prose — styles every <code> that's not a hljs code block.
 ;; Variables live on :root with a .dark override so the page's existing theme
 ;; toggle (which adds/removes .dark on <html>) drives the swap automatically.
-;; -----------------------------------------------------------------------------
 
 (def ^:private inline-code-css
   "

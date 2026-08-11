@@ -1,8 +1,4 @@
-/**
- * Input Component Styles
- * PORTED FROM: clj/ty/components/input.css
- * Phase A: Regular input styles only (no checkbox, no numeric formatting)
- */
+/** Input Component Styles */
 
 import { FLAVORS } from "../types/common.js";
 
@@ -74,8 +70,6 @@ export const inputStyles = `
   box-sizing: border-box;
 }
 
-/* ===== LABEL STYLING ===== */
-
 .ty-field-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
@@ -88,7 +82,6 @@ export const inputStyles = `
   align-items: center;
 }
 
-/* Required indicator - using SVG icon */
 .required-icon {
   display: inline-flex;
   align-items: center;
@@ -104,12 +97,10 @@ export const inputStyles = `
   height: 100%;
 }
 
-/* ===== INPUT WRAPPER WITH SLOTS ===== */
-
 .input-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* No gap by default */
+  gap: 0.5rem;
   width: 100%;
   box-sizing: border-box;
   border: 1px solid var(--input-accent, var(--input-border, var(--ty-input-border)));
@@ -117,7 +108,6 @@ export const inputStyles = `
   background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
   transition: var(--ty-local-transition, all 0.15s ease-in-out);
 
-  /* Default size (md) */
   min-height: var(--ty-size-md);
   padding: 0 12px;
 }
@@ -146,9 +136,6 @@ export const inputStyles = `
   border-color: var(--input-disabled-border, var(--ty-input-disabled-border));
 }
 
-/* ===== SLOT STYLING ===== */
-
-/* Style slotted content directly (no wrappers needed) */
 ::slotted([slot="start"]),
 ::slotted([slot="end"]) {
   display: flex;
@@ -186,14 +173,11 @@ export const inputStyles = `
   height: 1rem;
 }
 
-/* Icon sizing for slotted icons */
 ::slotted(ty-icon) {
   width: 1em;
   height: 1em;
   flex-shrink: 0;
 }
-
-/* ===== ERROR MESSAGE STYLING ===== */
 
 .error-message {
   font-size: var(--ty-font-xs);
@@ -204,7 +188,6 @@ export const inputStyles = `
   padding-left: 12px;
 }
 
-/* Error state for wrapper */
 .input-wrapper.error {
   border-color: var(--ty-color-danger);
   background: var(--ty-bg-danger-soft);
@@ -215,10 +198,8 @@ export const inputStyles = `
   box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
-/* ===== INPUT BASE STYLING ===== */
-
 input {
-  /* Reset and base styles — Linear-paired typography */
+  /* Linear-paired typography */
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
@@ -246,21 +227,16 @@ input[type="number"] {
   -moz-appearance: textfield;
 }
 
-/* Disabled state */
 input:disabled {
   cursor: not-allowed;
   color: var(--input-disabled-color, var(--ty-input-disabled-color));
 }
 
-/* Placeholder styling */
 input::placeholder {
   color: var(--input-placeholder, var(--ty-input-placeholder));
   font-weight: 400;
 }
 
-/* ===== SIZE MODIFIERS ===== */
-
-/* Small */
 .input-wrapper.sm {
   min-height: var(--ty-size-sm);
   padding: 0 10px;
@@ -273,7 +249,6 @@ input::placeholder {
   letter-spacing: var(--ty-tracking-sm);
 }
 
-/* Medium (default) */
 .input-wrapper.md {
   min-height: var(--ty-size-md);
   padding: 0 12px;
@@ -286,7 +261,6 @@ input::placeholder {
   letter-spacing: var(--ty-tracking-sm);
 }
 
-/* Large */
 .input-wrapper.lg {
   min-height: var(--ty-size-lg);
   padding: 0 14px;
@@ -299,30 +273,24 @@ input::placeholder {
   letter-spacing: var(--ty-tracking-base);
 }
 
-/* ===== SEMANTIC FLAVOR MODIFIERS (set --input-accent*, consumed above) ===== */
+/* Semantic flavor modifiers set --input-accent*, consumed above */
 ${FLAVORS.filter((f) => f !== "neutral").map((f) => inputFlavor(f)).join("")}
-
-/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
 
 input:focus-visible {
   outline: none;
 }
 
-/* High contrast mode support */
 @media (prefers-contrast: high) {
   .input-wrapper {
     border-width: 2px;
   }
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper {
     transition: none;
   }
 }
-
-/* ===== RESPONSIVE BEHAVIOR ===== */
 
 @media (max-width: 640px) {
   .input-wrapper.lg {

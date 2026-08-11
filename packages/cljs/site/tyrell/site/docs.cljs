@@ -27,13 +27,10 @@
    [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.docs.tooltip :as tooltip-docs]
    [tyrell.site.docs.wizard :as wizard-docs]
-    ;; Import component doc namespaces
    [tyrell.site.views.getting-started :as getting-started]
    [tyrell.site.views.ty-styles :as ty-styles]))
 
-;; ============================================================================
 ;; Component picker previews
-;; ============================================================================
 ;; Each preview is a plain hiccup vector rendered inside a bento cell in the
 ;; component picker. Live ty- elements are used wherever they render cleanly
 ;; at rest; styled mocks are used for components that have no at-rest form
@@ -46,7 +43,6 @@
 (def ^:private button-preview
   [:div.flex.flex-col.gap-3
    {:style {:width "260px"}}
-   ;; Labeled buttons with icons
    [:div.flex.flex-wrap.items-center.gap-2
     [:ty-button {:flavor "primary"
                  :size "sm"}
@@ -340,7 +336,6 @@
 (def ^:private wizard-preview
   [:div.flex.items-center.gap-1
    {:style {:width "260px"}}
-   ;; Step 1 done
    [:div.flex.flex-col.items-center.gap-1
     [:div.flex.items-center.justify-center.rounded-full.ty-bg-success
      {:style {:width "26px"
@@ -350,7 +345,6 @@
                 :class "ty-text-success++"}]]
     [:span.text-xs.ty-text- "Plan"]]
    [:div.flex-1.h-px.ty-bg-success {:style {:margin-bottom "16px"}}]
-   ;; Step 2 active
    [:div.flex.flex-col.items-center.gap-1
     [:div.flex.items-center.justify-center.rounded-full.ty-bg-primary.text-xs.font-bold
      {:class "ty-text-primary++"
@@ -359,7 +353,6 @@
      "2"]
     [:span.text-xs.ty-text.font-medium "Build"]]
    [:div.flex-1.h-px.ty-bg-neutral- {:style {:margin-bottom "16px"}}]
-   ;; Step 3 pending
    [:div.flex.flex-col.items-center.gap-1
     [:div.flex.items-center.justify-center.rounded-full.text-xs.font-medium.ty-text--
      {:style {:width "26px"
@@ -381,7 +374,6 @@
        {:class (str "ty-bg-" flavor "-")
         :style {:width "60px"
                 :height "100%"}}])]
-   ;; Edge fade indicators
    [:div.absolute.left-0.top-0.bottom-0
     {:style {:width "20px"
              :pointer-events "none"
@@ -399,7 +391,6 @@
    [:div.flex.flex-col.items-center.gap-1
     [:div.text-xs.font-mono.ty-text- "200 × 92"]
     [:div.text-xs.ty-text-- "size tracked"]]
-   ;; Resize corner handle
    [:div.absolute
     {:style {:right "4px"
              :bottom "4px"
@@ -440,10 +431,6 @@
               :class "ty-text-warning"
               :pulse true
               :tempo "slow"}]])
-
-;; ============================================================================
-;; Components
-;; ============================================================================
 
 (def docs-components
   [{:id :tyrell.site.docs/button
@@ -680,9 +667,6 @@
     :tags ["theme" "oklch" "brand" "colors" "playground" "dark mode"]
     :view #(theming-docs/view)}])
 
-;; Define routes with views from separate namespaces
-
-;; Helper to check if current route is a docs route
 (defn in-docs? []
   (router/rendered? :tyrell.site/docs false))
 

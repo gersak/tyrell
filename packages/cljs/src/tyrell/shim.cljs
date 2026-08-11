@@ -6,9 +6,7 @@
             [cljs.reader :as edn]
             [clojure.string :as str]))
 
-;; -----------------------------
 ;; Hot Reload Support
-;; -----------------------------
 
 (defonce ^:private component-registry (atom {}))
 (defonce ^:private component-renderers (atom {}))
@@ -24,10 +22,6 @@
   (when-let [render-fn (get @component-renderers tag-name)]
     (let [instances (get-all-instances tag-name)]
       (.forEach instances render-fn))))
-
-;; -----------------------------
-;; Attribute parsing helpers
-;; -----------------------------
 
 (defn attr
   "Get raw attribute from element."
@@ -69,10 +63,6 @@
   (when-let [v (attr el k)]
     (edn/read-string v)))
 
-;; -----------------------------
-;; Shadow DOM helpers
-;; -----------------------------
-
 (defn ensure-shadow
   ([^js el] (ensure-shadow el "open"))
   ([^js el mode] (shim/ensureShadow el mode)))
@@ -80,10 +70,6 @@
 (defn set-shadow-html!
   [^js el html]
   (shim/setShadowHTML el (or html "")))
-
-;; -----------------------------
-;; Props helpers (property-based API)
-;; -----------------------------
 
 (defn set-props!
   "Batch set props (EDN map). Triggers per-key prop hook."
@@ -106,10 +92,6 @@
         (assoc r (keyword k) (aget p k)))
       {}
       (js/Object.keys p))))
-
-;; -----------------------------
-;; Hooks adapter
-;; -----------------------------
 
 (defn ^:private ->hooks
   "Build hooks object for wc-shim.js from a CLJS map:
@@ -137,10 +119,6 @@
                         :attr (when attr (fn [el n o v] (attr el (keyword n) o v)))
                         :prop (when prop (fn [el k o v] (prop el (keyword k) o v)))}]
     result))
-
-;; -----------------------------
-;; Development helpers
-;; -----------------------------
 
 (defn get-initial-attrs
   "Extract initial-only attributes on first render - React compatible.
@@ -189,8 +167,6 @@
       (js/console.log (str "[Ty] Refreshing: " tag-name))
       (refresh-instances! tag-name))))
 
- ;; Add to shim.cljs - new batching functions
-
 (defn- get-batch-queue [^js el]
   (or (.-tyAttrBatch el)
       (set! (.-tyAttrBatch el) #js {:changes #js {}
@@ -207,15 +183,12 @@
   "Flush both attribute and property batches"
   (let [batch (.-tyUnifiedBatch el)]
     (when batch
-      ;; Flush attributes if any and callback provided
       (when (and batch-attr-fn (seq (:attr-changes batch)))
         (batch-attr-fn el (:attr-changes batch)))
 
-      ;; Flush properties if any and callback provided  
       (when (and batch-prop-fn (seq (:prop-changes batch)))
         (batch-prop-fn el (:prop-changes batch)))
 
-      ;; Clear the batch
       (set! (.-tyUnifiedBatch el) {:attr-changes {}
                                    :prop-changes {}
                                    :scheduled false}))))
@@ -231,9 +204,7 @@
 (defn- flush-attribute-batch! [^js el batch-callback]
   (let [batch (.-tyAttrBatch el)]
     (when (and batch (> (.-length (js/Object.keys (.-changes batch))) 0))
-      ;; Call the batch callback with all changes
       (batch-callback el (->clj (.-changes batch)))
-      ;; Clear the batch
       (set! (.-changes batch) #js {})
       (set! (.-scheduled batch) false))))
 
@@ -244,9 +215,7 @@
       (js/requestAnimationFrame
         #(flush-attribute-batch! el batch-callback)))))
 
-;; -----------------------------
 ;; Public API with Hot Reload Support
-;; -----------------------------
 
 (defn define!
   "Define a Custom Element with batched attribute/property updates by default.
@@ -265,32 +234,26 @@
   [tag opts]
 
   (let [already-defined? (.get js/window.customElements tag)
-        ;; Extract batched callbacks
         batch-attr-fn (:attr opts)
         batch-prop-fn (:prop opts)]
 
-;; Create modified opts with individual hooks that batch
     (let [batched-opts (-> opts
                            (dissoc :attr :prop)
                            (cond->
                              batch-attr-fn
                              (assoc :attr
                                (fn [^js el attr-name old-value new-value]
-                                 ;; Add to attribute batch
                                  (let [batch (get-unified-batch-queue el)]
                                    (set! (.-tyUnifiedBatch el)
                                          (update batch :attr-changes assoc (name attr-name) new-value)))
-                                 ;; Schedule unified batch flush
                                  (schedule-unified-batch-flush! el batch-attr-fn batch-prop-fn)))
 
                              batch-prop-fn
                              (assoc :prop
                                (fn [^js el prop-name old-value new-value]
-                                 ;; Add to property batch
                                  (let [batch (get-unified-batch-queue el)]
                                    (set! (.-tyUnifiedBatch el)
                                          (update batch :prop-changes assoc (name prop-name) new-value)))
-                                 ;; Schedule unified batch flush
                                  (schedule-unified-batch-flush! el batch-attr-fn batch-prop-fn)))))]
 
       (cond
@@ -300,20 +263,15 @@
           (let [constructor (shim/define tag (->hooks batched-opts))]
             ;; Store in registry for hot reload
             (swap! component-registry assoc tag opts)
-            ;; Store render function if connected hook exists
             (when-let [connected (:connected opts)]
               (swap! component-renderers assoc tag connected))
             constructor))
         ;; In development and already defined - update and refresh
         :else
         (do
-          ;; Update registry with new implementation
           (swap! component-registry assoc tag opts)
-          ;; Update render function
           (when-let [connected (:connected opts)]
             (swap! component-renderers assoc tag connected))
-          ;; Refresh all existing instances
           (js/console.log (str "[Ty] Hot reloading component: " tag))
           (refresh-instances! tag)
-          ;; Return the existing constructor
           (.get js/window.customElements tag))))))

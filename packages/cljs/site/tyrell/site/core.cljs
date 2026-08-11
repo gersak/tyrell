@@ -18,9 +18,6 @@
 (goog-define ROUTER_BASE "")
 (goog-define PRODUCTION false)
 
-;; Define site routes
-
-;; Define all routes with their view handlers (like docs system)
 (def site-routes
   [;; Main landing page
    {:id ::landing
@@ -66,22 +63,17 @@
     :name "Sizing Sandbox (hidden)"
     :view sandbox-sizing/view}])
 
-;; Import docs components that are already configured
 (def component-routes docs/docs-components)
 
-;; Import guide components (integration guides)
 (def guide-routes docs/guide-components)
 
 (router/link ::router/root
              (concat
-              ;; Extract route configs from site-routes  
               site-routes
-              ;; Add component routes - change to /components/ prefix
               (map (fn [route]
                      (-> route
                          (update :segment (fn [segment] (str "components/" segment)))))
                    component-routes)
-              ;; Add guide routes - change to /guides/ prefix
               (map (fn [route]
                      (-> route
                          (select-keys [:id :segment :name])
@@ -102,10 +94,6 @@
     (let [raw (js/parseFloat (.getPropertyValue (js/getComputedStyle root) "--ty-theme-transition"))
           ms (if (js/isNaN raw) 450 (* 1000 raw))]
       (js/setTimeout #(.remove (.-classList root) "ty-theme-switching") ms))))
-
-;; ============================================================================
-;; Navigation Section Management
-;; ============================================================================
 
 (defn get-open-section-from-storage
   "Read the open navigation section from localStorage"
@@ -174,17 +162,13 @@
   [section-key items]
   (let [current (get @state :navigation.section/open)
         is-opening? (not= current section-key)]
-    ;; Toggle section state
     (swap! state assoc :navigation.section/open (if is-opening? section-key nil))
     (set-open-section-in-storage! (if is-opening? section-key nil))
 
-    ;; Navigate when opening
     (when (and is-opening? (seq items))
       (let [last-visited (get-last-visited-route section-key)
             target-route (if last-visited
-                           ;; Navigate to last visited if exists
                            (some #(when (= (:route-id %) last-visited) (:route-id %)) items)
-                           ;; Otherwise navigate to first item
                            (:route-id (first items)))]
         (when target-route
           (router/navigate! target-route))))))
@@ -207,10 +191,8 @@
   "Determine which section owns a route"
   [route-id]
   (cond
-    ;; Check if route is in guide-routes (QUICKSTART section)
     (route-in-list? route-id guide-routes) :quickstart
 
-    ;; Check if route is in component-routes (COMPONENTS section)
     (route-in-tree? route-id component-routes) :components
 
     ;; Otherwise nil (Welcome, Landing, Live Examples = collapse all)
@@ -266,7 +248,6 @@
   (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
         current-route (some #(when (router/rendered? (:id %) true) %) all-routes)
         section (when current-route (route->section (:id current-route)))]
-    ;; Set section state (nil will collapse all)
     (when section (swap! state assoc :navigation.section/open section))
     (set-open-section-in-storage! section)))
 
@@ -280,7 +261,6 @@
   "Determine if navigation to target route should trigger scroll to top.
    Returns false for routes with hash fragments (like landing page examples)."
   [target-route-id]
-  ;; Check if the route has a :hash key in its definition
   (let [all-routes (concat site-routes component-routes guide-routes)
         route (some #(when (= (:id %) target-route-id) %) all-routes)]
     (nil? (:hash route))))
@@ -330,7 +310,6 @@
         quickstart-h (or (:quickstart sizes) 40)
         components-h (or (:components sizes) 40)
 
-        ;; Which section is open?
         open-section (get @state :navigation.section/open)
 
         ;; The OTHER section's height (which is collapsed, so just header)
@@ -340,7 +319,6 @@
                           ;; Both closed - show both headers
                           (+ quickstart-h components-h))
 
-        ;; Calculate available height for expanded section
         available (- window-h
                      header-h
                      fixed-nav-h
@@ -385,7 +363,6 @@
     [:div.mb-2
      (when title
        (if collapsible?
-         ;; Collapsible section header (clickable)
          [:button.w-full.px-3.py-2.cursor-pointer.rounded-md.transition-all.duration-150.hover:ty-bg-primary-
           {:on {:click #(toggle-nav-section! section-key items)}}
           [:div.flex.items-center.gap-2
@@ -396,11 +373,9 @@
            [:h3.text-xs.font-medium.tracking-wide
             {:class (if is-open? "ty-text" "ty-text-")}
             (str/lower-case title)]]]
-         ;; Non-collapsible section header (static)
          [:div.px-3.py-2
           [:h3.text-xs.font-medium.ty-text-.tracking-wide (str/lower-case title)]]))
 
-     ;; Children container with collapse animation
      (if collapsible?
        ;; Collapsible children with CSS Grid for smooth height animation
        (let [available-height (calculate-collapsible-height)]
@@ -412,7 +387,6 @@
           [:div.overflow-hidden.transition-opacity.duration-300
            {:class (if is-open? "opacity-100" "opacity-0")
             :style {:min-height 0}}
-           ;; Scrollable content with scroll shadows
            [:ty-scroll-container.mt-2 {:max-height (str (- available-height 8) "px")
                                        :hide-scrollbar true}
             [:div.space-y-1.5
@@ -420,23 +394,18 @@
                (let [has-children? (seq (:children item))]
                  ^{:key (:label item)}
                  [:div
-                  ;; Parent item
                   (nav-item (assoc item :indented? false :section-key section-key))
-                  ;; Children items (indented)
                   (when has-children?
                     [:div.space-y-1.5
                      (for [child (:children item)]
                        ^{:key (:label child)}
                        (nav-item (assoc child :indented? true :section-key section-key)))])]))]]]])
-       ;; Non-collapsible children (always visible)
        [:div.space-y-1.5
         (for [item items]
           (let [has-children? (seq (:children item))]
             ^{:key (:label item)}
             [:div
-             ;; Parent item
              (nav-item (assoc item :indented? false))
-             ;; Children items (indented)
              (when has-children?
                [:div.space-y-1.5
                 (for [child (:children item)]
@@ -529,10 +498,6 @@
       (str/replace #"-+" "-")
       (str/trim)))
 
-;; ============================================================================
-;; Command Palette Search
-;; ============================================================================
-
 (defn fuzzy-match?
   "Check if query fuzzy-matches text (case-insensitive, matches if all chars appear in order)"
   [query text]
@@ -552,7 +517,6 @@
   "Build search index from docs and guide components"
   []
   (concat
-   ;; Guide components
    (for [route guide-routes]
      {:id (:id route)
       :name (:name route)
@@ -561,7 +525,6 @@
       :segment (:segment route)
       :description (:description route)
       :tags (or (:tags route) [])})
-   ;; Docs components (flatten children)
    (mapcat
     (fn [route]
       (let [parent {:id (:id route)
@@ -596,21 +559,13 @@
           desc-lower (str/lower-case (or (:description item) ""))
           tags (:tags item [])]
       (cond
-        ;; Exact name match
         (= q name-lower) 100
-        ;; Name starts with query
         (str/starts-with? name-lower q) 85
-        ;; Name contains query as word
         (str/includes? name-lower q) 70
-        ;; Tag exact match
         (some #(= q (str/lower-case %)) tags) 60
-        ;; Tag starts with query
         (some #(str/starts-with? (str/lower-case %) q) tags) 50
-        ;; Description contains query
         (str/includes? desc-lower q) 40
-        ;; Fuzzy match on name
         (fuzzy-match? q name-lower) 25
-        ;; No match
         :else 0))))
 
 (defn highlight-matches
@@ -620,13 +575,10 @@
     [[:span text]]
     (let [q (str/lower-case query)
           t-lower (str/lower-case text)
-          ;; Find match positions for highlighting
           positions (cond
-                      ;; Substring match - highlight the substring
                       (str/includes? t-lower q)
                       (let [start (str/index-of t-lower q)]
                         (set (range start (+ start (count q)))))
-                      ;; Fuzzy match - highlight matched chars
                       (fuzzy-match? q text)
                       (loop [qi 0 ti 0 pos #{}]
                         (cond
@@ -636,7 +588,6 @@
                           (recur (inc qi) (inc ti) (conj pos ti))
                           :else (recur qi (inc ti) pos)))
                       :else #{})]
-      ;; Build hiccup spans
       (if (empty? positions)
         [[:span text]]
         (loop [i 0 result [] in-match? false current ""]
@@ -668,7 +619,6 @@
                     (filter #(pos? (:score %)))
                     (sort-by :score >)
                     (take 12))]
-    ;; Group by type
     {:guides (filter #(= :guide (:type %)) scored)
      :components (filter #(= :component (:type %)) scored)}))
 
@@ -702,7 +652,6 @@
                :box-shadow "inset 2px 0 0 var(--ty-color-primary)"})
      :on {:click #(select-search-result! result)
           :mouseenter #(swap! state assoc-in [:search :selected-index] idx)}}
-    ;; Icon
     [:div.w-8.h-8.rounded-md.flex.items-center.justify-center.flex-shrink-0
      {:class (case (:type result)
                :guide ["ty-bg-success-" "ty-text-success"]
@@ -710,13 +659,11 @@
                ["ty-bg-neutral-"])}
      [:ty-icon {:name (:icon result)
                 :size "sm"}]]
-    ;; Name, description
     [:div.flex-1.min-w-0
      [:div.font-medium.ty-text.truncate
       (into [:span] (highlight-matches query (:name result)))]
      (when-let [desc (:description result)]
        [:div.text-xs.ty-text-.truncate desc])]
-    ;; Enter hint for selected
     (when (= idx selected-index)
       [:kbd.text-xs.ty-text-.ty-bg-neutral.px-2.py-1.rounded.flex-shrink-0 "↵"])]])
 
@@ -734,7 +681,6 @@
      [:div.ty-floating.rounded-xl.shadow-lg.overflow-hidden
       {:style {:width "min(520px, 90vw)"
                :max-height "80vh"}}
-        ;; Search input
       [:div.p-4.border-b.ty-border-
        [:div.flex.items-center.gap-3
         [:ty-icon {:name "search"
@@ -772,7 +718,6 @@
       [:div.overflow-y-auto {:style {:height "400px"}}
        (if (seq all-results)
          [:div.py-2
-            ;; Guides section
           (when (seq guides)
             [:div
              [:div.px-4.py-2.text-xs.font-medium.ty-text-.uppercase.tracking-wide
@@ -781,7 +726,6 @@
               (for [[idx result] (map-indexed vector guides)]
                 ^{:key (:id result)}
                 (search-result-item result idx selected-index query))]])
-            ;; Components section
           (when (seq components)
             [:div {:class (when (seq guides) "mt-2")}
              [:div.px-4.py-2.text-xs.font-medium.ty-text-.uppercase.tracking-wide
@@ -800,7 +744,6 @@
            [:p.text-sm.ty-text--.mt-1
             "Try different keywords or browse the sidebar"]]])]
 
-        ;; Footer with keyboard hints
       [:div.px-4.py-3.border-t.ty-border-.flex.items-center.gap-4.text-xs.ty-text--
        [:span.flex.items-center.gap-1
         [:kbd.ty-bg-neutral-.px-2.py-1.rounded "↑"]
@@ -813,9 +756,7 @@
         [:kbd.ty-bg-neutral-.px-2.py-1.rounded "esc"]
         " Close"]]]]))
 
-;; ============================================================================
 ;; Active component lookup (used by header to display the component name)
-;; ============================================================================
 
 (defn current-component-breadcrumb
   "Returns {:parent parent :current entry} for the active route if on a component page.
@@ -846,7 +787,6 @@
                                            (or (= (.-tagName active) "INPUT")
                                                (= (.-tagName active) "TEXTAREA")
                                                (.-isContentEditable active)))]
-                           ;; Cmd+K or Ctrl+K to open search (always works)
                            (when (and cmd-or-ctrl? (= key "k"))
                              (.preventDefault e)
                              (if (get-in @state [:search :open])
@@ -860,7 +800,6 @@
     [:div.p-5.mx-auto.rounded-xl.ty-floating.box-border.flex.flex-col
      {:style {:width "300px"
               :max-height "85vh"}}
-     ;; Logo header
      [:div.flex.items-center.gap-3.pb-4.border-b.ty-border-.flex-shrink-0
       [:ty-icon {:name "ty-logo"
                  :style {:width 40
@@ -869,7 +808,6 @@
                  :class "ty-text-primary"}]
       [:span.text-xs.ty-text-- "web components"]]
 
-     ;; Navigation content (scrollable)
      [:div.flex-1.overflow-y-auto.pt-4.min-h-0
       [:div.space-y-2
        (nav-items)]]]]])
@@ -994,16 +932,13 @@
                      :class "ty-text-primary"
                      :style {:height 28
                              :width 48}}]]
-         ;; Page title / breadcrumb (grows to fill, truncates)
          [:div.flex-1.min-w-0
           (header-title)]
-         ;; Search button (icon only)
          [:button.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:on {:click open-search!}}
           [:ty-icon {:name "search"
                      :size "sm"
                      :class "ty-text-"}]]
-         ;; GitHub link
          [:a.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:href "https://github.com/gersak/tyrell"
            :target "_blank"
@@ -1012,7 +947,6 @@
           [:ty-icon {:name "github"
                      :size "sm"
                      :class "ty-text-"}]]
-         ;; Theme toggle
          [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors.flex-shrink-0
           {:on {:click toggle-theme!}}
           [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
@@ -1079,7 +1013,6 @@
   ;; Idempotent + hot-reloadable via tyrell.css/ensure-document-styles!
   (styles/install!)
 
-  ;; Initialize theme from localStorage or system preference (default: dark)
   (let [stored-theme (.getItem js/localStorage "theme")
         system-theme (if (and (.-matchMedia js/window)
                               (.-matches (.matchMedia js/window "(prefers-color-scheme: dark)")))
@@ -1090,13 +1023,10 @@
       (.add (.-classList js/document.documentElement) "dark")
       (.remove (.-classList js/document.documentElement) "dark")))
 
-  ;; Initialize router with base path for GitHub Pages
   (router/init! (when-not (str/blank? ROUTER_BASE) ROUTER_BASE))
 
-  ;; Auto-expand navigation section based on current route (initial load)
   (auto-expand-section!)
 
-  ;; Setup global keyboard shortcuts (Cmd+K for search)
   (setup-keyboard-shortcuts!)
 
   ;; Watch router changes for auto-expand, scroll-to-top, and re-render
@@ -1110,7 +1040,6 @@
                (auto-expand-section!)
                (render-app!)))
 
-  ;; Watch state changes and re-render
   (add-watch state ::render
              (fn [_ _ _ _] (render-app!)))
 
@@ -1118,5 +1047,4 @@
   (add-watch layout/window-size ::window-resize
              (fn [_ _ _ _] (render-app!)))
 
-  ;; Initial render
   (render-app!))

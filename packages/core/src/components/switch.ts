@@ -4,16 +4,6 @@
  * "Just the toggle" primitive — renders only the track + thumb visual.
  * Label, required asterisk, and error display are the consumer's
  * responsibility — wrap in a `<label>` for click delegation.
- *
- * - Boolean checked state, role="switch" ARIA
- * - Form-associated, keyboard accessibility
- * - Sizes (xs, sm, md, lg, xl) and semantic flavors
- *
- * @example
- * <label>
- *   <ty-switch name="notifications" checked></ty-switch>
- *   Email notifications
- * </label>
  */
 
 import type { Flavor, Size } from "../types/common.js";
@@ -278,10 +268,6 @@ export class TySwitch
       this._internals.setValidity({});
     }
   }
-
-  // ============================================================================
-  // PROPERTY ACCESSORS
-  // ============================================================================
 
   get checked(): boolean { return this.getProperty("checked"); }
   set checked(value: boolean) { this.setProperty("checked", value); }

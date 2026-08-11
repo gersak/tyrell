@@ -7,9 +7,6 @@
    [tyrell.site.docs.common :refer [code-block doc-section docs-page
                                     component-header section-label]]))
 
-;; ----------------------------------------------------------------------------
-;; State
-;; ----------------------------------------------------------------------------
 ;; Seeds the user can drag. We persist them in the global state atom so the
 ;; slider remembers its position across re-renders.
 
@@ -40,7 +37,6 @@
    :c-base-mult   0.92
    :c-soft-mult   0.77
    :c-faint-mult  0.46
-   ;; UI state
    :floating-open? false
    :show-ladder?   false
    :show-curve?    false
@@ -192,10 +188,6 @@
 (defn- close-floating-on-mount! [_]
   (swap! state/state assoc-in [:brand-playground :floating-open?] false))
 
-;; ----------------------------------------------------------------------------
-;; UI fragments
-;; ----------------------------------------------------------------------------
-
 (defn- swatch
   "A tiny color swatch derived from the same OKLCH formula the brand layer
    uses. Drawn inline so the page is its own ground-truth preview."
@@ -275,7 +267,6 @@
       [:p.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem" :line-height 1.5}}
        "Drag the sliders — every component retints in light AND dark mode."]]
 
-     ;; Brand hue
      [:div {:style {:margin-bottom "0.75rem"}}
       [:div.flex.justify-between.items-center.mb-1
        [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
@@ -300,7 +291,6 @@
                 :border-radius "4px" :height "8px"
                 :appearance "none" :outline "none"}}]]
 
-     ;; Brand chroma
      [:div {:style {:margin-bottom "0.75rem"}}
       [:div.flex.justify-between.items-center.mb-1
        [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
@@ -517,12 +507,10 @@
                    :format "code"
                    :multiline true}]])]))
 
-;; ----------------------------------------------------------------------------
 ;; Flavor pack builder — the CSS_GUIDE "flavor pack" template, generated live.
 ;; A custom flavor declared this way gets FULL engine parity: shared L-curve,
 ;; saturation curve, dark mode via the same dial flips (no dark block of its
 ;; own), solid interaction states, auto-contrast foregrounds, theme scoping.
-;; ----------------------------------------------------------------------------
 
 (defn- fpb-name []  (get-in @state/state [:flavor-pack :name] "love"))
 (defn- fpb-color [] (get-in @state/state [:flavor-pack :color] "#76467c"))
@@ -659,7 +647,6 @@
         [:span.ty-text {:style {:font-size "0.75rem" :font-weight 600}}
          "Brand"]]
 
-       ;; Expanded widget
        [:div.ty-elevated.rounded-xl
         {:style {:width "320px"
                  :max-height "calc(100vh - 3rem)"
@@ -682,7 +669,6 @@
            :title "Collapse"}
           [:ty-icon {:name "x" :size "14"}]]]
 
-        ;; Hue
         [:div {:style {:margin-bottom "0.75rem"}}
          [:div.flex.justify-between.items-center.mb-1
           [:label.ty-text- {:style {:font-size "0.6875rem"}}
@@ -704,7 +690,6 @@
                    :border-radius "4px" :height "6px"
                    :appearance "none" :outline "none"}}]]
 
-        ;; Chroma
         [:div {:style {:margin-bottom "0.75rem"}}
          [:div.flex.justify-between.items-center.mb-1
           [:label.ty-text- {:style {:font-size "0.6875rem"}}
@@ -721,7 +706,6 @@
                    :border-radius "4px" :height "6px"
                    :appearance "none" :outline "none"}}]]
 
-        ;; Preset row (compact)
         [:div.flex.flex-wrap.gap-1 {:style {:margin-bottom "0.75rem"}}
          (for [[label hue chroma]
                [["Tyrell" 230 0.13] ["Teal" 200 0.13] ["Indigo" 260 0.14]
@@ -816,10 +800,8 @@
            :on {:click reset-all!}}
           "Reset"]]])]))
 
-;; ----------------------------------------------------------------------------
 ;; Live preview — these elements all use the same --ty-* tokens that the
 ;; brand layer drives. They retint as the seeds change.
-;; ----------------------------------------------------------------------------
 
 (defn- preview-buttons []
   [:div.ty-content.rounded-lg.p-5
@@ -886,16 +868,11 @@
        [:strong.ty-text+ label]
        [:div.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem"}} "Surface"]])]])
 
-;; ----------------------------------------------------------------------------
-;; Page
-;; ----------------------------------------------------------------------------
-
 (defn view []
   (docs-page
    (component-header "Theming"
                      "Two CSS variables re-brand every component — light and dark, no build step, no JS. Everything on this page is live: drag the seeds, watch the library follow.")
 
-    ;; Quick-start
    [:div.ty-elevated.rounded-xl.p-6
     [:div.mb-3
      (section-label "30-second start")]
@@ -912,7 +889,6 @@
      "That's the whole rebrand. Via npm: "
      [:code "import 'tyrell-components/css/tyrell-theme.css'"] " after tyrell.css."]]
 
-    ;; Playground
    (doc-section "Playground"
                 [:div.grid.gap-6 {:replicant/on-mount close-floating-on-mount!
                                   :style {:grid-template-columns "minmax(280px, 360px) 1fr"
@@ -925,11 +901,9 @@
 
        ;; RIGHT: live preview — short cards share rows, wide previews go full-width.
                  [:div.space-y-4
-        ;; Row 1: short utility cards
                   [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
                    (preview-buttons)
                    (preview-tags)]
-        ;; Row 2: form/surface cards
                   [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
                    (preview-inputs)
                    (preview-surfaces)]

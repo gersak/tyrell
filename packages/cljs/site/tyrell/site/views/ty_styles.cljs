@@ -18,10 +18,8 @@
     {:on {:click #(.. js/document -documentElement -classList (add "dark"))}}
     [:ty-icon {:name "moon" :size "sm"}] "Dark Theme"]])
 
-;; ----------------------------------------------------------------------------
 ;; The 5-variant emphasis ladder: public-class suffix → internal token name.
 ;; Order is fixed: strong > bold > base > soft > faint.
-;; ----------------------------------------------------------------------------
 
 (def ^:private emphasis-ladder
   [["++" "strong"]
@@ -69,7 +67,6 @@
    [:p.ty-text-.mb-6 "Each semantic color provides 3 background intensities: +, base, and -."]
 
    [:div.grid.gap-6.md:grid-cols-2.lg:grid-cols-3
-    ;; Primary backgrounds
     [:div.space-y-3
      [:h4.text-sm.font-medium.ty-text "Primary Backgrounds"]
      [:div.ty-bg-primary+.p-4.rounded-lg.text-center
@@ -82,7 +79,6 @@
       [:div.ty-text-primary++.font-medium "ty-bg-primary-"]
       [:div.ty-text-primary.text-sm "Softer background"]]]
 
-    ;; Success backgrounds
     [:div.space-y-3
      [:h4.text-sm.font-medium.ty-text "Success Backgrounds"]
      [:div.ty-bg-success+.p-4.rounded-lg.text-center
@@ -95,7 +91,6 @@
       [:div.ty-text-success++.font-medium "ty-bg-success-"]
       [:div.ty-text-success.text-sm "Softer background"]]]
 
-    ;; Danger backgrounds
     [:div.space-y-3
      [:h4.text-sm.font-medium.ty-text "Danger Backgrounds"]
      [:div.ty-bg-danger+.p-4.rounded-lg.text-center
@@ -108,7 +103,6 @@
       [:div.ty-text-danger++.font-medium "ty-bg-danger-"]
       [:div.ty-text-danger.text-sm "Softer background"]]]
 
-    ;; Warning backgrounds
     [:div.space-y-3
      [:h4.text-sm.font-medium.ty-text "Warning Backgrounds"]
      [:div.ty-bg-warning+.p-4.rounded-lg.text-center
@@ -121,7 +115,6 @@
       [:div.ty-text-warning++.font-medium "ty-bg-warning-"]
       [:div.ty-text-warning.text-sm "Softer background"]]]
 
-    ;; Neutral backgrounds
     [:div.space-y-3
      [:h4.text-sm.font-medium.ty-text "Neutral Backgrounds"]
      [:div.ty-bg-neutral+.p-4.rounded-lg.text-center
@@ -158,7 +151,6 @@
          [:h4.ty-text++.font-medium.mb-2.flex.items-center.gap-2 [:ty-icon {:name "layers" :size "sm"}] "Surface Layers"]
          [:p.ty-text-.text-sm "Each surface sits inside the previous one, creating depth and visual hierarchy like Russian nesting dolls."]]]]]]
 
-    ;; Individual surface descriptions
     [:div.grid.gap-4.md:grid-cols-2.lg:grid-cols-3
      [:div.ty-canvas.p-4.rounded-lg.text-center
       [:div.ty-text++.font-medium.mb-2 "ty-canvas"]
@@ -180,7 +172,6 @@
       [:div.ty-text-.text-sm "Modals, tooltips"]
       [:div.ty-text--.text-xs.mt-1 "Floating layer"]]]
 
-    ;; Visual hierarchy explanation
     [:div.ty-elevated.p-4.rounded-lg
      [:h4.text-sm.font-medium.ty-text.mb-3 "Layer Hierarchy Explanation"]
      [:div.space-y-2.text-sm.ty-text-
@@ -189,12 +180,10 @@
       [:div "• " [:strong.ty-text++ "ty-elevated"] " - Cards, panels, forms - elevated with shadow"]
       [:div "• " [:strong.ty-text++ "ty-floating"] " - Modals, dropdowns, tooltips - highest elevation"]]]]])
 
-;; ----------------------------------------------------------------------------
 ;; Borders — own family, own L ladder (2026-08 restructure). Used to alias
 ;; --ty-color-neutral-*, which meant tuning the text emphasis curve or
 ;; --ty-neutral-l-factor silently dragged every card/divider border with it.
 ;; --ty-l-border-* are independent dials now; same public class names.
-;; ----------------------------------------------------------------------------
 
 (def ^:private layer-flavors
   ["primary" "success" "danger" "warning" "neutral"])
@@ -236,12 +225,10 @@
                                            :border-style "solid"}}]
        [:code.ty-text-.text-xs.font-mono (str "ty-border-" f)]])]])
 
-;; ----------------------------------------------------------------------------
 ;; Solid fills + muted — this session's headline changes. Solid is its own
 ;; color system (not the text ramp); its foreground is now COMPUTED per fill
 ;; via --ty-solid-fg-threshold, not fixed white. `muted` is a fourth axis,
 ;; orthogonal to flavor/appearance: suppress to neutral until hovered/pressed.
-;; ----------------------------------------------------------------------------
 
 (defn solid-muted-demo
   "Solid fills (auto-contrast foreground) + the muted attribute."
@@ -270,9 +257,7 @@
     (for [f layer-flavors]
       [:ty-button {:key f :flavor f :muted true} f])]])
 
-;; ----------------------------------------------------------------------------
 ;; Input — a composite of the families above, not a fifth color system.
-;; ----------------------------------------------------------------------------
 
 (defn input-demo
   "ty-input/ty-select assemble surface + border + ink — they define nothing new."
@@ -288,10 +273,8 @@
     [:ty-input {:flavor "primary" :placeholder "Primary"}]
     [:ty-input {:flavor "danger" :placeholder "Danger" :error "Required"}]]])
 
-;; ----------------------------------------------------------------------------
 ;; Scrollbars — deliberately outside the OKLCH engine: alpha overlays, no
 ;; hue/chroma to retint, just an opacity to tune.
-;; ----------------------------------------------------------------------------
 
 (defn scrollbar-demo
   "The one layer left unwired to the color engine on purpose."
@@ -306,13 +289,11 @@
      (for [i (range 1 9)]
        [:p.ty-text-.text-sm {:key i} (str "Scrollable line " i)])]]])
 
-;; ----------------------------------------------------------------------------
 ;; Brand flavor — THE showcase. One attribute (flavor="brand"), one design
 ;; token (the color picker), and every component follows: hover, focus,
 ;; tones, light/dark. Built-in chips prove the same axis drives stock
 ;; flavors. This replaces the former separate "flavor axis" and "custom
 ;; flavors" sections.
-;; ----------------------------------------------------------------------------
 
 (def ^:private built-in-flavors
   ["primary" "success" "danger" "warning" "neutral"])
@@ -457,14 +438,12 @@ html:root, [data-ty-theme] {
                                        (router/navigate! :tyrell.site.docs/theming))}}
      "Theming"] " page."]])
 
-;; ----------------------------------------------------------------------------
 ;; Typography & shape — live font-family / border-radius override demo. Same
 ;; "minimal variable surface" point as brand-flavor-demo, but for the two
 ;; tokens that aren't color. No derivation machinery needed here (unlike the
 ;; OKLCH brand ramp) — --ty-font-sans and --ty-radius-{base,md} are the
 ;; literal tokens components already read; this just sets them directly on a
 ;; scoped container.
-;; ----------------------------------------------------------------------------
 
 (def ^:private font-presets
   [["sans" "Sans (default)" nil]
@@ -570,7 +549,6 @@ html:root, [data-ty-theme] {
 
 (defn view []
   (docs-page
-   ;; Header
    [:div.text-center.mb-8
     [:h1.text-3xl.font-bold.ty-text.mb-4 "ty Design System"]
     [:p.text-lg.ty-text-.max-w-3xl.mx-auto.leading-relaxed
@@ -583,10 +561,8 @@ html:root, [data-ty-theme] {
      [:span.px-3.py-1.ty-bg-warning-.ty-text-warning.rounded-full.text-sm.font-medium "Theme Adaptive"]
      [:span.px-3.py-1.ty-bg-neutral-.ty-text-neutral.rounded-full.text-sm.font-medium "Accessible"]]]
 
-   ;; Theme toggle
    (theme-toggle)
 
-   ;; Main content sections — single-column flow
    (text-variants-demo)
    (background-variants-demo)
    (surface-classes-demo)
@@ -598,7 +574,6 @@ html:root, [data-ty-theme] {
    (typography-shape-demo)
    (css-architecture-explanation)
 
-   ;; Footer summary
    [:div.ty-elevated.p-6.rounded-lg.text-center
     [:h4.text-lg.font-semibold.ty-text.mb-2.flex.items-center.gap-2 "Ready to Use" [:ty-icon {:name "sparkles" :size "sm"}]]
     [:p.ty-text-

@@ -8,7 +8,6 @@
    (component-header "ty-modal"
                      "Native <dialog> wrapper with backdrop, scroll locking, focus trapping, and ESC/click-outside close. A pure wrapper — all visual styling lives in your content, not the modal element.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
      [:h2.scroll-mt-6
@@ -62,11 +61,9 @@
         :payload "{reason: 'programmatic'|'native', returnValue?: string}"
         :when-fired "Fires when the modal has closed"}])]]
 
-   ;; Examples
    (doc-section "Examples"
      [:div.space-y-6
 
-      ;; Basic
       [:div.ty-content.rounded-lg.p-5
        (section-label "Basic")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -99,7 +96,6 @@
   </div>
 </ty-modal>")]
 
-      ;; Guarding close — beforeclose
       [:div.ty-content.rounded-lg.p-5
        (section-label "Guarding close — beforeclose")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -141,7 +137,6 @@
 // Later, in your discard handler:
 modalRef.current?.hide({ force: true });" "tsx")]
 
-      ;; Declarative control
       [:div.ty-content.rounded-lg.p-5
        (section-label "Declarative Control")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -156,11 +151,9 @@ modalRef.current?.hide({ force: true });" "tsx")]
             :on {:close #(reset! modal-open? false)}}
  [:div.ty-elevated.rounded-lg.p-6 ...]]")]])
 
-   ;; Advanced Examples
    (doc-section "Advanced Examples"
      [:div.space-y-6
 
-      ;; Complex form dialog (interactive)
       [:div.ty-content.rounded-lg.p-5
        (section-label "Complex Form Dialog")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
@@ -176,14 +169,12 @@ modalRef.current?.hide({ force: true });" "tsx")]
            {:style {:width "min(38rem, 92vw)" :max-height "85vh"
                     :display "flex" :flex-direction "column" :overflow "hidden"}}
 
-           ;; Header
            [:div {:style {:padding "1.25rem 1.5rem" :border-bottom "1px solid var(--ty-border-soft)"}}
             [:h3.ty-text++ {:style {:font-size "1.0625rem" :font-weight "600" :margin "0"}}
              "Create project"]
             [:p.ty-text- {:style {:font-size "0.8125rem" :margin "0.25rem 0 0"}}
              "Fill in the details below. Press ESC to cancel."]]
 
-           ;; Scrollable body
            [:div {:style {:padding "1.5rem" :overflow-y "auto" :flex "1 1 auto"}}
             [:div.grid.gap-4
              {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
@@ -222,7 +213,6 @@ modalRef.current?.hide({ force: true });" "tsx")]
                             :placeholder "What is this project about?"
                             :min-height "100px" :max-height "220px"}]]]
 
-           ;; Footer
            [:div.flex.justify-end.gap-2
             {:style {:padding "1rem 1.5rem" :border-top "1px solid var(--ty-border-soft)"
                      :background "var(--ty-surface-content)"}}
@@ -288,7 +278,6 @@ modalRef.current?.hide({ force: true });" "tsx")]
   </div>
 </ty-modal>")]
 
-      ;; JavaScript API
       [:div.ty-content.rounded-lg.p-5
        (section-label "JavaScript API")
        (code-block "const modal = document.getElementById('my-modal');
@@ -307,7 +296,6 @@ modal.addEventListener('close', (e) => {
   // reason: 'programmatic' | 'native'
 });" "javascript")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
      [:div.ty-elevated.rounded-lg.p-5
       [:div.grid.gap-6

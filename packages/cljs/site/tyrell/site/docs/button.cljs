@@ -5,10 +5,8 @@
 
 (defn view []
   (docs-page
-   ;; Page header
    (component-header "ty-button" "A flexible button component with multiple styles, sizes, and form integration.")
 
-   ;; API Reference
    [:div.ty-elevated.rounded-lg.p-6
     [:div.mb-5
      [:h2.scroll-mt-6.text-xs.font-bold.ty-text--.tracking-widest.uppercase "API Reference"]]
@@ -84,18 +82,15 @@
        {:name "end"
         :description "Content placed after the button text (typically an icon)"}])]]
 
-   ;; Basic Usage
    (doc-section "Basic Usage"
                 [:div.ty-content.rounded-lg.p-4
                  (code-block "<ty-button>Click me</ty-button>")
                  (demo-area
                   [:ty-button {:on {:click #(js/alert "It works!")}} "Try it out"])])
 
-   ;; Examples
    (doc-section "Examples"
                 [:div.space-y-6
 
-      ;; Button Flavors
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Button Flavors")
                   (demo-area
@@ -115,7 +110,6 @@
 <ty-button flavor=\"warning\">Warning</ty-button>
 <ty-button flavor=\"neutral\">Neutral</ty-button>")]
 
-      ;; Complete Matrix
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Complete Matrix")
                   [:p.ty-text-.mb-4
@@ -127,7 +121,6 @@
                    [:code.font-mono "-"] " (soft), base, "
                    [:code.font-mono "+"] " (strong). Useful for inspecting contrast in light vs dark mode."]
                   [:div.space-y-6
-        ;; Solid
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"
@@ -145,7 +138,6 @@
                         [:ty-button {:key (str "solid-" flavor "-base") :flavor flavor} flavor]
                         [:ty-button {:key (str "solid-" flavor "-strong") :flavor (str flavor "+")} flavor]))]]
 
-        ;; Outlined
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"
@@ -163,7 +155,6 @@
                         [:ty-button {:key (str "outlined-" flavor "-base") :flavor flavor :appearance "outlined"} flavor]
                         [:ty-button {:key (str "outlined-" flavor "-strong") :flavor (str flavor "+") :appearance "outlined"} flavor]))]]
 
-        ;; Ghost
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"
@@ -190,7 +181,6 @@
 <ty-button appearance=\"outlined\" flavor=\"success+\">Success outlined</ty-button>
 <ty-button appearance=\"ghost\" flavor=\"danger\">Danger ghost</ty-button>")]
 
-      ;; Muted
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Muted (suppress until interaction)")
                   [:p.ty-text-.mb-4
@@ -209,7 +199,6 @@
 <ty-button flavor=\"danger\" appearance=\"outlined\" muted>Danger outlined muted</ty-button>
 <ty-button flavor=\"success\" appearance=\"ghost\" muted>Success ghost muted</ty-button>")]
 
-      ;; Custom Colors via CSS Variables
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Custom Colors via CSS Variables")
                   [:p.ty-text-.mb-4
@@ -250,7 +239,6 @@
   Gradient
 </ty-button>")]
 
-      ;; Custom Flavors
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Custom Flavors")
                   [:p.ty-text-.mb-4
@@ -304,7 +292,6 @@
                    "Loading " [:code.font-mono "tyrell-theme.css"] "? Then one line replaces all of this — "
                    [:code.font-mono "--ty-brand-seed: #7c3aed"] " derives the full ramp, dark mode included. See the Theming page's Flavor pack builder."]]
 
-      ;; Button Sizes
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Button Sizes")
                   (demo-area
@@ -320,7 +307,6 @@
 <ty-button size=\"lg\">Large</ty-button>
 <ty-button size=\"xl\">Extra Large</ty-button>")]
 
-      ;; Action Buttons
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Action Buttons (Icon-only)")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
@@ -357,7 +343,6 @@
   <ty-icon name=\"x\" size=\"xs\"></ty-icon>
 </ty-button>")]
 
-      ;; Buttons with Icons
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Buttons with Icons")
                   (demo-area
@@ -384,7 +369,6 @@
   <ty-icon slot=\"end\" name=\"arrow-right\" size=\"sm\"></ty-icon>
 </ty-button>")]
 
-      ;; Button States
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Button States")
                   (demo-area
@@ -401,7 +385,6 @@
 
 <ty-button flavor=\"success\" disabled>Success Disabled</ty-button>")]
 
-      ;; Wide Buttons
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Wide Buttons")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
@@ -410,7 +393,6 @@
 
                   [:div.space-y-4
 
-        ;; Single wide
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Single wide"]
@@ -423,7 +405,6 @@
   Sign In
 </ty-button>")]
 
-        ;; Two-column grid
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Two-column grid"]
@@ -446,7 +427,6 @@
   </ty-button>
 </div>")]
 
-        ;; Action panel
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Action panel (three buttons)"]
@@ -467,7 +447,6 @@
   <ty-button wide=\"true\" flavor=\"danger\">Delete</ty-button>
 </div>")]
 
-        ;; Mobile form
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Mobile form layout"]
@@ -497,7 +476,6 @@
   </ty-button>
 </div>")]]]
 
-      ;; Form Integration
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Form Integration")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
@@ -506,7 +484,6 @@
 
                   [:div.space-y-5
 
-        ;; Basic form
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Basic form with submit"]
@@ -549,7 +526,6 @@
   <ty-button type=\"button\" flavor=\"neutral\">Cancel</ty-button>
 </form>")]
 
-        ;; Named submit buttons
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Multiple submit buttons with name/value"]
@@ -593,7 +569,6 @@
   </ty-button>
 </form>")]
 
-        ;; Button types comparison
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Button types comparison"]
@@ -625,7 +600,6 @@
 <ty-button type=\"reset\">Clear</ty-button>
 <ty-button type=\"button\">Custom Action</ty-button>")]]]
 
-      ;; Loading State
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Loading State")
                   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
@@ -635,7 +609,6 @@
 
                   [:div.space-y-5
 
-        ;; Static example
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Static (loading attribute set)"]
@@ -655,7 +628,6 @@
   <ty-icon name=\"save\" size=\"md\"></ty-icon>
 </ty-button>")]
 
-        ;; Interactive toggle demo
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Interactive — click to simulate a 2s save"]
@@ -683,7 +655,6 @@ btn.addEventListener('click', async () => {
   btn.loading = false;
 });")]
 
-        ;; Global spinner customization
                    [:div
                     [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
                                                 :font-weight "500"}} "Customize the spinner globally"]
@@ -716,7 +687,6 @@ setLoaderSvg(null); // back to default" "javascript")
 
 (ty/setLoaderSvg \"<svg viewBox=\\\"0 0 24 24\\\">...</svg>\")")]
 
-        ;; Notes
                    [:div.ty-elevated.rounded.p-3
                     {:style {:font-size "0.8125rem"}}
                     [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
@@ -725,11 +695,9 @@ setLoaderSvg(null); // back to default" "javascript")
                      [:li "If your registered SVG already has its own animation, override the wrapper rotation with the CSS variable " [:code.font-mono "--ty-loader-animation: none"] "."]
                      [:li "When set, the spinner inherits text color via " [:code.font-mono "currentColor"] " — so it adapts to your button flavor automatically."]]]]]])
 
-   ;; Common Use Cases
    (doc-section "Common Use Cases"
                 [:div.space-y-6
 
-      ;; FAB
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Floating Action Button (FAB)")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
@@ -751,7 +719,6 @@ setLoaderSvg(null); // back to default" "javascript")
   </ty-button>
 </div>")]
 
-      ;; Toolbar
                  [:div.ty-content.rounded-lg.p-5
                   (section-label "Toolbar Actions")
                   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
@@ -784,7 +751,6 @@ setLoaderSvg(null); // back to default" "javascript")
   </div>
 </div>")]])
 
-   ;; Best Practices
    (doc-section "Best Practices"
                 [:div.ty-elevated.rounded-lg.p-5
                  [:div.space-y-2

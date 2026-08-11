@@ -10,7 +10,7 @@
  */
 
 export const selectStyles = `
-/* ===== COMPACT skin: hugs content (field skin = base styles) ===== */
+/* Compact skin hugs its content (field skin = base styles) */
 .select-stub.compact {
   display: inline-flex;
   flex-wrap: nowrap;
@@ -106,7 +106,6 @@ export const selectStyles = `
   color: var(--input-color, var(--ty-input-color));
 }
 
-/* Empty state: muted placeholder color */
 .select-stub .dropdown-placeholder.placeholder-shown {
   color: var(--input-placeholder, var(--ty-input-placeholder));
 }
@@ -153,7 +152,7 @@ export const selectStyles = `
   pointer-events: auto;
 }
 
-/* ===== One-panel popup: search header fused with the options list ===== */
+/* One-panel popup: search header fused with the options list */
 
 /* Single unified shadow around the whole panel (header + list as one silhouette) */
 .dropdown-dialog.open {

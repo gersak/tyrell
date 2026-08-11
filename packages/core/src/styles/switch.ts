@@ -39,7 +39,7 @@ ${inputStyles}
   vertical-align: middle;
 }
 
-/* ===== SWITCH CONTAINER (just the visual) ===== */
+/* The switch container is just the visual */
 .switch-container {
   display: inline-block;
   cursor: pointer;
@@ -58,7 +58,6 @@ ${inputStyles}
   box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
 }
 
-/* ===== TRACK ===== */
 .switch-track {
   position: relative;
   flex-shrink: 0;
@@ -70,7 +69,6 @@ ${inputStyles}
   box-sizing: border-box;
 }
 
-/* ===== THUMB ===== */
 .switch-thumb {
   position: absolute;
   top: 2px;
@@ -83,7 +81,6 @@ ${inputStyles}
   transition: var(--ty-local-transition, transform 0.18s ease-in-out, background-color 0.18s ease-in-out);
 }
 
-/* ===== CHECKED STATE ===== */
 /* Default (no flavor attribute) is primary — defaults don't reflect to the
    host attribute, so the base rule's fallback carries the default look. */
 .switch-container[aria-checked="true"] .switch-track {
@@ -94,7 +91,6 @@ ${inputStyles}
   transform: translateX(16px);
 }
 
-/* ===== SIZE VARIANTS ===== */
 .switch-container.xs .switch-track { width: 26px; height: 14px; }
 .switch-container.xs .switch-thumb { width: 10px; height: 10px; }
 .switch-container.xs[aria-checked="true"] .switch-thumb { transform: translateX(12px); }
@@ -113,7 +109,7 @@ ${inputStyles}
 .switch-container.xl .switch-thumb { width: 24px; height: 24px; }
 .switch-container.xl[aria-checked="true"] .switch-thumb { transform: translateX(24px); }
 
-/* ===== FLAVOR VARIANTS (set --switch-track, consumed above) ===== */
+/* Flavor variants set --switch-track, consumed above */
 ${FLAVORS.map((f) => switchFlavor(f)).join("")}
 
 `;

@@ -3,13 +3,11 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-// Event detail structure for ty-textarea events
 export interface TyTextareaEventDetail {
   value: string; // textarea value
   originalEvent: Event; // original DOM event
 }
 
-// Type definitions for Ty Textarea component
 export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput' | 'onFocus' | 'onBlur' | 'style'> {
   style?: import('./TyInput').TyInputCSSProperties;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -51,7 +49,6 @@ export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>,
 // One-time warning flag.
 let _warnedOnInputProp = false;
 
-// React wrapper for ty-textarea web component
 export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
   ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, minHeight, maxHeight, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -102,18 +99,14 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
       const element = elementRef.current;
       if (!element) return;
 
-      // Listen for custom input/change events from ty-textarea
-      // Map onChange → input event (React convention)
       if (onChange) {
         element.addEventListener('input', handleInput as EventListener);
       }
       
-      // Map onChangeCommit → change event (blur behavior)
       if (onChangeCommit) {
         element.addEventListener('change', handleChangeCommit as EventListener);
       }
 
-      // Listen for standard focus/blur events
       if (onFocus) {
         element.addEventListener('focus', handleFocus as EventListener);
       }
@@ -138,7 +131,6 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
       };
     }, [handleInput, handleChangeCommit, handleFocus, handleBlur, onChange, onChangeCommit, onFocus, onBlur]);
 
-    // Handle ref forwarding
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {

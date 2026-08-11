@@ -5,7 +5,6 @@ import { useBooleanProperty } from '../utils/use-boolean-prop';
 type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
-// Type definitions for Ty Checkbox component
 export interface TyCheckboxProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'onInput'> {
   /** Checked state */
   checked?: boolean;
@@ -57,7 +56,6 @@ export interface TyCheckboxEventDetail {
   originalEvent: Event;
 }
 
-// React wrapper for ty-checkbox web component
 export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
   ({ 
     children,
@@ -76,7 +74,6 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
-    // Handle change events
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;
@@ -95,10 +92,8 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
         }
       };
 
-      // Map onChange → input event (React convention)
       element.addEventListener('input', handleInput);
       
-      // Map onChangeCommit → change event (blur behavior)
       element.addEventListener('change', handleChangeCommit);
 
       return () => {
@@ -107,7 +102,6 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
       };
     }, [onChange, onChangeCommit]);
 
-    // Combine refs if needed
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') {
@@ -127,19 +121,16 @@ export const TyCheckbox = React.forwardRef<HTMLElement, TyCheckboxProps>(
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
     const isRequired = useBooleanProperty(elementRef, 'required', required);
 
-    // Convert React props to web component attributes
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
       ref: elementRef,
     };
 
-    // Add boolean attributes
     if (isChecked) webComponentProps.checked = '';
     if (isIndeterminate) webComponentProps.indeterminate = '';
     if (isDisabled) webComponentProps.disabled = '';
     if (isRequired) webComponentProps.required = '';
     
-    // Add string attributes
     if (value) webComponentProps.value = value;
     if (name) webComponentProps.name = name;
     if (error) webComponentProps.error = error;
