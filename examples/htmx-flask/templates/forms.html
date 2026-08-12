@@ -17,10 +17,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="font-medium ty-text-info-strong">🔧 HTMX Debugging</h3>
-                    <p class="text-sm ty-text-info-mild">Toggle detailed HTMX request/response logging in the browser console.</p>
+                    <p class="text-sm ty-text-info-bold">Toggle detailed HTMX request/response logging in the browser console.</p>
                 </div>
                 <div class="flex space-x-2">
-                    <ty-button size="sm" flavor="secondary" 
+                    <ty-button size="sm" flavor="neutral" 
                                hx-get="/api/test-debug" 
                                hx-target="#debug-test-result">
                         Test Request
@@ -30,7 +30,7 @@
                     </ty-button>
                 </div>
             </div>
-            <div id="debug-status" class="mt-2 text-sm ty-text-info-mild">
+            <div id="debug-status" class="mt-2 text-sm ty-text-info-bold">
                 Debug logging is currently <span id="debug-state">disabled</span>. 
                 Open browser console (F12) to see logs when enabled.
             </div>
@@ -117,7 +117,7 @@
                 </div>
 
                 <div class="flex justify-end space-x-3">
-                    <ty-button flavor="secondary" type="reset" onclick="this.closest('form').reset()">
+                    <ty-button flavor="neutral" type="reset" onclick="this.closest('form').reset()">
                         Reset Form
                     </ty-button>
                     <ty-button type="submit" flavor="primary">
@@ -193,7 +193,7 @@
                 </form>
 
                 <div class="mt-4 flex space-x-3">
-                    <ty-button type="button" flavor="secondary" onclick="addFormField()">
+                    <ty-button type="button" flavor="neutral" onclick="addFormField()">
                         Add Field
                     </ty-button>
                     <ty-button type="button" flavor="primary" onclick="previewForm()">

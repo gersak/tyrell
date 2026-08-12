@@ -3,7 +3,12 @@
 export const iconStyles = `
 :host {
   /* Display & Layout - CRITICAL: No containment to prevent paint deferral */
-  display: inline-flex;
+  /* Block-level flex, NOT inline-flex: as an inline box the icon generates a
+     line box in its parent, so a shrink-wrapping wrapper (badge, .rounded-full
+     chip) inherits the parent's line-height strut and renders taller than wide
+     — a 12px icon in a 24px-line-height badge becomes a 22x34 oval. To place an
+     icon inline with text, make the *text wrapper* inline-flex instead. */
+  display: flex;
   align-items: center;
   justify-content: center;
   line-height: 0;
@@ -50,6 +55,12 @@ export const iconStyles = `
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* In a named slot the icon sits alongside text (button start/end), so inline
+   layout is what the host expects there. */
+:host([slot]) {
+  display: inline-flex;
 }
 
 :host(.icon-xs) {

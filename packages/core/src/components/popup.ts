@@ -3,7 +3,7 @@
  * (the anchor). Stays open for interaction; closes on outside click or ESC.
  */
 
-import { findBestPosition, type Placement } from '../utils/positioning.js';
+import { findBestPosition, preferenceChain, type Placement } from '../utils/positioning.js';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
 import { ensureStyles } from '../utils/styles.js';
 import { popupStyles } from '../styles/popup.js';
@@ -77,12 +77,10 @@ function updatePosition(el: TyPopup): void {
 
   if (!anchor || !dialog) return;
 
-  const preferences: Placement[] =
-    placement === 'top' ? ['top', 'bottom', 'left', 'right'] :
-      placement === 'bottom' ? ['bottom', 'top', 'left', 'right'] :
-        placement === 'left' ? ['left', 'right', 'top', 'bottom'] :
-          placement === 'right' ? ['right', 'left', 'top', 'bottom'] :
-            ['bottom', 'top', 'right', 'left']; // Default popup placement
+  // Handles all 12 placements. The old hand-written chain only matched the four
+  // bare sides, so 'bottom-start' & co. fell through to the default and the
+  // requested alignment was silently dropped.
+  const preferences: Placement[] = preferenceChain(placement);
 
   const positionData = findBestPosition({
     targetEl: anchor,

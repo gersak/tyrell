@@ -16,7 +16,7 @@ export const optionStyles = `
 
   /* Linear-paired typography */
   color: var(--ty-text);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);

@@ -209,7 +209,12 @@ export const tabsStyles = `
 }
 
 ::slotted(ty-tab) {
-  width: var(--tabs-width, 100%);
+  /* Carousel page width. --tabs-page-width is the measured pixel width, set by
+     the ResizeObserver for percentage-width tabs so every panel is exactly one
+     page wide. It is deliberately NOT --tabs-width: that one sizes :host, and
+     feeding a measured pixel value back into the host's own width is a
+     self-referential loop (see setupResizeObserver). */
+  width: var(--tabs-page-width, var(--tabs-width, 100%));
   height: 100%;
   flex-shrink: 0;
 }

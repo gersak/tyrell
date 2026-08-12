@@ -55,9 +55,80 @@ code:not(.hljs) {
 }
 ")
 
+;; Chrome is PINNED; only page content follows the theme playground.
+;;
+;; The playground writes its dials as an inline style on <html> (see
+;; theming.cljs/apply-seed!), so every brand-derived colour on the page —
+;; including the logo, sidebar and TOC — used to retint as visitors dragged the
+;; sliders. Re-declaring the same dials on the chrome subtree stops that: for an
+;; inherited custom property, a declaration on the element itself always beats
+;; whatever it would have inherited, no matter how specific the ancestor rule is
+;; (inline style on <html> included). So the chrome resolves its own seeds and
+;; the experiment stays inside <main>.
+;;
+;; Values mirror theming.cljs/default-seeds (light) and dark-curve-defaults
+;; (dark) — keep the three in sync. Hues are theme-invariant, so only the L and
+;; chroma curves need a dark block; everything else falls through from light.
+;;
+;; brand-hue/chroma are the TYRELL IDENTITY color (orange, tuned per-mode —
+;; hand-picked off the "Orange" preset in theming.cljs), deliberately NOT the
+;; content playground's default (252, violet — picked precisely so a visitor
+;; dragging sliders can't land on and be confused with the real brand).
+;; success/warning/danger hue + chroma (as calc(brand-chroma * mult), so they
+;; track chrome's OWN brand-chroma) + l-factor are pinned explicitly too and
+;; mirror tyrell-theme.css's own defaults — otherwise the playground's
+;; per-flavor "chroma × brand" and "l-factor" sliders (theming.cljs) would
+;; leak into chrome as INLINE overrides on <html>, the same way any un-pinned
+;; dial does — see the maintenance note above.
+(def ^:private chrome-pin-css
+  "
+[data-ty-theme].site-chrome {
+  --ty-brand-hue: 38;
+  --ty-brand-chroma: 0.15;
+  --ty-success-hue: 145;
+  --ty-warning-hue: 76;
+  --ty-danger-hue: 31;
+  --ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08);
+  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 2.22);
+  --ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.95);
+  --ty-success-l-factor: 1;
+  --ty-warning-l-factor: 1.3;
+  --ty-danger-l-factor: 1.01;
+  --ty-l-strong: 0.38;
+  --ty-l-bold: 0.46;
+  --ty-l-base: 0.54;
+  --ty-l-soft: 0.72;
+  --ty-l-faint: 0.88;
+  --ty-c-strong-mult: 0.77;
+  --ty-c-bold-mult: 1;
+  --ty-c-base-mult: 0.92;
+  --ty-c-soft-mult: 0.77;
+  --ty-c-faint-mult: 0.46;
+
+  /* Content lifts this to 0.16 so its solid fills read cleanly; chrome keeps
+     the library identity value so header/sidebar fills are untouched. */
+  --ty-solid-l: 0;
+}
+
+.dark [data-ty-theme].site-chrome,
+[data-theme=\"dark\"] [data-ty-theme].site-chrome {
+  --ty-brand-hue: 42;
+  --ty-brand-chroma: 0.16;
+  --ty-brand-l-factor: 1.1;
+  --ty-l-strong: 0.72;
+  --ty-l-bold: 0.66;
+  --ty-l-base: 0.62;
+  --ty-l-soft: 0.46;
+  --ty-l-faint: 0.30;
+  --ty-c-faint-mult: 0.50;
+  --ty-solid-l: -0.2;
+}
+")
+
 (defn install!
   "Inject all site-chrome styles into document.head. Idempotent and hot-reloadable
    — calling repeatedly updates the <style> element's content rather than appending
    duplicates. Call from core/init."
   []
-  (css/ensure-document-styles! inline-code-css "tyrell-site-inline-code"))
+  (css/ensure-document-styles! inline-code-css "tyrell-site-inline-code")
+  (css/ensure-document-styles! chrome-pin-css "tyrell-site-chrome-pin"))

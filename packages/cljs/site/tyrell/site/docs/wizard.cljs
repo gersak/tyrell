@@ -350,36 +350,4 @@ wizard.addEventListener('ty-wizard-step-change', (e) => {
                     #(reset! active (-> % .-detail .-activeId))}}
    [:ty-step {:id \"step-1\" :label \"Account\"} ...]
    [:ty-step {:id \"step-2\" :label \"Profile\"} ...]])")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Keep steps to 3–6 — longer wizards lose users before the end"
-                     "Show clear Back/Next buttons in every step panel"
-                     "Update completed as steps are validated, not just navigated"
-                     "Validate each step before allowing Next to advance"
-                     "Use description to hint what each step collects or requires"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Allow advancing past a step with invalid data"
-                     "Use a wizard for simple one-screen forms — keep it a single form"
-                     "Mark a step completed before it's actually validated"
-                     "Omit width and height — the layout breaks without them"
-                     "Disable the Back button — users should always be able to go back"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

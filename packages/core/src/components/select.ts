@@ -11,7 +11,7 @@ import { selectBaseStyles, selectCustomFlavorCss } from "../styles/select-base.j
 import { selectStyles } from "../styles/select.js";
 import { getLoaderSvg } from "../utils/loader-registry.js";
 import { lockScroll, unlockScroll } from "../utils/scroll-lock.js";
-import { computeAnchoredPosition } from "../utils/positioning.js";
+import { computeAnchoredPosition, placementToAnchored, type Placement } from "../utils/positioning.js";
 import { isMobileTouch } from "../utils/mobile.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
@@ -251,8 +251,19 @@ export class TySelect extends TyComponent<SelectState> {
       type: "string" as const,
       visual: true,
       default: "start",
-      validate: (v: any) => ["start", "end"].includes(v),
-      coerce: (v: any) => (v === "end" ? "end" : "start"),
+      validate: (v: any) => ["start", "center", "end"].includes(v),
+      coerce: (v: any) =>
+        v === "end" ? "end" : v === "center" ? "center" : "start",
+    },
+    // Full placement, same vocabulary as ty-popup/ty-tooltip: a side plus an
+    // optional cross-axis alignment ("bottom-end", "top-start", …). A dropdown
+    // only lives above or below its trigger, so left/right degrade to auto-side
+    // with the alignment kept. Takes precedence over `align` when set; `align`
+    // stays supported on its own for back-compat.
+    placement: {
+      type: "string" as const,
+      visual: true,
+      default: "",
     },
     size: {
       type: "string" as const,
@@ -810,11 +821,22 @@ export class TySelect extends TyComponent<SelectState> {
       ? cssWidth
       : Math.max(stubRect.width, 320);
 
+    // `placement` wins when set; otherwise fall back to the older `align`-only
+    // API so existing markup keeps its behaviour.
+    const requested = this.getProperty("placement") as Placement | "";
+    const anchored = requested
+      ? placementToAnchored(requested)
+      : {
+        side: "auto" as const,
+        align: this.getProperty("align") as "start" | "center" | "end",
+      };
+
     const pos = computeAnchoredPosition({
       anchorRect: stubRect,
       popupWidth,
       popupHeight: estimatedHeight,
-      align: this.getProperty("align") as "start" | "end",
+      align: anchored.align,
+      side: anchored.side,
     });
     const positionBelow = pos.below;
 
@@ -2259,12 +2281,20 @@ export class TySelect extends TyComponent<SelectState> {
     this.setProperty("size", value);
   }
 
-  get align(): "start" | "end" {
-    return this.getProperty("align") as "start" | "end";
+  get align(): "start" | "center" | "end" {
+    return this.getProperty("align") as "start" | "center" | "end";
   }
 
-  set align(value: "start" | "end") {
+  set align(value: "start" | "center" | "end") {
     this.setProperty("align", value);
+  }
+
+  get placement(): Placement | "" {
+    return this.getProperty("placement") as Placement | "";
+  }
+
+  set placement(value: Placement | "") {
+    this.setProperty("placement", value);
   }
 
   get flavor(): Flavor {

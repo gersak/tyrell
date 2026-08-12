@@ -1,7 +1,7 @@
 (ns tyrell.site.docs.resize-observer
   "Documentation for ty-resize-observer component"
   (:require [tyrell.site.docs.common :refer [code-block attribute-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+                                             doc-section docs-page component-header section-label]]))
 
 (defn view []
   (docs-page
@@ -155,36 +155,4 @@ onResize('data-grid', ({ width }) => {
                           (unsub)
                           (set! (.-_unsub el) nil)))}
  [:div ...panel content...]]")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Always provide a unique id — without it the element won't register"
-                     "Always call the unsubscribe function returned by onResize when cleaning up"
-                     "Use debounce for expensive operations like chart renders or API calls"
-                     "Prefer onResize over polling getSize() in a loop"
-                     "Use CSS Container Queries for pure layout changes when browser support allows"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Forget to unsubscribe on component unmount — this causes memory leaks"
-                     "Use duplicate ids across multiple elements — only the last one registers"
-                     "Poll getSize() in a tight loop — subscribe with onResize instead"
-                     "Use ty-resize-observer for simple responsive design — CSS media queries are cheaper"
-                     "Omit debounce for layout-heavy callbacks triggered on every pixel change"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

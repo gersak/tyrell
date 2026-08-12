@@ -20,7 +20,7 @@
     ($ :div {:class "wrapper"}
        ($ :div {:class "count"} count)
        ($ :div {:class "buttons"}
-          ($ :ty-button {:flavor "secondary" :on-click #(set-count dec)} "−")
+          ($ :ty-button {:flavor "neutral" :on-click #(set-count dec)} "−")
           ($ :ty-button {:flavor "primary"   :on-click #(set-count inc)} "+")))))
 
 (defn render! [^js el]

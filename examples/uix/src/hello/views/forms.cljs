@@ -191,7 +191,7 @@
                ($ ty/Button
                   {:type "button"
                    :wide true
-                   :flavor "secondary"
+                   :flavor "neutral"
                    :on-click #(do
                                 (set-form-data {:name ""
                                                 :email ""

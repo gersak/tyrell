@@ -20,7 +20,7 @@
       [{:name "placement"
         :type "string"
         :default "\"bottom\""
-        :description "Preferred placement: top, bottom, left, right. Auto-flips if it would overflow the viewport"}
+        :description "Side plus optional cross-axis alignment: top, right, bottom, left — each also as -start / -end (e.g. bottom-start, left-end). Bare side = centered on the trigger; -start aligns leading edges, -end aligns trailing edges. Auto-flips if it would overflow, keeping the alignment: left-start tries right-start before falling back to the other axis."}
        {:name "offset"
         :type "number"
         :default "8"
@@ -84,29 +84,40 @@
       [:div.ty-content.rounded-lg.p-5
        (section-label "Placement")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Four positions. The popup auto-flips when it would overflow the viewport."]
+        "A placement is a "
+        [:strong "side"] " plus an optional "
+        [:strong "cross-axis alignment"] ". The bare side centers the popup on the trigger; "
+        [:code "-start"] " lines up the leading edges and " [:code "-end"] " the trailing edges — "
+        "so " [:code "bottom-start"] " hangs below with left edges flush, and "
+        [:code "left-end"] " sits to the left with bottom edges flush. Twelve combinations in total."]
        (demo-area
-        [:div.flex.flex-wrap.items-center.gap-3
-         [:ty-button "Bottom"
-          [:ty-popup {:placement "bottom"}
-           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned below"]]]]
-         [:ty-button "Top"
-          [:ty-popup {:placement "top"}
-           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned above"]]]]
-         [:ty-button "Right"
-          [:ty-popup {:placement "right"}
-           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned right"]]]]
-         [:ty-button "Left"
-          [:ty-popup {:placement "left"}
-           [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "140px"}}
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} "Positioned left"]]]]])
-       (code-block "<ty-popup placement=\"top\">...</ty-popup>
+        [:div.flex.flex-col.gap-3
+         (for [[side variants] [["bottom" ["bottom-start" "bottom" "bottom-end"]]
+                                ["top" ["top-start" "top" "top-end"]]
+                                ["left" ["left-start" "left" "left-end"]]
+                                ["right" ["right-start" "right" "right-end"]]]]
+           ^{:key side}
+           [:div.flex.flex-wrap.items-center.gap-2
+            [:span.ty-text--.font-mono {:style {:font-size "0.6875rem" :width "3.5rem"}} side]
+            (for [p variants]
+              ^{:key p}
+              [:ty-button {:size "sm"} p
+               [:ty-popup {:placement p}
+                [:div.ty-elevated.rounded-lg.p-3 {:style {:min-width "130px"}}
+                 [:p.ty-text.font-mono {:style {:font-size "0.75rem"}} p]]]])])])
+       [:p.ty-text--.mb-3 {:style {:font-size "0.75rem" :line-height "1.6"}}
+        "Alignment survives the auto-flip: a " [:code "left-start"] " popup with no room on the left "
+        "becomes " [:code "right-start"] " — still top-aligned — before it gives up on the axis entirely."]
+       (code-block "<!-- side only — centered on the trigger -->
 <ty-popup placement=\"bottom\">...</ty-popup>
-<ty-popup placement=\"left\">...</ty-popup>
-<ty-popup placement=\"right\">...</ty-popup>")]
+
+<!-- side + alignment -->
+<ty-popup placement=\"bottom-start\">...</ty-popup>   <!-- below, left edges flush  -->
+<ty-popup placement=\"bottom-end\">...</ty-popup>     <!-- below, right edges flush -->
+<ty-popup placement=\"top-start\">...</ty-popup>      <!-- above, left edges flush  -->
+<ty-popup placement=\"left-start\">...</ty-popup>     <!-- left,  top edges flush   -->
+<ty-popup placement=\"left-end\">...</ty-popup>       <!-- left,  bottom edges flush -->
+<ty-popup placement=\"right-end\">...</ty-popup>      <!-- right, bottom edges flush -->")]
 
       [:div.ty-content.rounded-lg.p-5
        (section-label "Action Menu")
@@ -203,36 +214,4 @@ popup.addEventListener('close', () => console.log('closed'));" "javascript")]
 <TyPopup ref={popupRef} manual disable-close>
   <div class=\"ty-elevated rounded-lg p-5\">...</div>
 </TyPopup>")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Nest ty-popup directly inside the trigger element for automatic wiring"
-                     "Use disable-close for confirm dialogs — force an explicit cancel/confirm"
-                     "Close the popup in action handlers with .closePopup() on the ancestor"
-                     "Use ty-elevated or ty-floating as the content surface for correct layering"
-                     "Set min-width on the content div to avoid cramped narrow popups"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Nest popups — one level only, or use a modal for layered interactions"
-                     "Apply visual styles to the ty-popup element — it's invisible by design"
-                     "Forget to close the popup after an action fires inside it"
-                     "Use disable-close without providing an explicit cancel path"
-                     "Use for long-form content — a modal is better for complex dialogs"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

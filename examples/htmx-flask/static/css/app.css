@@ -79,60 +79,60 @@ ty-icon {
 }
 html {
   --ty-color-primary-strong: #0034c7;
-  --ty-color-primary-mild: #1c40a8;
+  --ty-color-primary-bold: #1c40a8;
   --ty-color-primary: #4367cd;
   --ty-color-primary-soft: #60a5fa;
   --ty-color-primary-faint: #93c5fd;
   --ty-color-secondary-strong: #6d28d9;
-  --ty-color-secondary-mild: #7c3aed;
+  --ty-color-secondary-bold: #7c3aed;
   --ty-color-secondary: #8b5cf6;
   --ty-color-secondary-soft: #a78bfa;
   --ty-color-secondary-faint: #c4b5fd;
   --ty-color-success-strong: #006e49;
-  --ty-color-success-mild: #2b8f6d;
+  --ty-color-success-bold: #2b8f6d;
   --ty-color-success: #3eaa86;
   --ty-color-success-soft: #64b399;
   --ty-color-success-faint: #7fd4b2;
   --ty-color-danger-strong: #b91c1c;
-  --ty-color-danger-mild: #dc2626;
+  --ty-color-danger-bold: #dc2626;
   --ty-color-danger: #ef4444;
   --ty-color-danger-soft: #f87171;
   --ty-color-danger-faint: #fca5a5;
   --ty-color-warning-strong: #e86400;
-  --ty-color-warning-mild: #ee7f00;
+  --ty-color-warning-bold: #ee7f00;
   --ty-color-warning: #f59e0b;
   --ty-color-warning-soft: #fbbf24;
   --ty-color-warning-faint: #fcd34d;
   --ty-color-neutral-strong: #374151;
-  --ty-color-neutral-mild: #4b5563;
+  --ty-color-neutral-bold: #4b5563;
   --ty-color-neutral: #6b7280;
   --ty-color-neutral-soft: #9ca3af;
   --ty-color-neutral-faint: #d1d5db;
   --ty-bg-faint: #f8fafc;
   --ty-bg-soft: #f1f5f9;
   --ty-bg: #ffffff;
-  --ty-bg-mild: #f8fafc;
+  --ty-bg-bold: #f8fafc;
   --ty-bg-strong: #e2e8f0;
   --ty-bg-primary: #dbeafe;
-  --ty-bg-primary-mild: #bfdbfe;
+  --ty-bg-primary-bold: #bfdbfe;
   --ty-bg-primary-soft: #eff6ff;
   --ty-bg-secondary: #e9d5ff;
-  --ty-bg-secondary-mild: #ddd6fe;
+  --ty-bg-secondary-bold: #ddd6fe;
   --ty-bg-secondary-soft: #f3e8ff;
   --ty-bg-success: #d1fae5;
-  --ty-bg-success-mild: #a7f3d0;
+  --ty-bg-success-bold: #a7f3d0;
   --ty-bg-success-soft: #ecfdf5;
   --ty-bg-danger: #fee2e2;
-  --ty-bg-danger-mild: #fecaca;
+  --ty-bg-danger-bold: #fecaca;
   --ty-bg-danger-soft: #fef2f2;
   --ty-bg-warning: #fef3c7;
-  --ty-bg-warning-mild: #fde68a;
+  --ty-bg-warning-bold: #fde68a;
   --ty-bg-warning-soft: #fffbeb;
   --ty-bg-neutral: #f2f2f2;
-  --ty-bg-neutral-mild: #e9e9e9;
+  --ty-bg-neutral-bold: #e9e9e9;
   --ty-bg-neutral-soft: #f9fafb;
   --ty-border: #e5e7eb;
-  --ty-border-mild: #d1d5db;
+  --ty-border-bold: #d1d5db;
   --ty-border-strong: #6b7280;
   --ty-border-soft: #f3f4f6;
   --ty-border-faint: #fafafa;
@@ -148,7 +148,7 @@ html {
   --ty-surface-floating: #ffffff;
   --ty-surface-input: #ffffff;
   --ty-text: #111827;
-  --ty-text-mild: #000000;
+  --ty-text-bold: #000000;
   --ty-text-strong: #000000;
   --ty-text-soft: #374151;
   --ty-text-faint: #9ca3af;
@@ -272,60 +272,60 @@ html {
 }
 html.dark, html[data-theme="dark"] {
   --ty-color-primary-strong: #c9dff9;
-  --ty-color-primary-mild: #68a5f0;
+  --ty-color-primary-bold: #68a5f0;
   --ty-color-primary: #4784d0;
   --ty-color-primary-soft: #4573ac;
   --ty-color-primary-faint: #4d6888;
   --ty-color-secondary-strong: #ddd6fe;
-  --ty-color-secondary-mild: #c4b5fd;
+  --ty-color-secondary-bold: #c4b5fd;
   --ty-color-secondary: #a78bfa;
   --ty-color-secondary-soft: #8269bc;
   --ty-color-secondary-faint: #76619f;
   --ty-color-success-strong: #c2f0df;
-  --ty-color-success-mild: #6ee7b7;
+  --ty-color-success-bold: #6ee7b7;
   --ty-color-success: #3aba8b;
   --ty-color-success-soft: #459679;
   --ty-color-success-faint: #1b795c;
   --ty-color-danger-strong: #ffabab;
-  --ty-color-danger-mild: #e58787;
+  --ty-color-danger-bold: #e58787;
   --ty-color-danger: #d06f6f;
   --ty-color-danger-soft: #b06666;
   --ty-color-danger-faint: #aa6e6e;
   --ty-color-warning-strong: #fde68a;
-  --ty-color-warning-mild: #fcd34d;
+  --ty-color-warning-bold: #fcd34d;
   --ty-color-warning: #fbbf24;
   --ty-color-warning-soft: #f59e0b;
   --ty-color-warning-faint: #a06726;
   --ty-color-neutral-strong: #f3f4f6;
-  --ty-color-neutral-mild: #d6d6d6;
+  --ty-color-neutral-bold: #d6d6d6;
   --ty-color-neutral: #b3b3b3;
   --ty-color-neutral-soft: #777777;
   --ty-color-neutral-faint: #5b5b5b;
   --ty-bg-faint: #0f1419;
   --ty-bg-soft: #111827;
   --ty-bg: #1f2937;
-  --ty-bg-mild: #374151;
+  --ty-bg-bold: #374151;
   --ty-bg-strong: #6b7280;
-  --ty-bg-primary-mild: #43517a;
+  --ty-bg-primary-bold: #43517a;
   --ty-bg-primary: #394159;
   --ty-bg-primary-soft: #323a4f;
-  --ty-bg-secondary-mild: #5b21b6;
+  --ty-bg-secondary-bold: #5b21b6;
   --ty-bg-secondary: #4a3c65;
   --ty-bg-secondary-soft: #3b3645;
   --ty-bg-success: #3a4442;
-  --ty-bg-success-mild: #405752;
+  --ty-bg-success-bold: #405752;
   --ty-bg-success-soft: #2f3b38;
-  --ty-bg-danger-mild: #853535;
+  --ty-bg-danger-bold: #853535;
   --ty-bg-danger: #522828;
   --ty-bg-danger-soft: #483c3c;
-  --ty-bg-warning-mild: #743953;
+  --ty-bg-warning-bold: #743953;
   --ty-bg-warning: #694555;
   --ty-bg-warning-soft: #45333b;
-  --ty-bg-neutral-mild: #414141;
+  --ty-bg-neutral-bold: #414141;
   --ty-bg-neutral: #323232;
   --ty-bg-neutral-soft: #242424;
   --ty-border-strong: #8c8c8c;
-  --ty-border-mild: #666666;
+  --ty-border-bold: #666666;
   --ty-border: #535353;
   --ty-border-soft: #1f2937;
   --ty-border-faint: #030712;
@@ -334,7 +334,7 @@ html.dark, html[data-theme="dark"] {
   --ty-surface-elevated: #282828;
   --ty-surface-floating: #343434;
   --ty-surface-input: #1f2937;
-  --ty-text-mild: #f9fafb;
+  --ty-text-bold: #f9fafb;
   --ty-text-strong: #ffffff;
   --ty-text: #d6d6d6;
   --ty-text-soft: #7f8590;
@@ -362,15 +362,15 @@ html.dark, html[data-theme="dark"] {
   --ty-input-disabled-border: #2e2e2e;
   --ty-input-disabled-color: #717171;
   --ty-label-color: #d1d5db;
-  --ty-modal-bg: var(--ty-bg-mild);
-  --ty-modal-color: var(--ty-color-neutral-mild);
+  --ty-modal-bg: var(--ty-bg-bold);
+  --ty-modal-color: var(--ty-color-neutral-bold);
   --ty-modal-border: var(--ty-border);
   --ty-modal-backdrop: rgba(0, 0, 0, 0.7);
   --ty-modal-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4),
     0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 ::selection {
-  background-color: var(--ty-selection-bg, var(--ty-bg-primary-mild));
+  background-color: var(--ty-selection-bg, var(--ty-bg-primary-bold));
   color: var(--ty-selection-color, var(--ty-text-strong));
 }
 ::-moz-selection {
@@ -478,7 +478,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-primary);
 }
 .ty-bg-primary\+ {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-bold);
 }
 .ty-bg-primary- {
   background-color: var(--ty-bg-primary-soft);
@@ -487,7 +487,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-secondary);
 }
 .ty-bg-secondary\+ {
-  background-color: var(--ty-bg-secondary-mild);
+  background-color: var(--ty-bg-secondary-bold);
 }
 .ty-bg-secondary- {
   background-color: var(--ty-bg-secondary-soft);
@@ -496,7 +496,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-success);
 }
 .ty-bg-success\+ {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-bold);
 }
 .ty-bg-success- {
   background-color: var(--ty-bg-success-soft);
@@ -505,7 +505,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-danger);
 }
 .ty-bg-danger\+ {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-bold);
 }
 .ty-bg-danger- {
   background-color: var(--ty-bg-danger-soft);
@@ -514,7 +514,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-warning);
 }
 .ty-bg-warning\+ {
-  background-color: var(--ty-bg-warning-mild);
+  background-color: var(--ty-bg-warning-bold);
 }
 .ty-bg-warning- {
   background-color: var(--ty-bg-warning-soft);
@@ -523,7 +523,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-neutral);
 }
 .ty-bg-neutral\+ {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-bold);
 }
 .ty-bg-neutral- {
   background-color: var(--ty-bg-neutral-soft);
@@ -532,7 +532,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg);
 }
 .ty-bg\+ {
-  background-color: var(--ty-bg-mild);
+  background-color: var(--ty-bg-bold);
 }
 .ty-bg\- {
   background-color: var(--ty-bg-soft);
@@ -541,7 +541,7 @@ html.dark .ty-sunken {
   color: var(--ty-text) !important;
 }
 .ty-text\+ {
-  color: var(--ty-text-mild) !important;
+  color: var(--ty-text-bold) !important;
 }
 .ty-text\+\+ {
   color: var(--ty-text-strong) !important;
@@ -556,7 +556,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-primary-strong) !important;
 }
 .ty-text-primary\+ {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 .ty-text-primary {
   color: var(--ty-color-primary) !important;
@@ -571,7 +571,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-secondary-strong) !important;
 }
 .ty-text-secondary\+ {
-  color: var(--ty-color-secondary-mild) !important;
+  color: var(--ty-color-secondary-bold) !important;
 }
 .ty-text-secondary {
   color: var(--ty-color-secondary) !important;
@@ -586,7 +586,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-success-strong) !important;
 }
 .ty-text-success\+ {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 .ty-text-success {
   color: var(--ty-color-success) !important;
@@ -601,7 +601,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-danger-strong) !important;
 }
 .ty-text-danger\+ {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 .ty-text-danger {
   color: var(--ty-color-danger) !important;
@@ -616,7 +616,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-warning-strong) !important;
 }
 .ty-text-warning\+ {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 .ty-text-warning {
   color: var(--ty-color-warning) !important;
@@ -631,7 +631,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-neutral-strong) !important;
 }
 .ty-text-neutral\+ {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 .ty-text-neutral {
   color: var(--ty-color-neutral) !important;
@@ -646,7 +646,7 @@ html.dark .ty-sunken {
   border-color: var(--ty-border) !important;
 }
 .ty-border\+ {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 .ty-border\+\+ {
   border-color: var(--ty-border-strong) !important;
@@ -677,10 +677,10 @@ html.dark .ty-sunken {
 }
 .ty-card {
   background-color: var(--ty-bg);
-  color: var(--ty-color-neutral-mild);
+  color: var(--ty-color-neutral-bold);
 }
 .ty-card-elevated {
-  background-color: var(--ty-bg-mild);
+  background-color: var(--ty-bg-bold);
   box-shadow: var(--ty-shadow-md);
 }
 .ty-input-bg {
@@ -708,7 +708,7 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-neutral);
 }
 .hover\:ty-bg-neutral\+:hover {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-bold);
 }
 .hover\:ty-bg-neutral\+\+:hover {
   background-color: var(--ty-bg-neutral-strong);
@@ -717,25 +717,25 @@ html.dark .ty-sunken {
   background-color: var(--ty-bg-primary);
 }
 .hover\:ty-bg-primary\+:hover {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-bold);
 }
 .hover\:ty-bg-secondary:hover {
   background-color: var(--ty-bg-secondary);
 }
 .hover\:ty-bg-secondary\+:hover {
-  background-color: var(--ty-bg-secondary-mild);
+  background-color: var(--ty-bg-secondary-bold);
 }
 .hover\:ty-bg-success:hover {
   background-color: var(--ty-bg-success);
 }
 .hover\:ty-bg-success\+:hover {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-bold);
 }
 .hover\:ty-bg-danger:hover {
   background-color: var(--ty-bg-danger);
 }
 .hover\:ty-bg-danger\+:hover {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-bold);
 }
 .hover\:ty-bg-danger-:hover {
   background-color: var(--ty-bg-danger-soft);
@@ -744,7 +744,7 @@ html.dark .ty-sunken {
   color: var(--ty-text);
 }
 .hover\:ty-text\+:hover {
-  color: var(--ty-text-mild);
+  color: var(--ty-text-bold);
 }
 .hover\:ty-text\+\+:hover {
   color: var(--ty-text-strong);
@@ -759,7 +759,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-primary-strong) !important;
 }
 .hover\:ty-text-primary\+:hover {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 .hover\:ty-text-primary:hover {
   color: var(--ty-color-primary) !important;
@@ -774,7 +774,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-secondary-strong) !important;
 }
 .hover\:ty-text-secondary\+:hover {
-  color: var(--ty-color-secondary-mild) !important;
+  color: var(--ty-color-secondary-bold) !important;
 }
 .hover\:ty-text-secondary:hover {
   color: var(--ty-color-secondary) !important;
@@ -789,7 +789,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-success-strong) !important;
 }
 .hover\:ty-text-success\+:hover {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 .hover\:ty-text-success:hover {
   color: var(--ty-color-success) !important;
@@ -804,7 +804,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-danger-strong) !important;
 }
 .hover\:ty-text-danger\+:hover {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 .hover\:ty-text-danger:hover {
   color: var(--ty-color-danger) !important;
@@ -819,7 +819,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-warning-strong) !important;
 }
 .hover\:ty-text-warning\+:hover {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 .hover\:ty-text-warning:hover {
   color: var(--ty-color-warning) !important;
@@ -834,7 +834,7 @@ html.dark .ty-sunken {
   color: var(--ty-color-neutral-strong) !important;
 }
 .hover\:ty-text-neutral+:hover {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 .hover\:ty-text-neutral:hover {
   color: var(--ty-color-neutral) !important;
@@ -849,7 +849,7 @@ html.dark .ty-sunken {
   border-color: var(--ty-border-strong) !important;
 }
 .hover\:ty-border\+:hover {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 .hover\:ty-border:hover {
   border-color: var(--ty-border) !important;
@@ -882,7 +882,7 @@ html.dark .ty-sunken {
   border-color: var(--ty-border-strong) !important;
 }
 .focus\:ty-border+:focus {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 .focus\:ty-border:focus {
   border-color: var(--ty-border) !important;
@@ -2421,7 +2421,7 @@ html.dark .ty-sunken {
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
     background-color: var(--ty-bg-danger-soft);
-    color: var(--ty-color-danger-mild);
+    color: var(--ty-color-danger-bold);
   }
   .priority-medium {
     border-radius: calc(infinity * 1px);
@@ -2503,7 +2503,7 @@ html.dark .ty-sunken {
     transition-duration: var(--tw-duration, var(--default-transition-duration));
     --tw-duration: 200ms;
     transition-duration: 200ms;
-    color: var(--ty-color-neutral-mild);
+    color: var(--ty-color-neutral-bold);
   }
   .nav-link:hover {
     color: var(--ty-color-primary);
@@ -2556,13 +2556,13 @@ html.dark .ty-sunken {
 }
 @layer utilities {
   .text-gradient-primary {
-    background: linear-gradient(135deg, var(--ty-color-primary-strong), var(--ty-color-primary-mild));
+    background: linear-gradient(135deg, var(--ty-color-primary-strong), var(--ty-color-primary-bold));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .text-gradient-success {
-    background: linear-gradient(135deg, var(--ty-color-success-strong), var(--ty-color-success-mild));
+    background: linear-gradient(135deg, var(--ty-color-success-strong), var(--ty-color-success-bold));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

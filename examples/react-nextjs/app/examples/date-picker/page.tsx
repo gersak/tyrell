@@ -211,18 +211,18 @@ export default function DatePickerExample() {
           <h1 className="text-3xl font-bold ty-text++ mb-2">
             Date Picker React Integration - Extended Test Suite
           </h1>
-          <div className="ty-bg-info- ty-border-info border rounded-lg p-4 mb-6">
-            <p className="ty-text-info font-semibold mb-1">System Information:</p>
-            <p className="ty-text-info text-sm">
+          <div className="ty-bg-primary- ty-border-primary border rounded-lg p-4 mb-6">
+            <p className="ty-text-primary font-semibold mb-1">System Information:</p>
+            <p className="ty-text-primary text-sm">
               Timezone: {tzInfo.timezone} ({tzInfo.offsetString})
             </p>
-            <p className="ty-text-info text-sm">
+            <p className="ty-text-primary text-sm">
               Current UTC: {new Date().toISOString()}
             </p>
-            <p className="ty-text-info text-sm">
+            <p className="ty-text-primary text-sm">
               Current Local: {new Date().toLocaleString()}
             </p>
-            <p className="ty-text-info text-sm mt-2">
+            <p className="ty-text-primary text-sm mt-2">
               Render count: {renderCountRef.current} | Change events: {changeCount} | Last source: {lastChangeSource}
             </p>
           </div>
@@ -246,7 +246,7 @@ export default function DatePickerExample() {
               </div>
             )}
           </div>
-          <TyButton size="sm" flavor="secondary" onClick={() => setEventLog([])}>
+          <TyButton size="sm" flavor="neutral" onClick={() => setEventLog([])}>
             Clear Log
           </TyButton>
         </section>
@@ -406,7 +406,7 @@ export default function DatePickerExample() {
                 <TyButton
                   key={test.label}
                   size="sm"
-                  flavor="secondary"
+                  flavor="neutral"
                   onClick={() => {
                     setEdgeCaseDate(test.value)
                     logEvent('edge-case-set', test.label)
@@ -467,7 +467,7 @@ export default function DatePickerExample() {
                 <TyButton
                   key={test.label}
                   size="sm"
-                  flavor="secondary"
+                  flavor="neutral"
                   onClick={() => {
                     setParseTestValue(test.value)
                     logEvent('parse-input', `${test.label}: ${test.value}`)
@@ -537,7 +537,7 @@ export default function DatePickerExample() {
 
             <div className="flex gap-2">
               <TyButton type="submit">Submit Form</TyButton>
-              <TyButton type="reset" flavor="secondary">
+              <TyButton type="reset" flavor="neutral">
                 Reset Form
               </TyButton>
               <TyButton type="button" flavor="danger" onClick={clearDates}>
@@ -572,7 +572,7 @@ export default function DatePickerExample() {
             <div>
               <h3 className="text-lg font-medium ty-text+ mb-3">Flavors</h3>
               <div className="grid md:grid-cols-2 gap-3">
-                {(['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'neutral'] as const).map(flavor => (
+                {(['primary', 'success', 'danger', 'warning', 'neutral'] as const).map(flavor => (
                   <TyDatePicker
                     key={flavor}
                     label={`Flavor: ${flavor}`}
@@ -677,7 +677,7 @@ export default function DatePickerExample() {
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(0, 0, 0, 0)
@@ -690,7 +690,7 @@ export default function DatePickerExample() {
 
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(6, 0, 0, 0)
@@ -703,7 +703,7 @@ export default function DatePickerExample() {
 
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(9, 0, 0, 0)
@@ -716,7 +716,7 @@ export default function DatePickerExample() {
 
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(12, 0, 0, 0)
@@ -729,7 +729,7 @@ export default function DatePickerExample() {
 
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(17, 0, 0, 0)
@@ -742,7 +742,7 @@ export default function DatePickerExample() {
 
                   <TyButton
                     size="sm"
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => {
                       const date = new Date()
                       date.setHours(23, 59, 0, 0)

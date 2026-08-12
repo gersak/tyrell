@@ -28,13 +28,32 @@ const pkg = JSON.parse(
  * Output: dist/tyrell.js
  */
 
+/**
+ * Terser only minifies code, never string contents — and ~40% of this bundle
+ * is CSS living inside template literals in src/styles/*.ts, prose comments
+ * and all. Stripping /* … *\/ before the bundle runs is worth ~30kB raw /
+ * ~13kB gzip. JS comments go too, which terser would have dropped anyway.
+ */
+const stripComments = () => ({
+  name: 'strip-comments',
+  transform(code: string, id: string) {
+    if (!id.endsWith('.ts')) return null
+    return code
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      // Indentation and blank lines inside those same literals are shipped
+      // bytes too. Newlines stay (ASI needs them; CSS doesn't care).
+      .replace(/\n[ \t]+/g, '\n')
+      .replace(/\n{2,}/g, '\n')
+  },
+})
+
 export default defineConfig({
   // Inject version at build time
   define: {
     '__VERSION__': JSON.stringify(pkg.version)
   },
 
-  plugins: [],
+  plugins: [stripComments()],
 
   build: {
     // NO SOURCE MAPS for CDN (size critical)

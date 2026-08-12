@@ -295,37 +295,5 @@ modal.addEventListener('close', (e) => {
   console.log('closed, reason:', e.detail.reason);
   // reason: 'programmatic' | 'native'
 });" "javascript")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Style your content div, not the ty-modal element itself"
-                     "Use ty-elevated or ty-floating as the content wrapper surface"
-                     "Always include a clear close action (button or cancel link)"
-                     "Listen for beforeclose to guard forms with unsaved input — render your own confirm UI"
-                     "Set max-width on the content div to keep the modal readable"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Apply visual styles to the ty-modal tag — it's transparent by design"
-                     "Nest modals unless absolutely necessary"
-                     "Auto-open a modal on page load without a clear user trigger"
-                     "Use modals for trivial confirmations — inline UI is often better"
-                     "Forget to handle the close event for state cleanup"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))
 

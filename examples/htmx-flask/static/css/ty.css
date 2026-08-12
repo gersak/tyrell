@@ -124,62 +124,10 @@ CSS VARIABLES - DESIGN TOKENS
 
 /* Default theme (light) */
 html {
-  /* =================================================================
-5-VARIANT COLOR SYSTEM
-Simplified from 7 variants to 5 practical variants:
--strong = Strong emphasis - active states, strong borders
--mild = Moderate emphasis - hover states, focus rings  
-= Base color - default appearance
--soft = Reduced emphasis - muted backgrounds, secondary
--faint = Minimal emphasis - subtle hints, disabled states
-================================================================= */
-
-  /* Primary */
-  --ty-color-primary-strong: #0034c7;
-  --ty-color-primary-mild: #1c40a8;
-  --ty-color-primary: #4367cd;
-  --ty-color-primary-soft: #60a5fa;
-  --ty-color-primary-faint: #93c5fd;
-
-  /* Secondary */
-  --ty-color-secondary-strong: #6d28d9;
-  --ty-color-secondary-mild: #7c3aed;
-  --ty-color-secondary: #8b5cf6;
-  --ty-color-secondary-soft: #a78bfa;
-  --ty-color-secondary-faint: #c4b5fd;
-
-  /* Success */
-  --ty-color-success-strong: #006e49;
-  --ty-color-success-mild: #2b8f6d;
-  --ty-color-success: #3eaa86;
-  --ty-color-success-soft: #64b399;
-  --ty-color-success-faint: #7fd4b2;
-
-  /* Danger */
-  --ty-color-danger-strong: #b91c1c;
-  --ty-color-danger-mild: #dc2626;
-  --ty-color-danger: #ef4444;
-  --ty-color-danger-soft: #f87171;
-  --ty-color-danger-faint: #fca5a5;
-
-  /* Warning */
-  --ty-color-warning-strong: #e86400;
-  --ty-color-warning-mild: #ee7f00;
-  --ty-color-warning: #f59e0b;
-  --ty-color-warning-soft: #fbbf24;
-  --ty-color-warning-faint: #fcd34d;
-
-  /* Neutral */
-  --ty-color-neutral-strong: #000000;
-  --ty-color-neutral-mild: #000000;
-  --ty-color-neutral: #111827;
-  --ty-color-neutral-soft: #374151;
-  --ty-color-neutral-faint: #9ca3af;
-
-  /* Accent - brand highlights, focus rings, selection states */
-  --ty-color-accent-mild: #cc6d00; /* darker - hover/active */
-  --ty-color-accent: #e67b00; /* base */
-  --ty-color-accent-soft: #f59e42; /* lighter - subtle */
+  /* Color tokens (--ty-color-*, --ty-bg-{flavor}-*, --ty-border-*,
+     --ty-surface-*, --ty-text-*, --ty-input-{color}-*, --ty-solid-*) live
+     in tyrell-colors-static.css or tyrell-theme.css — load one of those
+     alongside this file. See CSS_GUIDE.md. */
 
   /* =================================================================
 BACKGROUND COLORS
@@ -191,87 +139,62 @@ BACKGROUND COLORS
   /* Light canvas - app backgrounds */
   --ty-bg: #ffffff;
   /* WHITE - primary content baseline */
-  --ty-bg-mild: #f8fafc;
+  --ty-bg-bold: #f8fafc;
   /* Subtle elevation - cards with light tint */
   --ty-bg-strong: #e2e8f0;
   /* Maximum elevation - clear distinction */
 
-  /* Primary backgrounds */
-  --ty-bg-primary: #dbeafe;
-  --ty-bg-primary-mild: #bfdbfe;
-  --ty-bg-primary-soft: #eff6ff;
-
-  /* Secondary backgrounds */
-  --ty-bg-secondary: #e9d5ff;
-  --ty-bg-secondary-mild: #ddd6fe;
-  --ty-bg-secondary-soft: #f3e8ff;
-
-  /* Success backgrounds */
-  --ty-bg-success: #d1fae5;
-  --ty-bg-success-mild: #a7f3d0;
-  --ty-bg-success-soft: #ecfdf5;
-
-  /* Danger backgrounds */
-  --ty-bg-danger: #fee2e2;
-  --ty-bg-danger-mild: #fecaca;
-  --ty-bg-danger-soft: #fef2f2;
-
-  /* Warning backgrounds */
-  --ty-bg-warning: #fef3c7;
-  --ty-bg-warning-mild: #fde68a;
-  --ty-bg-warning-soft: #fffbeb;
-
-  /* Neutral backgrounds */
-  --ty-bg-neutral: #f2f2f2;
-  --ty-bg-neutral-mild: #e9e9e9;
-  --ty-bg-neutral-soft: #f9fafb;
-
-  /* Accent backgrounds */
-  --ty-bg-accent: #ffedd5; /* light orange tint */
-  --ty-bg-accent-mild: #fed7aa; /* slightly stronger */
-  --ty-bg-accent-soft: #fff7ed; /* very subtle */
+  /* Focus ring gap - matches page background for button focus ring effect */
+  --ty-focus-ring-gap: #ffffff;
 
   /* =================================================================
 BORDER COLORS
 ================================================================= */
 
-  --ty-border: #e5e7eb;
-  --ty-border-mild: #d1d5db;
-  --ty-border-strong: #6b7280;
-  --ty-border-soft: #f3f4f6;
-  --ty-border-faint: #fafafa;
+  /* Border width — used as fallback by surface utilities (--ty-{surface}-border-width) */
+  --ty-border-width: 1px;
 
-  /* Semantic borders */
-  --ty-border-primary: var(--ty-color-primary);
-  --ty-border-secondary: var(--ty-color-secondary);
-  --ty-border-success: var(--ty-color-success);
-  --ty-border-danger: var(--ty-color-danger);
-  --ty-border-warning: var(--ty-color-warning);
-  --ty-border-neutral: var(--ty-color-neutral);
-  --ty-border-accent-mild: var(--ty-color-accent-mild);
-  --ty-border-accent: var(--ty-color-accent);
-  --ty-border-accent-soft: var(--ty-color-accent-soft);
+  /* =================================================================
+SCROLLBAR
+================================================================= */
+
+  --ty-scrollbar-thumb: rgba(0, 0, 0, 0.35);
+  --ty-scrollbar-thumb-hover: rgba(0, 0, 0, 0.5);
+  --ty-scrollbar-thumb-active: rgba(0, 0, 0, 0.6);
+  --ty-scrollbar-track: transparent;
+  --ty-scrollbar-track-hover: rgba(0, 0, 0, 0.06);
 
   /* =================================================================
 SURFACE SYSTEM
 ================================================================= */
 
-  --ty-surface-canvas: #ebebeb;
-  --ty-surface-content: #f4f4f4;
-  --ty-surface-elevated: #f8f8f8;
-  --ty-surface-floating: #ffffff;
-  --ty-surface-input: #ffffff;
+  /* Surface borders — opt-in. Set color to make a surface's border visible.
+     Width and style fall back to --ty-border-width and `solid` if unset. */
+  --ty-elevated-border-width: var(--ty-border-width);
+  --ty-elevated-border-style: solid;
 
-  /* =================================================================
-TEXT HIERARCHY
-================================================================= */
+  --ty-floating-border-width: var(--ty-border-width);
+  --ty-floating-border-style: solid;
 
-  /* Text hierarchy - emphasis based, not semantic */
-  --ty-text: #111827;
-  --ty-text-mild: #000000;
-  --ty-text-strong: #000000;
-  --ty-text-soft: #374151;
-  --ty-text-faint: #9ca3af;
+  --ty-canvas-border: transparent;
+  --ty-canvas-border-width: var(--ty-border-width);
+  --ty-canvas-border-style: solid;
+
+  --ty-content-border-width: var(--ty-border-width);
+  --ty-content-border-style: solid;
+
+  /* --ty-input-border is a color token (tyrell-colors-static.css /
+     tyrell-theme.css) used by <ty-input> shadow DOM and .ty-input utility.
+     Width/style live here. */
+  --ty-input-border-width: var(--ty-border-width);
+  --ty-input-border-style: solid;
+
+  /* Divider context — consumed by .ty-divide-x / .ty-divide-y utilities.
+     Each surface re-points --ty-divide-color to its own --ty-{surface}-border
+     token, so the same knob controls both the surface's chrome AND any
+     dividers inside it. Inherits down the tree via CSS variable inheritance. */
+  --ty-divide-color: var(--ty-border);
+  --ty-divide-width: var(--ty-border-width);
 
   /* =================================================================
 COMPONENT TOKENS
@@ -297,31 +220,7 @@ COMPONENT TOKENS
   --ty-modal-full-height: 95vh;
 
   /* Input component tokens */
-  --ty-input-bg: #ffffff;
-  --ty-input-color: #111827;
-  --ty-input-border: #d1d5db;
-  --ty-input-border-hover: #9ca3af;
-  --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-shadow-focus: rgba(59, 130, 246, 0.1);
-  --ty-input-placeholder: #9ca3af;
-  --ty-input-disabled-bg: #f9fafb;
-  --ty-input-disabled-border: #e5e7eb;
-  --ty-input-disabled-color: #9ca3af;
   --ty-label-color: #374151;
-
-  /* Input semantic states */
-  --ty-input-success-border: var(--ty-color-success);
-  --ty-input-danger-border: var(--ty-color-danger);
-  --ty-input-warning-border: var(--ty-color-warning);
-
-  /* Accent colors */
-  --ty-accent-primary: #367cd2;
-  --ty-accent-secondary: #8461d5;
-  --ty-accent-success: #3bb68d;
-  --ty-accent-danger: #df5b5b;
-  --ty-accent-warning: #e1a644;
-  --ty-accent-neutral: #414141;
-  --ty-accent-accent: #cc6d00; /* for filled buttons */
 
   /* =================================================================
 DESIGN SYSTEM TOKENS
@@ -348,13 +247,13 @@ DESIGN SYSTEM TOKENS
 
   /* Border Radius */
   --ty-radius-none: 0;
-  --ty-radius-sm: 0.125rem;
-  --ty-radius-base: 0.25rem;
-  --ty-radius-md: 0.375rem;
-  --ty-radius-lg: 0.5rem;
-  --ty-radius-xl: 0.75rem;
-  --ty-radius-2xl: 1rem;
-  --ty-radius-3xl: 1.5rem;
+  --ty-radius-sm: 0.25rem; /*  4px */
+  --ty-radius-base: 0.375rem; /*  6px */
+  --ty-radius-md: 0.5rem; /*  8px (anchor) */
+  --ty-radius-lg: 0.75rem; /* 12px */
+  --ty-radius-xl: 1rem; /* 16px */
+  --ty-radius-2xl: 1.5rem; /* 24px */
+  --ty-radius-3xl: 2rem; /* 32px */
   --ty-radius-full: 9999px;
 
   /* Shadows */
@@ -386,13 +285,74 @@ DESIGN SYSTEM TOKENS
   --ty-font-4xl: 2.25rem;
   --ty-font-5xl: 3rem;
 
+  /* Paired line-heights — values follow Linear's text-* tokens (text-small
+     uses 21px not 20px; text-regular uses 1.6 ratio for breathable body text).
+     Paired with --ty-font-* so that `font-size: var(--ty-font-sm)` should also
+     use `line-height: var(--ty-leading-sm)`. */
+  --ty-leading-xxs: 0.9375rem; /* 15px paired with 10px text (Linear text-tiny 1.5) */
+  --ty-leading-xs: 1.05rem; /* ≈16.8px paired with 12px text (Linear text-micro 1.4) */
+  --ty-leading-sm: 1.3125rem; /* 21px paired with 14px text (Linear text-small) */
+  --ty-leading-base: 1.5rem; /* 24px paired with 16px text (Linear text-regular 1.6 ≈) */
+  --ty-leading-lg: 1.6875rem; /* 27px paired with 18px text (Linear text-large) */
+  --ty-leading-xl: 1.75rem; /* 28px paired with 20px text */
+  --ty-leading-2xl: 2rem; /* 32px paired with 24px text */
+  --ty-leading-3xl: 2.25rem; /* 36px paired with 30px text */
+  --ty-leading-4xl: 2.5rem; /* 40px paired with 36px text */
+  --ty-leading-5xl: 1; /* paired with 48px+ display text */
+
+  /* Letter-spacing (tracking) tokens — pulled from Linear's per-size values.
+     Linear uses slightly negative tracking on most text to tighten Inter. */
+  --ty-tracking-xxs: -0.015em; /* paired with text-tiny */
+  --ty-tracking-xs: 0; /* paired with text-micro */
+  --ty-tracking-sm: -0.013em; /* paired with text-small */
+  --ty-tracking-base: -0.011em; /* paired with text-regular */
+  --ty-tracking-lg: 0; /* paired with text-large */
+  --ty-tracking-tight: -0.022em; /* for titles (Linear title-4 and up) */
+  --ty-tracking-title: -0.012em; /* for titles (Linear title-1..3) */
+
+  /* Weights tuned to Linear (Inter Variable). With the system font stack
+     these round to the nearest available (500/600/700); load Inter Variable
+     for the exact rendering. */
   --ty-font-thin: 100;
   --ty-font-light: 300;
   --ty-font-normal: 400;
-  --ty-font-medium: 500;
-  --ty-font-semibold: 600;
-  --ty-font-bold: 700;
+  --ty-font-medium: 510;
+  --ty-font-semibold: 590;
+  --ty-font-bold: 680;
   --ty-font-extrabold: 800;
+
+  /* Semantic weight dials — MODE-FLIPPED (see the html.dark block).
+     Light text on dark surfaces optically blooms (halation), so dark mode
+     wants genuinely lighter weights than light mode; a single fixed weight
+     can't be right in both. Components consume these instead of the raw
+     scale above:
+       --ty-weight-action  buttons, interactive chrome
+       --ty-weight-label   tags, chips, badges
+     Theme these like any other token — per :root, html.dark, a named theme
+     pack, or one element. The theme layer registers them as typed numbers,
+     so with a variable font, weight crossfades during theme transitions
+     along with the colors. */
+  --ty-weight-action: var(--ty-font-medium);
+  --ty-weight-label: 440;
+
+  /* Solid-button depth chrome (consumed in button.ts):
+       --ty-button-depth     master intensity 0–1. 0 = pixel-flat (the old
+                             look), 1 = full tactile gloss. Scales the
+                             derived border offset, top sheen and drop
+                             shadow together. Themable per mode / theme
+                             pack / element like any other dial.
+       --ty-button-border-l  L-offset of the fill-derived 1px border,
+                             mode-flipped below: dark mode needs a LIGHTER-
+                             than-fill hairline (solids wash out against
+                             dark surfaces without a lit edge), light mode
+                             a slightly darker one. */
+  --ty-button-depth: 0.35;
+  --ty-button-border-l: -0.08;
+  /* Neutral (ink) gets its own, stronger edge: it has no hue separating it
+     from the canvas, so the same offset that reads fine on colored fills
+     nearly vanishes on it — especially in dark mode, where the ink fill
+     sits close to the page. */
+  --ty-button-border-l-neutral: -0.25;
 
   --ty-line-height-none: 1;
   --ty-line-height-tight: 1.25;
@@ -401,26 +361,33 @@ DESIGN SYSTEM TOKENS
   --ty-line-height-relaxed: 1.625;
   --ty-line-height-loose: 2;
 
-  /* Transitions */
+  /* Transitions. Each routes through --ty-local-transition first — unset by
+     default (falls through to the real value below), but the theme engine's
+     .ty-theme-switching sets it to `none` for the duration of a theme swap,
+     so components using these tokens don't run their own hover/focus
+     transition at the same time as the coordinated theme crossfade. See
+     tyrell-theme.css SECTION 3 — THEME TRANSITIONS. */
   --ty-transition-none: none;
-  --ty-transition-all: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ty-transition-colors:
+  --ty-transition-all: var(--ty-local-transition, all 150ms cubic-bezier(0.4, 0, 0.2, 1));
+  --ty-transition-colors: var(--ty-local-transition,
     bg-color, border-color, color, fill,
-    stroke 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ty-transition-shadow: box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ty-transition-transform: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    stroke 150ms cubic-bezier(0.4, 0, 0.2, 1));
+  --ty-transition-shadow: var(--ty-local-transition, box-shadow 150ms cubic-bezier(0.4, 0, 0.2, 1));
+  --ty-transition-transform: var(--ty-local-transition, transform 150ms cubic-bezier(0.4, 0, 0.2, 1));
 
-  /* Component Sizes */
-  --ty-size-xs: 1.5rem;
-  /* 24px */
+  /* Component Sizes — single source of truth for FIELD heights.
+     Fields (ty-input, ty-select, ty-date-picker) come in exactly three
+     sizes and consume these via min-height: var(--ty-size-*), so the same
+     `size` attribute is the same height on every field. Shared scale with
+     ty-button's 4px ladder (see button.ts): field sm = button md (32px),
+     field md = button lg (36px), field lg = button xl (40px) — a button
+     and a field of the paired size sit flush, same height, in a row. */
   --ty-size-sm: 2rem;
   /* 32px */
-  --ty-size-md: 2.5rem;
+  --ty-size-md: 2.25rem;
+  /* 36px */
+  --ty-size-lg: 2.5rem;
   /* 40px */
-  --ty-size-lg: 3rem;
-  /* 48px */
-  --ty-size-xl: 3.5rem;
-  /* 56px */
 
   /* Z-Index Scale */
   --ty-z-auto: auto;
@@ -455,6 +422,34 @@ DESIGN SYSTEM TOKENS
     transparent
   );
   --ty-scroll-shadow-transition: opacity 0.2s ease-out;
+
+  /* =================================================================
+  TOOLTIP (default/"dark" flavor)
+  Deliberately theme-INDEPENDENT — defined once here, not redeclared in
+  html.dark below. A tooltip's job is to pop against whatever it's sitting
+  on, light page or dark; every major library (Material, Bootstrap, Ant,
+  Shoelace) keeps its default tooltip a fixed dark chip regardless of page
+  theme. Override on :root (or scope to a container) to retheme globally
+  without touching flavor="light"/"info"/other components.
+  Values are pure achromatic gray (R=G=B, no hue) — matches
+  --ty-solid-neutral's "no tint" convention. Don't reuse a Tailwind
+  slate/cool-gray hex here (e.g. #1f2937) — those carry a real blue
+  undertone (blue channel > red/green) and read as a color flavor next to
+  genuinely neutral buttons, which was exactly the bug being fixed.
+  ================================================================= */
+  --ty-tooltip-bg: #262626;
+  --ty-tooltip-color: #f5f5f5;
+  --ty-tooltip-border: #404040;
+
+  /* =================================================================
+  CALENDAR — "other month" day de-emphasis
+  --ty-color-neutral-faint alone is only ~2.5:1 against white — already
+  below the 4.5:1 WCAG AA text minimum before the (now-removed) opacity
+  fade made it worse still. This is its own token, calibrated to actually
+  pass, rather than reusing -faint here. Real bug, caught by adding
+  axe-core coverage for the first time, not a design choice being revised.
+  ================================================================= */
+  --ty-calendar-other-month-color: #6b7280; /* 4.83:1 vs white */
 }
 
 /* =================================================================
@@ -463,113 +458,37 @@ DARK THEME OVERRIDES
 
 html.dark,
 html[data-theme="dark"] {
-  /* =================================================================
-5-VARIANT COLOR SYSTEM - DARK THEME
-Emphasis logic inverts: lighter = more emphasis
-================================================================= */
+  /* Weight dials flip with the mode — light-on-dark text blooms, so dark
+     mode runs genuinely lighter. See the :root definitions. */
+  --ty-weight-action: var(--ty-font-normal);
+  --ty-weight-label: var(--ty-font-normal);
 
-  /* Primary */
-  --ty-color-primary-strong: #c9dff9;
-  --ty-color-primary-mild: #68a5f0;
-  --ty-color-primary: #4784d0;
-  --ty-color-primary-soft: #4573ac;
-  --ty-color-primary-faint: #4d6888;
-
-  /* Secondary */
-  --ty-color-secondary-strong: #ddd6fe;
-  --ty-color-secondary-mild: #c4b5fd;
-  --ty-color-secondary: #a78bfa;
-  --ty-color-secondary-soft: #8269bc;
-  --ty-color-secondary-faint: #76619f;
-
-  /* Success */
-  --ty-color-success-strong: #c2f0df;
-  --ty-color-success-mild: #6ee7b7;
-  --ty-color-success: #3aba8b;
-  --ty-color-success-soft: #459679;
-  --ty-color-success-faint: #1b795c;
-
-  /* Danger */
-  --ty-color-danger-strong: #ffabab;
-  --ty-color-danger-mild: #e58787;
-  --ty-color-danger: #d06f6f;
-  --ty-color-danger-soft: #b06666;
-  --ty-color-danger-faint: #aa6e6e;
-
-  /* Warning */
-  --ty-color-warning-strong: #fde68a;
-  --ty-color-warning-mild: #fcd34d;
-  --ty-color-warning: #fbbf24;
-  --ty-color-warning-soft: #f59e0b;
-  --ty-color-warning-faint: #a06726;
-
-  /* Neutral */
-  --ty-color-neutral-strong: #ffffff;
-  --ty-color-neutral-mild: #f9fafb;
-  --ty-color-neutral: #d6d6d6;
-  --ty-color-neutral-soft: #7f8590;
-  --ty-color-neutral-faint: #555a63;
-
-  /* Accent - dark mode (emphasis inverted) */
-  --ty-color-accent-mild: #ffb366; /* lighter = more emphasis */
-  --ty-color-accent: #e67b00; /* base */
-  --ty-color-accent-soft: #8b4d00; /* darker = less emphasis */
+  /* Colored solid buttons: no border in dark mode — border color equals
+     the fill exactly, so it's geometrically present (depth 0 keeps
+     geometry stable) but invisible. Neutral keeps its own separate,
+     stronger dial (below) since its dark ink fill needs the lit edge to
+     read as a shape at all against a near-black canvas; colored fills
+     don't have that problem (their own hue/saturation already separates
+     them from the page), so no border reads as cleaner. */
+  --ty-button-border-l: 0;
+  --ty-button-border-l-neutral: 0.5;
 
   /* Backgrounds for dark mode */
   --ty-bg-faint: #0f1419;
   --ty-bg-soft: #111827;
   --ty-bg: #1f2937;
-  --ty-bg-mild: #374151;
+  --ty-bg-bold: #374151;
   --ty-bg-strong: #6b7280;
 
-  /* Semantic backgrounds - much darker in dark mode */
-  --ty-bg-primary-mild: #43517a;
-  --ty-bg-primary: #394159;
-  --ty-bg-primary-soft: #323a4f;
+  /* Focus ring gap */
+  --ty-focus-ring-gap: #1f2937;
 
-  --ty-bg-secondary-mild: #5b21b6;
-  --ty-bg-secondary: #4a3c65;
-  --ty-bg-secondary-soft: #3b3645;
-
-  --ty-bg-success: #3a4442;
-  --ty-bg-success-mild: #405752;
-  --ty-bg-success-soft: #2f3b38;
-
-  --ty-bg-danger-mild: #853535;
-  --ty-bg-danger: #522828;
-  --ty-bg-danger-soft: #483c3c;
-
-  --ty-bg-warning-mild: #743953;
-  --ty-bg-warning: #694555;
-  --ty-bg-warning-soft: #45333b;
-
-  --ty-bg-neutral-mild: #414141;
-  --ty-bg-neutral: #323232;
-  --ty-bg-neutral-soft: #242424;
-
-  /* Accent backgrounds - dark mode */
-  --ty-bg-accent: #7c4a1a;
-  --ty-bg-accent-mild: #92400e;
-  --ty-bg-accent-soft: #5c3d1a;
-
-  /* Borders for dark mode */
-  --ty-border-strong: #8c8c8c;
-  --ty-border-mild: #666666;
-  --ty-border: #535353;
-  --ty-border-soft: #1f2937;
-  --ty-border-faint: #030712;
-
-  --ty-surface-canvas: black;
-  --ty-surface-content: #1a1a1a;
-  --ty-surface-elevated: #282828;
-  --ty-surface-floating: #343434;
-  --ty-surface-input: #1f2937;
-
-  --ty-text-mild: #f9fafb;
-  --ty-text-strong: #ffffff;
-  --ty-text: #d6d6d6;
-  --ty-text-soft: #7f8590;
-  --ty-text-faint: #555a63;
+  /* Scrollbar - dark mode */
+  --ty-scrollbar-thumb: rgba(255, 255, 255, 0.13);
+  --ty-scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+  --ty-scrollbar-thumb-active: rgba(255, 255, 255, 0.3);
+  --ty-scrollbar-track: transparent;
+  --ty-scrollbar-track-hover: rgba(255, 255, 255, 0.04);
 
   /* Shadows need to be darker/more prominent in dark mode */
   --ty-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
@@ -583,31 +502,12 @@ Emphasis logic inverts: lighter = more emphasis
     0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   --ty-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 
-  /* Accent colors for dark mode */
-  --ty-accent-primary: #415b7a;
-  --ty-accent-secondary: #8461d5;
-  --ty-accent-success: #3f7a66;
-  --ty-accent-danger: #ab5050;
-  --ty-accent-warning: #d0852f;
-  --ty-accent-neutral: #4d4d4d;
-  --ty-accent-accent: #cc6d00;
-
   /* Input component tokens - dark mode */
-  --ty-input-bg: #1b1b1b;
-  --ty-input-color: #f9fafb;
-  --ty-input-border: #505050;
-  --ty-input-border-hover: #7f7f7f;
-  --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-shadow-focus: rgba(96, 165, 250, 0.1);
-  --ty-input-placeholder: #717171;
-  --ty-input-disabled-bg: #282828;
-  --ty-input-disabled-border: #2e2e2e;
-  --ty-input-disabled-color: #717171;
   --ty-label-color: #d1d5db;
 
   /* Modal - dark mode */
-  --ty-modal-bg: var(--ty-bg-mild);
-  --ty-modal-color: var(--ty-color-neutral-mild);
+  --ty-modal-bg: var(--ty-bg-bold);
+  --ty-modal-color: var(--ty-color-neutral-bold);
   --ty-modal-border: var(--ty-border);
   --ty-modal-backdrop: rgba(0, 0, 0, 0.7);
   --ty-modal-shadow:
@@ -626,6 +526,10 @@ Emphasis logic inverts: lighter = more emphasis
     rgba(0, 0, 0, 0),
     transparent
   );
+
+  /* Calendar "other month" de-emphasis — see the :root definition for why
+     this is its own token instead of --ty-color-neutral-faint. */
+  --ty-calendar-other-month-color: #8a8a8a; /* 5.04:1 vs dark content bg (#1a1a1a) */
 }
 
 /* =================================================================
@@ -635,7 +539,7 @@ Global and semantic text selection colors
 
 /* Global text selection - uses primary colors by default */
 ::selection {
-  background-color: var(--ty-selection-bg, var(--ty-bg-primary-mild));
+  background-color: var(--ty-selection-bg, var(--ty-bg-primary-bold));
   color: var(--ty-selection-color, var(--ty-text-strong));
 }
 
@@ -685,11 +589,6 @@ html.dark textarea::-moz-selection {
   color: var(--ty-color-primary-strong);
 }
 
-.ty-selection-secondary ::selection,
-.ty-selection-secondary::-moz-selection {
-  background-color: var(--ty-color-secondary-soft);
-  color: var(--ty-color-secondary-strong);
-}
 
 .ty-selection-success ::selection,
 .ty-selection-success::-moz-selection {
@@ -722,11 +621,6 @@ html.dark .ty-selection-primary::-moz-selection {
   color: white;
 }
 
-html.dark .ty-selection-secondary ::selection,
-html.dark .ty-selection-secondary::-moz-selection {
-  background-color: var(--ty-color-secondary);
-  color: white;
-}
 
 html.dark .ty-selection-success ::selection,
 html.dark .ty-selection-success::-moz-selection {
@@ -756,39 +650,87 @@ html.dark .ty-selection-neutral::-moz-selection {
 UTILITY CLASSES
 ================================================================= */
 
+/* Sensible default for any border that doesn't set its own color —
+   Tailwind's `border` / `border-t`, plain CSS `border: 1px solid`, etc.
+   Scoped to `html` to win specificity over Tailwind's (0,0,0) preflight
+   regardless of injection order. Class-based overrides (`border-red-500`,
+   `ty-border-primary`, etc.) still win their cascade. Theme-aware:
+   `--ty-border` switches in dark mode automatically. */
+html *,
+html ::before,
+html ::after {
+  border-color: var(--ty-border);
+}
+
 /* =================================================================
 SURFACE UTILITIES
 ================================================================= */
 
 /* Elevated surfaces - cards, panels, components */
 .ty-elevated {
+  box-sizing: border-box !important;
   background-color: var(--ty-surface-elevated) !important;
+  border: var(--ty-elevated-border-width, var(--ty-border-width, 1px))
+    var(--ty-elevated-border-style, solid)
+    var(--ty-elevated-border, transparent) !important;
   box-shadow:
     0 1px 3px 0 rgb(0 0 0 / 0.1),
     0 1px 2px -1px rgb(0 0 0 / 0.1) !important;
+  --ty-divide-color: var(--ty-elevated-border);
 }
 
 /* Floating surfaces - modals, dropdowns, tooltips */
 .ty-floating {
+  box-sizing: border-box !important;
   background-color: var(--ty-surface-floating) !important;
+  border: var(--ty-floating-border-width, var(--ty-border-width, 1px))
+    var(--ty-floating-border-style, solid)
+    var(--ty-floating-border, transparent) !important;
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.1),
     0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  --ty-divide-color: var(--ty-floating-border);
 }
 
 /* App and page backgrounds - the canvas for content */
 .ty-canvas {
+  box-sizing: border-box !important;
   background-color: var(--ty-surface-canvas) !important;
+  border: var(--ty-canvas-border-width, var(--ty-border-width, 1px))
+    var(--ty-canvas-border-style, solid) var(--ty-canvas-border, transparent) !important;
+  --ty-divide-color: var(--ty-canvas-border);
 }
 
 /* Main content areas - primary content background */
 .ty-content {
+  box-sizing: border-box !important;
   background-color: var(--ty-surface-content) !important;
+  border: var(--ty-content-border-width, var(--ty-border-width, 1px))
+    var(--ty-content-border-style, solid) var(--ty-content-border, transparent) !important;
+  --ty-divide-color: var(--ty-content-border);
 }
 
 /* Input surfaces - form controls, text areas, inputs */
 .ty-input {
+  box-sizing: border-box !important;
   background-color: var(--ty-input-bg) !important;
+  border: var(--ty-input-border-width, var(--ty-border-width, 1px))
+    var(--ty-input-border-style, solid) var(--ty-input-border, transparent) !important;
+  --ty-divide-color: var(--ty-input-border);
+}
+
+/* Divider utilities — consume --ty-divide-color from the nearest surface
+   context (set on .ty-elevated/.ty-floating/.ty-canvas/.ty-content/.ty-input)
+   via CSS variable inheritance. Override per-instance:
+     style="--ty-divide-color: var(--ty-border-strong);" */
+.ty-divide-y > * + * {
+  border-top: var(--ty-divide-width, var(--ty-border-width, 1px)) solid
+    var(--ty-divide-color, var(--ty-border));
+}
+
+.ty-divide-x > * + * {
+  border-left: var(--ty-divide-width, var(--ty-border-width, 1px)) solid
+    var(--ty-divide-color, var(--ty-border));
 }
 
 /* Dark theme adjustments for shadows */
@@ -828,31 +770,22 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-primary\+ {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-bold);
 }
 
 .ty-bg-primary- {
   background-color: var(--ty-bg-primary-soft);
 }
 
-.ty-bg-secondary {
-  background-color: var(--ty-bg-secondary);
-}
 
-.ty-bg-secondary\+ {
-  background-color: var(--ty-bg-secondary-mild);
-}
 
-.ty-bg-secondary- {
-  background-color: var(--ty-bg-secondary-soft);
-}
 
 .ty-bg-success {
   background-color: var(--ty-bg-success);
 }
 
 .ty-bg-success\+ {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-bold);
 }
 
 .ty-bg-success- {
@@ -864,7 +797,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-danger\+ {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-bold);
 }
 
 .ty-bg-danger- {
@@ -876,7 +809,7 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-warning\+ {
-  background-color: var(--ty-bg-warning-mild);
+  background-color: var(--ty-bg-warning-bold);
 }
 
 .ty-bg-warning- {
@@ -888,37 +821,11 @@ SEMANTIC BACKGROUND UTILITIES
 }
 
 .ty-bg-neutral\+ {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-bold);
 }
 
 .ty-bg-neutral- {
   background-color: var(--ty-bg-neutral-soft);
-}
-
-/* Accent backgrounds */
-.ty-bg-accent {
-  background-color: var(--ty-bg-accent);
-}
-
-.ty-bg-accent\+ {
-  background-color: var(--ty-bg-accent-mild);
-}
-
-.ty-bg-accent- {
-  background-color: var(--ty-bg-accent-soft);
-}
-
-/* Legacy background utilities */
-.ty-bg {
-  background-color: var(--ty-bg);
-}
-
-.ty-bg\+ {
-  background-color: var(--ty-bg-mild);
-}
-
-.ty-bg\- {
-  background-color: var(--ty-bg-soft);
 }
 
 /* =================================================================
@@ -931,7 +838,7 @@ TEXT HIERARCHY UTILITIES
 }
 
 .ty-text\+ {
-  color: var(--ty-text-mild) !important;
+  color: var(--ty-text-bold) !important;
 }
 
 .ty-text\+\+ {
@@ -956,7 +863,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-primary\+ {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 
 .ty-text-primary {
@@ -971,26 +878,9 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
   color: var(--ty-color-primary-faint) !important;
 }
 
-/* Secondary text colors */
-.ty-text-secondary\+\+ {
-  color: var(--ty-color-secondary-strong) !important;
-}
 
-.ty-text-secondary\+ {
-  color: var(--ty-color-secondary-mild) !important;
-}
 
-.ty-text-secondary {
-  color: var(--ty-color-secondary) !important;
-}
 
-.ty-text-secondary- {
-  color: var(--ty-color-secondary-soft) !important;
-}
-
-.ty-text-secondary-- {
-  color: var(--ty-color-secondary-faint) !important;
-}
 
 /* Success text colors */
 .ty-text-success\+\+ {
@@ -998,7 +888,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-success\+ {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 
 .ty-text-success {
@@ -1019,7 +909,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-danger\+ {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 
 .ty-text-danger {
@@ -1040,7 +930,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-warning\+ {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 
 .ty-text-warning {
@@ -1061,7 +951,7 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
 }
 
 .ty-text-neutral\+ {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 
 .ty-text-neutral {
@@ -1076,19 +966,6 @@ SEMANTIC TEXT COLORS - 5-VARIANT SYSTEM
   color: var(--ty-color-neutral-faint) !important;
 }
 
-/* Accent text colors */
-.ty-text-accent\+ {
-  color: var(--ty-color-accent-mild) !important;
-}
-
-.ty-text-accent {
-  color: var(--ty-color-accent) !important;
-}
-
-.ty-text-accent- {
-  color: var(--ty-color-accent-soft) !important;
-}
-
 /* =================================================================
 BORDER UTILITIES
 ================================================================= */
@@ -1099,7 +976,7 @@ BORDER UTILITIES
 }
 
 .ty-border\+ {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .ty-border\+\+ {
@@ -1119,9 +996,6 @@ BORDER UTILITIES
   border-color: var(--ty-border-primary);
 }
 
-.ty-border-secondary {
-  border-color: var(--ty-border-secondary);
-}
 
 .ty-border-success {
   border-color: var(--ty-border-success);
@@ -1139,30 +1013,18 @@ BORDER UTILITIES
   border-color: var(--ty-border-neutral);
 }
 
-.ty-border-accent\+ {
-  border-color: var(--ty-border-accent-mild);
-}
-
-.ty-border-accent {
-  border-color: var(--ty-border-accent);
-}
-
-.ty-border-accent- {
-  border-color: var(--ty-border-accent-soft);
-}
-
 /* =================================================================
 COMPONENT UTILITIES
 ================================================================= */
 
 /* Card/Panel utilities */
 .ty-card {
-  background-color: var(--ty-bg);
-  color: var(--ty-color-neutral-mild);
+  background-color: var(--ty-surface-elevated);
+  color: var(--ty-color-neutral-bold);
 }
 
 .ty-card-elevated {
-  background-color: var(--ty-bg-mild);
+  background-color: var(--ty-surface-floating);
   box-shadow: var(--ty-shadow-md);
 }
 
@@ -1193,92 +1055,74 @@ INTERACTIVE STATES
 ================================================================= */
 
 .hover\:ty-bg-neutral--:hover {
-  background-color: var(--ty-bg-neutral-faint);
+  background-color: var(--ty-bg-neutral-faint) !important;
 }
 
 .hover\:ty-bg-neutral-:hover {
-  background-color: var(--ty-bg-neutral-soft);
+  background-color: var(--ty-bg-neutral-soft) !important;
 }
 
 .hover\:ty-bg-neutral:hover {
-  background-color: var(--ty-bg-neutral);
+  background-color: var(--ty-bg-neutral) !important;
 }
 
 .hover\:ty-bg-neutral\+:hover {
-  background-color: var(--ty-bg-neutral-mild);
+  background-color: var(--ty-bg-neutral-bold) !important;
 }
 
 .hover\:ty-bg-neutral\+\+:hover {
-  background-color: var(--ty-bg-neutral-strong);
+  background-color: var(--ty-bg-neutral-strong) !important;
 }
 
 .hover\:ty-bg-primary:hover {
-  background-color: var(--ty-bg-primary);
+  background-color: var(--ty-bg-primary) !important;
 }
 
 .hover\:ty-bg-primary\+:hover {
-  background-color: var(--ty-bg-primary-mild);
+  background-color: var(--ty-bg-primary-bold) !important;
 }
 
-.hover\:ty-bg-secondary:hover {
-  background-color: var(--ty-bg-secondary);
-}
 
-.hover\:ty-bg-secondary\+:hover {
-  background-color: var(--ty-bg-secondary-mild);
-}
 
 .hover\:ty-bg-success:hover {
-  background-color: var(--ty-bg-success);
+  background-color: var(--ty-bg-success) !important;
 }
 
 .hover\:ty-bg-success\+:hover {
-  background-color: var(--ty-bg-success-mild);
+  background-color: var(--ty-bg-success-bold) !important;
 }
 
 .hover\:ty-bg-danger:hover {
-  background-color: var(--ty-bg-danger);
+  background-color: var(--ty-bg-danger) !important;
 }
 
 .hover\:ty-bg-danger\+:hover {
-  background-color: var(--ty-bg-danger-mild);
+  background-color: var(--ty-bg-danger-bold) !important;
 }
 
 .hover\:ty-bg-danger-:hover {
-  background-color: var(--ty-bg-danger-soft);
-}
-
-.hover\:ty-bg-accent:hover {
-  background-color: var(--ty-bg-accent);
-}
-
-.hover\:ty-bg-accent\+:hover {
-  background-color: var(--ty-bg-accent-mild);
-}
-
-.hover\:ty-bg-accent-:hover {
-  background-color: var(--ty-bg-accent-soft);
+  background-color: var(--ty-bg-danger-soft) !important;
 }
 
 /* Hover states for text colors */
 .hover\:ty-text:hover {
-  color: var(--ty-text);
+  color: var(--ty-text) !important;
 }
 
 .hover\:ty-text\+:hover {
-  color: var(--ty-text-mild);
+  color: var(--ty-text-bold) !important;
 }
 
 .hover\:ty-text\+\+:hover {
-  color: var(--ty-text-strong);
+  color: var(--ty-text-strong) !important;
 }
 
 .hover\:ty-text-:hover {
-  color: var(--ty-text-soft);
+  color: var(--ty-text-soft) !important;
 }
 
 .hover\:ty-text--:hover {
-  color: var(--ty-text-faint);
+  color: var(--ty-text-faint) !important;
 }
 
 /* Hover states for semantic text colors */
@@ -1288,7 +1132,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-primary\+:hover {
-  color: var(--ty-color-primary-mild) !important;
+  color: var(--ty-color-primary-bold) !important;
 }
 
 .hover\:ty-text-primary:hover {
@@ -1303,26 +1147,9 @@ INTERACTIVE STATES
   color: var(--ty-color-primary-faint) !important;
 }
 
-/* Secondary text hover states */
-.hover\:ty-text-secondary\+\+:hover {
-  color: var(--ty-color-secondary-strong) !important;
-}
 
-.hover\:ty-text-secondary\+:hover {
-  color: var(--ty-color-secondary-mild) !important;
-}
 
-.hover\:ty-text-secondary:hover {
-  color: var(--ty-color-secondary) !important;
-}
 
-.hover\:ty-text-secondary-:hover {
-  color: var(--ty-color-secondary-soft) !important;
-}
-
-.hover\:ty-text-secondary--:hover {
-  color: var(--ty-color-secondary-faint) !important;
-}
 
 /* Success text hover states */
 .hover\:ty-text-success\+\+:hover {
@@ -1330,7 +1157,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-success\+:hover {
-  color: var(--ty-color-success-mild) !important;
+  color: var(--ty-color-success-bold) !important;
 }
 
 .hover\:ty-text-success:hover {
@@ -1351,7 +1178,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-danger\+:hover {
-  color: var(--ty-color-danger-mild) !important;
+  color: var(--ty-color-danger-bold) !important;
 }
 
 .hover\:ty-text-danger:hover {
@@ -1372,7 +1199,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-warning\+:hover {
-  color: var(--ty-color-warning-mild) !important;
+  color: var(--ty-color-warning-bold) !important;
 }
 
 .hover\:ty-text-warning:hover {
@@ -1393,7 +1220,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-text-neutral + :hover {
-  color: var(--ty-color-neutral-mild) !important;
+  color: var(--ty-color-neutral-bold) !important;
 }
 
 .hover\:ty-text-neutral:hover {
@@ -1408,19 +1235,6 @@ INTERACTIVE STATES
   color: var(--ty-color-neutral-faint) !important;
 }
 
-/* Accent text hover states */
-.hover\:ty-text-accent\+:hover {
-  color: var(--ty-color-accent-mild) !important;
-}
-
-.hover\:ty-text-accent:hover {
-  color: var(--ty-color-accent) !important;
-}
-
-.hover\:ty-text-accent-:hover {
-  color: var(--ty-color-accent-soft) !important;
-}
-
 /* Hover states for borders */
 /* Base border hover states */
 .hover\:ty-border\+\+:hover {
@@ -1428,7 +1242,7 @@ INTERACTIVE STATES
 }
 
 .hover\:ty-border\+:hover {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .hover\:ty-border:hover {
@@ -1448,9 +1262,6 @@ INTERACTIVE STATES
   border-color: var(--ty-border-primary) !important;
 }
 
-.hover\:ty-border-secondary:hover {
-  border-color: var(--ty-border-secondary) !important;
-}
 
 .hover\:ty-border-success:hover {
   border-color: var(--ty-border-success) !important;
@@ -1468,24 +1279,12 @@ INTERACTIVE STATES
   border-color: var(--ty-border-neutral) !important;
 }
 
-.hover\:ty-border-accent\+:hover {
-  border-color: var(--ty-border-accent-mild) !important;
-}
-
-.hover\:ty-border-accent:hover {
-  border-color: var(--ty-border-accent) !important;
-}
-
-.hover\:ty-border-accent-:hover {
-  border-color: var(--ty-border-accent-soft) !important;
-}
-
 .focus\:ty-border\+\+:focus {
   border-color: var(--ty-border-strong) !important;
 }
 
 .focus\:ty-border + :focus {
-  border-color: var(--ty-border-mild) !important;
+  border-color: var(--ty-border-bold) !important;
 }
 
 .focus\:ty-border:focus {
@@ -1505,9 +1304,6 @@ INTERACTIVE STATES
   border-color: var(--ty-border-primary) !important;
 }
 
-.focus\:ty-border-secondary:focus {
-  border-color: var(--ty-border-secondary) !important;
-}
 
 .focus\:ty-border-success:focus {
   border-color: var(--ty-border-success) !important;
@@ -1525,28 +1321,12 @@ INTERACTIVE STATES
   border-color: var(--ty-border-neutral) !important;
 }
 
-.focus\:ty-border-accent\+:focus {
-  border-color: var(--ty-border-accent-mild) !important;
-}
-
-.focus\:ty-border-accent:focus {
-  border-color: var(--ty-border-accent) !important;
-}
-
-.focus\:ty-border-accent-:focus {
-  border-color: var(--ty-border-accent-soft) !important;
-}
-
 /* =================================================================
 RESPONSIVE VARIANTS
 ================================================================= */
 
 /* Small screens and up */
 @media (min-width: 640px) {
-  .sm\:ty-bg {
-    background-color: var(--ty-bg);
-  }
-
   .sm\:ty-bg-primary {
     background-color: var(--ty-bg-primary);
   }
@@ -1558,10 +1338,6 @@ RESPONSIVE VARIANTS
 
 /* Medium screens and up */
 @media (min-width: 768px) {
-  .md\:ty-bg {
-    background-color: var(--ty-bg);
-  }
-
   .md\:ty-bg-primary {
     background-color: var(--ty-bg-primary);
   }
@@ -1573,15 +1349,23 @@ RESPONSIVE VARIANTS
 
 /* Large screens and up */
 @media (min-width: 1024px) {
-  .lg\:ty-bg {
-    background-color: var(--ty-bg);
-  }
-
   .lg\:ty-bg-primary {
     background-color: var(--ty-bg-primary);
   }
 
   .lg\:ty-text-primary {
     color: var(--ty-color-primary);
+  }
+}
+
+/* =================================================================
+   MOBILE FONT SIZE
+   Prevents iOS Safari auto-zoom on input focus (requires >= 16px)
+   and improves readability on small screens.
+================================================================= */
+
+@media (max-width: 768px) {
+  :root {
+    --ty-font-sm: 1rem;
   }
 }

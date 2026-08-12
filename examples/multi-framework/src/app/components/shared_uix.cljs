@@ -33,7 +33,7 @@
       ($ :div {:class "label"} "uix watching r/atom")
       ($ :div {:class "count"} count)
       ($ :div {:class "buttons"}
-        ($ :ty-button {:flavor "secondary"
+        ($ :ty-button {:flavor "neutral"
                        :on-click #(swap! state/shared-count dec)} "−")
         ($ :ty-button {:flavor "primary"
                        :on-click #(swap! state/shared-count inc)} "+")))))

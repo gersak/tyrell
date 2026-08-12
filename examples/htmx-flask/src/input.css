@@ -14,37 +14,37 @@
   --color-primary-50: rgb(var(--ty-color-primary-faint) / <alpha-value>);
   --color-primary-100: rgb(var(--ty-color-primary-soft) / <alpha-value>);
   --color-primary-500: rgb(var(--ty-color-primary) / <alpha-value>);
-  --color-primary-600: rgb(var(--ty-color-primary-mild) / <alpha-value>);
+  --color-primary-600: rgb(var(--ty-color-primary-bold) / <alpha-value>);
   --color-primary-900: rgb(var(--ty-color-primary-strong) / <alpha-value>);
   
   --color-success-50: rgb(var(--ty-color-success-faint) / <alpha-value>);
   --color-success-100: rgb(var(--ty-color-success-soft) / <alpha-value>);
   --color-success-500: rgb(var(--ty-color-success) / <alpha-value>);
-  --color-success-600: rgb(var(--ty-color-success-mild) / <alpha-value>);
+  --color-success-600: rgb(var(--ty-color-success-bold) / <alpha-value>);
   --color-success-900: rgb(var(--ty-color-success-strong) / <alpha-value>);
   
   --color-danger-50: rgb(var(--ty-color-danger-faint) / <alpha-value>);
   --color-danger-100: rgb(var(--ty-color-danger-soft) / <alpha-value>);
   --color-danger-500: rgb(var(--ty-color-danger) / <alpha-value>);
-  --color-danger-600: rgb(var(--ty-color-danger-mild) / <alpha-value>);
+  --color-danger-600: rgb(var(--ty-color-danger-bold) / <alpha-value>);
   --color-danger-900: rgb(var(--ty-color-danger-strong) / <alpha-value>);
   
   --color-warning-50: rgb(var(--ty-color-warning-faint) / <alpha-value>);
   --color-warning-100: rgb(var(--ty-color-warning-soft) / <alpha-value>);
   --color-warning-500: rgb(var(--ty-color-warning) / <alpha-value>);
-  --color-warning-600: rgb(var(--ty-color-warning-mild) / <alpha-value>);
+  --color-warning-600: rgb(var(--ty-color-warning-bold) / <alpha-value>);
   --color-warning-900: rgb(var(--ty-color-warning-strong) / <alpha-value>);
   
   --color-info-50: rgb(var(--ty-color-info-faint) / <alpha-value>);
   --color-info-100: rgb(var(--ty-color-info-soft) / <alpha-value>);
   --color-info-500: rgb(var(--ty-color-info) / <alpha-value>);
-  --color-info-600: rgb(var(--ty-color-info-mild) / <alpha-value>);
+  --color-info-600: rgb(var(--ty-color-info-bold) / <alpha-value>);
   --color-info-900: rgb(var(--ty-color-info-strong) / <alpha-value>);
   
   --color-neutral-50: rgb(var(--ty-color-neutral-faint) / <alpha-value>);
   --color-neutral-100: rgb(var(--ty-color-neutral-soft) / <alpha-value>);
   --color-neutral-500: rgb(var(--ty-color-neutral) / <alpha-value>);
-  --color-neutral-600: rgb(var(--ty-color-neutral-mild) / <alpha-value>);
+  --color-neutral-600: rgb(var(--ty-color-neutral-bold) / <alpha-value>);
   --color-neutral-900: rgb(var(--ty-color-neutral-strong) / <alpha-value>);
 
   /* Custom backdrop blur */
@@ -56,7 +56,7 @@
   --animate-scale-in: scaleIn 0.2s ease-out;
 
   /* Custom gradients */
-  --gradient-hero: linear-gradient(135deg, rgb(var(--ty-color-primary-faint)) 0%, rgb(var(--ty-color-secondary-faint)) 100%);
+  --gradient-hero: linear-gradient(135deg, rgb(var(--ty-color-primary-faint)) 0%, rgb(var(--ty-color-neutral-faint)) 100%);
 
   /* Glass morphism shadows */
   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
@@ -179,7 +179,7 @@
   .priority-high {
     @apply px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wide;
     background-color: var(--ty-bg-danger-soft);
-    color: var(--ty-color-danger-mild);
+    color: var(--ty-color-danger-bold);
   }
 
   .priority-medium {
@@ -218,7 +218,7 @@
   /* Navigation improvements */
   .nav-link {
     @apply flex items-center px-4 py-2 rounded-md text-sm font-medium transition-all duration-200;
-    color: var(--ty-color-neutral-mild);
+    color: var(--ty-color-neutral-bold);
   }
 
   .nav-link:hover {
@@ -293,14 +293,14 @@
 
   /* Text gradient utilities */
   .text-gradient-primary {
-    background: linear-gradient(135deg, var(--ty-color-primary-strong), var(--ty-color-primary-mild));
+    background: linear-gradient(135deg, var(--ty-color-primary-strong), var(--ty-color-primary-bold));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-success {
-    background: linear-gradient(135deg, var(--ty-color-success-strong), var(--ty-color-success-mild));
+    background: linear-gradient(135deg, var(--ty-color-success-strong), var(--ty-color-success-bold));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -316,7 +316,7 @@
   .bg-gradient-hero {
     background: linear-gradient(135deg,
         rgba(var(--ty-color-primary-faint), 0.05) 0%,
-        rgba(var(--ty-color-secondary-faint), 0.05) 100%);
+        rgba(var(--ty-color-neutral-faint), 0.05) 100%);
   }
 
   /* Animation utilities */

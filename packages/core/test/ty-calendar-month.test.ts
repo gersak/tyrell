@@ -11,7 +11,7 @@ const cells = (el: any): HTMLElement[] =>
 describe('ty-calendar-month ARIA grid structure', () => {
   it('the days container is role="grid" with rows and columnheaders', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
 
@@ -28,7 +28,7 @@ describe('ty-calendar-month ARIA grid structure', () => {
 
   it('every day cell is a gridcell with a full-date aria-label', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
 
@@ -45,7 +45,7 @@ describe('ty-calendar-month ARIA grid structure', () => {
 describe('ty-calendar-month roving tabindex', () => {
   it('exactly one gridcell is tabindex="0"; the rest are "-1"', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
 
@@ -70,7 +70,7 @@ describe('ty-calendar-month roving tabindex', () => {
 
   it('disabled (out-of-range) days are excluded from the roving set and tab order', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}" min="2026-07-10"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH} min="2026-07-10"></ty-calendar-month>
     `)) as any;
     await nextFrame();
 
@@ -92,7 +92,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('ArrowRight moves the roving cell one day forward and moves DOM focus with it', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
     const start = focusRovingCell(el);
@@ -110,7 +110,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('ArrowDown moves the roving cell one full week (7 days) forward', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
     const start = focusRovingCell(el);
@@ -125,7 +125,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('ArrowUp clamps at the top row instead of throwing or wrapping past index 0', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
 
@@ -155,7 +155,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('Enter on the focused gridcell selects that day (day-click fires)', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
     const roving = focusRovingCell(el);
@@ -169,7 +169,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('Space on the focused gridcell also selects that day', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
     `)) as any;
     await nextFrame();
     const roving = focusRovingCell(el);
@@ -183,7 +183,7 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
 
   it('arrow keys do not activate a disabled day at the grid boundary', async () => {
     const el = (await fixture(html`
-      <ty-calendar-month display-year="${YEAR}" display-month="${MONTH}" min="2026-07-05"></ty-calendar-month>
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH} min="2026-07-05"></ty-calendar-month>
     `)) as any;
     await nextFrame();
     // Move the roving cell onto the first ENABLED day, then try to step

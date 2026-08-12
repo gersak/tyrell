@@ -402,7 +402,7 @@ export default function DataDashboardExample() {
               <TyTag value="signup" flavor="success" size="sm">Signups</TyTag>
               <TyTag value="purchase" flavor="primary" size="sm">Purchases</TyTag>
               <TyTag value="login" flavor="neutral" size="sm">Logins</TyTag>
-              <TyTag value="feature_use" flavor="secondary" size="sm">Features</TyTag>
+              <TyTag value="feature_use" flavor="neutral" size="sm">Features</TyTag>
               <TyTag value="support" flavor="warning" size="sm">Support</TyTag>
             </TyMultiselect>
           </div>
@@ -460,7 +460,7 @@ export default function DataDashboardExample() {
             <div className="ty-elevated p-6 rounded-xl border ty-border">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium ty-text+">Total Events</h3>
-                <TyIcon name="activity" size="20" className="ty-text-info" />
+                <TyIcon name="activity" size="20" className="ty-text-warning" />
               </div>
               <div className="text-2xl font-bold ty-text++ mb-1">
                 {summaryStats.totalEvents.toLocaleString()}
@@ -473,7 +473,7 @@ export default function DataDashboardExample() {
             <div className="ty-elevated p-6 rounded-xl border ty-border">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-sm font-medium ty-text+">Conversions</h3>
-                <TyIcon name="trending-up" size="20" className="ty-text-secondary" />
+                <TyIcon name="trending-up" size="20" className="ty-text-neutral" />
               </div>
               <div className="text-2xl font-bold ty-text++ mb-1">
                 {summaryStats.totalConversions.toLocaleString()}
@@ -510,11 +510,11 @@ export default function DataDashboardExample() {
                   <span className="text-xs ty-text">Medium Activity (3-5 events)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 ty-bg-info rounded-full"></div>
+                  <div className="w-2 h-2 ty-bg-primary rounded-full"></div>
                   <span className="text-xs ty-text">Low Activity (1-2 events)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 ty-bg-secondary rounded-full"></div>
+                  <div className="w-3 h-3 ty-bg-neutral rounded-full"></div>
                   <span className="text-xs ty-text">High Revenue ($2000+)</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -574,7 +574,7 @@ export default function DataDashboardExample() {
                       <span className="text-sm ty-text">Medium Activity (3-5 events)</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 ty-bg-info rounded-full"></div>
+                      <div className="w-3 h-3 ty-bg-primary rounded-full"></div>
                       <span className="text-sm ty-text">Low Activity (1-2 events)</span>
                     </div>
                   </div>
@@ -584,11 +584,11 @@ export default function DataDashboardExample() {
                   <h3 className="font-medium ty-text+ mb-3">Revenue Indicators</h3>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
-                      <div className="w-4 h-4 ty-bg-secondary rounded-full"></div>
+                      <div className="w-4 h-4 ty-bg-neutral rounded-full"></div>
                       <span className="text-sm ty-text">High Revenue ($2000+)</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 ty-bg-secondary rounded-full opacity-60"></div>
+                      <div className="w-3 h-3 ty-bg-neutral rounded-full opacity-60"></div>
                       <span className="text-sm ty-text">Medium Revenue ($1000+)</span>
                     </div>
                   </div>
@@ -638,8 +638,8 @@ export default function DataDashboardExample() {
             {[
               { type: 'signup', label: 'Signups', icon: 'user-plus', flavor: 'success' },
               { type: 'purchase', label: 'Purchases', icon: 'shopping-cart', flavor: 'primary' },
-              { type: 'login', label: 'Logins', icon: 'log-in', flavor: 'info' },
-              { type: 'feature_use', label: 'Features', icon: 'zap', flavor: 'secondary' },
+              { type: 'login', label: 'Logins', icon: 'log-in', flavor: 'neutral' },
+              { type: 'feature_use', label: 'Features', icon: 'zap', flavor: 'danger' },
               { type: 'support', label: 'Support', icon: 'help-circle', flavor: 'warning' }
             ].map(actType => {
               const count = filteredActivities.filter(a => a.type === actType.type).length
@@ -674,7 +674,7 @@ export default function DataDashboardExample() {
                           activity.type === 'signup' ? 'success' :
                             activity.type === 'purchase' ? 'primary' :
                               activity.type === 'login' ? 'neutral' :
-                                activity.type === 'feature_use' ? 'secondary' : 'warning'
+                                activity.type === 'feature_use' ? 'danger' : 'warning'
                         }
                         size="sm"
                       >
@@ -751,20 +751,20 @@ export default function DataDashboardExample() {
                 <div className="text-xs ty-text-success">Revenue</div>
               </div>
 
-              <div className="text-center p-4 ty-bg-info- rounded-lg">
-                <TyIcon name="activity" size="24" className="ty-text-info mx-auto mb-2" />
-                <div className="text-2xl font-bold ty-text-info+">
+              <div className="text-center p-4 ty-bg-warning- rounded-lg">
+                <TyIcon name="activity" size="24" className="ty-text-warning mx-auto mb-2" />
+                <div className="text-2xl font-bold ty-text-warning+">
                   {dayDetailsData.events}
                 </div>
-                <div className="text-xs ty-text-info">Events</div>
+                <div className="text-xs ty-text-warning">Events</div>
               </div>
 
-              <div className="text-center p-4 ty-bg-secondary- rounded-lg">
-                <TyIcon name="trending-up" size="24" className="ty-text-secondary mx-auto mb-2" />
-                <div className="text-2xl font-bold ty-text-secondary+">
+              <div className="text-center p-4 ty-bg-neutral- rounded-lg">
+                <TyIcon name="trending-up" size="24" className="ty-text-neutral mx-auto mb-2" />
+                <div className="text-2xl font-bold ty-text-neutral+">
                   {dayDetailsData.conversions}
                 </div>
-                <div className="text-xs ty-text-secondary">Conversions</div>
+                <div className="text-xs ty-text-neutral">Conversions</div>
               </div>
             </div>
 

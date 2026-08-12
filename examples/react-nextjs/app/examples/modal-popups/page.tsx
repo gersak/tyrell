@@ -238,7 +238,7 @@ export default function ModalPopupsTest() {
               >
                 <TyTag value="frontend" size="sm" flavor="success" >frontend</TyTag>
                 <TyTag value="backend"  size="sm" flavor="warning" >backend</TyTag>
-                <TyTag value="design"   size="sm" flavor="secondary">design</TyTag>
+                <TyTag value="design"   size="sm" flavor="neutral">design</TyTag>
                 <TyTag value="infra"    size="sm" flavor="neutral" >infra</TyTag>
                 <TyTag value="research" size="sm" flavor="primary" >research</TyTag>
               </TyMultiselect>

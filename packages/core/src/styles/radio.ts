@@ -47,7 +47,7 @@ ${inputStyles}
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   color: var(--ty-color-text);
 }
 

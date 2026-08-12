@@ -170,36 +170,4 @@ cal.addEventListener('navigate', (e) => {
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>
 <!-- FormData: event-date=2025-06-15 -->")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use value with ISO format (YYYY-MM-DD) — it's the canonical API"
-                     "Set locale to match your users' region for natural date labels"
-                     "Use stateless mode when managing date state in a framework"
-                     "Set name when submitting inside a form — the value lands in FormData"
-                     "Use ty-date-picker for inline input + calendar popup in forms"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Mix value and year/month/day — use one model or the other"
-                     "Reach for ty-calendar when ty-date-picker would serve — it includes an input"
-                     "Forget to reflect navigation events back onto the element in stateless mode"
-                     "Use width and size together — they're mutually exclusive"
-                     "Skip the name attribute when inside a form — the date won't submit"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

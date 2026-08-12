@@ -11,10 +11,7 @@
          ;; Resize observer - element sizes by ID
          :element-sizes {}
 
-         ;; CSS System page — interactive flavor axis picker
-         :flavor-picker {:flavor "brand" :tone "" :hex "#6b3d71"}
-
-         ;; CSS System page — interactive font/radius picker
+         ;; Theming page — interactive font/radius picker
          :typography-picker {:font "sans" :radius "8"}
 
          :search {:open false

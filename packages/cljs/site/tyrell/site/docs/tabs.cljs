@@ -182,36 +182,4 @@ tabs.setAttribute('active', 'details');" "javascript")]
   <ty-tab id=\"overview\" label=\"Overview\">...</ty-tab>
   <ty-tab id=\"settings\" label=\"Settings\">...</ty-tab>
 </ty-tabs>")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Keep to 3–6 tabs — more than 7 causes overflow and poor usability"
-                     "Give every ty-tab a unique, stable id — it drives the active attribute"
-                     "Set width and height explicitly — the carousel layout requires them"
-                     "Use bottom placement for mobile-style navigation patterns"
-                     "Use ty-tab-change events for URL sync or reactive state updates"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Omit width or height — the carousel won't render correctly without them"
-                     "Use tabs for sequential steps — ty-wizard is the right primitive"
-                     "Put deeply nested navigation inside a tab — use a sidebar instead"
-                     "Disable a tab without explaining why — add a tooltip or inline message"
-                     "Use tabs when there are only two options — a toggle or switch is cleaner"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

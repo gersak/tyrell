@@ -20,17 +20,15 @@ export default function ThemePage() {
 
   const semanticColors = [
     { name: 'Primary', key: 'primary', description: 'Main brand color and primary actions' },
-    { name: 'Secondary', key: 'secondary', description: 'Supporting brand color' },
     { name: 'Success', key: 'success', description: 'Positive states, confirmations' },
     { name: 'Danger', key: 'danger', description: 'Errors, critical states, destructive actions' },
     { name: 'Warning', key: 'warning', description: 'Caution, important notices' },
-    { name: 'Info', key: 'info', description: 'Informational content' },
     { name: 'Neutral', key: 'neutral', description: 'Default, standard content' },
   ]
 
   const emphasisLevels = [
     { name: 'Strong', key: 'strong', description: 'Maximum emphasis - headers, critical text' },
-    { name: 'Mild', key: 'mild', description: 'High emphasis - subheadings, important text' },
+    { name: 'Bold', key: 'bold', description: 'High emphasis - subheadings, important text' },
     { name: 'Base', key: '', description: 'Base emphasis - standard links, primary text' },
     { name: 'Soft', key: 'soft', description: 'Reduced emphasis - secondary text, descriptions' },
     { name: 'Faint', key: 'faint', description: 'Minimal emphasis - disabled text, fine print' },
@@ -71,7 +69,7 @@ export default function ThemePage() {
                 <code>--ty-color-danger</code><br/>
                 <code>--ty-bg-success</code>
               </p>
-              <p style={{ color: 'var(--ty-color-success-mild)', fontSize: '12px' }}>
+              <p style={{ color: 'var(--ty-color-success-bold)', fontSize: '12px' }}>
                 Express intent and meaning
               </p>
             </div>
@@ -84,7 +82,7 @@ export default function ThemePage() {
                 <code>--red-light</code><br/>
                 <code>--gray-400</code>
               </p>
-              <p style={{ color: 'var(--ty-color-danger-mild)', fontSize: '12px' }}>
+              <p style={{ color: 'var(--ty-color-danger-bold)', fontSize: '12px' }}>
                 Meaningless without context
               </p>
             </div>
@@ -233,7 +231,7 @@ export default function ThemePage() {
               <h4 style={{ color: 'var(--ty-color-primary-strong)', marginBottom: '12px' }}>Emphasis Levels</h4>
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ color: 'var(--ty-color-primary-strong)', fontSize: '14px' }}>Strong emphasis</div>
-                <div style={{ color: 'var(--ty-color-primary-mild)', fontSize: '14px' }}>Mild emphasis</div>
+                <div style={{ color: 'var(--ty-color-primary-bold)', fontSize: '14px' }}>Bold emphasis</div>
                 <div style={{ color: 'var(--ty-color-primary)', fontSize: '14px' }}>Base emphasis</div>
                 <div style={{ color: 'var(--ty-color-primary-soft)', fontSize: '14px' }}>Soft emphasis</div>
                 <div style={{ color: 'var(--ty-color-primary-faint)', fontSize: '14px' }}>Faint emphasis</div>
@@ -243,10 +241,10 @@ export default function ThemePage() {
             <div className="ty-elevated" style={{ 
               padding: '16px', 
               borderRadius: '8px',
-              borderLeft: '4px solid var(--ty-color-info)'
+              borderLeft: '4px solid var(--ty-color-primary)'
             }}>
-              <h4 style={{ color: 'var(--ty-color-info-strong)', marginBottom: '12px' }}>Automatic Adaptation</h4>
-              <p style={{ color: 'var(--ty-color-info)', fontSize: '14px', lineHeight: '1.4' }}>
+              <h4 style={{ color: 'var(--ty-color-primary-strong)', marginBottom: '12px' }}>Automatic Adaptation</h4>
+              <p style={{ color: 'var(--ty-color-primary)', fontSize: '14px', lineHeight: '1.4' }}>
                 Colors automatically invert emphasis logic in dark mode for optimal contrast and readability.
               </p>
             </div>
@@ -297,8 +295,8 @@ export default function ThemePage() {
               </ul>
             </div>
 
-            <div className="ty-elevated" style={{ padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--ty-color-info)' }}>
-              <h4 style={{ color: 'var(--ty-color-info-strong)', marginBottom: '12px' }}>💡 Pro Tips</h4>
+            <div className="ty-elevated" style={{ padding: '16px', borderRadius: '8px', borderLeft: '4px solid var(--ty-color-primary)' }}>
+              <h4 style={{ color: 'var(--ty-color-primary-strong)', marginBottom: '12px' }}>💡 Pro Tips</h4>
               <ul style={{ color: 'var(--ty-color-neutral)', fontSize: '14px', lineHeight: '1.5', paddingLeft: '16px' }}>
                 <li>Use .ty-elevated for content cards</li>
                 <li>Apply .ty-floating for overlays</li>

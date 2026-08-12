@@ -181,36 +181,4 @@
         [:strong "How it works:"] " the component's shadow root contains a single " [:code "<slot>"]
         " whose fallback content is driven by the registry. When light-DOM children are present, the browser shows them instead — same CSS classes (" [:code "icon-lg"] ", " [:code "icon-spin"]
         ", color via " [:code "currentColor"] ") apply to whichever wins. Set " [:code "fill"] " or " [:code "stroke"] " to " [:code "currentColor"] " on your SVG so " [:code "ty-text-*"] " classes still tint it."]]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Color with ty-text-* classes, not fill or stroke CSS properties"
-                     "Use gap on the parent container for spacing, not margins on the icon"
-                     "Pair icons with visible labels — icons alone are often ambiguous"
-                     "Use spin for loading states and pulse for live status indicators"
-                     "Match icon size to adjacent text (size ≈ font-size)"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Add margin to the icon itself — use gap on the container instead"
-                     "Override fill or stroke directly — ty-text-* handles color correctly"
-                     "Use icons without accessible text in interactive elements (buttons, links)"
-                     "Combine spin and pulse on the same icon — pick one"
-                     "Use pixel values for size when named variants (xs–xl) exist"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

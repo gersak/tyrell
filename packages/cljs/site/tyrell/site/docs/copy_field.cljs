@@ -236,36 +236,6 @@ copy.addEventListener('copy-error', (e) => {
                 (advanced-api-keys-dashboard)
                 (advanced-event-handling)]))
 
-(defn- practice-column [flavor icon-circle icon-item title items]
-  [:div
-   [:div.flex.items-center.gap-2.mb-3
-    [:ty-icon {:class [(str "ty-text-" flavor)] :name icon-circle :size "16"}]
-    [:span {:class [(str "ty-text-" flavor "+")]
-            :style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} title]]
-   [:div.space-y-2
-    (for [text items]
-      [:div.flex.items-start.gap-2
-       [:ty-icon.mt-px {:class [(str "ty-text-" flavor)] :name icon-item :size "14"}]
-       [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]])
-
-(defn best-practices []
-  (doc-section "Best Practices"
-               [:div.ty-elevated.rounded-lg.p-5
-                [:div.grid.gap-6
-                 {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-                 (practice-column "success" "check-circle" "check" "Do"
-                                  ["Use format=\"code\" for tokens, commands, and connection strings"
-                                   "Use semantic flavors to signal env or sensitivity"
-                                   "Provide clear labels describing what the value is"
-                                   "Listen to copy-success for toast notifications or analytics"
-                                   "Use multiline for SSH keys, certs, or long tokens"])
-                 (practice-column "danger" "x-circle" "x" "Don't"
-                                  ["Use for editable content — ty-input handles that"
-                                   "Expose secrets without server-side access control"
-                                   "Skip copy-error handling — clipboard API can fail"
-                                   "Rely on color alone to distinguish fields — add clear labels"
-                                   "Use for interactive actions — that's what ty-button is for"])]]))
-
 (defn view []
   (docs-page
    (component-header "ty-copy"
@@ -274,5 +244,4 @@ copy.addEventListener('copy-error', (e) => {
    (examples)
    (sizes)
    (semantic-flavors)
-   (advanced-examples)
-   (best-practices)))
+   (advanced-examples)))

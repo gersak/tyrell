@@ -44,7 +44,7 @@ export const datePickerStyles = `
   display: block;
   width: auto;
   min-width: 200px;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
 
   /* Theming tokens — date-picker stub. Thin shim over --ty-input-*: override
      these to retheme just the date-picker trigger, not other inputs. */
@@ -136,7 +136,7 @@ export const datePickerStyles = `
   color: var(--ty-date-picker-color);
   border: 1px solid var(--date-picker-accent, var(--ty-date-picker-border));
   border-radius: var(--ty-date-picker-radius);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   font-weight: var(--ty-font-normal);
   line-height: var(--ty-line-height-tight);
@@ -354,7 +354,7 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   border-radius: var(--ty-radius-sm);
   background: var(--ty-input-bg);
   color: var(--ty-calendar-time-input-color);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   font-variant-numeric: tabular-nums;
   text-align: center;

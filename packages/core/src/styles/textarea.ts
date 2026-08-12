@@ -6,7 +6,7 @@
 export const textareaStyles = `
 :host {
   display: block;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   width: 100%;
 }
 
@@ -122,6 +122,7 @@ export const textareaStyles = `
 /* Error state is reflected on .textarea-wrapper (see above). */
 
 textarea {
+  font-family: inherit;
   /* Borderless — the .textarea-wrapper owns the border/background now. */
   box-sizing: border-box;
   width: 100%;

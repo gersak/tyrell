@@ -160,7 +160,7 @@ export const wizardStyles = `
      dims solid fills by 0.25 L), which stranded white text at 3.5:1. */
   color: oklch(
     from var(--ty-wizard-completed-accent)
-      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+      clamp(0, (var(--ty-solid-fg-threshold, 0.57) - l) * 1000, 1) 0 0
   );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-completed-accent) 12%, transparent);
 }
@@ -170,7 +170,7 @@ export const wizardStyles = `
   border-color: var(--ty-color-primary-strong);
   color: oklch(
     from var(--ty-wizard-active-accent)
-      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+      clamp(0, (var(--ty-solid-fg-threshold, 0.57) - l) * 1000, 1) 0 0
   );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-active-accent) 12%, transparent);
 }
@@ -186,7 +186,7 @@ export const wizardStyles = `
   border-color: var(--ty-color-danger-strong);
   color: oklch(
     from var(--ty-wizard-error-accent)
-      clamp(0, (var(--ty-solid-fg-threshold, 0.6) - l) * 1000, 1) 0 0
+      clamp(0, (var(--ty-solid-fg-threshold, 0.57) - l) * 1000, 1) 0 0
   );
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--ty-wizard-error-accent) 12%, transparent);
 }

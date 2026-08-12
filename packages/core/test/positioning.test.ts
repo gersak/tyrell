@@ -1,5 +1,10 @@
 import { fixture, html, expect, nextFrame } from '@open-wc/testing';
-import { computeAnchoredPosition } from '../lib/utils/positioning.js';
+import {
+  computeAnchoredPosition,
+  preferenceChain,
+  placementToAnchored,
+  placements,
+} from '../lib/utils/positioning.js';
 import '../lib/components/date-picker.js';
 import '../lib/components/select.js';
 import '../lib/components/option.js';
@@ -8,6 +13,60 @@ import '../lib/components/button.js';
 
 const rect = (top: number, left: number, width: number, height: number) =>
   ({ top, left, width, height, right: left + width, bottom: top + height }) as DOMRect;
+
+describe('placement side + alignment', () => {
+  it('start and end are distinct on the vertical axis', () => {
+    // Regression: left-start/right-start were both configured as
+    // vertical:'center', so they rendered identically to bare left/right and
+    // the start-alignment branch in calculatePlacement was unreachable.
+    expect(placements['left-start'].vertical).to.not.equal(placements['left'].vertical);
+    expect(placements['right-start'].vertical).to.not.equal(placements['right'].vertical);
+    expect(placements['left-start'].vertical).to.not.equal(placements['left-end'].vertical);
+  });
+
+  it('every one of the 12 placements has a config', () => {
+    for (const side of ['top', 'right', 'bottom', 'left']) {
+      for (const p of [side, `${side}-start`, `${side}-end`]) {
+        expect(placements[p as keyof typeof placements], p).to.exist;
+      }
+    }
+  });
+
+  it('preferenceChain flips before re-aligning', () => {
+    const chain = preferenceChain('left-start');
+    expect(chain[0]).to.equal('left-start');
+    // Flip carries the alignment and must come before any same-side re-align:
+    // re-aligning cannot fix side-axis overflow, flipping can.
+    expect(chain[1]).to.equal('right-start');
+    expect(chain.indexOf('right-start')).to.be.lessThan(chain.indexOf('left'));
+    expect(chain).to.have.lengthOf(12);
+  });
+
+  it('bare sides keep their historic fallback order', () => {
+    // Back-compat: before aligned placements existed, popup/tooltip used
+    // hand-written chains where the requested side degraded straight to its
+    // opposite. That must still hold or existing markup shifts on overflow.
+    expect(preferenceChain('top').slice(0, 2)).to.deep.equal(['top', 'bottom']);
+    expect(preferenceChain('bottom').slice(0, 2)).to.deep.equal(['bottom', 'top']);
+    expect(preferenceChain('left').slice(0, 2)).to.deep.equal(['left', 'right']);
+    expect(preferenceChain('right').slice(0, 2)).to.deep.equal(['right', 'left']);
+  });
+
+  it('preferenceChain covers all 12 placements without duplicates', () => {
+    for (const p of ['top', 'bottom-end', 'right-start', 'left']) {
+      const chain = preferenceChain(p as any);
+      expect(new Set(chain).size, p).to.equal(12);
+    }
+  });
+
+  it('placementToAnchored degrades left/right to auto but keeps alignment', () => {
+    expect(placementToAnchored('bottom-end')).to.deep.equal({ side: 'bottom', align: 'end' });
+    expect(placementToAnchored('top-start')).to.deep.equal({ side: 'top', align: 'start' });
+    expect(placementToAnchored('left-end')).to.deep.equal({ side: 'auto', align: 'end' });
+    // Empty/absent must keep the historic dropdown default.
+    expect(placementToAnchored('')).to.deep.equal({ side: 'auto', align: 'start' });
+  });
+});
 
 describe('computeAnchoredPosition', () => {
   const vw = () => window.innerWidth;

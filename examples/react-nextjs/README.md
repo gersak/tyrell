@@ -121,7 +121,7 @@ declare global {
     interface IntrinsicElements {
       'ty-button': React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLElement> & {
-          flavor?: 'primary' | 'secondary' | 'success' | 'danger'
+          flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral'
           size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
           disabled?: boolean
         },

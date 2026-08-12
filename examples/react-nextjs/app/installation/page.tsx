@@ -44,7 +44,7 @@ export default function InstallationPage() {
       icon: 'download',
       title: 'Import CSS Styles',
       description: 'Include the CSS bundle in your project',
-      status: 'info',
+      status: 'neutral',
       action: 'Required'
     },
     {
@@ -146,8 +146,8 @@ export default function InstallationPage() {
               </p>
             </div>
 
-            <div className="text-center p-4 rounded-lg ty-bg-info-">
-              <TyIcon name="layers" size="32" className="ty-text-info mx-auto mb-3" />
+            <div className="text-center p-4 rounded-lg ty-bg-neutral-">
+              <TyIcon name="layers" size="32" className="ty-text-neutral mx-auto mb-3" />
               <h3 className="ty-text+ font-medium mb-2">Zero Dependencies</h3>
               <p className="text-sm ty-text- leading-relaxed">
                 Pure web components with no runtime dependencies
@@ -426,8 +426,8 @@ export function MyComponent() {
               </div>
             </div>
 
-            <div className="ty-elevated p-4 rounded-lg border-l-4 ty-border-info">
-              <h3 className="ty-text-info+ font-medium mb-2 flex items-center gap-2">
+            <div className="ty-elevated p-4 rounded-lg border-l-4 ty-border-danger">
+              <h3 className="ty-text-danger+ font-medium mb-2 flex items-center gap-2">
                 <TyIcon name="info" size="18" />
                 TypeScript Errors
               </h3>
@@ -473,7 +473,7 @@ export function MyComponent() {
           </TyButton>
 
           <TyButton
-            flavor="secondary"
+            flavor="neutral"
             size="lg"
             className="flex items-center gap-2 hover:shadow-lg transition-shadow duration-200"
           >

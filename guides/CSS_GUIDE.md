@@ -378,7 +378,7 @@ Fills darker than the threshold get white, lighter get black. One token per *fil
 
 ```css
 :root {
-  --ty-solid-fg-threshold: 0.6;   /* crossover. Higher = prefers white, lower = prefers black. */
+  --ty-solid-fg-threshold: 0.57;  /* crossover. Higher = prefers white, lower = prefers black. */
 }
 ```
 
@@ -573,43 +573,7 @@ The built-in flavors (`primary` / `success` / `danger` / `warning` / `neutral` �
 
 The built-ins are nothing more than pre-installed instances of this template. Substitute your name for `love`, pick ONE seed color, and the flavor gets everything a built-in gets — the shared L-curve (equal perceived weight with every other flavor at each shade), the saturation curve, dark mode via the same dial flips, solid interaction states, and **auto-contrast foregrounds** (text derives from each fill's own lightness — no white-on-pale accidents):
 
-```css
-:root {
-  /* ── the ONE value you must pick — any color format ── */
-  --ty-love-seed: #76467c;
-  --ty-love-l-factor: 1;      /* optional per-flavor push, like Tier 5 */
-}
-
-html:root,
-[data-ty-theme] {
-  /* ── ink ramp — seed contributes c+h; L comes from the curve ── */
-  --ty-color-love-strong: oklch(from var(--ty-love-seed) calc(var(--ty-l-strong) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-strong-mult)) h);
-  --ty-color-love-bold:   oklch(from var(--ty-love-seed) calc(var(--ty-l-bold)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bold-mult))   h);
-  --ty-color-love:        oklch(from var(--ty-love-seed) calc(var(--ty-l-base)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-base-mult))   h);
-  --ty-color-love-soft:   oklch(from var(--ty-love-seed) calc(var(--ty-l-soft)   * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-soft-mult))   h);
-  --ty-color-love-faint:  oklch(from var(--ty-love-seed) calc(var(--ty-l-faint)  * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-faint-mult))  h);
-
-  /* ── background tints ── */
-  --ty-bg-love:      oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-base) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-base-mult)) h);
-  --ty-bg-love-bold: oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-bold) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-bold-mult)) h);
-  --ty-bg-love-soft: oklch(from var(--ty-love-seed) calc(var(--ty-l-bg-soft) * var(--ty-love-l-factor, 1)) calc(c * var(--ty-c-bg-soft-mult)) h);
-
-  /* ── accent border — tracks the flavor's own ink ── */
-  --ty-border-love: var(--ty-color-love-soft);
-
-  /* ── solid fills + interaction states ── */
-  --ty-solid-love: oklch(from var(--ty-color-love) calc(l + var(--ty-solid-l)) calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h)));
-  --ty-solid-love-hover:  oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-hover-l))  c h);
-  --ty-solid-love-active: oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-active-l)) c h);
-  --ty-solid-love-strong: oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-strong-l)) c h);
-  --ty-solid-love-soft:   oklch(from var(--ty-solid-love) calc(l + var(--ty-solid-soft-l))   c h);
-
-  /* ── auto-contrast foregrounds — one per FILL ── */
-  --ty-solid-love-fg:        oklch(from var(--ty-solid-love)        clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
-  --ty-solid-love-soft-fg:   oklch(from var(--ty-solid-love-soft)   clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
-  --ty-solid-love-strong-fg: oklch(from var(--ty-solid-love-strong) clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
-}
-```
+The full template (ink ramp, background tints, border, solid fills + interaction states, auto-contrast foregrounds) is generated live by the **Flavor pack builder** on the Theming page — give it a name and one seed color and copy the CSS it produces. Kept there instead of pasted here so the template can't drift out of sync with the engine as `tyrell-theme.css` evolves.
 
 ```html
 <ty-button flavor="love">Love</ty-button>
@@ -684,7 +648,7 @@ Hand-picking 14 values gives you full control over every shade, but it's not the
   --ty-solid-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
   /* auto-contrast, not hardcoded white — a pale seed gets black text */
   --ty-solid-brand-fg: oklch(from var(--brand-base)
-    clamp(0, (var(--ty-solid-fg-threshold, 0.62) - l) * 1000, 1) 0 0);
+    clamp(0, (var(--ty-solid-fg-threshold, 0.57) - l) * 1000, 1) 0 0);
 }
 ```
 

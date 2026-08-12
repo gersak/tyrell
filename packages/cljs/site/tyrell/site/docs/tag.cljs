@@ -81,13 +81,11 @@
        (demo-area
         [:div.flex.flex-wrap.gap-3
          [:ty-tag {:flavor "primary"} "Primary"]
-         [:ty-tag {:flavor "neutral"} "Secondary"]
          [:ty-tag {:flavor "success"} "Success"]
          [:ty-tag {:flavor "danger"} "Danger"]
          [:ty-tag {:flavor "warning"} "Warning"]
          [:ty-tag {:flavor "neutral"} "Neutral"]])
        (code-block "<ty-tag flavor=\"primary\">Primary</ty-tag>
-<ty-tag flavor=\"neutral\">Secondary</ty-tag>
 <ty-tag flavor=\"success\">Success</ty-tag>
 <ty-tag flavor=\"danger\">Danger</ty-tag>
 <ty-tag flavor=\"warning\">Warning</ty-tag>
@@ -313,38 +311,6 @@ document.body.appendChild(tag);
 // Enter/Space → click  |  Delete/Backspace → dismiss"
        "javascript")])
 
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use semantic flavors to convey meaning (success for positive, danger for errors)"
-                     "Keep tag text concise and scannable"
-                     "Use dismissible tags for removable filters or selections"
-                     "Provide visual feedback with icons or emojis in slots"
-                     "Use consistent sizing within tag groups"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use tags for long text — they're meant for short labels"
-                     "Mix pill and rectangular shapes in the same context"
-                     "Make all tags dismissible if they represent fixed categories"
-                     "Use clickable without providing clear visual feedback"
-                     "Overuse different flavors — maintain visual hierarchy"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
 
    (doc-section "Accessibility"
      [:div.ty-content.rounded-lg.p-5

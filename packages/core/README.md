@@ -62,7 +62,7 @@ import 'tyrell-components/input'
 
 ## Available Components
 
-- **ty-button** - Button with multiple flavors (primary, secondary, success, danger, warning)
+- **ty-button** - Button with multiple flavors (primary, success, danger, warning, neutral)
 - **ty-modal** - Modal dialog with backdrop, ESC key, focus trap
 - **ty-input** - Input field with validation, number formatting
 - **ty-dropdown** - Dropdown with positioning, keyboard navigation

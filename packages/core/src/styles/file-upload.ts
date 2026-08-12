@@ -1,7 +1,7 @@
 export const fileUploadStyles = `
 :host {
   display: block;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   width: 100%;
 }
 

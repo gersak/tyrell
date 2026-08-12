@@ -10,7 +10,7 @@
             <span class="text-gradient-primary">📅 Calendar</span>
             <span class="ty-text-primary-strong"> Component Excellence</span>
         </h1>
-        <p class="text-xl ty-text-neutral-mild max-w-3xl mx-auto">
+        <p class="text-xl ty-text-neutral-bold max-w-3xl mx-auto">
             Showcasing component-native patterns with smart event loading, intelligent caching, and graceful fallbacks. No HTMX required.
         </p>
     </div>
@@ -23,7 +23,7 @@
             <h2 class="text-3xl font-bold ty-text-primary-strong mb-4">
                 🌟 Smart Event Calendar
             </h2>
-            <p class="text-lg ty-text-neutral-mild">
+            <p class="text-lg ty-text-neutral-bold">
                 Component excellence with instant navigation, intelligent caching, and graceful error handling
             </p>
         </div>
@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <h3 class="text-2xl font-bold ty-text-primary-strong">Smart Event Loading</h3>
-                        <p class="ty-text-neutral-mild">Instant navigation, background prefetching, graceful fallbacks</p>
+                        <p class="ty-text-neutral-bold">Instant navigation, background prefetching, graceful fallbacks</p>
                     </div>
                 </div>
                 
@@ -75,14 +75,14 @@
                     </div>
                     <div>
                         <h3 class="text-2xl font-bold ty-text-success-strong">Component Excellence</h3>
-                        <p class="ty-text-neutral-mild">Smart event loading, instant navigation, graceful fallbacks</p>
+                        <p class="ty-text-neutral-bold">Smart event loading, instant navigation, graceful fallbacks</p>
                     </div>
                 </div>
                 
                 <div class="space-y-4">
                     <div class="ty-bg-success-soft rounded-lg p-4">
                         <h4 class="font-semibold ty-text-success-strong mb-2">✨ Features Demonstrated</h4>
-                        <ul class="text-sm ty-text-success-mild space-y-1">
+                        <ul class="text-sm ty-text-success-bold space-y-1">
                             <li>• Instant month navigation (no loading delays)</li>
                             <li>• Background event fetching with smart caching</li>
                             <li>• Event count badges on calendar days</li>
@@ -93,7 +93,7 @@
                     
                     <div class="ty-bg-info-soft rounded-lg p-4">
                         <h4 class="font-semibold ty-text-info-strong mb-2">🛠 Technical Excellence</h4>
-                        <ul class="text-sm ty-text-info-mild space-y-1">
+                        <ul class="text-sm ty-text-info-bold space-y-1">
                             <li>• Web Components with native browser APIs</li>
                             <li>• Async/await with intelligent batching</li>
                             <li>• In-memory caching with LRU eviction</li>
@@ -104,8 +104,8 @@
                     
                     <div class="ty-bg-neutral-soft rounded-lg p-4">
                         <h4 class="font-semibold ty-text-neutral-strong mb-2">🔍 Try It Out</h4>
-                        <p class="text-sm ty-text-neutral-mild mb-3">Open browser dev tools and navigate months to see:</p>
-                        <ul class="text-xs ty-text-neutral-mild space-y-1">
+                        <p class="text-sm ty-text-neutral-bold mb-3">Open browser dev tools and navigate months to see:</p>
+                        <ul class="text-xs ty-text-neutral-bold space-y-1">
                             <li>• Console logs showing cache hits/misses</li>
                             <li>• Background prefetching of adjacent months</li>
                             <li>• Event count loading for calendar badges</li>
@@ -279,9 +279,9 @@ class CalendarEventManager {
             const monthName = this.monthNames[this.currentMonth - 1];
             this.eventListElement.innerHTML = `
                 <div class="ty-bg-neutral-soft rounded-lg p-6 text-center animate-fade-in">
-                    <ty-icon name="calendar" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-mild"></ty-icon>
+                    <ty-icon name="calendar" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-bold"></ty-icon>
                     <p class="font-medium ty-text-neutral-strong">No Events This Month</p>
-                    <p class="text-sm ty-text-neutral-mild">${monthName} ${this.currentYear} is currently clear</p>
+                    <p class="text-sm ty-text-neutral-bold">${monthName} ${this.currentYear} is currently clear</p>
                 </div>
             `;
             return;
@@ -299,7 +299,7 @@ class CalendarEventManager {
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="font-medium ty-text-${event.color}-strong truncate">${event.title}</p>
-                        <p class="text-sm ty-text-neutral-mild">${monthName} ${event.day}, ${this.currentYear} at ${event.time}</p>
+                        <p class="text-sm ty-text-neutral-bold">${monthName} ${event.day}, ${this.currentYear} at ${event.time}</p>
                     </div>
                     <div class="flex-shrink-0">
                         <div class="w-4 h-4 rounded-full shadow-sm border-2 border-white " style="background-color:var(--ty-color-${event.color})"></div>

@@ -3,8 +3,13 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+type Placement =
+  | 'top-start' | 'top' | 'top-end'
+  | 'right-start' | 'right' | 'right-end'
+  | 'bottom-start' | 'bottom' | 'bottom-end'
+  | 'left-start' | 'left' | 'left-end';
 
 export interface TySelectItem {
   value: string;
@@ -92,8 +97,11 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
   size?: 'sm' | 'md' | 'lg';
 
-  /** Horizontal popup anchor: "start" (default, trigger's left edge) or "end" (trigger's right edge) — clamped into the viewport either way. Useful with a custom slot="trigger" element. */
-  align?: 'start' | 'end';
+  /** Horizontal popup anchor: "start" (default, trigger's left edge), "center", or "end" (trigger's right edge) — clamped into the viewport either way. Useful with a custom slot="trigger" element. Ignored when `placement` is set. */
+  align?: 'start' | 'center' | 'end';
+
+  /** Full placement, same vocabulary as ty-popup/ty-tooltip: a side plus an optional cross-axis alignment (e.g. "bottom-end"). Takes precedence over `align` when set. */
+  placement?: Placement;
 
   /** Built-in x clear button in the default/compact trigger, shown once something is selected. Default true. Not shown with slot="trigger" — use the ref's clear() method there instead. */
   clearable?: boolean;
@@ -144,6 +152,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     loading,
     size,
     align,
+    placement,
     clearable,
     flavor,
     onChange,
@@ -245,6 +254,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     if (name) webComponentProps.name = name;
     if (size) webComponentProps.size = size;
     if (align) webComponentProps.align = align;
+    if (placement) webComponentProps.placement = placement;
     if (isClearable) webComponentProps.clearable = '';
     if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();

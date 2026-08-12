@@ -287,7 +287,8 @@ THE select control. Single select by default with a form-field look matching `ty
 | `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
 | `disabled` / `readonly` / `required` | boolean | `false` | |
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
-| `align` | string | `'start'` | Horizontal popup anchor: `'start'` (trigger's left edge) or `'end'` (trigger's right edge) — clamped into the viewport either way. Useful with `slot="trigger"` when the custom trigger sits near the right edge of its container |
+| `placement` | string | - | Popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic. Takes precedence over `align` |
+| `align` | string | `'start'` | Horizontal popup anchor only: `'start'` (trigger's left edge), `'center'`, or `'end'` (trigger's right edge) — clamped into the viewport either way. Useful with `slot="trigger"` when the custom trigger sits near the right edge of its container. Prefer `placement` for new markup |
 | `clearable` | boolean | `true` | Built-in × clear button in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. `not-clearable` (or `clearable="false"`) opts out |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
@@ -409,6 +410,7 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 | `required` | boolean | `false` | |
 | `locale` | string | `'en-US'` | |
 | `size` | string | `'md'` | |
+| `placement` | string | - | Calendar popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic |
 | `clearable` | boolean | `true` | Built-in × clear button in the stub, shown once a date is selected. Suppressed while `disabled`. Use `not-clearable` (or `clearable="false"`) to opt out. |
 | `flavor` | string | `'default'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the stub border + focus ring (override via `--date-picker-accent` / `--date-picker-accent-bold` / `--date-picker-ring`) and the popup calendar's selected/today day (forwarded to the nested `ty-calendar`). |
 
@@ -436,7 +438,7 @@ Always render modals in DOM. Control with `open` attribute or `show()`/`hide()`.
 
 ### ty-tooltip
 
-Attrs: `placement` (default `'top'`), `offset` (8), `delay` (600ms), `disabled`, `flavor` (default `'dark'`; also `light` / `info`, built-in semantics with `+`/`-` shades, or a custom flavor from `--ty-bg-X` / `--ty-color-X` tokens).
+Attrs: `placement` (default `'top'` — see [Placement](#placement)), `offset` (8), `delay` (600ms), `disabled`, `flavor` (default `'dark'`; also `light` / `info`, built-in semantics with `+`/`-` shades, or a custom flavor from `--ty-bg-X` / `--ty-color-X` tokens).
 
 Nest as child of target: `<ty-button>Hover<ty-tooltip>Help text</ty-tooltip></ty-button>`
 
@@ -450,11 +452,48 @@ Nest as child of target: `<ty-button>Hover<ty-tooltip>Help text</ty-tooltip></ty
 
 ### ty-popup
 
-Attrs: `manual`, `disable-close`, `placement` (default `'bottom'`), `offset` (8).
+Attrs: `manual`, `disable-close`, `placement` (default `'bottom'` — see [Placement](#placement)), `offset` (8).
 
 **Methods:** `show()`, `hide()`
 
 Nest as child of the trigger: `<button>Click me<ty-popup>...</ty-popup></button>`. Unless `manual`, the trigger automatically gets `aria-haspopup="dialog"` and a live `aria-expanded` (the popup itself is a real `<dialog>` via `showModal()`, so it already has `role="dialog"` + focus-trap for free).
+
+---
+
+### Placement
+
+Shared by `ty-popup`, `ty-tooltip`, `ty-select` and `ty-date-picker`. A placement is a **side** plus an optional **cross-axis alignment**:
+
+```
+<side>            centered on the anchor
+<side>-start      leading edges flush
+<side>-end        trailing edges flush
+```
+
+Twelve values in total — `top` `top-start` `top-end`, `right` `right-start` `right-end`, `bottom` `bottom-start` `bottom-end`, `left` `left-start` `left-end`.
+
+For **top/bottom** the alignment runs horizontally (`-start` = left edges flush, `-end` = right edges flush). For **left/right** it runs vertically (`-start` = top edges flush, `-end` = bottom edges flush).
+
+```html
+<ty-button>Menu
+  <ty-popup placement="bottom-start">…</ty-popup>   <!-- below, left edges flush -->
+</ty-button>
+
+<ty-button>Help
+  <ty-tooltip placement="right-start">…</ty-tooltip> <!-- right, top edges flush -->
+</ty-button>
+```
+
+**Auto-flip keeps your alignment.** When the requested side has no room, the fallback order exhausts that side, then flips to the *opposite* side with the alignment intact, and only then tries the perpendicular axis. So `left-start` becomes `right-start` — still top-aligned — long before it becomes `bottom`.
+
+**Dropdowns are vertical-only.** `ty-select` and `ty-date-picker` open above or below their trigger, so they accept `bottom*` / `top*` directly; a `left-*` / `right-*` value keeps its alignment but leaves the side automatic. Both still flip rather than clip.
+
+```html
+<ty-select placement="bottom-end">…</ty-select>
+<ty-date-picker placement="top-start"></ty-date-picker>
+```
+
+`ty-select` also keeps its older `align` attribute (`start` | `center` | `end`) for horizontal anchoring alone; `placement` wins when both are set.
 
 ---
 

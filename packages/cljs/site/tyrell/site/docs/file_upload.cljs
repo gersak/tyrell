@@ -169,41 +169,4 @@ upload.addEventListener('change', (e) => {
 
 // Form reset clears selection
 document.querySelector('form').reset();" "javascript")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+
-          {:style {:font-size "0.75rem" :font-weight "600"
-                   :letter-spacing "0.05em" :text-transform "uppercase"}}
-          "Do"]]
-        [:div.space-y-2
-         (for [text ["Use accept to restrict the file dialog — fewer wrong uploads"
-                     "Always give the field a name so files appear in FormData"
-                     "Use multiple only when the use case genuinely needs several files"
-                     "Show a label so users know what to upload"
-                     "Validate file size and type server-side regardless of accept"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+
-          {:style {:font-size "0.75rem" :font-weight "600"
-                   :letter-spacing "0.05em" :text-transform "uppercase"}}
-          "Don't"]]
-        [:div.space-y-2
-         (for [text ["Trust accept alone for security — it is bypassable by the user"
-                     "Use multiple when only one file makes sense — it creates ambiguity"
-                     "Skip progress feedback when uploading large files from the change event"
-                     "Omit error messages — show why the file was rejected, not just that it was"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

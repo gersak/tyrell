@@ -35,7 +35,7 @@ export const calendarNavigationStyles = `
   align-items: center;
   justify-content: space-between;
   padding: var(--nav-padding);
-  font-family: system-ui, sans-serif;
+  font-family: inherit;
   user-select: none;
   width: var(--nav-width, var(--nav-default-width));
   box-sizing: border-box;

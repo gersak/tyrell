@@ -17,7 +17,7 @@
     [:div.wrapper
      [:div.count @!count]
      [:div.buttons
-      [:ty-button {:flavor "secondary" :on-click #(swap! !count dec)} "−"]
+      [:ty-button {:flavor "neutral" :on-click #(swap! !count dec)} "−"]
       [:ty-button {:flavor "primary"   :on-click #(swap! !count inc)} "+"]]]))
 
 (defn- emit-value! [^js el v]

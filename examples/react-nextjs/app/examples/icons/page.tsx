@@ -58,7 +58,7 @@ export default function IconsExample() {
             <TyIcon name="check" />
             Save
           </button>
-          <button className="ty-bg-secondary ty-text++ px-4 py-2 rounded flex items-center gap-2">
+          <button className="ty-bg-neutral ty-text++ px-4 py-2 rounded flex items-center gap-2">
             <TyIcon name="search" />
             Search
           </button>

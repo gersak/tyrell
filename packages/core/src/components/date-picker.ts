@@ -8,7 +8,7 @@ import { ensureStyles } from '../utils/styles.js';
 import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js';
 import { datePickerStyles, datePickerCustomFlavorCss } from '../styles/date-picker.js';
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
-import { computeAnchoredPosition } from '../utils/positioning.js';
+import { computeAnchoredPosition, placementToAnchored, type Placement } from '../utils/positioning.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { isMobileTouch } from '../utils/mobile.js';
 import { TyComponent } from '../base/ty-component.js';
@@ -564,6 +564,15 @@ class TimeInput {
 
 export class TyDatePicker extends TyComponent<DatePickerState> {
   protected static properties = {
+    // Same placement vocabulary as ty-popup/ty-tooltip/ty-select: a side plus
+    // an optional cross-axis alignment ("bottom-end", "top-start", …). The
+    // calendar only lives above or below the field, so left/right degrade to
+    // auto-side with the alignment kept. Empty = auto (below when it fits).
+    placement: {
+      type: 'string' as const,
+      visual: true,
+      default: '',
+    },
     size: {
       type: 'string' as const,
       visual: true,
@@ -958,6 +967,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   get size(): DatePickerSize { return this.getProperty('size') as DatePickerSize; }
   set size(v: DatePickerSize) { this.setProperty('size', v); }
 
+  get placement(): Placement | '' { return this.getProperty('placement') as Placement | ''; }
+  set placement(v: Placement | '') { this.setProperty('placement', v); }
+
   get flavor(): DatePickerFlavor { return this.getProperty('flavor') as DatePickerFlavor; }
   set flavor(v: DatePickerFlavor) { this.setProperty('flavor', v); }
 
@@ -1309,11 +1321,17 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
     const wrapPadding = 8;
 
+    const anchored = placementToAnchored(
+      this.getProperty('placement') as Placement | ''
+    );
+
     const pos = computeAnchoredPosition({
       anchorRect: stubRect,
       popupWidth,
       popupHeight: estimatedHeight,
       gap: 0,
+      align: anchored.align,
+      side: anchored.side,
     });
     const positionBelow = pos.below;
 

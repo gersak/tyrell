@@ -5,5 +5,5 @@
   ($ :div {:class "wrapper"}
     ($ :div {:class "count"} count)
     ($ :div {:class "buttons"}
-      ($ :ty-button {:flavor "secondary" :on-click on-dec} "−")
+      ($ :ty-button {:flavor "neutral" :on-click on-dec} "−")
       ($ :ty-button {:flavor "primary"   :on-click on-inc} "+"))))

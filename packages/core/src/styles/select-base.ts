@@ -49,7 +49,7 @@ export const selectBaseStyles = `
 :host {
   display: block;
   width: 100%;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   --mobile-border-color: var(--ty-border, #5858587d);
 }
 
@@ -133,6 +133,7 @@ export const selectBaseStyles = `
 }
 
 .dropdown-search-input {
+  font-family: inherit;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -140,7 +141,7 @@ export const selectBaseStyles = `
   color: var(--input-color, var(--ty-input-color));
   border: 1px solid var(--input-border, var(--ty-input-border));
   border-radius: var(--ty-radius-md);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
@@ -202,7 +203,7 @@ export const selectBaseStyles = `
   color: var(--input-color, var(--ty-input-color));
   border: 1px solid var(--select-accent, var(--input-border, var(--ty-input-border)));
   border-radius: var(--ty-radius-md);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
@@ -641,6 +642,7 @@ export const selectBaseStyles = `
 }
 
 .dropdown-mode-mobile .mobile-search-input {
+  font-family: inherit;
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
@@ -649,7 +651,7 @@ export const selectBaseStyles = `
   border: 2px solid;
   border-color: var(--mobile-border-color);
   border-radius: var(--ty-radius-md);
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);

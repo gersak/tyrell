@@ -147,8 +147,8 @@ export default function Home() {
                 <TyIcon name="square" size="16" />
                 Open Modal
               </TyButton>
-              <TyButton onClick={() => alert('Secondary action!')} flavor="secondary" size="sm">
-                Secondary
+              <TyButton onClick={() => alert('Neutral action!')} flavor="neutral" size="sm">
+                Neutral
               </TyButton>
               <TyButton onClick={() => alert('Success action!')} flavor="success" size="sm" className="flex items-center gap-1.5">
                 <TyIcon name="check" size="16" />
@@ -215,7 +215,7 @@ export default function Home() {
                 <TyIcon name="star" size="24" className="text-primary-ty-base" />
                 <TyIcon name="heart" size="24" className="text-danger-ty-base" />
                 <TyIcon name="check-circle" size="24" className="text-success-ty-base" />
-                <TyIcon name="info" size="24" className="text-info-ty-base" />
+                <TyIcon name="info" size="24" className="text-neutral-ty-base" />
                 <span className="text-xs text-neutral-ty-soft ml-2">Colors</span>
               </div>
             </div>
@@ -314,8 +314,8 @@ export default function Home() {
                   <TyIcon name="code" size="24" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-info-ty-strong">Utility First</h3>
-                  <p className="text-xs text-info-ty-base">Fast Development</p>
+                  <h3 className="font-semibold text-neutral-ty-strong">Utility First</h3>
+                  <p className="text-xs text-neutral-ty-base">Fast Development</p>
                 </div>
               </div>
               <p className="text-sm ty-text+ leading-relaxed relative z-10">
@@ -372,15 +372,15 @@ export default function Home() {
             </div>
 
             {/* Data Dashboard Example */}
-            <div className="p-6 rounded-lg ty-bg-info- border ty-border-info hover:shadow-lg transition-all duration-200">
+            <div className="p-6 rounded-lg ty-bg-warning- border ty-border-warning hover:shadow-lg transition-all duration-200">
               <div className="flex items-center mb-4">
-                <TyIcon name="monitor" size="24" className="ty-text-info mr-3" />
+                <TyIcon name="monitor" size="24" className="ty-text-warning mr-3" />
                 <div>
-                  <h3 className="font-semibold ty-text-info++">Data Dashboard</h3>
+                  <h3 className="font-semibold ty-text-warning++">Data Dashboard</h3>
                   <span className="text-xs ty-bg-success ty-text-success+ px-2 py-1 rounded">Available</span>
                 </div>
               </div>
-              <p className="text-sm ty-text-info mb-4 leading-relaxed">
+              <p className="text-sm ty-text-warning mb-4 leading-relaxed">
                 Interactive dashboard with TyCalendar custom day content rendering, data visualization,
                 filtering controls, and responsive analytics with real-time updates.
               </p>
@@ -394,7 +394,7 @@ export default function Home() {
               </div>
               <TyButton
                 onClick={() => window.location.href = '/examples/dashboard'}
-                flavor="info"
+                flavor="neutral"
                 size="sm"
                 className="flex items-center gap-2"
               >
@@ -434,15 +434,15 @@ export default function Home() {
             </div>
 
             {/* Settings Panel Example */}
-            <div className="p-6 rounded-lg ty-bg-secondary- border ty-border-secondary hover:shadow-lg transition-all duration-200">
+            <div className="p-6 rounded-lg ty-bg-neutral- border ty-border-neutral hover:shadow-lg transition-all duration-200">
               <div className="flex items-center mb-4">
-                <TyIcon name="settings" size="24" className="ty-text-secondary mr-3" />
+                <TyIcon name="settings" size="24" className="ty-text-neutral mr-3" />
                 <div>
-                  <h3 className="font-semibold ty-text-secondary++">Settings Panel</h3>
+                  <h3 className="font-semibold ty-text-neutral++">Settings Panel</h3>
                   <span className="text-xs ty-bg-success ty-text-success+ px-2 py-1 rounded">Available</span>
                 </div>
               </div>
-              <p className="text-sm ty-text-secondary mb-4 leading-relaxed">
+              <p className="text-sm ty-text-neutral mb-4 leading-relaxed">
                 Comprehensive settings interface with theme controls, notifications,
                 privacy options, and advanced configuration with instant feedback.
               </p>
@@ -456,7 +456,7 @@ export default function Home() {
               </div>
               <TyButton
                 onClick={() => window.location.href = '/examples/settings'}
-                flavor="secondary"
+                flavor="neutral"
                 size="sm"
                 className="flex items-center gap-2"
               >

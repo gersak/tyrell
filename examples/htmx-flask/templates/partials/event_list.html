@@ -7,9 +7,9 @@
         </div>
         <div class="flex-1 min-w-0">
             <p class="font-medium ty-text-{{ event.color }}-strong truncate">{{ event.title }}</p>
-            <p class="text-sm ty-text-neutral-mild">
+            <p class="text-sm ty-text-neutral-bold">
                 {{ event.formatted_date }}
-                {% if event.time %}<span class="ty-text-{{ event.color }}-mild font-medium"> • {{ event.time }}</span>{% endif %}
+                {% if event.time %}<span class="ty-text-{{ event.color }}-bold font-medium"> • {{ event.time }}</span>{% endif %}
             </p>
         </div>
         <div class="flex-shrink-0 flex items-center space-x-2">
@@ -28,12 +28,12 @@
 <div class="text-center py-8 animate-fade-in">
     <ty-icon name="calendar-days" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-soft"></ty-icon>
     {% if selected_date %}
-    <p class="ty-text-neutral-mild mb-2">No events on {{ selected_date }}</p>
+    <p class="ty-text-neutral-bold mb-2">No events on {{ selected_date }}</p>
     <p class="text-sm ty-text-neutral-faint">
         Use the form above to add your first event
     </p>
     {% else %}
-    <p class="ty-text-neutral-mild mb-2">Select a date to view events</p>
+    <p class="ty-text-neutral-bold mb-2">Select a date to view events</p>
     <p class="text-sm ty-text-neutral-faint">
         Click on any date in the calendar above
     </p>

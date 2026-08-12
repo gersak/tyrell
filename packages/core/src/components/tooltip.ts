@@ -4,7 +4,7 @@
  * document.body (top layer), not in this element's shadow root.
  */
 
-import { findBestPosition, placementPreferences, type Placement, type CleanupFn } from '../utils/positioning.js';
+import { findBestPosition, preferenceChain, type Placement, type CleanupFn } from '../utils/positioning.js';
 import { ensureStyles } from '../utils/styles.js';
 import { tooltipStyles } from '../styles/tooltip.js';
 import type { Flavor } from '../types/common.js';
@@ -234,11 +234,10 @@ function updatePosition(el: TyTooltip): void {
     return;
   }
 
-  const preferences = placement === 'top' ? placementPreferences.tooltip :
-    placement === 'bottom' ? ['bottom', 'top', 'left', 'right'] as Placement[] :
-      placement === 'left' ? ['left', 'right', 'top', 'bottom'] as Placement[] :
-        placement === 'right' ? ['right', 'left', 'top', 'bottom'] as Placement[] :
-          placementPreferences.tooltip;
+  // Handles all 12 placements. The old hand-written chain only matched the four
+  // bare sides, so 'top-start' & co. fell through to the default and the
+  // requested alignment was silently dropped.
+  const preferences: Placement[] = preferenceChain(placement);
 
   const position = findBestPosition({
     targetEl: anchor,

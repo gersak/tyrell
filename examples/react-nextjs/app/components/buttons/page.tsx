@@ -42,11 +42,9 @@ export default function ButtonsPage() {
 
   const flavors = [
     { name: 'Primary', key: 'primary', description: 'Main call-to-action buttons' },
-    { name: 'Secondary', key: 'secondary', description: 'Secondary actions and alternatives' },
     { name: 'Success', key: 'success', description: 'Positive actions like save, confirm' },
     { name: 'Danger', key: 'danger', description: 'Destructive actions like delete' },
     { name: 'Warning', key: 'warning', description: 'Caution actions that need attention' },
-    { name: 'Info', key: 'info', description: 'Informational actions' },
     { name: 'neutral', key: 'neutral', description: 'Subtle actions with minimal styling' },
   ]
 
@@ -167,7 +165,7 @@ export default function ButtonsPage() {
 
                   <TyButton
                     size={size.key as any}
-                    flavor="secondary"
+                    flavor="neutral"
                     onClick={() => handleClick(`size-secondary-${size.key}`)}
                     className="flex items-center gap-2"
                   >
@@ -261,7 +259,7 @@ export default function ButtonsPage() {
                 </TyButton>
 
                 <TyButton
-                  flavor="secondary"
+                  flavor="neutral"
                   onClick={() => handleClick('icon-right')}
                   className="w-full flex items-center justify-center gap-2 group hover:shadow-lg transition-all duration-200"
                 >
@@ -348,7 +346,7 @@ export default function ButtonsPage() {
                   Cancel
                 </TyButton>
                 <TyButton
-                  flavor="secondary"
+                  flavor="neutral"
                   onClick={() => handleClick('draft')}
                   className="flex items-center gap-2 hover:shadow-md transition-shadow duration-200"
                 >
@@ -434,7 +432,7 @@ export default function ButtonsPage() {
                   Get Started Free
                 </TyButton>
                 <TyButton
-                  flavor="secondary"
+                  flavor="neutral"
                   size="lg"
                   onClick={() => handleClick('cta-secondary')}
                   className="flex items-center gap-2 hover:shadow-lg transition-shadow duration-200"

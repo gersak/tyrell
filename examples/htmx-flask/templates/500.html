@@ -14,7 +14,7 @@
             <!-- Error Message -->
             <h1 class="text-6xl font-bold ty-text-warning-strong mb-4">500</h1>
             <h2 class="text-2xl font-semibold ty-text-neutral-strong mb-4">Server Error</h2>
-            <p class="ty-text-neutral-mild mb-8 max-w-sm mx-auto leading-relaxed">
+            <p class="ty-text-neutral-bold mb-8 max-w-sm mx-auto leading-relaxed">
                 Something went wrong on our end. Our robots are working hard to fix this!
             </p>
             
@@ -25,7 +25,7 @@
                     Try Again
                 </ty-button>
                 
-                <ty-button flavor="secondary" size="lg" class="w-full" onclick="window.location.href='{{ url_for('index') }}'">
+                <ty-button flavor="neutral" size="lg" class="w-full" onclick="window.location.href='{{ url_for('index') }}'">
                     <ty-icon name="home" class="mr-2"></ty-icon>
                     Return Home
                 </ty-button>
@@ -39,7 +39,7 @@
                         <ty-icon name="code" class="w-4 h-4 mr-2 inline"></ty-icon>
                         Technical Details (Debug Mode)
                     </summary>
-                    <div class="mt-4 text-sm ty-text-neutral-mild font-mono">
+                    <div class="mt-4 text-sm ty-text-neutral-bold font-mono">
                         <p><strong>Error:</strong> Internal Server Error</p>
                         <p><strong>Time:</strong> {{ moment().format('YYYY-MM-DD HH:mm:ss') if moment else 'Unknown' }}</p>
                         <p class="mt-2 text-xs">Check the Flask console for detailed error logs.</p>

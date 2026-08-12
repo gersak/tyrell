@@ -369,9 +369,18 @@ function setupResizeObserver(el: TyTabs): void {
     const activeId = getActiveTabId(el, tabs);
     const activeIndex = activeId ? findTabIndex(tabs, activeId) : 0;
 
-    // Update CSS variable with measured width (percentage widths only)
+    // Carousel page width (percentage widths only). This MUST NOT be written to
+    // --tabs-width: :host is `width: var(--tabs-width, 100%)` with
+    // `box-sizing: border-box`, so assigning a measured content-box width back
+    // to it makes the new border box equal the old content box — the element
+    // shrinks by its own padding + border on every callback, which re-triggers
+    // this observer and shrinks it again. It converges toward zero, the button
+    // row's clientWidth collapses with it, and updateOverflow then finds that
+    // even the first tab "doesn't fit" and banishes everything into the "…"
+    // menu. Reloading looked fine only because render() resets --tabs-width to
+    // 100% and no resize had happened yet.
     if (width.includes('%')) {
-      el.style.setProperty('--tabs-width', `${entry.contentRect.width}px`);
+      el.style.setProperty('--tabs-page-width', `${entry.contentRect.width}px`);
     }
 
     // Update transform with new width
@@ -559,6 +568,13 @@ function updateOverflow(el: TyTabs): void {
   if (buttons.length === 0) return;
 
   const available = container.clientWidth;
+  // A zero/negative measurement means we cannot know what fits — the element is
+  // display:none, inside a collapsed parent, or mid-layout. Collapsing on that
+  // reading would hide every tab behind "…" and, since nothing re-runs until
+  // the next resize, leave it stuck that way after the element becomes visible.
+  // Bail and keep the current (all-visible) state instead.
+  if (available <= 0) return;
+
   let total = 0;
   let cutoff = buttons.length;
   for (let i = 0; i < buttons.length; i++) {

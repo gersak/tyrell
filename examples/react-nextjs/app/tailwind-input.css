@@ -75,7 +75,7 @@
   }
 
   .app-logo:hover {
-    color: var(--ty-color-primary-mild);
+    color: var(--ty-color-primary-bold);
   }
 
   /* Sidebar using Tailwind layout + Ty theming */
@@ -212,9 +212,9 @@
     color: var(--ty-color-danger-strong);
   }
 
-  .status-indicator.info {
-    background-color: var(--ty-bg-info-soft);
-    color: var(--ty-color-info-strong);
+  .status-indicator.neutral {
+    background-color: var(--ty-bg-neutral-soft);
+    color: var(--ty-color-neutral-strong);
   }
 
   /* Theme samples using Ty variables */
@@ -303,6 +303,6 @@
   }
 
   .theme-toggle-icon.moon {
-    color: var(--ty-color-info);
+    color: var(--ty-color-primary);
   }
 }

@@ -206,12 +206,12 @@
     [:p.ty-text-.mb-4 "This guide is being expanded. In the meantime:"]
     [:ul.text-left.space-y-2.ml-4
      [:li.ty-text- "• Explore the component documentation for available features"]
-     [:li.ty-text- "• Check out the CSS System guide for styling best practices"]
+     [:li.ty-text- "• Check out the Theming guide for styling best practices"]
      [:li.ty-text- "• Review examples in the repository"]]
     [:div.flex.gap-4.justify-center.mt-6
      [:button.ty-bg-primary.ty-text++.px-4.py-2.rounded.hover:opacity-90
       {:on {:click #(js/window.open "https://github.com/gersak/tyrell" "_blank")}}
       "View Repository"]
      [:button.ty-bg-neutral.ty-text++.px-4.py-2.rounded.hover:opacity-90
-      {:on {:click #(-> js/window .-location .-href (set! "/docs/css"))}}
-      "CSS System Guide"]]]))
+      {:on {:click #(-> js/window .-location .-href (set! "/docs/theming"))}}
+      "Theming Guide"]]]))

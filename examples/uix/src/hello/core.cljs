@@ -126,7 +126,7 @@
            "Button Variants")
         ($ :div.flex.flex-wrap.gap-4
            ($ ty/Button {:flavor "primary"} "Primary")
-           ($ ty/Button {:flavor "secondary"} "Secondary")
+           ($ ty/Button {:flavor "neutral"} "Neutral")
            ($ ty/Button {:flavor "success"
                          :outlined true} "Outline")
            ($ ty/Button {:flavor "ghost"} "Ghost")))

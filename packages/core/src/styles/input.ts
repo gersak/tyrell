@@ -51,7 +51,7 @@ export const inputCustomFlavorCss = (base: string) => inputFlavor(base, "neutral
 export const inputStyles = `
 :host {
   display: block;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
   width: 100%;
 }
 
@@ -200,6 +200,7 @@ export const inputStyles = `
 
 input {
   /* Linear-paired typography */
+  font-family: inherit;
   flex: 1;
   min-width: 0;
   box-sizing: border-box;

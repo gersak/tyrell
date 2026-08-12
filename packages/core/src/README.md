@@ -195,7 +195,7 @@ Full API:
 
 ```typescript
 interface TyButtonElement extends HTMLElement {
-  flavor?: 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral'
+  flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral'
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   disabled?: boolean
   pill?: boolean      // Fully rounded

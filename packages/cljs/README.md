@@ -33,7 +33,7 @@ Semantic buttons with multiple flavors and styles.
 </ty-button>
 ```
 
-**Attributes:** `flavor` (primary|secondary|success|danger|warning|neutral, with optional `+`/`-` suffix), `appearance` (solid|outlined|ghost), `size` (xs|sm|md|lg|xl), `disabled`, `pill`, `action`, `wide`
+**Attributes:** `flavor` (primary|success|danger|warning|neutral, with optional `+`/`-` suffix), `appearance` (solid|outlined|ghost), `size` (xs|sm|md|lg|xl), `disabled`, `pill`, `action`, `wide`
 
 ---
 

@@ -57,10 +57,14 @@
        :type "string"
        :default "\"md\""
        :description "Size variant: sm, md, lg"}
+      {:name "placement"
+       :type "string"
+       :default "-"
+       :description "Side plus optional cross-axis alignment, same vocabulary as ty-popup: bottom, bottom-start, bottom-end, top, top-start, top-end. A dropdown only opens above or below its trigger, so left-*/right-* keep their alignment but let the side stay automatic. Still flips rather than clipping when the chosen side has no room. Takes precedence over align."}
       {:name "align"
        :type "string"
        :default "\"start\""
-       :description "Horizontal popup anchor: start (default, trigger's left edge) or end (trigger's right edge) — clamped into the viewport either way. Useful with slot=\"trigger\" when the custom trigger sits near the right edge of its container."}
+       :description "Horizontal popup anchor only: start (default, trigger's left edge), center, or end (trigger's right edge) — clamped into the viewport either way. Useful with slot=\"trigger\" when the custom trigger sits near the right edge of its container. Prefer placement for new markup; align remains supported."}
       {:name "clearable"
        :type "boolean"
        :default "true"

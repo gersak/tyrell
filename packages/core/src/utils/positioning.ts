@@ -14,7 +14,7 @@ export type PlacementOrientation = 'horizontal' | 'vertical';
 /**
  * Vertical alignment options
  */
-export type VerticalAlign = 'top' | 'center' | 'bottom' | 'end';
+export type VerticalAlign = 'top' | 'start' | 'center' | 'bottom' | 'end';
 
 /**
  * Horizontal alignment options
@@ -132,7 +132,7 @@ export const placements: Record<Placement, PlacementConfig> = {
     horizontal: 'end',
   },
   'right-start': {
-    vertical: 'center',
+    vertical: 'start',
     horizontal: 'end',
     orientation: 'vertical',
   },
@@ -159,7 +159,7 @@ export const placements: Record<Placement, PlacementConfig> = {
     horizontal: 'end',
   },
   'left-start': {
-    vertical: 'center',
+    vertical: 'start',
     horizontal: 'start',
     orientation: 'vertical',
   },
@@ -192,6 +192,88 @@ export const placementPreferences = {
     'bottom', 'top', 'right', 'left'
   ] as Placement[],
 };
+
+/** The four sides a floating element can sit on. */
+export type PlacementSide = 'top' | 'right' | 'bottom' | 'left';
+
+/** Cross-axis alignment against the anchor. Omitted means centred. */
+export type PlacementAlign = 'start' | 'end';
+
+const OPPOSITE_SIDE: Record<PlacementSide, PlacementSide> = {
+  top: 'bottom',
+  bottom: 'top',
+  left: 'right',
+  right: 'left',
+};
+
+/** Split `'left-end'` into `{ side: 'left', align: 'end' }`. */
+export function parsePlacement(
+  placement: Placement
+): { side: PlacementSide; align?: PlacementAlign } {
+  const [side, align] = placement.split('-') as [PlacementSide, PlacementAlign | undefined];
+  return { side, align };
+}
+
+/**
+ * Fallback order to try for a requested placement, best-fit first.
+ *
+ * FLIP BEFORE RE-ALIGN. When a placement overflows it is almost always the
+ * SIDE axis that ran out of room, and re-aligning on the same side does not
+ * change the fit at all: `bottom-start` and `bottom-end` need identical
+ * vertical space. Flipping to the opposite side is the move that actually
+ * helps, so the requested alignment is carried across the flip first, and only
+ * then do we try other alignments.
+ *
+ * This also keeps the old hand-written chains intact for the four bare sides —
+ * `top` still degrades to `bottom` as its very next candidate, exactly as
+ * before aligned placements existed.
+ *
+ * Callers previously hand-wrote a 4-entry chain per side, which silently
+ * dropped every aligned placement onto the default chain.
+ */
+export function preferenceChain(placement: Placement): Placement[] {
+  const { side, align } = parsePlacement(placement);
+  const opposite = OPPOSITE_SIDE[side];
+  const perpendicular: PlacementSide[] =
+    side === 'top' || side === 'bottom' ? ['right', 'left'] : ['bottom', 'top'];
+
+  // The requested alignment on a given side, then that side's other alignments.
+  const exact = (s: PlacementSide): Placement =>
+    (align ? `${s}-${align}` : s) as Placement;
+  const rest = (s: PlacementSide): Placement[] =>
+    (align
+      ? [s, `${s}-${align === 'start' ? 'end' : 'start'}`]
+      : [`${s}-start`, `${s}-end`]) as Placement[];
+
+  return [
+    exact(side),
+    exact(opposite),        // flip first — the only move that fixes side-axis overflow
+    ...rest(side),
+    ...rest(opposite),
+    ...perpendicular.flatMap((s) => [exact(s), ...rest(s)]),
+  ];
+}
+
+/**
+ * Map a `Placement` onto `computeAnchoredPosition`'s inputs, so dropdown-style
+ * components (ty-select, ty-date-picker) accept the same `placement` vocabulary
+ * as ty-popup / ty-tooltip.
+ *
+ * Dropdowns only ever live above or below their trigger, so a left/right
+ * placement degrades to "auto" side while keeping its alignment. Bare sides
+ * default to start-aligned, matching a native <select> and the behaviour these
+ * components had before `placement` existed.
+ */
+export function placementToAnchored(
+  placement?: Placement | '' | null
+): { side: 'top' | 'bottom' | 'auto'; align: 'start' | 'center' | 'end' } {
+  if (!placement) return { side: 'auto', align: 'start' };
+  const { side, align } = parsePlacement(placement);
+  return {
+    side: side === 'top' || side === 'bottom' ? side : 'auto',
+    align: align ?? 'start',
+  };
+}
 
 /**
  * Get element dimensions relative to viewport with calculated center points
@@ -266,9 +348,12 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
     if (vertical === 'center') {
       y = targetRect.centerY - floatingRect.height / 2;
     } else if (vertical === 'end') {
+      // Bottom edges flush: left-end / right-end
       y = targetRect.bottom - floatingRect.height - containerPadding;
     } else {
-      y = targetRect.top;
+      // Top edges flush: left-start / right-start. Mirrors the 'end' inset so
+      // the two alignments are symmetric about the anchor.
+      y = targetRect.top + containerPadding;
     }
   } else {
     // Top/bottom placements
@@ -364,10 +449,14 @@ export interface AnchoredPopupOptions {
   gap?: number;
   /** Minimum distance from viewport edges (px, default 8) */
   padding?: number;
-  /** Horizontal anchor edge: trigger's left edge ("start", default) or
-   *  right edge ("end"). Either way the result is clamped into the
-   *  viewport, same as before. */
-  align?: "start" | "end";
+  /** Horizontal anchor edge: trigger's left edge ("start", default), its
+   *  right edge ("end"), or centred on it. Either way the result is clamped
+   *  into the viewport, same as before. */
+  align?: "start" | "center" | "end";
+  /** Preferred vertical side. "auto" (default) keeps the historic behaviour:
+   *  below when it fits, otherwise whichever side has more room. Naming a
+   *  side honours it when it fits and still flips rather than clipping. */
+  side?: "top" | "bottom" | "auto";
 }
 
 export interface AnchoredPopupPosition {
@@ -389,16 +478,28 @@ export function computeAnchoredPosition(o: AnchoredPopupOptions): AnchoredPopupP
   const spaceBelow = vh - o.anchorRect.bottom;
   const spaceAbove = o.anchorRect.top;
 
-  // Below when it fits — and when neither side fits, the side with MORE room
-  // instead of blindly flipping up (a trigger near the viewport top used to
-  // clip the popup off-screen).
-  const below =
-    spaceBelow >= o.popupHeight + gap + padding || spaceBelow >= spaceAbove;
+  const needed = o.popupHeight + gap + padding;
+  const fitsBelow = spaceBelow >= needed;
+  const fitsAbove = spaceAbove >= needed;
 
-  // Anchor to the trigger's left edge ("start") or right edge ("end"),
+  // "auto": below when it fits — and when neither side fits, the side with MORE
+  // room instead of blindly flipping up (a trigger near the viewport top used
+  // to clip the popup off-screen).
+  // A named side is honoured when it fits, and still flips rather than clipping
+  // when it doesn't; if neither fits we fall back to the roomier side.
+  const side = o.side ?? "auto";
+  const below =
+    side === "bottom" ? (fitsBelow || !fitsAbove ? true : false)
+      : side === "top" ? (fitsAbove || !fitsBelow ? false : true)
+        : fitsBelow || spaceBelow >= spaceAbove;
+
+  // Anchor to the trigger's left edge ("start"), right edge ("end"), or centre,
   // clamped into the viewport either way.
   const rawX =
-    o.align === "end" ? o.anchorRect.right - o.popupWidth : o.anchorRect.left;
+    o.align === "end" ? o.anchorRect.right - o.popupWidth
+      : o.align === "center"
+        ? o.anchorRect.left + (o.anchorRect.width - o.popupWidth) / 2
+        : o.anchorRect.left;
   const x = Math.max(padding, Math.min(rawX, vw - o.popupWidth - padding));
 
   return {

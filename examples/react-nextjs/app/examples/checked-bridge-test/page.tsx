@@ -91,7 +91,7 @@ export default function CheckedBridgeTestPage() {
           <TyButton flavor="primary" onClick={() => setChecked(prev => !prev)}>
             Flip checked (React state: {String(checked)})
           </TyButton>
-          <TyButton flavor="secondary" onClick={() => setRadioValue(prev => (prev === 'a' ? 'b' : 'a'))}>
+          <TyButton flavor="neutral" onClick={() => setRadioValue(prev => (prev === 'a' ? 'b' : 'a'))}>
             Flip radio (selected: {radioValue})
           </TyButton>
           <TyButton

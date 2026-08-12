@@ -27,8 +27,7 @@
    [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.docs.tooltip :as tooltip-docs]
    [tyrell.site.docs.wizard :as wizard-docs]
-   [tyrell.site.views.getting-started :as getting-started]
-   [tyrell.site.views.ty-styles :as ty-styles]))
+   [tyrell.site.views.getting-started :as getting-started]))
 
 ;; Component picker previews
 ;; Each preview is a plain hiccup vector rendered inside a bento cell in the
@@ -652,13 +651,6 @@
     :description "HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP — render HTML on the server, hydrate as web components"
     :tags ["htmx" "datastar" "server" "html" "ssr" "backend" "flask" "django" "rails" "phoenix" "php" "laravel"]
     :view html-docs/view}
-   {:id :tyrell.site.docs/css
-    :segment "css"
-    :name "CSS System"
-    :icon "palette"
-    :description "Colors, surfaces, and design tokens"
-    :tags ["theme" "colors" "dark mode" "styling" "tailwind"]
-    :view #(ty-styles/view)}
    {:id :tyrell.site.docs/theming
     :segment "theming"
     :name "Theming (OKLCH)"

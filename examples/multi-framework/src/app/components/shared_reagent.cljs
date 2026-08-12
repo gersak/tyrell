@@ -19,7 +19,7 @@
    [:div.label "reagent r/atom"]
    [:div.count @state/shared-count]
    [:div.buttons
-    [:ty-button {:flavor "secondary" :on-click #(swap! state/shared-count dec)} "−"]
+    [:ty-button {:flavor "neutral" :on-click #(swap! state/shared-count dec)} "−"]
     [:ty-button {:flavor "primary"   :on-click #(swap! state/shared-count inc)} "+"]]])
 
 (defn render! [^js el]

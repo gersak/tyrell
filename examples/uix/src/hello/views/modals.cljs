@@ -80,15 +80,7 @@
            {:flavor "neutral"}
            "Info"
            ($ ty/Tooltip
-              "Additional information available"))
-
-        ;; Secondary
-        ($ ty/Button
-           {:flavor "secondary"}
-           "Secondary"
-           ($ ty/Tooltip
-              {:flavor "secondary"}
-              "Secondary action")))))
+              "Additional information available")))))
 
 (defui rich-tooltip-demo []
   "Shows tooltips with rich content"
@@ -130,7 +122,7 @@
                  ($ :div.text-xs.opacity-75 "Line 3: Additional note"))))
 
         ;; With icon
-        ($ :button.ty-bg-secondary.ty-text++.px-4.py-2.rounded
+        ($ :button.ty-bg-neutral.ty-text++.px-4.py-2.rounded
            "With Icon"
            ($ ty/Tooltip
               ($ :div.flex.items-center.gap-2

@@ -146,7 +146,7 @@
              ;; Double nested with 50% dimensions
              (layout/with-container {:width (layout/width% 50)
                                      :height (layout/height% 50)}
-               ($ :div.border-2.border-dashed.ty-border-secondary.p-4.rounded
+               ($ :div.border-2.border-dashed.ty-border-neutral.p-4.rounded
                   ($ :div
                      ($ :span.font-medium.ty-text+ "Nested Container (50%): ")
                      ($ :span.text-sm.font-mono.ty-text
@@ -332,7 +332,7 @@
          ($ :div.flex.gap-4.h-80
           ;; Sidebar with resize observer
             ($ :ty-resize-observer {:id "uix-flex-sidebar"
-                                    :class "ty-bg-secondary- border-2 ty-border-secondary rounded-lg p-4 resize overflow-auto"
+                                    :class "ty-bg-neutral- border-2 ty-border-neutral rounded-lg p-4 resize overflow-auto"
                                     :style {:min-width "150px"
                                             :width "200px"}}
                (if sidebar-size
@@ -378,7 +378,7 @@
                          (cond
                            (>= width 1024) ($ :div.ty-text-success "🖥️ Desktop Layout")
                            (>= width 768) ($ :div.ty-text-primary "💻 Tablet Layout")
-                           :else ($ :div.ty-text-secondary "📱 Mobile Layout")))))
+                           :else ($ :div.ty-text-neutral "📱 Mobile Layout")))))
                  ($ :div.ty-text-.text-center "Loading..."))))))))
 
 ;; =============================================================================

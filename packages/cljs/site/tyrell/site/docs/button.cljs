@@ -97,14 +97,12 @@
                    [:div.flex.flex-wrap.gap-3
                     [:ty-button "Default"]
                     [:ty-button {:flavor "primary"} "Primary"]
-                    [:ty-button {:flavor "neutral"} "Secondary"]
                     [:ty-button {:flavor "danger"} "Danger"]
                     [:ty-button {:flavor "success"} "Success"]
                     [:ty-button {:flavor "warning"} "Warning"]
                     [:ty-button {:flavor "neutral"} "Neutral"]])
                   (code-block "<ty-button>Default</ty-button>
 <ty-button flavor=\"primary\">Primary</ty-button>
-<ty-button flavor=\"neutral\">Secondary</ty-button>
 <ty-button flavor=\"danger\">Danger</ty-button>
 <ty-button flavor=\"success\">Success</ty-button>
 <ty-button flavor=\"warning\">Warning</ty-button>
@@ -750,31 +748,4 @@ setLoaderSvg(null); // back to default" "javascript")
     </ty-button>
   </div>
 </div>")]])
-
-   (doc-section "Best Practices"
-                [:div.ty-elevated.rounded-lg.p-5
-                 [:div.space-y-2
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-success.mt-1 {:name "check" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Use semantic flavors (primary, danger) to convey meaning"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-success.mt-1 {:name "check" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Show loading states with spinning icons for async operations"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-success.mt-1 {:name "check" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Use action buttons for icon-only actions to save space"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-success.mt-1 {:name "check" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Disable buttons during loading to prevent multiple submissions"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-success.mt-1 {:name "check" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Use slots for icons to maintain proper spacing"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-danger.mt-1 {:name "x" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Don't use multiple buttons with the same primary action"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-danger.mt-1 {:name "x" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Avoid using more than one primary button per section"]]
-                  [:div.flex.items-start.gap-2
-                   [:ty-icon.ty-text-danger.mt-1 {:name "x" :size "sm"}]
-                   [:p.ty-text- {:style {:font-size "0.875rem"}} "Don't use action buttons for text-heavy actions"]]]])))
+))

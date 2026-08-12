@@ -248,7 +248,7 @@
             [:> ty/TyTag {:value "vue"        :flavor "neutral"} "Vue.js"]
             [:> ty/TyTag {:value "clojure"    :flavor "success"} "Clojure"]
             [:> ty/TyTag {:value "python"     :flavor "warning"} "Python"]
-            [:> ty/TyTag {:value "tailwind"   :flavor "secondary"} "Tailwind CSS"]
+            [:> ty/TyTag {:value "tailwind"   :flavor "neutral"} "Tailwind CSS"]
             [:> ty/TyTag {:value "docker"     :flavor "neutral"} "Docker"]]
            (when (seq (:skills form-data))
              [:p.text-xs.ty-text+.mt-2.flex.items-center.gap-1
@@ -290,7 +290,7 @@
           [:p.text-xs.ty-text-.mt-1 "All fields marked with * are required"]]
 
          [:div.flex.gap-3.w-full.sm:w-auto
-          [:> ty/TyButton {:flavor "secondary"
+          [:> ty/TyButton {:flavor "neutral"
                            :className "flex-1 sm:flex-none"
                            :onClick (fn [e]
                                       (js/console.log "[RESET] onClick fired" e)
@@ -340,7 +340,7 @@
         [:div.flex.gap-4.flex-wrap
          [:> ty/TyButton {:onClick #(js/alert "Default clicked!")} "Default"]
          [:> ty/TyButton {:flavor "primary" :onClick #(js/alert "Primary clicked!")} "Primary"]
-         [:> ty/TyButton {:flavor "secondary" :onClick #(js/alert "Secondary clicked!")} "Secondary"]]]
+         [:> ty/TyButton {:flavor "neutral" :onClick #(js/alert "Neutral clicked!")} "Neutral"]]]
 
        [:div
         [:h3.font-medium.mb-3.ty-text+ "Semantic Buttons"]
@@ -356,7 +356,7 @@
           [:> ty/TyIcon {:name "save" :size "sm"}] "Save"]
          [:> ty/TyButton {:flavor "danger"}
           [:> ty/TyIcon {:name "trash" :size "sm"}] "Delete"]
-         [:> ty/TyButton {:flavor "secondary"}
+         [:> ty/TyButton {:flavor "neutral"}
           [:> ty/TyIcon {:name "download" :size "sm"}] "Download"]]]]]])))
 
 (defn components-view []

@@ -312,36 +312,4 @@ textarea.addEventListener('input', () => {
   <ty-textarea name=\"notes\" label=\"Notes\"></ty-textarea>
   <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
 </form>")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Set min-height for UX and max-height to cap growth"
-                     "Always provide a label for accessibility"
-                     "Use required and error for form validation feedback"
-                     "Debounce auto-save logic to avoid excessive writes"
-                     "Match size to surrounding form controls"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use without a label — screen readers need context"
-                     "Set a fixed height via CSS — defeats auto-resize"
-                     "Skip max-height for very long documents"
-                     "Validate on every keystroke — use change not input for validation"
-                     "Use for short single-line text — ty-input handles that"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

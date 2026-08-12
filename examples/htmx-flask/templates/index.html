@@ -13,7 +13,7 @@
                 <span class="text-gradient-primary">Beautiful</span>
                 <span class="ty-text-primary-strong"> Web Components</span>
             </h1>
-            <p class="text-xl md:text-2xl ty-text-neutral-mild max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p class="text-xl md:text-2xl ty-text-neutral-bold max-w-3xl mx-auto mb-12 leading-relaxed">
                 Experience the perfect fusion of 
                 <span class="ty-text-primary-strong font-semibold">Ty Components</span>,
                 <span class="ty-text-success-strong font-semibold">HTMX</span>, and 
@@ -28,7 +28,7 @@
                     <ty-icon name="zap" class="mr-1"></ty-icon>
                     Explore Interactive Forms
                 </ty-button>
-                <ty-button flavor="secondary" size="lg"
+                <ty-button flavor="neutral" size="lg"
                            class="transform hover:scale-[1.02] transition-transform duration-200"
                            onclick="window.location.href='{{ url_for('components') }}'">
                     <ty-icon name="layers" class="mr-1"></ty-icon>
@@ -49,7 +49,7 @@
         <h2 class="text-4xl font-bold ty-text-primary-strong mb-6">
             Live Interactive Demos
         </h2>
-        <p class="text-xl ty-text-neutral-mild max-w-2xl mx-auto">
+        <p class="text-xl ty-text-neutral-bold max-w-2xl mx-auto">
             See real-world patterns in action. Every interaction is powered by server-side logic.
         </p>
     </div>
@@ -62,7 +62,7 @@
                     <h3 class="text-2xl font-bold ty-text-primary-strong mb-2">
                         🔍 Smart User Search
                     </h3>
-                    <p class="ty-text-neutral-mild">
+                    <p class="ty-text-neutral-bold">
                         Live server-side filtering with beautiful results
                     </p>
                 </div>
@@ -98,7 +98,7 @@
                     <h3 class="text-2xl font-bold ty-text-success-strong mb-2">
                         📋 Task Dashboard
                     </h3>
-                    <p class="ty-text-neutral-mild">
+                    <p class="ty-text-neutral-bold">
                         Real-time filtering and status management
                     </p>
                 </div>
@@ -162,7 +162,7 @@
                     <h3 class="text-2xl font-bold ty-text-warning-strong mb-2">
                         📅 Event Scheduler
                     </h3>
-                    <p class="ty-text-neutral-mild">
+                    <p class="ty-text-neutral-bold">
                         Interactive calendar with real-time event management
                     </p>
                 </div>
@@ -210,7 +210,7 @@
                         </ty-button>
                     </form>
                     
-                    <div id="date-selection-status" class="text-sm ty-text-neutral-mild">
+                    <div id="date-selection-status" class="text-sm ty-text-neutral-bold">
                         📅 Click on a date above to start scheduling events
                     </div>
                 </div>
@@ -232,7 +232,7 @@
                     <h3 class="text-2xl font-bold ty-text-info-strong mb-2">
                         🎭 Dynamic Modals
                     </h3>
-                    <p class="ty-text-neutral-mild">
+                    <p class="ty-text-neutral-bold">
                         Server-powered content loading in beautiful dialogs
                     </p>
                 </div>
@@ -249,7 +249,7 @@
                         User Profile
                     </ty-button>
                     
-                    <ty-button flavor="secondary" size="lg"
+                    <ty-button flavor="neutral" size="lg"
                                class="w-full"
                                hx-get="/api/modal/content/task-details?task_id=1"
                                hx-target="#modal-content"
@@ -260,8 +260,8 @@
                 </div>
                 
                 <div class="ty-bg-neutral-soft rounded-xl p-6 text-center">
-                    <ty-icon name="sparkles" class="w-12 h-12 mx-auto mb-3 ty-text-info-mild"></ty-icon>
-                    <p class="ty-text-neutral-mild">
+                    <ty-icon name="sparkles" class="w-12 h-12 mx-auto mb-3 ty-text-info-bold"></ty-icon>
+                    <p class="ty-text-neutral-bold">
                         Click the buttons above to see dynamic content loading in action!
                     </p>
                 </div>
@@ -270,7 +270,7 @@
                     <div id="modal-content">
                         <div class="text-center">
                             <div class="spinner ty-text-primary mb-4"></div>
-                            <p class="ty-text-neutral-mild">Loading amazing content...</p>
+                            <p class="ty-text-neutral-bold">Loading amazing content...</p>
                         </div>
                     </div>
                 </ty-modal>
@@ -284,7 +284,7 @@
             <h2 class="text-4xl font-bold ty-text-primary-strong mb-6">
                 Powered by Modern Technologies
             </h2>
-            <p class="text-xl ty-text-neutral-mild max-w-3xl mx-auto">
+            <p class="text-xl ty-text-neutral-bold max-w-3xl mx-auto">
                 See how beautifully these technologies work together to create amazing user experiences.
             </p>
         </div>
@@ -295,7 +295,7 @@
                     <ty-icon name="zap" class="ty-text-primary-strong"></ty-icon>
                 </div>
                 <h3 class="text-xl font-bold ty-text-primary-strong mb-3">Real-time Validation</h3>
-                <p class="ty-text-neutral-mild">
+                <p class="ty-text-neutral-bold">
                     Server-side form validation with instant feedback and beautiful error states.
                 </p>
             </div>
@@ -305,7 +305,7 @@
                     <ty-icon name="search" class="ty-text-success-strong"></ty-icon>
                 </div>
                 <h3 class="text-xl font-bold ty-text-success-strong mb-3">Dynamic Search</h3>
-                <p class="ty-text-neutral-mild">
+                <p class="ty-text-neutral-bold">
                     Live search with server-side filtering, debouncing, and beautiful result presentation.
                 </p>
             </div>
@@ -315,7 +315,7 @@
                     <ty-icon name="calendar-plus" class="ty-text-warning-strong"></ty-icon>
                 </div>
                 <h3 class="text-xl font-bold ty-text-warning-strong mb-3">Event Scheduler</h3>
-                <p class="ty-text-neutral-mild">
+                <p class="ty-text-neutral-bold">
                     Interactive calendar with real-time event creation, management, and server-side persistence.
                 </p>
             </div>
@@ -328,7 +328,7 @@
             <h2 class="text-3xl font-bold ty-text-primary-strong mb-4">
                 Ready to Build Something Amazing?
             </h2>
-            <p class="text-lg ty-text-neutral-mild mb-6">
+            <p class="text-lg ty-text-neutral-bold mb-6">
                 Explore all the features and see the source code.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
@@ -424,7 +424,7 @@ function updateDateSelectionStatus(year, month, day) {
         showDateSelectedToast(formattedDate);
     } else {
         statusDiv.innerHTML = '📅 Click on a date above to start scheduling events';
-        statusDiv.className = 'text-sm ty-text-neutral-mild';
+        statusDiv.className = 'text-sm ty-text-neutral-bold';
     }
 }
 
@@ -470,7 +470,7 @@ document.body.addEventListener('htmx:beforeRequest', function(event) {
                 // Reset after 3 seconds
                 setTimeout(() => {
                     statusDiv.innerHTML = '📅 Click on a date above to start scheduling events';
-                    statusDiv.className = 'text-sm ty-text-neutral-mild';
+                    statusDiv.className = 'text-sm ty-text-neutral-bold';
                 }, 3000);
             }
             

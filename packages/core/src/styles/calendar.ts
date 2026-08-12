@@ -9,7 +9,7 @@ export const calendarStyles = `
   flex-direction: column;
   gap: 0.125rem;
   box-sizing: border-box;
-  font-family: system-ui, sans-serif;
+  font-family: inherit;
 }
 
 @media (max-width: 320px) {

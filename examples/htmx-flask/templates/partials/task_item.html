@@ -1,7 +1,7 @@
 <div class="group flex items-center space-x-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-sm hover:scale-[1.02] transition-all duration-200 mb-3 animate-fade-in">
     <!-- Task Status Toggle -->
     <ty-button size="sm" 
-               flavor="{% if task.status == 'completed' %}success{% else %}secondary{% endif %}"
+               flavor="{% if task.status == 'completed' %}success{% else %}neutral{% endif %}"
                class="flex-shrink-0"
                hx-post="/api/tasks/{{ task.id }}/toggle"
                hx-target="closest div"
@@ -48,7 +48,7 @@
     
     <!-- Task Actions (shown on hover) -->
     <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
-        <ty-button size="xs" flavor="secondary"
+        <ty-button size="xs" flavor="neutral"
                    hx-get="/api/modal/content/task-details?task_id={{ task.id }}"
                    hx-target="#modal-content"
                    onclick="document.getElementById('demo-modal').show()">

@@ -417,7 +417,7 @@ export default function ContactFormExample() {
 
                 <TyButton
                   type="button"
-                  flavor="secondary"
+                  flavor="neutral"
                   size="lg"
                   disabled={isSubmitting}
                   onClick={() => {
@@ -541,11 +541,11 @@ export default function ContactFormExample() {
           </div>
 
           {/* Response Time */}
-          <div className="ty-elevated rounded-xl p-6 border ty-border ty-bg-info-">
-            <h3 className="text-lg font-semibold mb-2 ty-text-info++">
+          <div className="ty-elevated rounded-xl p-6 border ty-border ty-bg-primary-">
+            <h3 className="text-lg font-semibold mb-2 ty-text-primary++">
               Quick Response
             </h3>
-            <p className="text-sm ty-text-info leading-relaxed">
+            <p className="text-sm ty-text-primary leading-relaxed">
               We typically respond to all inquiries within 24 hours during business days.
               For urgent matters, please mark your message as "Critical" priority.
             </p>

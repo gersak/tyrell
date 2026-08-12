@@ -5,6 +5,68 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 1.0.0-TC47
+
+### Changed
+
+- **The default brand seed moved from `--ty-brand-hue: 285` / `--ty-brand-chroma: 0.1` to `252` / `0.08` (light), `233` / `0.095` (dark).** Anyone consuming `tyrell-theme.css` without setting their own seeds gets a different default violet — a two-line override (`--ty-brand-hue`, `--ty-brand-chroma`) restores the old look.
+
+- **`--ty-bg-{flavor}` moved from a lightness formula to an alpha composite.** Previously each background tint had its own `--ty-l-bg-{base,bold,soft}` lightness stop and `--ty-c-bg-{base,bold,soft}-mult` chroma multiplier, computed the same way as the ink track: `L = l-stop × l-factor`. That formula is only well-behaved mid-scale — the bg stops sit at the *ends* of the L range (0.92–0.98 light, 0.19–0.26 dark), so a flavor with `l-factor` far from 1 either clamped to the page background (tint disappeared) or collapsed to a mid-tone fill (no longer read as a background at all).
+
+  `--ty-bg-{flavor}` is now `oklch(from var(--ty-color-{flavor}) l c h / var(--ty-a-bg-{base,bold,soft}))` — the flavor's own mid-scale ink, composited at low alpha over whatever surface it sits on. The ink stays in the gamut-widest part of the L range regardless of `l-factor`, direction (lighten vs. darken) is automatic per surface instead of requiring a hand-picked absolute lightness, and the tint now correctly adapts to any surface level (content, elevated, floating), not just a single nominal one.
+
+  **Removed:** `--ty-l-bg-base`, `--ty-l-bg-bold`, `--ty-l-bg-soft`, `--ty-c-bg-base-mult`, `--ty-c-bg-bold-mult`, `--ty-c-bg-soft-mult` (both modes). **Added:** `--ty-a-bg-base` (9% light / 13% dark), `--ty-a-bg-bold` (17% / 22%), `--ty-a-bg-soft` (4% / 7%). A custom flavor pack's `--ty-bg-X` lines need the same swap — see the flavor pack builder on the Theming page for the current template. **Visual change:** background tints render slightly differently (generally cleaner at extreme `l-factor` values); anyone who pinned the removed `--ty-l-bg-*`/`--ty-c-bg-*-mult` dials directly needs to move that override to the corresponding `--ty-a-bg-*` alpha instead.
+
+### Added
+
+- **Placements gain cross-axis alignment — `ty-popup`, `ty-tooltip`, `ty-select` and `ty-date-picker` now share one 12-value vocabulary.** A placement is a **side** plus an optional **alignment**: the bare side centers on the anchor, `-start` puts the leading edges flush, `-end` the trailing edges. For `top`/`bottom` that axis is horizontal (`bottom-start` = below, left edges flush); for `left`/`right` it is vertical (`left-start` = to the left, top edges flush). All twelve combinations are valid.
+
+  The `Placement` type already declared all twelve, but nothing honored them. `popup.ts` and `tooltip.ts` each hand-wrote a four-entry fallback chain matching only the bare sides, so `placement="top-start"` typechecked, fell through the `if`-chain to the default, and was silently discarded. Replaced both with a shared `preferenceChain()` (`utils/positioning.ts`).
+
+  **Fallback flips before it re-aligns.** When a placement overflows it is the *side* axis that ran out of room, and re-aligning on the same side cannot change the fit — `bottom-start` and `bottom-end` need identical vertical space. So the requested alignment is carried across the flip first (`left-start` → `right-start`, still top-aligned), and only then are other alignments tried, perpendicular axis last. This also preserves the historic chains exactly: every bare side still degrades straight to its opposite as the very next candidate, so existing markup cannot shift on overflow. Locked by regression test.
+
+- **`ty-date-picker` gets a `placement` attribute; `ty-select`'s `align` gains `center`.** The date picker previously had no positioning control at all — the calendar was always start-anchored below/above with no way to influence it. Dropdowns only live above or below their trigger, so both components accept `bottom*`/`top*` directly and degrade `left-*`/`right-*` to auto-side while keeping the alignment. Implemented via a new `side` option and `center` alignment on `computeAnchoredPosition()`, plus `placementToAnchored()` to translate a `Placement` into that engine's inputs. `ty-select`'s existing `align` keeps working standalone; `placement` takes precedence when both are set.
+
+### Fixed
+
+- **`left-start` and `right-start` were dead values — identical to bare `left`/`right`.** Both were configured `vertical: 'center'` in the `placements` table, and `VerticalAlign` had no `'start'` member to express anything else, so neither could ever top-align. Meanwhile `calculatePlacement()` already contained a working start-alignment branch that was unreachable — nothing ever set `vertical` to something outside `'center'`/`'end'`. Added `'start'` to the union, pointed both entries at it, and gave that branch the same `containerPadding` inset its `end` sibling already had so the two alignments are symmetric about the anchor. **Visual change:** markup using `left-start`/`right-start` moves from centered to top-aligned. Use bare `left`/`right` for the old centered behavior.
+
+- **`ty-icon` rendered as an oval inside shrink-wrapping wrappers (regression in TC46).** TC46 changed `:host` from `display: flex` to `inline-flex` so an icon placed inline in running text would not force a line break. As an *inline* box the icon generates a line box in its parent, so any wrapper that shrink-wraps it — a `.rounded-full` badge, a chip — inherits the parent's `line-height` strut instead of hugging the icon: a 12px icon in a 24px-line-height badge measured **22×34 instead of 22×22**. Badges are far more common than icons in running text, so this reverts to `display: flex` (and restores the `:host([slot])` inline-flex rule). The inline-in-text case is solved correctly on the consumer side instead — make the *text wrapper* `inline-flex`, which makes the icon a flex item. Documented in the CSS so it is not "fixed" again the same way.
+
+- **Every component rendered in a different typeface than the page.** Component styles used four inconsistent approaches to `font-family`: `var(--ty-font-sans)` (×13), a hardcoded `system-ui, sans-serif` (×3), `inherit` (×3), and nothing at all. Since `--ty-font-sans` resolves to a *system* stack, a consumer setting their own body font got Tyrell components in the system font regardless — contradicting the library's "typography stays yours" contract. All 19 declarations are now `inherit`.
+
+  Additionally, `font-family: inherit` on `:host` does **not** reach native form controls inside the shadow root: the UA stylesheet sets a font on `button`/`input`/`textarea`, and that beats inheritance. So `ty-button`'s inner `<button>` had always rendered in the system font even when the host resolved correctly. Explicit `font-family: inherit` added to the native `button`, `input`, `textarea` and both select search inputs.
+
+- **`secondary` was still advertised in the React package.** All 14 `tyrell-react` components declared `type BuiltinFlavor = 'primary' | 'secondary' | …`, so TypeScript accepted and autocompleted a flavor removed from the core in TC37 — it silently degraded to `neutral` at runtime, meaning the published `.d.ts` misrepresented the API. Stripped from all 14 and from the dead union documented in `packages/core/src/README.md`.
+
+- **Solid auto-contrast put white text on `warning+` in both modes — below AA, and the worse of the two choices.** `--ty-solid-fg-threshold` shipped at `0.62`, described in the source as the "~0.58-0.62 sRGB break-even." Measured in a browser at stock dials, the L at which black and white give *equal* WCAG contrast is **0.553** (success) / 0.564 (neutral) / 0.569 (warning) / 0.570 (primary) / **0.578** (danger) — so `0.62` sat above every flavor's real crossover and biased the decision toward white for any fill in the 0.55–0.62 band.
+
+  `warning+` is the one built-in fill that lands there, and it failed in both modes: light (L 0.588) took white at **4.23:1** where black gives 4.97, dark (L 0.604) took white at **3.95:1** where black gives 5.31. Threshold retuned to `0.57`. Swept across all 30 fills (15 × light/dark): AA failures **2 → 0**, worst case **3.95:1 → 4.83:1**, and only `warning+` flips — the other 28 foregrounds are unchanged.
+
+  The 0.025 hue spread means one global dial can't be exactly right for every hue, but the previous error was ~0.05 in the *same* direction for all five flavors, so per-hue thresholds would add 15 tokens to buy nothing a retune doesn't. The window where every fill gets the better color is `(0.544, 0.588]`.
+
+  **Visual change:** `flavor="warning+"` now renders black label text instead of white, in both modes. Pin `--ty-solid-warning-strong-fg: white` to keep the old look, or set `--ty-solid-fg-threshold: 1` to force white everywhere. Same value applied to `ty-wizard`'s step circles, which carried their own `0.6` fallback for the brand-layer-not-loaded case.
+
+  Regression-locked by `test/solid-contrast.test.ts`, which asserts the *invariant* (every fill's computed foreground clears AA **and** beats the alternative) rather than the dial — so retuning the L-curve or rebranding stays free, and only an actually-unreadable button fails.
+
+## [1.0.0-TC46] - 2026-08-11
+
+### Changed
+
+- **Published package is 13% smaller — 5.02 MB → 4.65 MB packed, 25.8 MB → 23.7 MB unpacked, 359 → 181 files.** Three separate causes, only one of which was comments:
+
+  **Sourcemaps were dead weight.** `lib/**/*.map` (~2 MB) shipped via the `files` field but referenced `../../src/*.ts`, which is never published, with no `sourcesContent` embedded — consumers could not resolve them under any circumstance. `sourceMap` and `declarationMap` are now off for the published build.
+
+  **`tsc` was keeping comments.** Unlike the CDN bundle (Terser, `format.comments: false`) the NPM `lib/` build had no `removeComments`, so every source comment shipped. Now a two-pass build: `tsconfig.lib.json` emits `.js` with `removeComments`, and a new `tsconfig.lib.dts.json` emits declarations **with** JSDoc intact, so consumer hover documentation is unaffected. (`tsconfig.lib.json` also had duplicate `outDir` and `declarationMap` keys; cleaned up.)
+
+  **CSS comments were shipping in the CDN bundle.** Component styles are CSS inside template literals, which makes those comments *string data* — Terser never stripped them. Removing them took 15 KB off `dist/tyrell.js` (now 343 KB / 76.8 KB gzipped).
+
+- **Redundant comments removed across the source tree** — 139 files, 4,623 deletions, ~142 KB. Targeted duplicated file-header feature lists and `@example` blocks (already in `guides/TY_GUIDE.md` and the docs site), pure restatement, `// ====` banner rules, dead commented-out code, and stale `PORTED FROM:` / `(Phase N)` scaffolding. Rationale comments were preserved; the emitted `.js` for all 59 non-style modules is byte-identical to the previous build, and the 26 style modules differ only in removed CSS comments. Several stale comments were corrected in passing — `scroll-lock.ts` claimed `position: fixed` when the implementation uses `overflow: hidden` on `<html>`, and `input.ts` had a `/* No gap by default */` note directly above `gap: 0.5rem`.
+
+### Known issues
+
+- `ty-icon` renders as an oval inside shrink-wrapping wrappers such as `.rounded-full` badges. Fixed in TC47.
+
 ## [1.0.0-TC45] - 2026-08-08
 
 ### Added

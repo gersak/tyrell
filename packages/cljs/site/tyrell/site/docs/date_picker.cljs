@@ -37,6 +37,10 @@
         :type "string"
         :default "\"md\""
         :description "Size variant: xs, sm, md, lg, xl"}
+       {:name "placement"
+        :type "string"
+        :default "-"
+        :description "Calendar popup side plus optional cross-axis alignment, same vocabulary as ty-popup: bottom, bottom-start, bottom-end, top, top-start, top-end. The calendar only opens above or below the field, so left-*/right-* keep their alignment but let the side stay automatic. Still flips rather than clipping when the chosen side has no room."}
        {:name "flavor"
         :type "string"
         :default "-"
@@ -231,36 +235,4 @@ picker.addEventListener('change', (e) => {
         "Full token reference is in the " [:strong "CSS Design System"] " guide under " [:em "Per-Component Color Overrides → ty-calendar, ty-calendar-month, ty-date-picker"] "."]
        [:p.ty-text--.mb-0 {:style {:font-size "0.75rem" :line-height "1.5"}}
         "Tokens for the day grid (" [:code "--ty-calendar-*"] ") are shared across " [:code "<ty-calendar>"] ", " [:code "<ty-calendar-month>"] ", and the popup inside " [:code "<ty-date-picker>"] " — set them on a parent element to theme all three at once."]]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use value in ISO format (YYYY-MM-DD) — the picker handles display formatting"
-                     "Set locale and format to match the user's region and preference"
-                     "Set name when inside a form — it's required for FormData submission"
-                     "Use with-time only when precise time entry is genuinely needed"
-                     "Use clearable=\"false\" when the date is required and shouldn't be cleared"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Pass a non-ISO string to value — the picker won't recognize it"
-                     "Use ty-date-picker when a bare ty-calendar grid is all you need"
-                     "Rely on the formatted display string for date logic — use value or milliseconds"
-                     "Forget required when the date is mandatory in a form"
-                     "Use with-time and then ignore the time component in your backend"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

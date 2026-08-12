@@ -3,8 +3,13 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+type Placement =
+  | 'top-start' | 'top' | 'top-end'
+  | 'right-start' | 'right' | 'right-end'
+  | 'bottom-start' | 'bottom' | 'bottom-end'
+  | 'left-start' | 'left' | 'left-end';
 
 export interface TyDatePickerEventDetail {
   /** The selected date value (ISO string or formatted string based on format) */
@@ -59,7 +64,10 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
 
   /** Latest selectable date (ISO "YYYY-MM-DD") */
   max?: string;
-  
+
+  /** Calendar popup placement, same vocabulary as ty-popup/ty-tooltip/ty-select: a side plus an optional cross-axis alignment (e.g. "bottom-start"). The calendar only lives above or below the field, so left/right degrade to auto-side with the alignment kept. Empty/unset = auto (below when it fits). */
+  placement?: Placement;
+
   /** Callback when the date value changes */
   onChange?: (event: CustomEvent<TyDatePickerEventDetail>) => void;
   
@@ -91,6 +99,7 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     withTime,
     min,
     max,
+    placement,
     onChange,
     onOpen,
     onClose,
@@ -223,6 +232,10 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
 
     if (max) {
       webComponentProps.max = max;
+    }
+
+    if (placement) {
+      webComponentProps.placement = placement;
     }
 
     return React.createElement('ty-date-picker', webComponentProps);

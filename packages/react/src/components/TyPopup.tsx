@@ -2,9 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
+type Placement =
+  | 'top-start' | 'top' | 'top-end'
+  | 'right-start' | 'right' | 'right-end'
+  | 'bottom-start' | 'bottom' | 'bottom-end'
+  | 'left-start' | 'left' | 'left-end';
+
 export interface TyPopupProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onClose'> {
-  /** Preferred placement of the popup relative to anchor parent: "top" | "bottom" | "left" | "right" */
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  /** Preferred placement of the popup relative to anchor parent: a side plus an optional cross-axis alignment (e.g. "bottom-start") */
+  placement?: Placement;
 
   /** Distance offset from the anchor in pixels (default: 8) */
   offset?: number;

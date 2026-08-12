@@ -31,7 +31,7 @@
                 </span>
             </div>
             
-            <div class="flex items-center space-x-4 text-sm ty-text-neutral-mild">
+            <div class="flex items-center space-x-4 text-sm ty-text-neutral-bold">
                 <div class="flex items-center space-x-1">
                     <ty-icon name="flag" class="w-4 h-4"></ty-icon>
                     <span class="capitalize">{{ task.priority }} Priority</span>
@@ -48,7 +48,7 @@
     <div class="mb-6">
         <h4 class="text-lg font-medium ty-text-neutral-strong mb-3">Description</h4>
         <div class="ty-bg-neutral-soft rounded-lg p-4">
-            <p class="ty-text-neutral-mild leading-relaxed">
+            <p class="ty-text-neutral-bold leading-relaxed">
                 {% if task.title == "Design new homepage" %}
                 Create a modern, responsive homepage design that showcases our latest features and improves user engagement. 
                 The design should follow our brand guidelines and include sections for hero content, feature highlights, 
@@ -79,15 +79,15 @@
             <h4 class="text-lg font-medium ty-text-neutral-strong mb-3">Details</h4>
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm ty-text-neutral-mild">Created</span>
+                    <span class="text-sm ty-text-neutral-bold">Created</span>
                     <span class="text-sm font-medium">{{ "2025-01-" + (task.id|string|length * 5)|string + "-15" }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm ty-text-neutral-mild">Due Date</span>
+                    <span class="text-sm ty-text-neutral-bold">Due Date</span>
                     <span class="text-sm font-medium">{{ "2025-02-" + ((task.id * 3) % 28 + 1)|string + "-15" }}</span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm ty-text-neutral-mild">Assignee</span>
+                    <span class="text-sm ty-text-neutral-bold">Assignee</span>
                     <span class="text-sm font-medium">
                         {% if task.id == 1 %}Alice Johnson
                         {% elif task.id == 2 %}Bob Smith
@@ -96,7 +96,7 @@
                     </span>
                 </div>
                 <div class="flex items-center justify-between">
-                    <span class="text-sm ty-text-neutral-mild">Estimated Hours</span>
+                    <span class="text-sm ty-text-neutral-bold">Estimated Hours</span>
                     <span class="text-sm font-medium">{{ task.id * 4 + 8 }}h</span>
                 </div>
             </div>
@@ -107,7 +107,7 @@
             <div class="space-y-4">
                 <!-- Progress Bar -->
                 <div>
-                    <div class="flex justify-between text-sm ty-text-neutral-mild mb-1">
+                    <div class="flex justify-between text-sm ty-text-neutral-bold mb-1">
                         <span>Completion</span>
                         <span>{{ 75 if task.status == 'in-progress' else (100 if task.status == 'completed' else 25) }}%</span>
                     </div>
@@ -121,21 +121,21 @@
                 
                 <!-- Subtasks -->
                 <div>
-                    <span class="text-sm ty-text-neutral-mild mb-2 block">Subtasks</span>
+                    <span class="text-sm ty-text-neutral-bold mb-2 block">Subtasks</span>
                     <div class="space-y-2">
                         <div class="flex items-center space-x-2 text-sm">
                             <ty-icon name="check-circle" class="w-4 h-4 ty-text-success"></ty-icon>
-                            <span class="ty-text-neutral-mild">Research requirements</span>
+                            <span class="ty-text-neutral-bold">Research requirements</span>
                         </div>
                         <div class="flex items-center space-x-2 text-sm">
                             <ty-icon name="{% if task.status == 'completed' %}check-circle{% else %}circle{% endif %}" 
-                                     class="w-4 h-4 {% if task.status == 'completed' %}ty-text-success{% else %}ty-text-neutral-mild{% endif %}"></ty-icon>
-                            <span class="ty-text-neutral-mild">Implementation</span>
+                                     class="w-4 h-4 {% if task.status == 'completed' %}ty-text-success{% else %}ty-text-neutral-bold{% endif %}"></ty-icon>
+                            <span class="ty-text-neutral-bold">Implementation</span>
                         </div>
                         <div class="flex items-center space-x-2 text-sm">
                             <ty-icon name="{% if task.status == 'completed' %}check-circle{% else %}circle{% endif %}" 
-                                     class="w-4 h-4 {% if task.status == 'completed' %}ty-text-success{% else %}ty-text-neutral-mild{% endif %}"></ty-icon>
-                            <span class="ty-text-neutral-mild">Testing & Review</span>
+                                     class="w-4 h-4 {% if task.status == 'completed' %}ty-text-success{% else %}ty-text-neutral-bold{% endif %}"></ty-icon>
+                            <span class="ty-text-neutral-bold">Testing & Review</span>
                         </div>
                     </div>
                 </div>
@@ -150,21 +150,21 @@
             <div class="flex items-start space-x-3 py-3 border-l-2 border-l-success pl-4 ty-bg-success-soft rounded-r">
                 <ty-icon name="message-circle" class="w-4 h-4 ty-text-success mt-0.5"></ty-icon>
                 <div>
-                    <p class="text-sm ty-text-neutral-mild">Progress update: Implementation phase completed successfully.</p>
+                    <p class="text-sm ty-text-neutral-bold">Progress update: Implementation phase completed successfully.</p>
                     <p class="text-xs ty-text-neutral-faint mt-1">2 hours ago</p>
                 </div>
             </div>
             <div class="flex items-start space-x-3 py-3 border-l-2 border-l-info pl-4 ty-bg-info-soft rounded-r">
                 <ty-icon name="edit" class="w-4 h-4 ty-text-info mt-0.5"></ty-icon>
                 <div>
-                    <p class="text-sm ty-text-neutral-mild">Task details updated with new requirements.</p>
+                    <p class="text-sm ty-text-neutral-bold">Task details updated with new requirements.</p>
                     <p class="text-xs ty-text-neutral-faint mt-1">1 day ago</p>
                 </div>
             </div>
             <div class="flex items-start space-x-3 py-3 border-l-2 border-l-warning pl-4 ty-bg-warning-soft rounded-r">
                 <ty-icon name="clock" class="w-4 h-4 ty-text-warning mt-0.5"></ty-icon>
                 <div>
-                    <p class="text-sm ty-text-neutral-mild">Due date extended by 3 days due to scope changes.</p>
+                    <p class="text-sm ty-text-neutral-bold">Due date extended by 3 days due to scope changes.</p>
                     <p class="text-xs ty-text-neutral-faint mt-1">3 days ago</p>
                 </div>
             </div>
@@ -174,7 +174,7 @@
     <!-- Action Buttons -->
     <div class="flex justify-between items-center pt-6 border-t ty-border">
         <div class="flex space-x-3">
-            <ty-button flavor="secondary" size="sm">
+            <ty-button flavor="neutral" size="sm">
                 <ty-icon name="edit" class="mr-2"></ty-icon>
                 Edit Task
             </ty-button>

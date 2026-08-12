@@ -19,7 +19,7 @@
    [:div.label "replicant watching r/atom"]
    [:div.count count]
    [:div.buttons
-    [:ty-button {:flavor "secondary"
+    [:ty-button {:flavor "neutral"
                  :on {:click #(swap! state/shared-count dec)}} "−"]
     [:ty-button {:flavor "primary"
                  :on {:click #(swap! state/shared-count inc)}} "+"]]])

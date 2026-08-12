@@ -272,7 +272,7 @@ export default function SettingsPanelExample() {
 
                 <TyButton
                   onClick={handleResetSection}
-                  flavor="secondary"
+                  flavor="neutral"
                   size="sm"
                   className="w-full flex items-center justify-center gap-2"
                 >
@@ -480,7 +480,7 @@ export default function SettingsPanelExample() {
                         <div key={item.key} className="ty-elevated p-4 rounded-lg border ty-border-">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <TyIcon name={item.icon} size="20" className="ty-text-info mr-3" />
+                              <TyIcon name={item.icon} size="20" className="ty-text-primary mr-3" />
                               <div>
                                 <label className="text-sm font-medium ty-text+ cursor-pointer">
                                   {item.label}
@@ -492,7 +492,7 @@ export default function SettingsPanelExample() {
                               type="checkbox"
                               checked={settings.notificationTypes[item.key as keyof typeof settings.notificationTypes]}
                               onChange={(e) => updateNestedSetting('notificationTypes', item.key as keyof typeof settings.notificationTypes, e.target.checked)}
-                              className="w-4 h-4 ty-text-info border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              className="w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
                             />
                           </div>
                         </div>
@@ -553,7 +553,7 @@ export default function SettingsPanelExample() {
                         <div key={item.key} className="ty-elevated p-4 rounded-lg border ty-border-">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <TyIcon name={item.icon} size="20" className="ty-text-secondary mr-3" />
+                              <TyIcon name={item.icon} size="20" className="ty-text-neutral mr-3" />
                               <div>
                                 <label className="text-sm font-medium ty-text+ cursor-pointer">
                                   {item.label}
@@ -565,7 +565,7 @@ export default function SettingsPanelExample() {
                               type="checkbox"
                               checked={settings[item.key as keyof SettingsState] as boolean}
                               onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-secondary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              className="w-4 h-4 ty-text-neutral border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
                             />
                           </div>
                         </div>
@@ -836,7 +836,7 @@ export default function SettingsPanelExample() {
                         <div key={item.key} className="ty-elevated p-4 rounded-lg border ty-border-">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <TyIcon name={item.icon} size="20" className="ty-text-info mr-3" />
+                              <TyIcon name={item.icon} size="20" className="ty-text-primary mr-3" />
                               <div>
                                 <label className="text-sm font-medium ty-text+ cursor-pointer">
                                   {item.label}
@@ -848,7 +848,7 @@ export default function SettingsPanelExample() {
                               type="checkbox"
                               checked={settings[item.key as keyof SettingsState] as boolean}
                               onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-info border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              className="w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
                             />
                           </div>
                         </div>
@@ -895,7 +895,7 @@ export default function SettingsPanelExample() {
                       </TyButton>
 
                       <TyButton
-                        flavor="secondary"
+                        flavor="neutral"
                         size="sm"
                         onClick={() => alert('Clear cache and reload would be implemented here')}
                         className="flex items-center gap-2"

@@ -11,7 +11,9 @@
    [tyrell.site.styles :as styles]
    [tyrell.site.views.components-index :as components-index]
    [tyrell.site.views.landing :as landing]
-   [tyrell.site.views.sandbox-sizing :as sandbox-sizing]))
+   [tyrell.site.views.sandbox-sizing :as sandbox-sizing]
+   [tyrell.site.views.sandbox-tabs :as sandbox-tabs]
+   [tyrell.site.views.sandbox-toggles :as sandbox-toggles]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -61,7 +63,17 @@
    {:id ::sandbox-sizing
     :segment "internal/sizing"
     :name "Sizing Sandbox (hidden)"
-    :view sandbox-sizing/view}])
+    :view sandbox-sizing/view}
+
+   {:id ::sandbox-tabs
+    :segment "internal/tabs"
+    :name "Tabs Resize/Overflow Verify (hidden)"
+    :view sandbox-tabs/view}
+
+   {:id ::sandbox-toggles
+    :segment "internal/toggles"
+    :name "Switch/Checkbox Double-fire Verify (hidden)"
+    :view sandbox-toggles/view}])
 
 (def component-routes docs/docs-components)
 
@@ -430,7 +442,6 @@
        (unsubscribe)
        (set! (.-_resizeUnsub el) nil)))})
 
-(def ^:private css-route-id :tyrell.site.docs/css)
 (def ^:private theming-route-id :tyrell.site.docs/theming)
 
 (defn nav-items []
@@ -456,22 +467,18 @@
                 ;; Keep "Components" highlighted whenever the user is on any
                 ;; specific component's documentation page, not just the index.
                 :also-active-for (mapv :id (flatten-routes component-routes))}
-               {:route-id css-route-id
-                :label "CSS System"
-                :icon "palette"
-                :featured? true}
                {:route-id theming-route-id
                 :label "Theming"
                 :icon "droplet"
                 :featured? true}]})]]
 
    ;; Quickstart (route navigation) - Always visible.
-   ;; CSS System + Theming live in the featured top section, so we filter
-   ;; them out of the Quickstart list.
+   ;; Theming lives in the featured top section, so we filter it out of
+   ;; the Quickstart list.
    (nav-section
     {:title "Quickstart"
      :items (for [route guide-routes
-                  :when (not (#{css-route-id theming-route-id} (:id route)))]
+                  :when (not= theming-route-id (:id route))]
               {:route-id (:id route)
                :label (:name route)
                :icon (:icon route)})})])
@@ -678,8 +685,9 @@
     ;; Always render modal (must be in DOM), control visibility via :open attribute
     [:ty-modal {:open open
                 :on {:close close-search!}}
-     [:div.ty-floating.rounded-xl.shadow-lg.overflow-hidden
-      {:style {:width "min(520px, 90vw)"
+     [:div.ty-floating.rounded-xl.shadow-lg.overflow-hidden.site-chrome
+      {:data-ty-theme true
+       :style {:width "min(520px, 90vw)"
                :max-height "80vh"}}
       [:div.p-4.border-b.ty-border-
        [:div.flex.items-center.gap-3
@@ -794,7 +802,7 @@
                                (open-search!))))))))
 
 (defn mobile-menu []
-  [:div.lg:hidden
+  [:div.lg:hidden.site-chrome {:data-ty-theme true}
    [:ty-modal {:open (:mobile-menu-open @state)
                :on {:close close-mobile-menu!}}
     [:div.p-5.mx-auto.rounded-xl.ty-floating.box-border.flex.flex-col
@@ -820,7 +828,6 @@
     (router/rendered? ::event-booking true) "Event Booking"
     (router/rendered? ::contact-form true) "Contact Form"
     (router/rendered? ::components true) "Components"
-    (router/rendered? ::ty-styles true) "CSS System"
     (router/rendered? ::getting-started true) "Getting Started"
     :else nil))
 
@@ -884,8 +891,9 @@
     [:ty-resize-observer
      (merge {:id "tyrell.header"}
             (resize-observer-hooks "tyrell.header" [:sidebar-sizes :header]))
-     [:header.border-b.ty-border-soft
-      {:style {:background-color "var(--ty-surface-canvas)"}}
+     [:header.border-b.ty-border-soft.site-chrome
+      {:data-ty-theme true
+       :style {:background-color "var(--ty-surface-canvas)"}}
       (if show-sidebar?
         ;; Desktop: Grid layout matching content columns
         [:div.mx-auto.px-5.lg:px-8
@@ -983,8 +991,9 @@
                   ;; No vertical padding — sidebars start at top-0 and stick immediately
                   :padding (if show-sidebar? "0 32px" "8px 4px")}}
          (when show-sidebar?
-           [:div.sticky.top-0.self-start
-            {:style {:max-height sidebar-max-h
+           [:div.sticky.top-0.self-start.site-chrome
+            {:data-ty-theme true
+             :style {:max-height sidebar-max-h
                      :overflow-y "auto"
                      :scrollbar-width "none"}}
             (sidebar-content)])
@@ -998,8 +1007,9 @@
              :height (- (layout/container-height) header-height content-padding)}
             (render))]
          (when has-toc?
-           [:div.sticky.top-0.self-start
-            {:style {:max-height sidebar-max-h
+           [:div.sticky.top-0.self-start.site-chrome
+            {:data-ty-theme true
+             :style {:max-height sidebar-max-h
                      :overflow-y "auto"
                      :scrollbar-width "none"}}
             (right-sidebar toc)])]]])))

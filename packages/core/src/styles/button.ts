@@ -165,7 +165,7 @@ export const buttonCustomFlavorCss = (base: string) =>
 export const buttonStyles = `
 :host {
   display: inline-block;
-  font-family: var(--ty-font-sans);
+  font-family: inherit;
 }
 
 :host([wide]) {
@@ -174,6 +174,10 @@ export const buttonStyles = `
 }
 
 button {
+  /* Native form controls do NOT inherit font from the shadow host — the UA
+     stylesheet sets one on them, which beats inheritance. Must be explicit
+     here or the button silently falls back to the system font. */
+  font-family: inherit;
   position: relative;
   display: flex;
   align-items: center;

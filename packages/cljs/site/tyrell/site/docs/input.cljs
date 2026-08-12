@@ -393,39 +393,6 @@ document.getElementById('usd').addEventListener('input', (e) => {
 });
 </script>" "javascript")])
 
-(defn- best-practices-content []
-  [:div.ty-elevated.rounded-lg.p-5
-   [:div.grid.gap-6
-    {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-    [:div
-     [:div.flex.items-center.gap-2.mb-3
-      [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-      [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-     [:div.space-y-2
-      (for [t ["Always provide labels for accessibility"
-               "Use semantic input types (email, password, tel, url)"
-               "Show validation feedback via the error attribute"
-               "Use event.detail.value for numeric shadow values"
-               "Set currency and locale for international apps"
-               "Use name attribute for form submission"]]
-        [:div.flex.items-start.gap-2
-         [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-         [:p.ty-text- {:style {:font-size "0.8125rem"}} t]])]]
-
-    [:div
-     [:div.flex.items-center.gap-2.mb-3
-      [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-      [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-     [:div.space-y-2
-      (for [t ["Use formatted display values for calculations"
-               "Expect ty-input to validate data for you"
-               "Use placeholder as a label replacement"
-               "Ignore event.detail.value for numeric types"
-               "Mix error attribute with non-danger flavors"]]
-        [:div.flex.items-start.gap-2
-         [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-         [:p.ty-text- {:style {:font-size "0.8125rem"}} t]])]]]])
 
 (defn- tips-content []
   [:div.ty-content.rounded-lg.p-5
@@ -469,7 +436,6 @@ document.getElementById('usd').addEventListener('input', (e) => {
       (validation-content)
       (currency-converter-content)])
 
-   (doc-section "Best Practices" (best-practices-content))
    (doc-section "Tips & Tricks" (tips-content))
 
    [:div.p-4.ty-border.border.rounded-lg

@@ -83,7 +83,7 @@
   }
 
   .app-logo:hover {
-    color: var(--ty-color-primary-mild);
+    color: var(--ty-color-primary-bold);
   }
 
   /* Sidebar Component */
@@ -213,7 +213,7 @@
   }
 
   .theme-toggle-icon.moon {
-    color: var(--ty-color-info);
+    color: var(--ty-color-primary);
   }
 
   /* Status Indicator Component */
@@ -236,9 +236,9 @@
     color: var(--ty-color-danger-strong);
   }
 
-  .status-indicator.info {
-    background-color: var(--ty-bg-info-soft);
-    color: var(--ty-color-info-strong);
+  .status-indicator.neutral {
+    background-color: var(--ty-bg-neutral-soft);
+    color: var(--ty-color-neutral-strong);
   }
 
   /* Code Block Component */
@@ -337,7 +337,7 @@
 
   /* Semantic text utilities */
   .text-hierarchy-strong { color: var(--ty-color-neutral-strong); }
-  .text-hierarchy-mild { color: var(--ty-color-neutral-mild); }
+  .text-hierarchy-bold { color: var(--ty-color-neutral-bold); }
   .text-hierarchy-base { color: var(--ty-color-neutral); }
   .text-hierarchy-soft { color: var(--ty-color-neutral-soft); }
   .text-hierarchy-faint { color: var(--ty-color-neutral-faint); }

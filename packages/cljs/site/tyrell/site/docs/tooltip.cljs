@@ -20,7 +20,7 @@
       [{:name "placement"
         :type "string"
         :default "\"top\""
-        :description "Preferred placement: top, bottom, left, right. Auto-flips if it would overflow the viewport"}
+        :description "Side plus optional cross-axis alignment: top, right, bottom, left — each also as -start / -end (e.g. top-start, right-end). Bare side = centered on the anchor; -start aligns leading edges, -end aligns trailing edges. Auto-flips if it would overflow, keeping the alignment."}
        {:name "flavor"
         :type "string"
         :default "\"dark\""
@@ -181,36 +181,4 @@
     </div>
   </ty-tooltip>
 </ty-button>")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use on icon-only buttons — the tooltip is the accessible label"
-                     "Keep text short: one phrase or one sentence maximum"
-                     "Match tooltip flavor to the host element's flavor for coherence"
-                     "Set delay to 0 on small/dense targets where intent is clear"
-                     "Use rich content only when keyboard shortcut or extra detail genuinely helps"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Put critical information only in a tooltip — it's inaccessible on touch"
-                     "Use a tooltip on a disabled element — show inline helper text instead"
-                     "Use rich content as a substitute for a proper popover or help panel"
-                     "Stack tooltips — one tooltip per trigger element"
-                     "Rely on tooltips to explain a confusing UI — fix the UI instead"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

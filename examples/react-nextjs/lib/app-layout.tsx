@@ -128,7 +128,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
           <Link
             href="/"
-            className="text-2xl font-semibold no-underline transition-colors duration-150 text-primary-ty-base hover:text-primary-ty-mild"
+            className="text-2xl font-semibold no-underline transition-colors duration-150 text-primary-ty-base hover:text-primary-ty-bold"
           >
             Ty + Tailwind Showcase
           </Link>

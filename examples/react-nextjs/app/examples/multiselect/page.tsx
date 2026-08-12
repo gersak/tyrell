@@ -124,7 +124,7 @@ export default function MultiselectExample() {
             <div>
               <h2 className="ty-text+ text-xl font-semibold flex items-center gap-2">
                 Internal search
-                <span className="ty-bg-info- ty-text-info++ px-2 py-0.5 rounded text-xs font-normal">default</span>
+                <span className="ty-bg-primary- ty-text-primary++ px-2 py-0.5 rounded text-xs font-normal">default</span>
               </h2>
               <p className="ty-text- text-sm mt-1">
                 Default mode — all options are provided as children, the component filters them itself.
@@ -196,7 +196,7 @@ export default function MultiselectExample() {
           <div className="ty-content rounded p-3 text-sm flex items-center gap-2 border ty-border-">
             <span className="ty-text-">React-side state:</span>
             <span className="font-mono ty-text">searchQuery = </span>
-            <code className="ty-bg-neutral- ty-text-info+ px-2 py-0.5 rounded">
+            <code className="ty-bg-neutral- ty-text-primary+ px-2 py-0.5 rounded">
               {searchQuery ? `"${searchQuery}"` : '""'}
             </code>
             <span className="ty-text-- ml-auto">
@@ -268,7 +268,7 @@ export default function MultiselectExample() {
                   key={`${e.ts}-${i}`}
                   className="ty-content rounded p-3 font-mono text-sm flex justify-between gap-4 border ty-border-"
                 >
-                  <span className="ty-text-info">
+                  <span className="ty-text-primary">
                     query: {e.query.length === 0 ? <em className="ty-text--">(empty)</em> : <strong>"{e.query}"</strong>}
                   </span>
                   <span className="ty-text-- text-xs">

@@ -10,7 +10,7 @@
             <span class="text-gradient-primary">⚡ Component</span>
             <span class="ty-text-primary-strong"> Gallery</span>
         </h1>
-        <p class="text-xl ty-text-neutral-mild max-w-3xl mx-auto">
+        <p class="text-xl ty-text-neutral-bold max-w-3xl mx-auto">
             Explore all Ty components in action. Each component showcases 
             different variants, sizes, and interactive states with flashy animations and effects.
         </p>
@@ -75,7 +75,7 @@
 
                 <!-- Right Column: Multiselect -->
                 <div class="space-y-6">
-                    <h3 class="text-xl font-semibold ty-text-secondary-strong">Dynamic Multiselect</h3>
+                    <h3 class="text-xl font-semibold ty-text-neutral-strong">Dynamic Multiselect</h3>
                     
                     <div class="form-group">
                         <label class="form-label">Build Your Dream Team</label>
@@ -84,7 +84,7 @@
                             <ty-tag value="bob" flavor="success" pill size="sm">👨‍💼 Bob (Manager)</ty-tag>
                             <ty-tag value="carol" flavor="info" pill size="sm">🎨 Carol (Designer)</ty-tag>
                             <ty-tag value="dave" flavor="warning" pill size="sm">🔧 Dave (DevOps)</ty-tag>
-                            <ty-tag value="eve" flavor="secondary" pill size="sm">📊 Eve (Data)</ty-tag>
+                            <ty-tag value="eve" flavor="neutral" pill size="sm">📊 Eve (Data)</ty-tag>
                             <ty-tag value="frank" flavor="neutral" pill size="sm">🧪 Frank (QA)</ty-tag>
                         </ty-multiselect>
                     </div>
@@ -129,7 +129,7 @@
                 <div class="space-y-4">
                     <div class="flex flex-wrap gap-3">
                         <ty-button flavor="primary">Primary</ty-button>
-                        <ty-button flavor="secondary">Secondary</ty-button>
+                        <ty-button flavor="neutral">Neutral</ty-button>
                         <ty-button flavor="success">Success</ty-button>
                         <ty-button flavor="danger">Danger</ty-button>
                         <ty-button flavor="warning">Warning</ty-button>
@@ -165,7 +165,7 @@
                             <ty-icon name="plus" class="mr-1"></ty-icon>
                             Add Item
                         </ty-button>
-                        <ty-button flavor="secondary">
+                        <ty-button flavor="neutral">
                             <ty-icon name="edit" class="mr-1"></ty-icon>
                             Edit
                         </ty-button>
@@ -204,7 +204,7 @@
                                 Loading...
                             </span>
                         </ty-button>
-                        <ty-button flavor="secondary" class="loading-demo" onclick="showLoading(this)">
+                        <ty-button flavor="neutral" class="loading-demo" onclick="showLoading(this)">
                             <span class="btn-text">Save Changes</span>
                             <span class="btn-loading hidden">
                                 <div class="spinner mr-1"></div>
@@ -470,7 +470,7 @@
 
     <!-- Multiselect -->
     <div class="mb-20">
-        <h2 class="text-3xl font-bold ty-text-secondary-strong mb-8 flex items-center section-header">
+        <h2 class="text-3xl font-bold ty-text-neutral-strong mb-8 flex items-center section-header">
             <ty-icon name="list" class="mr-3"></ty-icon>
             Dynamic Multiselect
         </h2>
@@ -488,13 +488,13 @@
                             <ty-tag value="react" flavor="info" pill size="sm">⚛️ React</ty-tag>
                             <ty-tag value="vue" flavor="success" pill size="sm">🟢 Vue.js</ty-tag>
                             <ty-tag value="angular" flavor="danger" pill size="sm">🅰️ Angular</ty-tag>
-                            <ty-tag value="node" flavor="secondary" pill size="sm">💚 Node.js</ty-tag>
+                            <ty-tag value="node" flavor="neutral" pill size="sm">💚 Node.js</ty-tag>
                             <ty-tag value="python" flavor="neutral" pill size="sm">🐍 Python</ty-tag>
                             <ty-tag value="rust" flavor="warning" pill size="sm">🦀 Rust</ty-tag>
                         </ty-multiselect>
                     </div>
-                    <div class="p-3 ty-bg-secondary-soft rounded-lg border-l-4 ty-border-secondary">
-                        <p class="text-sm ty-text-secondary-strong">Click tags to select/deselect multiple technologies</p>
+                    <div class="p-3 ty-bg-neutral-soft rounded-lg border-l-4 ty-border-neutral">
+                        <p class="text-sm ty-text-neutral-strong">Click tags to select/deselect multiple technologies</p>
                     </div>
                 </div>
             </div>
@@ -537,7 +537,7 @@
                             <ty-tag value="backend" flavor="success" pill size="sm" selected>Backend Development</ty-tag>
                             <ty-tag value="design" flavor="info" pill size="sm">UI/UX Design</ty-tag>
                             <ty-tag value="devops" flavor="warning" pill size="sm">DevOps</ty-tag>
-                            <ty-tag value="mobile" flavor="secondary" pill size="sm">Mobile Development</ty-tag>
+                            <ty-tag value="mobile" flavor="neutral" pill size="sm">Mobile Development</ty-tag>
                             <ty-tag value="testing" flavor="neutral" pill size="sm">Testing</ty-tag>
                         </ty-multiselect>
                     </div>
@@ -577,7 +577,7 @@
                         <label class="form-label">Required Multiselect</label>
                         <ty-multiselect required placeholder="Must select at least one..." style="min-width: 280px;">
                             <ty-tag value="option1" flavor="primary" pill size="sm">Option 1</ty-tag>
-                            <ty-tag value="option2" flavor="secondary" pill size="sm">Option 2</ty-tag>
+                            <ty-tag value="option2" flavor="neutral" pill size="sm">Option 2</ty-tag>
                             <ty-tag value="option3" flavor="success" pill size="sm">Option 3</ty-tag>
                         </ty-multiselect>
                     </div>
@@ -608,7 +608,6 @@
                 <h3 class="text-xl font-semibold ty-text-neutral-strong mb-6">Tag Variants</h3>
                 <div class="flex flex-wrap gap-3">
                     <ty-tag flavor="primary">Primary</ty-tag>
-                    <ty-tag flavor="secondary">Secondary</ty-tag>
                     <ty-tag flavor="success">Success</ty-tag>
                     <ty-tag flavor="danger">Danger</ty-tag>
                     <ty-tag flavor="warning">Warning</ty-tag>
@@ -643,7 +642,7 @@
                 <h3 class="text-xl font-semibold ty-text-neutral-strong mb-6">Usage Examples</h3>
                 <div class="space-y-4">
                     <div>
-                        <p class="text-sm ty-text-neutral-mild mb-2">Skills:</p>
+                        <p class="text-sm ty-text-neutral-bold mb-2">Skills:</p>
                         <div class="flex flex-wrap gap-2">
                             <ty-tag size="sm" flavor="info">JavaScript</ty-tag>
                             <ty-tag size="sm" flavor="info">TypeScript</ty-tag>
@@ -652,7 +651,7 @@
                         </div>
                     </div>
                     <div>
-                        <p class="text-sm ty-text-neutral-mild mb-2">Status:</p>
+                        <p class="text-sm ty-text-neutral-bold mb-2">Status:</p>
                         <div class="flex flex-wrap gap-2">
                             <ty-tag flavor="success">Active</ty-tag>
                             <ty-tag flavor="warning">Pending</ty-tag>
@@ -698,7 +697,7 @@
 
     <!-- Icons -->
     <div class="mb-20">
-        <h2 class="text-3xl font-bold ty-text-secondary-strong mb-8 flex items-center">
+        <h2 class="text-3xl font-bold ty-text-neutral-strong mb-8 flex items-center">
             <ty-icon name="star" class="mr-3"></ty-icon>
             Icons
         </h2>
@@ -710,49 +709,49 @@
                     <div class="w-12 h-12 ty-bg-primary-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="home" class="ty-text-primary-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">home</p>
+                    <p class="text-xs ty-text-neutral-bold">home</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-success-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="check" class="ty-text-success-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">check</p>
+                    <p class="text-xs ty-text-neutral-bold">check</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-danger-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="x" class="ty-text-danger-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">x</p>
+                    <p class="text-xs ty-text-neutral-bold">x</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-warning-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="star" class="ty-text-warning-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">star</p>
+                    <p class="text-xs ty-text-neutral-bold">star</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-info-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="info" class="ty-text-info-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">info</p>
+                    <p class="text-xs ty-text-neutral-bold">info</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-neutral-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="settings" class="ty-text-neutral-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">settings</p>
+                    <p class="text-xs ty-text-neutral-bold">settings</p>
                 </div>
                 <div class="group">
                     <div class="w-12 h-12 ty-bg-primary-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
                         <ty-icon name="user" class="ty-text-primary-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">user</p>
+                    <p class="text-xs ty-text-neutral-bold">user</p>
                 </div>
                 <div class="group">
-                    <div class="w-12 h-12 ty-bg-secondary-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                        <ty-icon name="heart" class="ty-text-secondary-strong"></ty-icon>
+                    <div class="w-12 h-12 ty-bg-neutral-soft rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                        <ty-icon name="heart" class="ty-text-neutral-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">heart</p>
+                    <p class="text-xs ty-text-neutral-bold">heart</p>
                 </div>
             </div>
         </div>
@@ -764,7 +763,7 @@
     <div class="p-6 text-center">
         <ty-icon name="info" class="w-12 h-12 mx-auto mb-4 ty-text-info"></ty-icon>
         <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">Small Modal</h3>
-        <p class="ty-text-neutral-mild mb-4">This is a small modal perfect for simple confirmations.</p>
+        <p class="ty-text-neutral-bold mb-4">This is a small modal perfect for simple confirmations.</p>
         <ty-button flavor="primary" onclick="hideModal('modal-sm')">Got it</ty-button>
     </div>
 </ty-modal>
@@ -772,9 +771,9 @@
 <ty-modal id="modal-md" size="md">
     <div class="p-8">
         <h3 class="text-xl font-semibold ty-text-neutral-strong mb-4">Medium Modal</h3>
-        <p class="ty-text-neutral-mild mb-6">This medium-sized modal provides more space for content while remaining focused and easy to read.</p>
+        <p class="ty-text-neutral-bold mb-6">This medium-sized modal provides more space for content while remaining focused and easy to read.</p>
         <div class="flex justify-end space-x-3">
-            <ty-button flavor="secondary" onclick="hideModal('modal-md')">Cancel</ty-button>
+            <ty-button flavor="neutral" onclick="hideModal('modal-md')">Cancel</ty-button>
             <ty-button flavor="primary" onclick="hideModal('modal-md')">Confirm</ty-button>
         </div>
     </div>
@@ -784,14 +783,14 @@
     <div class="p-8">
         <h3 class="text-2xl font-semibold ty-text-neutral-strong mb-6">Large Modal</h3>
         <div class="space-y-4 mb-8">
-            <p class="ty-text-neutral-mild">This large modal can accommodate more complex content, forms, or detailed information.</p>
+            <p class="ty-text-neutral-bold">This large modal can accommodate more complex content, forms, or detailed information.</p>
             <div class="ty-bg-neutral-soft rounded-lg p-4">
                 <h4 class="font-medium ty-text-neutral-strong mb-2">Example Content</h4>
-                <p class="ty-text-neutral-mild text-sm">Large modals are perfect for detailed forms, settings panels, or rich content that requires more space to be properly displayed.</p>
+                <p class="ty-text-neutral-bold text-sm">Large modals are perfect for detailed forms, settings panels, or rich content that requires more space to be properly displayed.</p>
             </div>
         </div>
         <div class="flex justify-end space-x-3">
-            <ty-button flavor="secondary" onclick="hideModal('modal-lg')">Cancel</ty-button>
+            <ty-button flavor="neutral" onclick="hideModal('modal-lg')">Cancel</ty-button>
             <ty-button flavor="primary" onclick="hideModal('modal-lg')">Save Changes</ty-button>
         </div>
     </div>
@@ -803,27 +802,27 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             <div>
                 <h4 class="text-lg font-medium ty-text-neutral-strong mb-4">Left Column</h4>
-                <p class="ty-text-neutral-mild mb-4">Extra large modals provide maximum space for complex interfaces, dashboards, or multi-section content.</p>
+                <p class="ty-text-neutral-bold mb-4">Extra large modals provide maximum space for complex interfaces, dashboards, or multi-section content.</p>
                 <div class="space-y-3">
                     <div class="ty-bg-primary-soft rounded-lg p-3">
                         <p class="font-medium">Feature 1</p>
-                        <p class="text-sm ty-text-neutral-mild">Description of feature</p>
+                        <p class="text-sm ty-text-neutral-bold">Description of feature</p>
                     </div>
                     <div class="ty-bg-success-soft rounded-lg p-3">
                         <p class="font-medium">Feature 2</p>
-                        <p class="text-sm ty-text-neutral-mild">Description of feature</p>
+                        <p class="text-sm ty-text-neutral-bold">Description of feature</p>
                     </div>
                 </div>
             </div>
             <div>
                 <h4 class="text-lg font-medium ty-text-neutral-strong mb-4">Right Column</h4>
                 <div class="ty-bg-neutral-soft rounded-lg p-6">
-                    <p class="ty-text-neutral-mild">This demonstrates how extra large modals can accommodate complex layouts with multiple sections and rich content.</p>
+                    <p class="ty-text-neutral-bold">This demonstrates how extra large modals can accommodate complex layouts with multiple sections and rich content.</p>
                 </div>
             </div>
         </div>
         <div class="flex justify-end space-x-3">
-            <ty-button flavor="secondary" onclick="hideModal('modal-xl')">Cancel</ty-button>
+            <ty-button flavor="neutral" onclick="hideModal('modal-xl')">Cancel</ty-button>
             <ty-button flavor="primary" onclick="hideModal('modal-xl')">Apply Changes</ty-button>
         </div>
     </div>

@@ -188,7 +188,7 @@ def calendar():
         {"title": "Client Call", "icon": "phone", "color": "success", "time": "3:30 PM"},
         {"title": "Project Deadline", "icon": "calendar-x", "color": "danger", "time": "11:59 PM"},
         {"title": "Workshop", "icon": "book-open", "color": "warning", "time": "9:00 AM"},
-        {"title": "Planning Session", "icon": "target", "color": "secondary", "time": "1:00 PM"},
+        {"title": "Planning Session", "icon": "target", "color": "neutral", "time": "1:00 PM"},
     ]
     
     # Ensure we have at least 3 events
@@ -305,7 +305,7 @@ def test_debug():
     <div class="ty-bg-success-soft p-3 rounded text-sm">
         <ty-icon name="check-circle" class="inline mr-1 ty-text-success"></ty-icon>
         <strong>Debug test successful!</strong> Check console for HTMX logs.
-        <br><small class="ty-text-success-mild">Timestamp: {}</small>
+        <br><small class="ty-text-success-bold">Timestamp: {}</small>
     </div>
     """.format(datetime.now().strftime("%H:%M:%S"))
 
@@ -391,7 +391,7 @@ def generate_month_events_data(year, month):
         {"title": "Client Call", "icon": "phone", "color": "success", "time": "3:30 PM"},
         {"title": "Project Deadline", "icon": "calendar-x", "color": "danger", "time": "11:59 PM"},
         {"title": "Workshop", "icon": "book-open", "color": "warning", "time": "9:00 AM"},
-        {"title": "Planning Session", "icon": "target", "color": "secondary", "time": "1:00 PM"},
+        {"title": "Planning Session", "icon": "target", "color": "neutral", "time": "1:00 PM"},
     ]
     
     events_by_day = {}
@@ -497,7 +497,7 @@ def test_icons():
             <div class="ty-elevated p-6 rounded-xl mb-8">
                 <h2 class="text-xl font-semibold mb-4">Icon Status</h2>
                 <div id="icon-status" class="space-y-2">
-                    <p class="ty-text-neutral-mild">Loading...</p>
+                    <p class="ty-text-neutral-bold">Loading...</p>
                 </div>
             </div>
             
@@ -513,7 +513,7 @@ def test_icons():
                     <ty-icon name="search" class="mr-1"></ty-icon>
                     Test All Icons
                 </ty-button>
-                <ty-button flavor="secondary" onclick="window.location.href='/'">
+                <ty-button flavor="neutral" onclick="window.location.href='/'">
                     <ty-icon name="home" class="mr-1"></ty-icon>
                     Back to Demo
                 </ty-button>
@@ -555,7 +555,7 @@ def test_icons():
                     <div class="w-12 h-12 ty-bg-primary-soft rounded-lg flex items-center justify-center mx-auto mb-2">
                         <ty-icon name="${iconName}" class="ty-text-primary-strong"></ty-icon>
                     </div>
-                    <p class="text-xs ty-text-neutral-mild">${iconName}</p>
+                    <p class="text-xs ty-text-neutral-bold">${iconName}</p>
                 </div>
             `).join('');
         }
@@ -629,7 +629,7 @@ def calendar_date_select():
                 <p class="text-sm">
                     {"🎉 Weekend day! Perfect for relaxation." if is_weekend else "💼 Weekday - great for productivity!"}
                 </p>
-                <p class="text-xs ty-text-neutral-mild mt-1">
+                <p class="text-xs ty-text-neutral-bold mt-1">
                     Server processed in {processing_time:.2f}s
                 </p>
             </div>
@@ -878,25 +878,25 @@ def modal_content(content_type):
             <div class="text-center mb-6">
                 <ty-icon name="cloud" class="w-16 h-16 mx-auto mb-4 ty-text-info"></ty-icon>
                 <h3 class="text-xl font-semibold ty-text-neutral-strong">Weather Report</h3>
-                <p class="ty-text-neutral-mild">{weather_data['location']}</p>
+                <p class="ty-text-neutral-bold">{weather_data['location']}</p>
             </div>
             
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="text-center ty-bg-primary-soft rounded-lg p-4">
                     <div class="text-3xl font-bold ty-text-primary-strong">{weather_data['temperature']}°C</div>
-                    <div class="text-sm ty-text-neutral-mild">Temperature</div>
+                    <div class="text-sm ty-text-neutral-bold">Temperature</div>
                 </div>
                 <div class="text-center ty-bg-info-soft rounded-lg p-4">
                     <div class="text-lg font-semibold ty-text-info-strong">{weather_data['condition']}</div>
-                    <div class="text-sm ty-text-neutral-mild">Conditions</div>
+                    <div class="text-sm ty-text-neutral-bold">Conditions</div>
                 </div>
                 <div class="text-center ty-bg-success-soft rounded-lg p-4">
                     <div class="text-lg font-bold ty-text-success-strong">{weather_data['humidity']}%</div>
-                    <div class="text-sm ty-text-neutral-mild">Humidity</div>
+                    <div class="text-sm ty-text-neutral-bold">Humidity</div>
                 </div>
                 <div class="text-center ty-bg-warning-soft rounded-lg p-4">
                     <div class="text-lg font-bold ty-text-warning-strong">{weather_data['wind']} km/h</div>
-                    <div class="text-sm ty-text-neutral-mild">Wind Speed</div>
+                    <div class="text-sm ty-text-neutral-bold">Wind Speed</div>
                 </div>
             </div>
             
@@ -934,7 +934,7 @@ def modal_content(content_type):
                 </div>
                 <div class="text-right">
                     <div class="text-sm font-semibold ty-text-{status_color}-strong capitalize">{service['status']}</div>
-                    <div class="text-xs ty-text-neutral-mild">{service['uptime']} uptime</div>
+                    <div class="text-xs ty-text-neutral-bold">{service['uptime']} uptime</div>
                 </div>
             </div>
             """
@@ -944,7 +944,7 @@ def modal_content(content_type):
             <div class="text-center mb-6">
                 <ty-icon name="activity" class="w-16 h-16 mx-auto mb-4 ty-text-warning"></ty-icon>
                 <h3 class="text-xl font-semibold ty-text-neutral-strong">System Status</h3>
-                <p class="ty-text-neutral-mild">Real-time service monitoring</p>
+                <p class="ty-text-neutral-bold">Real-time service monitoring</p>
             </div>
             
             <div class="mb-6">
@@ -956,7 +956,7 @@ def modal_content(content_type):
                     <ty-icon name="info" class="w-4 h-4 ty-text-info"></ty-icon>
                     <span class="text-sm font-medium">Last Updated</span>
                 </div>
-                <p class="text-sm ty-text-neutral-mild">{datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+                <p class="text-sm ty-text-neutral-bold">{datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
             </div>
             
             <div class="flex justify-end">
@@ -982,14 +982,14 @@ def modal_content(content_type):
         quote = random.choice(quotes)
         return f"""
         <div class="p-8 text-center">
-            <ty-icon name="message-circle" class="w-16 h-16 mx-auto mb-6 ty-text-secondary"></ty-icon>
+            <ty-icon name="message-circle" class="w-16 h-16 mx-auto mb-6 ty-text-neutral"></ty-icon>
             <blockquote class="text-xl ty-text-neutral-strong font-medium mb-4 leading-relaxed">
                 "{quote['text']}"
             </blockquote>
-            <cite class="text-lg ty-text-secondary-mild font-semibold">— {quote['author']}</cite>
+            <cite class="text-lg ty-text-neutral-bold font-semibold">— {quote['author']}</cite>
             
             <div class="flex justify-center space-x-3 mt-8">
-                <ty-button flavor="secondary" 
+                <ty-button flavor="neutral" 
                            hx-get="/api/modal/content/random-quote"
                            hx-target="#dynamic-modal-content"
                            hx-swap="innerHTML">
@@ -1012,11 +1012,11 @@ def modal_content(content_type):
         <div class="p-8 text-center">
             <ty-icon name="check-circle" class="w-16 h-16 mx-auto mb-4 ty-text-success animate-bounce"></ty-icon>
             <h3 class="text-xl font-semibold ty-text-success-strong mb-2">Content Loaded!</h3>
-            <p class="ty-text-neutral-mild mb-4">
+            <p class="ty-text-neutral-bold mb-4">
                 This content took 2 seconds to load, demonstrating loading states and indicators.
             </p>
             <div class="ty-bg-success-soft rounded-lg p-4 mb-6">
-                <p class="text-sm ty-text-neutral-mild">
+                <p class="text-sm ty-text-neutral-bold">
                     <strong>Pro tip:</strong> Use loading indicators to keep users informed during longer operations.
                 </p>
             </div>
@@ -1036,15 +1036,15 @@ def modal_content(content_type):
             <div class="p-8 text-center">
                 <ty-icon name="wifi-off" class="w-16 h-16 mx-auto mb-4 ty-text-danger"></ty-icon>
                 <h3 class="text-xl font-semibold ty-text-danger-strong mb-2">Network Error</h3>
-                <p class="ty-text-neutral-mild mb-4">
+                <p class="ty-text-neutral-bold mb-4">
                     Unable to connect to the server. Please check your internet connection.
                 </p>
                 <div class="ty-bg-danger-soft rounded-lg p-4 mb-6 text-left">
                     <div class="text-sm font-mono ty-text-danger-strong">Error Code: NET_001</div>
-                    <div class="text-xs ty-text-neutral-mild mt-1">Connection timeout after 30 seconds</div>
+                    <div class="text-xs ty-text-neutral-bold mt-1">Connection timeout after 30 seconds</div>
                 </div>
                 <div class="flex justify-center space-x-3">
-                    <ty-button flavor="secondary" onclick="document.getElementById('error-modal').removeAttribute('open')">
+                    <ty-button flavor="neutral" onclick="document.getElementById('error-modal').removeAttribute('open')">
                         Cancel
                     </ty-button>
                     <ty-button flavor="danger">
@@ -1059,12 +1059,12 @@ def modal_content(content_type):
         <div class="p-8 text-center">
             <ty-icon name="alert-triangle" class="w-16 h-16 mx-auto mb-4 ty-text-danger"></ty-icon>
             <h3 class="text-xl font-semibold ty-text-danger-strong mb-2">Something Went Wrong</h3>
-            <p class="ty-text-neutral-mild mb-4">
+            <p class="ty-text-neutral-bold mb-4">
                 An unexpected error occurred while processing your request.
             </p>
             <div class="ty-bg-danger-soft rounded-lg p-4 mb-6 text-left">
                 <div class="text-sm font-mono ty-text-danger-strong">Error Code: SRV_500</div>
-                <div class="text-xs ty-text-neutral-mild mt-1">Internal server error - please try again later</div>
+                <div class="text-xs ty-text-neutral-bold mt-1">Internal server error - please try again later</div>
             </div>
             <ty-button flavor="danger" onclick="document.getElementById('error-modal').removeAttribute('open')">
                 <ty-icon name="x" class="mr-1"></ty-icon>
@@ -1101,7 +1101,7 @@ def submit_contact_form():
                 <ty-icon name="x-circle" class="w-5 h-5 ty-text-danger flex-shrink-0 mt-0.5"></ty-icon>
                 <div>
                     <div class="font-medium ty-text-danger-strong mb-1">Please fix the following errors:</div>
-                    <div class="text-sm ty-text-danger-mild">{error_html}</div>
+                    <div class="text-sm ty-text-danger-bold">{error_html}</div>
                 </div>
             </div>
         </div>
@@ -1115,7 +1115,7 @@ def submit_contact_form():
     <div class="ty-bg-success-soft border border-success rounded-lg p-4 mb-4 text-center">
         <ty-icon name="check-circle" class="w-8 h-8 mx-auto mb-2 ty-text-success"></ty-icon>
         <div class="font-medium ty-text-success-strong mb-1">Message Sent Successfully!</div>
-        <div class="text-sm ty-text-success-mild">Thank you {name}, we'll get back to you soon.</div>
+        <div class="text-sm ty-text-success-bold">Thank you {name}, we'll get back to you soon.</div>
     </div>
     <script>
         setTimeout(function() {{
@@ -1133,9 +1133,9 @@ def start_wizard():
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold ty-text-neutral-strong">Setup Wizard</h3>
             <div class="flex items-center space-x-2">
-                <span class="text-sm ty-text-neutral-mild">Step</span>
+                <span class="text-sm ty-text-neutral-bold">Step</span>
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full ty-bg-primary text-white text-sm font-medium">1</span>
-                <span class="text-sm ty-text-neutral-mild">of 3</span>
+                <span class="text-sm ty-text-neutral-bold">of 3</span>
             </div>
         </div>
         
@@ -1163,7 +1163,7 @@ def start_wizard():
         </div>
         
         <div class="flex justify-between">
-            <ty-button flavor="secondary" onclick="document.getElementById('wizard-modal').removeAttribute('open')">
+            <ty-button flavor="neutral" onclick="document.getElementById('wizard-modal').removeAttribute('open')">
                 Cancel
             </ty-button>
             <ty-button flavor="primary" 
@@ -1191,9 +1191,9 @@ def wizard_step2():
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold ty-text-neutral-strong">Setup Wizard</h3>
             <div class="flex items-center space-x-2">
-                <span class="text-sm ty-text-neutral-mild">Step</span>
+                <span class="text-sm ty-text-neutral-bold">Step</span>
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full ty-bg-primary text-white text-sm font-medium">2</span>
-                <span class="text-sm ty-text-neutral-mild">of 3</span>
+                <span class="text-sm ty-text-neutral-bold">of 3</span>
             </div>
         </div>
         
@@ -1246,7 +1246,7 @@ def wizard_step2():
         <input type="hidden" name="wizard_company" value="{company}">
         
         <div class="flex justify-between">
-            <ty-button flavor="secondary" 
+            <ty-button flavor="neutral" 
                        hx-get="/api/modal/wizard/start"
                        hx-target="#wizard-modal-content">
                 <ty-icon name="arrow-left" class="mr-2"></ty-icon>
@@ -1280,9 +1280,9 @@ def wizard_step3():
         <div class="flex items-center justify-between mb-6">
             <h3 class="text-xl font-semibold ty-text-neutral-strong">Setup Wizard</h3>
             <div class="flex items-center space-x-2">
-                <span class="text-sm ty-text-neutral-mild">Step</span>
+                <span class="text-sm ty-text-neutral-bold">Step</span>
                 <span class="inline-flex items-center justify-center w-6 h-6 rounded-full ty-bg-primary text-white text-sm font-medium">3</span>
-                <span class="text-sm ty-text-neutral-mild">of 3</span>
+                <span class="text-sm ty-text-neutral-bold">of 3</span>
             </div>
         </div>
         
@@ -1322,7 +1322,7 @@ def wizard_step3():
         </div>
         
         <div class="flex justify-between">
-            <ty-button flavor="secondary" 
+            <ty-button flavor="neutral" 
                        hx-post="/api/modal/wizard/step2"
                        hx-target="#wizard-modal-content"
                        hx-include="[name^='wizard_']">
@@ -1354,7 +1354,7 @@ def wizard_complete():
     <div class="p-8 text-center">
         <ty-icon name="check-circle" class="w-20 h-20 mx-auto mb-6 ty-text-success animate-bounce"></ty-icon>
         <h3 class="text-2xl font-semibold ty-text-success-strong mb-2">Setup Complete!</h3>
-        <p class="ty-text-neutral-mild mb-6">
+        <p class="ty-text-neutral-bold mb-6">
             Welcome aboard, {name}! Your account has been configured successfully.
         </p>
         
@@ -1363,7 +1363,7 @@ def wizard_complete():
                 <ty-icon name="gift" class="w-5 h-5 ty-text-success-strong"></ty-icon>
                 <span class="font-medium ty-text-success-strong">What's Next?</span>
             </div>
-            <p class="text-sm ty-text-neutral-mild">
+            <p class="text-sm ty-text-neutral-bold">
                 Check your email for a confirmation link and start exploring all the features!
             </p>
         </div>

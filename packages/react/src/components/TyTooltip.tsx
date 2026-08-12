@@ -2,12 +2,17 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
+type Placement =
+  | 'top-start' | 'top' | 'top-end'
+  | 'right-start' | 'right' | 'right-end'
+  | 'bottom-start' | 'bottom' | 'bottom-end'
+  | 'left-start' | 'left' | 'left-end';
 
 export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
-  /** Tooltip positioning relative to the parent element */
-  placement?: 'top' | 'bottom' | 'left' | 'right';
+  /** Tooltip positioning relative to the parent element: a side plus an optional cross-axis alignment (e.g. "bottom-start") */
+  placement?: Placement;
   
   /** Distance in pixels from the anchor element (default: 8) */
   offset?: number;

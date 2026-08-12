@@ -214,7 +214,7 @@ This example showcases the perfect integration of:
 .text-gradient-primary {
   background: linear-gradient(135deg, 
     var(--ty-color-primary-strong), 
-    var(--ty-color-primary-mild)
+    var(--ty-color-primary-bold)
   );
 }
 

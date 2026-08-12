@@ -56,7 +56,7 @@ export const calendarMonthStyles = `
   gap: 0;
   padding: 0.75rem;
   border-radius: var(--ty-radius-md);
-  font-family: system-ui, sans-serif;
+  font-family: inherit;
   user-select: none;
   width: var(--calendar-width, fit-content);
   min-width: 280px;

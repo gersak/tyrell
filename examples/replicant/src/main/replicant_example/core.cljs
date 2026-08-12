@@ -72,7 +72,7 @@
                     :on {:click #(swap! state update :counter inc)}}
         [:ty-icon {:name "plus" :size "sm"}]
         "Increment"]
-       [:ty-button {:flavor "secondary"
+       [:ty-button {:flavor "neutral"
                     :on {:click #(swap! state update :counter dec)}}
         [:ty-icon {:name "minus" :size "sm"}]
         "Decrement"]]]

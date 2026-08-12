@@ -3,7 +3,7 @@ import { hostProps } from '../utils/host-props';
 import { needsPropertyBridge } from '../utils/react-version';
 import { useBooleanProperty } from '../utils/use-boolean-prop';
 
-type BuiltinFlavor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'neutral';
+type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
 
 export interface TyInputEventDetail {

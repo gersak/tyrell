@@ -184,36 +184,4 @@
            [:div.flex.items-start.gap-2
             [:ty-icon.ty-text-primary+.mt-px {:name "check" :size "14"}]
             [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Apply changes immediately — switches imply instant effect"
-                     "Wrap in <label> for a larger click target"
-                     "Use flavor to reinforce the implication: danger for destructive settings"
-                     "Describe the current state in the label (not the action to take)"
-                     "Group related switches visually in a settings panel"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use for form agreement (\"I accept terms\") — that's a checkbox"
-                     "Use for mutually exclusive options — that's a radio group"
-                     "Change the label text based on state — it creates confusion"
-                     "Use without a label — switches without labels are inaccessible"
-                     "Batch switch changes with a submit button — defeats the pattern"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

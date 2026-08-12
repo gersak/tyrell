@@ -186,36 +186,4 @@ sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchore
        (code-block "<ty-scroll-container overflow-x hide-scrollbar>
   <pre><code>...long code line...</code></pre>
 </ty-scroll-container>")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Set max-height to trigger scrolling — without it the container grows freely"
-                     "Use custom-scrollbar for design-system-consistent scroll thumb styling"
-                     "Use hide-scrollbar for touch-first surfaces where scroll bars clutter"
-                     "Combine overflow-x with a width: max-content inner wrapper for horizontal lists"
-                     "Keep shadow=\"true\" (default) — it gives strong overflow affordance"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Nest scroll containers — inner containers suppress the outer shadow"
-                     "Use hide-scrollbar on desktop without an alternative scroll indicator"
-                     "Apply max-height and overflow: hidden on the inner content — let the container handle it"
-                     "Forget width: max-content on inner content when using overflow-x"
-                     "Use for infinite scroll without virtualization — render only what's visible"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

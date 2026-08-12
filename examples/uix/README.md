@@ -104,7 +104,7 @@ public/
 - Feature cards showcasing key technologies
 
 ### **2. Buttons & Icons**
-- Button variant demonstrations (primary, secondary, outline, ghost)
+- Button variant demonstrations (primary, neutral, outline, ghost)
 - Icon gallery with 25+ registered Lucide icons
 - Interactive hover states and transitions
 - Proper spacing using `gap` (no margins on icons)

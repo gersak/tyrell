@@ -112,36 +112,4 @@ grid.dayContentFn = (ctx) => {
 
   return el;
 };" "javascript")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Use ty-calendar when you need navigation built in — ty-calendar-month is the lower primitive"
-                     "Set dayContentFn as a JS property, not an HTML attribute"
-                     "Always reflect the selected value back onto the element after a day-click"
-                     "Use the UTC timestamp (value) for date math — avoid dayInMonth alone"
-                     "Use locale to render localized day-of-week headers"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use ty-calendar-month when ty-calendar would do — it includes navigation"
-                     "Try to set dayContentFn as an HTML attribute — it's a function property"
-                     "Assume the grid has built-in month navigation — wire your own controls"
-                     "Forget that the grid always renders 42 cells (6 weeks) regardless of month length"
-                     "Mix localValue and value in date comparisons — pick one timezone convention"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

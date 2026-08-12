@@ -224,36 +224,4 @@ group.addEventListener('change', (e) => {
   console.log(e.detail.value);     // selected radio's value
   console.log(e.detail.formValue); // same — what gets submitted
 });" "javascript")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Provide a clear group label — it's the fieldset legend for screen readers"
-                     "Pre-select a sensible default so the form is valid out of the box"
-                     "Use horizontal layout for 2-4 short options that fit in one row"
-                     "Use flavor to signal meaning — danger for destructive choices"
-                     "Disable individual options (not the whole group) when some are unavailable"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use for more than 5-6 options — a dropdown is better at that scale"
-                     "Skip the name attribute — the group won't submit to FormData"
-                     "Use for independent choices — that's what checkboxes are for"
-                     "Mix flavors per-radio inside a group — it contradicts the grouping"
-                     "Use horizontal layout for 5+ options or long option labels"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

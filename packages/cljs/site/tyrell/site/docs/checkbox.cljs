@@ -221,36 +221,4 @@ checkbox.addEventListener('change', (e) => {
   console.log(e.detail.checked);   // true | false
   console.log(e.detail.formValue); // 'on' | null
 });" "javascript")]])
-
-   (doc-section "Best Practices"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(260px, 1fr))"}}
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-success {:name "check-circle" :size "16"}]
-         [:span.ty-text-success+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Do"]]
-        [:div.space-y-2
-         (for [text ["Wrap in <label> — the browser handles the click delegation"
-                     "Use required and render error message + asterisk yourself"
-                     "Use for independent binary choices that don't affect each other"
-                     "Use flavor to reinforce meaning — danger for destructive, success for opt-ins"
-                     "Use indeterminate for parent checkboxes in a tree"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-danger {:name "x-circle" :size "16"}]
-         [:span.ty-text-danger+ {:style {:font-size "0.75rem" :font-weight "600" :letter-spacing "0.05em" :text-transform "uppercase"}} "Don't"]]
-        [:div.space-y-2
-         (for [text ["Use checkbox for mutually exclusive options — use ty-radio-group instead"
-                     "Put all your label text inside the checkbox itself"
-                     "Rely on color alone for error state — show an error message too"
-                     "Use for immediate-effect toggles — ty-switch is better for settings"
-                     "Skip the label — checkboxes without labels are inaccessible"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-danger.mt-px {:name "x" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])))
+))

@@ -144,7 +144,7 @@ export default function FixesTestPage() {
 
         {/* Imperative ref test */}
         <div className="flex items-center gap-4 mt-4 mb-4">
-          <TyButton flavor="secondary" onClick={() => modalRef.current?.show()}>
+          <TyButton flavor="neutral" onClick={() => modalRef.current?.show()}>
             Open modal (imperative ref)
           </TyButton>
         </div>
