@@ -298,7 +298,10 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   }
 
   protected onFormReset(): void {
+    // Base class restored `value` to its attribute-declared default —
+    // re-derive the parsed shadow value (and form value) from it.
     this._shadowValue = null
+    this.initializeShadowValue()
 
     this._isFocused = false
 

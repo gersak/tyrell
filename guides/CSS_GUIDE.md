@@ -172,12 +172,12 @@ if (theme === 'dark') document.documentElement.classList.add('dark');
 
 `tyrell.css` on its own has **no color tokens** — spacing, radius, typography, shadows, z-index and component structure only. Pair it with exactly one color layer:
 
-- **`tyrell-theme.css`** — OKLCH brand layer, dynamic, retintable, recommended (Option 1 below).
+- **`tyrell-theme.css`** — OKLCH theme engine, dynamic, retintable, recommended (Option 1 below).
 - **`tyrell-colors-static.css`** — the plain hardcoded hex fallback (light + dark), for consumers who don't want the theme engine at all.
 
 Loading both is harmless (`tyrell-theme.css` always wins the cascade) but redundant — pick one.
 
-### Option 1 — OKLCH brand layer (recommended)
+### Option 1 — OKLCH theme engine (recommended)
 
 Load `tyrell-theme.css` after `tyrell.css`, then rebrand with one variable:
 
@@ -188,11 +188,11 @@ Load `tyrell-theme.css` after `tyrell.css`, then rebrand with one variable:
 
 ```css
 :root {
-  --ty-brand-hue: 200;        /* teal. Try 260 indigo, 30 orange, 145 emerald. */
+  --ty-primary-hue: 200;        /* teal. Try 260 indigo, 30 orange, 145 emerald. */
 }
 ```
 
-That's it. Primary, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Greys stay pure by design (see the neutral row below) — set `--ty-neutral-hue`/`--ty-neutral-chroma` to warm them toward the brand.
+That's it. Primary, surfaces, inputs, solid buttons, focus rings — everything retints coherently in both light and dark mode. Greys stay pure by design (see the neutral row below) — set `--ty-neutral-hue`/`--ty-neutral-chroma` to warm them toward primary.
 
 #### How it builds colors
 
@@ -200,9 +200,9 @@ Every color in the library is one formula on five axes:
 
 ```
 oklch(
-  L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
-  C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
-  H = flavor-hue                                  ← Tier 2
+  L = L-curve[shade] × flavor-l-factor            ← Tier 2 × Tier 4
+  C = flavor-chroma  × saturation-curve[shade]    ← Tier 1 × Tier 3
+  H = flavor-hue                                  ← Tier 1
 )
 ```
 
@@ -229,52 +229,47 @@ The customisation surface has **five tiers**, each independent. Set just the see
 
 ---
 
-#### Tier 1 — seeds (1 variable)
+#### Tier 1 — flavor seeds
+
+Every flavor — including primary — is one hue + one chroma. No flavor derives from another; each is a standalone dial:
 
 ```css
 :root {
-  --ty-brand-hue: 200;          /* the color (0–360°) */
-  --ty-brand-chroma: 0.15;      /* saturation (0–0.30) — every flavor scales proportionally */
+  --ty-primary-hue: 200;          /* the color (0–360°) */
+  --ty-primary-chroma: 0.15;      /* saturation (0–0.30) */
 }
 ```
 
-Setting `--ty-brand-chroma: 0` collapses every flavor to grayscale. `0.30` punches up the whole palette. Success / danger / warning still pop because their chromas default to `calc(var(--ty-brand-chroma) * <ratio>)` — danger is `× 1.31`, success `× 1.08`, etc.
-
----
-
-#### Tier 2 — per-flavor anchor tuning
-
-Each semantic flavor has a hue and a chroma you can pin independently:
+Rebrand by overriding `--ty-primary-hue`/`-chroma` alone; touch the others only when a specific flavor needs its own tuning:
 
 ```css
 :root {
-  --ty-brand-hue: 200;
+  --ty-primary-hue: 200;
 
-
-  /* Semantic anchors. Override hue and/or chroma. */
-  --ty-success-hue: 165;                /* brand-coherent green */
+  /* Every flavor is independent. Override hue and/or chroma. */
+  --ty-success-hue: 165;
   --ty-danger-chroma: 0.20;             /* louder errors */
 
-  /* Neutral is ACHROMATIC by default — greys do NOT follow the brand.
-     Opt in to brand-warmed greys: */
-  --ty-neutral-hue: var(--ty-brand-hue);
-  --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04);
+  /* Neutral is ACHROMATIC by default — greys do NOT follow primary.
+     Opt in to primary-warmed greys: */
+  --ty-neutral-hue: var(--ty-primary-hue);
+  --ty-neutral-chroma: 0.003;
 }
 ```
 
-| Flavor   | Hue var                 | Chroma var                | Default        |
-|----------|-------------------------|---------------------------|----------------|
-| primary  | `--ty-brand-hue`        | `--ty-brand-chroma`       | `230°` / `0.13` |
-| success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / brand × 1.08 |
-| danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `25°` / brand × 1.31 |
-| warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `75°` / brand × 2 |
-| neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | `0` / `0` — pure grey, brand-independent |
+| Flavor   | Hue var                 | Chroma var                | Default (light) |
+|----------|-------------------------|---------------------------|------------------|
+| primary  | `--ty-primary-hue`      | `--ty-primary-chroma`     | `252°` / `0.08` |
+| success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / `0.086` |
+| danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `31°` / `0.134` |
+| warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `76°` / `0.178` |
+| neutral  | `--ty-neutral-hue`      | `--ty-neutral-chroma`     | `0` / `0` — pure grey, primary-independent |
 
 **Or skip the numbers entirely — seed any flavor with a color.** Every flavor also accepts `--ty-{flavor}-seed: <any color>`; its hue + chroma are read via relative color syntax and the number dials are bypassed. The seed's *lightness is discarded by design* — shade placement per mode is the L-curve's job, which is what keeps dark mode, tones and contrast correct for any seed:
 
 ```css
 :root {
-  --ty-primary-seed: #76467c;   /* brand from one hex — done */
+  --ty-primary-seed: #76467c;   /* your color from one hex — done */
   --ty-danger-seed: crimson;
 }
 ```
@@ -282,7 +277,7 @@ Each semantic flavor has a hue and a chroma you can pin independently:
 
 ---
 
-#### Tier 3 — L-curve (emphasis ladder)
+#### Tier 2 — L-curve (emphasis ladder)
 
 The 5-shade text ramp (`strong / bold / base / soft / faint`) is computed from shared lightness stops. Reshape the ladder by overriding any:
 
@@ -313,7 +308,7 @@ Use cases: compress the ladder for an "all-soft" muted palette; expand it for hi
 
 ---
 
-#### Tier 4 — saturation curve (per-shade chroma multipliers)
+#### Tier 3 — saturation curve (per-shade chroma multipliers)
 
 Each shade's chroma = `flavor-chroma × multiplier`. Override to make any shade more or less saturated than the curve's default:
 
@@ -331,13 +326,13 @@ Same idea for bg multipliers: `--ty-c-bg-base-mult`, `--ty-c-bg-bold-mult`, `--t
 
 ---
 
-#### Tier 5 — per-flavor L-factor
+#### Tier 4 — per-flavor L-factor
 
-A single multiplier per flavor that scales every L-curve value *only for that flavor*. Default `1` = no change. Useful when one flavor's brand-default sits too close to brand-hue on the wheel and the buttons blend.
+A single multiplier per flavor that scales every L-curve value *only for that flavor*. Default `1` = no change. Useful when one flavor's hue sits too close to primary's on the wheel and the buttons blend.
 
 ```css
 :root {
-  --ty-brand-hue: 47;              /* gold brand */
+  --ty-primary-hue: 47;            /* gold primary */
   --ty-warning-l-factor: 0.85;     /* nudge warning darker so it stands apart */
 }
 ```
@@ -455,8 +450,8 @@ A theme is nothing more than a class that overrides Section 1 dials — `html.da
 
 ```css
 html.love {
-  --ty-brand-hue: 340;
-  --ty-brand-chroma: 0.18;
+  --ty-primary-hue: 340;
+  --ty-primary-chroma: 0.18;
   --ty-l-base: 0.5;
   /* any Section 1 dial */
 }
@@ -468,7 +463,7 @@ html.love {
 
 That's a complete named theme — every derived token recomputes because the formulas read these dials, not literal colors.
 
-**Scope one to a subtree** with `[data-ty-theme]`, which the brand layer's formulas already match alongside `html:root`:
+**Scope one to a subtree** with `[data-ty-theme]`, which the theme engine's formulas already match alongside `html:root`:
 
 ```html
 <section data-ty-theme class="love">
@@ -485,7 +480,7 @@ Combine with a flavor pack (below) for a theme that also carries its own custom 
 
 #### Animated theme transitions
 
-Every dial in the brand layer is a typed, `@property`-registered number — and every color is a pure function of the dials. So theme and mode switches don't snap: the dials interpolate, and the whole page crossfades through OKLCH space. This applies to `html.dark`, named theme packs, `[data-ty-theme]` subtree switches, and even live seed changes.
+Every dial in the theme engine is a typed, `@property`-registered number — and every color is a pure function of the dials. So theme and mode switches don't snap: the dials interpolate, and the whole page crossfades through OKLCH space. This applies to `html.dark`, named theme packs, `[data-ty-theme]` subtree switches, and even live seed changes.
 
 ```css
 :root { --ty-theme-transition: 0s; }    /* opt out */
@@ -513,23 +508,23 @@ Any tier can be overridden separately for dark mode by repeating the declaration
 
 ```css
 :root {
-  --ty-brand-hue: 200;             /* light mode teal */
+  --ty-primary-hue: 200;           /* light mode teal */
   --ty-warning-l-factor: 0.85;     /* darker warning in light mode */
 }
 html.dark, html[data-theme="dark"] {
-  --ty-brand-hue: 210;             /* slightly cooler teal in dark mode */
+  --ty-primary-hue: 210;           /* slightly cooler teal in dark mode */
   --ty-warning-l-factor: 1.15;     /* brighter warning in dark mode */
   --ty-c-faint-mult: 0.60;         /* dark mode needs more chroma at faint */
 }
 ```
 
-The brand layer's `html.dark` block already redefines the L-curve with inverted defaults (`0.86 / 0.74 / 0.62 / 0.46 / 0.30`) and bumps `--ty-c-faint-mult` so dim shades don't collapse to grey. Override either to fine-tune.
+The theme engine's `html.dark` block already redefines the L-curve with inverted defaults (`0.86 / 0.74 / 0.62 / 0.46 / 0.30`) and bumps `--ty-c-faint-mult` so dim shades don't collapse to grey. Override either to fine-tune.
 
 ---
 
 ### Option 2 — direct token override (legacy / fine-grained)
 
-If you don't load the brand layer, load `tyrell-colors-static.css` alongside `tyrell.css` for the base tokens, then override individual shades on top — or, if you're already on the brand layer and just want to override individual derived tokens, write hex values directly; the brand layer doesn't block this, the cascade resolves consumer overrides past the formula's output.
+If you don't load the theme engine, load `tyrell-colors-static.css` alongside `tyrell.css` for the base tokens, then override individual shades on top — or, if you're already on the theme engine and just want to override individual derived tokens, write hex values directly; the theme engine doesn't block this, the cascade resolves consumer overrides past the formula's output.
 
 ```html
 <link rel="stylesheet" href=".../tyrell.css">
@@ -557,11 +552,11 @@ html.dark {
 **Pattern:** `--ty-color-{flavor}-{strong | bold | soft | faint}`, `--ty-bg-{flavor}-{bold | soft}`, `--ty-border-{flavor}`. Flavors are `primary`, `success`, `danger`, `warning`, `neutral`.
 
 Use this when:
-- You have a fixed brand palette and don't need the OKLCH math
+- You have a fixed color palette and don't need the OKLCH math
 - You want to override one specific shade without abandoning the formula (set the seed AND the one token)
 - You're integrating with an existing design-token system
 
-The brand layer (Option 1) is strictly more powerful — anything you can do with Option 2 you can also do on top of Option 1. Most apps shouldn't need Option 2 at all.
+The theme engine (Option 1) is strictly more powerful — anything you can do with Option 2 you can also do on top of Option 1. Most apps shouldn't need Option 2 at all.
 
 ---
 
@@ -626,7 +621,7 @@ Notes:
 
 ### The quick path: one color in, a full ramp out
 
-Hand-picking 14 values gives you full control over every shade, but it's not the only option. Every one of those tokens can instead be *derived* from a single base color with [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) — the same "one seed → full ramp" idea the OKLCH brand layer uses for the built-in flavors, just with a simpler formula:
+Hand-picking 14 values gives you full control over every shade, but it's not the only option. Every one of those tokens can instead be *derived* from a single base color with [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) — the same "one seed → full ramp" idea the OKLCH theme engine uses for the built-in flavors, just with a simpler formula:
 
 ```css
 :root {
@@ -654,7 +649,7 @@ Hand-picking 14 values gives you full control over every shade, but it's not the
 
 Change `--brand-base` and every shade updates with it — including live, from a `<input type="color">`, since it's an ordinary CSS variable. The docs site's "CSS System" page demonstrates this working live: the "Try the Flavor Axis" section's `custom` chip is driven by exactly this formula.
 
-Trade-off: this mixes toward flat `black`/`white`, so it won't invert correctly for dark mode the way the hand-picked values (or the real OKLCH brand layer) do — pick per-theme base colors, or a `light-dark()`/`html.dark` override for `--brand-base`, if you need that. For a flavor that's fully theme-aware out of the box, use the brand layer's own hue/chroma seeds instead (see the docs site's "Theming" page) rather than a hand-rolled custom flavor.
+Trade-off: this mixes toward flat `black`/`white`, so it won't invert correctly for dark mode the way the hand-picked values (or the real OKLCH theme engine) do — pick per-theme base colors, or a `light-dark()`/`html.dark` override for `--brand-base`, if you need that. For a flavor that's fully theme-aware out of the box, use the theme engine's own hue/chroma seeds instead (see the docs site's "Theming" page) rather than a hand-rolled custom flavor.
 
 Each flavored component funnels its colors through a few local vars, which double as the per-instance override API (set them on the host from any page-level rule):
 

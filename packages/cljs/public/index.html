@@ -29,19 +29,19 @@
     <!-- Ty Complete CSS System (Variables + Utilities) -->
     <link rel="stylesheet" href="/css/tyrell.css" />
     <link rel="preloadmodule" href="/css/tyrell.css" />
-    <!-- Opt-in OKLCH brand layer. Demoed at /docs/theming. -->
+    <!-- Opt-in OKLCH theme layer. Demoed at /docs/theming. -->
     <link rel="stylesheet" href="/css/tyrell-theme.css" />
     <!-- <link rel="stylesheet" href="/css/tyrell-light.css" /> -->
 
-    <!-- Site brand seeds: mirror tyrell-theme.css's OWN :root defaults (not a
+    <!-- Site flavor seeds: mirror tyrell-theme.css's OWN :root defaults (not a
          separate site pick) so the content area starts from the library
          default and the playground is purely "tweak away from here." Also
          mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
          playground sliders + Reset button agree with first-paint values. -->
     <style>
       :root {
-        --ty-brand-hue: 252;
-        --ty-brand-chroma: 0.08;
+        --ty-primary-hue: 252;
+        --ty-primary-chroma: 0.08;
         --ty-neutral-l-factor: 1;
 
         /* Lift SOLID fills only — at the base L, a solid fill at this hue/chroma

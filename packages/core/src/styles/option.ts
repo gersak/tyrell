@@ -24,9 +24,24 @@ export const optionStyles = `
   border-radius: var(--ty-radius-md);
 }
 
+/* Cloned copy (projected into the select's trigger field): host defaults to
+   inline like any unstyled custom element, which ignores width/overflow —
+   force a block box so the parent's flex-basis:0 truncation (select.ts
+   .select-stub.has-clone slot[name="selected"]) actually clips it, and
+   collapse the content to a single ellipsized line instead of wrapping. */
+:host([cloned]) {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+}
 :host([cloned]) .option-content {
+  display: block;
   padding: 0px;
   background: transparent;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .option-content:hover {

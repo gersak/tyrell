@@ -70,10 +70,16 @@ const solidFlavor = (f: string, fb?: string) => {
   // from the canvas — see --ty-button-border-l-neutral in tyrell.css).
   // Colored flavors must RESET to the plain dial: the bare button.solid
   // rule (which matches every solid button) sets the neutral chain.
+  // Muted rest fills EVERY flavor with the neutral swatch (see button.muted
+  // below) — the border must follow, or a muted colored button reads as
+  // neutral-filled but keeps its (invisible, in dark mode) colored-flavor
+  // border dial while neutral alone gets a visible edge. --_muted-border-l
+  // is unset on hover/active so the border reverts to the flavor's own dial
+  // the moment the real color is revealed.
   const borderL =
     f === 'neutral'
       ? ' --_border-l: var(--ty-button-border-l-neutral, var(--ty-button-border-l, -0.15));'
-      : ' --_border-l: var(--ty-button-border-l, -0.15);'
+      : ' --_border-l: var(--_muted-border-l, var(--ty-button-border-l, -0.15));'
   // Neutral+ is full-contrast ink at an L extreme — its hover/active must
   // move toward mid (fill-relative), not in the mode's direction.
   const plusNudge = f === 'neutral' ? nudgedMid : nudged
@@ -371,6 +377,7 @@ button.muted {
   --_muted-solid-fg: var(--ty-solid-neutral-fg);
   --_muted-outlined-line: var(--ty-color-neutral);
   --_muted-ghost-fg: var(--ty-color-neutral);
+  --_muted-border-l: var(--ty-button-border-l-neutral, var(--ty-button-border-l, -0.15));
 }
 button.muted.tone-plus {
   --_muted-solid-bg: var(--ty-solid-neutral-strong);
@@ -393,6 +400,7 @@ button.muted.tone-minus {
     --_muted-solid-fg: unset;
     --_muted-outlined-line: unset;
     --_muted-ghost-fg: unset;
+    --_muted-border-l: unset;
   }
 }
 button.muted:active:not(:disabled),
@@ -401,6 +409,7 @@ button.muted:focus-visible:not(:disabled) {
   --_muted-solid-fg: unset;
   --_muted-outlined-line: unset;
   --_muted-ghost-fg: unset;
+  --_muted-border-l: unset;
 }
 
 button.pill {

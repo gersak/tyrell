@@ -60,15 +60,15 @@ Pin to a specific version (recommended for production):
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
 
-### The OKLCH brand layer
+### The OKLCH theme engine
 
 `tyrell.css` alone has no color tokens — spacing, typography, shadows, component structure only. `tyrell-theme.css`, loaded after it, supplies every color via a computed OKLCH engine: correct-contrast button text on any color, seed-based rebranding, named/scoped themes, animated theme transitions. Rebrand the whole library coherently in light AND dark mode with a single CSS variable:
 
 ```html
 <style>
   :root {
-    --ty-brand-hue: 200;        /* teal */
-    --ty-brand-chroma: 0.13;
+    --ty-primary-hue: 200;      /* teal */
+    --ty-primary-chroma: 0.13;
   }
 </style>
 ```

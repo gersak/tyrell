@@ -185,10 +185,10 @@ describe('anchored popup integration', () => {
     const stubRect = stub.getBoundingClientRect();
     const x = parseFloat(el.style.getPropertyValue('--dropdown-x'));
     const y = parseFloat(el.style.getPropertyValue('--dropdown-y'));
-    // wrap padding is 20, gap 4
+    // wrap padding is 20, gap 8 (unified trigger→popup offset, 2026-08-19)
     expect(x).to.be.closeTo(Math.max(8, stubRect.left) - 20, 1);
     if (below) {
-      expect(y).to.be.closeTo(stubRect.bottom + 4 - 20, 1);
+      expect(y).to.be.closeTo(stubRect.bottom + 8 - 20, 1);
     }
   });
 

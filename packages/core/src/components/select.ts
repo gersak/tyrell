@@ -837,6 +837,7 @@ export class TySelect extends TyComponent<SelectState> {
       popupHeight: estimatedHeight,
       align: anchored.align,
       side: anchored.side,
+      gap: 8, // unified trigger→popup offset (select/date-picker/popup)
     });
     const positionBelow = pos.below;
 
@@ -924,10 +925,14 @@ export class TySelect extends TyComponent<SelectState> {
     lockScroll(lockId);
 
     dialog.showModal();
-    dialog.classList.add("open");
 
-    // Position dropdown AFTER showing modal
+    // Position BEFORE adding .open: calculatePosition reads layout
+    // (getBoundingClientRect), which commits the dialog's pre-open styles —
+    // without that flush the enter transition never runs, the dropdown just
+    // pops in. (This ordering is why the date-picker animated and select
+    // didn't.)
     this.calculatePosition();
+    dialog.classList.add("open");
 
     this._state.open = true;
 
@@ -1039,8 +1044,11 @@ export class TySelect extends TyComponent<SelectState> {
     this._scrollLockId = lockId;
     lockScroll(lockId);
 
-    // Show dialog using native API (handles z-index automatically)
+    // Show dialog using native API (handles z-index automatically).
+    // getBoundingClientRect flush between showModal and .open lets the enter
+    // transition run (see openDropdown).
     dialog.showModal();
+    dialog.getBoundingClientRect();
     dialog.classList.add("open");
 
     this._state.open = true;
@@ -1538,10 +1546,11 @@ export class TySelect extends TyComponent<SelectState> {
    */
   private fireOpenEvent(): void {
     this.dispatchEvent(
+      // ponytail: popup lifecycle events do NOT bubble — same as native
+      // <dialog> open/close. A bubbling `close` from a select nested in a
+      // ty-modal lands on the modal's own `close` listener and closes it.
       new CustomEvent("open", {
         detail: { mode: this._state.mode, element: this },
-        bubbles: true,
-        composed: true,
       }),
     );
     if (this._externalSearch) {
@@ -1551,10 +1560,9 @@ export class TySelect extends TyComponent<SelectState> {
 
   private fireCloseEvent(): void {
     this.dispatchEvent(
+      // ponytail: non-bubbling, see fireOpenEvent()
       new CustomEvent("close", {
         detail: { mode: this._state.mode, element: this },
-        bubbles: true,
-        composed: true,
       }),
     );
   }

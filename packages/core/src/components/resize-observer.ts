@@ -39,6 +39,18 @@ export class TyResizeObserver extends HTMLElement {
     this.setupObserver()
   }
 
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+    // Renaming the id must migrate the registry entry — otherwise the old
+    // key stays registered forever while updates land under the new key.
+    if (name === 'id' && oldValue && oldValue !== newValue) {
+      removeSize(oldValue)
+      if (newValue && this.isConnected) {
+        const { width, height } = this.getBoundingClientRect()
+        updateSize(newValue, width, height)
+      }
+    }
+  }
+
   disconnectedCallback(): void {
     this.cleanup()
   }
@@ -84,4 +96,6 @@ export class TyResizeObserver extends HTMLElement {
   }
 }
 
-customElements.define('ty-resize-observer', TyResizeObserver)
+if (!customElements.get('ty-resize-observer')) {
+  customElements.define('ty-resize-observer', TyResizeObserver)
+}

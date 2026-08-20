@@ -116,7 +116,36 @@ function removeDescribedBy(anchor: HTMLElement, id: string): void {
  * Get or create popover element using Popover API
  * The popover is created in document.body for top-layer placement
  */
+/**
+ * Enter motion for all tooltip popovers — one document-level sheet (the
+ * popover lives in document.body, outside any shadow root, and
+ * @starting-style can't be expressed inline). Faster and calmer than the
+ * popup recipe: 120ms fade + 4px slide from the anchor side, no overshoot —
+ * tooltips fire on every hover, bounce would grate. Enter-only, matching
+ * modal/select/date-picker.
+ */
+function ensureTooltipMotionStyles(): void {
+  if (document.getElementById('ty-tooltip-motion')) return;
+  const style = document.createElement('style');
+  style.id = 'ty-tooltip-motion';
+  style.textContent = `
+.ty-tooltip-popover:popover-open {
+  transition:
+    opacity var(--ty-tooltip-duration, 120ms) ease-out,
+    translate var(--ty-tooltip-duration, 120ms) ease-out;
+}
+@starting-style {
+  .ty-tooltip-popover:popover-open { opacity: 0; translate: 0 4px; }
+  .ty-tooltip-popover:popover-open[data-side="bottom"] { translate: 0 -4px; }
+  .ty-tooltip-popover:popover-open[data-side="left"] { translate: 4px 0; }
+  .ty-tooltip-popover:popover-open[data-side="right"] { translate: -4px 0; }
+}
+`;
+  document.head.appendChild(style);
+}
+
 function getOrCreatePopover(el: TyTooltip): HTMLElement {
+  ensureTooltipMotionStyles();
   let popover = popoverElements.get(el);
 
   if (!popover) {
@@ -248,6 +277,8 @@ function updatePosition(el: TyTooltip): void {
 
   popover.style.left = `${position.x}px`;
   popover.style.top = `${position.y}px`;
+  // Resolved side (post-flip) drives the directional entrance slide
+  popover.dataset.side = position.placement.split('-')[0];
 }
 
 function cleanupAutoUpdate(el: TyTooltip): void {

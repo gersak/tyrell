@@ -1,5 +1,5 @@
 (ns tyrell.site.docs.theming
-  "Interactive playground for the OKLCH brand layer (tyrell-theme.css)."
+  "Interactive playground for the OKLCH theme engine (tyrell-theme.css)."
   (:require
    [clojure.string :as str]
    [tyrell.router :as router]
@@ -17,25 +17,21 @@
    ;; Also mirrored as :root overrides in packages/cljs/public/index.html
    ;; so first paint matches before CLJS boots. Chrome is the one exception
    ;; — it's pinned to the Tyrell identity orange, see styles.cljs.
-   :brand-hue 252
-   :brand-chroma 0.08
-   ;; PER-FLAVOR HUES — semantic anchors. Defaults match the brand layer's
-   ;; CSS fallbacks. Chroma stays bound to the per-flavor multipliers in
-   ;; tyrell-theme.css (success ×1.08, warning ×2.22, danger ×1.95) so
-   ;; the emphasis hierarchy survives any hue change. Neutral isn't tweakable
-   ;; here — it's achromatic by default in the brand layer (hue 0, chroma 0),
-   ;; independent of brand-hue.
+   :primary-hue 252
+   :primary-chroma 0.08
+   ;; PER-FLAVOR HUES + CHROMA — every flavor is a standalone hue+chroma
+   ;; seed, primary included; none derives from another. Defaults mirror
+   ;; tyrell-theme.css's own :root literals. Neutral isn't tweakable here —
+   ;; it's achromatic by default (hue 0, chroma 0), independent of primary.
    :success-hue 145
    :warning-hue 76
    :danger-hue  31
-   ;; PER-FLAVOR CHROMA — multiplier on brand-chroma (matches the brand
-   ;; layer's calc(var(--ty-brand-chroma) * N) defaults). Exported as the
-   ;; same calc(), so a dragged flavor still tracks brand-chroma changes.
-   :success-chroma-mult 1.08
-   :warning-chroma-mult 2.22
-   :danger-chroma-mult  1.95
-   ;; PER-FLAVOR L-FACTOR — Tier 5. One multiplier shifts all 5 shades of
+   :success-chroma 0.086
+   :warning-chroma 0.178
+   :danger-chroma  0.134
+   ;; PER-FLAVOR L-FACTOR — Tier 4. One multiplier shifts all 5 shades of
    ;; a flavor up/down without touching the shared curve.
+   :primary-l-factor 1
    :success-l-factor 1
    :warning-l-factor 1.3
    :danger-l-factor  1.01
@@ -57,27 +53,27 @@
    :show-curve?    false
    :show-anchors?  true})
 
-;; The brand layer redefines EVERY tier per theme now — brand-hue/chroma,
-;; per-flavor hue/chroma/l-factor, the L-curve and the saturation curve all
-;; differ between :root and html.dark in tyrell-theme.css — so every dial
-;; is theme-scoped: stored under [:brand-playground :curves <theme>] and
-;; applied via an injected <style> with :root / html.dark blocks. An inline
-;; style on <html> would clobber BOTH themes at once, which is why nothing
-;; here writes to documentElement.style anymore except the legacy-hygiene
-;; path in reset-all!.
+;; The theme engine redefines EVERY tier per theme now — per-flavor
+;; hue/chroma (primary included), l-factor, the L-curve and the saturation
+;; curve all differ between :root and html.dark in tyrell-theme.css — so
+;; every dial is theme-scoped: stored under [:brand-playground :curves
+;; <theme>] and applied via an injected <style> with :root / html.dark
+;; blocks. An inline style on <html> would clobber BOTH themes at once,
+;; which is why nothing here writes to documentElement.style anymore
+;; except the legacy-hygiene path in reset-all!.
 (def ^:private curve-keys
-  #{:brand-hue :brand-chroma
+  #{:primary-hue :primary-chroma
     :success-hue :warning-hue :danger-hue
-    :success-chroma-mult :warning-chroma-mult :danger-chroma-mult
-    :success-l-factor :warning-l-factor :danger-l-factor
+    :success-chroma :warning-chroma :danger-chroma
+    :primary-l-factor :success-l-factor :warning-l-factor :danger-l-factor
     :l-strong :l-bold :l-base :l-soft :l-faint
     :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult})
 
 ;; Mirror of the html.dark block in tyrell-theme.css.
 (def ^:private dark-curve-defaults
-  {:brand-hue 233 :brand-chroma 0.095
+  {:primary-hue 226 :primary-chroma 0.065
    :success-hue 129 :warning-hue 82 :danger-hue 13
-   :success-chroma-mult 1.42 :warning-chroma-mult 3 :danger-chroma-mult 1.96
+   :success-chroma 0.092 :warning-chroma 0.195 :danger-chroma 0.101
    :success-l-factor 1.09 :warning-l-factor 1.5 :danger-l-factor 1.06
    :l-strong 0.72 :l-bold 0.66 :l-base 0.62 :l-soft 0.46 :l-faint 0.30
    :c-strong-mult 0.77 :c-bold-mult 1.00 :c-base-mult 0.92 :c-soft-mult 0.77
@@ -87,7 +83,7 @@
   (if (= "dark" (:theme @state/state)) :dark :light))
 
 (defn- get-seeds
-  "Merged seed view for the ACTIVE theme: brand defaults, dark curve
+  "Merged seed view for the ACTIVE theme: flavor defaults, dark curve
    defaults when dark, then the user's per-theme curve overrides."
   []
   (let [st (get-in @state/state [:brand-playground] {})
@@ -102,11 +98,15 @@
    that are UI-only (panels expanded, etc.)."
   [k]
   (case k
-    :brand-hue        "--ty-brand-hue"
-    :brand-chroma     "--ty-brand-chroma"
+    :primary-hue      "--ty-primary-hue"
+    :primary-chroma   "--ty-primary-chroma"
     :success-hue      "--ty-success-hue"
     :warning-hue      "--ty-warning-hue"
     :danger-hue       "--ty-danger-hue"
+    :success-chroma   "--ty-success-chroma"
+    :warning-chroma   "--ty-warning-chroma"
+    :danger-chroma    "--ty-danger-chroma"
+    :primary-l-factor "--ty-primary-l-factor"
     :success-l-factor "--ty-success-l-factor"
     :warning-l-factor "--ty-warning-l-factor"
     :danger-l-factor  "--ty-danger-l-factor"
@@ -122,46 +122,30 @@
     :c-faint-mult    "--ty-c-faint-mult"
     nil))
 
-;; Per-flavor chroma isn't a bare number — it's a multiplier on
-;; brand-chroma, written as calc(var(--ty-brand-chroma) * N) so a dragged
-;; flavor still tracks the brand-chroma slider (the coupling the engine's
-;; Tier 2 anchors are built for).
-(def ^:private chroma-mult-keys
-  {:success-chroma-mult "--ty-success-chroma"
-   :warning-chroma-mult "--ty-warning-chroma"
-   :danger-chroma-mult  "--ty-danger-chroma"})
-
-(def ^:private hue-keys #{:brand-hue :success-hue :warning-hue :danger-hue})
+(def ^:private hue-keys #{:primary-hue :success-hue :warning-hue :danger-hue})
+(def ^:private chroma-keys #{:primary-chroma :success-chroma :warning-chroma :danger-chroma})
 
 ;; One formatter shared by the live <style> writer (curve-css) and the
-;; export text (theme-dial-lines) — chroma-mult keys wrap in calc() so a
-;; dragged flavor still tracks brand-chroma, hues are integers, everything
-;; else keeps 2 decimals (brand-chroma gets 3 — its slider step is 0.005).
+;; export text (theme-dial-lines) — hues are integers, chromas get 3
+;; decimals (their slider step is 0.001–0.005), everything else 2.
 (defn- dial-value-line [k v]
   (let [fmt (cond
               (hue-keys k) (str (int v))
-              (= k :brand-chroma) (.toFixed v 3)
+              (chroma-keys k) (.toFixed v 3)
               :else (.toFixed v 2))]
-    (if-let [css-name (chroma-mult-keys k)]
-      (str "  " css-name ": calc(var(--ty-brand-chroma) * " fmt ");")
-      (str "  " (key->var k) ": " fmt ";"))))
+    (str "  " (key->var k) ": " fmt ";")))
 
 (defn- apply-seed!
   "Write a single CSS variable to documentElement.style. Always live."
   [k value]
-  (if-let [css-name (chroma-mult-keys k)]
-    (.setProperty (.-style (.-documentElement js/document)) css-name
-                  (str "calc(var(--ty-brand-chroma) * " value ")"))
-    (when-let [css-name (key->var k)]
-      (.setProperty (.-style (.-documentElement js/document)) css-name (str value)))))
+  (when-let [css-name (key->var k)]
+    (.setProperty (.-style (.-documentElement js/document)) css-name (str value))))
 
 (defn- clear-seed!
-  "Remove the inline override so the brand-layer default takes back over."
+  "Remove the inline override so the theme engine's default takes back over."
   [k]
-  (if-let [css-name (chroma-mult-keys k)]
-    (.removeProperty (.-style (.-documentElement js/document)) css-name)
-    (when-let [css-name (key->var k)]
-      (.removeProperty (.-style (.-documentElement js/document)) css-name))))
+  (when-let [css-name (key->var k)]
+    (.removeProperty (.-style (.-documentElement js/document)) css-name)))
 
 (defn- curve-css
   "Render the per-theme curve overrides as :root / html.dark blocks."
@@ -200,30 +184,35 @@
         (do (swap! state/state assoc-in [:brand-playground k] v)
             (apply-seed! k v))))))
 
-;; brand-hue/brand-chroma are curve-keys like everything else now — drag
-;; on the LEFT theme only. (set-by-key! :brand-hue) would do the same
-;; thing; these two names stay because they're the site's most-used
+;; primary-hue/primary-chroma are curve-keys like everything else now —
+;; drag on the LEFT theme only. (set-by-key! :primary-hue) would do the
+;; same thing; these two names stay because they're the site's most-used
 ;; sliders and read better at their call sites.
-(def ^:private set-brand-hue! (set-by-key! :brand-hue))
-(def ^:private set-brand-chroma! (set-by-key! :brand-chroma))
+(def ^:private set-primary-hue! (set-by-key! :primary-hue))
+(def ^:private set-primary-chroma! (set-by-key! :primary-chroma))
 
 (defn- preset! [hue chroma]
   (swap! state/state update-in [:brand-playground :curves (active-theme)] assoc
-         :brand-hue hue :brand-chroma chroma)
+         :primary-hue hue :primary-chroma chroma)
   (sync-curve-style!))
 
 (defn- reset-all! [_]
   (swap! state/state assoc :brand-playground default-seeds)
   ;; Curve keys included for hygiene: older builds wrote them inline on <html>.
-  (doseq [k [:brand-hue :brand-chroma
-             ;; secondary-* kept for hygiene: pre-TC37 builds wrote them inline
-             :secondary-offset :secondary-hue :secondary-chroma
+  (doseq [k [:primary-hue :primary-chroma
+             :secondary-offset :secondary-hue :secondary-chroma ;; pre-TC37 hygiene
              :success-hue :warning-hue :danger-hue
-             :success-chroma-mult :warning-chroma-mult :danger-chroma-mult
-             :success-l-factor :warning-l-factor :danger-l-factor
+             :success-chroma :warning-chroma :danger-chroma
+             :primary-l-factor :success-l-factor :warning-l-factor :danger-l-factor
              :l-strong :l-bold :l-base :l-soft :l-faint
              :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult]]
     (clear-seed! k))
+  ;; Pre-TC49 builds could have written these directly-named custom
+  ;; properties inline; key->var no longer maps to them (renamed to
+  ;; --ty-primary-*, chroma multipliers flattened to literals), so
+  ;; clear-seed! above is a no-op for them — remove by literal name instead.
+  (doseq [css-name ["--ty-brand-hue" "--ty-brand-chroma" "--ty-brand-l-factor"]]
+    (.removeProperty (.-style (.-documentElement js/document)) css-name))
   ;; State no longer has :curves — this empties the style tag.
   (sync-curve-style!))
 
@@ -245,8 +234,8 @@
   (swap! state/state assoc-in [:brand-playground :floating-open?] false))
 
 (defn- swatch
-  "A tiny color swatch derived from the same OKLCH formula the brand layer
-   uses. Drawn inline so the page is its own ground-truth preview."
+  "A tiny color swatch derived from the same OKLCH formula the theme
+   engine uses. Drawn inline so the page is its own ground-truth preview."
   [label l c h]
   [:div.flex.flex-col.items-center.gap-1
    [:div.rounded-md
@@ -256,21 +245,22 @@
    [:span.ty-text-- {:style {:font-size "0.6875rem"}} label]])
 
 (defn- theme-dial-lines
-  "Seed + curve dials that differ from brand-layer defaults, as CSS lines.
-   Returns {:light [...] :dark [...]}. brand-hue/brand-chroma are ALWAYS
-   shown for :light — the two-line rebrand headline — everything else, in
-   both themes, is diff-only against tyrell-theme.css's own defaults."
+  "Seed + curve dials that differ from the theme engine's defaults, as CSS
+   lines. Returns {:light [...] :dark [...]}. primary-hue/primary-chroma
+   are ALWAYS shown for :light — the two-line rebrand headline —
+   everything else, in both themes, is diff-only against tyrell-theme.css's
+   own defaults."
   [seeds]
-  (let [always-light [(dial-value-line :brand-hue (:brand-hue seeds))
-                       (dial-value-line :brand-chroma (:brand-chroma seeds))]
+  (let [always-light [(dial-value-line :primary-hue (:primary-hue seeds))
+                       (dial-value-line :primary-chroma (:primary-chroma seeds))]
         diff-lines (fn [theme]
                      (let [defaults (cond-> default-seeds
                                       (= theme :dark) (merge dark-curve-defaults))
                            touched (get-in @state/state [:brand-playground :curves theme])
-                           ;; light's brand-hue/chroma are already covered by
+                           ;; light's primary-hue/chroma are already covered by
                            ;; always-light above — skip so they don't double up.
                            touched (cond-> touched
-                                     (= theme :light) (dissoc :brand-hue :brand-chroma))]
+                                     (= theme :light) (dissoc :primary-hue :primary-chroma))]
                        (for [[k v] touched
                              :when (not= v (get defaults k))]
                          (dial-value-line k v))))]
@@ -279,8 +269,8 @@
 
 (defn- build-theme-css
   "Render the current seed state as a paste-ready :root block. Only emits
-   values that differ from the brand-layer defaults — users get the minimal
-   override snippet, not noise."
+   values that differ from the theme engine's defaults — users get the
+   minimal override snippet, not noise."
   [seeds]
   (let [{:keys [light dark]} (theme-dial-lines seeds)]
     (str ":root {\n" (str/join "\n" light) "\n}"
@@ -303,13 +293,13 @@
            (str "\n" cls ".dark,\n.dark " cls " {\n" (str/join "\n" dark) "\n}")))))
 
 (defn seeds-panel
-  "Interactive brand-seeds widget. Exported so the CSS Guide page can embed it
-   as a sticky side rail — drag the sliders, scroll through the design system,
-   watch every swatch/ramp retint in place."
+  "Interactive flavor-seeds widget. Exported so the CSS Guide page can embed
+   it as a sticky side rail — drag the sliders, scroll through the design
+   system, watch every swatch/ramp retint in place."
   []
-  (let [{:keys [brand-hue brand-chroma
+  (let [{:keys [primary-hue primary-chroma primary-l-factor
                 success-hue warning-hue danger-hue
-                success-chroma-mult warning-chroma-mult danger-chroma-mult
+                success-chroma warning-chroma danger-chroma
                 success-l-factor warning-l-factor danger-l-factor
                 show-anchors? show-ladder? show-curve?]} (get-seeds)]
     [:div.ty-elevated.rounded-xl.p-5
@@ -324,15 +314,15 @@
      [:div {:style {:margin-bottom "0.75rem"}}
       [:div.flex.justify-between.items-center.mb-1
        [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
-        [:code "--ty-brand-hue"]]
+        [:code "--ty-primary-hue"]]
        [:code.ty-text+
         {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
                  :padding "0.125rem 0.5rem" :border-radius "4px"}}
-        (str (int brand-hue) "°")]]
+        (str (int primary-hue) "°")]]
       [:input
        {:type "range" :min 0 :max 360 :step 1
-        :value brand-hue
-        :on {:input set-brand-hue!}
+        :value primary-hue
+        :on {:input set-primary-hue!}
         :style {:width "100%"
                 :background (str "linear-gradient(to right,"
                                  " oklch(0.6 0.18 0),"
@@ -348,21 +338,35 @@
      [:div {:style {:margin-bottom "0.75rem"}}
       [:div.flex.justify-between.items-center.mb-1
        [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
-        [:code "--ty-brand-chroma"]]
+        [:code "--ty-primary-chroma"]]
        [:code.ty-text+
         {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
                  :padding "0.125rem 0.5rem" :border-radius "4px"}}
-        (.toFixed brand-chroma 3)]]
+        (.toFixed primary-chroma 3)]]
       [:input
        {:type "range" :min 0 :max 0.3 :step 0.005
-        :value brand-chroma
-        :on {:input set-brand-chroma!}
+        :value primary-chroma
+        :on {:input set-primary-chroma!}
         :style {:width "100%"
                 :background (str "linear-gradient(to right,"
-                                 " oklch(0.6 0 " brand-hue "),"
-                                 " oklch(0.6 0.3 " brand-hue "))")
+                                 " oklch(0.6 0 " primary-hue "),"
+                                 " oklch(0.6 0.3 " primary-hue "))")
                 :border-radius "4px" :height "8px"
                 :appearance "none" :outline "none"}}]]
+
+     [:div {:style {:margin-bottom "0.75rem"}}
+      [:div.flex.justify-between.items-center.mb-1
+       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
+        [:code "--ty-primary-l-factor"]]
+       [:code.ty-text+
+        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
+                 :padding "0.125rem 0.5rem" :border-radius "4px"}}
+        (.toFixed primary-l-factor 2)]]
+      [:input
+       {:type "range" :min 0.5 :max 1.5 :step 0.01
+        :value primary-l-factor
+        :on {:input (set-by-key! :primary-l-factor)}
+        :style {:width "100%" :height "8px"}}]]
 
      ;; Presets — inline chip row, no separate header
      [:div.flex.flex-wrap.gap-1 {:style {:margin-bottom "0.75rem"}}
@@ -384,14 +388,13 @@
          label])]
 
      ;; Per-flavor tuning — collapsible. Power-user surface for retinting
-     ;; semantic colors (success/warning/danger): hue, a chroma multiplier
-     ;; on brand-chroma (stays coupled — exported as calc(), so it still
-     ;; tracks the brand-chroma slider), and l-factor (Tier 5, shifts all
-     ;; 5 shades of a flavor without touching the shared curve). Like every
-     ;; other dial on this page, these are per-theme — dragging one only
-     ;; touches the ACTIVE theme; toggle dark/light to tune each side.
-     ;; Neutral has no controls here — it's achromatic by default, not a
-     ;; hue to retint.
+     ;; semantic colors (success/warning/danger): hue, chroma (its own
+     ;; standalone value — not derived from primary), and l-factor
+     ;; (Tier 4, shifts all 5 shades of a flavor without touching the
+     ;; shared curve). Like every other dial on this page, these are
+     ;; per-theme — dragging one only touches the ACTIVE theme; toggle
+     ;; dark/light to tune each side. Neutral has no controls here — it's
+     ;; achromatic by default, not a hue to retint.
      [:div {:style {:padding "0.5rem 0.75rem"
                     :background "var(--ty-bg-neutral-soft)"
                     :border-radius "8px"
@@ -407,15 +410,15 @@
         (if show-anchors? "−" "+")]]
       (when show-anchors?
         [:div {:style {:margin-top "0.625rem"}}
-         (for [[hk cmk lfk label hue cmult lfactor]
+         (for [[hk ck lfk label hue chroma lfactor]
                ;; success → danger → warning — matches the flavor order
                ;; the component previews below use (buttons/tags/text ramps).
-               [[:success-hue :success-chroma-mult :success-l-factor
-                 "success" success-hue success-chroma-mult success-l-factor]
-                [:danger-hue :danger-chroma-mult :danger-l-factor
-                 "danger" danger-hue danger-chroma-mult danger-l-factor]
-                [:warning-hue :warning-chroma-mult :warning-l-factor
-                 "warning" warning-hue warning-chroma-mult warning-l-factor]]]
+               [[:success-hue :success-chroma :success-l-factor
+                 "success" success-hue success-chroma success-l-factor]
+                [:danger-hue :danger-chroma :danger-l-factor
+                 "danger" danger-hue danger-chroma danger-l-factor]
+                [:warning-hue :warning-chroma :warning-l-factor
+                 "warning" warning-hue warning-chroma warning-l-factor]]]
            [:div {:key (name hk)
                   :style {:margin-bottom "0.75rem" :padding-bottom "0.5rem"
                           :border-bottom "1px solid var(--ty-border-soft)"}}
@@ -443,11 +446,11 @@
                        :appearance "none" :outline "none"}}]]
             [:div {:style {:margin-bottom "0.375rem"}}
              [:div.flex.justify-between.items-center.mb-1
-              [:label.ty-text- {:style {:font-size "0.625rem"}} "chroma × brand"]
-              [:code.ty-text {:style {:font-size "0.625rem"}} (.toFixed cmult 2)]]
+              [:label.ty-text- {:style {:font-size "0.625rem"}} "chroma"]
+              [:code.ty-text {:style {:font-size "0.625rem"}} (.toFixed chroma 3)]]
              [:input
-              {:type "range" :min 0 :max 3 :step 0.01 :value cmult
-               :on {:input (set-by-key! cmk)}
+              {:type "range" :min 0 :max 0.35 :step 0.001 :value chroma
+               :on {:input (set-by-key! ck)}
                :style {:width "100%" :height "6px"}}]]
             [:div
              [:div.flex.justify-between.items-center.mb-1
@@ -459,10 +462,9 @@
                :style {:width "100%" :height "6px"}}]]])
          [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
                                 :margin "0 0 0"}}
-          "Chroma is a multiplier on brand-chroma — dragging it exports "
-          [:code "calc(var(--ty-brand-chroma) * N)"] ", so the flavor still "
-          "tracks the brand slider. L-factor shifts all 5 shades of a "
-          "flavor without touching the shared curve."]])]
+          "Chroma is this flavor's own value, independent of primary. "
+          "L-factor shifts all 5 shades of a flavor without touching the "
+          "shared curve."]])]
 
      ;; L-curve — 5 lightness stops. Collapsed by default; matches the
      ;; floating-widget pattern.
@@ -789,9 +791,9 @@
 (defn floating-seeds
   "Compact always-on widget pinned to the bottom-right corner. Collapses to a
    small chip on click. Use this on docs pages where you want the visitor to
-   tweak the brand while scrolling the page contents (e.g. the CSS Guide)."
+   tweak the theme while scrolling the page contents (e.g. the CSS Guide)."
   []
-  (let [{:keys [brand-hue brand-chroma floating-open?]} (get-seeds)]
+  (let [{:keys [primary-hue primary-chroma floating-open?]} (get-seeds)]
     [:div
      {:style {:position "fixed"
               :bottom "1.25rem"
@@ -810,7 +812,7 @@
                        :background "var(--ty-color-primary)"
                        :border "1px solid var(--ty-border-soft)"}}]
         [:span.ty-text {:style {:font-size "0.75rem" :font-weight 600}}
-         "Brand"]]
+         "Theme"]]
 
        [:div.ty-elevated.rounded-xl
         {:style {:width "320px"
@@ -826,7 +828,7 @@
                          :border "1px solid var(--ty-border-soft)"}}]
           [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
                                    :letter-spacing "0.08em" :text-transform "uppercase"}}
-           "Brand seeds"]]
+           "Theme seeds"]]
          [:button.ty-text-.hover:ty-text
           {:style {:cursor "pointer" :background "transparent" :border "none"
                    :padding "0.125rem 0.375rem" :line-height 1}
@@ -837,12 +839,12 @@
         [:div {:style {:margin-bottom "0.75rem"}}
          [:div.flex.justify-between.items-center.mb-1
           [:label.ty-text- {:style {:font-size "0.6875rem"}}
-           [:code "--ty-brand-hue"]]
+           [:code "--ty-primary-hue"]]
           [:code.ty-text {:style {:font-size "0.6875rem"}}
-           (str (int brand-hue) "°")]]
+           (str (int primary-hue) "°")]]
          [:input
-          {:type "range" :min 0 :max 360 :step 1 :value brand-hue
-           :on {:input set-brand-hue!}
+          {:type "range" :min 0 :max 360 :step 1 :value primary-hue
+           :on {:input set-primary-hue!}
            :style {:width "100%"
                    :background (str "linear-gradient(to right,"
                                     " oklch(0.6 0.18 0),"
@@ -858,16 +860,16 @@
         [:div {:style {:margin-bottom "0.75rem"}}
          [:div.flex.justify-between.items-center.mb-1
           [:label.ty-text- {:style {:font-size "0.6875rem"}}
-           [:code "--ty-brand-chroma"]]
+           [:code "--ty-primary-chroma"]]
           [:code.ty-text {:style {:font-size "0.6875rem"}}
-           (.toFixed brand-chroma 3)]]
+           (.toFixed primary-chroma 3)]]
          [:input
-          {:type "range" :min 0 :max 0.3 :step 0.005 :value brand-chroma
-           :on {:input set-brand-chroma!}
+          {:type "range" :min 0 :max 0.3 :step 0.005 :value primary-chroma
+           :on {:input set-primary-chroma!}
            :style {:width "100%"
                    :background (str "linear-gradient(to right,"
-                                    " oklch(0.6 0 " brand-hue "),"
-                                    " oklch(0.6 0.3 " brand-hue "))")
+                                    " oklch(0.6 0 " primary-hue "),"
+                                    " oklch(0.6 0.3 " primary-hue "))")
                    :border-radius "4px" :height "6px"
                    :appearance "none" :outline "none"}}]]
 
@@ -966,7 +968,7 @@
           "Reset"]]])]))
 
 ;; Live preview — these elements all use the same --ty-* tokens that the
-;; brand layer drives. They retint as the seeds change.
+;; theme engine drives. They retint as the seeds change.
 
 (defn- preview-buttons []
   [:div.ty-content.rounded-lg.p-5
@@ -978,11 +980,11 @@
     [:ty-button {:flavor "warning"}   "Warning"]
     [:ty-button {:flavor "neutral"}   "Neutral"]]
    [:div.flex.flex-wrap.gap-2 {:style {:margin-top "0.75rem"}}
-    [:ty-button {:flavor "primary"   :outlined ""} "Primary"]
-    [:ty-button {:flavor "success"   :outlined ""} "Success"]
-    [:ty-button {:flavor "danger"    :outlined ""} "Danger"]
-    [:ty-button {:flavor "warning"   :outlined ""} "Warning"]
-    [:ty-button {:flavor "neutral"   :outlined ""} "Neutral"]]])
+    [:ty-button {:flavor "primary"   :appearance "outlined"} "Primary"]
+    [:ty-button {:flavor "success"   :appearance "outlined"} "Success"]
+    [:ty-button {:flavor "danger"    :appearance "outlined"} "Danger"]
+    [:ty-button {:flavor "warning"   :appearance "outlined"} "Warning"]
+    [:ty-button {:flavor "neutral"   :appearance "outlined"} "Neutral"]]])
 
 (defn- preview-tags []
   [:div.ty-content.rounded-lg.p-5
@@ -1167,7 +1169,7 @@
 (defn view []
   (docs-page
    (component-header "Theming"
-                     "Two CSS variables re-brand every component — light and dark, no build step, no JS. Everything on this page is live: drag the seeds, watch the library follow.")
+                     "Two CSS variables rebrand every component — light and dark, no build step, no JS. Everything on this page is live: drag the seeds, watch the library follow.")
 
    [:div.ty-elevated.rounded-xl.p-6
     [:div.mb-3
@@ -1177,15 +1179,15 @@
 
 <style>
   :root {
-    --ty-brand-hue: 200;        /* teal */
-    --ty-brand-chroma: 0.13;
+    --ty-primary-hue: 200;        /* teal */
+    --ty-primary-chroma: 0.13;
   }
 </style>")
     [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
      "That's the whole rebrand. Via npm: "
      [:code "import 'tyrell-components/css/tyrell-theme.css'"] " after tyrell.css."]
     [:p.ty-text--.mt-2 {:style {:font-size "0.75rem"}}
-     "This page is the interactive playground for the brand layer specifically. For the "
+     "This page is the interactive playground for the theme engine specifically. For the "
      "full written reference — surfaces vs. backgrounds, the text/border/background "
      "families, dark mode, per-component overrides — see the "
      [:a.ty-text-primary {:href "https://github.com/gersak/tyrell/blob/master/guides/CSS_GUIDE.md"
@@ -1260,15 +1262,15 @@
    (doc-section "Recipes"
                 [:div.ty-content.rounded-lg.p-5
                  (code-block ":root {
-  /* rotate the brand — usually all you need */
-  --ty-brand-hue: 200;
-  --ty-brand-chroma: 0.13;
+  /* rotate primary — usually all you need */
+  --ty-primary-hue: 200;
+  --ty-primary-chroma: 0.13;
 
-  /* semantic anchors are independent seeds */
+  /* every flavor is an independent seed */
   --ty-danger-chroma: 0.2;
 
-  /* pull a semantic flavor toward the brand */
-  --ty-success-hue: var(--ty-brand-hue);
+  /* pull a semantic flavor toward primary */
+  --ty-success-hue: var(--ty-primary-hue);
 
   /* pin one derived token — cascade still wins */
   --ty-color-primary-strong: #003344;

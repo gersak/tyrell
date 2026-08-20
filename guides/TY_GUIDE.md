@@ -426,9 +426,11 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 
 Also registered as **`ty-dialog`** — same element, platform/ARIA name (wraps native `<dialog>`).
 
-Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
+Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true), `backdrop-zoom` (opt-in: scales the page body down slightly while open, Vaul-style; the modal itself renders in the top layer and is unaffected — skip it if your app has `position: fixed` chrome, since a scaled body becomes its containing block), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
 
-Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'`. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
+Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'` — `close` reports the same reason. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
+
+None of the three bubble, so a modal opened from inside another modal never trips the outer modal's listeners — and neither does a `ty-select` / `ty-date-picker` / `ty-popup` closing its own popup inside the modal. Attach listeners to the element itself.
 
 **Methods:** `show()`, `hide()` | **Events:** `close` -> `{ reason, returnValue? }`
 
@@ -473,6 +475,8 @@ Shared by `ty-popup`, `ty-tooltip`, `ty-select` and `ty-date-picker`. A placemen
 Twelve values in total — `top` `top-start` `top-end`, `right` `right-start` `right-end`, `bottom` `bottom-start` `bottom-end`, `left` `left-start` `left-end`.
 
 For **top/bottom** the alignment runs horizontally (`-start` = left edges flush, `-end` = right edges flush). For **left/right** it runs vertically (`-start` = top edges flush, `-end` = bottom edges flush).
+
+**The geometry contract** (what you can rely on, identical for popup and tooltip): measurements are of the **visible surface**, never any internal shadow-room wrapper — on the chosen side there is an **8px gap** (the `offset` attribute) between trigger edge and surface edge, `-start`/`-end` put the aligned edges **exactly flush**, and no suffix **centers** the surface on the trigger. `ty-select` / `ty-date-picker` use the same 8px visual gap below/above their field.
 
 ```html
 <ty-button>Menu
@@ -699,3 +703,5 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 | `ty-button` | `click` | `{ originalEvent }` |
 
 Always access via `event.detail.value`, never `event.target.value`.
+
+**Bubbling:** `change` / `input` bubble like their native counterparts — delegation works. Popup lifecycle events (`open`, `close`, `beforeclose` on `ty-modal`, `ty-select`, `ty-date-picker`, `ty-popup`) **do not**, matching native `<dialog>`. Listen on the element itself; a container listener hears nothing, which is what keeps a dropdown closing inside a modal from closing the modal.

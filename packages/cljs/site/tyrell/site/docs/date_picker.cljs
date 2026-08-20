@@ -76,9 +76,9 @@
       [{:name "change"
         :payload "{value: string, milliseconds: number, source: string, formatted: string}"
         :when-fired "Fires when the date changes — source is 'selection', 'time-change', 'clear', or 'external'"}
-       {:name "open"
+       {:name "open / close"
         :payload "{}"
-        :when-fired "Fires when the calendar popup opens"}])]]
+        :when-fired "Calendar popup lifecycle. Does not bubble (native <dialog> semantics) — listen on the element itself, so a popup closing inside a ty-modal never trips the modal's own close listener."}])]]
 
    (doc-section "Examples"
      [:div.space-y-6

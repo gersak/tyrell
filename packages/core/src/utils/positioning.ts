@@ -332,13 +332,15 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
       x = targetRect.right + offset - containerPadding;
     }
   } else {
-    // Top/bottom placements
+    // Top/bottom placements. containerPadding is the floating element's
+    // transparent wrap (shadow room) — the VISIBLE panel is inset by it, so
+    // aligned edges must shift the box outward to bring the panel flush.
     if (horizontal === 'start') {
-      x = targetRect.left;
+      x = targetRect.left - containerPadding;
     } else if (horizontal === 'center') {
       x = targetRect.centerX - floatingRect.width / 2;
     } else {
-      x = targetRect.right - floatingRect.width;
+      x = targetRect.right - floatingRect.width + containerPadding;
     }
   }
 
@@ -348,12 +350,15 @@ function calculatePlacement(options: CalculatePlacementOptions): PositionResult 
     if (vertical === 'center') {
       y = targetRect.centerY - floatingRect.height / 2;
     } else if (vertical === 'end') {
-      // Bottom edges flush: left-end / right-end
-      y = targetRect.bottom - floatingRect.height - containerPadding;
+      // Bottom edges flush (left-end / right-end): shift the box DOWN by the
+      // wrap so the visible panel's bottom lands on the trigger's bottom.
+      // The old `- containerPadding` had the sign flipped — the panel sat
+      // 2×wrap above flush.
+      y = targetRect.bottom - floatingRect.height + containerPadding;
     } else {
-      // Top edges flush: left-start / right-start. Mirrors the 'end' inset so
-      // the two alignments are symmetric about the anchor.
-      y = targetRect.top + containerPadding;
+      // Top edges flush (left-start / right-start): shift the box UP by the
+      // wrap so the visible panel's top lands on the trigger's top.
+      y = targetRect.top - containerPadding;
     }
   } else {
     // Top/bottom placements

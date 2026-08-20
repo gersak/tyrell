@@ -194,7 +194,7 @@ SAMPLE_TASKS = [
 ### **Ty's 5-Variant Color System**
 Each semantic color has 5 emphasis levels:
 - `--ty-color-primary-strong` - Maximum emphasis (headers, critical text)
-- `--ty-color-primary-mild` - High emphasis (subheadings)  
+- `--ty-color-primary-bold` - High emphasis (subheadings)  
 - `--ty-color-primary` - Base emphasis (standard links)
 - `--ty-color-primary-soft` - Reduced emphasis (secondary text)
 - `--ty-color-primary-faint` - Minimal emphasis (disabled text)

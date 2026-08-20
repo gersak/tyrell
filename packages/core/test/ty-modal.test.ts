@@ -1,5 +1,7 @@
 import { fixture, html, expect, nextFrame } from '@open-wc/testing';
 import '../lib/components/modal.js';
+import '../lib/components/select.js';
+import '../lib/components/option.js';
 
 describe('ty-modal', () => {
   it('opens the internal <dialog> when the open attribute is set', async () => {
@@ -62,5 +64,108 @@ describe('ty-modal accessible name', () => {
     await nextFrame();
     const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
     expect(dialog.getAttribute('aria-label')).to.equal('Second');
+  });
+});
+
+describe('ty-modal + nested popups (issue: select closes the modal)', () => {
+  it('does not fire close when a ty-select inside it opens/closes its dropdown', async () => {
+    const el = (await fixture(html`
+      <ty-modal open>
+        <ty-select id="s"><ty-option value="a">A</ty-option></ty-select>
+      </ty-modal>
+    `)) as any;
+    await nextFrame();
+
+    let closes = 0;
+    el.addEventListener('close', () => closes++);
+
+    const select = el.querySelector('ty-select') as any;
+    const stub = select.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    stub.click();            // open dropdown
+    await nextFrame();
+    (el.querySelector('ty-option[value="a"]') as HTMLElement).click(); // select -> closes dropdown
+    await nextFrame();
+
+    expect(closes, 'modal close listener must not see the select close').to.equal(0);
+    expect(el.hasAttribute('open'), 'modal still open').to.be.true;
+    el.remove();
+  });
+
+  it('honours close-on-escape="false" against the native dialog cancel', async () => {
+    const el = (await fixture(html`<ty-modal open close-on-escape="false"><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    // ESC on a showModal() dialog arrives as `cancel`, not our keydown handler
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await nextFrame();
+
+    expect(dialog.open, 'stays open').to.be.true;
+    expect(el.hasAttribute('open')).to.be.true;
+    el.remove();
+  });
+});
+
+describe('ty-modal close reason + nesting', () => {
+  it('reports the real reason on close, not just "programmatic"', async () => {
+    const el = (await fixture(html`<ty-modal open><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+
+    let reason: string | undefined;
+    el.addEventListener('close', (e: CustomEvent) => { reason = e.detail.reason; });
+
+    const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    dialog.click(); // target === dialog -> backdrop click
+    await nextFrame();
+
+    expect(reason, 'close detail carries the same reason as beforeclose').to.equal('backdrop');
+    el.remove();
+  });
+
+  it('a modal inside a modal does not close its parent', async () => {
+    const el = (await fixture(html`
+      <ty-modal open id="outer">
+        <div>
+          <ty-modal id="inner"><p>Confirm?</p></ty-modal>
+        </div>
+      </ty-modal>
+    `)) as any;
+    await nextFrame();
+
+    let outerCloses = 0;
+    el.addEventListener('close', () => outerCloses++);
+
+    const inner = el.querySelector('#inner') as any;
+    inner.show();
+    await nextFrame();
+    inner.hide();
+    await nextFrame();
+
+    expect(outerCloses, 'inner close must not reach the outer modal').to.equal(0);
+    expect(el.hasAttribute('open'), 'outer still open').to.be.true;
+    el.remove();
+  });
+});
+
+describe('ty-modal boolean property binding', () => {
+  it('accepts real booleans via properties (framework property binding)', async () => {
+    const el = (await fixture(html`<ty-modal open><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+
+    el.closeOnEscape = false;      // boolean, not string
+    el.closeOnOutsideClick = false;
+    await nextFrame();
+
+    expect(el.getAttribute('close-on-escape')).to.equal('false');
+    expect(el.closeOnEscape).to.equal(false);
+    expect(el.closeOnOutsideClick).to.equal(false);
+
+    // ESC (native cancel) must not close it now
+    const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await nextFrame();
+    expect(dialog.open).to.be.true;
+
+    el.remove();
   });
 });

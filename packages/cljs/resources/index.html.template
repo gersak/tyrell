@@ -24,13 +24,13 @@
     <!-- OKLCH theme engine. Demoed at /docs/theming. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{version}}/css/tyrell-theme.css">
 
-    <!-- Site brand seeds: override the theme-engine defaults for this site only.
+    <!-- Site flavor seeds: override the theme-engine defaults for this site only.
          Mirrored in site/tyrell/site/docs/theming.cljs default-seeds so the
          playground sliders + Reset button agree with first-paint values. -->
     <style>
         :root {
-            --ty-brand-hue: 270;
-            --ty-brand-chroma: 0.12;
+            --ty-primary-hue: 270;
+            --ty-primary-chroma: 0.12;
             --ty-neutral-l-factor: 1;
 
             /* Lift SOLID fills only — at the base L, a solid fill at this hue/chroma

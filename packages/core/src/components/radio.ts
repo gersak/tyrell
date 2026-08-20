@@ -315,8 +315,18 @@ export class TyRadioGroup
     const radios = this.getRadios();
     for (const radio of radios) {
       radio.checked = radio.value === this.value;
-      // Inherit size/flavor/disabled from group unless radio set its own
-      if (this.disabled) radio.disabled = true;
+      // Inherit size/flavor/disabled from group unless radio set its own.
+      // Group-imposed disable is marked so re-enabling the group releases
+      // exactly the radios it disabled — individually-disabled ones stay off.
+      if (this.disabled) {
+        if (!radio.disabled) {
+          radio.disabled = true;
+          radio.dataset.tyGroupDisabled = "";
+        }
+      } else if ("tyGroupDisabled" in radio.dataset) {
+        radio.disabled = false;
+        delete radio.dataset.tyGroupDisabled;
+      }
       radio.size = this.size;
       radio.flavor = this.flavor;
     }

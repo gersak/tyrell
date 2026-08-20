@@ -56,6 +56,11 @@ const closeButtonHandlers = new WeakMap<TyModal, (e: Event) => void>();
 const hoverEnterHandlers = new WeakMap<TyModal, (e: Event) => void>();
 const hoverLeaveHandlers = new WeakMap<TyModal, (e: Event) => void>();
 const modalIds = new WeakMap<TyModal, string>(); // Store unique modal ID for scroll locking
+// Why the modal is closing, handed from closeModal() to the render() pass that
+// the `open` attribute removal triggers — otherwise `close` can only ever
+// report 'programmatic' and the reason the consumer saw in `beforeclose`
+// (backdrop / escape / close-button) is lost.
+const pendingCloseReasons = new WeakMap<TyModal, ModalCloseReason>();
 
 // Constants
 
@@ -118,9 +123,12 @@ function isMobile(): boolean {
 }
 
 function dispatchModalEvent(el: TyModal, eventType: string, detail: unknown): void {
+  // Non-bubbling, like the native <dialog> events these mirror. A modal opened
+  // from inside another modal is a light-DOM descendant of the outer one, so a
+  // bubbling `close` would land on the outer modal's own close listener and
+  // take both down. Listen on the element itself.
   const event = new CustomEvent(eventType, {
     detail,
-    bubbles: true,
     cancelable: true,
   });
   el.dispatchEvent(event);
@@ -184,15 +192,14 @@ function closeModal(
   if (!opts?.force) {
     const beforeClose = new CustomEvent<ModalBeforeCloseDetail>('beforeclose', {
       detail: { reason },
-      bubbles: true,
-      composed: true,
       cancelable: true,
     });
     el.dispatchEvent(beforeClose);
     if (beforeClose.defaultPrevented) return;
   }
 
-  // Remove open attribute (triggers actual close).
+  // Remove open attribute (triggers actual close, which emits `close`).
+  pendingCloseReasons.set(el, reason);
   el.removeAttribute('open');
 }
 
@@ -366,30 +373,42 @@ function render(el: TyModal): void {
   
   setupBackdropClick(el, dialog, attributes.closeOnOutsideClick);
   setupEscapeKey(el, dialog, attributes.closeOnEscape);
+
+  // showModal() gives ESC-to-close for free — the browser fires `cancel` and
+  // closes the dialog itself, bypassing our keydown handler entirely. That
+  // made close-on-escape="false" a no-op. Always intercept `cancel` and route
+  // it through closeModal() so the attribute (and `beforeclose`) is honoured.
+  dialog.oncancel = (event: Event) => {
+    event.preventDefault();
+    if (getModalAttributes(el).closeOnEscape) closeModal(el, 'escape');
+  };
   setupCloseButton(el, dialog, attributes.closeOnOutsideClick);
   setupCloseButtonHover(el, dialog);
   
   if (attributes.open) {
     if (!dialog.open) {
       lockScroll(modalId);
-      
+
       if (attributes.backdrop) {
         dialog.showModal();
       } else {
         dialog.show();
       }
-      
+
+      syncBackdropZoom();
       dispatchModalEvent(el, 'open', {});
     }
   } else {
     if (dialog.open) {
       unlockScroll(modalId);
-      
+
       dialog.close();
-      
-      dispatchModalEvent(el, 'close', { 
-        reason: 'programmatic' 
-      } as ModalCloseDetail);
+      syncBackdropZoom();
+
+      const reason = pendingCloseReasons.get(el) ?? 'programmatic';
+      pendingCloseReasons.delete(el);
+
+      dispatchModalEvent(el, 'close', { reason } as ModalCloseDetail);
     }
   }
   
@@ -414,7 +433,27 @@ function render(el: TyModal): void {
         returnValue: dialog.returnValue || undefined
       } as ModalCloseDetail);
     }
+    syncBackdropZoom();
   };
+}
+
+/**
+ * Opt-in Vaul-style page zoom: while any modal with `backdrop-zoom` is open,
+ * <html> carries .ty-modal-zoom and tyrell.css scales <body> down slightly.
+ * The dialog itself lives in the top layer, which escapes ancestor
+ * transforms, so only the page behind it moves. State is derived, not
+ * counted — the last zooming modal out clears the class, nested modals keep it.
+ */
+function syncBackdropZoom(): void {
+  // Same string-tolerant boolean parsing as the other modal attrs —
+  // backdrop-zoom="false" must count as off, not as present.
+  const anyOpen = Array.from(
+    document.querySelectorAll('ty-modal[open][backdrop-zoom], ty-dialog[open][backdrop-zoom]'),
+  ).some((m) => {
+    const v = m.getAttribute('backdrop-zoom')!.toLowerCase().trim();
+    return v !== 'false' && v !== '0';
+  });
+  document.documentElement.classList.toggle('ty-modal-zoom', anyOpen);
 }
 
 function cleanup(el: TyModal): void {
@@ -427,6 +466,7 @@ function cleanup(el: TyModal): void {
     unlockScroll(modalId);
     modalIds.delete(el);
   }
+  syncBackdropZoom();
   
   if (!dialog) return;
   
@@ -487,6 +527,22 @@ export class TyModal extends HTMLElement {
   static get observedAttributes() {
     return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'label'];
   }
+
+  // Property mirrors for the boolean attributes. Frameworks that
+  // property-bind (React, Vue, CLJS wrappers) hand us real booleans —
+  // `closeOnOutsideClick = false` — which never reach attributeChangedCallback.
+  // Reflect them to the attribute so one code path (getModalAttributes) rules.
+  get open(): boolean { return parseBoolAttr(this, 'open'); }
+  set open(v: boolean) { v ? this.setAttribute('open', 'true') : this.removeAttribute('open'); }
+
+  get backdrop(): boolean { return getModalAttributes(this).backdrop; }
+  set backdrop(v: boolean) { this.setAttribute('backdrop', String(!!v)); }
+
+  get closeOnOutsideClick(): boolean { return getModalAttributes(this).closeOnOutsideClick; }
+  set closeOnOutsideClick(v: boolean) { this.setAttribute('close-on-outside-click', String(!!v)); }
+
+  get closeOnEscape(): boolean { return getModalAttributes(this).closeOnEscape; }
+  set closeOnEscape(v: boolean) { this.setAttribute('close-on-escape', String(!!v)); }
   
   constructor() {
     super();

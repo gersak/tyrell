@@ -57,7 +57,7 @@
         :when-fired "Fires when the popup opens"}
        {:name "close"
         :payload "{}"
-        :when-fired "Fires when the popup closes"}])]]
+        :when-fired "Fires when the popup closes. Does not bubble (native <dialog> semantics) — listen on the element itself, so a popup closing inside a ty-modal never trips the modal's own close listener."}])]]
 
    (doc-section "Examples"
      [:div.space-y-6

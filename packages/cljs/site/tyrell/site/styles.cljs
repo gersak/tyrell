@@ -58,7 +58,7 @@ code:not(.hljs) {
 ;; Chrome is PINNED; only page content follows the theme playground.
 ;;
 ;; The playground writes its dials as an inline style on <html> (see
-;; theming.cljs/apply-seed!), so every brand-derived colour on the page —
+;; theming.cljs/apply-seed!), so every flavor-derived colour on the page —
 ;; including the logo, sidebar and TOC — used to retint as visitors dragged the
 ;; sliders. Re-declaring the same dials on the chrome subtree stops that: for an
 ;; inherited custom property, a declaration on the element itself always beats
@@ -70,27 +70,27 @@ code:not(.hljs) {
 ;; (dark) — keep the three in sync. Hues are theme-invariant, so only the L and
 ;; chroma curves need a dark block; everything else falls through from light.
 ;;
-;; brand-hue/chroma are the TYRELL IDENTITY color (orange, tuned per-mode —
+;; primary-hue/chroma are the TYRELL IDENTITY color (orange, tuned per-mode —
 ;; hand-picked off the "Orange" preset in theming.cljs), deliberately NOT the
 ;; content playground's default (252, violet — picked precisely so a visitor
 ;; dragging sliders can't land on and be confused with the real brand).
-;; success/warning/danger hue + chroma (as calc(brand-chroma * mult), so they
-;; track chrome's OWN brand-chroma) + l-factor are pinned explicitly too and
-;; mirror tyrell-theme.css's own defaults — otherwise the playground's
-;; per-flavor "chroma × brand" and "l-factor" sliders (theming.cljs) would
-;; leak into chrome as INLINE overrides on <html>, the same way any un-pinned
-;; dial does — see the maintenance note above.
+;; success/warning/danger hue + chroma are literal numbers (chroma computed as
+;; chrome's-own-chroma × the same ratios core ships: ×1.08 / ×2.22 / ×1.95) +
+;; l-factor, pinned explicitly to mirror tyrell-theme.css's own defaults —
+;; otherwise the playground's per-flavor chroma and l-factor sliders
+;; (theming.cljs) would leak into chrome as INLINE overrides on <html>, the
+;; same way any un-pinned dial does — see the maintenance note above.
 (def ^:private chrome-pin-css
   "
 [data-ty-theme].site-chrome {
-  --ty-brand-hue: 38;
-  --ty-brand-chroma: 0.15;
+  --ty-primary-hue: 38;
+  --ty-primary-chroma: 0.15;
   --ty-success-hue: 145;
   --ty-warning-hue: 76;
   --ty-danger-hue: 31;
-  --ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08);
-  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 2.22);
-  --ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.95);
+  --ty-success-chroma: 0.162;
+  --ty-warning-chroma: 0.333;
+  --ty-danger-chroma: 0.293;
   --ty-success-l-factor: 1;
   --ty-warning-l-factor: 1.3;
   --ty-danger-l-factor: 1.01;
@@ -112,9 +112,12 @@ code:not(.hljs) {
 
 .dark [data-ty-theme].site-chrome,
 [data-theme=\"dark\"] [data-ty-theme].site-chrome {
-  --ty-brand-hue: 42;
-  --ty-brand-chroma: 0.16;
-  --ty-brand-l-factor: 1.1;
+  --ty-primary-hue: 42;
+  --ty-primary-chroma: 0.16;
+  --ty-primary-l-factor: 1.1;
+  --ty-success-chroma: 0.173;
+  --ty-warning-chroma: 0.355;
+  --ty-danger-chroma: 0.312;
   --ty-l-strong: 0.72;
   --ty-l-bold: 0.66;
   --ty-l-base: 0.62;

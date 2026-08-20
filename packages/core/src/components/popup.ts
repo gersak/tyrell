@@ -94,6 +94,9 @@ function updatePosition(el: TyPopup): void {
   el.style.setProperty('--popup-x', `${positionData.x}px`);
   el.style.setProperty('--popup-y', `${positionData.y}px`);
 
+  // Resolved side (post-flip) drives the directional entrance slide in CSS
+  dialog.dataset.side = positionData.placement.split('-')[0];
+
   // Add position class like dropdown does (this applies the variables)
   dialog.classList.add('position-calculated');
 }
@@ -120,10 +123,8 @@ function closePopup(el: TyPopup, force = false): void {
 
   setTimeout(() => {
     dialog.classList.remove('position-calculated');
-    dialog.close(); // This will trigger 'close' event which unlocks scroll
-  }, 150);
-
-  el.dispatchEvent(new CustomEvent('close', { bubbles: true }));
+    dialog.close(); // fires the dialog 'close' listener: unlock + emit 'close'
+  }, 200); // ≥ --ty-popup-duration (180ms) so the exit transition completes
 }
 
 /**
@@ -158,7 +159,7 @@ function openPopup(el: TyPopup): void {
       // Now animate: scale(0.95) → scale(1) + opacity + visibility
       dialog.classList.add('open');
 
-      el.dispatchEvent(new CustomEvent('open', { bubbles: true }));
+      el.dispatchEvent(new CustomEvent('open'));
     });
   });
 }
@@ -307,7 +308,9 @@ function render(el: TyPopup): void {
       unlockScroll(popupId);
       dialog.classList.remove('open');
       dialog.classList.remove('preparing-animation');
-      el.dispatchEvent(new CustomEvent('close', { bubbles: true }));
+      // ponytail: non-bubbling, like native <dialog> — bubbling close from
+      // a popup inside a ty-modal would trip the modal's own close listener.
+      el.dispatchEvent(new CustomEvent('close'));
     });
   }
 

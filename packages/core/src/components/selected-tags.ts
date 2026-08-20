@@ -155,7 +155,8 @@ export class TySelectedOptions extends HTMLElement {
    * carry them as regular childNodes — support both.
    */
   private templateSource(template: HTMLTemplateElement): DocumentFragment {
-    if (template.content.firstElementChild) return template.content
+    // Any content node counts — a text-only template ("{label}") is valid.
+    if (template.content.hasChildNodes()) return template.content
     const frag = document.createDocumentFragment()
     template.childNodes.forEach(n => frag.appendChild(n.cloneNode(true)))
     return frag

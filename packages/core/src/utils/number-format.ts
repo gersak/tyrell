@@ -81,6 +81,10 @@ export function formatNumber(
  * Simple rule: the last occurring . or , is the decimal separator.
  * Everything else is stripped. This works for both US (1,234.56) and
  * European (1.234,56) input, and for mobile keyboards that use , as decimal.
+ * One grouping exception: a repeated separator ("1.234.567") can't be a
+ * decimal point, so it's stripped as thousands grouping. A LONE separator is
+ * always decimal — "$1,234" pasted from formatted text parses as 1.234; this
+ * known ambiguity is resolved in favor of typed input ("12,50" → 12.5).
  *
  * @example
  * ```typescript
@@ -89,7 +93,8 @@ export function formatNumber(
  * parseNumericValue("12,50")    // 12.5    (last separator is ,)
  * parseNumericValue("12.50")    // 12.5    (last separator is .)
  * parseNumericValue("1234")     // 1234
- * parseNumericValue("$1,234")   // 1234
+ * parseNumericValue("1.234.567") // 1234567 (repeated separator = grouping)
+ * parseNumericValue("$1,234")   // 1.234  (lone separator = decimal; known paste ambiguity)
  * parseNumericValue("15%")      // 15
  * parseNumericValue("")         // null
  * ```
@@ -104,7 +109,7 @@ export function parseNumericValue(value: string): number | null {
 
   if (stripped === '' || stripped === '-') return null
 
-  // Find the last occurring . or , — that's the decimal separator
+  // Find the last occurring . or , — that's the decimal separator candidate
   const lastComma = stripped.lastIndexOf(',')
   const lastDot = stripped.lastIndexOf('.')
   const lastSep = Math.max(lastComma, lastDot)
@@ -115,8 +120,21 @@ export function parseNumericValue(value: string): number | null {
     return isNaN(parsed) ? null : parsed
   }
 
-  const intPart = stripped.slice(0, lastSep).replace(/[.,]/g, '')
-  const decPart = stripped.slice(lastSep + 1)
+  const sepChar = stripped[lastSep]
+  const before = stripped.slice(0, lastSep)
+  const after = stripped.slice(lastSep + 1)
+
+  // A repeated separator can't be a decimal point — it's thousands grouping
+  // ("1.234.567" → 1234567). A LONE separator is always treated as decimal:
+  // this path parses what the user TYPES (mobile keyboards use , as decimal),
+  // so typing wins over the pasted-"$1,234" ambiguity.
+  if (before.includes(sepChar)) {
+    const parsed = parseFloat(stripped.replace(/[.,]/g, ''))
+    return isNaN(parsed) ? null : parsed
+  }
+
+  const intPart = before.replace(/[.,]/g, '')
+  const decPart = after
 
   const parsed = parseFloat(intPart + '.' + decPart)
   return isNaN(parsed) ? null : parsed

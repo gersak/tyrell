@@ -27,9 +27,9 @@ export const popupStyles = `
   /* NO TRANSFORM here - apply only when animating to avoid measurement errors! */
 
   transition:
-    opacity 150ms ease-out,
-    visibility 150ms ease-out,
-    transform 150ms ease-out;
+    opacity var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    visibility var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    transform var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
 
   /* Prevent interactions when hidden */
   pointer-events: none;
@@ -41,9 +41,26 @@ export const popupStyles = `
   left: var(--popup-x, 0px);
 }
 
-/* Apply scale for entrance animation (right before .open) */
+/* Entrance prep (right before .open): scale + a short slide from the anchor
+   side. data-side is the RESOLVED side (post-flip), set by updatePosition. */
 .popup-dialog.preparing-animation {
-  transform: scale(0.95);
+  transform: scale(0.96);
+}
+
+.popup-dialog[data-side="bottom"].preparing-animation:not(.open) {
+  transform: translateY(-6px) scale(0.96);
+}
+
+.popup-dialog[data-side="top"].preparing-animation:not(.open) {
+  transform: translateY(6px) scale(0.96);
+}
+
+.popup-dialog[data-side="left"].preparing-animation:not(.open) {
+  transform: translateX(6px) scale(0.96);
+}
+
+.popup-dialog[data-side="right"].preparing-animation:not(.open) {
+  transform: translateX(-6px) scale(0.96);
 }
 
 .popup-dialog.open {

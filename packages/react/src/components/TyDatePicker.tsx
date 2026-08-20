@@ -135,10 +135,8 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
       }
     }, [onChange]);
 
-    // Handle open/close events. Guard with `event.target === element` so
-    // bubbled open/close events from popup-like descendants slotted inside
-    // (rare for a date-picker, but defensive — same fix as TyModal/TyPopup)
-    // don't fire the consumer's onOpen/onClose.
+    // Handle open/close events. See TyModal.tsx for why the
+    // `event.target === element` guard is still here.
     const handleOpen = useCallback((event: Event) => {
       if (event.target !== elementRef.current) return;
       if (onOpen) onOpen(event as CustomEvent<{}>);

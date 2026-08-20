@@ -1329,6 +1329,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       anchorRect: stubRect,
       popupWidth,
       popupHeight: estimatedHeight,
+      // gap 0 IS the unified 8px visual offset: the dialog's --calendar-padding
+      // (8px) is not compensated on y (unlike select's wrapPadding), so the
+      // calendar face already sits 8px from the trigger.
       gap: 0,
       align: anchored.align,
       side: anchored.side,
@@ -1615,10 +1618,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
     this.updateState({ open: true });
 
-    this.dispatchEvent(new CustomEvent('open', {
-      bubbles: true,
-      composed: true
-    }));
+    // ponytail: non-bubbling, like native <dialog> — a bubbling open/close
+    // from a picker nested in ty-modal hits the modal's own listeners.
+    this.dispatchEvent(new CustomEvent('open'));
 
     this.render();
 
@@ -1669,10 +1671,8 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       if (stubEl) stubEl.setAttribute('aria-expanded', 'false');
     }
 
-    this.dispatchEvent(new CustomEvent('close', {
-      bubbles: true,
-      composed: true
-    }));
+    // ponytail: non-bubbling, see openDropdown()
+    this.dispatchEvent(new CustomEvent('close'));
 
     this.render();
   }

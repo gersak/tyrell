@@ -91,6 +91,24 @@ export const modalStyles = `
   outline: none;
 }
 
+/* Panel zoom-in synced with the backdrop fade (shadcn-style zoom-in-95).
+   Enter-only: animating exit on a native <dialog> means delaying close(). */
+.ty-modal-dialog[open] {
+  animation: ty-modal-enter var(--ty-modal-duration, 200ms) ease-out;
+}
+
+@keyframes ty-modal-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.93);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Backdrop is part of modal functionality, not user content */
 .ty-modal-dialog::backdrop {
   background: var(--ty-modal-backdrop, rgba(0, 0, 0, 0.5));

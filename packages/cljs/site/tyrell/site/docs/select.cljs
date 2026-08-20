@@ -108,7 +108,7 @@
        :when-fired "External search mode: user typed in the search input (debounced)"}
       {:name "open / close"
        :payload "{mode: 'desktop'|'mobile', element}"
-       :when-fired "Popup lifecycle"}])]])
+       :when-fired "Popup lifecycle. Does not bubble (native <dialog> semantics) — listen on the element itself, so a popup closing inside a ty-modal never trips the modal's own close listener."}])]])
 
 (defn example-single []
   [:div.ty-content.rounded-lg.p-5
@@ -121,8 +121,7 @@
     [:div.space-y-3
      [:ty-select {:id "single-select"
                   :label "Robot"
-                  :name "robot"
-                  :style {:max-width "280px"}}
+                  :name "robot"}
       [:ty-option {:value "bobo" :flavor "primary"} "Bobo Robot Name"]
       [:ty-option {:value "email" :flavor "info"} "Email klijent za KnowledBase"]
       [:ty-option {:value "eywa" :flavor "success"} "EYWA Dataset Example with Reacher"]

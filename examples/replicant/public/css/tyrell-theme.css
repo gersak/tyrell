@@ -13,8 +13,8 @@
  *   <link rel="stylesheet" href=".../tyrell-theme.css">
  *
  *   :root {
- *     --ty-brand-hue: 200;        // teal. Try 260 indigo, 30 orange, 145 emerald.
- *     --ty-brand-chroma: 0.13;
+ *     --ty-primary-hue: 200;        // teal. Try 260 indigo, 30 orange, 145 emerald.
+ *     --ty-primary-chroma: 0.13;
  *   }
  *
  * =====================================================================
@@ -24,9 +24,9 @@
  * Every color in the library is one formula on five axes:
  *
  *     oklch(
- *       L = L-curve[shade] × flavor-l-factor            ← Tier 3 × Tier 5
- *       C = flavor-chroma  × saturation-curve[shade]    ← Tier 2 × Tier 4
- *       H = flavor-hue                                  ← Tier 2
+ *       L = L-curve[shade] × flavor-l-factor            ← Tier 2 × Tier 4
+ *       C = flavor-chroma  × saturation-curve[shade]    ← Tier 1 × Tier 3
+ *       H = flavor-hue                                  ← Tier 1
  *     )
  *
  * Pick a flavor (primary / success / warning / danger /
@@ -61,15 +61,15 @@
  *
  *   SECTION 1 — KNOBS
  *     The variables you might want to override. Six tiers from drop-in
- *     rebrand (Tier 1) to surgical per-flavor tweak (Tier 5) plus solid
- *     buttons (Tier 6).
+ *     rebrand (Tier 1) to surgical per-flavor tweak (Tier 4) plus solid
+ *     buttons (Tier 5).
  *
  *   SECTION 2 — IMPLEMENTATION
  *     The oklch() expressions that wire the knobs through to the actual
  *     color tokens. Rarely needs editing — Section 1 is the contract.
  *
  * Browser support: oklch() is in every evergreen browser since mid-2023.
- * Tier 6 (solid) additionally uses OKLCH relative color — oklch(from …) —
+ * Tier 5 (solid) additionally uses OKLCH relative color — oklch(from …) —
  * which lands later: Chrome 119, Safari 16.4, Firefox 128 (mid-2024).
  * Solid fills have no fallback below those versions.
  *
@@ -83,59 +83,53 @@
  * these in your own `:root` (or `html.dark` for per-mode tuning) —
  * your declaration wins by source order.
  *
- *   Tier 1 — SEEDS                 brand-hue + chroma. Rebrand in 2 lines.
- *   Tier 2 — PER-FLAVOR ANCHORS    each flavor's hue + chroma.
- *   Tier 3 — L-CURVE               5 lightness stops for the emphasis ramp.
- *   Tier 4 — SATURATION CURVE      per-shade chroma multipliers.
- *   Tier 5 — PER-FLAVOR L-FACTOR   per-flavor lightness multiplier — push
+ *   Tier 1 — FLAVOR SEEDS          each flavor's hue + chroma, incl. primary.
+ *   Tier 2 — L-CURVE               5 lightness stops for the emphasis ramp.
+ *   Tier 3 — SATURATION CURVE      per-shade chroma multipliers.
+ *   Tier 4 — PER-FLAVOR L-FACTOR   per-flavor lightness multiplier — push
  *                                  one flavor up or down without touching
  *                                  the others. Default 1.
- *   Tier 6 — SOLID FILLS           solid-button system: hover/active/tone
+ *   Tier 5 — SOLID FILLS           solid-button system: hover/active/tone
  *                                  L offsets + per-theme dim/desaturate.
  * ===================================================================== */
 
 :root {
   /* ----------------------------------------------------------------
-   * Tier 1 — SEEDS
-   * Brand-hue + chroma drive primary, neutral, surfaces, inputs,
-   * solid buttons. One slider rebrands the page.
-   * --------------------------------------------------------------*/
-
-  --ty-brand-hue: 45;
-  --ty-brand-chroma: 0.125; /* restrained default; the loud 0.2 read as "bollywood" */
-
-  /* Surface tint. 0 = monochrome surfaces (default, no brand leak).
-   * Bump to ~0.005 (light) / ~0.012 (dark) to warm surfaces toward brand. */
-  --ty-surface-chroma: 0;
-
-  /* ----------------------------------------------------------------
-   * Tier 2 — PER-FLAVOR ANCHORS
-   * Semantic colors (success/warning/danger/neutral) have their own
-   * hue + chroma seeds so they keep meaning across brand changes.
-   * Override any individually:
+   * Tier 1 — FLAVOR SEEDS
+   * Every flavor — including primary — is one hue + one chroma. No
+   * flavor derives from another; each is a standalone dial:
    *   --ty-success-hue: 160;     (more teal)
    *   --ty-warning-chroma: 0.2;  (more vivid)
+   * Rebrand by overriding --ty-primary-hue/-chroma alone; touch the
+   * others only when a specific flavor needs its own tuning.
    * --------------------------------------------------------------*/
 
+  --ty-primary-hue: 252;
+  --ty-primary-chroma: 0.08; /* restrained default; the loud 0.2 read as "bollywood" */
+
+  /* Surface tint. 0 = monochrome surfaces (default, no primary leak).
+   * Bump to ~0.005 (light) / ~0.012 (dark) to warm surfaces toward primary. */
+  --ty-surface-chroma: 0;
+
   --ty-success-hue: 145;
-  --ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08);
+  --ty-success-chroma: 0.086;
 
-  --ty-warning-hue: 75;
-  --ty-warning-chroma: calc(var(--ty-brand-chroma) * 2);
+  --ty-warning-hue: 76;
+  --ty-warning-chroma: 0.178;
 
-  --ty-danger-hue: 25;
-  --ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.31);
+  --ty-danger-hue: 31;
+  --ty-danger-chroma: 0.134;
 
-  /* Neutral is ACHROMATIC by default — greys do not follow the brand.
+  /* Neutral is ACHROMATIC by default — greys do not follow primary.
    * Most of an interface is monochrome; a rebrand should not drift it.
-   * To warm greys toward the brand (the pre-2026-08 behavior), opt in:
-   *   --ty-neutral-hue: var(--ty-brand-hue);
-   *   --ty-neutral-chroma: calc(var(--ty-brand-chroma) * 0.04); */
+   * To warm greys toward primary (the pre-2026-08 behavior), opt in:
+   *   --ty-neutral-hue: var(--ty-primary-hue);
+   *   --ty-neutral-chroma: 0.003; */
   --ty-neutral-hue: 0;
   --ty-neutral-chroma: 0;
 
   /* ----------------------------------------------------------------
-   * Tier 3 — L-CURVE (light mode)
+   * Tier 2 — L-CURVE (light mode)
    * 5 lightness stops per flavor for the emphasis ramp.
    * Lower L = darker = more emphasis in light mode.
    * Plus 3 bg L stops for the soft-tint backgrounds.
@@ -147,9 +141,16 @@
   --ty-l-soft: 0.72; /* -  low emphasis */
   --ty-l-faint: 0.88; /* -- min emphasis */
 
-  --ty-l-bg-base: 0.96;
-  --ty-l-bg-bold: 0.92;
-  --ty-l-bg-soft: 0.98;
+  /* BG TRACK — the flavor's BASE color at low opacity, composited over
+   * whatever surface it sits on. No bg-specific L or chroma stops: the
+   * ink is always mid-scale (gamut-happy, l-factor-safe), and the alpha
+   * does the washing. Direction is automatic — the same token lightens
+   * a dark surface and darkens a light one — and l-factor reaches the
+   * tint only through the ink, scaled by alpha: it points, it doesn't
+   * shove. */
+  --ty-a-bg-base: 9%;
+  --ty-a-bg-bold: 17%;
+  --ty-a-bg-soft: 4%;
 
   /* Text ladder (--ty-text-*) and surface borders — historically
    * hardcoded hexes in tyrell.css that a rebrand never touched; now
@@ -202,7 +203,7 @@
   --ty-focus-ring-alpha: 5%; /* focus ring mix strength (dark needs more) */
 
   /* ----------------------------------------------------------------
-   * Tier 4 — SATURATION CURVE
+   * Tier 3 — SATURATION CURVE
    * Per-shade chroma multipliers. Each shade's chroma =
    * flavor-chroma × multiplier. Drops near the extremes so
    * near-white and near-black can hold their tint.
@@ -214,18 +215,14 @@
   --ty-c-soft-mult: 0.77;
   --ty-c-faint-mult: 0.46;
 
-  --ty-c-bg-base-mult: 0.15;
-  --ty-c-bg-bold-mult: 0.38;
-  --ty-c-bg-soft-mult: 0.08;
-
   /* ----------------------------------------------------------------
-   * Tier 5 — PER-FLAVOR L-FACTOR
+   * Tier 4 — PER-FLAVOR L-FACTOR
    * Multiplies the L-curve values for that flavor only. Default 1 =
-   * no change. Useful when one flavor's brand-default sits too close
-   * to brand-hue on the wheel and the buttons blend.
+   * no change. Useful when one flavor's hue sits too close to
+   * primary's on the wheel and the buttons blend.
    *
-   * Example: brand-hue: 47° (gold). Warning sits at 75° (amber).
-   * Both render as similar warm browns at brand-chroma. Drop warning
+   * Example: primary-hue: 47° (gold). Warning sits at 75° (amber).
+   * Both render as similar warm browns at that chroma. Drop warning
    * a notch and it darkens enough to stand apart:
    *   --ty-warning-l-factor: 0.85;
    *
@@ -235,24 +232,24 @@
    * light AND set its inverse (1 / factor, roughly) in `html.dark`.
    * --------------------------------------------------------------*/
 
-  --ty-primary-l-factor: 1;
+  --ty-primary-l-factor: 0.8;
   --ty-success-l-factor: 1;
-  --ty-warning-l-factor: 1.15;
-  --ty-danger-l-factor: 1;
+  --ty-warning-l-factor: 1.3;
+  --ty-danger-l-factor: 0.93;
   --ty-neutral-l-factor: 1;
 
   /* ----------------------------------------------------------------
-   * Tier 6 — SOLID FILLS
+   * Tier 5 — SOLID FILLS
    * Solid buttons are their OWN system, not the emphasis ramp. Each
    * flavor's fill defaults to --ty-color-{flavor}; the knobs below
    * derive its hover / active / tone+ / tone- and per-theme adjust.
-   * Math lives in SECTION 2 (search "Tier 6 — SOLID"); these are the
+   * Math lives in SECTION 2 (search "Tier 5 — SOLID"); these are the
    * dials.
    *
    * Axis A — interaction & tone, OKLCH L offsets on the fill.
    * Axis B — per-theme adjust applied to the base fill (dim/desaturate).
    *
-   * NOTE: like Tier 5, the emphasis curve flips for dark, so these L
+   * NOTE: like Tier 4, the emphasis curve flips for dark, so these L
    * offsets are sign-flipped in `html.dark` below (darken in light =
    * lighten in dark). Keep the two blocks in sync.
    * --------------------------------------------------------------*/
@@ -276,17 +273,32 @@
    * black-text (Material treats amber the same way). Other flavors: 0. */
   --ty-primary-solid-l: 0;
   --ty-success-solid-l: 0;
-  --ty-warning-solid-l: 0.1;
+  --ty-warning-solid-l: 0;
   --ty-danger-solid-l: 0;
 }
 
-/* Dark mode overrides for the L-curve and saturation curve. Tier 1 + 2
- * seeds and Tier 5 L-factors carry through unchanged from :root. */
+/* Dark mode overrides for the L-curve and saturation curve, plus Tier 1
+ * (per-flavor hue/chroma, incl. primary) and Tier 4 (l-factor)
+ * — dark ships its own distinct flavor tuning here, not a
+ * carry-through of :root's light values. */
 html.dark,
 html[data-theme="dark"],
 [data-ty-theme].dark,
 [data-ty-theme][data-theme="dark"] {
-  /* Tier 3 dark — inverted curve. Higher L = lighter text = more
+  --ty-primary-l-factor: 1;
+  --ty-solid-fg-threshold: 0.5 !important;
+  --ty-primary-hue: 226;
+  --ty-primary-chroma: 0.065;
+  --ty-success-hue: 129;
+  --ty-success-chroma: 0.092;
+  --ty-success-l-factor: 1.09;
+  --ty-danger-hue: 13;
+  --ty-danger-chroma: 0.101;
+  --ty-danger-l-factor: 1.06;
+  --ty-warning-hue: 82;
+  --ty-warning-chroma: 0.195;
+  --ty-warning-l-factor: 1.5;
+  /* Tier 2 dark — inverted curve. Higher L = lighter text = more
    * emphasis on a dark background. */
   --ty-l-strong: 0.72;
   --ty-l-bold: 0.66;
@@ -294,9 +306,11 @@ html[data-theme="dark"],
   --ty-l-soft: 0.46;
   --ty-l-faint: 0.3;
 
-  --ty-l-bg-base: 0.22;
-  --ty-l-bg-bold: 0.26;
-  --ty-l-bg-soft: 0.19;
+  /* BG TRACK dark — dark ink sits closer to its surface in L than
+   * light's does, so the tint needs a touch more alpha to be felt. */
+  --ty-a-bg-base: 13%;
+  --ty-a-bg-bold: 22%;
+  --ty-a-bg-soft: 7%;
 
   /* Text ladder + surface borders dark — L matched to the hexes
    * tyrell.css used to hardcode (#fff/#f9fafb/#d6d6d6/#7f8590/#555a63,
@@ -330,12 +344,12 @@ html[data-theme="dark"],
   --ty-l-bg-neutral-faint: 0.15;
   --ty-c-bg-neutral-faint-mult: 2;
 
-  /* Tier 5 dark — neutral inks pulled down a notch against dark surfaces. */
+  /* Tier 4 dark — neutral inks pulled down a notch against dark surfaces. */
   --ty-neutral-l-factor: 0.8;
 
   --ty-focus-ring-alpha: 20%;
 
-  /* Tier 4 dark — dim shades hold more chroma so they don't grey out;
+  /* Tier 3 dark — dim shades hold more chroma so they don't grey out;
    * strong shades trim chroma so bright tones don't over-pop. */
   --ty-c-strong-mult: 0.77;
   --ty-c-bold-mult: 1;
@@ -343,11 +357,7 @@ html[data-theme="dark"],
   --ty-c-soft-mult: 0.77;
   --ty-c-faint-mult: 0.5;
 
-  --ty-c-bg-base-mult: 0.38;
-  --ty-c-bg-bold-mult: 0.54;
-  --ty-c-bg-soft-mult: 0.23;
-
-  /* Tier 6 dark — interaction offsets flip sign (press LIGHTENS on dark),
+  /* Tier 5 dark — interaction offsets flip sign (press LIGHTENS on dark),
    * and the per-theme adjust dims + desaturates the fills against the
    * dark canvas. (Computed solid tokens are declared once at html:root.) */
   /* Bigger than light mode's 0.04/0.08: small L deltas at the dark end of
@@ -386,8 +396,8 @@ html[data-theme="dark"],
  * Formulas are declared ONCE, at `html:root` (specificity 0,1,1 — NOT
  * plain `:root` (0,1,0)): they out-rank tyrell.css's hardcoded light
  * tokens by specificity and its hardcoded `html.dark` hexes (0,1,1) by
- * source order, since the brand layer loads after. Dark mode needs no
- * formula duplicates — the dials they read (Tier 3/4, SECTION 1) are
+ * source order, since the theme layer loads after. Dark mode needs no
+ * formula duplicates — the dials they read (Tier 2/3, SECTION 1) are
  * what flip per mode. The `html.dark` block at the END of this file
  * holds only genuine per-mode DATA (surface ladder, hand-pinned
  * absolutes) — never formulas. If you add a token here, do NOT mirror
@@ -403,8 +413,8 @@ html:root,
    * ramp formula reads that seed's c + h channels via relative color
    * syntax; L always comes from the mode-flipped curve. Two ways in:
    *
-   *   numbers (default) — the Tier 1/2 hue+chroma dials construct the
-   *   seed:      --ty-brand-hue: 200; --ty-brand-chroma: 0.13;
+   *   numbers (default) — the Tier 1 hue+chroma dials construct the
+   *   seed:      --ty-primary-hue: 200; --ty-primary-chroma: 0.13;
    *
    *   a color   — set the seed directly and the dials are bypassed:
    *              --ty-primary-seed: #76467c;
@@ -416,9 +426,23 @@ html:root,
    * correct for ANY seed — light or dark. (Your exact pixel may
    * appear nowhere; pin --ty-solid-X etc. if you need it literally.)
    * --------------------------------------------------------------*/
+  /* BG TRACK — `--ty-bg-X` is the flavor's BASE ink at low alpha, real
+   * transparency, composited by the browser over whatever is actually
+   * underneath. Why this beats computing a tint lightness:
+   *
+   *   - The ink is MID-SCALE (L 0.38–0.88), where the gamut is widest
+   *     and `l-stop × l-factor` behaves — no near-white/near-black
+   *     endpoint math, no chroma clipping, no hue drift.
+   *   - Direction per mode is free: the same token darkens a light
+   *     surface and lightens a dark one, on ANY surface level (content,
+   *     elevated, floating), not just a nominal one.
+   *   - l-factor points rather than shoves: it moves the ink a little,
+   *     and only alpha × that movement reaches the tint.
+   *
+   * The wash amount is the --ty-a-bg-* dials (Tier 2 area). */
   --ty-primary-seed-resolved: var(
     --ty-primary-seed,
-    oklch(0.5 var(--ty-brand-chroma) var(--ty-brand-hue))
+    oklch(0.5 var(--ty-primary-chroma) var(--ty-primary-hue))
   );
   --ty-success-seed-resolved: var(
     --ty-success-seed,
@@ -464,19 +488,13 @@ html:root,
       calc(c * var(--ty-c-faint-mult)) h
   );
   --ty-bg-primary: oklch(
-    from var(--ty-primary-seed-resolved)
-      calc(var(--ty-l-bg-base) * var(--ty-primary-l-factor))
-      calc(c * var(--ty-c-bg-base-mult)) h
+    from var(--ty-color-primary) l c h / var(--ty-a-bg-base)
   );
   --ty-bg-primary-bold: oklch(
-    from var(--ty-primary-seed-resolved)
-      calc(var(--ty-l-bg-bold) * var(--ty-primary-l-factor))
-      calc(c * var(--ty-c-bg-bold-mult)) h
+    from var(--ty-color-primary) l c h / var(--ty-a-bg-bold)
   );
   --ty-bg-primary-soft: oklch(
-    from var(--ty-primary-seed-resolved)
-      calc(var(--ty-l-bg-soft) * var(--ty-primary-l-factor))
-      calc(c * var(--ty-c-bg-soft-mult)) h
+    from var(--ty-color-primary) l c h / var(--ty-a-bg-soft)
   );
   --ty-border-primary: var(--ty-color-primary-soft);
 
@@ -507,19 +525,13 @@ html:root,
       calc(c * var(--ty-c-faint-mult)) h
   );
   --ty-bg-success: oklch(
-    from var(--ty-success-seed-resolved)
-      calc(var(--ty-l-bg-base) * var(--ty-success-l-factor))
-      calc(c * var(--ty-c-bg-base-mult)) h
+    from var(--ty-color-success) l c h / var(--ty-a-bg-base)
   );
   --ty-bg-success-bold: oklch(
-    from var(--ty-success-seed-resolved)
-      calc(var(--ty-l-bg-bold) * var(--ty-success-l-factor))
-      calc(c * var(--ty-c-bg-bold-mult)) h
+    from var(--ty-color-success) l c h / var(--ty-a-bg-bold)
   );
   --ty-bg-success-soft: oklch(
-    from var(--ty-success-seed-resolved)
-      calc(var(--ty-l-bg-soft) * var(--ty-success-l-factor))
-      calc(c * var(--ty-c-bg-soft-mult)) h
+    from var(--ty-color-success) l c h / var(--ty-a-bg-soft)
   );
   --ty-border-success: var(--ty-color-success-soft);
 
@@ -550,19 +562,13 @@ html:root,
       calc(c * var(--ty-c-faint-mult)) h
   );
   --ty-bg-danger: oklch(
-    from var(--ty-danger-seed-resolved)
-      calc(var(--ty-l-bg-base) * var(--ty-danger-l-factor))
-      calc(c * var(--ty-c-bg-base-mult)) h
+    from var(--ty-color-danger) l c h / var(--ty-a-bg-base)
   );
   --ty-bg-danger-bold: oklch(
-    from var(--ty-danger-seed-resolved)
-      calc(var(--ty-l-bg-bold) * var(--ty-danger-l-factor))
-      calc(c * var(--ty-c-bg-bold-mult)) h
+    from var(--ty-color-danger) l c h / var(--ty-a-bg-bold)
   );
   --ty-bg-danger-soft: oklch(
-    from var(--ty-danger-seed-resolved)
-      calc(var(--ty-l-bg-soft) * var(--ty-danger-l-factor))
-      calc(c * var(--ty-c-bg-soft-mult)) h
+    from var(--ty-color-danger) l c h / var(--ty-a-bg-soft)
   );
   --ty-border-danger: var(--ty-color-danger-soft);
 
@@ -593,19 +599,13 @@ html:root,
       calc(c * var(--ty-c-faint-mult)) h
   );
   --ty-bg-warning: oklch(
-    from var(--ty-warning-seed-resolved)
-      calc(var(--ty-l-bg-base) * var(--ty-warning-l-factor))
-      calc(c * var(--ty-c-bg-base-mult)) h
+    from var(--ty-color-warning) l c h / var(--ty-a-bg-base)
   );
   --ty-bg-warning-bold: oklch(
-    from var(--ty-warning-seed-resolved)
-      calc(var(--ty-l-bg-bold) * var(--ty-warning-l-factor))
-      calc(c * var(--ty-c-bg-bold-mult)) h
+    from var(--ty-color-warning) l c h / var(--ty-a-bg-bold)
   );
   --ty-bg-warning-soft: oklch(
-    from var(--ty-warning-seed-resolved)
-      calc(var(--ty-l-bg-soft) * var(--ty-warning-l-factor))
-      calc(c * var(--ty-c-bg-soft-mult)) h
+    from var(--ty-color-warning) l c h / var(--ty-a-bg-soft)
   );
   --ty-border-warning: var(--ty-color-warning-soft);
 
@@ -636,19 +636,13 @@ html:root,
       calc(c * var(--ty-c-faint-mult)) h
   );
   --ty-bg-neutral: oklch(
-    from var(--ty-neutral-seed-resolved)
-      calc(var(--ty-l-bg-base) * var(--ty-neutral-l-factor))
-      calc(c * var(--ty-c-bg-base-mult)) h
+    from var(--ty-color-neutral) l c h / var(--ty-a-bg-base)
   );
   --ty-bg-neutral-bold: oklch(
-    from var(--ty-neutral-seed-resolved)
-      calc(var(--ty-l-bg-bold) * var(--ty-neutral-l-factor))
-      calc(c * var(--ty-c-bg-bold-mult)) h
+    from var(--ty-color-neutral) l c h / var(--ty-a-bg-bold)
   );
   --ty-bg-neutral-soft: oklch(
-    from var(--ty-neutral-seed-resolved)
-      calc(var(--ty-l-bg-soft) * var(--ty-neutral-l-factor))
-      calc(c * var(--ty-c-bg-soft-mult)) h
+    from var(--ty-color-neutral) l c h / var(--ty-a-bg-soft)
   );
   --ty-bg-neutral-strong: oklch(
     from var(--ty-neutral-seed-resolved) var(--ty-l-bg-neutral-strong)
@@ -660,7 +654,7 @@ html:root,
   );
 
   /* ----------------------------------------------------------------
-   * Global neutral borders — own family, own L ladder (Tier 3).
+   * Global neutral borders — own family, own L ladder (Tier 2).
    * Tinted by the neutral seeds like everything grey, but NOT tied to
    * the text emphasis curve or --ty-neutral-l-factor. Per-flavor
    * accent borders (--ty-border-{flavor}) stay ink aliases — a colored
@@ -684,7 +678,7 @@ html:root,
 
   /* ----------------------------------------------------------------
    * Text ladder + surface borders — engine-wired versions of tokens
-   * tyrell.css hardcodes as hexes. Own L dials (Tier 3), neutral
+   * tyrell.css hardcodes as hexes. Own L dials (Tier 2), neutral
    * hue/chroma tint. These out-rank the base hexes the same way every
    * other token here does; a rebrand now reaches body text too.
    * --------------------------------------------------------------*/
@@ -739,7 +733,7 @@ html:root,
   );
 
   /* ----------------------------------------------------------------
-   * Inputs — tied to neutral ramp so form controls retint with brand.
+   * Inputs — tied to neutral ramp so form controls retint with primary.
    * --------------------------------------------------------------*/
   --ty-input-bg: var(--ty-surface-input);
   --ty-input-color: var(--ty-color-neutral-strong);
@@ -758,10 +752,10 @@ html:root,
 }
 
 /* ----------------------------------------------------------------
- * Tier 6 — SOLID (implementation)
+ * Tier 5 — SOLID (implementation)
  * Solid is its OWN system, NOT the text/emphasis ramp. The dials
  * (--ty-solid-hover-l / -active-l / -strong-l / -soft-l and
- * --ty-solid-l / -c / -h) live in SECTION 1, Tier 6. Below is the
+ * --ty-solid-l / -c / -h) live in SECTION 1, Tier 5. Below is the
  * derivation only: base fill bakes in the per-theme adjust (Axis B);
  * hover/active/strong/soft offset the base by Axis A. Override any
  * single --ty-solid-{flavor}-{state} to recolor just that segment.
@@ -769,8 +763,8 @@ html:root,
  * Declared at `html:root` (specificity 0,1,1) — NOT plain `:root` (0,1,0) —
  * on purpose: it must out-rank tyrell.css's hardcoded dark solids at
  * `html.dark` (0,1,1). It wins light by specificity over base's `html{}`,
- * and wins dark by source order over base's `html.dark` (brand loads after).
- * That's what lets dark solids re-tint with --ty-brand-hue. Declared ONCE —
+ * and wins dark by source order over base's `html.dark` (theme layer loads after).
+ * That's what lets dark solids re-tint with --ty-primary-hue. Declared ONCE —
  * the oklch(from var(--ty-color-*)) formulas resolve per-mode automatically,
  * so no dark duplicate is needed.
  * --------------------------------------------------------------*/
@@ -807,7 +801,7 @@ html:root,
    * SOLID FOREGROUNDS — auto-contrast.
    *
    * Each fill gets a foreground picked from its OWN lightness, so a
-   * rebrand (--ty-brand-hue / --ty-brand-chroma / any L-curve override)
+   * rebrand (--ty-primary-hue / --ty-primary-chroma / any L-curve override)
    * can't strand white text on a pale fill. Branchless, no JS:
    *
    *   clamp(0, (threshold - l) * 1000, 1)  ->  1 (white) when the fill
@@ -823,9 +817,19 @@ html:root,
    * or set --ty-solid-fg-threshold: 1 to force white everywhere.
    * --------------------------------------------------------------*/
 
-  /* Crossover point. Fills lighter than this get black text. ~0.58-0.62
-     is the sRGB break-even; higher = prefers white, lower = prefers black. */
-  --ty-solid-fg-threshold: 0.62;
+  /* Crossover point. Fills lighter than this get black text; higher =
+     prefers white, lower = prefers black.
+
+     Measured in-browser at stock dials, not guessed: the L at which black
+     and white give EQUAL WCAG contrast is 0.553 (success) / 0.564 (neutral)
+     / 0.569 (warning) / 0.570 (primary) / 0.578 (danger) — a 0.025 spread,
+     so one global dial can serve every hue. Sweeping all 30 fills (15 ×
+     light/dark), the window where every fill gets the better of black/white
+     is (0.544, 0.588]; 0.57 sits ~mid-window. It previously read 0.62 —
+     above every flavor's break-even — which put white on `warning+` in both
+     modes: 4.23:1 light, 3.95:1 dark, each below AA and each the worse of
+     the two choices. Locked by test/solid-contrast.test.ts. */
+  --ty-solid-fg-threshold: 0.75;
 
   --ty-solid-primary-fg: oklch(
     from var(--ty-solid-primary)
@@ -984,15 +988,15 @@ html:root,
  * work, switches just snap (the pre-TC37 behavior).
  * ===================================================================== */
 
-@property --ty-brand-hue {
+@property --ty-primary-hue {
   syntax: "<number>";
   inherits: true;
-  initial-value: 45;
+  initial-value: 252;
 }
-@property --ty-brand-chroma {
+@property --ty-primary-chroma {
   syntax: "<number>";
   inherits: true;
-  initial-value: 0.125;
+  initial-value: 0.08;
 }
 @property --ty-surface-chroma {
   syntax: "<number>";
@@ -1064,20 +1068,20 @@ html:root,
   inherits: true;
   initial-value: 0.88;
 }
-@property --ty-l-bg-base {
-  syntax: "<number>";
+@property --ty-a-bg-base {
+  syntax: "<percentage>";
   inherits: true;
-  initial-value: 0.96;
+  initial-value: 9%;
 }
-@property --ty-l-bg-bold {
-  syntax: "<number>";
+@property --ty-a-bg-bold {
+  syntax: "<percentage>";
   inherits: true;
-  initial-value: 0.92;
+  initial-value: 17%;
 }
-@property --ty-l-bg-soft {
-  syntax: "<number>";
+@property --ty-a-bg-soft {
+  syntax: "<percentage>";
   inherits: true;
-  initial-value: 0.98;
+  initial-value: 4%;
 }
 @property --ty-l-text-strong {
   syntax: "<number>";
@@ -1219,21 +1223,6 @@ html:root,
   inherits: true;
   initial-value: 0.46;
 }
-@property --ty-c-bg-base-mult {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0.15;
-}
-@property --ty-c-bg-bold-mult {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0.38;
-}
-@property --ty-c-bg-soft-mult {
-  syntax: "<number>";
-  inherits: true;
-  initial-value: 0.08;
-}
 @property --ty-primary-l-factor {
   syntax: "<number>";
   inherits: true;
@@ -1346,7 +1335,7 @@ html:root,
 @property --ty-solid-fg-threshold {
   syntax: "<number>";
   inherits: true;
-  initial-value: 0.62;
+  initial-value: 0.75;
 }
 @property --ty-focus-ring-alpha {
   syntax: "<percentage>";
@@ -1384,11 +1373,11 @@ html:root,
   html,
   [data-ty-theme] {
     transition-property:
-      --ty-brand-hue, --ty-brand-chroma, --ty-surface-chroma, --ty-success-hue,
+      --ty-primary-hue, --ty-primary-chroma, --ty-surface-chroma, --ty-success-hue,
       --ty-success-chroma, --ty-warning-hue, --ty-warning-chroma,
       --ty-danger-hue, --ty-danger-chroma, --ty-neutral-hue,
       --ty-neutral-chroma, --ty-l-strong, --ty-l-bold, --ty-l-base, --ty-l-soft,
-      --ty-l-faint, --ty-l-bg-base, --ty-l-bg-bold, --ty-l-bg-soft,
+      --ty-l-faint, --ty-a-bg-base, --ty-a-bg-bold, --ty-a-bg-soft,
       --ty-l-text-strong, --ty-l-text-bold, --ty-l-text-base, --ty-l-text-soft,
       --ty-l-text-faint, --ty-l-border-content, --ty-l-border-elevated,
       --ty-l-border-floating, --ty-l-border-strong, --ty-l-border-bold,
@@ -1398,7 +1387,6 @@ html:root,
       --ty-l-solid-neutral-strong, --ty-l-bg-neutral-strong,
       --ty-l-bg-neutral-faint, --ty-c-bg-neutral-faint-mult, --ty-c-strong-mult,
       --ty-c-bold-mult, --ty-c-base-mult, --ty-c-soft-mult, --ty-c-faint-mult,
-      --ty-c-bg-base-mult, --ty-c-bg-bold-mult, --ty-c-bg-soft-mult,
       --ty-primary-l-factor, --ty-success-l-factor, --ty-warning-l-factor,
       --ty-danger-l-factor, --ty-neutral-l-factor, --ty-primary-solid-l,
       --ty-success-solid-l, --ty-warning-solid-l, --ty-danger-solid-l,

@@ -75,7 +75,17 @@ export const selectBaseStyles = `
   /* Modal handles z-index automatically */
 
   opacity: 0;
-  transition: opacity 400ms ease;
+  /* Panel-level entrance: individual scale/translate compose with the
+     collision-shift transform below. The single-select skin flattens the
+     inner .dropdown-options animation (select.ts: "panel appears as one"),
+     so the dialog carries the motion for both skins. */
+  scale: 0.96;
+  translate: 0 -6px;
+  transform-origin: top center;
+  transition:
+    opacity var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    scale var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    translate var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
 
   transform: translate(var(--dropdown-offset-x, 0px), var(--dropdown-offset-y, 0px));
   top: -1000px;
@@ -98,6 +108,8 @@ export const selectBaseStyles = `
   bottom: var(--dropdown-y);
   top: auto;
   flex-direction: column-reverse;
+  translate: 0 6px;
+  transform-origin: bottom center;
 }
 
 .dropdown-dialog.position-above .dropdown-header {
@@ -112,13 +124,45 @@ export const selectBaseStyles = `
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1), var(--ty-shadow-md);
 }
 
+.dropdown-dialog.position-above .dropdown-options {
+  transform: translateY(6px) scale(0.96);
+  transform-origin: bottom center;
+}
+
 .dropdown-dialog.open {
   opacity: 1;
+  scale: 1;
+  translate: 0 0;
 }
 
 .dropdown-dialog.open .dropdown-options {
   opacity: 1;
   transform: translateY(0) scale(1);
+}
+
+/* Transitions never start on an element that was display:none last frame —
+   showModal() + .open land in the same frame, so the enter transition was
+   silently skipped. @starting-style supplies the first-frame "from" values
+   (this is the platform mechanism for animating dialog/top-layer entry). */
+@starting-style {
+  .dropdown-dialog.open {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 -6px;
+  }
+
+  .dropdown-dialog.open.position-above {
+    translate: 0 6px;
+  }
+
+  .dropdown-dialog.open .dropdown-options {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+
+  .dropdown-dialog.open.position-above .dropdown-options {
+    transform: translateY(6px) scale(0.96);
+  }
 }
 
 .dropdown-dialog::backdrop {
@@ -345,8 +389,11 @@ export const selectBaseStyles = `
   min-width: 0;
 }
 
+/* No flex-grow here — the placeholder only ever renders inside .select-stub,
+   and select.ts sets flex: 1 1 0% on it. A bare flex-grow: 1 (implicit
+   flex-basis:auto) is the wrap bug that fix exists to prevent; leaving it
+   here would silently reintroduce it if the specific rule ever moved. */
 .dropdown-placeholder {
-  flex-grow: 1;
   color: var(--input-placeholder, var(--ty-input-placeholder, #9ca3af));
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
@@ -382,10 +429,11 @@ export const selectBaseStyles = `
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
-  transform: translateY(-8px) scale(0.95);
+  transform: translateY(-6px) scale(0.96);
+  transform-origin: top center;
   transition:
-    opacity 200ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    transform var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
 
   display: flex;
   flex-wrap: wrap;

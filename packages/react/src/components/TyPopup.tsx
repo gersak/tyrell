@@ -60,11 +60,8 @@ export const TyPopup = React.forwardRef<TyPopupElement, TyPopupProps>(
       }
     }, [ref]);
 
-    // Listen for popup open/close events.
-    // Guard with `event.target === element` so bubbled open/close events
-    // from popup-like descendants (ty-dropdown, ty-multiselect, ty-date-picker
-    // when slotted inside this popup) don't fire the consumer's onOpen/onClose.
-    // See TyModal.tsx for the same pattern + rationale.
+    // Listen for popup open/close events. See TyModal.tsx for why the
+    // `event.target === element` guard is still here.
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;

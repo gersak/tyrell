@@ -1369,3 +1369,22 @@ RESPONSIVE VARIANTS
     --ty-font-sm: 1rem;
   }
 }
+
+/* =================================================================
+   MODAL BACKDROP ZOOM (opt-in)
+   While any <ty-modal backdrop-zoom open> is open, the component toggles
+   .ty-modal-zoom on <html> and the page body scales down slightly
+   (Vaul/shadcn-style). The modal itself renders in the top layer, which
+   escapes ancestor transforms — only the page behind it moves.
+   Caveat: a scaled <body> becomes the containing block for position:fixed
+   descendants — apps with fixed headers/sidebars should not use backdrop-zoom.
+================================================================= */
+
+body {
+  transition: scale var(--ty-modal-duration, 200ms) ease-out;
+}
+
+html.ty-modal-zoom body {
+  scale: 0.99;
+  transform-origin: 50% 50%;
+}

@@ -206,7 +206,9 @@ describe('a11y (axe) — no serious/critical violations', () => {
       <ty-modal label="Confirm delete"><p>Are you sure?</p></ty-modal>
     `)) as any;
     el.setAttribute('open', 'true');
-    await nextFrame();
+    // Let the 200ms panel enter animation finish — axe measures color
+    // contrast against the mid-fade opacity otherwise.
+    await new Promise((r) => setTimeout(r, 300));
     expectClean(await audit(el));
   });
 });

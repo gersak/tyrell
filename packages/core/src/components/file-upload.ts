@@ -125,13 +125,31 @@ export class TyFileUpload
   }
 
   protected getFormValue(): FormData | string | null {
-    if (this._files.length === 0) return null;
+    // Native fidelity: an unnamed control is excluded from submission.
+    if (this._files.length === 0 || !this.name) return null;
     const fd = new FormData();
-    const fieldName = this.name || "files";
     for (const file of this._files) {
-      fd.append(fieldName, file);
+      fd.append(this.name, file);
     }
     return fd;
+  }
+
+  /**
+   * Match a file against the `accept` attribute the way native inputs do:
+   * comma-separated list of `.ext`, `type/subtype` or `type/*` entries.
+   * No/blank accept matches everything.
+   */
+  private matchesAccept(file: File): boolean {
+    const accept = this.accept?.trim();
+    if (!accept) return true;
+    return accept.split(",").some((raw) => {
+      const entry = raw.trim().toLowerCase();
+      if (!entry) return false;
+      if (entry.startsWith(".")) return file.name.toLowerCase().endsWith(entry);
+      const type = file.type.toLowerCase();
+      if (entry.endsWith("/*")) return type.startsWith(entry.slice(0, -1));
+      return type === entry;
+    });
   }
 
   get files(): File[] {
@@ -278,7 +296,11 @@ export class TyFileUpload
       e.stopPropagation();
       this._isDragging = false;
       dropZone.classList.remove("drag-active");
-      const files = Array.from(e.dataTransfer?.files ?? []);
+      // The native picker filters by `accept`, but drag-and-drop bypasses the
+      // dialog entirely — apply the same filter here (native inputs do too).
+      const files = Array.from(e.dataTransfer?.files ?? []).filter((f) =>
+        this.matchesAccept(f),
+      );
       if (files.length > 0) this.setFiles(files);
     };
 

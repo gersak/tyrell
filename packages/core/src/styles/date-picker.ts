@@ -265,7 +265,15 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   padding: var(--calendar-padding, 8px);
 
   opacity: 0;
-  transition: opacity 200ms ease;
+  /* Entrance motion uses the individual scale/translate properties so it
+     composes with the collision-shift transform below (they apply first). */
+  scale: 0.96;
+  translate: 0 -6px;
+  transform-origin: top center;
+  transition:
+    opacity var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    scale var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
+    translate var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
 
   transform: translate(var(--calendar-offset-x, 0px), var(--calendar-offset-y, 0px));
   top: -1000px;
@@ -282,10 +290,28 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   bottom: var(--calendar-y);
   top: auto;
   flex-direction: column-reverse;
+  translate: 0 6px;
+  transform-origin: bottom center;
 }
 
 .calendar-dialog.open {
   opacity: 1;
+  scale: 1;
+  translate: 0 0;
+}
+
+/* First-frame "from" values — see select-base.ts: transitions can't start on
+   an element that was display:none last frame; @starting-style fixes that. */
+@starting-style {
+  .calendar-dialog.open {
+    opacity: 0;
+    scale: 0.96;
+    translate: 0 -6px;
+  }
+
+  .calendar-dialog.open.position-above {
+    translate: 0 6px;
+  }
 }
 
 .calendar-dialog::backdrop {

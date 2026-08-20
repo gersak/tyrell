@@ -143,7 +143,21 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    */
   connectedCallback(): void {
     this._connected = true
-    
+
+    // Native defaultValue/defaultChecked semantics: form.reset() restores the
+    // ATTRIBUTE-declared state. Property changes reflect back to attributes
+    // here (unlike native inputs), so the original attribute must be captured
+    // once, at first connect, before any interaction overwrites it.
+    if (!this._resetDefaults) {
+      this._resetDefaults = new Map()
+      const ctor = this.constructor as typeof TyComponent
+      for (const [name, config] of Object.entries(ctor.properties)) {
+        if (!config.formValue) continue
+        const attr = this.getAttribute(this._toKebabCase(name))
+        this._resetDefaults.set(name, attr ?? config.default ?? null)
+      }
+    }
+
     // Capture pre-set properties (React/Vue/Reagent pattern)
     const preSetProps = this._capturePreSetProperties()
 
@@ -340,19 +354,19 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     return false
   }
 
+  private _resetDefaults: Map<string, any> | null = null
+
   /**
-   * Form reset callback - called when form.reset() is invoked
-   * Resets component to its default value
+   * Form reset callback - called when form.reset() is invoked.
+   * Restores every formValue-bearing property to its attribute-declared
+   * default captured at first connect (native defaultValue/defaultChecked
+   * semantics). Non-form state (e.g. a checkbox's submission `value`, a
+   * ty-radio's option `value`) is deliberately left alone — the old
+   * blanket 'value' reset corrupted radio groups by wiping child values.
    */
   formResetCallback(): void {
-    const ctor = this.constructor as typeof TyComponent
-    const valueConfig = ctor.properties['value']
-    
-    if (valueConfig) {
-      const defaultValue = valueConfig.default ?? ''
-      
-      // Reset the value property through setProperty to trigger lifecycle
-      this.setProperty('value', defaultValue)
+    for (const [name, def] of this._resetDefaults ?? []) {
+      this.setProperty(name, def)
     }
 
     this.onFormReset()

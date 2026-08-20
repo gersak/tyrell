@@ -90,15 +90,12 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
       element: elementRef.current,
     }), []);
 
-    // ty-dropdown, ty-multiselect, ty-date-picker etc. dispatch their own
-    // `open`/`close` custom events with `bubbles: true, composed: true` when
-    // their internal popups toggle. Those events bubble up through the
-    // modal's slotted content and land on the ty-modal host — same event
-    // type, same listener. Without the `event.target === element` guard, an
-    // `onClose={() => setIsOpen(false)}` callback would fire every time the
-    // user closes a dropdown inside the modal, and the React state flip
-    // would close the modal. Core's modal.ts already applies the same guard
-    // on its internal <dialog>.onclose; this is the React-layer mirror.
+    // Popup lifecycle events (`open`/`close`, plus `beforeclose` on the modal)
+    // no longer bubble — core dispatches them non-composed on the element
+    // itself, like the native <dialog> events they mirror, so a dropdown or
+    // nested modal closing inside this one can't reach these listeners. The
+    // `event.target === element` guard stays as belt-and-braces for consumers
+    // pinned to an older tyrell-components.
     useEffect(() => {
       const element = elementRef.current;
       if (!element) return;

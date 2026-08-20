@@ -121,7 +121,11 @@ export const selectStyles = `
 }
 .select-stub.has-clone slot[name="selected"] {
   display: block;
-  flex: 1 1 auto;
+  /* flex-basis 0, not auto — same reasoning as .dropdown-placeholder above:
+     .select-stub is flex-wrap:wrap, and auto's hypothetical size is the
+     clone's full untruncated text width, which pushes .select-clear onto
+     a second line. */
+  flex: 1 1 0%;
   min-width: 0;
   overflow: hidden;
 }

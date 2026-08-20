@@ -13,6 +13,7 @@
    [tyrell.site.views.landing :as landing]
    [tyrell.site.views.sandbox-sizing :as sandbox-sizing]
    [tyrell.site.views.sandbox-tabs :as sandbox-tabs]
+   [tyrell.site.views.sandbox-polish :as sandbox-polish]
    [tyrell.site.views.sandbox-toggles :as sandbox-toggles]))
 
 ;; Configuration for GitHub Pages deployment
@@ -73,7 +74,12 @@
    {:id ::sandbox-toggles
     :segment "internal/toggles"
     :name "Switch/Checkbox Double-fire Verify (hidden)"
-    :view sandbox-toggles/view}])
+    :view sandbox-toggles/view}
+
+   {:id ::sandbox-polish
+    :segment "internal/polish"
+    :name "Open Polish Issues (hidden)"
+    :view sandbox-polish/view}])
 
 (def component-routes docs/docs-components)
 

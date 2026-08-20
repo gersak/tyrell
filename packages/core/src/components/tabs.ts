@@ -775,14 +775,32 @@ export class TyTabs extends HTMLElement {
     this.attachShadow({ mode: 'open' });
   }
   
+  private _childObserver: MutationObserver | null = null;
+  private _childRenderQueued = false;
+
   connectedCallback() {
     render(this);
+
+    // Frameworks add/remove ty-tab children dynamically — the button strip
+    // renders from light DOM, so watch it. Batched on a microtask; render()
+    // only touches shadow DOM, so no observer feedback loop.
+    this._childObserver = new MutationObserver(() => {
+      if (this._childRenderQueued) return;
+      this._childRenderQueued = true;
+      queueMicrotask(() => {
+        this._childRenderQueued = false;
+        if (this.isConnected) render(this);
+      });
+    });
+    this._childObserver.observe(this, { childList: true });
   }
-  
+
   disconnectedCallback() {
+    this._childObserver?.disconnect();
+    this._childObserver = null;
     cleanup(this);
   }
-  
+
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     // Smart rendering: only full render when structural attributes change
     if (name === 'active') {
