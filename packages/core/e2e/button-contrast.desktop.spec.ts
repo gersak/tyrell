@@ -5,7 +5,7 @@ import { mount } from './helpers'
  * Regression coverage for the auto-contrast foreground fix (--ty-solid-*-fg
  * derived from the fill's own lightness instead of hardcoded white).
  * Before the fix: every `flavor-` (tone-minus) solid button failed WCAG AA
- * at every brand hue — worst case 2.53:1. Desktop-only: no touch dependency,
+ * at every primary hue — worst case 2.53:1. Desktop-only: no touch dependency,
  * one run is enough to catch a regression in the token math.
  */
 
@@ -55,7 +55,7 @@ test.describe('solid button auto-contrast — WCAG AA across flavors/tones/hues/
 
       const failures: string[] = []
       for (const hue of HUES) {
-        await page.evaluate((h) => document.documentElement.style.setProperty('--ty-brand-hue', String(h)), hue)
+        await page.evaluate((h) => document.documentElement.style.setProperty('--ty-primary-hue', String(h)), hue)
         await page.waitForTimeout(60)
         for (const f of FLAVORS) {
           for (const t of TONES) {
