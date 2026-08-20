@@ -90,12 +90,20 @@ function getModalAttributes(el: TyModal): ModalAttributes {
   return {
     open: parseBoolAttr(el, 'open'),
     backdrop: el.hasAttribute('backdrop') ? parseBoolAttr(el, 'backdrop') : true,
-    closeOnOutsideClick: el.hasAttribute('close-on-outside-click')
-      ? parseBoolAttr(el, 'close-on-outside-click')
-      : true,
-    closeOnEscape: el.hasAttribute('close-on-escape')
-      ? parseBoolAttr(el, 'close-on-escape')
-      : true,
+    // Closing is the default, so the HTML-idiomatic switch is a presence
+    // boolean naming the DEVIATION: <ty-modal prevent-outside-click>.
+    // prevent-* wins over the older close-on-*="false" form, which stays
+    // supported (shipped in TC48, promised in the issue reply).
+    closeOnOutsideClick: parseBoolAttr(el, 'prevent-outside-click')
+      ? false
+      : el.hasAttribute('close-on-outside-click')
+        ? parseBoolAttr(el, 'close-on-outside-click')
+        : true,
+    closeOnEscape: parseBoolAttr(el, 'prevent-escape')
+      ? false
+      : el.hasAttribute('close-on-escape')
+        ? parseBoolAttr(el, 'close-on-escape')
+        : true,
   };
 }
 
@@ -278,6 +286,19 @@ function setupEscapeKey(el: TyModal, dialog: HTMLDialogElement, enabled: boolean
   
   if (enabled) {
     const handler = (e: KeyboardEvent) => handleEscapeKey(el, e);
+    escapeKeyHandlers.set(el, handler);
+    dialog.addEventListener('keydown', handler);
+  } else {
+    // ESC-close disabled: consume the keydown so the browser never sees a
+    // close request. Without this, only the FIRST close request is
+    // cancelable — the CloseWatcher anti-trap rule force-closes on a second
+    // consecutive ESC (fires our close with reason 'native'). Consuming the
+    // key is the standard guard-dialog approach; the Android back gesture is
+    // a separate close-request path we deliberately leave force-closable, so
+    // an ultimate escape hatch always remains.
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') e.preventDefault();
+    };
     escapeKeyHandlers.set(el, handler);
     dialog.addEventListener('keydown', handler);
   }
@@ -525,7 +546,7 @@ export class TyModal extends HTMLElement {
   hide?: (opts?: { force?: boolean }) => void;
   
   static get observedAttributes() {
-    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'label'];
+    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'prevent-outside-click', 'prevent-escape', 'label'];
   }
 
   // Property mirrors for the boolean attributes. Frameworks that
@@ -538,12 +559,26 @@ export class TyModal extends HTMLElement {
   get backdrop(): boolean { return getModalAttributes(this).backdrop; }
   set backdrop(v: boolean) { this.setAttribute('backdrop', String(!!v)); }
 
+  /** @deprecated Use preventOutsideClick — prevent-* wins when both are set. */
   get closeOnOutsideClick(): boolean { return getModalAttributes(this).closeOnOutsideClick; }
   set closeOnOutsideClick(v: boolean) { this.setAttribute('close-on-outside-click', String(!!v)); }
 
+  /** @deprecated Use preventEscape — prevent-* wins when both are set. */
   get closeOnEscape(): boolean { return getModalAttributes(this).closeOnEscape; }
   set closeOnEscape(v: boolean) { this.setAttribute('close-on-escape', String(!!v)); }
-  
+
+  // Presence-boolean mirrors: true sets the attribute, false removes it —
+  // like native `disabled`.
+  get preventOutsideClick(): boolean { return parseBoolAttr(this, 'prevent-outside-click'); }
+  set preventOutsideClick(v: boolean) {
+    v ? this.setAttribute('prevent-outside-click', '') : this.removeAttribute('prevent-outside-click');
+  }
+
+  get preventEscape(): boolean { return parseBoolAttr(this, 'prevent-escape'); }
+  set preventEscape(v: boolean) {
+    v ? this.setAttribute('prevent-escape', '') : this.removeAttribute('prevent-escape');
+  }
+
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });

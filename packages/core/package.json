@@ -1,6 +1,6 @@
 {
   "name": "tyrell-components",
-  "version": "1.0.0-TC48",
+  "version": "1.0.0-TC50",
   "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
   "sideEffects": [
