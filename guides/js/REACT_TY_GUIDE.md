@@ -188,15 +188,15 @@ When React controls the `open` state, the modal can still close itself via backd
 ```tsx
 <TyModal
   open={isOpen}
-  closeOnOutsideClick={false}
-  closeOnEscape={false}
+  preventOutsideClick
+  preventEscape
   onClose={() => setIsOpen(false)}
 >
   ...
 </TyModal>
 ```
 
-Now only programmatic state changes (`setIsOpen(false)`) or the built-in X button close the modal.
+Now only programmatic state changes (`setIsOpen(false)`) close the modal — note a fully guarded modal hides the built-in ✕, so render your own close button inside (WCAG 2.1.2). The older `closeOnOutsideClick={false}` / `closeOnEscape={false}` props are deprecated but still work.
 
 ### Tag Events
 

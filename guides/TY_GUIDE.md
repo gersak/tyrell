@@ -426,7 +426,20 @@ Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — o
 
 Also registered as **`ty-dialog`** — same element, platform/ARIA name (wraps native `<dialog>`).
 
-Attrs: `open`, `backdrop` (default true), `close-on-outside-click` (true), `close-on-escape` (true), `backdrop-zoom` (opt-in: scales the page body down slightly while open, Vaul-style; the modal itself renders in the top layer and is unaffected — skip it if your app has `position: fixed` chrome, since a scaled body becomes its containing block), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
+Attrs: `open`, `backdrop` (default true), **`prevent-escape`**, **`prevent-outside-click`** (presence booleans — see below), `backdrop-zoom` (opt-in: scales the page body down slightly while open, Vaul-style; the modal itself renders in the top layer and is unaffected — skip it if your app has `position: fixed` chrome, since a scaled body becomes its containing block), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
+
+**Guarding the close paths.** Closing on ESC and on backdrop click is the default, so the switches follow the HTML convention of naming the *deviation*, like `disabled`:
+
+```html
+<ty-modal prevent-outside-click>…</ty-modal>              <!-- backdrop click does nothing -->
+<ty-modal prevent-escape prevent-outside-click>…</ty-modal> <!-- fully guarded -->
+```
+
+Property mirrors `preventEscape` / `preventOutsideClick` take real booleans (true sets the attribute, false removes it). `prevent-escape` consumes the Escape *keydown*, so the browser's CloseWatcher anti-trap (which force-closes on a second consecutive ESC after one canceled close request) never engages; the Android back gesture deliberately remains force-closable as the last-resort escape hatch.
+
+**Accessibility contract:** a fully guarded modal has no built-in ✕ (the ✕ follows the outside-click setting), so **you must render your own keyboard-reachable close control inside it** — otherwise it's a WCAG 2.1.2 keyboard trap in your app. ESC-closing is also the ARIA APG convention; reserve `prevent-escape` for real guards (unsaved changes, payment in flight), and prefer the gentler `beforeclose` + `hide({ force: true })` confirm pattern where a response to ESC is acceptable.
+
+*Deprecated:* the older `close-on-escape="false"` / `close-on-outside-click="false"` attributes (and `closeOnEscape` / `closeOnOutsideClick` properties) still work — `prevent-*` wins when both are present — but they will be removed in a future release; string-valued booleans were the root of a whole bug class. Migrate to `prevent-*`.
 
 Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'` — `close` reports the same reason. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
 

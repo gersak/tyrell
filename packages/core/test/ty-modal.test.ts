@@ -168,4 +168,30 @@ describe('ty-modal boolean property binding', () => {
 
     el.remove();
   });
+
+  it('prevent-escape / prevent-outside-click presence booleans, winning over close-on-*', async () => {
+    const el = (await fixture(html`
+      <ty-modal prevent-escape close-on-escape="true"><div>x</div></ty-modal>
+    `)) as any;
+    await nextFrame();
+    // prevent-* wins over the legacy attribute
+    expect(el.closeOnEscape).to.equal(false);
+    expect(el.closeOnOutsideClick).to.equal(true);
+
+    // ESC (cancel) must be swallowed
+    el.setAttribute('open', 'true');
+    await nextFrame();
+    const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await nextFrame();
+    expect(el.hasAttribute('open'), 'prevent-escape keeps it open').to.equal(true);
+
+    // property mirrors behave like native disabled: true sets, false removes
+    el.preventEscape = false;
+    expect(el.hasAttribute('prevent-escape')).to.equal(false);
+    expect(el.closeOnEscape).to.equal(true);
+    el.preventOutsideClick = true;
+    expect(el.getAttribute('prevent-outside-click')).to.equal('');
+    expect(el.closeOnOutsideClick).to.equal(false);
+  });
 });

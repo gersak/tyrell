@@ -25,11 +25,27 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** Show backdrop behind modal (default: true) */
   backdrop?: boolean;
 
-  /** Allow closing modal by clicking backdrop (default: true) */
+  /**
+   * @deprecated Use `preventOutsideClick` — string-boolean attrs are being
+   * phased out. Still works; prevent-* wins when both are set.
+   */
   closeOnOutsideClick?: boolean;
 
-  /** Allow closing modal with Escape key (default: true) */
+  /**
+   * @deprecated Use `preventEscape` — string-boolean attrs are being phased
+   * out. Still works; prevent-* wins when both are set.
+   */
   closeOnEscape?: boolean;
+
+  /** Backdrop clicks no longer close the modal (also hides the built-in ✕) */
+  preventOutsideClick?: boolean;
+
+  /**
+   * ESC no longer closes the modal (keydown is consumed, so the browser's
+   * double-ESC anti-trap never fires). A fully guarded modal must render its
+   * own close control — WCAG 2.1.2.
+   */
+  preventEscape?: boolean;
 
   /**
    * Accessible name — sets aria-label on the internal <dialog>. The dialog
@@ -67,6 +83,8 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     backdrop,
     closeOnOutsideClick,
     closeOnEscape,
+    preventOutsideClick,
+    preventEscape,
     label,
     onOpen,
     onClose,
@@ -159,7 +177,9 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
       setIf('backdrop', backdrop);
       setIf('closeOnOutsideClick', closeOnOutsideClick);
       setIf('closeOnEscape', closeOnEscape);
-    }, [backdrop, closeOnOutsideClick, closeOnEscape]);
+      setIf('preventOutsideClick', preventOutsideClick);
+      setIf('preventEscape', preventEscape);
+    }, [backdrop, closeOnOutsideClick, closeOnEscape, preventOutsideClick, preventEscape]);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -178,6 +198,13 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     }
     if (closeOnEscape !== undefined && !coerceBool(closeOnEscape)) {
       webComponentProps['close-on-escape'] = 'false';
+    }
+    // Presence booleans: render the bare attribute only when true
+    if (preventOutsideClick !== undefined && coerceBool(preventOutsideClick)) {
+      webComponentProps['prevent-outside-click'] = '';
+    }
+    if (preventEscape !== undefined && coerceBool(preventEscape)) {
+      webComponentProps['prevent-escape'] = '';
     }
     if (label) webComponentProps.label = label;
 

@@ -40,14 +40,22 @@
         :type "boolean"
         :default "true"
         :description "Show a backdrop behind the modal content. Also picks the underlying mode: true opens with showModal() — top layer, focus trap, ESC handling; false opens with show(), a non-modal dialog that leaves the page interactive."}
+       {:name "prevent-outside-click"
+        :type "presence"
+        :default "—"
+        :description "Backdrop clicks no longer close the modal. Presence boolean — write the bare attribute, or leave it out. Also hides the built-in ✕."}
+       {:name "prevent-escape"
+        :type "presence"
+        :default "—"
+        :description "ESC no longer closes the modal — the keydown is consumed, so even the browser's double-ESC anti-trap never fires. A fully guarded modal MUST render its own close button (WCAG 2.1.2). Android back gesture stays force-closable on purpose."}
        {:name "close-on-outside-click"
         :type "boolean"
         :default "true"
-        :description "Clicking the backdrop closes the modal"}
+        :description "DEPRECATED — use prevent-outside-click. Still works; prevent-* wins when both are present. Will be removed in a future release."}
        {:name "close-on-escape"
         :type "boolean"
         :default "true"
-        :description "Pressing ESC closes the modal"}
+        :description "DEPRECATED — use prevent-escape. Still works; prevent-* wins when both are present. Will be removed in a future release."}
        {:name "label"
         :type "string"
         :default "—"
@@ -284,8 +292,15 @@
       [:div.ty-content.rounded-lg.p-5
        (section-label "Declarative Control")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Control visibility with the " [:code "open"] " attribute — useful in reactive frameworks where you manage state externally."]
-       (code-block "<!-- React / framework binding -->
+        "Control visibility with the " [:code "open"] " attribute — useful in reactive frameworks where you manage state externally. Guard the close paths with the "
+        [:code "prevent-*"] " presence booleans — they name the deviation from the default, like native " [:code "disabled"] "."]
+       (code-block "<!-- backdrop click does nothing -->
+<ty-modal prevent-outside-click>...</ty-modal>
+
+<!-- fully guarded: provide your OWN close button (WCAG 2.1.2) -->
+<ty-modal prevent-escape prevent-outside-click>...</ty-modal>
+
+<!-- React / framework binding -->
 <TyModal open={isOpen} onClose={() => setIsOpen(false)}>
   <div class=\"ty-elevated rounded-lg p-6\">...</div>
 </TyModal>

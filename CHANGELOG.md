@@ -5,11 +5,45 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 1.0.0-TC47
+## [1.0.0-TC50] - 2026-08-20
+
+### Added
+
+- **`preventEscape` / `preventOutsideClick` props on tyrell-react's `TyModal`.** TC49 added the attributes to the core component but the React wrapper never exposed them — React users had no idiomatic path to the new API. Presence semantics: the bare attribute is rendered only when the prop is true. The deprecated `closeOnEscape` / `closeOnOutsideClick` props keep working and now carry `@deprecated` JSDoc (as do the core element's property mirrors), so IDEs flag the migration.
+
+## [1.0.0-TC49] - 2026-08-20
+
+### Added
+
+- **`prevent-escape` / `prevent-outside-click` on `ty-modal` — presence booleans that guard the close paths.** Closing on ESC and backdrop click is the default, so the switch names the *deviation*, HTML-style: `<ty-modal prevent-outside-click>`. Property mirrors `preventEscape` / `preventOutsideClick` take real booleans (true sets the attribute, false removes it, like native `disabled`). A fully guarded modal has no built-in ✕ — consumers must render their own keyboard-reachable close control (WCAG 2.1.2).
+
+### Fixed
+
+- **Guarded modals no longer force-close on a second consecutive ESC.** Browsers allow only one close request to be canceled (the CloseWatcher anti-trap); the second ESC bypassed `cancel` and closed the modal with `reason: "native"`. With ESC-close disabled the modal now consumes the Escape keydown, so no close request is ever generated. The Android back gesture deliberately remains force-closable as the last-resort escape hatch.
+
+### Deprecated
+
+- **`close-on-escape` / `close-on-outside-click` attributes (and the `closeOnEscape` / `closeOnOutsideClick` properties).** Still fully working — `prevent-*` wins when both forms are present — but string-valued booleans (`"false"`) were the root of a whole bug class and these will be removed in a future release. Migrate: `close-on-escape="false"` → `prevent-escape`; `close-on-outside-click="false"` → `prevent-outside-click`.
+
+## [1.0.0-TC48] - 2026-08-20
 
 ### Changed
 
-- **The default brand seed moved from `--ty-brand-hue: 285` / `--ty-brand-chroma: 0.1` to `252` / `0.08` (light), `233` / `0.095` (dark).** Anyone consuming `tyrell-theme.css` without setting their own seeds gets a different default violet — a two-line override (`--ty-brand-hue`, `--ty-brand-chroma`) restores the old look.
+- **The default primary seed moved from `--ty-primary-hue: 285` / `--ty-primary-chroma: 0.1` to `252` / `0.08` (light), `226` / `0.065` (dark).** Anyone consuming `tyrell-theme.css` without setting their own seeds gets a different default violet — a two-line override (`--ty-primary-hue`, `--ty-primary-chroma`) restores the old look.
+
+- **`--ty-brand-hue` / `--ty-brand-chroma` are gone — renamed to `--ty-primary-hue` / `--ty-primary-chroma`, and every semantic flavor's chroma is now a literal number instead of a multiplier on it.** "Brand" and "primary" were two names circling the same knob: in the shipped default, `--ty-brand-hue` only ever drove primary (semantic hues are fixed constants, surface tint defaults to 0, neutral is achromatic), while the `calc(var(--ty-brand-chroma) * N)` coupling on success/warning/danger was overridden with a *different* multiplier by core light, core dark, the docs-site chrome, and the docs-site playground — every consumer already treated the "shared" dial as a fiction. Flattened: every flavor (primary/success/warning/danger) is now one standalone hue + one standalone chroma, matching how neutral already worked.
+
+  **Migration:**
+
+  | Old | New |
+  |---|---|
+  | `--ty-brand-hue` | `--ty-primary-hue` |
+  | `--ty-brand-chroma` | `--ty-primary-chroma` |
+  | `--ty-success-chroma: calc(var(--ty-brand-chroma) * 1.08)` (light) / `* 1.42` (dark) | `--ty-success-chroma: 0.086` (light) / `0.092` (dark) |
+  | `--ty-warning-chroma: calc(var(--ty-brand-chroma) * 2.22)` (light) / `* 3` (dark) | `--ty-warning-chroma: 0.178` (light) / `0.195` (dark) |
+  | `--ty-danger-chroma: calc(var(--ty-brand-chroma) * 1.68)` (light) / `* 1.56` (dark) | `--ty-danger-chroma: 0.134` (light) / `0.101` (dark) |
+
+  `--ty-{flavor}-seed` (full color override, any flavor) is unaffected. Anyone who only ever touched `--ty-brand-hue` for a one-line rebrand just renames it; anyone who pinned a semantic chroma multiplier moves to the literal number. The Theming page playground's per-flavor "chroma × brand" sliders are now plain absolute chroma sliders.
 
 - **`--ty-bg-{flavor}` moved from a lightness formula to an alpha composite.** Previously each background tint had its own `--ty-l-bg-{base,bold,soft}` lightness stop and `--ty-c-bg-{base,bold,soft}-mult` chroma multiplier, computed the same way as the ink track: `L = l-stop × l-factor`. That formula is only well-behaved mid-scale — the bg stops sit at the *ends* of the L range (0.92–0.98 light, 0.19–0.26 dark), so a flavor with `l-factor` far from 1 either clamped to the page background (tint disappeared) or collapsed to a mid-tone fill (no longer read as a background at all).
 
@@ -18,6 +52,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   **Removed:** `--ty-l-bg-base`, `--ty-l-bg-bold`, `--ty-l-bg-soft`, `--ty-c-bg-base-mult`, `--ty-c-bg-bold-mult`, `--ty-c-bg-soft-mult` (both modes). **Added:** `--ty-a-bg-base` (9% light / 13% dark), `--ty-a-bg-bold` (17% / 22%), `--ty-a-bg-soft` (4% / 7%). A custom flavor pack's `--ty-bg-X` lines need the same swap — see the flavor pack builder on the Theming page for the current template. **Visual change:** background tints render slightly differently (generally cleaner at extreme `l-factor` values); anyone who pinned the removed `--ty-l-bg-*`/`--ty-c-bg-*-mult` dials directly needs to move that override to the corresponding `--ty-a-bg-*` alpha instead.
 
 ### Added
+
+- **Enter motion for every floating surface, on one shared recipe.** `ty-select`, `ty-date-picker` and `ty-popup` enter with a fade + `scale(0.96)` + 6px directional slide from the anchor side, driven by two tokens: `--ty-popup-duration` (180ms) and `--ty-popup-ease` (slight-overshoot `cubic-bezier(0.34, 1.56, 0.64, 1)`). `ty-tooltip` gets a calmer variant (120ms fade + 4px slide, no overshoot, `--ty-tooltip-duration`). `ty-modal`'s panel now zooms in (`scale(0.93)` + fade) in sync with its backdrop. Under the hood select/date-picker use `@starting-style` — CSS transitions never start on an element that was `display:none` the previous frame, which is why **ty-select had never animated at all**: `showModal()` and the open class land in the same frame, and the single-select skin additionally disabled the inner panel's transition in favor of a dialog fade that could never run.
+
+- **`backdrop-zoom` attribute on `ty-modal` (opt-in).** While open, the page body scales to 0.99 (Vaul-style); the modal itself renders in the top layer and is unaffected. Derived state — nested modals keep it, last one out clears it. Caveat: a scaled `<body>` becomes the containing block for `position: fixed` descendants; apps with fixed chrome should skip it.
+
+### Fixed
+
+- **`-start`/`-end` placements now align the VISIBLE surface, not the shadow-room wrapper.** `ty-popup`'s dialog carries a 16px transparent wrap; cross-axis alignment ignored it on `top-*`/`bottom-*` (panel 16px off-flush) and had the compensation sign flipped on `left-*`/`right-*` (32px off). Tooltip was already flush (no wrap) — popup and tooltip now share one geometry contract, pinned by e2e: 8px gap on the chosen side, aligned edges exactly flush, bare side centered. Also: `ty-select`'s trigger→popup gap went 4px → 8px, matching date-picker and popup.
+
+- **Native form fidelity (from the 2026-08-19 audit).** `form.reset()` now restores every form control to its attribute-declared default (native `defaultValue`/`defaultChecked` semantics) — previously checkboxes/switches stayed toggled, inputs reset to `''` instead of their `value` attribute, and resetting a form **wiped the `value` of every `ty-radio`** in a group (the base class reset the wrong property on non-form children). Also fixed: re-enabling a disabled `ty-radio-group` re-enables its radios; `ty-file-upload` applies its `accept` filter to drag-and-drop (the picker dialog was the only thing filtering) and unnamed uploads are excluded from `FormData` like native inputs; `ty-tabs`/`ty-wizard` render dynamically added `ty-tab`/`ty-step` children (light DOM is now observed); `ty-resize-observer` migrates its registry entry on id rename; `ty-selected-tags` stamps text-only `<template>`s; `parseNumericValue` treats a repeated separator as thousands grouping (`"1.234.567"` → 1234567) while a lone separator stays decimal.
 
 - **Placements gain cross-axis alignment — `ty-popup`, `ty-tooltip`, `ty-select` and `ty-date-picker` now share one 12-value vocabulary.** A placement is a **side** plus an optional **alignment**: the bare side centers on the anchor, `-start` puts the leading edges flush, `-end` the trailing edges. For `top`/`bottom` that axis is horizontal (`bottom-start` = below, left edges flush); for `left`/`right` it is vertical (`left-start` = to the left, top edges flush). All twelve combinations are valid.
 
