@@ -62,6 +62,15 @@ export const selectBaseStyles = `
   width: auto;
 }
 
+/* A custom slot="trigger" is the same situation as compact: the trigger is
+   the consumer's own button, not a form field — hug it so chips/toolbar
+   items can sit right next to it. [has-trigger] is reflected by
+   setupTriggerSlot() because Blink does not parse :has() inside :host(). */
+:host([has-trigger]) {
+  display: inline-block;
+  width: auto;
+}
+
 .dropdown-dialog {
   position: fixed;
   width: var(--dropdown-width, 200px);

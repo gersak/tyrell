@@ -207,7 +207,11 @@
     "Popup width is independent of the trigger (override with "
     [:code.ty-text "--ty-select-popup-width"] ")."]
    (demo-area
-    [:div.space-y-3
+    ;; Chips INLINE beside the trigger, same flex row — a slot="trigger"
+    ;; select hugs its trigger (like [compact]) instead of claiming the row.
+    ;; Chips freeze while the popup is open and refresh with the final
+    ;; selection on close — they are never hidden.
+    [:div.flex.flex-wrap.items-center.gap-2
      [:ty-select {:id "trigger-select"
                   :multiple true
                   :name "robots"}
@@ -218,8 +222,7 @@
       [:ty-option {:value "email"} "Email klijent za KnowledBase"]
       [:ty-option {:value "eywa"} "EYWA Dataset Example with Reacher"]
       [:ty-option {:value "pdf"} "Generate PDF microservice"]]
-     [:div.flex.flex-wrap.gap-2
-      [:ty-selected-options {:for "trigger-select"}]]])
+     [:ty-selected-options {:for "trigger-select"}]])
    (code-block "<ty-select multiple name=\"robots\" id=\"robots\">
   <!-- your trigger, your styling -->
   <ty-button slot=\"trigger\" flavor=\"primary\" outlined pill>

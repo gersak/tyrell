@@ -31,19 +31,21 @@ export class TySelectedOptions extends HTMLElement {
   private _pickerObserver: MutationObserver | null = null
   private _lastTemplate: HTMLTemplateElement | null = null
 
-  // While the linked picker's own popup is open, its independently-sized,
-  // independently-positioned dropdown can visually collide with this chip
-  // row (it's a separate element, placed wherever the consumer wants it —
-  // there's no layout relationship to enforce). Hiding the chips for the
-  // duration sidesteps that instead of trying to out-z-index or reflow
-  // around an overlay whose size/position we don't control.
-  private _restoreDisplay = 'contents'
+  // While the linked picker's popup is open, chips FREEZE: no re-render, no
+  // hide, no style writes — whatever was on screen stays exactly as it is
+  // (INVARIANTS.md §1: position-indifferent, and §2 trivially — we never
+  // touch our own inline style). The popup is a top-layer <dialog>, so it
+  // paints over the chips like any dropdown covers content beneath it. One
+  // refresh on close renders the final selection.
+  private _pickerOpen = false
+
   private _onPickerOpen = (): void => {
-    this._restoreDisplay = this.style.display || 'contents'
-    this.style.display = 'none'
+    this._pickerOpen = true
   }
+
   private _onPickerClose = (): void => {
-    this.style.display = this._restoreDisplay
+    this._pickerOpen = false
+    this.renderChips()
   }
 
   connectedCallback(): void {
@@ -116,8 +118,8 @@ export class TySelectedOptions extends HTMLElement {
     this._pickerObserver?.disconnect()
     this._pickerObserver = null
     this._picker = null
-    // Don't leave chips hidden if the picker is swapped/removed mid-open.
-    this.style.display = this._restoreDisplay
+    // Don't leave chips frozen if the picker is swapped/removed mid-open.
+    this._pickerOpen = false
   }
 
   private values(): string[] {
@@ -217,6 +219,11 @@ export class TySelectedOptions extends HTMLElement {
   }
 
   private renderChips(): void {
+    // Frozen while the picker's popup is open — the selection may churn as
+    // the user picks, but the chip row must not move/grow under the popup.
+    // _onPickerClose renders the final state.
+    if (this._pickerOpen) return
+
     const template = this.template()
     this._lastTemplate = template
 

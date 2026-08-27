@@ -14,6 +14,9 @@ export interface TyTabsProps extends Omit<React.HTMLAttributes<HTMLElement>, 'on
   /** Position of tab buttons */
   placement?: 'top' | 'bottom';
   
+  /** Divide the bar equally between the tabs instead of scrolling them */
+  fixed?: boolean;
+  
   /** Tab change event handler */
   onChange?: (event: CustomEvent<TabChangeDetail>) => void;
   
@@ -35,6 +38,7 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
     height,
     active,
     placement,
+    fixed,
     onChange,
     ...props 
   }, ref) => {
@@ -76,6 +80,8 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
     if (height) webComponentProps.height = height;
     if (active) webComponentProps.active = active;
     if (placement) webComponentProps.placement = placement;
+    // Presence boolean — render the bare attribute only when true.
+    if (fixed) webComponentProps.fixed = '';
 
     return React.createElement(
       'ty-tabs',

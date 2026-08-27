@@ -99,21 +99,21 @@ test.describe('ty-tabs — overflow menu', () => {
     await mount(page, `<ty-tabs id="t" width="900px">${manyTabs}</ty-tabs>`)
     await page.waitForTimeout(100)
     expect(await page.locator('#t .tab-overflow-trigger').count()).toBe(0)
-    expect(await page.locator('#t .tab-button.overflow-hidden').count()).toBe(0)
   })
 
-  test('narrow container: excess tabs collapse behind a "more" trigger', async ({ page }) => {
+  test('narrow container: strip scrolls and the "…" jump menu appears — no tab is hidden', async ({ page }) => {
     await mount(page, `<ty-tabs id="t" width="300px">${manyTabs}</ty-tabs>`)
     await page.waitForTimeout(100)
     await expect(page.locator('#t .tab-overflow-trigger')).toBeVisible()
-    const hiddenCount = await page.locator('#t .tab-button.overflow-hidden').count()
-    expect(hiddenCount).toBeGreaterThan(0)
-    // At least one tab stays visible alongside the trigger.
-    const visibleCount = await page.locator('#t .tab-button:not(.overflow-hidden)').count()
-    expect(visibleCount).toBeGreaterThan(0)
+    // All buttons stay in the DOM flow (scrollable), none display:none.
+    expect(await page.locator('#t .tab-button').count()).toBe(6)
+    const overflowing = await page.locator('#t .tab-strip').evaluate(
+      (s) => s.scrollWidth > s.clientWidth
+    )
+    expect(overflowing).toBe(true)
   })
 
-  test('selecting a tab from the overflow menu activates it and keeps it visible', async ({ page }) => {
+  test('selecting a tab from the jump menu activates it and scrolls it into view', async ({ page }) => {
     await mount(page, `<ty-tabs id="t" width="300px">${manyTabs}</ty-tabs>`)
     await page.waitForTimeout(100)
     await page.locator('#t .tab-overflow-trigger').click()
@@ -121,10 +121,154 @@ test.describe('ty-tabs — overflow menu', () => {
     await expect(lastItem).toBeVisible()
     const label = await lastItem.textContent()
     await lastItem.click()
-    await page.waitForTimeout(100)
+    // Smooth scroll needs a moment to settle.
+    await page.waitForTimeout(600)
     const activeButton = page.locator('#t .tab-button[aria-selected="true"]')
     await expect(activeButton).toHaveText(label!.trim())
-    await expect(activeButton).not.toHaveClass(/overflow-hidden/)
+    const fullyVisible = await page.locator('#t .tab-strip').evaluate((s) => {
+      const btn = s.querySelector('[aria-selected="true"]') as HTMLElement
+      const left = btn.offsetLeft
+      const right = left + btn.offsetWidth
+      return left >= s.scrollLeft - 1 && right <= s.scrollLeft + s.clientWidth + 1
+    })
+    expect(fullyVisible).toBe(true)
+    // Marker frame follows the active tab in the final (scrolled) layout.
+    const markerAligned = await page.locator('#t .tab-strip').evaluate((s) => {
+      const btn = s.querySelector('[aria-selected="true"]') as HTMLElement
+      const marker = s.querySelector('.marker-wrapper') as HTMLElement
+      return Math.abs(parseFloat(marker.style.left) - btn.offsetLeft) <= 1
+    })
+    expect(markerAligned).toBe(true)
+  })
+
+  // 6 short tabs squeezed to the 72px floor = 432px of content.
+  const CONTENT = 432
+
+  test('a sliver of overflow does not summon the "…" trigger (it costs ~52px to reveal ~5px)', async ({ page }) => {
+    await mount(page, `<ty-tabs id="t" width="${CONTENT - 5}px" height="200px">${manyTabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    expect(await page.locator('#t .tab-overflow-trigger').count()).toBe(0)
+    // The strip keeps the full bar width, so the last tab is one small scroll away.
+    const hidden = await page.locator('#t .tab-strip').evaluate(
+      (s) => s.scrollWidth - s.clientWidth
+    )
+    expect(hidden).toBeLessThanOrEqual(10)
+    // ...and activating it brings it fully into view. Driven through the
+    // `active` attribute — the exact path a click takes (setActiveTab just
+    // sets it) minus the narrow-viewport hit-testing a real click needs.
+    await page.locator('#t').evaluate((el) => el.setAttribute('active', 'tab5'))
+    await page.waitForTimeout(600)
+    const fullyVisible = await page.locator('#t .tab-strip').evaluate((s) => {
+      const btn = s.querySelector('[aria-selected="true"]') as HTMLElement
+      return btn.offsetLeft + btn.offsetWidth <= s.scrollLeft + s.clientWidth + 1
+    })
+    expect(fullyVisible).toBe(true)
+  })
+
+  test('the edge fade never veils more than is actually hidden', async ({ page }) => {
+    await mount(page, `<ty-tabs id="t" width="${CONTENT - 5}px" height="200px">${manyTabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    const fade = await page.locator('#t .tab-strip').evaluate(
+      (s) => parseFloat(s.style.getPropertyValue('--fade-right'))
+    )
+    expect(fade).toBeGreaterThan(0)
+    expect(fade).toBeLessThanOrEqual(10)
+  })
+
+  test('activating an already-visible tab does not jerk the strip back and glide in (52px twitch)', async ({ page }) => {
+    await mount(page, `<ty-tabs id="t" active="tab0" width="300px" height="200px">${manyTabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    // Land at the far end first.
+    await page.locator('#t').evaluate((el) => el.setAttribute('active', 'tab5'))
+    await page.waitForTimeout(600)
+
+    // Activating a neighbour re-centres it — a small, monotonic move. What must
+    // NOT happen is the strip jerking backwards past the destination first: the
+    // render used to rebuild the "…" trigger, the momentarily widened strip
+    // clamped scrollLeft down by the trigger's width, and the ensure-visible
+    // glide then slid forward from there.
+    const samples = await page.locator('#t').evaluate(async (el: any) => {
+      const strip = el.shadowRoot.querySelector('.tab-strip')
+      const out: number[] = [Math.round(strip.scrollLeft)]
+      let stop = false
+      const tick = () => {
+        out.push(Math.round(strip.scrollLeft))
+        if (!stop) requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+      el.setAttribute('active', 'tab4')
+      await new Promise((r) => setTimeout(r, 600))
+      stop = true
+      return out
+    })
+    const start = samples[0]
+    const end = samples[samples.length - 1]
+    expect(Math.min(...samples)).toBeGreaterThanOrEqual(Math.min(start, end))
+    expect(Math.max(...samples)).toBeLessThanOrEqual(Math.max(start, end))
+  })
+
+  test('scrollable tabs keep their natural width — they scroll, they never squeeze or ellipsize', async ({ page }) => {
+    const labels = ['Overview', 'Runs', 'Recovery', 'Commits', 'Settings']
+    const tabs = labels.map((l, i) => `<ty-tab id="n${i}" label="${l}">C${i}</ty-tab>`).join('')
+
+    const measure = () => page.locator('#t').evaluate((el: any) => {
+      const buttons = [...el.shadowRoot.querySelectorAll('.tab-button')]
+      return {
+        widths: buttons.map((b: any) => b.offsetWidth),
+        clipped: buttons.some((b: any) => {
+          const label = b.querySelector('.tab-label')
+          return label ? label.scrollWidth > label.clientWidth + 1 : false
+        }),
+      }
+    })
+
+    await mount(page, `<ty-tabs id="t" width="900px" height="200px">${tabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    const roomy = await measure()
+    expect(roomy.clipped).toBe(false)
+
+    // Squeeze the bar well past what the tabs need. Their widths must not budge
+    // — the strip scrolls instead. (They are flex items; without flex-shrink: 0
+    // they collapse toward the min-width floor and the labels ellipsize before
+    // the strip ever overflows.)
+    await page.locator('#t').evaluate((el) => el.setAttribute('width', '260px'))
+    await page.waitForTimeout(200)
+    const squeezed = await measure()
+    expect(squeezed.widths).toEqual(roomy.widths)
+    expect(squeezed.clipped).toBe(false)
+    const hidden = await page.locator('#t .tab-strip').evaluate((s) => s.scrollWidth - s.clientWidth)
+    expect(hidden).toBeGreaterThan(0)
+  })
+
+  test('fixed: tabs split the bar equally, never overflow, never summon the "…"', async ({ page }) => {
+    await mount(page, `<ty-tabs id="t" fixed width="400px" height="200px">${manyTabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    expect(await page.locator('#t .tab-overflow-trigger').count()).toBe(0)
+    const d = await page.locator('#t').evaluate((el: any) => {
+      const strip = el.shadowRoot.querySelector('.tab-strip')
+      return {
+        widths: [...el.shadowRoot.querySelectorAll('.tab-button')].map((b: any) => b.offsetWidth),
+        hidden: strip.scrollWidth - strip.clientWidth,
+      }
+    })
+    expect(d.hidden).toBe(0)
+    // Equal shares — allow a pixel of sub-pixel rounding between them.
+    expect(Math.max(...d.widths) - Math.min(...d.widths)).toBeLessThanOrEqual(1)
+    // As scrollable tabs these 6 would floor at 72px each (432px); here they
+    // share 400px, so each is narrower than the scrollable floor.
+    expect(Math.max(...d.widths)).toBeLessThan(72)
+  })
+
+  test('fixed can be toggled at runtime', async ({ page }) => {
+    await mount(page, `<ty-tabs id="t" width="300px" height="200px">${manyTabs}</ty-tabs>`)
+    await page.waitForTimeout(200)
+    await expect(page.locator('#t .tab-overflow-trigger')).toBeVisible()
+    await page.locator('#t').evaluate((el) => el.setAttribute('fixed', ''))
+    await page.waitForTimeout(200)
+    expect(await page.locator('#t .tab-overflow-trigger').count()).toBe(0)
+    await page.locator('#t').evaluate((el) => el.removeAttribute('fixed'))
+    await page.waitForTimeout(200)
+    await expect(page.locator('#t .tab-overflow-trigger')).toBeVisible()
   })
 
   test('shrinking the width attribute at runtime updates the overflow set', async ({ page }) => {

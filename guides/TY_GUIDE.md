@@ -335,7 +335,11 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 
 ### ty-tabs / ty-tab
 
-**ty-tabs:** `width` (default `'100%'`), `height` (required), `active` (tab id), `placement` (`top` | `bottom`)
+**ty-tabs:** `width` (default `'100%'`), `height` (required), `active` (tab id), `placement` (`top` | `bottom`), `fixed` (presence boolean)
+
+By default tabs are **scrollable**: each button keeps its natural width (floored at `min-width: 72px` via `--ty-tab-min-width`) and never squeezes — the bar scrolls instead, with a `…` jump menu, once they no longer fit. `fixed` divides the bar equally between the tabs instead: no floor, no overflow, no jump menu, labels ellipsize if squeezed.
+
+**Use `fixed` for 2–5 tabs.** Equal shares only read as tabs while each share fits its label — split a bar between 17 and every one becomes an ellipsis. Rough check: if *widest label × tab count* exceeds the narrowest width you support, stay on the scrollable default and let the `…` menu carry the rest. Keep it off for open-ended or user-generated tab sets.
 
 **ty-tab:** `id` (required), `label` (required)
 
@@ -359,12 +363,10 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 **CSS Variables:**
 
 ```css
---ty-tabs-bg
---ty-tabs-border-width
---ty-tabs-button-padding
---ty-tabs-button-gap
---ty-tabs-button-hover-bg
---transition-duration
+--ty-tab-min-width             /* 72px — scrollable tab button floor; ignored by `fixed` */
+--ty-tabs-separator            /* line between bar and panel; transparent removes it */
+--ty-tabs-transition-duration  /* 300ms — marker glide, carousel slide, panel fade */
+--ty-tabs-transition-easing    /* ease-in-out */
 ```
 
 ---

@@ -30,16 +30,72 @@ export const tabsStyles = `
   gap: 0;
   flex-shrink: 0;
   position: relative;
-  /* For absolute positioned marker */
-  
+
   /* Default minimal styling - customize via ::part(buttons-container) */
-  border-bottom: 1px solid var(--ty-border);
   background: transparent;
 }
 
-.tabs-container[data-placement="bottom"] .tab-buttons {
-  border-bottom: none;
-  border-top: 1px solid var(--ty-border);
+/* Separator drawn as a pseudo-element, not a border: a border sits OUTSIDE the
+   strip's box, so the marker (absolutely positioned inside the strip) could only
+   ever stop just above it, reading as two stacked lines. As an overlaid line it
+   lands inside the marker's range, and .tab-strip's z-index lets the marker
+   cover it. */
+.tab-buttons::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  /* --ty-tabs-separator: transparent removes the line (e.g. with a pill marker) */
+  background: var(--ty-tabs-separator, var(--ty-border));
+  pointer-events: none;
+}
+
+.tabs-container[data-placement="bottom"] .tab-buttons::after {
+  bottom: auto;
+  top: 0;
+}
+
+/* Scrollable strip holding the buttons + marker. Tabs never collapse — the
+   strip scrolls (scrollbar hidden; touch/wheel still work) and activation
+   glides the active tab into view. The "…" trigger sits OUTSIDE this strip,
+   pinned at the edge. position:relative makes it the offsetParent for the
+   marker, so the marker scrolls with the buttons and can't desync. */
+.tab-strip {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+  /* Paints the marker + buttons over .tab-buttons::after (the separator line) */
+  z-index: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  /* Edge fades — a mask, not overlays, so it works over any background.
+     --fade-left/right are set from the scroll listener: 0px at a hard edge,
+     28px when more tabs continue past that side. */
+  --fade-left: 0px;
+  --fade-right: 0px;
+  -webkit-mask-image: linear-gradient(to right,
+    transparent, black var(--fade-left),
+    black calc(100% - var(--fade-right)), transparent);
+  mask-image: linear-gradient(to right,
+    transparent, black var(--fade-left),
+    black calc(100% - var(--fade-right)), transparent);
+}
+
+.tab-strip::-webkit-scrollbar {
+  display: none;
+}
+
+/* When every tab fits there is nothing to scroll, so drop the clipping —
+   both overflow and the mask cut a custom marker's box-shadow off at the
+   strip edge. Set by updateOverflow(); clipping stays the pre-measurement
+   default so overflowing tabs can't spill for a frame on first render. */
+.tab-strip.unclipped {
+  overflow: visible;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 /* Marker wrapper — exposed as a CSS Part for custom marker styling */
@@ -49,25 +105,26 @@ export const tabsStyles = `
   /* Behind buttons */
   pointer-events: none;
   /* Don't block clicks */
-  transition: left var(--transition-duration, 300ms) var(--transition-easing, ease-in-out),
-    width var(--transition-duration, 300ms) var(--transition-easing, ease-in-out),
-    height var(--transition-duration, 300ms) var(--transition-easing, ease-in-out),
-    top var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
+  transition: left var(--ty-tabs-transition-duration, 300ms) var(--ty-tabs-transition-easing, ease-in-out),
+    width var(--ty-tabs-transition-duration, 300ms) var(--ty-tabs-transition-easing, ease-in-out),
+    height var(--ty-tabs-transition-duration, 300ms) var(--ty-tabs-transition-easing, ease-in-out),
+    top var(--ty-tabs-transition-duration, 300ms) var(--ty-tabs-transition-easing, ease-in-out);
 }
 
 .default-marker {
   position: absolute;
   bottom: 0;
   left: 0;
-  height: 2px;
+  height: 3px;
   width: 100%;
   background: var(--ty-color-primary);
   pointer-events: none;
 }
 
-/* Hide default marker when custom marker is slotted */
-.marker-wrapper:has(::slotted([slot="marker"])) .default-marker {
-  display: none;
+/* Bottom placement: marker rides the top edge, next to the content it marks */
+.tabs-container[data-placement="bottom"] .default-marker {
+  bottom: auto;
+  top: 0;
 }
 
 ::slotted([slot="marker"]) {
@@ -78,7 +135,15 @@ export const tabsStyles = `
 }
 
 .tab-button {
-  min-width: 120px;
+  /* Material's floor for SCROLLABLE tabs. 120px is the fixed-tab number and it
+     manufactured overflow: five short labels claimed 600px whether they needed
+     it or not. Equal-width rhythm is what the "fixed" attribute is for. */
+  min-width: var(--ty-tab-min-width, 72px);
+  /* Scrollable tabs keep their natural width and let the strip scroll — that is
+     the whole contract. Without this they are flex items with the default
+     shrink of 1, so they squeeze toward the floor and their labels ellipsize
+     before the strip ever overflows. Squeezing is what "fixed" is for. */
+  flex-shrink: 0;
   padding: 6px 12px;
   border: none;
   background: transparent;
@@ -99,6 +164,22 @@ export const tabsStyles = `
   /* Above marker */
 }
 
+/* Fixed tabs: the bar is divided between them instead of scrolling. Material
+   calls this "fixed tabs" — for a small, known set of short labels. No
+   min-width floor, no overflow, no "…". */
+.tabs-container[data-fixed] .tab-button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Fixed tabs only. A scrollable tab is never narrower than its label, so
+   ellipsizing there would hide text the user could simply scroll to. */
+.tabs-container[data-fixed] .tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tab-button[aria-selected=true] {
   color: var(--ty-text-strong);
 }
@@ -114,31 +195,32 @@ export const tabsStyles = `
   outline-offset: -2px;
 }
 
-.tab-button.overflow-hidden {
-  display: none;
-}
-
-/* Overflow "more" trigger + menu */
+/* Overflow "more" trigger (pill) + menu */
 .tab-overflow-trigger {
   flex-shrink: 0;
-  width: 40px;
-  min-width: 40px;
-  padding: 6px;
-  border: none;
+  align-self: center;
+  min-width: 36px;
+  height: 24px;
+  margin: 0 8px;
+  padding: 0 10px;
+  border: 1px solid var(--ty-border);
+  border-radius: 9999px;
   background: transparent;
   cursor: pointer;
   color: var(--ty-text-soft);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   position: relative;
   z-index: 10;
+  transition: color 200ms, border-color 200ms;
 }
 
 .tab-overflow-trigger:hover {
   color: var(--ty-text-strong);
+  border-color: var(--ty-text-soft);
 }
 
 .tab-overflow-trigger:focus-visible {
@@ -176,6 +258,11 @@ export const tabsStyles = `
   color: var(--ty-text-strong);
 }
 
+.tab-overflow-item[data-active="true"] {
+  color: var(--ty-color-primary);
+  font-weight: var(--ty-font-bold);
+}
+
 .tab-overflow-item[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
@@ -195,7 +282,7 @@ export const tabsStyles = `
 .panels-wrapper {
   display: flex;
   height: 100%;
-  transition: transform var(--transition-duration, 300ms) var(--transition-easing, ease-in-out);
+  transition: transform var(--ty-tabs-transition-duration, 300ms) var(--ty-tabs-transition-easing, ease-in-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

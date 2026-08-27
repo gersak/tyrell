@@ -651,6 +651,17 @@ const [activeTab, setActiveTab] = useState('overview')
 </TyTabs>
 ```
 
+Tabs scroll by default — each button has a `min-width: 72px` floor
+(`--ty-tab-min-width`) and the bar grows a `…` jump menu once they no longer fit. Pass `fixed` to divide the bar
+equally between them instead: no floor, no overflow, no jump menu, labels
+ellipsize if squeezed. It's a presence boolean, so `fixed={false}` renders no
+attribute at all. Use it for **2–5** tabs — past that the shares are too narrow
+to read, and the scrollable default with its `…` menu is the right tool:
+
+```tsx
+<TyTabs fixed height="300px" active={activeTab} onChange={…}>
+```
+
 ```tsx
 <TyWizard active={step} completed={completedSteps.join(',')}>
   <TyStep id="info" label="Information">Step 1 content</TyStep>

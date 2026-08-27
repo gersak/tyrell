@@ -242,6 +242,19 @@ Every flavor — including primary — is one hue + one chroma. No flavor derive
 
 Rebrand by overriding `--ty-primary-hue`/`-chroma` alone; touch the others only when a specific flavor needs its own tuning:
 
+> **These dials are per-mode.** Dark mode re-declares every Tier-1 flavor seed
+> at `html.dark` (`--ty-primary-hue: 226`, `--ty-primary-chroma: 0.065`, and the
+> same for success/warning/danger), and `html.dark` (0,1,1) outranks `:root`
+> (0,1,0). So the block below rebrands **light mode only** — dark silently keeps
+> the stock palette. Either repeat the declarations inside `html.dark`
+> (see [Per-mode overrides](#per-mode-overrides)), or set
+> `--ty-{flavor}-seed` instead, which nothing re-declares and which therefore
+> covers both modes in one line:
+>
+> ```css
+> :root { --ty-primary-seed: oklch(0.5 0.13 200); }   /* light + dark */
+> ```
+
 ```css
 :root {
   --ty-primary-hue: 200;
@@ -504,7 +517,13 @@ Purely additive — nothing changes unless you add the class yourself. Works thr
 
 #### Per-mode overrides
 
-Any tier can be overridden separately for dark mode by repeating the declaration inside `html.dark`:
+Any tier can be overridden separately for dark mode by repeating the declaration inside `html.dark`.
+
+For most tiers this is optional. For the **Tier 1 flavor dials**
+(`--ty-{primary,success,warning,danger}-{hue,chroma}`) it is **required** —
+dark ships its own values for those at `html.dark`, so a `:root`-only override
+never reaches dark mode. Repeat them here, or use `--ty-{flavor}-seed` on
+`:root` instead and skip the duplication entirely.
 
 ```css
 :root {

@@ -1635,11 +1635,13 @@ export class TySelect extends TyComponent<SelectState> {
       'slot[name="trigger"]',
     ) as HTMLSlotElement | null;
     if (!stub || !slot) return;
-    const sync = () =>
-      stub.classList.toggle(
-        "custom-trigger",
-        slot.assignedElements().length > 0,
-      );
+    const sync = () => {
+      const hasTrigger = slot.assignedElements().length > 0;
+      stub.classList.toggle("custom-trigger", hasTrigger);
+      // Reflected for :host([has-trigger]) styling (content-hugging width).
+      // Blink does not parse :has() inside :host(), so detection lives here.
+      this.toggleAttribute("has-trigger", hasTrigger);
+    };
     slot.addEventListener("slotchange", sync);
     sync();
   }

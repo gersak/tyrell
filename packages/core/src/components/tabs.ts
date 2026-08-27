@@ -15,6 +15,7 @@ export interface TabsAttributes {
   height: string;             // Total container height including buttons
   active: string | null;      // ID of currently active tab
   placement: 'top' | 'bottom'; // Position of tab buttons
+  fixed: boolean;             // Split the bar into equal shares instead of scrolling
 }
 
 /**
@@ -48,6 +49,7 @@ function getTabsAttributes(el: TyTabs): TabsAttributes {
     height: el.getAttribute('height') || '400px',
     active: el.getAttribute('active'),
     placement: (el.getAttribute('placement') || 'top') as 'top' | 'bottom',
+    fixed: el.hasAttribute('fixed'),
   };
 }
 
@@ -60,11 +62,17 @@ function getTabId(tab: HTMLElement): string | null {
 }
 
 /**
- * Check if ty-tabs has a direct child label slot for this tab-id.
- * Looks in ty-tabs' light DOM for slot='label-{tab-id}' elements.
+ * Find the rich label element for a tab-id.
+ * DIRECT children only — a slot in ty-tabs' shadow root can only be filled by a
+ * direct child of ty-tabs, so a `slot="label-x"` buried inside a ty-tab would be
+ * detected but never rendered, blanking the button.
  */
+function getSlotLabel(tabsEl: TyTabs, tabId: string): Element | null {
+  return tabsEl.querySelector(`:scope > [slot='label-${tabId}']`);
+}
+
 function hasSlotLabel(tabsEl: TyTabs, tabId: string): boolean {
-  return tabsEl.querySelector(`[slot='label-${tabId}']`) !== null;
+  return getSlotLabel(tabsEl, tabId) !== null;
 }
 
 /**
@@ -229,7 +237,7 @@ function updateAriaAttributes(el: TyTabs, shadowRoot: ShadowRoot, activeId: stri
       // data-active lets consumers style slotted label content
       button.setAttribute('data-active', String(isActive));
 
-      const slottedLabel = el.querySelector(`[slot='label-${tabId}']`);
+      const slottedLabel = getSlotLabel(el, tabId);
       if (slottedLabel) {
         slottedLabel.setAttribute('data-active', String(isActive));
       }
@@ -339,6 +347,11 @@ function updateActiveTabState(el: TyTabs, tabId: string, previousId: string | nu
   updatePanelInteraction(el, tabId);
   updateMarker(el, tabId);
 
+  // The "…" menu is not rebuilt on activation any more, so re-mark it here.
+  shadowRoot.querySelectorAll<HTMLElement>('.tab-overflow-item').forEach((item) => {
+    item.setAttribute('data-active', String(item.dataset.tabId === tabId));
+  });
+
   // Reset scroll position of new active panel
   const newPanel = tabs[newIndex] as any;
   if (newPanel?.resetScroll) {
@@ -388,12 +401,14 @@ function setupResizeObserver(el: TyTabs): void {
       updateTransform(el, activeIndex);
     }
 
-    // Update marker position (tab button positions may have changed)
+    // Overflow before marker: the "…" trigger appearing/vanishing reflows the
+    // strip, and the marker must be measured against the final layout.
+    updateOverflow(el);
+
     if (activeId) {
       updateMarker(el, activeId);
+      scrollActiveIntoView(el, activeId, false);
     }
-
-    updateOverflow(el);
   });
 
   observer.observe(el);
@@ -433,17 +448,19 @@ function renderTabButtons(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string 
       data-active="${active}"
       ${disabled ? 'disabled aria-disabled="true"' : ''}
     >
-      ${labelType === 'slot' ? `<slot name="label-${tabId}"></slot>` : textLabel}
+      ${labelType === 'slot' ? `<slot name="label-${tabId}"></slot>` : `<span class="tab-label">${textLabel}</span>`}
     </button>`;
   }).join('');
   
   return `
     <div class="tab-buttons" role="tablist" part="buttons-container">
-      <div class="marker-wrapper" part="marker-wrapper">
-        ${!hasCustomMarker(tabsEl) ? '<div class="default-marker"></div>' : ''}
-        <slot name="marker"></slot>
+      <div class="tab-strip" part="strip">
+        <div class="marker-wrapper" part="marker-wrapper">
+          ${!hasCustomMarker(tabsEl) ? '<div class="default-marker"></div>' : ''}
+          <slot name="marker"></slot>
+        </div>
+        ${buttons}
       </div>
-      ${buttons}
     </div>
   `;
 }
@@ -472,19 +489,16 @@ function renderButtonsOnly(tabsEl: TyTabs, tabs: HTMLElement[], activeId: string
       data-active="${active}"
       ${disabled ? 'disabled aria-disabled="true"' : ''}
     >
-      ${labelType === 'slot' ? `<slot name="label-${tabId}"></slot>` : textLabel}
+      ${labelType === 'slot' ? `<slot name="label-${tabId}"></slot>` : `<span class="tab-label">${textLabel}</span>`}
     </button>`;
   }).join('');
 }
 
-// Overflow handling: collapse tabs that don't fit into a "more" menu.
-const OVERFLOW_TRIGGER_WIDTH = 40;
-
-/** Build a display label for a hidden tab's overflow-menu entry. */
+/** Build a display label for a tab's overflow-menu entry. */
 function getTabMenuLabel(tabsEl: TyTabs, tab: HTMLElement): string {
   const tabId = getTabId(tab);
   if (tabId && getTabLabelType(tabsEl, tab) === 'slot') {
-    const slotted = tabsEl.querySelector(`[slot='label-${tabId}']`);
+    const slotted = getSlotLabel(tabsEl, tabId);
     return slotted?.textContent?.trim() || tabId;
   }
   return tab.getAttribute('label') || 'Tab';
@@ -496,24 +510,18 @@ function removeOverflowMenu(shadowRoot: ShadowRoot): void {
 }
 
 /**
- * Build the "more" trigger button + its ty-popup menu for the given
- * (already-hidden) tab buttons, and append it to the buttons container.
+ * Build the "more" trigger button + its ty-popup jump menu listing ALL tabs
+ * (active one marked), and append it to the buttons container — outside the
+ * scrollable strip, so it stays pinned at the edge.
  * Reuses ty-popup instead of a second floating-menu implementation.
  */
-function renderOverflowMenu(
-  el: TyTabs,
-  container: HTMLElement,
-  hiddenButtons: HTMLButtonElement[],
-  allTabs: HTMLElement[]
-): void {
-  if (hiddenButtons.length === 0) return;
-
-  const tabsById = new Map(allTabs.map((tab) => [getTabId(tab), tab]));
+function renderOverflowMenu(el: TyTabs, container: HTMLElement, allTabs: HTMLElement[]): void {
+  const activeId = getActiveTabId(el, allTabs);
 
   const trigger = document.createElement('button');
   trigger.className = 'tab-overflow-trigger';
   trigger.type = 'button';
-  trigger.setAttribute('aria-label', `${hiddenButtons.length} more tabs`);
+  trigger.setAttribute('aria-label', `${allTabs.length} tabs`);
   trigger.textContent = '⋯';
 
   const popup = document.createElement('ty-popup');
@@ -523,15 +531,16 @@ function renderOverflowMenu(
   menu.className = 'tab-overflow-menu';
   menu.setAttribute('role', 'menu');
 
-  hiddenButtons.forEach((btn) => {
-    const tabId = btn.dataset.tabId;
-    const tab = tabId ? tabsById.get(tabId) : undefined;
-    if (!tabId || !tab) return;
+  allTabs.forEach((tab) => {
+    const tabId = getTabId(tab);
+    if (!tabId) return;
 
     const item = document.createElement('button');
     item.type = 'button';
     item.className = 'tab-overflow-item';
     item.setAttribute('role', 'menuitem');
+    item.setAttribute('data-tab-id', tabId);
+    item.setAttribute('data-active', String(tabId === activeId));
     item.textContent = getTabMenuLabel(el, tab);
     if (isTabDisabled(tab)) {
       item.disabled = true;
@@ -550,61 +559,113 @@ function renderOverflowMenu(
 }
 
 /**
- * Measure the tab buttons against the available width and collapse whatever
- * doesn't fit behind a "more" trigger + popup menu. The active tab is always
- * kept visible — if it would be the one to overflow, the last visible button
- * is hidden in its place instead.
+ * Tabs never collapse: the strip scrolls horizontally (scrollbar hidden) and
+ * activating a tab glides it into view. This only decides whether the "…"
+ * jump menu is needed — shown when the strip actually overflows. scrollWidth/
+ * clientWidth are both integer-rounded the same way, so summing fractional
+ * button widths (the old false-positive "…" with room to spare) can't happen.
  */
 function updateOverflow(el: TyTabs): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
 
   const container = shadowRoot.querySelector<HTMLElement>('.tab-buttons');
-  if (!container) return;
+  const strip = shadowRoot.querySelector<HTMLElement>('.tab-strip');
+  if (!container || !strip) return;
 
+  // Fixed tabs divide the bar between them, so there is nothing to overflow,
+  // nothing to scroll and nothing to fade. Leave the strip unclipped so a
+  // custom marker's shadow can breathe.
+  if (getTabsAttributes(el).fixed) {
+    removeOverflowMenu(shadowRoot);
+    strip.classList.add('unclipped');
+    strip.style.removeProperty('--fade-left');
+    strip.style.removeProperty('--fade-right');
+    return;
+  }
+
+  // Taking the trigger away widens the strip, so the browser clamps scrollLeft
+  // down by the trigger's width — and putting the trigger back does NOT undo
+  // that. Since this runs on every activation, the loss showed up as the strip
+  // jerking ~52px toward the start and gliding back. Restore it once the layout
+  // has settled, below.
+  const savedScrollLeft = strip.scrollLeft;
   removeOverflowMenu(shadowRoot);
-  const buttons = Array.from(container.querySelectorAll<HTMLButtonElement>('.tab-button'));
-  buttons.forEach((b) => b.classList.remove('overflow-hidden'));
-  if (buttons.length === 0) return;
 
-  const available = container.clientWidth;
-  // A zero/negative measurement means we cannot know what fits — the element is
-  // display:none, inside a collapsed parent, or mid-layout. Collapsing on that
-  // reading would hide every tab behind "…" and, since nothing re-runs until
-  // the next resize, leave it stuck that way after the element becomes visible.
-  // Bail and keep the current (all-visible) state instead.
-  if (available <= 0) return;
+  // A zero measurement means the element is display:none or mid-layout —
+  // we can't know whether it overflows, so leave the trigger off.
+  if (strip.clientWidth <= 0) return;
 
-  let total = 0;
-  let cutoff = buttons.length;
-  for (let i = 0; i < buttons.length; i++) {
-    total += buttons[i].offsetWidth;
-    if (total > available) { cutoff = i; break; }
-  }
-  if (cutoff >= buttons.length) return; // everything fits
+  // Content extent comes from the buttons, not scrollWidth: an unclipped strip
+  // has no scrolling box, so scrollWidth would just echo clientWidth and we'd
+  // never notice it started overflowing again.
+  const buttons = strip.querySelectorAll<HTMLElement>('.tab-button');
+  const last = buttons[buttons.length - 1];
+  const contentWidth = last ? last.offsetLeft + last.offsetWidth : 0;
+  const stripWidth = strip.clientWidth;
+  const hidden = contentWidth - stripWidth;
 
-  // Recompute the cutoff leaving room for the "more" trigger itself.
-  total = 0;
-  cutoff = buttons.length;
-  for (let i = 0; i < buttons.length; i++) {
-    total += buttons[i].offsetWidth;
-    if (total > available - OVERFLOW_TRIGGER_WIDTH) { cutoff = i; break; }
-  }
-  cutoff = Math.max(cutoff, 1);
+  // Clipping the strip is what cuts a custom marker's box-shadow off, so only
+  // clip when the tabs actually need to scroll.
+  strip.classList.toggle('unclipped', hidden <= 1);
 
-  const tabs = getChildTabs(el);
-  const activeId = getActiveTabId(el, tabs);
-  const hidden = new Set(buttons.slice(cutoff));
-
-  const activeButton = activeId ? buttons.find((b) => b.dataset.tabId === activeId) : undefined;
-  if (activeButton && hidden.has(activeButton)) {
-    const lastVisible = buttons[cutoff - 1];
-    hidden.delete(activeButton);
-    hidden.add(lastVisible);
+  if (hidden <= 1) { // everything fits
+    strip.scrollLeft = savedScrollLeft;
+    updateEdgeFades(strip);
+    return;
   }
 
-  buttons.forEach((b) => b.classList.toggle('overflow-hidden', hidden.has(b)));
-  renderOverflowMenu(el, container, buttons.filter((b) => hidden.has(b)), tabs);
+  renderOverflowMenu(el, container, getChildTabs(el));
+
+  // The trigger pays for itself out of the strip's width. When the tabs
+  // overflowed by less than it costs, adding it hides MORE than it reveals —
+  // the sliver that was one small scroll away is now a whole tab plus the
+  // trigger's own footprint. Measure what it actually took and back out.
+  const triggerCost = container.clientWidth - strip.clientWidth;
+  if (hidden <= triggerCost) {
+    removeOverflowMenu(shadowRoot);
+  }
+
+  strip.scrollLeft = savedScrollLeft;
+  updateEdgeFades(strip);
+}
+
+/**
+ * Fade the strip's edges where more tabs continue past them — left fade when
+ * scrolled away from the start, right fade while there's content beyond the
+ * viewport. Driven by --fade-left/right consumed by the strip's mask-image.
+ */
+function updateEdgeFades(strip: HTMLElement): void {
+  const maxScroll = strip.scrollWidth - strip.clientWidth;
+  // Never fade more than is actually hidden: a full 28px veil over a 4px
+  // sliver of overflow obscures far more than it hints at.
+  const fade = (distance: number) => `${distance > 1 ? Math.min(28, distance) : 0}px`;
+  strip.style.setProperty('--fade-left', fade(strip.scrollLeft));
+  strip.style.setProperty('--fade-right', fade(maxScroll - strip.scrollLeft));
+}
+
+/**
+ * Center the active tab button in the strip, clamped at both ends. With tabs
+ * [1..6] and 4 visible: activating 3 shows [2,3,4,5]; activating 5 wants
+ * [4,5,…] but clamps at the right edge, showing [3,4,5,6]. The recenter
+ * motion itself is the "more tabs over here" affordance. Smooth on
+ * user-driven activation, instant on first render / resize.
+ */
+function scrollActiveIntoView(el: TyTabs, activeId: string, smooth: boolean): void {
+  const shadowRoot = el.shadowRoot;
+  if (!shadowRoot) return;
+
+  const strip = shadowRoot.querySelector<HTMLElement>('.tab-strip');
+  const button = shadowRoot.querySelector<HTMLElement>(`[data-tab-id='${activeId}']`);
+  if (!strip || !button || strip.clientWidth <= 0) return;
+
+  const centered = button.offsetLeft + button.offsetWidth / 2 - strip.clientWidth / 2;
+  const target = Math.max(0, Math.min(centered, strip.scrollWidth - strip.clientWidth));
+
+  if (Math.round(target) !== Math.round(strip.scrollLeft)) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    strip.scrollTo({ left: target, behavior: smooth && !reduce ? 'smooth' : 'auto' });
+  }
 }
 
 /**
@@ -615,7 +676,7 @@ function render(el: TyTabs): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
   
-  const { width, height, placement } = getTabsAttributes(el);
+  const { width, height, placement, fixed } = getTabsAttributes(el);
   const tabs = getChildTabs(el);
   const activeId = getActiveTabId(el, tabs);
   const activeIndex = activeId ? (findTabIndex(tabs, activeId) ?? 0) : 0;
@@ -640,39 +701,41 @@ function render(el: TyTabs): void {
 
   const existingContainer = shadowRoot.querySelector('.tabs-container');
   const existingButtons = shadowRoot.querySelector('.tab-buttons');
+  const existingStrip = shadowRoot.querySelector<HTMLElement>('.tab-strip');
   const existingViewport = shadowRoot.querySelector('.panels-viewport');
 
   ensureStyles(shadowRoot, { css: tabsStyles, id: 'ty-tabs' });
 
-  if (tabs.length > 7) {
-    console.warn(
-      `[ty-tabs] More than 7 tabs detected (${tabs.length} tabs). ` +
-      'This may cause overflow and poor UX. ' +
-      'Consider using sidebar navigation, accordion menu, or other patterns.'
-    );
-  }
-  
   el.style.setProperty('--tabs-width', width.includes('%') ? '100%' : width);
   el.style.setProperty('--tabs-height', height);
   el.style.setProperty('--active-index', String(activeIndex));
   
-  if (existingContainer && existingButtons && existingViewport) {
+  if (existingContainer && existingButtons && existingStrip && existingViewport) {
     // === SMART UPDATE: Structure exists, only update what changed ===
 
     existingContainer.setAttribute('data-placement', placement);
+    existingContainer.toggleAttribute('data-fixed', fixed);
 
-    // Preserve the marker wrapper; only the buttons are recreated.
+    // Preserve the marker wrapper; only the buttons are recreated. Removing
+    // every button momentarily empties the strip, which clamps its scrollLeft
+    // to 0 — capture it first and restore after re-append, so the ensure-
+    // visible glide below starts from where the user actually was.
+    // Save BEFORE the trigger goes: removing it widens the strip, which clamps
+    // scrollLeft down by the trigger's width. Reading it afterwards would save
+    // the already-clamped value and "restore" the strip 52px short.
+    const savedScrollLeft = existingStrip.scrollLeft;
     existingButtons.querySelector('.tab-overflow-trigger')?.remove();
-    const allButtons = existingButtons.querySelectorAll('.tab-button');
+    const allButtons = existingStrip.querySelectorAll('.tab-button');
     allButtons.forEach(button => button.remove());
 
     const buttonsHtml = renderButtonsOnly(el, tabs, activeId);
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = buttonsHtml;
-    
+
     Array.from(tempDiv.children).forEach(button => {
-      existingButtons.appendChild(button);
+      existingStrip.appendChild(button);
     });
+    existingStrip.scrollLeft = savedScrollLeft;
 
     // Re-setup event listeners (buttons were recreated)
     setupEventListeners(el, shadowRoot, tabs);
@@ -684,16 +747,18 @@ function render(el: TyTabs): void {
         const buttonsHeight = (buttons as HTMLElement).offsetHeight;
         el.style.setProperty('--buttons-height', `${buttonsHeight}px`);
       }
-      
+
       // Update transform with current active index
       updateTransform(el, activeIndex);
 
-      // Update marker position to match active tab
+      // Overflow before marker: inserting/removing the "…" trigger reflows the
+      // strip, and the marker must be measured against the final layout.
+      updateOverflow(el);
+
       if (activeId) {
         updateMarker(el, activeId);
+        scrollActiveIntoView(el, activeId, true);
       }
-
-      updateOverflow(el);
     });
 
     // Update panel interaction states
@@ -705,7 +770,7 @@ function render(el: TyTabs): void {
     // === FULL RENDER: First time or structure missing ===
     
     shadowRoot.innerHTML = `
-      <div class="tabs-container" data-placement="${placement}">
+      <div class="tabs-container" data-placement="${placement}"${fixed ? ' data-fixed' : ''}>
         ${renderTabButtons(el, tabs, activeId)}
         <div class="panels-viewport" part="panels-container">
           <div class="panels-wrapper">
@@ -725,16 +790,24 @@ function render(el: TyTabs): void {
 
       updateTransform(el, activeIndex);
 
+      // Overflow before marker — see the smart-update branch.
+      updateOverflow(el);
+
       if (activeId) {
         updateMarker(el, activeId);
+        scrollActiveIntoView(el, activeId, false); // first paint: snap, no glide
       }
-
-      updateOverflow(el);
     });
 
     setupEventListeners(el, shadowRoot, tabs);
     updateAriaAttributes(el, shadowRoot, activeId || '');
     setupResizeObserver(el);
+
+    // The strip survives smart updates (only buttons are recreated), so one
+    // listener per full render is enough. Keeps the edge fades in sync while
+    // the user drags/wheels and during the smooth recenter glide.
+    const strip = shadowRoot.querySelector<HTMLElement>('.tab-strip');
+    strip?.addEventListener('scroll', () => updateEdgeFades(strip), { passive: true });
 
     if (activeId) {
       updatePanelInteraction(el, activeId);
@@ -767,7 +840,7 @@ function cleanup(el: TyTabs): void {
  */
 export class TyTabs extends HTMLElement {
   static get observedAttributes() {
-    return ['width', 'height', 'active', 'placement'];
+    return ['width', 'height', 'active', 'placement', 'fixed'];
   }
   
   constructor() {
@@ -804,14 +877,25 @@ export class TyTabs extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     // Smart rendering: only full render when structural attributes change
     if (name === 'active') {
-      if (newValue) {
-        // Pass `oldValue` explicitly so the change-detection inside
-        // `updateActiveTabState` compares against the previous value
-        // rather than re-reading the (already updated) attribute.
-        updateActiveTabState(this, newValue, oldValue);
+      if (!newValue) return;
+
+      // Which tab is active changes nothing about how wide the tabs are, so a
+      // full render here is pure churn — and destructive churn: rebuilding the
+      // buttons and the "…" trigger momentarily widens the strip, the browser
+      // clamps scrollLeft down by the trigger's width, and the ensure-visible
+      // glide then slides back from the wrong place. That was the ~52px twitch
+      // on activating an already-visible tab. Update in place instead; the
+      // childList MutationObserver still re-renders when tabs come and go.
+      if (!this.shadowRoot?.querySelector(`[data-tab-id='${newValue}']`)) {
+        render(this); // button doesn't exist yet — structure has to catch up
+        return;
       }
-      // Always call render after active change to update button states
-      render(this);
+
+      // Pass `oldValue` explicitly so the change-detection inside
+      // `updateActiveTabState` compares against the previous value
+      // rather than re-reading the (already updated) attribute.
+      updateActiveTabState(this, newValue, oldValue);
+      scrollActiveIntoView(this, newValue, true);
     } else {
       // Other attributes changed (width, height, placement) - full render
       render(this);

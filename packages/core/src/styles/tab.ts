@@ -11,7 +11,7 @@ export const tabStyles = `
   display: block;
   box-sizing: border-box;
   flex-shrink: 0;
-  transition: opacity var(--transition-duration, 400ms) var(--transition-easing, ease-in-out);
+  transition: opacity var(--ty-tabs-transition-duration, 400ms) var(--ty-tabs-transition-easing, ease-in-out);
 }
 
 @media (prefers-reduced-motion: reduce) {

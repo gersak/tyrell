@@ -308,6 +308,40 @@ describe('ty-selected-tags basics and edges', () => {
     const tags = wrap.querySelector('ty-selected-tags')!;
     expect(tags.textContent).to.contain('Alpha');
   });
+
+  // INVARIANTS.md §1/§2 — chips freeze while the picker's popup is open:
+  // never hidden, never re-rendered, no style writes; one refresh on close.
+  it('freezes chips while open and renders the final selection on close', async () => {
+    const wrap = (await fixture(html`
+      <div>
+        <ty-select id="fz" multiple value="a">
+          <ty-option value="a">Alpha</ty-option>
+          <ty-option value="b">Beta</ty-option>
+        </ty-select>
+        <ty-selected-tags for="fz"></ty-selected-tags>
+      </div>
+    `)) as HTMLElement;
+    await nextFrame();
+    await tick(50);
+    const picker = wrap.querySelector('#fz') as HTMLElement & { value: string };
+    const tags = wrap.querySelector('ty-selected-tags') as HTMLElement;
+    expect(tags.querySelectorAll('ty-tag').length).to.equal(1);
+
+    // Open, then change the selection while open: chips must not move.
+    picker.dispatchEvent(new CustomEvent('open', { detail: {} }));
+    picker.value = 'a,b';
+    picker.dispatchEvent(new CustomEvent('change', { detail: {} }));
+    await tick(50);
+    expect(tags.querySelectorAll('ty-tag').length, 'frozen while open').to.equal(1);
+    // No style writes at any point (§2 trivially satisfied).
+    expect(getComputedStyle(tags).visibility).to.not.equal('hidden');
+    expect(getComputedStyle(tags).display).to.equal('contents');
+
+    // Close renders the final selection.
+    picker.dispatchEvent(new CustomEvent('close', { detail: {} }));
+    await tick(50);
+    expect(tags.querySelectorAll('ty-tag').length, 'refreshed on close').to.equal(2);
+  });
 });
 
 // ---------------------------------------------------------------------------

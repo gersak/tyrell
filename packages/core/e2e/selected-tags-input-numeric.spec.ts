@@ -17,6 +17,64 @@ test.describe('ty-selected-tags — edge cases', () => {
     expect(await chips.count()).toBe(2)
   })
 
+  test('chips freeze while open (never hidden) and refresh with the final selection on close (INVARIANTS.md §1/§2)', async ({ page }) => {
+    await mount(page, `
+      <div style="width:400px">
+        <ty-select id="sel" multiple>
+          <ty-option value="a" selected>Apple</ty-option>
+          <ty-option value="b">Banana</ty-option>
+          <ty-option value="c">Cherry</ty-option>
+        </ty-select>
+        <div style="display:flex;gap:4px;margin-top:4px">
+          <ty-selected-tags id="tags" for="sel"></ty-selected-tags>
+        </div>
+      </div>
+    `)
+    await page.waitForTimeout(100)
+    expect(await page.locator('#tags ty-tag').count()).toBe(1)
+
+    await page.locator('#sel').click()
+    await page.waitForTimeout(200)
+    // Never hidden, no style writes — the popup simply paints over them.
+    const style = await page.locator('#tags').evaluate((el) => {
+      const cs = getComputedStyle(el)
+      return { visibility: cs.visibility, display: cs.display }
+    })
+    expect(style.visibility).toBe('visible')
+    expect(style.display).toBe('contents')
+
+    // Pick another option while open: chip row stays frozen.
+    await page.locator('#sel ty-option[value="b"]').click()
+    await page.waitForTimeout(100)
+    expect(await page.locator('#tags ty-tag').count(), 'frozen while open').toBe(1)
+
+    // Close → single refresh with the final selection.
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(100)
+    expect(await page.locator('#tags ty-tag').count(), 'refreshed on close').toBe(2)
+  })
+
+  test('slot="trigger" select hugs its trigger so chips fit beside it on the same row', async ({ page }) => {
+    await mount(page, `
+      <div style="width:600px;display:flex;align-items:center;gap:8px">
+        <ty-select id="sel" multiple>
+          <button slot="trigger">Robots</button>
+          <ty-option value="a" selected>Apple</ty-option>
+        </ty-select>
+        <ty-selected-tags id="tags" for="sel"></ty-selected-tags>
+      </div>
+    `)
+    await page.waitForTimeout(100)
+    const hostWidth = await page.locator('#sel').evaluate((el) => el.getBoundingClientRect().width)
+    expect(hostWidth, 'content-hugging, not full row').toBeLessThan(300)
+    // The chip actually sits on the same horizontal band as the trigger.
+    const [selY, chipY] = await page.evaluate(() => [
+      document.querySelector('#sel')!.getBoundingClientRect().top,
+      document.querySelector('#tags ty-tag')!.getBoundingClientRect().top,
+    ])
+    expect(Math.abs(selY - chipY)).toBeLessThan(20)
+  })
+
   test('previous-sibling fallback: no for="" needed when adjacent to the select', async ({ page }) => {
     await mount(page, `
       <ty-select id="sel" multiple>

@@ -67,11 +67,21 @@ Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-comp
 ```html
 <style>
   :root {
-    --ty-primary-hue: 200;      /* teal */
-    --ty-primary-chroma: 0.13;
+    --ty-primary-seed: oklch(0.5 0.13 200);   /* teal */
   }
 </style>
 ```
+
+Seed the flavor — don't drive the `--ty-primary-hue` / `--ty-primary-chroma`
+dials directly. Dark mode ships its own tuning for those dials at `html.dark`,
+which outranks anything you set on `:root`, so a dials-only override applies in
+light mode and silently reverts to the stock palette in dark. Nothing
+re-declares `--ty-*-seed`, so one line covers both modes. (Driving the dials is
+still fine — just repeat them inside `html.dark` too.)
+
+The seed's lightness is discarded by design: placing each shade is the L-curve's
+job, which is what keeps dark mode, `+`/`-` tones and auto-contrast correct for
+any seed you hand it. Only hue and chroma are read.
 
 Don't want the theme engine? Load `tyrell-colors-static.css` instead of `tyrell-theme.css` for a plain hardcoded fallback palette — no relative-color-syntax requirement, works on older browsers, no theming API.
 
