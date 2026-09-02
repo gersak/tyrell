@@ -1,6 +1,6 @@
 {
   "name": "tyrell-react",
-  "version": "1.0.0-TC52",
+  "version": "1.0.0-TC53",
   "description": "React wrappers for Tyrell Components",
   "type": "module",
   "main": "./dist/components/index.js",

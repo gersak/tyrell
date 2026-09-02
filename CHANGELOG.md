@@ -5,6 +5,43 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC53] - 2026-09-02
+
+### Added
+
+- **One size ladder for every field — `styles/field-size.ts`.** Each field component used to carry its own height/padding/font table, so "the same size" meant something slightly different on each of them. There is now a single set of `--ty-field-*` custom properties per rung, and every field consumes them: heights are **28 / 32 / 36 / 40 / 44px** for xs → xl, with padding, font size, line box, label type scale, label gap, in-field control box and icon size all stepping together. Narrow viewports drop `lg` and `xl` one rung each (640px and 480px breakpoints) — same ladder, no component-specific overrides. Covered by `e2e/field-size-ladder.spec.ts`, which asserts input, copy, select and date-picker share a height and a label scale at every rung.
+
+- **`DEFAULT_SIZE` in `types/common.ts`.** The default `size` for field components is declared once instead of repeated in ten components.
+
+- **`value` attribute on `ty-calendar`.** The component observed `year`/`month`/`day` but not `value`, so `<ty-calendar value="2026-07-15">` was silently ignored and the calendar rendered the current month. The `.value` property setter already handled everything; the attribute now routes into it. This also unblocks `<TyCalendar value="…" />` in tyrell-react, which passes `value` as an attribute.
+
+- **`display-year` / `display-month` attributes on `ty-calendar-month`.** The year/month API was properties-only. `ty-calendar` drives its child by property, which hid it — but standalone use, the documentation site's own examples, and tyrell-react's `TyCalendarMonth` (which maps `displayYear`/`displayMonth` onto exactly these attribute names) all set attributes, and all silently rendered today's month instead. Invalid values are ignored rather than throwing.
+
+- **Size showcases for `ty-select` and `ty-radio-group`** on the documentation site. Every other ladder component demonstrated xs → xl; these two demonstrated none.
+
+### Changed
+
+- **BREAKING: the default `size` for every field component moves from `md` to `sm`.** Affects `ty-button`, `ty-checkbox`, `ty-radio`, `ty-radio-group`, `ty-copy`, `ty-date-picker`, `ty-input`, `ty-select`, `ty-switch`, `ty-tag` and `ty-textarea`. A field left without a `size` attribute is now 32px tall rather than 36px. Set `size="md"` explicitly to keep the old dimensions. Calendar components are unaffected — they use their own `CalendarSize` scale.
+
+- **BREAKING (types): `TyInput`, `TySelect` and `TyDatePicker` in tyrell-react accept the full ladder.** Their `size` prop was typed `'sm' | 'md' | 'lg'` and documented as "fields come in exactly three; legacy xs/xl map to sm/lg" — no such mapping exists, and the underlying components have always supported all five rungs. Now `'xs' | 'sm' | 'md' | 'lg' | 'xl'`.
+
+- **Input borders in dark mode are drawn from the border family, not the neutral ink ramp.** `--ty-input-border` / `--ty-input-border-hover` aliased `--ty-color-neutral-faint` / `-soft`, which are multiplied by `--ty-neutral-l-factor` (`0.8` in dark). That put the resting border at L 0.24 against an L 0.18 input surface — **half** the separation light mode gets (0.88 on 1.00). The border ladder is exempt from that factor by design. Dark now takes it one rung harder than light (`--ty-border` at rest, `--ty-border-bold` on hover) because a small L delta at the dark end of the scale reads much weaker than the same delta mid-scale. **Light mode rest is byte-identical; light hover moves L 0.72 → 0.76.**
+
+### Fixed
+
+- **Label and error text were misaligned with the value they describe — by 1px, on every field, at every size.** The value sits inside the wrapper's 1px border *plus* `--ty-field-pad-x`; the label and error message sit outside that box and only ever cleared the padding. Two hardcoded insets, one missing a term. There is now a single `--ty-field-outer-pad-x` in the ladder (`calc(var(--ty-field-pad-x) + 1px)`) that all outside-the-box text uses, so it resolves per rung and cannot drift again. Verified at 0px delta across `ty-input`, `ty-copy`, `ty-select`, `ty-date-picker` and `ty-textarea` at all five sizes.
+
+- **`ty-textarea` kept a second, parallel size table that had drifted from the ladder.** Its horizontal padding was `10px` at `xs` where the ladder says `8px` (a 2px label/value stagger), and its error message was pinned at a hardcoded `12px`, off the ladder entirely. Horizontal padding now reads `--ty-field-pad-x` in all eleven rules, including the container- and media-query step-downs. Vertical padding and min-heights are unchanged — a multi-line box legitimately needs its own.
+
+- **The narrow-viewport step-down didn't carry the whole rung.** `lg`/`xl` dropped their height, padding, font and leading below 640px/480px but kept `--ty-field-control` at the original rung. That variable sizes the in-field button box, which drives the wrapper's content height — so `ty-copy` at `xl` rendered **38px** on a phone while every other field rendered 36. `--ty-field-control` and `--ty-field-icon` now step down with everything else.
+
+### Documentation
+
+- The site's chrome identity colour is specified as a finished OKLCH swatch per mode (`oklch(0.69 0.15 42.1)` light, `oklch(0.71 0.13 42.2)` dark), with the seeds solved back through the primary formula and the derivation written down next to them.
+- Nine component API tables still documented the `size` default as `md`.
+- Removed the table-of-contents' left rule, which ran from the header down to wherever the TOC happened to end and had no counterpart on the left sidebar.
+- The desktop header no longer repeats the current page's title — the sidebar already highlights it. The component breadcrumb stays (it shows depth the sidebar doesn't), and the plain title still renders on mobile, where the navigation is hidden.
+
 ## [1.0.0-TC52] - 2026-08-26
 
 ### Added
