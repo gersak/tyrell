@@ -13,6 +13,7 @@ import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { isMobileTouch } from '../utils/mobile.js';
 import { TyComponent } from '../base/ty-component.js';
 import type { Flavor } from '../types/common.js';
+import { DEFAULT_SIZE } from '../types/common.js';
 import type { PropertyChange } from '../utils/property-manager.js';
 
 /**
@@ -576,15 +577,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     size: {
       type: 'string' as const,
       visual: true,
-      default: 'md',
-      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
-      validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
+      default: DEFAULT_SIZE,
+      validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
-        if (v === 'xs') return 'sm';
-        if (v === 'xl') return 'lg';
-        if (!['sm', 'md', 'lg'].includes(v)) {
-          console.warn(`[ty-date-picker] Invalid size '${v}'. Using 'md'.`);
-          return 'md';
+        if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
+          console.warn(`[ty-date-picker] Invalid size '${v}'. Using '${DEFAULT_SIZE}'.`);
+          return DEFAULT_SIZE;
         }
         return v;
       }
@@ -1041,10 +1039,6 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
   private buildStubClasses(): string {
     const classes = ['date-picker-stub'];
-
-    const size = this.getProperty('size') || 'md';
-
-    classes.push(size);
 
     if (this.getProperty('disabled')) classes.push('disabled');
     if (this.getProperty('required')) classes.push('required');

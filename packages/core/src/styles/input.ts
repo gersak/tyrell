@@ -1,6 +1,7 @@
 /** Input Component Styles */
 
 import { FLAVORS } from "../types/common.js";
+import { fieldSizeVars } from "./field-size.js";
 
 /* Flavor rules only set --input-accent (border), --input-accent-bold
    (hover/focus border), and --input-ring (focus shadow); the wrapper base
@@ -49,18 +50,11 @@ const inputFlavor = (f: string, fb?: string) => {
 export const inputCustomFlavorCss = (base: string) => inputFlavor(base, "neutral");
 
 export const inputStyles = `
+${fieldSizeVars}
 :host {
   display: block;
   font-family: inherit;
   width: 100%;
-}
-
-:host([size="sm"]) {
-  font-size: 14px;
-}
-
-:host([size="lg"]) {
-  font-size: 18px;
 }
 
 .input-container {
@@ -71,13 +65,13 @@ export const inputStyles = `
 }
 
 .ty-field-label {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
+  font-size: var(--ty-field-label-font);
+  line-height: var(--ty-field-label-leading);
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
-  margin-bottom: 6px;
-  padding-left: 12px;
+  margin-bottom: var(--ty-field-label-gap);
+  padding-left: var(--ty-field-outer-pad-x);
   display: flex;
   align-items: center;
 }
@@ -108,8 +102,8 @@ export const inputStyles = `
   background: var(--input-bg, var(--input-bg, var(--ty-input-bg)));
   transition: var(--ty-local-transition, all 0.15s ease-in-out);
 
-  min-height: var(--ty-size-md);
-  padding: 0 12px;
+  min-height: var(--ty-field-height);
+  padding: 0 var(--ty-field-pad-x);
 }
 
 /* Wrapper states — --input-accent* are set by the flavor rules below;
@@ -185,7 +179,7 @@ export const inputStyles = `
   letter-spacing: var(--ty-tracking-xs);
   color: var(--ty-color-danger);
   margin-top: 4px;
-  padding-left: 12px;
+  padding-left: var(--ty-field-outer-pad-x);
 }
 
 .input-wrapper.error {
@@ -199,8 +193,6 @@ export const inputStyles = `
 }
 
 input {
-  /* Linear-paired typography */
-  font-family: inherit;
   flex: 1;
   min-width: 0;
   box-sizing: border-box;
@@ -209,9 +201,9 @@ input {
   background: transparent;
   color: var(--input-color, var(--ty-input-color));
   font-family: inherit;
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
+  font-size: var(--ty-field-font);
+  line-height: var(--ty-field-leading);
+  letter-spacing: var(--ty-field-tracking);
   font-weight: var(--ty-font-normal);
   padding: 0;
   margin: 0;
@@ -238,42 +230,6 @@ input::placeholder {
   font-weight: 400;
 }
 
-.input-wrapper.sm {
-  min-height: var(--ty-size-sm);
-  padding: 0 10px;
-  border-radius: var(--ty-input-radius-sm, var(--ty-radius-base));
-}
-
-.input-wrapper.sm input {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
-}
-
-.input-wrapper.md {
-  min-height: var(--ty-size-md);
-  padding: 0 12px;
-  border-radius: var(--ty-input-radius-md, var(--ty-radius-base));
-}
-
-.input-wrapper.md input {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
-}
-
-.input-wrapper.lg {
-  min-height: var(--ty-size-lg);
-  padding: 0 14px;
-  border-radius: var(--ty-input-radius-lg, var(--ty-radius-base));
-}
-
-.input-wrapper.lg input {
-  font-size: var(--ty-font-base);
-  line-height: var(--ty-leading-base);
-  letter-spacing: var(--ty-tracking-base);
-}
-
 /* Semantic flavor modifiers set --input-accent*, consumed above */
 ${FLAVORS.filter((f) => f !== "neutral").map((f) => inputFlavor(f)).join("")}
 
@@ -290,43 +246,6 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .input-wrapper {
     transition: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .input-wrapper.lg {
-    min-height: 40px;
-    padding: 0 12px;
-  }
-
-  .input-wrapper.lg input {
-    font-size: var(--ty-font-sm);
-    line-height: var(--ty-leading-sm);
-    letter-spacing: var(--ty-tracking-sm);
-  }
-
-  .input-wrapper.xl {
-    min-height: 44px;
-    padding: 0 14px;
-  }
-
-  .input-wrapper.xl input {
-    font-size: var(--ty-font-base);
-    line-height: var(--ty-leading-base);
-    letter-spacing: var(--ty-tracking-base);
-  }
-}
-
-@media (max-width: 480px) {
-  .input-wrapper.xl {
-    min-height: 40px;
-    padding: 0 12px;
-  }
-
-  .input-wrapper.xl input {
-    font-size: var(--ty-font-sm);
-    line-height: var(--ty-leading-sm);
-    letter-spacing: var(--ty-tracking-sm);
   }
 }
 `

@@ -134,9 +134,9 @@
   "scripts": {
     "dev": "vite",
     "generate:version": "node scripts/generate-version.js",
-    "build:lib": "npm run generate:version && tsc --project tsconfig.lib.json && tsc --project tsconfig.lib.dts.json",
-    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && cp css/tyrell.css dist/tyrell.css && cp css/tyrell-theme.css dist/tyrell-theme.css && cp css/tyrell-colors-static.css dist/tyrell-colors-static.css",
-    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && cp css/tyrell.css dist/tyrell.css && cp css/tyrell-theme.css dist/tyrell-theme.css && cp css/tyrell-colors-static.css dist/tyrell-colors-static.css",
+    "build:lib": "npm run generate:version && tsc --project tsconfig.lib.json && tsc --project tsconfig.lib.dts.json && node scripts/strip-lib-comments.mjs",
+    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && esbuild css/tyrell.css css/tyrell-theme.css css/tyrell-colors-static.css --minify --outdir=dist",
+    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && esbuild css/tyrell.css css/tyrell-theme.css css/tyrell-colors-static.css --minify --outdir=dist",
     "build:dev:watch": "vite build --config vite.config.dev.ts --watch",
     "build": "npm run build:lib && npm run build:cdn",
     "prepublishOnly": "npm run build",

@@ -39,7 +39,7 @@
         :description "Layout: vertical (default) or horizontal"}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Size applied to all child ty-radio elements: xs, sm, md, lg, xl"}
        {:name "flavor"
         :type "string"
@@ -114,6 +114,25 @@
   <label><ty-radio value=\"dark\"></ty-radio> Dark</label>
   <label><ty-radio value=\"auto\"></ty-radio> System</label>
 </ty-radio-group>")]
+
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Sizes")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Set " [:code.ty-text "size"] " on the group and every child radio follows — "
+        "the same ladder every field component shares."]
+       (demo-area
+        [:div.flex.flex-col.items-start.gap-3
+         (for [[size label] [["xs" "Extra small"] ["sm" "Small (default)"] ["md" "Medium"]
+                             ["lg" "Large"] ["xl" "Extra large"]]]
+           [:ty-radio-group {:size size :orientation "horizontal" :value "a"}
+            [:label.inline-flex.items-center.gap-2.cursor-pointer.font-medium
+             {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}
+             [:ty-radio {:value "a"}] [:span.whitespace-nowrap label]]])])
+       (code-block "<ty-radio-group size=\"xs\">...</ty-radio-group>
+<ty-radio-group size=\"sm\">...</ty-radio-group>
+<ty-radio-group size=\"md\">...</ty-radio-group>
+<ty-radio-group size=\"lg\">...</ty-radio-group>
+<ty-radio-group size=\"xl\">...</ty-radio-group>")]
 
       [:div.ty-content.rounded-lg.p-5
        (section-label "Semantic Flavors")

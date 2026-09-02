@@ -35,7 +35,7 @@
         :description "Form field name — submits selected date in FormData as ISO string"}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Size variant: xs, sm, md, lg, xl"}
        {:name "placement"
         :type "string"
@@ -106,14 +106,16 @@
        (section-label "Sizes")
        (demo-area
         [:div.flex.flex-col.gap-3
-         [:ty-date-picker {:label "Extra small" :size "xs"}]
-         [:ty-date-picker {:label "Small" :size "sm"}]
-         [:ty-date-picker {:label "Medium (default)" :size "md"}]
-         [:ty-date-picker {:label "Large" :size "lg"}]])
+         [:ty-date-picker {:label "Extra small" :size "xs" :value "2026-03-14"}]
+         [:ty-date-picker {:label "Small (default)" :size "sm" :value "2026-03-14"}]
+         [:ty-date-picker {:label "Medium" :size "md" :value "2026-03-14"}]
+         [:ty-date-picker {:label "Large" :size "lg" :value "2026-03-14"}]
+         [:ty-date-picker {:label "Extra large" :size "xl" :value "2026-03-14"}]])
        (code-block "<ty-date-picker size=\"xs\"></ty-date-picker>
 <ty-date-picker size=\"sm\"></ty-date-picker>
 <ty-date-picker size=\"md\"></ty-date-picker>
-<ty-date-picker size=\"lg\"></ty-date-picker>")]
+<ty-date-picker size=\"lg\"></ty-date-picker>
+<ty-date-picker size=\"xl\"></ty-date-picker>")]
 
       [:div.ty-content.rounded-lg.p-5
        (section-label "Locale and Format")

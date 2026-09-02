@@ -35,7 +35,7 @@
        :description "Scroll long content sideways instead of clipping with an ellipsis. Combine with multiline for two-axis code blocks."}
       {:name "size"
        :type "string"
-       :default "\"md\""
+       :default "\"sm\""
        :description "Size variant: xs, sm, md, lg, xl"}
       {:name "flavor"
        :type "string"
@@ -143,12 +143,12 @@
                [:div.ty-content.rounded-lg.p-5
                 (demo-area
                  [:div.space-y-3
-                  (for [[size label] [["xs" "Extra Small"] ["sm" "Small"] ["md" "Medium (default)"]
+                  (for [[size label] [["xs" "Extra Small"] ["sm" "Small (default)"] ["md" "Medium"]
                                       ["lg" "Large"] ["xl" "Extra Large"]]]
                     [:ty-copy {:size size :label label :value (str size "-value-example-123")}])])
                 (code-block "<ty-copy size=\"xs\" label=\"Extra Small\" value=\"...\"></ty-copy>
 <ty-copy size=\"sm\" label=\"Small\" value=\"...\"></ty-copy>
-<ty-copy size=\"md\" label=\"Medium (default)\" value=\"...\"></ty-copy>
+<ty-copy size=\"md\" label=\"Medium\" value=\"...\"></ty-copy>
 <ty-copy size=\"lg\" label=\"Large\" value=\"...\"></ty-copy>
 <ty-copy size=\"xl\" label=\"Extra Large\" value=\"...\"></ty-copy>")]))
 

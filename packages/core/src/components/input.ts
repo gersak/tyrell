@@ -5,6 +5,7 @@
  */
 
 import type { Flavor, Size, InputType, TyInputElement } from '../types/common.js'
+import { DEFAULT_SIZE } from '../types/common.js'
 import { TyComponent } from '../base/ty-component.js'
 import type { PropertyChange } from '../utils/property-manager.js'
 import { ensureStyles } from '../utils/styles.js'
@@ -115,15 +116,12 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     size: {
       type: 'string' as const,
       visual: true,
-      default: 'md',
-      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
-      validate: (v: any) => ['sm', 'md', 'lg'].includes(v),
+      default: DEFAULT_SIZE,
+      validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
-        if (v === 'xs') return 'sm'
-        if (v === 'xl') return 'lg'
-        if (!['sm', 'md', 'lg'].includes(v)) {
-          console.warn(`[ty-input] Invalid size '${v}'. Using 'md'.`)
-          return 'md'
+        if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
+          console.warn(`[ty-input] Invalid size '${v}'. Using '${DEFAULT_SIZE}'.`)
+          return DEFAULT_SIZE
         }
         return v
       }
@@ -436,7 +434,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   }
 
   private buildClassList(): string {
-    const classes: string[] = [this.size]
+    const classes: string[] = []
 
     if (this.disabled) classes.push('disabled')
     if (this.required) classes.push('required')

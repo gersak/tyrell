@@ -112,7 +112,7 @@ export class TyCalendar extends HTMLElement {
   static formAssociated = true;
 
   static get observedAttributes(): string[] {
-    return ['year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
+    return ['value', 'year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
   }
 
   constructor() {
@@ -201,6 +201,12 @@ export class TyCalendar extends HTMLElement {
     if (oldValue === newValue) return;
 
     switch (name) {
+      // `value` is the ISO-date form of year/month/day — the setter fans it
+      // out to those attributes (and syncs children), so no extra work here.
+      case 'value':
+        this.value = newValue || '';
+        break;
+
       case 'year':
       case 'month':
       case 'day':

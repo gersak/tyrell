@@ -49,7 +49,7 @@
        :description "Error message to display — automatically applies danger flavor"}
       {:name "size"
        :type "string"
-       :default "'md'"
+       :default "'sm'"
        :description "Size variant: xs, sm, md, lg, xl"}
       {:name "flavor"
        :type "string"
@@ -255,16 +255,16 @@ document.querySelector('ty-input').addEventListener('input', (e) => {
     "Five size variants for different contexts and layouts."]
    (demo-area
     [:div.grid.gap-4
-     [:ty-input {:size "xs" :placeholder "Extra small" :label "Size XS"}]
-     [:ty-input {:size "sm" :placeholder "Small" :label "Size SM"}]
-     [:ty-input {:size "md" :placeholder "Medium (default)" :label "Size MD"}]
-     [:ty-input {:size "lg" :placeholder "Large" :label "Size LG"}]
-     [:ty-input {:size "xl" :placeholder "Extra large" :label "Size XL"}]])
-   (code-block "<ty-input size=\"xs\" placeholder=\"Extra small\" label=\"Size XS\"></ty-input>
-<ty-input size=\"sm\" placeholder=\"Small\" label=\"Size SM\"></ty-input>
-<ty-input size=\"md\" placeholder=\"Medium (default)\" label=\"Size MD\"></ty-input>
-<ty-input size=\"lg\" placeholder=\"Large\" label=\"Size LG\"></ty-input>
-<ty-input size=\"xl\" placeholder=\"Extra large\" label=\"Size XL\"></ty-input>")])
+     [:ty-input {:size "xs" :value "Extra small — 28px" :label "Size XS"}]
+     [:ty-input {:size "sm" :value "Small — 32px" :label "Size SM (default)"}]
+     [:ty-input {:size "md" :value "Medium — 36px" :label "Size MD"}]
+     [:ty-input {:size "lg" :value "Large — 40px" :label "Size LG"}]
+     [:ty-input {:size "xl" :value "Extra large — 44px" :label "Size XL"}]])
+   (code-block "<ty-input size=\"xs\" value=\"Extra small\" label=\"Size XS\"></ty-input>
+<ty-input size=\"sm\" value=\"Small\" label=\"Size SM\"></ty-input>
+<ty-input size=\"md\" value=\"Medium\" label=\"Size MD\"></ty-input>
+<ty-input size=\"lg\" value=\"Large\" label=\"Size LG\"></ty-input>
+<ty-input size=\"xl\" value=\"Extra large\" label=\"Size XL\"></ty-input>")])
 
 (defn- flavors-content []
   [:div.ty-content.rounded-lg.p-5

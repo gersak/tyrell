@@ -5,6 +5,7 @@
  */
 
 import { FLAVORS } from "../types/common.js";
+import { fieldSizeVars } from "./field-size.js";
 import { customScrollbarStyles } from "./custom-scrollbar.js";
 
 /* Flavor rules only set --select-accent (border), --select-accent-bold
@@ -46,6 +47,7 @@ const selectFlavor = (f: string, fb?: string) => {
 export const selectCustomFlavorCss = (base: string) => selectFlavor(base, "neutral");
 
 export const selectBaseStyles = `
+${fieldSizeVars}
 :host {
   display: block;
   width: 100%;
@@ -257,44 +259,23 @@ export const selectBaseStyles = `
   border: 1px solid var(--select-accent, var(--input-border, var(--ty-input-border)));
   border-radius: var(--ty-radius-md);
   font-family: inherit;
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
+  font-size: var(--ty-field-font);
+  line-height: var(--ty-field-leading);
+  letter-spacing: var(--ty-field-tracking);
   cursor: pointer;
   position: relative;
   width: 100%;
   box-sizing: border-box;
 }
 
-/* buildStubClasses() always stamps exactly one size class on .select-stub.
-   min-height comes from the shared --ty-size-* tokens (same ones ty-input
-   and ty-date-picker consume) so a given size is the same height on every
-   field. Right padding stays 2.5rem for chevron room. Zero vertical
-   padding — same fix as ty-input: with align-items:center on a flex
-   container, ANY vertical padding adds on top of min-height instead of
-   being absorbed by it, so a padded stub silently overflows past the
-   shared field height (measured +3px at sm/md before this was zeroed).
-   min-height + centering alone gets the exact height. */
-.select-stub.sm {
-  min-height: var(--ty-size-sm);
-  padding: 0 2.5rem 0 0.625rem;
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
-}
-
-/* md matches the base rule; listed for parity/overrides */
-.select-stub.md {
-  min-height: var(--ty-size-md);
-  padding: 0 2.5rem 0 0.75rem;
-}
-
-.select-stub.lg {
-  min-height: var(--ty-size-lg);
-  padding: 0 2.5rem 0 0.875rem;
-  font-size: var(--ty-font-base);
-  line-height: var(--ty-leading-base);
-  letter-spacing: var(--ty-tracking-base);
+/* Geometry comes from the shared ladder (styles/field-size.ts) so a size is
+   the same height on every field. Right padding stays 2.5rem for chevron room.
+   Zero vertical padding — with align-items:center ANY vertical padding adds on
+   top of min-height instead of being absorbed by it, overflowing the shared
+   field height. */
+.select-stub {
+  min-height: var(--ty-field-height);
+  padding: 0 2.5rem 0 var(--ty-field-pad-x);
 }
 
 .select-stub:hover {
@@ -404,9 +385,9 @@ export const selectBaseStyles = `
    here would silently reintroduce it if the specific rule ever moved. */
 .dropdown-placeholder {
   color: var(--input-placeholder, var(--ty-input-placeholder, #9ca3af));
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
+  font-size: var(--ty-field-font);
+  line-height: var(--ty-field-leading);
+  letter-spacing: var(--ty-field-tracking);
   font-weight: var(--ty-font-light);
   font-style: italic;
 }
@@ -514,13 +495,13 @@ export const selectBaseStyles = `
 }
 
 .ty-field-label {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
+  font-size: var(--ty-field-label-font);
+  line-height: var(--ty-field-label-leading);
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
-  margin-bottom: 6px;
-  padding-left: 12px;
+  margin-bottom: var(--ty-field-label-gap);
+  padding-left: var(--ty-field-outer-pad-x);
   display: flex;
   align-items: center;
 }

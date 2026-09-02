@@ -5,6 +5,56 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-TC52] - 2026-08-26
+
+### Added
+
+- **`fixed` on `ty-tabs` — Material's "fixed tabs": the bar is divided equally between the tabs instead of scrolling them.** The default (scrollable) mode gives every button a `min-width: 120px` floor, so five short labels claim 600px whether they need it or not, and a 595px bar overflows for no good reason. `<ty-tabs fixed>` drops the floor, gives each button an equal share, and skips overflow entirely — no scrolling, no edge fades, no "…" jump menu. Labels ellipsize if squeezed — plain text labels are now wrapped in a `<span class="tab-label">` inside the button to make that possible (the ellipsis rule applies only in `fixed` mode; slotted `label-{id}` content is untouched). Suits **2–5** tabs — equal shares only read as tabs while each share fits its label, so past that everything ellipsizes and the scrollable default is the right tool. Leave it off when the tab set is open-ended or user-generated. Exposed on tyrell-react's `TyTabs` as the presence boolean `fixed`.
+
+### Changed
+
+- **BREAKING: the scrollable tab-button floor drops from `min-width: 120px` to `72px`, now overridable as `--ty-tab-min-width`.** 120px is Material's *fixed*-tab figure (90dp mobile / 160dp desktop); for **scrollable** tabs the recommended floor is 72dp, and using the fixed-tab number on a scrolling bar manufactured overflow — five short labels claimed 600px whether they needed it or not, so a 595px bar scrolled for no reason. Equal-width rhythm is what the new `fixed` attribute is for. **Visual change:** scrollable tab bars get narrower, label-dependent buttons; some bars that scrolled will now fit outright. Set `--ty-tab-min-width: 120px` to keep the old look.
+
+- **BREAKING: `ty-tabs`' transition tokens are namespaced.** `--transition-duration` / `--transition-easing` were generic enough that any ancestor setting them for its own purposes silently retimed the tabs — and the marker glide, the carousel slide and `ty-tab`'s panel fade all read them. They are now `--ty-tabs-transition-duration` / `--ty-tabs-transition-easing`, matching the `--ty-wizard-transition-*` precedent. Rename any override; the defaults (300ms / `ease-in-out`) are unchanged. The unreleased `--tabs-separator` is likewise `--ty-tabs-separator`.
+
+### Removed
+
+- **A dead `ty-tabs` style rule.** `.marker-wrapper:has(::slotted([slot="marker"])) .default-marker` never reached the CSSOM — pseudo-elements are invalid inside `:has()`, so the parser dropped the whole rule. Hiding the default marker when one is slotted was, and remains, handled in JS.
+
+### Fixed
+
+- **Scrollable `ty-tabs` no longer squeeze their buttons or ellipsize their labels.** Tab buttons are flex items and had the default `flex-shrink: 1`, so a narrow bar collapsed them toward the `min-width` floor — "Overview" became "Over…" — *before* the strip ever overflowed. That inverts the contract: a scrollable tab is never narrower than its label, and hiding text the user could simply scroll to helps no one. Buttons are now `flex-shrink: 0`, so they keep their natural width (floored at `--ty-tab-min-width`) and the strip scrolls, as the mode always promised. Label ellipsis is scoped to `fixed`, which is the mode that genuinely squeezes. Previously masked by the 120px floor, which most labels fit inside.
+
+- **`ty-tabs` no longer jerks the strip backwards when you activate a tab.** Changing `active` ran a full render, which rebuilds the buttons and the "…" trigger. Taking the trigger out momentarily widens the strip, so the browser clamps `scrollLeft` down by the trigger's width (~52px) — and putting the trigger back does not undo that. The ensure-visible glide then animated forward from the wrong place, reading as a twitch on every click near the end of the bar. Which tab is active says nothing about how wide the tabs are, so activation now updates in place — marker, ARIA, panels, the "…" menu's active mark and the scroll — with no rebuild and no overflow re-measure. Structural changes still re-render via the existing childList observer. `updateOverflow` also saves and restores `scrollLeft` around its own trigger churn, for the resize path.
+
+- **`ty-tabs` no longer shows the "…" jump menu when the tabs overflow by less than the trigger costs.** The trigger is ~52px of the bar, taken out of the scrollable strip. It appeared on *any* overflow, so a 5px sliver — five short tabs against a 595px bar, where `min-width: 120px` alone makes 600px of content — summoned a control that hid another 52px, turning a barely-clipped last tab into a genuinely hidden one. The trigger's real footprint is now measured after it renders and it is backed out when the overflow was smaller than that. Large overflows keep the jump menu.
+
+- **The tab strip's edge fade never veils more than is actually hidden.** `--fade-left/right` were a flat 28px whenever any scroll distance remained, so a 5px overflow was covered by a 28px gradient — the hint obscured five times what it was hinting at. Both are now `min(28px, distance remaining)`.
+
+## [1.0.0-TC51] - 2026-08-26
+
+### Added
+
+- **`--tabs-separator` on `ty-tabs`** — the color of the line between the tab bar and the panel, defaulting to `--ty-border`. Set it to `transparent` to drop the line entirely, which is what you usually want alongside a custom `slot="marker"` that already carries the active state.
+
+### Changed
+
+- **`ty-tabs` with `placement="bottom"` draws the active marker on the *top* edge of the tab bar.** The marker used to stay pinned to the bottom of the button, leaving it stranded at the far edge of the screen with the whole bar between it and the panel it marks. It now sits against the content edge in both placements — top tabs underline, bottom tabs overline. A slotted `<div slot="marker">` fills the marker wrapper and is unaffected.
+
+- **`ty-tabs` only clips its tab strip when the tabs actually overflow.** The strip carries `overflow-x: auto` so tabs can scroll, which (per spec) forces vertical clipping too, and its edge-fade `mask-image` clips as well — together they cut off anything a custom `slot="marker"` painted outside its box, most visibly a `box-shadow` glow. When every tab fits there is nothing to scroll, so the strip now drops both. Overflow detection moved from `scrollWidth` to the buttons' own extent, since an unclipped element has no scrolling box and `scrollWidth` would just echo `clientWidth`. Clipping remains the pre-measurement default, so overflowing tabs still can't spill on first render.
+
+- **The default `ty-tabs` active marker is 3px tall** (was 2px) — it reads as a deliberate indicator rather than a second border now that it overlaps the separator line.
+
+- **The `ty-tabs` separator line is now a pseudo-element, so the active marker sits *on* it rather than beside it.** The line was `border-bottom` on the button bar — a border lives outside the strip's box, so the absolutely-positioned marker could only ever stop just above it, reading as two stacked lines. It's now `.tab-buttons::after` with the strip lifted above it. `::part(buttons-container)` no longer carries a border; a consumer who overrode `border-bottom`/`border-top` there to restyle or remove the separator should target the `::after` instead.
+
+### Fixed
+
+- **A `slot="label-{id}"` element nested inside a `ty-tab` no longer blanks that tab's button.** Rich labels must be *direct children of `ty-tabs`* — a slot in the shadow root can only be filled by a direct child of its host, so a nested one never renders. Detection used a descendant query, so it found the nested element, switched the button into slot mode, and produced an empty button (the element itself stayed invisible too — `ty-tab` exposes only an unnamed slot). Detection is now scoped to direct children, so a misplaced label falls back to the `label` attribute instead of vanishing.
+
+## [1.0.0-RC14] - 2026-08-24
+
+Promotion of the TC48–TC50 test-candidate line to the release-candidate channel (npm `latest`). All changes below under TC48, TC49 and TC50 ship in this version; nothing new beyond them. Highlights: modal/select/popup event fixes, brand→primary theme flatten, native form-reset fidelity, enter motion for all floating surfaces, placement flush contract, `prevent-escape` / `prevent-outside-click`.
+
 ## [1.0.0-TC50] - 2026-08-20
 
 ### Added

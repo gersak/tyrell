@@ -7,7 +7,7 @@ import { mount } from './helpers'
 
 test.describe('ty-calendar-month — edge cases', () => {
   test('day click fires day-click with correct date detail', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const detail = await page.evaluate(() => {
       return new Promise((resolve) => {
         const cal = document.getElementById('cal')!
@@ -23,7 +23,7 @@ test.describe('ty-calendar-month — edge cases', () => {
   })
 
   test('min/max: out-of-range days are aria-disabled and do not emit day-click', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7" min="2026-07-10" max="2026-07-20"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7" min="2026-07-10" max="2026-07-20"></ty-calendar-month>`)
     const day5 = page.locator('#cal').locator('.calendar-day-cell', { hasText: /^5$/ }).first()
     await expect(day5).toHaveAttribute('aria-disabled', 'true')
     await expect(day5).toHaveAttribute('tabindex', '-1')
@@ -40,7 +40,7 @@ test.describe('ty-calendar-month — edge cases', () => {
   })
 
   test('exactly one gridcell has tabindex=0 (roving tabindex invariant)', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const rovingCount = await page.locator('#cal').locator('[role=gridcell][tabindex="0"]').count()
     expect(rovingCount).toBe(1)
   })
@@ -49,7 +49,7 @@ test.describe('ty-calendar-month — edge cases', () => {
     // Every day in the visible month is out of range — roving tabindex must
     // not land on a disabled cell (would trap keyboard users with no
     // reachable, actionable day).
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7" min="2026-08-01" max="2026-08-31"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7" min="2026-08-01" max="2026-08-31"></ty-calendar-month>`)
     const rovingCell = page.locator('#cal').locator('[role=gridcell][tabindex="0"]')
     const count = await rovingCell.count()
     if (count > 0) {
@@ -58,7 +58,7 @@ test.describe('ty-calendar-month — edge cases', () => {
   })
 
   test('arrow keys move the roving tabindex by the expected day delta', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const roving = page.locator('#cal').locator('[role=gridcell][tabindex="0"]')
     const beforeLabel = await roving.getAttribute('aria-label')
     await roving.focus()
@@ -72,12 +72,12 @@ test.describe('ty-calendar-month — edge cases', () => {
   test('min > max misconfiguration renders without crashing (all days effectively disabled or shown)', async ({ page }) => {
     const errors: string[] = []
     page.on('pageerror', (e) => errors.push(e.message))
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7" min="2026-08-01" max="2026-07-01"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7" min="2026-08-01" max="2026-07-01"></ty-calendar-month>`)
     expect(errors).toEqual([])
   })
 
   test('leading/trailing other-month days are marked and excluded from selection date math', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const otherMonthCount = await page.locator('#cal .other-month').count()
     // July 2026: 1st is a Wednesday, 31 days — grid is 42 cells, so there
     // WILL be leading/trailing days from June/August padding the 6-week grid.
@@ -85,13 +85,13 @@ test.describe('ty-calendar-month — edge cases', () => {
   })
 
   test('custom dayContentFn returning a non-DOM, non-string value throws (documented contract)', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const threw = await page.evaluate(() => {
       const cal = document.getElementById('cal') as any
       try {
         cal.dayContentFn = () => 12345 // not a DOM element or string
-        cal.year = 2026 // trigger re-render
-        cal.month = 8
+        cal.displayYear = 2026 // trigger re-render
+        cal.displayMonth = 8
         return false
       } catch {
         return true
@@ -100,15 +100,15 @@ test.describe('ty-calendar-month — edge cases', () => {
     expect(threw).toBe(true)
   })
 
-  test('invalid year/month attributes do not crash the component', async ({ page }) => {
+  test('invalid display-year/display-month attributes do not crash the component', async ({ page }) => {
     const errors: string[] = []
     page.on('pageerror', (e) => errors.push(e.message))
-    await mount(page, `<ty-calendar-month id="cal" year="not-a-year" month="99"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="not-a-year" display-month="99"></ty-calendar-month>`)
     expect(errors).toEqual([])
   })
 
   test('tap-select works on touch (mobile projects)', async ({ page }) => {
-    await mount(page, `<ty-calendar-month id="cal" year="2026" month="7"></ty-calendar-month>`)
+    await mount(page, `<ty-calendar-month id="cal" display-year="2026" display-month="7"></ty-calendar-month>`)
     const day15 = page.locator('#cal').locator('.calendar-day-cell:not(.other-month)', { hasText: /^15$/ }).first()
     const detailPromise = page.evaluate(() => new Promise((resolve) => {
       document.getElementById('cal')!.addEventListener('day-click', (e: any) => resolve(e.detail), { once: true })

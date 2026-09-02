@@ -215,10 +215,10 @@ describe('anchored popup integration', () => {
 });
 
 describe('field heights are unified across ty-input / ty-select / ty-date-picker', () => {
-  // Fields come in exactly three sizes and consume var(--ty-size-*) —
-  // seed the tokens the way tyrell.css would. Legacy xs/xl coerce to sm/lg.
-  const SIZES = { sm: '2.25rem', md: '2.5rem', lg: '2.75rem' };
-  const EXPECTED: Record<string, number> = { sm: 36, md: 40, lg: 44 };
+  // Fields come in five sizes and consume var(--ty-size-*) via the shared
+  // ladder (styles/field-size.ts) — seed the tokens the way tyrell.css would.
+  const SIZES = { xs: '2rem', sm: '2.25rem', md: '2.5rem', lg: '2.75rem', xl: '3rem' };
+  const EXPECTED: Record<string, number> = { xs: 32, sm: 36, md: 40, lg: 44, xl: 48 };
 
   before(() => {
     for (const [k, v] of Object.entries(SIZES)) {
@@ -231,7 +231,7 @@ describe('field heights are unified across ty-input / ty-select / ty-date-picker
     }
   });
 
-  (['sm', 'md', 'lg'] as const).forEach((size) => {
+  (['xs', 'sm', 'md', 'lg', 'xl'] as const).forEach((size) => {
     it(`size=${size}: input, select, and date-picker are all ${EXPECTED[size]}px`, async () => {
       const inp = (await fixture(html`<ty-input size=${size} placeholder="x"></ty-input>`)) as any;
       const sel = (await fixture(html`
@@ -250,12 +250,13 @@ describe('field heights are unified across ty-input / ty-select / ty-date-picker
     });
   });
 
-  it('legacy size="xs" / size="xl" coerce to sm / lg', async () => {
-    const xs = (await fixture(html`<ty-input size="xs" placeholder="x"></ty-input>`)) as any;
-    const xl = (await fixture(html`<ty-input size="xl" placeholder="x"></ty-input>`)) as any;
+  it('a field with no size attribute matches size="sm"', async () => {
+    const bare = (await fixture(html`<ty-input placeholder="x"></ty-input>`)) as any;
+    const sm = (await fixture(html`<ty-input size="sm" placeholder="x"></ty-input>`)) as any;
     await nextFrame();
-    expect(Math.round(xs.shadowRoot.querySelector('.input-wrapper').getBoundingClientRect().height)).to.equal(36);
-    expect(Math.round(xl.shadowRoot.querySelector('.input-wrapper').getBoundingClientRect().height)).to.equal(44);
+    const h = (el: any) => Math.round(el.shadowRoot.querySelector('.input-wrapper').getBoundingClientRect().height);
+    expect(bare.size).to.equal('sm');
+    expect(h(bare)).to.equal(h(sm));
   });
 });
 

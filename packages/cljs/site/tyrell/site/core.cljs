@@ -172,7 +172,7 @@
        label])))
 
 (defn right-sidebar [{:keys [title items]}]
-  [:div.border-l.ty-border-soft.pt-8.pb-8
+  [:div.pt-8.pb-8
    (when title
      [:p.text-xs.uppercase.tracking-widest.ty-text-.pl-4.mb-3
       title])
@@ -843,8 +843,13 @@
     (router/rendered? ::getting-started true) "Getting Started"
     :else nil))
 
-(defn header-title []
-  (if-let [{:keys [parent current]} (current-component-breadcrumb)]
+(defn header-title
+  "Breadcrumb when we're inside a component page — it shows depth the sidebar
+   doesn't. A bare page title only repeats the highlighted nav item, so it's
+   worth the space just when the nav is hidden (mobile); desktop passes false."
+  ([] (header-title true))
+  ([show-page-title?]
+   (if-let [{:keys [parent current]} (current-component-breadcrumb)]
     [:div.flex.items-center.gap-1.text-sm
      [:button.ty-text-.hover:ty-text-primary.transition-colors.cursor-pointer
       {:on {:click #(router/navigate! ::components)}}
@@ -857,8 +862,9 @@
      (when parent
        [:span.ty-text-- "›"])
      [:span.ty-text.font-medium (:name current)]]
-    (when-let [title (page-title-text)]
-      [:h2.text-sm.font-medium.ty-text-.truncate title])))
+     (when show-page-title?
+       (when-let [title (page-title-text)]
+         [:h2.text-sm.font-medium.ty-text-.truncate title])))))
 
 (defn header-actions []
   [:div.flex.items-center.gap-2.flex-shrink-0
@@ -929,9 +935,9 @@
          ;; Content header area — title only when right sidebar present
          (if has-toc?
            [:div.flex.items-center.py-2
-            [:div.flex-1.min-w-0 (header-title)]]
+            [:div.flex-1.min-w-0 (header-title false)]]
            [:div.flex.items-center.justify-between.gap-3.py-2
-            [:div.flex-1.min-w-0 (header-title)]
+            [:div.flex-1.min-w-0 (header-title false)]
             (header-actions)])
          ;; When right sidebar is visible, actions move here to align with it
          (when has-toc?

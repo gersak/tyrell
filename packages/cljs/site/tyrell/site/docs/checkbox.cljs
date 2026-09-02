@@ -43,7 +43,7 @@
         :description "Sets aria-required and participates in form validation"}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Size variant: xs, sm, md, lg, xl"}
        {:name "flavor"
         :type "string"
@@ -138,7 +138,7 @@
        (section-label "Sizes")
        (demo-area
         [:div.flex.flex-col.items-start.gap-3
-         (for [[size label] [["xs" "Extra small"] ["sm" "Small"] ["md" "Medium (default)"]
+         (for [[size label] [["xs" "Extra small"] ["sm" "Small (default)"] ["md" "Medium"]
                              ["lg" "Large"] ["xl" "Extra large"]]]
            [:label.inline-flex.items-center.gap-2.cursor-pointer.font-medium
             {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}

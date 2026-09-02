@@ -4,6 +4,7 @@
  */
 
 import type { Flavor, Size, TyButtonElement } from "../types/common.js";
+import { DEFAULT_SIZE } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles, buildClassList } from "../utils/styles.js";
@@ -45,12 +46,12 @@ export class TyButton
     size: {
       type: "string" as const,
       visual: true,
-      default: "md",
+      default: DEFAULT_SIZE,
       validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
         if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
-          console.warn(`[ty-button] Invalid size '${v}'. Using 'md'.`);
-          return "md";
+          console.warn(`[ty-button] Invalid size '${v}'. Using '${DEFAULT_SIZE}'.`);
+          return DEFAULT_SIZE;
         }
         return v;
       },

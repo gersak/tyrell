@@ -23,7 +23,7 @@
         :description "Semantic color theme: primary, success, danger, warning, neutral"}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Tag size: xs, sm, md, lg, xl"}
        {:name "pill"
         :type "boolean"

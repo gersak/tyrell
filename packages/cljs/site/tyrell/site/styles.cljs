@@ -70,21 +70,37 @@ code:not(.hljs) {
 ;; (dark) — keep the three in sync. Hues are theme-invariant, so only the L and
 ;; chroma curves need a dark block; everything else falls through from light.
 ;;
-;; primary-hue/chroma are the TYRELL IDENTITY color (orange, tuned per-mode —
-;; hand-picked off the "Orange" preset in theming.cljs), deliberately NOT the
-;; content playground's default (252, violet — picked precisely so a visitor
-;; dragging sliders can't land on and be confused with the real brand).
-;; success/warning/danger hue + chroma are literal numbers (chroma computed as
-;; chrome's-own-chroma × the same ratios core ships: ×1.08 / ×2.22 / ×1.95) +
-;; l-factor, pinned explicitly to mirror tyrell-theme.css's own defaults —
-;; otherwise the playground's per-flavor chroma and l-factor sliders
-;; (theming.cljs) would leak into chrome as INLINE overrides on <html>, the
-;; same way any un-pinned dial does — see the maintenance note above.
+;; primary-hue/chroma/l-factor are the TYRELL IDENTITY color (orange, tuned
+;; per-mode), deliberately NOT the content playground's default (252, violet —
+;; picked precisely so a visitor dragging sliders can't land on and be confused
+;; with the real brand).
+;;
+;; The identity is specified as a finished OKLCH swatch per mode:
+;;     light  oklch(0.69 0.15 42.1)      dark  oklch(0.71 0.13 42.2)
+;; The seeds below are solved BACK from those, through the primary formula in
+;; tyrell-theme.css:
+;;     --ty-color-primary = oklch(l-base * primary-l-factor,
+;;                                primary-chroma * c-base-mult, primary-hue)
+;; so the odd-looking numbers are exact, not hand-tuned — re-derive them if you
+;; change the swatch or the L/C curves below:
+;;     primary-chroma   = C / c-base-mult   (0.92)
+;;     primary-l-factor = L / l-base        (light 0.54, dark 0.62)
+;; NOTE light pins primary-l-factor explicitly: core's :root ships 0.96, which
+;; would otherwise land the identity at 0.518 instead of 0.690.
+;;
+;; success/warning/danger hue + chroma are literal numbers + l-factor, pinned
+;; explicitly to mirror tyrell-theme.css's own defaults — otherwise the
+;; playground's per-flavor chroma and l-factor sliders (theming.cljs) would leak
+;; into chrome as INLINE overrides on <html>, the same way any un-pinned dial
+;; does — see the maintenance note above. They are deliberately NOT re-derived
+;; from the identity chroma above: semantic flavors are not the brand, so
+;; keeping them fixed is what makes a brand change a one-flavor change.
 (def ^:private chrome-pin-css
   "
 [data-ty-theme].site-chrome {
-  --ty-primary-hue: 38;
-  --ty-primary-chroma: 0.15;
+  --ty-primary-hue: 42.1;
+  --ty-primary-chroma: 0.163;    /* 0.163 * 0.92   = 0.150 */
+  --ty-primary-l-factor: 1.2778; /* 0.54  * 1.2778 = 0.690 */
   --ty-success-hue: 145;
   --ty-warning-hue: 76;
   --ty-danger-hue: 31;
@@ -112,9 +128,9 @@ code:not(.hljs) {
 
 .dark [data-ty-theme].site-chrome,
 [data-theme=\"dark\"] [data-ty-theme].site-chrome {
-  --ty-primary-hue: 42;
-  --ty-primary-chroma: 0.16;
-  --ty-primary-l-factor: 1.1;
+  --ty-primary-hue: 42.2;
+  --ty-primary-chroma: 0.1413;   /* 0.1413 * 0.92   = 0.130 */
+  --ty-primary-l-factor: 1.1452; /* 0.62   * 1.1452 = 0.710 */
   --ty-success-chroma: 0.173;
   --ty-warning-chroma: 0.355;
   --ty-danger-chroma: 0.312;

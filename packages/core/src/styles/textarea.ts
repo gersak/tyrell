@@ -3,7 +3,10 @@
  * Enhanced textarea with auto-resize functionality
  */
 
+import { fieldSizeVars } from './field-size.js'
+
 export const textareaStyles = `
+${fieldSizeVars}
 :host {
   display: block;
   font-family: inherit;
@@ -92,13 +95,13 @@ export const textareaStyles = `
 }
 
 .ty-field-label {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
+  font-size: var(--ty-field-label-font);
+  line-height: var(--ty-field-label-leading);
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
-  margin-bottom: 6px;
-  padding-left: 12px;
+  margin-bottom: var(--ty-field-label-gap);
+  padding-left: var(--ty-field-outer-pad-x);
 }
 
 .required-icon {
@@ -116,7 +119,7 @@ export const textareaStyles = `
   letter-spacing: var(--ty-tracking-xs);
   color: var(--ty-color-danger);
   margin-top: 4px;
-  padding-left: 12px;
+  padding-left: var(--ty-field-outer-pad-x);
 }
 
 /* Error state is reflected on .textarea-wrapper (see above). */
@@ -206,7 +209,7 @@ textarea:not(.resize-both):not(.resize-horizontal):not(.resize-vertical) {
 
 textarea.xs {
   min-height: 64px;
-  padding: 8px 10px;
+  padding: 8px var(--ty-field-pad-x);
   font-size: var(--ty-font-xs);
   line-height: var(--ty-leading-xs);
   letter-spacing: var(--ty-tracking-xs);
@@ -214,7 +217,7 @@ textarea.xs {
 
 textarea.sm {
   min-height: 72px;
-  padding: 10px 10px;
+  padding: 10px var(--ty-field-pad-x);
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
@@ -222,7 +225,7 @@ textarea.sm {
 
 textarea.md {
   min-height: 80px;
-  padding: 12px 12px;
+  padding: 12px var(--ty-field-pad-x);
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   letter-spacing: var(--ty-tracking-sm);
@@ -230,7 +233,7 @@ textarea.md {
 
 textarea.lg {
   min-height: 96px;
-  padding: 14px 14px;
+  padding: 14px var(--ty-field-pad-x);
   font-size: var(--ty-font-base);
   line-height: var(--ty-leading-base);
   letter-spacing: var(--ty-tracking-base);
@@ -238,7 +241,7 @@ textarea.lg {
 
 textarea.xl {
   min-height: 112px;
-  padding: 16px 16px;
+  padding: 16px var(--ty-field-pad-x);
   font-size: var(--ty-font-lg);
   line-height: var(--ty-leading-lg);
   letter-spacing: var(--ty-tracking-lg);
@@ -270,7 +273,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-sm);
     line-height: var(--ty-leading-sm);
     letter-spacing: var(--ty-tracking-sm);
-    padding: 12px 12px;
+    padding: 12px var(--ty-field-pad-x);
     min-height: 80px;
   }
 
@@ -278,7 +281,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-base);
     line-height: var(--ty-leading-base);
     letter-spacing: var(--ty-tracking-base);
-    padding: 14px 14px;
+    padding: 14px var(--ty-field-pad-x);
     min-height: 96px;
   }
 }
@@ -288,7 +291,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-sm);
     line-height: var(--ty-leading-sm);
     letter-spacing: var(--ty-tracking-sm);
-    padding: 12px 12px;
+    padding: 12px var(--ty-field-pad-x);
     min-height: 80px;
   }
 }
@@ -299,7 +302,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-sm);
     line-height: var(--ty-leading-sm);
     letter-spacing: var(--ty-tracking-sm);
-    padding: 12px 12px;
+    padding: 12px var(--ty-field-pad-x);
     min-height: 80px;
   }
 
@@ -307,7 +310,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-base);
     line-height: var(--ty-leading-base);
     letter-spacing: var(--ty-tracking-base);
-    padding: 14px 14px;
+    padding: 14px var(--ty-field-pad-x);
     min-height: 96px;
   }
 }
@@ -317,7 +320,7 @@ textarea:focus-visible {
     font-size: var(--ty-font-sm);
     line-height: var(--ty-leading-sm);
     letter-spacing: var(--ty-tracking-sm);
-    padding: 12px 12px;
+    padding: 12px var(--ty-field-pad-x);
     min-height: 80px;
   }
 }

@@ -1,1 +1,1 @@
-/home/rgersak/dev/gersak/tyrell/packages/core/dist/tyrell.js
+../../../core/dist/tyrell.js

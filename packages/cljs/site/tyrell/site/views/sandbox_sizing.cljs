@@ -3,16 +3,23 @@
    docs/guide route lists (see core.cljs nav-items). Reachable only by direct
    URL at /internal/sizing. Throwaway: no docs polish intended.
 
-   Model: fields (input/select/date-picker) come in exactly THREE sizes
-   sharing --ty-size-sm/md/lg (32/36/40px). Buttons run a 4px ladder
-   (xs 24 / sm 28 / md 32 / lg 36 / xl 40). The two ladders share a scale:
-   field sm = button md (32), field md = button lg (36), field lg = button
-   xl (40) — a button and a field of the paired size are the SAME height,
-   flush in a row, not nested."
+   Model: every field (input/select/date-picker/copy) takes its geometry from
+   ONE ladder — styles/field-size.ts emits --ty-field-* per :host([size]), so
+   the same size name is the same height, font and label scale on all of them:
+   xs 28 / sm 32 / md 36 / lg 40 / xl 44. `sm` is DEFAULT_SIZE (types/common.ts).
+
+   Buttons run a 4px ladder one rung below (xs 24 / sm 28 / md 32 / lg 36 /
+   xl 40) so a same-name button NESTS inside a field's end slot, and the
+   ladders still intersect for flush alongside pairing: field sm = button md
+   (32), field md = button lg (36), field lg = button xl (40).
+
+   Tag, checkbox, switch and radio scale on their own ladders — shown here to
+   eyeball them against the field rungs, not held to them."
   (:require
    [tyrell.site.state :as state]))
 
-(def ^:private field-sizes ["sm" "md" "lg"])
+(def ^:private sizes ["xs" "sm" "md" "lg" "xl"])
+(def ^:private field-heights {"xs" 28 "sm" 32 "md" 36 "lg" 40 "xl" 44})
 (def ^:private button-sizes ["xs" "sm" "md" "lg" "xl"])
 (def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
 
@@ -32,6 +39,20 @@
             :key f}
    f])
 
+(defn- rung-label [size]
+  [:code.ty-text-.text-xs {:style {:width "6.5rem" :flex-shrink "0" :white-space "nowrap"}}
+   (str (when (= size "sm") "★ ") size " · " (field-heights size) "px")])
+
+;; Dashed box of exactly the rung's field height: anything taller than the
+;; ladder visibly breaks out of it, so misalignment is seen, not measured.
+(defn- guide-row [size & children]
+  (into [:div.flex.items-center.gap-3
+         {:style {:height (str (field-heights size) "px")
+                  :border-top "1px dashed var(--ty-color-primary)"
+                  :border-bottom "1px dashed var(--ty-color-primary)"
+                  :overflow-x "auto"}}]
+        children))
+
 (defn view []
   (let [f (flavor)]
     [:div.p-6.max-w-5xl.mx-auto.space-y-8
@@ -39,34 +60,67 @@
 
      [:div.flex.flex-wrap.gap-2 (map flavor-chip flavors)]
 
-     ;; Field reference grid — three sizes, three fields, all equal height.
+     ;; The whole point: one rung per row, every size-aware component in it,
+     ;; bracketed by the expected field height.
      [:div.space-y-2
-      [:h2.text-lg.font-semibold.ty-text "Fields — three sizes, one ladder"]
+      [:h2.text-lg.font-semibold.ty-text "Every component, one rung per row"]
       [:p.ty-text-.text-sm
-       "ty-input / ty-select / ty-date-picker share " [:code "--ty-size-sm/md/lg"]
-       " (32/36/40px) and always line up. Legacy " [:code "xs"] "/" [:code "xl"]
-       " coerce to sm/lg."]
-      [:div.ty-elevated.p-6.rounded-lg.space-y-3
-       (for [size field-sizes]
-         [:div.flex.flex-wrap.items-center.gap-3 {:key size}
-          [:code.ty-text-.w-8.text-xs size]
-          [:ty-input {:flavor f :size size :placeholder "Input" :style {:width "12rem"}}]
-          [:ty-select {:flavor f :size size :placeholder "Select" :style {:width "12rem"}}
+       "Dashed rules mark the rung's field height. Input, select, date-picker"
+       " and copy must sit exactly inside them (★ = default size). Button, tag,"
+       " checkbox, switch and radio run their own ladders — they sit inside the"
+       " rules by design, they are not expected to touch them."]
+      [:div.ty-elevated.p-6.rounded-lg.space-y-6
+       (for [size sizes]
+         [:div.space-y-1 {:key size}
+          (rung-label size)
+          (guide-row size
+                     [:ty-input {:flavor f :size size :value "Sample text" :style {:width "8rem"}}]
+                     [:ty-select {:flavor f :size size :value "a" :style {:width "10rem"}}
+                      [:ty-option {:value "a"} "Option A"]
+                      [:ty-option {:value "b"} "Option B"]]
+                     [:ty-date-picker {:flavor f :size size :value "2026-07-17"}]
+                     [:ty-copy {:flavor f :size size :value "copy-me-123" :style {:width "9rem"}}])
+          (guide-row size
+                     [:ty-button {:flavor f :size size} "Button"]
+                     [:ty-tag {:flavor f :size size} "Tag"]
+                     [:ty-checkbox {:flavor f :size size :checked "true"}]
+                     [:ty-switch {:flavor f :size size :checked "true"}]
+                     [:ty-radio {:flavor f :size size :checked "true"}]
+                     [:span.ty-text--.text-xs "button / tag / checkbox / switch / radio — own ladders"])])]]
+
+     ;; Labels ride the same ladder — font, gap and left inset track the
+     ;; field's padding, so a row of labelled fields aligns on both edges.
+     [:div.space-y-2
+      [:h2.text-lg.font-semibold.ty-text "Labels follow the ladder"]
+      [:p.ty-text-.text-sm
+       "Label font (12/12/14/14/16), gap and left inset come from the same"
+       " --ty-field-* vars, so labels and values line up across fields at"
+       " every size."]
+      [:div.ty-elevated.p-6.rounded-lg.space-y-4
+       (for [size sizes]
+         [:div.space-y-1 {:key size}
+          (rung-label size)
+          [:div.flex.flex-wrap.items-start.gap-3
+          [:ty-input {:flavor f :size size :label "Input" :value "Sample text" :style {:width "11rem"}}]
+          [:ty-select {:flavor f :size size :label "Select" :value "a" :style {:width "10rem"}}
            [:ty-option {:value "a"} "Option A"]
            [:ty-option {:value "b"} "Option B"]]
-          [:ty-date-picker {:flavor f :size size :value "2026-07-17"}]])]]
+          [:ty-date-picker {:flavor f :size size :label "Date" :value "2026-07-17"}]
+          [:ty-copy {:flavor f :size size :label "Copy" :value "copy-me-123" :style {:width "10rem"}}]
+          [:ty-textarea {:flavor f :size size :label "Textarea" :rows "2"
+                         :value "Sample text" :style {:width "12rem"}}]]])]]
 
      ;; Button ladder — compact, deliberately below the field ladder.
      [:div.space-y-2
       [:h2.text-lg.font-semibold.ty-text "Buttons — compact 4px ladder"]
       [:p.ty-text-.text-sm
-       "24/28/32/36/40px — smaller than fields on purpose."]
+       "24/28/32/36/40px — one rung below fields on purpose."]
       [:div.ty-elevated.p-6.rounded-lg
        [:div.flex.flex-wrap.items-end.gap-3
         (for [size button-sizes]
           [:div.flex.flex-col.items-center.gap-1 {:key size}
            [:ty-button {:flavor f :size size} "Button"]
-           [:code.ty-text--.text-xs size]])]]]
+           [:code.ty-text--.text-xs (str size (when (= size "sm") " ★"))]])]]]
 
      ;; Paired alongside — the three exact intersections. Field and button
      ;; sit in the SAME flex row, vertically centered but not stretched, so
@@ -92,29 +146,14 @@
             [:ty-option {:value "b"} "Option B"]]
            [:ty-button {:flavor f :size btn-size} "Button"]]])]]
 
-     ;; Input + select, both with labels, forced into the same row — checks
-     ;; that both fields' :host block boxes (label above field) stay flush
-     ;; and don't collapse/stretch oddly when placed side by side.
-     [:div.space-y-2
-      [:h2.text-lg.font-semibold.ty-text "Input + Select with labels — same row"]
-      [:p.ty-text-.text-sm
-       "Both fields are block-level; an explicit width on each keeps them"
-       " side by side with labels aligned."]
-      [:div.ty-elevated.p-6.rounded-lg
-       [:div.flex.flex-wrap.items-start.gap-3
-        [:ty-input {:flavor f :label "Name" :placeholder "Jane Doe" :style {:width "14rem"}}]
-        [:ty-select {:flavor f :label "Role" :placeholder "Select role" :style {:width "14rem"}}
-         [:ty-option {:value "admin"} "Admin"]
-         [:ty-option {:value "user"} "User"]]]]]
-
      ;; Button in the input's end slot — same size name, ~4px margin.
      [:div.space-y-2
       [:h2.text-lg.font-semibold.ty-text "Button in an input's end slot — same size name"]
       [:p.ty-text-.text-sm
        "Same name nests with a consistent ~4px margin (button sm 28 in field sm 32, …)."]
       [:div.ty-elevated.p-6.rounded-lg.space-y-3
-       (for [size field-sizes]
+       (for [size sizes]
          [:div.flex.flex-wrap.items-center.gap-3 {:key size}
-          [:code.ty-text-.w-8.text-xs size]
+          (rung-label size)
           [:ty-input {:flavor f :size size :placeholder "Search…" :style {:width "16rem"}}
            [:ty-button {:slot "end" :flavor f :size size :appearance "ghost"} "Go"]]])]]]))

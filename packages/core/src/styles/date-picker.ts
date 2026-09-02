@@ -1,6 +1,7 @@
 /** Date Picker Component Styles */
 
 import { FLAVORS } from "../types/common.js";
+import { fieldSizeVars } from "./field-size.js";
 
 /* Flavor rules only set --date-picker-accent (border), -accent-bold
    (hover/focus border), and -ring (focus shadow); the stub base rules
@@ -40,6 +41,7 @@ const datePickerFlavor = (f: string, fb?: string) => {
 export const datePickerCustomFlavorCss = (base: string) => datePickerFlavor(base, "neutral");
 
 export const datePickerStyles = `
+${fieldSizeVars}
 :host {
   display: block;
   width: auto;
@@ -84,13 +86,13 @@ export const datePickerStyles = `
 }
 
 .ty-field-label {
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
+  font-size: var(--ty-field-label-font);
+  line-height: var(--ty-field-label-leading);
   letter-spacing: var(--ty-tracking-sm);
   font-weight: var(--ty-font-medium);
   color: var(--ty-label-color);
-  margin-bottom: 6px;
-  padding-left: 12px;
+  margin-bottom: var(--ty-field-label-gap);
+  padding-left: var(--ty-field-outer-pad-x);
   display: flex;
   align-items: center;
 }
@@ -137,12 +139,12 @@ export const datePickerStyles = `
   border: 1px solid var(--date-picker-accent, var(--ty-date-picker-border));
   border-radius: var(--ty-date-picker-radius);
   font-family: inherit;
-  font-size: var(--ty-font-sm);
+  font-size: var(--ty-field-font);
   font-weight: var(--ty-font-normal);
-  line-height: var(--ty-line-height-tight);
-  min-height: var(--ty-size-md);
-  padding: var(--ty-spacing-2) var(--ty-spacing-3);
-  padding-right: calc(var(--ty-spacing-3) + 1rem + var(--ty-spacing-2));
+  line-height: var(--ty-field-leading);
+  min-height: var(--ty-field-height);
+  padding: 0 var(--ty-field-pad-x);
+  padding-right: calc(var(--ty-field-pad-x) + 1rem + var(--ty-field-pad-x));
   transition: var(--ty-transition-all), opacity 0.2s ease;
   outline: none;
 }
@@ -162,20 +164,6 @@ export const datePickerStyles = `
 .date-picker-stub.open {
   border-color: var(--date-picker-accent-bold, var(--ty-date-picker-border-focus));
   box-shadow: 0 0 0 3px var(--date-picker-ring, var(--ty-date-picker-shadow-focus));
-}
-
-.date-picker-stub.sm {
-  min-height: var(--ty-size-sm);
-  font-size: var(--ty-font-xs);
-  padding: var(--ty-spacing-1) var(--ty-spacing-2);
-  padding-right: calc(var(--ty-spacing-2) + 0.875rem + var(--ty-spacing-1));
-}
-
-.date-picker-stub.lg {
-  min-height: var(--ty-size-lg);
-  font-size: var(--ty-font-base);
-  padding: var(--ty-spacing-2) var(--ty-spacing-4);
-  padding-right: calc(var(--ty-spacing-4) + 1.125rem + var(--ty-spacing-2));
 }
 
 /* Flavor variants — set --date-picker-accent*, consumed by the stub rules above */

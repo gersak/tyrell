@@ -8,6 +8,7 @@ import type {
   TyTagElement,
   TyTagEventDetail,
 } from "../types/common.js";
+import { DEFAULT_SIZE } from "../types/common.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
@@ -54,12 +55,12 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
     size: {
       type: "string" as const,
       visual: true,
-      default: "md",
+      default: DEFAULT_SIZE,
       validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
         if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
-          console.warn(`[ty-tag] Invalid size '${v}'. Using 'md'.`);
-          return "md";
+          console.warn(`[ty-tag] Invalid size '${v}'. Using '${DEFAULT_SIZE}'.`);
+          return DEFAULT_SIZE;
         }
         return v;
       },

@@ -32,6 +32,9 @@ export const copyCustomFlavorCss = (base: string) => copyFlavor(base, "neutral")
 export const copyStyles = `
 .copy-field-value {
   flex: 1;
+  font-size: var(--ty-field-font);
+  line-height: var(--ty-field-leading);
+  letter-spacing: var(--ty-field-tracking);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -42,8 +45,6 @@ export const copyStyles = `
   border: none;
   color: inherit;
   font-family: inherit;
-  font-size: inherit;
-  line-height: inherit;
 }
 
 .copy-field-value.multiline {
@@ -85,10 +86,6 @@ export const copyStyles = `
   display: none; /* Chrome/Safari */
 }
 
-.copy-field-value {
-  font-size: 0.8em;
-}
-
 /* Hover state — flavor-soft background (primary by default) */
 .input-wrapper:not(.disabled):hover {
   background: var(--copy-bg-hover, var(--ty-bg-primary-soft));
@@ -100,8 +97,8 @@ export const copyStyles = `
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--ty-field-control);
+  height: var(--ty-field-control);
   cursor: pointer;
   border: none;
   background: transparent;
@@ -132,8 +129,8 @@ export const copyStyles = `
 }
 
 .copy-button svg {
-  width: 18px;
-  height: 18px;
+  width: var(--ty-field-icon);
+  height: var(--ty-field-icon);
 }
 
 .input-wrapper.disabled .copy-button {

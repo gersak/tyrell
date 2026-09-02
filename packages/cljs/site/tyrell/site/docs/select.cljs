@@ -55,7 +55,7 @@
        :description "Show spinner in options area (external search in flight)"}
       {:name "size"
        :type "string"
-       :default "\"md\""
+       :default "\"sm\""
        :description "Size variant: sm, md, lg"}
       {:name "placement"
        :type "string"
@@ -133,6 +133,27 @@
 </ty-select>
 
 <!-- submits: robot=eywa -->")])
+
+(defn example-sizes []
+  [:div.ty-content.rounded-lg.p-5
+   (section-label "Sizes — the shared field ladder")
+   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+    "Same " [:code.ty-text "size"] " ladder as " [:code.ty-text "ty-input"] ", "
+    [:code.ty-text "ty-copy"] " and " [:code.ty-text "ty-date-picker"]
+    " — put them in a row at the same size and they line up exactly. "
+    "Narrow viewports step lg/xl down a rung."]
+   (demo-area
+    [:div.space-y-3
+     (for [[size label] [["xs" "Extra small — 28px"] ["sm" "Small — 32px (default)"]
+                         ["md" "Medium — 36px"] ["lg" "Large — 40px"] ["xl" "Extra large — 44px"]]]
+       [:ty-select {:size size :label (str "Size " (.toUpperCase size)) :value "a"}
+        [:ty-option {:value "a"} label]
+        [:ty-option {:value "b"} "Another option"]])])
+   (code-block "<ty-select size=\"xs\" label=\"Size XS\">...</ty-select>
+<ty-select size=\"sm\" label=\"Size SM\">...</ty-select>
+<ty-select size=\"md\" label=\"Size MD\">...</ty-select>
+<ty-select size=\"lg\" label=\"Size LG\">...</ty-select>
+<ty-select size=\"xl\" label=\"Size XL\">...</ty-select>")])
 
 (defn example-slots []
   [:div.ty-content.rounded-lg.p-5
@@ -223,17 +244,22 @@
       [:ty-option {:value "eywa"} "EYWA Dataset Example with Reacher"]
       [:ty-option {:value "pdf"} "Generate PDF microservice"]]
      [:ty-selected-options {:for "trigger-select"}]])
-   (code-block "<ty-select multiple name=\"robots\" id=\"robots\">
-  <!-- your trigger, your styling -->
-  <ty-button slot=\"trigger\" flavor=\"primary\" outlined pill>
-    <ty-icon slot=\"start\" name=\"filter\" size=\"sm\"></ty-icon>
-    Robots
-  </ty-button>
+   (code-block "<!-- one flex row: the trigger and the chips sit side by side -->
+<div style=\"display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;\">
+  <ty-select multiple name=\"robots\" id=\"robots\">
+    <!-- your trigger, your styling -->
+    <ty-button slot=\"trigger\" flavor=\"primary\" outlined pill>
+      <ty-icon slot=\"start\" name=\"filter\" size=\"sm\"></ty-icon>
+      Robots
+    </ty-button>
 
-  <ty-option value=\"bobo\">Bobo Robot Name</ty-option>
-  <ty-option value=\"email\">Email klijent za KnowledBase</ty-option>
-</ty-select>
-<ty-selected-options for=\"robots\"></ty-selected-options>")])
+    <ty-option value=\"bobo\">Bobo Robot Name</ty-option>
+    <ty-option value=\"email\">Email klijent za KnowledBase</ty-option>
+  </ty-select>
+
+  <!-- display:contents — the chips become items of the row above -->
+  <ty-selected-options for=\"robots\"></ty-selected-options>
+</div>")])
 
 (defn example-template []
   [:div.ty-content.rounded-lg.p-5
@@ -471,6 +497,7 @@
   (doc-section "Examples"
     [:div.space-y-6
      (example-single)
+     (example-sizes)
      (example-slots)
      (example-basic)
      (example-custom-trigger)

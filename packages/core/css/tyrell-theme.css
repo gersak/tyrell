@@ -737,8 +737,14 @@ html:root,
    * --------------------------------------------------------------*/
   --ty-input-bg: var(--ty-surface-input);
   --ty-input-color: var(--ty-color-neutral-strong);
-  --ty-input-border: var(--ty-color-neutral-faint);
-  --ty-input-border-hover: var(--ty-color-neutral-soft);
+  /* Borders come from the BORDER family, not the neutral ink ramp: ink is
+     multiplied by --ty-neutral-l-factor (0.8 in dark), which crushed the
+     resting input border to L 0.24 against an L 0.18 input surface — half
+     the separation light gets (0.88 on 1.0). The border ladder is exempt
+     from that factor by design, and its own comments name these two as the
+     successors of neutral-faint / neutral-soft. */
+  --ty-input-border: var(--ty-border-soft);
+  --ty-input-border-hover: var(--ty-border);
   --ty-input-border-focus: var(--ty-color-primary);
   --ty-input-placeholder: var(--ty-color-neutral-soft);
   --ty-input-disabled-bg: var(--ty-color-neutral-faint);
@@ -749,6 +755,23 @@ html:root,
     var(--ty-color-primary) var(--ty-focus-ring-alpha),
     transparent
   );
+}
+
+/* Dark takes the border family one rung harder than light. Genuine per-mode
+   DATA, not a formula duplicate: a small L delta at the dark end of an
+   emissive screen reads much weaker than the same delta mid-scale (the same
+   reason dark hover/active offsets are bigger — see Tier 5 dark), so light's
+   soft/base pair lands too quiet here. Dark uses base/bold instead.
+
+   Placed AFTER the block above on purpose: html.dark and html:root are both
+   (0,1,1), so source order is what decides this one — moving it up to the
+   dial block at the top of the file would lose the tie. */
+html.dark,
+html[data-theme="dark"],
+[data-ty-theme].dark,
+[data-ty-theme][data-theme="dark"] {
+  --ty-input-border: var(--ty-border);
+  --ty-input-border-hover: var(--ty-border-bold);
 }
 
 /* ----------------------------------------------------------------

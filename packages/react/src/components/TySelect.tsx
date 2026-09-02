@@ -93,9 +93,9 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Loading state — shows a spinner in the options area (external search in flight) */
   loading?: boolean;
 
-  /** Size variant */
-  /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
-  size?: 'sm' | 'md' | 'lg';
+  /** Field size — the ladder shared by every field component
+   *  (styles/field-size.ts). Defaults to 'sm'. */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   /** Horizontal popup anchor: "start" (default, trigger's left edge), "center", or "end" (trigger's right edge) — clamped into the viewport either way. Useful with a custom slot="trigger" element. Ignored when `placement` is set. */
   align?: 'start' | 'center' | 'end';

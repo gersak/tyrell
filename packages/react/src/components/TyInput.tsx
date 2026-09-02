@@ -35,9 +35,9 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   /** Semantic styling variant */
   flavor?: ShadedFlavor | (string & {});
 
-  /** Input size */
-  /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
-  size?: 'sm' | 'md' | 'lg';
+  /** Field size — the ladder shared by every field component
+   *  (styles/field-size.ts). Defaults to 'sm'. */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
   /** Input value */
   value?: string;

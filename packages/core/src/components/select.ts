@@ -5,6 +5,7 @@
  * Skins: default form field, `compact` content-hugging trigger, slot="trigger" custom.
  */
 import type { Flavor, Size } from "../types/common.js";
+import { DEFAULT_SIZE } from "../types/common.js";
 import { ensureStyles } from "../utils/styles.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { selectBaseStyles, selectCustomFlavorCss } from "../styles/select-base.js";
@@ -268,15 +269,12 @@ export class TySelect extends TyComponent<SelectState> {
     size: {
       type: "string" as const,
       visual: true,
-      default: "md",
-      // Fields come in exactly three sizes; legacy xs/xl map to sm/lg.
-      validate: (v: any) => ["sm", "md", "lg"].includes(v),
+      default: DEFAULT_SIZE,
+      validate: (v: any) => ["xs", "sm", "md", "lg", "xl"].includes(v),
       coerce: (v: any) => {
-        if (v === "xs") return "sm";
-        if (v === "xl") return "lg";
-        if (!["sm", "md", "lg"].includes(v)) {
-          console.warn(`[ty-select] Invalid size. Using md.`);
-          return "md";
+        if (!["xs", "sm", "md", "lg", "xl"].includes(v)) {
+          console.warn(`[ty-select] Invalid size. Using ${DEFAULT_SIZE}.`);
+          return DEFAULT_SIZE;
         }
         return v;
       },
@@ -332,7 +330,7 @@ export class TySelect extends TyComponent<SelectState> {
   private _searchable: "auto" | "always" | "never" = "auto";
   private _loading = false;
   private _scrollLockId: string | null = null;
-  private _size: Size = "md";
+  private _size: Size = DEFAULT_SIZE;
   private _availableLabel: string = "Available";
   private _noOptionsMessage: string = "No options available";
 
@@ -1693,7 +1691,7 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private buildStubClasses(): string {
-    const classes: string[] = [this._size];
+    const classes: string[] = [];
     if (this._disabled) classes.push("disabled");
     if (this._compact) classes.push("compact");
     return classes.join(" ");
@@ -1751,7 +1749,7 @@ export class TySelect extends TyComponent<SelectState> {
                   ${SEARCH_ICON_SVG}
                 </div>
                 <input
-                  class="dropdown-search-input ${this._size}"
+                  class="dropdown-search-input"
                   type="text"
                   placeholder="${searchPlaceholder}"
                   ${this._disabled ? "disabled" : ""}
@@ -1824,7 +1822,7 @@ export class TySelect extends TyComponent<SelectState> {
               ${SEARCH_ICON_SVG}
             </div>
             <input
-              class="mobile-search-input ${this._size}"
+              class="mobile-search-input"
               type="text"
               placeholder="${searchPlaceholder}"
               autofocus

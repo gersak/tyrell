@@ -5,6 +5,7 @@
  */
 
 import type { Flavor, Size } from "../types/common.js";
+import { DEFAULT_SIZE } from "../types/common.js";
 import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
@@ -46,7 +47,7 @@ export class TyRadio
     size: {
       type: "string" as const,
       visual: true,
-      default: "md",
+      default: DEFAULT_SIZE,
     },
     flavor: {
       type: "string" as const,
@@ -260,7 +261,7 @@ export class TyRadioGroup
     size: {
       type: "string" as const,
       visual: true,
-      default: "md",
+      default: DEFAULT_SIZE,
     },
     flavor: {
       type: "string" as const,

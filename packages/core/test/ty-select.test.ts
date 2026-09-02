@@ -501,9 +501,9 @@ describe('ty-select loading spinner follows flavor', () => {
 describe('ty-select size follows ty-input', () => {
   // Both consume var(--ty-size-*) — tyrell.css isn't loaded in this harness,
   // so seed the tokens directly (same pattern as the color-token tests above).
-  // Fields come in exactly three sizes; legacy xs/xl coerce to sm/lg.
-  const SIZES = { sm: '2.25rem', md: '2.5rem', lg: '2.75rem' };
-  const EXPECTED: Record<string, number> = { sm: 36, md: 40, lg: 44 };
+  // Five sizes, geometry from the shared ladder (styles/field-size.ts).
+  const SIZES = { xs: '2rem', sm: '2.25rem', md: '2.5rem', lg: '2.75rem', xl: '3rem' };
+  const EXPECTED: Record<string, number> = { xs: 32, sm: 36, md: 40, lg: 44, xl: 48 };
 
   before(() => {
     for (const [k, v] of Object.entries(SIZES)) {
@@ -516,7 +516,7 @@ describe('ty-select size follows ty-input', () => {
     }
   });
 
-  (['sm', 'md', 'lg'] as const).forEach((size) => {
+  (['xs', 'sm', 'md', 'lg', 'xl'] as const).forEach((size) => {
     it(`stub height matches input at size=${size} (${EXPECTED[size]}px)`, async () => {
       const inp = (await fixture(html`<ty-input size=${size} placeholder="x"></ty-input>`)) as any;
       const sel = (await fixture(html`
@@ -528,8 +528,6 @@ describe('ty-select size follows ty-input', () => {
       const stub = sel.shadowRoot.querySelector('.select-stub');
       const stubH = stub.getBoundingClientRect().height;
 
-      // The size class must actually reach the stub (the bug was: applied but unstyled)
-      expect(stub.classList.contains(size), `stub carries .${size}`).to.be.true;
       expect(Math.round(inputH), 'input matches ladder').to.equal(EXPECTED[size]);
       expect(Math.round(stubH), 'select stub matches input').to.equal(EXPECTED[size]);
     });

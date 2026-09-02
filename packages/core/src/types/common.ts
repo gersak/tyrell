@@ -39,6 +39,9 @@ export type Flavor = FlavorShaded | (string & {})
 /** Component size variants */
 export type Size = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
+/** Default `size` for every field component — change here, not per component. */
+export const DEFAULT_SIZE: Size = 'sm'
+
 /** Input types supported by ty-input */
 export type InputType =
   | 'text'

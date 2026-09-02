@@ -24,7 +24,7 @@
         :description "Visual variant: \"solid\" (saturated brand fill, default), \"outlined\" (transparent bg with matching text + border), or \"ghost\" (text only with hover background)."}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Size of the button (xs, sm, md, lg, xl)"}
        {:name "disabled"
         :type "boolean"

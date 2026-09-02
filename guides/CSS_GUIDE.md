@@ -689,15 +689,73 @@ Each flavored component funnels its colors through a few local vars, which doubl
 
 ## Component Sizing
 
-**Fields** (`ty-input`, `ty-select`, `ty-date-picker`) come in exactly **three sizes** — `sm` / `md` / `lg` — sharing one height ladder via `--ty-size-{sm,md,lg}` (32/36/40px). The same `size` value is the same height on all three, so fields always line up in a form row. Legacy `xs`/`xl` are accepted and coerce to `sm`/`lg`.
+### The field ladder
 
-**Buttons** run a 4px ladder — `xs` 24 / `sm` 28 / `md` 32 / `lg` 36 / `xl` 40 — sharing its top three steps with the field ladder, not a smaller ladder underneath it:
+**Fields** (`ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`) come in **five sizes** — `xs` / `sm` / `md` / `lg` / `xl` — and **`sm` is the default**. The same `size` value gives the same height, the same text size and the same label scale on every field, so a form row lines up without per-component tuning.
+
+| size | height | field text | label | padding-x |
+|---|---|---|---|---|
+| `xs` | 28px | 12px | 12px | 8px |
+| **`sm`** (default) | **32px** | 14px | 12px | 10px |
+| `md` | 36px | 14px | 14px | 12px |
+| `lg` | 40px | 16px | 14px | 14px |
+| `xl` | 44px | 18px | 16px | 16px |
+
+All of it comes from **one file** — `src/styles/field-size.ts` — which emits a block of `--ty-field-*` custom properties per `:host([size])`. Every field stylesheet interpolates that block and consumes the vars; **no component hardcodes a size**:
+
+```css
+:host([size="md"]) {
+  --ty-field-height: var(--ty-size-md, 2.25rem);
+  --ty-field-pad-x: 12px;
+  --ty-field-font: var(--ty-font-sm);
+  --ty-field-leading: 20px;
+  --ty-field-label-font: var(--ty-font-sm);
+  --ty-field-label-gap: 6px;
+  --ty-field-control: 28px;   /* inline buttons, e.g. ty-copy's */
+  --ty-field-icon: 18px;
+}
+```
+
+Two consequences worth knowing:
+
+- The **base `:host` block is the `sm` rung**, not a neutral default. A component left at its default never receives a `size` attribute (property sets reflect to attributes, defaults don't), so there is nothing for `:host([size="sm"])` to match. Change `DEFAULT_SIZE` and you must move that base block with it.
+- Narrow viewports drop `lg` and `xl` one rung, in the ladder itself rather than per component.
+
+To retheme the ladder, override `--ty-size-*` on `:root`; to change the default size for every field, button and tag at once, change `DEFAULT_SIZE` in `src/types/common.ts`.
+
+### Why `--ty-field-leading` is a plain pixel value
+
+It is deliberately **an even number of pixels**, not the matching `--ty-leading-*` token.
+
+A single-line field centres its *line box* inside the field height. When the line box is an odd height — `--ty-leading-sm` is 21px — the leftover space in a 32px or 36px field splits into a half pixel, which the browser rounds down, and the text renders 1px off centre. An even line box divides cleanly at every rung. Multi-line text (`ty-textarea`, `ty-copy` in multiline mode) keeps the real leading tokens, where paragraph rhythm matters more than pixel centring.
+
+Beyond that, **no optical correction is applied, and none is needed**. Inter is a cap-centred typeface — `ascent − descent − capHeight = 0` — so once the line box centres cleanly, the cap-height-to-baseline band lands exactly in the middle of the field. Measured cap-band offset from the field centre is `0.0px` at `sm`/`md`/`lg` and `±0.5px` at `xs`/`xl` (irreducible sub-pixel rasterisation).
+
+> If the font is ever changed, check this assumption first. For a typeface where `ascent − descent ≠ capHeight`, symmetric centring will look wrong and the fix is [Capsize](https://seek-oss.github.io/capsize/)-style leading trim or the native `text-box-trim` / `text-box-edge` properties — not a nudge. Note that `text-box-trim: trim-both` with `text-box-edge: cap alphabetic` clips descenders inside an `<input>`, which clips overflow.
+
+### Text arriving from the light DOM
+
+`ty-select` renders its selected value by cloning the chosen `ty-option` into the trigger with `slot="selected"`. That clone lives in the **light DOM**, so it does not inherit the stub's shadow styles — it has to pick up the ladder explicitly:
+
+```css
+:host([cloned]) .option-content {
+  font-size: var(--ty-field-font, var(--ty-font-sm));
+  line-height: var(--ty-field-leading, var(--ty-leading-sm));
+  letter-spacing: var(--ty-field-tracking, var(--ty-tracking-sm));
+}
+```
+
+The custom properties reach it by inheriting from `ty-select` down the light-DOM tree. The fallbacks cover a `ty-option` used outside a select. Options *inside* the dropdown panel keep the panel's own type scale — the panel is not a field and does not follow the field ladder.
+
+### Buttons and tags
+
+**Buttons** run a 4px ladder — `xs` 24 / `sm` 28 / `md` 32 / `lg` 36 / `xl` 40 — deliberately one rung below the field ladder, sharing its top three steps. `ty-button` and `ty-tag` also default to `sm`, so the pairing below is unchanged by the default.
 
 | Placement | Rule | Example |
 |---|---|---|
 | **Alongside** a field (separate elements in a row) | field `sm` = button `md` (32); field `md` = button `lg` (36); field `lg` = button `xl` (40) — exact height match, flush in the row | input `size="md"` + button `size="lg"` → both 36px |
 | **Embedded** in a field's `end` slot | Same size name — nests with a consistent ~4px margin | input `size="md"` + slotted button `size="md"` (36 vs 32) |
-| Button `xs`/`sm` | No matching field — these two steps are button-only (compact toolbars, icon actions) | — |
+| Button `xs`/`sm` | Below the field ladder — compact toolbars, icon actions | — |
 
 ```html
 <!-- Alongside: button lg matches field md exactly -->
@@ -712,7 +770,11 @@ Each flavored component funnels its colors through a few local vars, which doubl
 </ty-input>
 ```
 
-Override `--ty-size-*` on `:root` (or scope it to a container) to shift the field ladder — fields and the three matching button tiers (`md`/`lg`/`xl`) follow automatically.
+`ty-checkbox`, `ty-switch` and `ty-radio` scale on their own ladders and are not held to the field height.
+
+### Checking it
+
+`/internal/sizing` renders every size-aware component, one row per rung, inside dashed rules marking that rung's expected field height — anything off the ladder breaks out of them visually. `e2e/field-size-ladder.spec.ts` asserts the same thing in CI.
 
 ---
 

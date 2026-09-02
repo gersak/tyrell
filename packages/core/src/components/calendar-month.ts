@@ -112,11 +112,11 @@ export class TyCalendarMonth extends HTMLElement {
   private _cellElements: HTMLElement[] = [];
 
   /**
-   * Observed attributes (minimal - mainly for debugging)
-   * Properties are the primary API
+   * Observed attributes. `display-year`/`display-month` mirror the
+   * displayYear/displayMonth properties (which are what ty-calendar drives).
    */
   static get observedAttributes(): string[] {
-    return ['locale', 'size', 'min', 'max', 'flavor'];
+    return ['display-year', 'display-month', 'locale', 'size', 'min', 'max', 'flavor'];
   }
 
   constructor() {
@@ -175,7 +175,14 @@ export class TyCalendarMonth extends HTMLElement {
   }
 
   attributeChangedCallback(name: string, _oldValue: string | null, newValue: string | null) {
-    if (name === 'locale') {
+    if (name === 'display-year' || name === 'display-month') {
+      const n = Number(newValue);
+      const valid = Number.isInteger(n) && (name === 'display-year' ? n > 0 : n >= 1 && n <= 12);
+      if (valid) {
+        if (name === 'display-year') this.displayYear = n;
+        else this.displayMonth = n;
+      }
+    } else if (name === 'locale') {
       this._locale = newValue || 'en-US';
       this.render();
     } else if (name === 'size') {

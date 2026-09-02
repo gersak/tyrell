@@ -26,8 +26,9 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
   /** The selected date value (ISO string or formatted string) */
   value?: string;
   
-  /** Field size — fields come in exactly three; legacy xs/xl map to sm/lg */
-  size?: 'sm' | 'md' | 'lg';
+  /** Field size — the ladder shared by every field component
+   *  (styles/field-size.ts). Defaults to 'sm'. */
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   
   /** Visual flavor — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens. Also tints the popup calendar's selected/today day. */
   flavor?: 'default' | ShadedFlavor | (string & {});

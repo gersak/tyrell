@@ -387,7 +387,7 @@ By default tabs are **scrollable**: each button keeps its natural width (floored
 
 ### ty-calendar
 
-Attrs: `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — out-of-bounds days disabled, navigation clamped), `flavor` (default `'primary'` — built-ins, `+`/`-` shades, or a custom flavor; colors the selected/today day in the nested `ty-calendar-month`, navigation stays neutral chrome). Property: `dayContentFn`.
+Attrs: `value` (ISO `YYYY-MM-DD` — sets selection *and* the displayed month; reflects to `year`/`month`/`day`), `year`, `month`, `day`, `name`, `required`, `min`, `max` (ISO dates — out-of-bounds days disabled, navigation clamped), `flavor` (default `'primary'` — built-ins, `+`/`-` shades, or a custom flavor; colors the selected/today day in the nested `ty-calendar-month`, navigation stays neutral chrome). Property: `dayContentFn`.
 
 **Events:** `change` -> `{ year, month, day, action, source, dayContext }` | `navigate` -> `{ month, year, action, source }`
 

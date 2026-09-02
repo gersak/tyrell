@@ -34,6 +34,11 @@ export const optionStyles = `
   min-width: 0;
   overflow: hidden;
 }
+
+/* The clone sits in the select's TRIGGER, so its type follows the field size
+   ladder (styles/field-size.ts) rather than the dropdown list's own scale —
+   the --ty-field-* vars inherit from ty-select through the light DOM. The
+   fallbacks cover a ty-option rendered outside a select. */
 :host([cloned]) .option-content {
   display: block;
   padding: 0px;
@@ -42,6 +47,9 @@ export const optionStyles = `
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-size: var(--ty-field-font, var(--ty-font-sm));
+  line-height: var(--ty-field-leading, var(--ty-leading-sm));
+  letter-spacing: var(--ty-field-tracking, var(--ty-tracking-sm));
 }
 
 .option-content:hover {

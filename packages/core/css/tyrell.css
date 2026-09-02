@@ -382,12 +382,16 @@ DESIGN SYSTEM TOKENS
      ty-button's 4px ladder (see button.ts): field sm = button md (32px),
      field md = button lg (36px), field lg = button xl (40px) — a button
      and a field of the paired size sit flush, same height, in a row. */
+  --ty-size-xs: 1.75rem;
+  /* 28px */
   --ty-size-sm: 2rem;
   /* 32px */
   --ty-size-md: 2.25rem;
   /* 36px */
   --ty-size-lg: 2.5rem;
   /* 40px */
+  --ty-size-xl: 2.75rem;
+  /* 44px */
 
   /* Z-Index Scale */
   --ty-z-auto: auto;

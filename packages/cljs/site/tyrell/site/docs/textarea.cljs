@@ -49,7 +49,7 @@
         :description "Error message displayed below; applies danger styling"}
        {:name "size"
         :type "string"
-        :default "\"md\""
+        :default "\"sm\""
         :description "Size variant: xs, sm, md, lg, xl"}
        {:name "rows"
         :type "string"
