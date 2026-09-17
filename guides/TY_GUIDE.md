@@ -237,8 +237,14 @@ Also registered as **`ty-copy-field`** — same element, descriptive name.
 | `value` | string | - | Text to copy |
 | `label` | string | - | |
 | `format` | string | `'text'` | `text` \| `code` |
+| `multiline` | boolean | `false` | Wrap and show the full value instead of one ellipsized line. Scrolls vertically past 200px; the copy button pins to the top-right. |
+| `horizontal-scroll` | boolean | `false` | Scroll long content sideways instead of clipping with an ellipsis. Combine with `multiline` for code blocks that keep their line breaks and scroll on both axes. |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the copy button + hover tint; per-instance override via `--copy-color` / `--copy-color-hover` / `--copy-bg-hover`. |
 | `disabled` | boolean | `false` | |
+
+**The default is one ellipsized line** — ty-copy is a compact field, so a long
+value is clipped rather than allowed to grow the layout. Opt into `multiline`
+or `horizontal-scroll` when the whole value has to be readable.
 
 The copy button is icon-only and carries `aria-label`, updated live through its states: "Copy to clipboard" → "Copied!" / "Copy failed" → back.
 

@@ -54,6 +54,26 @@ export class TySelectedOptions extends HTMLElement {
     this.bind()
     this.renderChips()
 
+    // The picker's OWN declarative init (an option pre-marked `selected` in
+    // markup, no `value` attribute on the picker) has the identical parse
+    // -timing problem this component works around for its <template> child
+    // below: a real HTML parser upgrades the picker the moment its start tag
+    // is seen, before its <ty-option> children exist, so the picker may not
+    // have resolved anything yet when we read `.value` above. And unlike a
+    // real selection change, that resolution — once it finally happens on
+    // DOMContentLoaded (see the picker's own resolveDeclarativeSelection) —
+    // deliberately fires no `change` event and touches no attribute our
+    // `_pickerObserver` below would catch (the options' `selected` attribute
+    // was already correct from markup, so nothing toggles). Recheck once,
+    // same technique, same trigger.
+    if (document.readyState === 'loading') {
+      document.addEventListener(
+        'DOMContentLoaded',
+        () => { if (this.isConnected) this.renderChips() },
+        { once: true },
+      )
+    }
+
     // During HTML parsing we connect BEFORE our <template> child is parsed —
     // re-render when it arrives so server-rendered pages get templated chips.
     // renderChips re-appends the SAME template node, so its own mutations

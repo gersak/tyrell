@@ -817,3 +817,186 @@ describe('ty-select accessibility — keyboard focus + ARIA combobox pattern', (
     expect(b.getAttribute('aria-selected')).to.equal('true');
   });
 });
+
+describe('ty-select — declarative init resolves selection SYNCHRONOUSLY at connect', () => {
+  it('a sibling reading .value right after connect (its own synchronous connectedCallback) sees the real selection', async () => {
+    // This is what ty-selected-tags does: renderChips() in its OWN
+    // connectedCallback reads picker.value synchronously. If the select
+    // deferred state resolution to a frame, this would see "" instead of
+    // the real selection, with nothing to ever correct it afterward (no
+    // DOM mutation fires when the `selected` attribute was already present
+    // in the source markup).
+    const host = document.createElement('div');
+    host.innerHTML = `<ty-select multiple>
+      <ty-option value="a" selected>Apple</ty-option>
+      <ty-option value="b" selected>Banana</ty-option>
+      <ty-option value="c">Cherry</ty-option>
+    </ty-select>`;
+    document.body.appendChild(host);
+    const el = host.querySelector('ty-select') as any;
+    // Deliberately NOT awaiting a frame — read immediately, like a sibling
+    // custom element's own synchronous connectedCallback would.
+    expect(el.value, 'value resolved before any frame/tick has passed').to.equal('a,b');
+    host.remove();
+  });
+});
+
+describe('ty-select — value is the selection, options are a view of it', () => {
+  it('.value, required-validity and FormData all agree even with ZERO options ever present', async () => {
+    // External search: value is set up front, the matching option may never
+    // arrive (still loading, or simply not in the current result page). The
+    // selection must not depend on an option existing to confirm it.
+    const form = document.createElement('form');
+    form.innerHTML = `<ty-select name="auth" value="token" required external-search></ty-select>`;
+    document.body.appendChild(form);
+    await tick();
+    const el = form.querySelector('ty-select') as any;
+
+    expect(el.value, '.value reports the selection with no options in the DOM').to.equal('token');
+    expect(form.checkValidity(), 'required is satisfied — a value IS selected').to.equal(true);
+    expect(new FormData(form).get('auth'), 'FormData carries it too').to.equal('token');
+    form.remove();
+  });
+
+  it('single-select falls back to the raw value when no option ever exists to clone a label from', async () => {
+    // Placeholder was previously hidden purely because a value was
+    // selected, with nothing put in its place when no matching option had
+    // ever existed to build a display clone from — a blank field with a
+    // clear button implying a selection nothing on screen confirmed.
+    const el = (await fixture(html`
+      <ty-select name="robot" value="bobo" external-search></ty-select>
+    `)) as any;
+    await tick();
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    const textEl = stub.querySelector('.dropdown-placeholder') as HTMLElement;
+    expect(el.querySelector(':scope > [cloned][slot="selected"]'), 'no clone could be built').to.not.exist;
+    expect(textEl.hidden, 'placeholder text is shown, not left blank').to.equal(false);
+    expect(textEl.textContent, 'falls back to the raw value').to.equal('bobo');
+    expect(textEl.classList.contains('placeholder-shown'), 'not styled as an empty placeholder').to.equal(false);
+  });
+
+  it('deselecting when no option is present still clears state (not a DOM no-op)', async () => {
+    const el = (await fixture(html`
+      <ty-select name="auth" value="token" external-search></ty-select>
+    `)) as any;
+    await tick();
+    expect(el.value).to.equal('token');
+    el.clear();
+    await tick();
+    expect(el.value, 'cleared even though no option ever existed to deselect').to.equal('');
+  });
+});
+
+describe('ty-select pre-selected option (selected attribute, no value attribute)', () => {
+  it('builds the trigger clone from an option that carries `selected`', async () => {
+    // Selection originating from the OPTION rather than the select's value:
+    // the list ticked it, .value reported it, but the trigger stayed blank.
+    const el = (await fixture(html`
+      <ty-select name="auth">
+        <ty-option value="k8s">Kubernetes</ty-option>
+        <ty-option value="token" selected>Static token</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    expect(el.value).to.equal('token');
+    const clone = el.querySelector(':scope > [cloned][slot="selected"]') as HTMLElement;
+    expect(clone, 'display clone exists').to.exist;
+    expect(clone.textContent).to.equal('Static token');
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    expect(stub.classList.contains('has-clone')).to.equal(true);
+  });
+
+  it('same, when the markup lands via innerHTML after load', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = `<ty-select name="auth">
+      <ty-option value="k8s">Kubernetes</ty-option>
+      <ty-option value="token" selected>Static token</ty-option>
+    </ty-select>`;
+    document.body.appendChild(host);
+    await tick();
+    const el = host.querySelector('ty-select') as any;
+    const clone = el.querySelector(':scope > [cloned][slot="selected"]') as HTMLElement;
+    expect(clone?.textContent).to.equal('Static token');
+    host.remove();
+  });
+});
+
+describe('ty-select streaming-parse (SSR)', () => {
+  it('re-clones a blank display clone once the option finishes parsing', async () => {
+    // Parser order on a streamed page: the select's value attribute syncs
+    // while the selected option is still an empty shell, so the display
+    // clone is captured blank. When the parser appends the next sibling
+    // option, the child observer must notice the stale clone and re-clone
+    // from the now-complete option.
+    const el = document.createElement('ty-select') as any;
+    el.setAttribute('name', 'auth');
+    el.setAttribute('value', 'token');
+    const opt = document.createElement('ty-option');
+    opt.setAttribute('value', 'token');
+    opt.setAttribute('selected', '');
+    el.appendChild(opt); // no text yet — mid-parse shape
+    document.body.appendChild(el);
+    await tick();
+
+    // parser catches up: text lands, a sibling option follows
+    opt.textContent = 'Static token';
+    const opt2 = document.createElement('ty-option');
+    opt2.setAttribute('value', 'k8s');
+    opt2.textContent = 'Kubernetes';
+    el.appendChild(opt2);
+    await tick();
+
+    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
+    expect(clone, 'display clone exists').to.exist;
+    expect(clone.textContent, 'clone carries the option text').to.equal('Static token');
+    expect(el.querySelectorAll('[cloned]').length, 'exactly one clone').to.equal(1);
+    el.remove();
+  });
+
+  it('re-clones a blank clone at parse end when the selected option is the LAST child', async () => {
+    // Same mid-parse shape, but NO sibling option follows — so the childList
+    // observer never fires and the staleness guard above never gets a chance.
+    // The component must re-sync on its own once parsing ends.
+    const rs = Object.getOwnPropertyDescriptor(document, 'readyState');
+    Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true });
+    try {
+      const el = document.createElement('ty-select') as any;
+      el.setAttribute('value', 'token');
+      const opt = document.createElement('ty-option');
+      opt.setAttribute('value', 'token');
+      el.appendChild(opt); // empty shell, last child
+      document.body.appendChild(el);
+      await tick();
+      expect((el.querySelector('[cloned][slot="selected"]') as HTMLElement).textContent).to.equal('');
+
+      opt.textContent = 'Static token'; // parser finishes the option's text
+      await tick();
+      document.dispatchEvent(new Event('DOMContentLoaded')); // ...and the document
+      await tick();
+
+      const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
+      expect(clone.textContent, 'clone re-synced at parse end').to.equal('Static token');
+      expect(el.querySelectorAll('[cloned]').length, 'exactly one clone').to.equal(1);
+      el.remove();
+    } finally {
+      if (rs) Object.defineProperty(document, 'readyState', rs);
+      else delete (document as any).readyState;
+    }
+  });
+
+  it('a server-prerendered display clone is adopted, not duplicated', async () => {
+    // The SSR workaround: page ships its own clone as FIRST child.
+    const el = (await fixture(html`
+      <ty-select name="auth" value="token">
+        <ty-option slot="selected" cloned="true" value="token">Static token</ty-option>
+        <ty-option value="token" selected>Static token</ty-option>
+        <ty-option value="k8s">Kubernetes</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+
+    expect(el.querySelectorAll('[cloned]').length).to.equal(1);
+    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
+    expect(clone.textContent).to.equal('Static token');
+  });
+});

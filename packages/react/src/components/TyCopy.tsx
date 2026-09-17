@@ -21,8 +21,11 @@ export interface TyCopyProps extends Omit<React.HTMLAttributes<HTMLElement>, 'on
   /** Display format */
   format?: 'text' | 'code';
   
-  /** Multi-line display */
+  /** Wrap and show the full value instead of one ellipsized line */
   multiline?: boolean;
+
+  /** Scroll long content sideways instead of clipping with an ellipsis */
+  horizontalScroll?: boolean;
   
   /** Disable the field */
   disabled?: boolean;
@@ -45,6 +48,7 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
     flavor,
     format,
     multiline,
+    horizontalScroll,
     disabled,
     required,
     onCopySuccess,
@@ -79,6 +83,7 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
     }, [onCopySuccess, onCopyError]);
 
     const isMultiline = useBooleanProperty(elementRef, 'multiline', multiline);
+    const isHorizontalScroll = useBooleanProperty(elementRef, 'horizontalScroll', horizontalScroll);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
     const isRequired = useBooleanProperty(elementRef, 'required', required);
 
@@ -94,6 +99,7 @@ export const TyCopy = React.forwardRef<HTMLElement, TyCopyProps>(
     if (format) webComponentProps.format = format;
 
     if (isMultiline) webComponentProps.multiline = '';
+    if (isHorizontalScroll) webComponentProps['horizontal-scroll'] = '';
     if (isDisabled) webComponentProps.disabled = '';
     if (isRequired) webComponentProps.required = '';
 

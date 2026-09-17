@@ -15,7 +15,8 @@
    [tyrell.site.views.sandbox-tabs :as sandbox-tabs]
    [tyrell.site.views.sandbox-polish :as sandbox-polish]
    [tyrell.site.views.sandbox-toggles :as sandbox-toggles]
-   [tyrell.site.views.sandbox-modal :as sandbox-modal]))
+   [tyrell.site.views.sandbox-modal :as sandbox-modal]
+   [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -85,7 +86,12 @@
    {:id ::sandbox-modal
     :segment "internal/modal"
     :name "Modal prevent-* Verify (hidden)"
-    :view sandbox-modal/view}])
+    :view sandbox-modal/view}
+
+   {:id ::sandbox-modal-tabs
+    :segment "internal/modal-tabs"
+    :name "Tabs Marker-in-Modal Snap Verify (hidden)"
+    :view sandbox-modal-tabs/view}])
 
 (def component-routes docs/docs-components)
 

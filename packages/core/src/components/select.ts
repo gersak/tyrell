@@ -387,14 +387,21 @@ export class TySelect extends TyComponent<SelectState> {
       }
     });
 
-    // Render FIRST to create DOM structure
+    // Render FIRST to create DOM structure...
     this.render();
 
-    // THEN initialize and sync tags (after DOM exists)
-    requestAnimationFrame(() => {
-      this.initializeState();
-      // Visual updates happen automatically via onPropertiesChanged
-    });
+    // ...THEN resolve initial selection state. Synchronous, not deferred to
+    // a frame: `value` is the selection (see getSelectedValues()), and any
+    // consumer reading it — most directly ty-selected-tags, which renders
+    // its OWN connectedCallback synchronously right after this element's —
+    // must see the real answer immediately. A deferred frame here used to be
+    // invisible because the OLD `.value` getter re-scanned option[selected]
+    // attributes directly, which are present in the DOM from parse time
+    // regardless of when this element's own JS runs; state has no such
+    // freebie and must be populated in the same tick. Re-verified against
+    // the full unit + e2e suite with no deferral: nothing here actually
+    // depended on waiting a frame.
+    this.initializeState();
 
     // Observe light-DOM children — re-sync selected state when consumers swap
     // tag children (external-search refresh). syncSelectedTags is idempotent
@@ -628,17 +635,68 @@ export class TySelect extends TyComponent<SelectState> {
       this.updateSelectionDisplay();
       this.updateMobileSelectedState();
     } else {
-      // No explicit value - check for pre-selected tags
-      const allTags = this.getTagElements();
+      this.resolveDeclarativeSelection();
+    }
+  }
 
-      const preSelectedTags = allTags
-        .filter((tag) => tag.hasAttribute("selected"))
-        .map((tag) => this.getTagData(tag).value);
+  /**
+   * Declarative init: no `value` attribute, but markup pre-marked one or more
+   * options `selected` — native <select> semantics. This is the ONE place
+   * selection is read FROM the DOM rather than treated as a rendering of
+   * state (see getSelectedValues()): it seeds initial state, once. After
+   * this, `value` rules — flipping an option's `selected` property later
+   * does nothing, same as native.
+   *
+   * Called from initializeState() at connect AND from the child observer:
+   * a real HTML parser upgrades a custom element the moment its start tag is
+   * seen, BEFORE its children exist — `<ty-select>` connects with zero
+   * `<ty-option>` children when it's part of the page's own markup (as
+   * opposed to an already-built fragment attached via innerHTML/appendChild,
+   * where children exist at connect). Calling this only at connect would
+   * silently miss every option parsed after that instant, which is the
+   * common case for markup that is literally in the page's initial HTML.
+   *
+   * Safe to call repeatedly: no-ops once `value` has ever been explicitly
+   * set (attribute or property) or state is already non-empty — including
+   * after a real `.clear()`, which removes `selected` from every option via
+   * syncSelectedTags, so there is nothing left here to (re-)seed from.
+   */
+  private resolveDeclarativeSelection(): void {
+    if (this.getAttribute("value") || this._state.selectedValues.length > 0) {
+      return;
+    }
+    const preSelectedTags = this.getTagElements()
+      .filter((tag) => tag.hasAttribute("selected"))
+      .map((tag) => this.getTagData(tag).value);
 
-      if (preSelectedTags.length > 0) {
-        // Set the property value and sync (updateComponentValue handles everything)
-        this.updateComponentValue(preSelectedTags, false);
-      }
+    if (preSelectedTags.length > 0) {
+      // updateComponentValue's change-guard compares against STATE (empty
+      // here), not the DOM, so it correctly sees this as a real change.
+      this.updateComponentValue(preSelectedTags, false);
+      return;
+    }
+
+    // Found nothing YET, and the document is still parsing: a real HTML
+    // parser upgrades a custom element the moment its start tag is seen —
+    // BEFORE its children exist — so `<ty-select>` that's part of the
+    // page's own markup can connect with zero `<ty-option>` children even
+    // though its full option list, `selected` attributes included, is
+    // right there a few tokens later in the same document. (Not a factor
+    // for an already-built fragment attached via innerHTML/appendChild,
+    // where children exist at connect — only for markup the browser's own
+    // parser is still working through.) Recheck once, when parsing is
+    // guaranteed complete, same technique as the streaming-parse guard in
+    // syncSelectedClone. Deliberately NOT re-run from the child observer:
+    // that would also fire for a LATER external-search swap, and could
+    // resurrect a selection the user had just deliberately cleared from a
+    // freshly-swapped-in option that happens to carry a stale `selected`
+    // attribute from server-rendered markup.
+    if (document.readyState === "loading") {
+      document.addEventListener(
+        "DOMContentLoaded",
+        () => { if (this.isConnected) this.resolveDeclarativeSelection(); },
+        { once: true },
+      );
     }
   }
 
@@ -685,13 +743,18 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Get array of currently selected values from tags (ALWAYS reads from DOM)
+   * Get the array of currently selected values.
+   *
+   * Reads STATE (`_state.selectedValues`), not the DOM: `value` is the
+   * selection, and an option's `selected` attribute is a rendering of it
+   * (written by syncSelectedTags below), never the other way round. This
+   * matters whenever options don't fully reflect the selection — external
+   * search legitimately has a selected value with no matching option
+   * present; a DOM scan would report empty and desync .value, `required`
+   * validation and the click-toggle logic from what's actually selected.
    */
   private getSelectedValues(): string[] {
-    return this.getTagElements()
-      .filter((tag) => tag.hasAttribute("selected"))
-      .map((tag) => this.getTagData(tag).value)
-      .filter((value) => value !== "");
+    return [...this._state.selectedValues];
   }
 
   private syncSelectedTags(selectedValues: string[]): void {
@@ -1214,8 +1277,10 @@ export class TySelect extends TyComponent<SelectState> {
       return;
     }
 
-    // Multiple: toggle — clicking a selected option deselects it
-    if (tag.hasAttribute("selected")) {
+    // Multiple: toggle — clicking a selected option deselects it. Reads
+    // `currentValues` (state), not the tag's own attribute: see
+    // getSelectedValues() for why the attribute isn't the source of truth.
+    if (currentValues.includes(tagValue)) {
       const newValues = currentValues.filter((v) => v !== tagValue);
       this.updateComponentValue(newValues, true, "remove", tagValue);
     } else {
@@ -2077,19 +2142,32 @@ export class TySelect extends TyComponent<SelectState> {
     // (rich HTML content survives — same mechanism as ty-dropdown).
     const wantClone = !this._multiple && count > 0 ? values[0] : null;
     this.syncSelectedClone(wantClone);
-    stub.classList.toggle("has-clone", wantClone !== null);
+    // Reflects the OUTCOME (did a clone actually get built or restored?),
+    // not the intent — a value can be selected with no option ever having
+    // existed to clone from (external search: a preset value before any
+    // result has loaded). Basing this on intent alone hid the placeholder
+    // AND had nothing to show in its place: a blank field with a clear
+    // button that implied a selection nothing on screen confirmed.
+    const hasClone = this._selectedClone !== null;
+    stub.classList.toggle("has-clone", hasClone);
 
     const textEl = stub.querySelector(
       ".dropdown-placeholder",
     ) as HTMLElement | null;
     if (textEl) {
       // The clone replaces the text display entirely in single mode
-      textEl.hidden = wantClone !== null;
+      textEl.hidden = hasClone;
       const showLabels = count > 0 && this._multiple && !this._compact;
       if (showLabels) {
         textEl.textContent = this.getSelectedItems(values)
           .map((i) => i.label)
           .join(", ");
+        textEl.classList.remove("placeholder-shown");
+      } else if (wantClone !== null) {
+        // Single-select wanted a clone but couldn't produce one. Fall back
+        // to the raw value — still true, unlike the placeholder text, and
+        // still visibly "something is selected" without inventing a label.
+        textEl.textContent = values.join(", ");
         textEl.classList.remove("placeholder-shown");
       } else {
         textEl.textContent = this._placeholder;
@@ -2109,8 +2187,22 @@ export class TySelect extends TyComponent<SelectState> {
       ':scope > [cloned][slot="selected"]',
     ) as HTMLElement | null;
     if (existing?.getAttribute("value") === value) {
-      this._selectedClone = existing;
-      return; // already right
+      // Streaming-parse guard: when the `value` attribute syncs DURING HTML
+      // parsing, the selected option's children may not exist yet, so the
+      // clone captures an empty shell and the trigger renders blank forever
+      // (the early-return below would keep it — "value matches, all good").
+      // An empty clone whose source option HAS children is that artifact:
+      // fall through and re-clone from the now-complete option.
+      const stale =
+        value !== null &&
+        existing.childNodes.length === 0 &&
+        (this.getTagElements().find(
+          (el) => this.getTagData(el).value === value,
+        )?.childNodes.length ?? 0) > 0;
+      if (!stale) {
+        this._selectedClone = existing;
+        return; // already right
+      }
     }
 
     existing?.remove();
@@ -2129,6 +2221,19 @@ export class TySelect extends TyComponent<SelectState> {
       clone.setAttribute("cloned", "true");
       this.appendChild(clone);
       this._selectedClone = clone;
+      // Captured mid-parse (the option has no children yet — see the
+      // staleness guard above)? The guard only runs when something calls back
+      // in here, and the child observer is childList-only on the select: a
+      // text node landing INSIDE the option never fires it. So if this option
+      // is the LAST child, nothing would ever re-sync and the trigger stays
+      // blank. Re-run once when the parser is done. No-op after load.
+      if (option.childNodes.length === 0 && document.readyState === "loading") {
+        document.addEventListener(
+          "DOMContentLoaded",
+          () => { if (this.isConnected) this.updateSelectionDisplay(); },
+          { once: true },
+        );
+      }
     } else if (this._selectedClone?.getAttribute("value") === value) {
       // The option list no longer contains the selection (external search
       // swapped the children — possibly wiping our clone with them). Restore
@@ -2168,7 +2273,7 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   get value(): string {
-    // Always read from DOM - tags with 'selected' attribute are source of truth
+    // State is the source of truth — see getSelectedValues().
     return this.getSelectedValues().join(",");
   }
 

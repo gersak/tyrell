@@ -83,18 +83,25 @@
   [:div.ty-content.rounded-lg.p-5
    (section-label "Multiline")
    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Long values like SSH keys or certificates wrap instead of truncating."]
+    "By default ty-copy is a single compact row — a long value is clipped with an "
+    "ellipsis so it can't grow the layout. Add " [:code.ty-text "multiline"]
+    " and the whole value wraps instead, breaking mid-token when there's nothing "
+    "to break on (which is exactly what a base64 key is). Past 200px it scrolls "
+    "vertically and the copy button stays pinned top-right."]
    (demo-area
-    [:ty-copy {:label "SSH Public Key"
-               :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7RvBMCvpxhCcvLrMKAGe9QsmkdLDVqD7nRwJf3P4 user@machine"
-               :format "code"
-               :multiline true}])
-   (code-block "<ty-copy
-  label=\"SSH Public Key\"
-  value=\"ssh-rsa AAAA...\"
-  format=\"code\"
-  multiline>
-</ty-copy>")])
+    [:div.space-y-3
+     [:ty-copy {:label "Deploy key — default (clipped)"
+                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
+                :format "code"}]
+     [:ty-copy {:label "Deploy key — multiline (wraps)"
+                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
+                :format "code"
+                :multiline true}]])
+   (code-block "<!-- default: one row, ellipsized -->
+<ty-copy label=\"Deploy key\" value=\"ssh-rsa AAAA...\" format=\"code\"></ty-copy>
+
+<!-- multiline: wraps to as many rows as it needs -->
+<ty-copy label=\"Deploy key\" value=\"ssh-rsa AAAA...\" format=\"code\" multiline></ty-copy>")])
 
 (defn example-horizontal-scroll []
   [:div.ty-content.rounded-lg.p-5
@@ -104,6 +111,10 @@
     [:code.ty-text "multiline"] " for code blocks that keep their line breaks and scroll on both axes — the copy icon stays pinned top-right."]
    (demo-area
     [:div.space-y-3
+     [:ty-copy {:label "Deploy key — horizontal-scroll (one row, drag sideways)"
+                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
+                :format "code"
+                :horizontal-scroll true}]
      [:ty-copy {:label "Connection String"
                 :value "postgresql://admin:s3cr3t@db.internal.example.com:5432/production?sslmode=require&application_name=tyrell"
                 :format "code"

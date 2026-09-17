@@ -43,6 +43,15 @@ const eventHandlers = new WeakMap<TyTabs, {
 
 const resizeObservers = new WeakMap<TyTabs, ResizeObserver>();
 
+// Consumed once per element: set on the initial full render (which snaps the
+// marker onto whatever tab is active at that instant — tab 0 by default if
+// `active` isn't set yet), so that if the app corrects `active` moments later
+// (e.g. once it knows which tab it actually wants) that correction also snaps
+// instead of animating from tab 0's position. Without this, mounting inside
+// an already-visible modal and setting `active` a tick after connect reads as
+// the marker "glitching in" from the top-left corner on load.
+const pendingInitialSnap = new WeakSet<TyTabs>();
+
 function getTabsAttributes(el: TyTabs): TabsAttributes {
   return {
     width: el.getAttribute('width') || '100%',
@@ -278,35 +287,37 @@ function calculateMarkerPosition(
   const buttonsContainer = shadowRoot.querySelector<HTMLElement>('.tab-buttons');
   
   if (!button || !buttonsContainer) return null;
-  
-  const buttonRect = button.getBoundingClientRect();
-  
-  // Use offset properties for position relative to container (accounts for padding)
+
+  // offsetLeft/Top/Width/Height are all layout-space, relative to the
+  // offsetParent's border box — unlike getBoundingClientRect(), they don't
+  // reflect an ancestor's CSS transform. ty-modal's entrance animation scales
+  // the whole dialog in from 0.93, and a rect taken mid-animation used to get
+  // baked into the marker's size permanently: nothing re-measures it
+  // afterwards, since a transform never fires ResizeObserver.
   const left = button.offsetLeft;
   const top = button.offsetTop;
-  
-  return {
-    left,
-    top,
-    width: buttonRect.width,
-    height: buttonRect.height,
-  };
+  const width = button.offsetWidth;
+  const height = button.offsetHeight;
+
+  return { left, top, width, height };
 }
 
-function updateMarker(el: TyTabs, activeId: string): void {
+function updateMarker(el: TyTabs, activeId: string, forceSnap = false): void {
   const shadowRoot = el.shadowRoot;
   if (!shadowRoot) return;
-  
+
   const marker = shadowRoot.querySelector<HTMLElement>('.marker-wrapper');
   if (!marker) return;
-  
+
   const position = calculateMarkerPosition(el, shadowRoot, activeId);
   if (!position) return;
 
   // Snap without animating when the marker was never positioned, or was
   // positioned while the tabs were hidden (zero-size rects) — otherwise it
-  // visibly glides in from 0,0 on first display.
-  const snap = !marker.style.left || marker.offsetWidth === 0;
+  // visibly glides in from 0,0 on first display. `forceSnap` covers the
+  // related case where the first paint already had a real position (tab 0,
+  // by getActiveTabId's default) and `active` is corrected right after.
+  const snap = forceSnap || !marker.style.left || marker.offsetWidth === 0;
   if (snap) marker.style.transition = 'none';
 
   marker.style.left = `${position.left}px`;
@@ -345,7 +356,7 @@ function updateActiveTabState(el: TyTabs, tabId: string, previousId: string | nu
   updateTransform(el, newIndex);
   updateAriaAttributes(el, shadowRoot, tabId);
   updatePanelInteraction(el, tabId);
-  updateMarker(el, tabId);
+  updateMarker(el, tabId, pendingInitialSnap.delete(el));
 
   // The "…" menu is not rebuilt on activation any more, so re-mark it here.
   shadowRoot.querySelectorAll<HTMLElement>('.tab-overflow-item').forEach((item) => {
@@ -768,7 +779,11 @@ function render(el: TyTabs): void {
     
   } else {
     // === FULL RENDER: First time or structure missing ===
-    
+
+    // The marker this render snaps onto may only be tab 0 by default (see
+    // getActiveTabId) — mark the next real `active` correction to also snap.
+    pendingInitialSnap.add(el);
+
     shadowRoot.innerHTML = `
       <div class="tabs-container" data-placement="${placement}"${fixed ? ' data-fixed' : ''}>
         ${renderTabButtons(el, tabs, activeId)}
