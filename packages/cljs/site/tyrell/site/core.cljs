@@ -16,7 +16,8 @@
    [tyrell.site.views.sandbox-polish :as sandbox-polish]
    [tyrell.site.views.sandbox-toggles :as sandbox-toggles]
    [tyrell.site.views.sandbox-modal :as sandbox-modal]
-   [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]))
+   [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]
+   [tyrell.site.views.sandbox-select-mobile :as sandbox-select-mobile]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -91,7 +92,12 @@
    {:id ::sandbox-modal-tabs
     :segment "internal/modal-tabs"
     :name "Tabs Marker-in-Modal Snap Verify (hidden)"
-    :view sandbox-modal-tabs/view}])
+    :view sandbox-modal-tabs/view}
+
+   {:id ::sandbox-select-mobile
+    :segment "internal/select-mobile"
+    :name "Select Mobile Strip/Accordion Verify (hidden)"
+    :view sandbox-select-mobile/view}])
 
 (def component-routes docs/docs-components)
 

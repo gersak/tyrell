@@ -146,7 +146,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 |-----------|------|---------|-------------|
 | `flavor` | string | `'neutral'` | Built-in: `primary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is a custom flavor: define `--ty-solid-X`(`-fg/-hover/...`), `--ty-color-X-*`, `--ty-bg-X-soft` tokens and it themes like a built-in (missing tokens fall back to neutral); `--ty-button-*` variables still override per instance. `ty-tag` works the same way via `--ty-bg-X` / `--ty-color-X` / `--ty-border-X`. |
 | `appearance` | string | `'solid'` | `solid` (saturated brand fill) \| `outlined` (transparent bg, text === border) \| `ghost` (text only with hover bg) |
-| `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — 24/28/32/36/40px |
 | `type` | string | `'submit'` | `button` \| `submit` \| `reset` |
 | `disabled` | boolean | `false` | |
 | `pill` | boolean | `false` | Rounded shape |
@@ -159,6 +159,41 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 **Sizing:** buttons run a 24-40px 4px ladder, sharing its top three steps with the fields' 32/36/40px ladder. Pairing with a field: **alongside** in a row, field `sm`/`md`/`lg` match button `md`/`lg`/`xl` exactly (32/36/40); **embedded** in a field's `end` slot, use the **same** size name — it nests with a consistent ~4px margin. See [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing).
 
 **Custom colors:** override per button with `--ty-button-bg`, `--ty-button-bg-hover`, `--ty-button-color`, `--ty-button-border`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
+
+**Custom sizing — style the control, not the host.** The host is a bare
+`inline-block` wrapper; the control is the `<button>` inside the shadow root.
+Height, padding and font all live on the control, so `ty-button { min-height }`
+or `ty-button { height }` grows the *wrapper* and leaves the control where it
+was — with a strip of dead, unclickable space over the difference. Use one of
+these two instead:
+
+```css
+/* 1. The size dials, per rung or per instance. */
+ty-button.tap {
+  --ty-button-height: 44px;      /* control height (24/28/32/36/40 by rung) */
+  --ty-button-min-width: 0;      /* default 4rem; ignored by [action] */
+  --ty-button-pad-x: 12px;
+  --ty-button-pad-y: 0;
+  --ty-button-font: 0.875rem;
+  --ty-button-leading: 20px;
+  --ty-button-tracking: 0;
+  --ty-button-gap: 8px;
+  --ty-button-action-size: 44px;  /* [action] square box */
+  --ty-button-action-icon: 20px;  /* icon inside it */
+}
+
+/* 2. ::part for anything the dials don't cover. */
+ty-button.tap::part(button) { min-height: 44px; }
+```
+
+For full width use the `wide` attribute — `width: 100%` on the host has the
+same problem (the control keeps its content width).
+
+> **Touch targets:** the ladder tops out at 40px, below iOS's 44pt and
+> Material's 48dp. Phone-facing UIs should raise `xs`/`sm` themselves —
+> `--ty-button-height` under a `(pointer: coarse)` media query is the
+> straightforward way — and give the fields beside them the same floor via
+> `--ty-field-height`, or rows stop sitting flush.
 
 ---
 
@@ -285,7 +320,9 @@ THE select control. Single select by default with a form-field look matching `ty
 | `name` | string | - | Single submits one FormData entry; multiple submits repeated `name=` entries |
 | `label` | string | - | |
 | `placeholder` | string | `'Select...'` | Shown while empty; selection shows the option itself (single) or joined labels (multiple) |
-| `searchable` | string | `'auto'` | Popup search row: `auto` = only for 8+ options; `searchable`/`"true"` always; `"false"` never. `external-search` and `allow-create` always show it |
+| `selected-label` | string | `'Selected'` | Mobile dialog only: heading of the pinned selection strip; the count is appended (`Selected (3)`) |
+| `available-label` | string | `'Available'` | Mobile dialog only: heading of the option list; counts what's still on offer (excludes already-selected and search-hidden options) |
+| `not-searchable` | boolean | `false` | Drop the popup search row. A select is searchable by default; this is the single opt-out — bare presence attribute, like `disabled`. Can't override `external-search`/`allow-create`, where the input is the only way to type a query |
 | `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response |
 | `allow-create` | boolean | `false` | Enter on unmatched search text mints a new `<ty-option>` and selects it. Exact match (value or label, case-insensitive) selects the existing option instead of duplicating. Single: replaces selection, closes. Multiple: appends, clears search, stays open (tags-input pattern). Fires the cancelable `create` event first — see below |
 | `create-transform` | string | `'none'` | `'slug'`: normalizes the **value** allow-create mints (lowercase, spaces → `_`, strips non-alphanumeric). The display label is always kept verbatim regardless |

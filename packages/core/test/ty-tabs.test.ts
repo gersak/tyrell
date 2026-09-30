@@ -174,3 +174,41 @@ describe('ty-tabs', () => {
     });
   });
 });
+
+describe('ty-tabs active set right after mount (framework "mount, then apply state")', () => {
+  it('the post-render frame does not replay the stale active tab', async () => {
+    const el = (await fixture(html`
+      <ty-tabs>
+        <ty-tab id="a" label="General">General panel</ty-tab>
+        <ty-tab id="b" label="Security">Security panel</ty-tab>
+        <ty-tab id="c" label="Notifications">Notifications panel</ty-tab>
+        <ty-tab id="d" label="Billing">Billing panel</ty-tab>
+      </ty-tabs>
+    `)) as HTMLElement;
+
+    // Correct `active` in the same task as the mount — before render()'s own
+    // requestAnimationFrame has had a chance to run.
+    el.setAttribute('active', 'd');
+
+    await nextFrame();
+    await nextFrame();
+
+    const sr = el.shadowRoot!;
+    const btnD = sr.querySelector('[data-tab-id="d"]') as HTMLElement;
+    const marker = sr.querySelector('.marker-wrapper') as HTMLElement;
+    const wrapper = sr.querySelector('.panels-wrapper') as HTMLElement;
+    const panelD = el.querySelector('#d') as HTMLElement;
+
+    expect(parseFloat(marker.style.left), 'marker sits on the corrected tab')
+      .to.be.closeTo(btnD.offsetLeft, 1);
+    expect(parseFloat(marker.style.width), 'marker spans the corrected tab')
+      .to.be.closeTo(btnD.offsetWidth, 1);
+    expect(btnD.getAttribute('aria-selected'), 'corrected tab is selected').to.equal('true');
+    const shift = parseFloat(wrapper.style.transform.replace(/[^\d.-]/g, ''));
+    expect(shift, 'carousel is on the corrected panel (index 3), not index 0')
+      .to.be.closeTo(-3 * panelD.offsetWidth, 1);
+    expect(panelD.style.opacity, 'corrected panel is the visible one').to.equal('1');
+    expect((el.querySelector('#a') as HTMLElement).style.opacity, 'stale tab-0 panel is hidden')
+      .to.equal('0');
+  });
+});

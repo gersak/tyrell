@@ -50,13 +50,19 @@
 (defn- attach-transition-watch!
   "Wire the proof: listen for the marker's own CSS transition actually
    running. `.marker-wrapper` exists synchronously once the element connects
-   (its innerHTML is set inside connectedCallback), so no need to wait a frame."
+   (its innerHTML is set inside connectedCallback), so no need to wait a frame.
+
+   Only the mount+correction window is under test. Once the verdict is in,
+   the listener stops judging: clicking a tab by hand SHOULD animate the
+   marker, and counting those as failures made the banner flip to
+   'regression' the moment anyone touched the tabs."
   [^js tabs-el]
   (when-let [sr (.-shadowRoot tabs-el)]
     (when-let [marker (.querySelector sr ".marker-wrapper")]
       (.addEventListener marker "transitionrun"
                           (fn [^js e]
-                            (when (#{"left" "top" "width" "height"} (.-propertyName e))
+                            (when (and (nil? (:verdict (sub)))
+                                       (#{"left" "top" "width" "height"} (.-propertyName e)))
                               (mark-bug! (.-propertyName e))))))))
 
 (defn- start-scenario!

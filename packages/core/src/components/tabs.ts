@@ -109,6 +109,17 @@ function findTabIndex(tabs: HTMLElement[], tabId: string): number | undefined {
   return index >= 0 ? index : undefined;
 }
 
+/**
+ * Active tab id + index read fresh from the DOM. Deferred work (rAF, resize)
+ * must use this rather than values captured when it was scheduled — `active`
+ * can change in between.
+ */
+function currentActive(el: TyTabs): { id: string | null; index: number } {
+  const tabs = getChildTabs(el);
+  const id = getActiveTabId(el, tabs);
+  return { id, index: (id ? findTabIndex(tabs, id) : undefined) ?? 0 };
+}
+
 /** Active tab ID, defaulting to the first tab if not specified. */
 function getActiveTabId(el: TyTabs, tabs: HTMLElement[]): string | null {
   const activeAttr = el.getAttribute('active');
@@ -759,16 +770,19 @@ function render(el: TyTabs): void {
         el.style.setProperty('--buttons-height', `${buttonsHeight}px`);
       }
 
-      // Update transform with current active index
-      updateTransform(el, activeIndex);
+      // Re-read rather than close over render-time values — see the full
+      // render branch below for why a stale replay corrupts the state.
+      const current = currentActive(el);
+
+      updateTransform(el, current.index);
 
       // Overflow before marker: inserting/removing the "…" trigger reflows the
       // strip, and the marker must be measured against the final layout.
       updateOverflow(el);
 
-      if (activeId) {
-        updateMarker(el, activeId);
-        scrollActiveIntoView(el, activeId, true);
+      if (current.id) {
+        updateMarker(el, current.id);
+        scrollActiveIntoView(el, current.id, true);
       }
     });
 
@@ -803,14 +817,23 @@ function render(el: TyTabs): void {
         el.style.setProperty('--buttons-height', `${buttonsHeight}px`);
       }
 
-      updateTransform(el, activeIndex);
+      // Re-read the active tab instead of closing over render-time values:
+      // `active` can change between render() and this frame (the common
+      // "mount, then apply the real active tab" pattern), and
+      // updateActiveTabState has already moved the marker, carousel, aria and
+      // panel visibility to the new tab. Replaying the stale index here drags
+      // the marker and carousel back to the old tab while everything else
+      // stays on the new one — marker under the wrong tab, blank panel.
+      const current = currentActive(el);
+
+      updateTransform(el, current.index);
 
       // Overflow before marker — see the smart-update branch.
       updateOverflow(el);
 
-      if (activeId) {
-        updateMarker(el, activeId);
-        scrollActiveIntoView(el, activeId, false); // first paint: snap, no glide
+      if (current.id) {
+        updateMarker(el, current.id);
+        scrollActiveIntoView(el, current.id, false); // first paint: snap, no glide
       }
     });
 

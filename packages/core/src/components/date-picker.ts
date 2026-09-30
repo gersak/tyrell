@@ -778,6 +778,13 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
                 // year, month, day, hour, minute are now undefined
               };
             }
+            // A malformed/garbage newValue is stored as-is by the property
+            // manager before this hook ever runs — without this, `.value`
+            // getter stays stranded on that raw garbage forever (state is
+            // empty and display/form are correctly blank, but the property
+            // itself never heals back to null the way the initial-attribute
+            // parse in initializeState() already does).
+            this.syncFormValue();
             break;
           }
 
@@ -801,6 +808,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
               ...this._state,
               ...newComponents,
             };
+            // Heals the property back to the normalized UTC form syncFormValue
+            // already pushes into ElementInternals — otherwise a raw
+            // attribute-declared value (e.g. from formResetCallback's
+            // setProperty(name, def)) sticks as `.value`, diverging from
+            // what actually gets submitted in FormData.
+            this.syncFormValue();
           }
           break;
         }
@@ -925,6 +938,24 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     }
 
     // Form value sync handled automatically by TyComponent (formValue: true)
+  }
+
+  /**
+   * Reflect constraint validation to the owning <form> via ElementInternals.
+   * Without this `required` is only cosmetic — unlike ty-input/ty-select/
+   * ty-calendar, which all call setValidity, an empty required date-picker
+   * never blocks form submission.
+   */
+  private updateValidity(): void {
+    if (this.disabled) {
+      this._internals.setValidity({});
+      return;
+    }
+    if (this.required && !this.value) {
+      this._internals.setValidity({ valueMissing: true }, 'Please fill out this field');
+    } else {
+      this._internals.setValidity({});
+    }
   }
 
 
@@ -1369,6 +1400,8 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   protected render(): void {
     if (!this.shadowRoot) return;
 
+    this.updateValidity();
+
     ensureStyles(this.shadowRoot, { css: datePickerStyles, id: 'ty-date-picker' });
 
     // Mobile: native input, no dialog/event listeners/scroll lock
@@ -1455,14 +1488,22 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       calendar.setAttribute('day', this._state.day!.toString());
     }
 
-    // Keep an already-open popup's flavor in sync. render() only rebuilds
-    // (and re-forwards flavor) while the dialog is CLOSED — while open it
-    // takes this partial-update path instead, so without this the calendar
-    // would stay stuck on whatever flavor was active when it was opened.
+    // Keep an already-open popup's flavor/bounds in sync. render() only
+    // rebuilds (and re-forwards these) while the dialog is CLOSED — while
+    // open it takes this partial-update path instead, so without this the
+    // calendar would stay stuck on whatever flavor/min/max was active when
+    // it was opened.
     if (calendar) {
       const flavor = this.getProperty('flavor');
       if (flavor && flavor !== 'default') calendar.setAttribute('flavor', flavor);
       else calendar.removeAttribute('flavor');
+
+      const min = this.getProperty('min');
+      const max = this.getProperty('max');
+      if (min) calendar.setAttribute('min', min);
+      else calendar.removeAttribute('min');
+      if (max) calendar.setAttribute('max', max);
+      else calendar.removeAttribute('max');
     }
 
     if (this._timeInput && this._state.hour !== undefined && this._state.minute !== undefined) {

@@ -89,3 +89,89 @@ describe('ty-button custom flavors', () => {
     document.documentElement.style.removeProperty('--ty-color-brand-strong');
   });
 });
+
+// The button's size ladder lives on the host as --ty-button-* vars (styles/
+// button.ts) and the inner <button> only reads them. Two guarantees ride on
+// that: the rungs keep their documented pixel heights, and the outside can
+// actually reach the control — host styling never could, it only grew the
+// wrapper and left a dead strip over the gap.
+
+const innerOf = (host: Element) =>
+  host.shadowRoot!.querySelector('button') as HTMLButtonElement;
+
+const h = (host: Element) => innerOf(host).getBoundingClientRect().height;
+
+describe('ty-button — size ladder', () => {
+  // 4px ladder, paired with the field scale: button md === field sm === 32px.
+  const RUNGS: Array<[string, number]> = [
+    ['xs', 24], ['sm', 28], ['md', 32], ['lg', 36], ['xl', 40],
+  ];
+
+  for (const [size, px] of RUNGS) {
+    it(`size="${size}" is ${px}px tall`, async () => {
+      const el = await fixture(html`<ty-button size="${size}">Go</ty-button>`);
+      await nextFrame();
+      expect(h(el)).to.equal(px);
+    });
+  }
+
+  it('defaults to the sm rung with no size attribute', async () => {
+    const el = await fixture(html`<ty-button>Go</ty-button>`);
+    await nextFrame();
+    expect(h(el)).to.equal(28);
+  });
+
+  it('keeps the action square per rung', async () => {
+    const el = await fixture(html`<ty-button action size="lg"><ty-icon name="x"></ty-icon></ty-button>`);
+    await nextFrame();
+    const box = innerOf(el).getBoundingClientRect();
+    expect(box.height).to.equal(36);
+    expect(box.width).to.equal(36);
+  });
+});
+
+describe('ty-button — the outside can reach the control', () => {
+  let sheet: HTMLStyleElement | null = null;
+
+  const styleDocument = (css: string) => {
+    sheet = document.createElement('style');
+    sheet.textContent = css;
+    document.head.appendChild(sheet);
+  };
+
+  afterEach(() => {
+    sheet?.remove();
+    sheet = null;
+  });
+
+  it('exposes part="button"', async () => {
+    const el = await fixture(html`<ty-button>Go</ty-button>`);
+    await nextFrame();
+    expect(innerOf(el).getAttribute('part')).to.equal('button');
+  });
+
+  it('::part(button) min-height grows the control, not just the host', async () => {
+    styleDocument('ty-button.tall::part(button) { min-height: 44px }');
+    const el = await fixture(html`<ty-button class="tall" size="sm">Go</ty-button>`);
+    await nextFrame();
+    expect(h(el)).to.equal(44);
+    // The host must not be left taller than the control it wraps.
+    expect(el.getBoundingClientRect().height).to.equal(44);
+  });
+
+  it('--ty-button-height on the host overrides the rung', async () => {
+    // Normal declarations in the outer tree beat :host — that is the whole
+    // reason the ladder is declared there and not on the inner button.
+    styleDocument('ty-button.tall { --ty-button-height: 44px }');
+    const el = await fixture(html`<ty-button class="tall" size="sm">Go</ty-button>`);
+    await nextFrame();
+    expect(h(el)).to.equal(44);
+  });
+
+  it('--ty-button-min-width is reachable', async () => {
+    styleDocument('ty-button.narrow { --ty-button-min-width: 0px }');
+    const el = await fixture(html`<ty-button class="narrow">x</ty-button>`);
+    await nextFrame();
+    expect(innerOf(el).getBoundingClientRect().width).to.be.below(64);
+  });
+});

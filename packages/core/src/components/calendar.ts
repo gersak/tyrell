@@ -91,7 +91,7 @@ function formatDateISO(year: number, month: number, day: number): string {
  */
 export class TyCalendar extends HTMLElement {
   private _state: CalendarState;
-  private _showNavigation: boolean = true;
+  private _hideNavigation: boolean = false;
   private _stateless: boolean = false;
   private _size: CalendarSize = 'md';
   private _width?: string;
@@ -105,14 +105,18 @@ export class TyCalendar extends HTMLElement {
   private _monthDisplay?: HTMLElement;
 
   private _internals?: ElementInternals;
-  
+  // Markup-declared value, captured once on connect — form.reset() reverts to
+  // this rather than whatever the year/month/day attributes currently say,
+  // since the value setter overwrites those attributes on every user pick.
+  private _initialValue: string = '';
+
   // Locale observer cleanup
   private _localeObserver?: () => void;
 
   static formAssociated = true;
 
   static get observedAttributes(): string[] {
-    return ['value', 'year', 'month', 'day', 'show-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
+    return ['value', 'year', 'month', 'day', 'hide-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
   }
 
   constructor() {
@@ -215,8 +219,8 @@ export class TyCalendar extends HTMLElement {
         this.updateFormValue();
         break;
 
-      case 'show-navigation':
-        this._showNavigation = newValue !== 'false';
+      case 'hide-navigation':
+        this._hideNavigation = newValue !== null;
         this.render();
         break;
 
@@ -377,13 +381,14 @@ export class TyCalendar extends HTMLElement {
     this.setAttribute('locale', value);
   }
 
-  get showNavigation(): boolean {
-    return this._showNavigation;
+  get hideNavigation(): boolean {
+    return this._hideNavigation;
   }
 
-  set showNavigation(value: boolean) {
-    this._showNavigation = value;
-    this.setAttribute('show-navigation', value.toString());
+  set hideNavigation(value: boolean) {
+    this._hideNavigation = value;
+    if (value) this.setAttribute('hide-navigation', '');
+    else this.removeAttribute('hide-navigation');
   }
 
   get stateless(): boolean {
@@ -509,7 +514,7 @@ export class TyCalendar extends HTMLElement {
     const yearStr = this.getAttribute('year');
     const monthStr = this.getAttribute('month');
     const dayStr = this.getAttribute('day');
-    const showNavStr = this.getAttribute('show-navigation');
+    const hideNav = this.hasAttribute('hide-navigation');
     const statelessStr = this.getAttribute('stateless');
     const sizeStr = this.getAttribute('size');
     const widthStr = this.getAttribute('width');
@@ -537,9 +542,7 @@ export class TyCalendar extends HTMLElement {
       }
     }
 
-    if (showNavStr) {
-      this._showNavigation = showNavStr !== 'false';
-    }
+    this._hideNavigation = hideNav;
 
     if (statelessStr !== null) {
       this._stateless = statelessStr !== 'false';
@@ -552,6 +555,12 @@ export class TyCalendar extends HTMLElement {
     if (widthStr) {
       this._width = widthStr;
     }
+
+    this._initialValue = this.value;
+  }
+
+  formResetCallback(): void {
+    this.value = this._initialValue;
   }
 
   private syncStateFromAttributes(): void {
@@ -837,7 +846,7 @@ export class TyCalendar extends HTMLElement {
     const container = document.createElement('div');
     container.className = 'calendar-container';
 
-    if (this._showNavigation) {
+    if (!this._hideNavigation) {
       const nav = this.createNavigation();
       container.appendChild(nav);
     }

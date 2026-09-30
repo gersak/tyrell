@@ -179,6 +179,84 @@ export const buttonStyles = `
   flex-grow: 1;
 }
 
+/* Button size ladder — one source of truth, same shape as the field ladder
+   (see field-size.ts). Per-rung values live on the HOST, not on the inner
+   button's size class: a normal declaration in the outer tree beats :host
+   (encapsulation context is sorted before specificity), so a consumer can
+   write "ty-button { --ty-button-height: 44px }" and have it win. Declared on
+   the inner button they would be unreachable — a declaration on the element
+   always beats an inherited one.
+
+   Base block = the DEFAULT_SIZE rung (sm), because a component left at its
+   default never gets a "size" attribute to match on (setProperty reflects,
+   defaults don't). :host([size]) rules override it.
+
+   Buttons run a 4px ladder (24-40px). Shared scale with fields
+   (--ty-size-sm/md/lg — see tyrell.css): field sm = button md (32px),
+   field md = button lg (36px), field lg = button xl (40px) — a button
+   and a field of the paired size sit flush, same height, in a row. */
+:host {
+  --ty-button-height: 1.75rem; /* 28px */
+  --ty-button-min-width: 4rem;
+  --ty-button-pad-x: var(--ty-spacing-2);
+  --ty-button-pad-y: 0px;
+  --ty-button-font: var(--ty-font-xs);
+  --ty-button-leading: var(--ty-leading-xs);
+  --ty-button-tracking: var(--ty-tracking-xs);
+  --ty-button-gap: var(--ty-spacing-1);
+  /* Action = icon-only square: one dial for the box, one for the icon. */
+  --ty-button-action-size: 1.5rem;
+  --ty-button-action-icon: 0.875rem;
+}
+
+:host([size="xs"]) {
+  --ty-button-height: 1.5rem; /* 24px */
+  --ty-button-pad-x: var(--ty-spacing-2);
+  --ty-button-pad-y: 0px;
+  --ty-button-font: var(--ty-font-xs);
+  --ty-button-leading: var(--ty-leading-xs);
+  --ty-button-tracking: var(--ty-tracking-xs);
+  --ty-button-gap: var(--ty-spacing-1);
+  --ty-button-action-size: 1.375rem;
+  --ty-button-action-icon: 0.75rem;
+}
+
+:host([size="md"]) {
+  --ty-button-height: 2rem; /* 32px — matches field sm */
+  --ty-button-pad-x: var(--ty-spacing-3);
+  --ty-button-pad-y: 0.375rem;
+  --ty-button-font: var(--ty-font-sm);
+  --ty-button-leading: var(--ty-leading-sm);
+  --ty-button-tracking: var(--ty-tracking-sm);
+  --ty-button-gap: var(--ty-spacing-2);
+  --ty-button-action-size: 2rem;
+  --ty-button-action-icon: 1rem;
+}
+
+:host([size="lg"]) {
+  --ty-button-height: 2.25rem; /* 36px — matches field md */
+  --ty-button-pad-x: var(--ty-spacing-4);
+  --ty-button-pad-y: 0.375rem;
+  --ty-button-font: var(--ty-font-sm);
+  --ty-button-leading: var(--ty-leading-sm);
+  --ty-button-tracking: var(--ty-tracking-sm);
+  --ty-button-gap: var(--ty-spacing-2);
+  --ty-button-action-size: 2.25rem;
+  --ty-button-action-icon: 1.125rem;
+}
+
+:host([size="xl"]) {
+  --ty-button-height: 2.5rem; /* 40px — matches field lg */
+  --ty-button-pad-x: var(--ty-spacing-6);
+  --ty-button-pad-y: var(--ty-spacing-2);
+  --ty-button-font: var(--ty-font-base);
+  --ty-button-leading: var(--ty-leading-base);
+  --ty-button-tracking: var(--ty-tracking-base);
+  --ty-button-gap: var(--ty-spacing-2);
+  --ty-button-action-size: 2.5rem;
+  --ty-button-action-icon: 1.25rem;
+}
+
 button {
   /* Native form controls do NOT inherit font from the shadow host — the UA
      stylesheet sets one on them, which beats inheritance. Must be explicit
@@ -188,10 +266,12 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--ty-spacing-1);
-  font-size: var(--ty-font-xs);
-  line-height: var(--ty-leading-xs);
-  letter-spacing: var(--ty-tracking-xs);
+  gap: var(--ty-button-gap);
+  height: var(--ty-button-height);
+  padding: var(--ty-button-pad-y) var(--ty-button-pad-x);
+  font-size: var(--ty-button-font);
+  line-height: var(--ty-button-leading);
+  letter-spacing: var(--ty-button-tracking);
   /* Mode-flipped weight dial (tyrell.css): medium in light, normal in dark —
      light-on-dark text blooms, a fixed semibold read heavy there. Override
      with --ty-weight-action at any scope. */
@@ -206,7 +286,7 @@ button {
 }
 
 button:not(.action) {
-  min-width: 4rem;
+  min-width: var(--ty-button-min-width);
 }
 
 button:not(.pill) {
@@ -280,80 +360,18 @@ button.loading > .loader-icon {
   flex-grow: 1;
 }
 
-/* Buttons run a 4px ladder (24-40px). Shared scale with fields
-   (--ty-size-sm/md/lg — see tyrell.css): field sm = button md (32px),
-   field md = button lg (36px), field lg = button xl (40px) — a button
-   and a field of the paired size sit flush, same height, in a row. */
-
-button.xs {
-  padding: 0 var(--ty-spacing-2);
-  font-size: var(--ty-font-xs);
-  line-height: var(--ty-leading-xs);
-  letter-spacing: var(--ty-tracking-xs);
-  gap: var(--ty-spacing-1);
-  height: 1.5rem; /* 24px */
-}
-
-button.sm {
-  padding: 0 var(--ty-spacing-2);
-  font-size: var(--ty-font-xs);
-  line-height: var(--ty-leading-xs);
-  letter-spacing: var(--ty-tracking-xs);
-  gap: var(--ty-spacing-1);
-  height: 1.75rem; /* 28px */
-}
-
-button.md {
-  padding: 0.375rem var(--ty-spacing-3);
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
-  gap: var(--ty-spacing-2);
-  height: 2rem; /* 32px — matches field sm */
-}
-
-button.lg {
-  padding: 0.375rem var(--ty-spacing-4);
-  font-size: var(--ty-font-sm);
-  line-height: var(--ty-leading-sm);
-  letter-spacing: var(--ty-tracking-sm);
-  gap: var(--ty-spacing-2);
-  height: 2.25rem; /* 36px — matches field md */
-}
-
-button.xl {
-  padding: var(--ty-spacing-2) var(--ty-spacing-6);
-  font-size: var(--ty-font-base);
-  line-height: var(--ty-leading-base);
-  letter-spacing: var(--ty-tracking-base);
-  gap: var(--ty-spacing-2);
-  height: 2.5rem; /* 40px — matches field lg */
-}
-
 /* Action = icon-only square */
 button.action {
   gap: 0px !important;
-  height: 2rem;
-  width: 2rem;
+  height: var(--ty-button-action-size);
+  width: var(--ty-button-action-size);
   padding: 0px !important;
 }
 
 button.action ::slotted(ty-icon) {
-  height: 1rem;
-  width: 1rem;
+  height: var(--ty-button-action-icon);
+  width: var(--ty-button-action-icon);
 }
-
-button.action.xs { height: 1.375rem; width: 1.375rem; }
-button.action.xs ::slotted(ty-icon) { height: 0.75rem; width: 0.75rem; }
-
-button.action.sm { height: 1.5rem; width: 1.5rem; }
-button.action.sm ::slotted(ty-icon) { height: 0.875rem; width: 0.875rem; }
-
-button.action.lg { height: 2.25rem; width: 2.25rem; }
-button.action.lg ::slotted(ty-icon) { height: 1.125rem; width: 1.125rem; }
-
-button.action.xl { height: 2.5rem; width: 2.5rem; }
-button.action.xl ::slotted(ty-icon) { height: 1.25rem; width: 1.25rem; }
 
 /* MUTED: show the neutral tokens at rest instead of the flavor color; reveal the
    real flavor on interaction. Implemented as a fallback tier the flavor

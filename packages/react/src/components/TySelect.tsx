@@ -60,11 +60,10 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Mark the field as required */
   required?: boolean;
 
-  /**
-   * Search row visibility: 'auto' (default) shows it only for 8+ options,
-   * 'always' / 'never' force it. external-search always shows it.
-   */
-  searchable?: 'auto' | 'always' | 'never' | boolean;
+  /** Drop the popup search row. A select is searchable by default; this is
+   *  the single opt-out. Cannot override externalSearch/allowCreate, where
+   *  the input is the only way to get a query out. */
+  notSearchable?: boolean;
 
   /**
    * External (remote) search mode — the component stops filtering and emits
@@ -144,7 +143,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     disabled,
     readonly,
     required,
-    searchable,
+    notSearchable,
     externalSearch,
     debounce,
     allowCreate,
@@ -259,9 +258,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();
     if (createTransform) webComponentProps['create-transform'] = createTransform;
-    if (searchable === 'always' || searchable === true) webComponentProps.searchable = 'true';
-    else if (searchable === 'never' || searchable === false) webComponentProps.searchable = 'false';
-    // 'auto' / undefined → omit (component default)
+    if (notSearchable) webComponentProps['not-searchable'] = '';
 
     return React.createElement('ty-select', webComponentProps, children);
   }

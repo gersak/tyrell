@@ -24,6 +24,10 @@ import '../lib/components/modal.js';
 const IGNORE = new Set([
   'region', 'landmark-one-main', 'page-has-heading-one',
   'html-has-lang', 'document-title', 'bypass',
+  // This suite audits components WITHOUT tyrell.css, so every --ty-* colour
+  // falls back to a UA default — axe would be grading Chrome's palette, not
+  // ours. Structure (roles, names, states) is what's worth gating on here.
+  'color-contrast',
 ]);
 
 async function audit(el: Element): Promise<string[]> {

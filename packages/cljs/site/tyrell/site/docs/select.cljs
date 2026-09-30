@@ -37,14 +37,22 @@
        :type "string"
        :default "\"Select...\""
        :description "Shown while nothing is selected. With a selection, the trigger shows the selected label(s) instead — except multiple+compact, which keeps the placeholder and adds a count badge."}
-      {:name "searchable"
-       :type "string"
-       :default "\"auto\""
-       :description "Search row visibility. auto (default): only for lists with 8+ options — short lists open as pure options. searchable / searchable=\"true\": always. searchable=\"false\": never. external-search always shows it."}
+      {:name "not-searchable"
+       :type "boolean"
+       :default "false"
+       :description "Drop the popup search row. A select is searchable by default; this is the single opt-out — a bare presence attribute, like disabled. Can't override external-search/allow-create, where the input is the only way to type a query."}
       {:name "external-search"
        :type "boolean"
        :default "false"
        :description "Delegate filtering to consumer via search event instead of filtering locally"}
+      {:name "selected-label"
+       :type "string"
+       :default "\"Selected\""
+       :description "Heading of the mobile dialog's pinned selection strip. The count is appended automatically — \"Selected (3)\"."}
+      {:name "available-label"
+       :type "string"
+       :default "\"Available\""
+       :description "Heading of the mobile dialog's option list. Counts what's still on offer — options already selected, or hidden by the search, are not included."}
       {:name "debounce"
        :type "number"
        :default "0"
@@ -416,11 +424,11 @@
 
 (defn example-large []
   [:div.ty-content.rounded-lg.p-5
-   (section-label "Large lists — search appears automatically")
+   (section-label "Large lists — search is there by default")
    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "With " [:code.ty-text "searchable=\"auto\""] " (the default), lists past 7 options "
-    "get the search row for free — this one has 100. The list caps at ~10 visible rows "
-    "and scrolls; typing filters locally."]
+    "Every select opens with a search row unless you opt out, which is what makes a "
+    "100-option list like this one usable without any extra markup. The list caps at "
+    "~10 visible rows and scrolls; typing filters locally."]
    (demo-area
     [:ty-select {:id "large-select"
                  :label "City"
@@ -435,6 +443,36 @@
   <ty-option value=\"c1\">New Split</ty-option>
   ...
 </ty-select>")])
+
+(defn example-search-override []
+  [:div.ty-content.rounded-lg.p-5
+   (section-label "Turning the search row off")
+   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+    "A select is searchable. " [:code.ty-text "not-searchable"]
+    " is the single opt-out — a bare presence attribute, like "
+    [:code.ty-text "disabled"] ", so it takes no value. Reach for it when the list is "
+    "short and fixed enough that a search box is just noise. It can't override "
+    [:code.ty-text "external-search"] " or " [:code.ty-text "allow-create"]
+    ": there the input IS the mechanism, so hiding it would leave no way to type a query."]
+   (demo-area
+    [:div.flex.flex-wrap.gap-6
+     [:div
+      [:p.ty-text--.mb-2 {:style {:font-size "0.75rem"}} "default — searchable"]
+      [:ty-select {:label "Month" :style {:max-width "220px"}}
+       (for [[i m] (map-indexed vector ["January" "February" "March" "April" "May" "June"
+                                        "July" "August" "September" "October" "November" "December"])]
+         [:ty-option {:value (str "m" i)} m])]]
+     [:div
+      [:p.ty-text--.mb-2 {:style {:font-size "0.75rem"}} "not-searchable"]
+      [:ty-select {:label "Size" :not-searchable true :style {:max-width "220px"}}
+       [:ty-option {:value "s"} "Small"]
+       [:ty-option {:value "m"} "Medium"]
+       [:ty-option {:value "l"} "Large"]]]])
+   (code-block "<!-- searchable, no attribute needed -->
+<ty-select label=\"Month\">…</ty-select>
+
+<!-- opt out — bare attribute, no value -->
+<ty-select label=\"Size\" not-searchable>…</ty-select>")])
 
 (defn example-external-search []
   [:div.ty-content.rounded-lg.p-5
@@ -504,6 +542,7 @@
      (example-template)
      (example-preselected)
      (example-large)
+     (example-search-override)
      (example-external-search)
      (example-form)
      (example-events)]))

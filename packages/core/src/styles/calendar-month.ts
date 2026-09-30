@@ -59,7 +59,8 @@ export const calendarMonthStyles = `
   font-family: inherit;
   user-select: none;
   width: var(--calendar-width, fit-content);
-  min-width: 280px;
+  /* Same public knob the nav reads — one value sizes the whole calendar. */
+  min-width: var(--ty-calendar-width, 280px);
   max-width: var(--calendar-max-width, none);
 }
 
@@ -194,7 +195,7 @@ export const calendarMonthStyles = `
 
 .calendar-size-sm {
   padding: 0.5rem;
-  min-width: 240px;
+  min-width: var(--ty-calendar-width, 240px);
 }
 
 .calendar-size-sm .calendar-header-cell {
@@ -213,7 +214,7 @@ export const calendarMonthStyles = `
 
 .calendar-size-md {
   padding: 0.75rem;
-  min-width: 280px;
+  min-width: var(--ty-calendar-width, 280px);
 }
 
 .calendar-size-md .calendar-header-cell {
@@ -232,7 +233,7 @@ export const calendarMonthStyles = `
 
 .calendar-size-lg {
   padding: 1rem;
-  min-width: 360px;
+  min-width: var(--ty-calendar-width, 360px);
 }
 
 .calendar-size-lg .calendar-header-cell {

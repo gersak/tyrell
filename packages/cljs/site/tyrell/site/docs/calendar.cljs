@@ -53,10 +53,10 @@
         :type "string"
         :default "-"
         :description "Latest selectable date (ISO YYYY-MM-DD) — later days disabled, navigation clamped"}
-       {:name "show-navigation"
+       {:name "hide-navigation"
         :type "boolean"
-        :default "true"
-        :description "Show or hide the month/year navigation bar"}
+        :default "false"
+        :description "Drop the month/year navigation bar — bare presence attribute, like disabled. Shown by default; use this when you drive the displayed month externally."}
        {:name "stateless"
         :type "boolean"
         :default "false"
@@ -122,13 +122,57 @@
 <ty-calendar locale=\"ja-JP\"></ty-calendar>")]
 
       [:div.ty-content.rounded-lg.p-5
-       (section-label "Without Navigation")
+       (section-label "Bounds — min / max")
        [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "show-navigation=\"false\""] " to hide the navigation bar — useful when you control the displayed month externally."]
+        "ISO dates in " [:code "min"] " / " [:code "max"] " disable everything outside the range: "
+        "out-of-bounds days render dimmed, don't respond to clicks or Enter, and arrow-key "
+        "navigation refuses to cross the boundary. Navigation clamps too — paging or jumping a "
+        "year lands on the bound's month rather than sailing past it. Set the two cross-wise on a "
+        "pair of calendars to build a period picker."]
+       (demo-area
+        [:div.flex.flex-wrap.items-start.justify-center.gap-6
+         [:div.flex.flex-col.items-center.gap-2
+          [:ty-calendar {:value "2026-09-17" :min "2026-09-10" :max "2026-10-20"}]
+          [:span.ty-text-- {:style {:font-size "0.75rem"}} "2026-09-10 → 2026-10-20"]]])
+       (code-block "<ty-calendar value=\"2026-09-17\" min=\"2026-09-10\" max=\"2026-10-20\"></ty-calendar>
+
+<!-- period picker: each end bounds the other -->
+<ty-calendar id=\"from\" max=\"2026-10-20\"></ty-calendar>
+<ty-calendar id=\"to\"   min=\"2026-09-10\"></ty-calendar>")]
+
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Form participation")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "With a " [:code "name"] ", the calendar submits its ISO date like any native field, and "
+        [:code "form.reset()"] " puts it back to the value the markup declared — pick a different "
+        "day, then hit Reset."]
+       (demo-area
+        [:form.flex.flex-col.items-center.gap-3
+         {:on {:submit (fn [^js e]
+                         (.preventDefault e)
+                         (let [data (js/FormData. (.-target e))]
+                           (set! (.-textContent (.getElementById js/document "cal-form-out"))
+                                 (str "submitted: " (.get data "when")))))}}
+         [:ty-calendar {:name "when" :value "2026-09-10"}]
+         [:div.flex.gap-2
+          [:ty-button {:type "submit" :size "sm" :flavor "primary"} "Submit"]
+          [:ty-button {:type "reset" :size "sm" :flavor "neutral"} "Reset"]]
+         [:pre#cal-form-out.ty-text- {:style {:font-size "0.75rem" :margin 0}}]])
+       (code-block "<form>
+  <ty-calendar name=\"when\" value=\"2026-09-10\"></ty-calendar>
+  <ty-button type=\"submit\">Submit</ty-button>
+  <ty-button type=\"reset\">Reset</ty-button>
+</form>")]
+
+      [:div.ty-content.rounded-lg.p-5
+       (section-label "Without navigation")
+       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
+        "Add " [:code "hide-navigation"] " — a bare presence attribute, like " [:code "disabled"]
+        " — to drop the navigation bar, for when you drive the displayed month externally."]
        (demo-area
         [:div.flex.justify-center
-         [:ty-calendar {:show-navigation "false"}]])
-       (code-block "<ty-calendar show-navigation=\"false\"></ty-calendar>")]])
+         [:ty-calendar {:hide-navigation true}]])
+       (code-block "<ty-calendar hide-navigation></ty-calendar>")]])
 
    (doc-section "Advanced Examples"
      [:div.space-y-6

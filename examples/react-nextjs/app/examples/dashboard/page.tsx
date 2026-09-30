@@ -527,7 +527,6 @@ export default function DataDashboardExample() {
             <div className="max-w-md mx-auto">
               <TyCalendar
                 dayContentFn={createDayContentFn()}
-                showNavigation={true}
                 className="w-full"
               />
             </div>
@@ -613,7 +612,6 @@ export default function DataDashboardExample() {
             <div className="max-w-2xl mx-auto">
               <TyCalendar
                 dayContentFn={createDayContentFn()}
-                showNavigation={true}
                 className="w-full text-center"
               />
             </div>

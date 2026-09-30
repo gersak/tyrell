@@ -7,8 +7,16 @@ TypeScript web components for universal UI development.
 ## Installation
 
 ```bash
-npm install tyrell-components
+npm install tyrell-components        # latest -> the RC line
+npm install tyrell-components@tc     # tc     -> the TC line (current work)
 ```
+
+**Two dist-tags, and `latest` is not the newest version.** `latest`/`rc` point
+at the RC line — the promoted, stable releases. `tc` points at the TC line,
+where features land first and which can run several versions and weeks ahead of
+`latest`. A plain `npm install` therefore gets you the RC, deliberately. Reach
+for `@tc` when you want the newest components; check
+[CHANGELOG.md](../../CHANGELOG.md) for what is only on the TC line so far.
 
 ## Usage
 

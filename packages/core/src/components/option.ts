@@ -40,7 +40,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
     // Check if value was set directly on the instance before our getter/setter was available
     const instanceValue = Object.getOwnPropertyDescriptor(this, 'value')
 
-    if (instanceValue && instanceValue.value !== undefined) {
+    if (instanceValue) {
       this._value = instanceValue.value
       // Clean up the instance property so our getter/setter works
       delete this.value
