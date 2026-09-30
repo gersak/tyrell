@@ -309,16 +309,13 @@ Helix's hooks-first model means non-React atoms (e.g. `tyrell.router/*router*`) 
   (:require [tyrell.icons :as icons]
             [tyrell.lucide :as lucide]))
 
-(defn register! []
-  (icons/register!
-    {:check    lucide/check
-     :send     lucide/send
-     :user     lucide/user
-     :rocket   lucide/rocket
-     :sparkles lucide/sparkles}))
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Helix-side: `($ ty/Icon {:name "check" :size "sm"})` or `(d/i {:class "..."})` if you want a plain `<i>` tag for an inline emoji-substitute. The Tyrell icon registry is global, so a single `(register!)` call on app init suffices.
+Then `($ ty/Icon {:name "check" :size "sm"})`. The registry is global, so one call at init is enough.
+
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ## Calendar and wizard
 

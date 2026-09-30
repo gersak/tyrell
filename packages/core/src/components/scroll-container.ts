@@ -198,9 +198,12 @@ export class TyScrollContainer extends HTMLElement {
       for (const r of records) {
         r.addedNodes.forEach((n) => {
           if (n.nodeType !== Node.ELEMENT_NODE) return
+          // A node that STARTS above the viewport top was inserted before the
+          // content you were looking at, so it pushed that content down by its
+          // FULL height — even if its tail now reaches into view. (Counting only
+          // the above-the-fold part left a jump of the visible remainder.)
           const rect = (n as HTMLElement).getBoundingClientRect()
-          if (rect.bottom <= wrapTop) addedAbove += rect.height          // fully above
-          else if (rect.top < wrapTop) addedAbove += wrapTop - rect.top  // partly above
+          if (rect.top < wrapTop) addedAbove += rect.height
         })
       }
       if (addedAbove > 0) {

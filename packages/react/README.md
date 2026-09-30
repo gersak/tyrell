@@ -258,61 +258,24 @@ function Dashboard() {
 **Golden rule:** use Tyrell surface/colour classes for colour, Tailwind (or your own utilities)
 for everything else (spacing, layout, typography). Don't mix `bg-blue-500` with surfaces.
 
-## 🎨 Icons (3000+ Available)
+## 🎨 Icons
 
-Import only the icons you need (tree-shaking) and register them once at app startup
-via the global `window.tyIcons` API exposed by `tyrell-components`:
+Register once, from a client-side entry that imports `tyrell-components`:
 
-```tsx
-// app/icons.ts (or wherever your app boots)
-import { check, heart, star } from 'tyrell-components/icons/lucide';
+```js
+import { registerIcons } from 'tyrell-components/icons/registry'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-export function registerIcons() {
-  window.tyIcons.register({ check, heart, star });
-}
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
 
 ```tsx
-// app/layout.tsx (call once, e.g. in a top-level effect)
-'use client';
-import { useEffect } from 'react';
-import { registerIcons } from './icons';
+import { TyIcon } from 'tyrell-react'
 
-export default function RootLayout({ children }) {
-  useEffect(() => { registerIcons(); }, []);
-  return <>{children}</>;
-}
+<TyIcon name="check" size="lg" />
 ```
 
-Then use icons anywhere in React:
-
-```tsx
-import { TyIcon, TyButton } from 'tyrell-react';
-
-function IconExample() {
-  return (
-    <>
-      <TyIcon name="check" size="lg" />
-
-      <TyButton flavor="primary">
-        <TyIcon name="heart" />
-        Like
-      </TyButton>
-    </>
-  );
-}
-```
-
-CDN alternative (vanilla HTML, no bundler):
-
-```html
-<script type="module">
-  import { check, heart, star }
-    from 'https://cdn.jsdelivr.net/npm/tyrell-components@latest/lib/icons/lucide.js';
-
-  window.tyIcons.register({ check, heart, star });
-</script>
-```
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](https://github.com/gersak/ty/blob/master/guides/ICONS_GUIDE.md#in-javascript).
 
 ## 📘 TypeScript Support
 

@@ -25,9 +25,10 @@
   (get-in @state/state [:sandbox-toggles :log] []))
 
 (defn- bump! [k detail]
-  (swap! state/state update-in [:sandbox-toggles :counts k] (fnil inc 0))
-  (swap! state/state update-in [:sandbox-toggles :log]
-         (fn [l] (vec (take-last 40 (conj (or l []) (str (name k) " → change  " detail)))))))
+  (swap! state/state update :sandbox-toggles
+         #(-> %
+              (update-in [:counts k] (fnil inc 0))
+              (update :log (fn [l] (vec (take-last 40 (conj (or l []) (str (name k) " → change  " detail)))))))))
 
 (defn- reset-count! [k]
   (swap! state/state assoc-in [:sandbox-toggles :counts k] 0))

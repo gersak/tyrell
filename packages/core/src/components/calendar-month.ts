@@ -446,6 +446,8 @@ export class TyCalendarMonth extends HTMLElement {
 
     const classes = getDefaultDayClasses(dayContext);
     if (disabled) classes.push('disabled');
+    // Built-in content only: styles like the today dot assume a bare number.
+    if (!this._dayContentFn) classes.push('default-content');
     dayElement.className = classes.join(' ');
 
     if (typeof content === 'string') {

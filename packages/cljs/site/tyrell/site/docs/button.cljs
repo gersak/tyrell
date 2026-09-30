@@ -1,751 +1,339 @@
 (ns tyrell.site.docs.button
   "Documentation for ty-button component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table slot-table
-                                             docs-page doc-section component-header section-label demo-area]]))
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
+
+(def ^:private lineup
+  "Playground stage: every shape the button takes, sharing the live props."
+  [{:label "Save changes"}
+   {:label "Save" :start "save"}
+   {:label "Continue" :end "arrow-right"}
+   {:label "Export" :start "download" :end "chevron-down"}
+   {:label "Syncing" :start "refresh-cw" :spin? true}
+   {:icon "plus" :aria "Add"}
+   {:icon "heart" :aria "Like"}
+   {:icon "settings" :aria "Settings" :spin? true}])
+
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor appearance pill muted loading disabled]}]
+  (cond-> {}
+    (not= flavor "neutral") (assoc :flavor flavor)
+    (not= appearance "solid") (assoc :appearance appearance)
+    (not= size "sm") (assoc :size size)
+    pill (assoc :pill true)
+    muted (assoc :muted true)
+    loading (assoc :loading true)
+    disabled (assoc :disabled true)))
+
+(defn- button-node [attrs {:keys [label start end icon aria spin?]}]
+  (let [ico (fn [slot n] [:ty-icon {:slot slot :name n :spin spin?}])]
+    [:ty-button (merge (when icon {:action true :aria-label aria}) attrs)
+     (when icon (ico nil icon))
+     (when start (ico "start" start))
+     label
+     (when end (ico "end" end))]))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (map (partial button-node attrs) lineup)
+     :datastar (str "<!-- same markup as HTML; wire actions with data-on -->\n"
+                    "<ty-button" (snippets/attr-str attrs) ">Save changes</ty-button>"
+                    "\n\n<ty-button" (snippets/attr-str attrs)
+                    "\n  data-on:click=\"@post('/save')\">Save changes</ty-button>"))))
+
+(defn- render-lineup
+  "Live stage: text buttons on one row, icon-only buttons on the next."
+  [{:keys [size flavor appearance pill muted loading disabled]}]
+  (let [base (cond-> {:flavor flavor :appearance appearance :size size}
+               pill (assoc :pill "")
+               muted (assoc :muted "")
+               loading (assoc :loading "")
+               disabled (assoc :disabled ""))
+        ico (fn [slot n spin?] [:ty-icon (cond-> {:name n} slot (assoc :slot slot) spin? (assoc :spin ""))])
+        btn (fn [{:keys [label start end icon aria spin?]}]
+              [:ty-button (cond-> (assoc base :replicant/key (or label icon))
+                            icon (assoc :action "" :aria-label aria))
+               (when icon (ico nil icon spin?))
+               (when start (ico "start" start spin?))
+               label
+               (when end (ico "end" end spin?))])
+        [texts icons] ((juxt remove filter) :icon lineup)]
+    [:div.flex.flex-col.items-center.gap-5
+     [:div.flex.flex-wrap.items-center.justify-center.gap-3 (map btn texts)]
+     [:div.flex.flex-wrap.items-center.justify-center.gap-3 (map btn icons)]]))
+
+(defn- fake-save!
+  "Loading example: spin for a moment, then settle."
+  []
+  (swap! state/state assoc-in [:button-doc :saving] true)
+  (js/setTimeout #(swap! state/state assoc-in [:button-doc :saving] false) 1600))
+
+(def ^:private custom-flavor-css
+  "ty-button[flavor=\"teal\"] {
+  --ty-solid-teal: #0d9488;
+  --ty-solid-teal-hover: #0f766e;
+  --ty-solid-teal-fg: white;
+  --ty-color-teal: #2dd4bf;
+  --ty-bg-teal-soft: #134e4a;
+}")
 
 (defn view []
-  (docs-page
-   (component-header "ty-button" "A flexible button component with multiple styles, sizes, and form integration.")
+  (component-page
+   {:title "Button"
+    :group "Action"
+    :tag "ty-button"
+    :description "Three appearances, five flavors, three tones each. Icon slots, loading without layout shift, and real form submission."
+    :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyButton (React)" "atom"]]
+    :source "packages/core/src/components/button.ts"
+    :mark "OK"
+    :demo [:div.flex.flex-col.items-start.gap-3
+           [:div.flex.flex-wrap.gap-2
+            [:ty-button {:flavor "primary" :size "md"}
+             [:ty-icon {:slot "start" :name "check" :size "sm"}] "Publish"]
+            [:ty-button {:appearance "outlined" :size "md"} "Preview"]
+            [:ty-button {:appearance "ghost" :size "md"} "Cancel"]]
+           [:div.flex.flex-wrap.gap-2
+            [:ty-button {:flavor "success" :size "md"} "Approve"]
+            [:ty-button {:flavor "danger" :appearance "outlined" :size "md"} "Delete"]
+            [:ty-button {:flavor "neutral" :size "md" :action ""}
+             [:ty-icon {:name "more-vertical" :size "sm"}]]]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5
-     [:h2.scroll-mt-6.text-xs.font-bold.ty-text--.tracking-widest.uppercase "API Reference"]]
+   (playground
+    {:id :button
+     :defaults {:size "md" :flavor "primary" :appearance "solid"
+                :pill false :muted false :loading false :disabled false}
+     :controls [{:key :appearance :options ["solid" "outlined" "ghost"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :pill :switch? true}
+                {:key :muted :switch? true}
+                {:key :loading :switch? true}
+                {:key :disabled :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "flavor"
-        :type "string"
-        :default "\"neutral\""
-        :description "Semantic color. Built-in: primary, success, danger, warning, neutral. Append '+' for a stronger shade or '-' for a softer one (e.g. \"primary+\", \"danger-\"). Any other string is also accepted — theme custom flavors via --ty-button-* CSS variables."}
-       {:name "appearance"
-        :type "string"
-        :default "\"solid\""
-        :description "Visual variant: \"solid\" (saturated brand fill, default), \"outlined\" (transparent bg with matching text + border), or \"ghost\" (text only with hover background)."}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Size of the button (xs, sm, md, lg, xl)"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Whether the button is disabled"}
-       {:name "loading"
-        :type "boolean"
-        :default "false"
-        :description "Show a centered spinner overlay, block clicks, and set aria-busy. Width is preserved (content kept in flow but hidden), so there is no layout shift. Customize the spinner globally via setLoaderSvg() / window.tyLoader.set()."}
-       {:name "action"
-        :type "boolean"
-        :default "false"
-        :description "Makes button circular/icon-only, typically for floating action buttons"}
-       {:name "wide"
-        :type "boolean"
-        :default "false"
-        :description "Makes button take more horizontal space"}
-       {:name "muted"
-        :type "boolean"
-        :default "false"
-        :description "Desaturates the flavor color at rest; reveals it on hover (pointer devices only) and on press/focus. Use for low-priority actions that shouldn't compete for attention until the user reaches for them."}
-       {:name "type"
-        :type "string"
-        :default "\"button\""
-        :description "HTML button type (button, submit, reset)"}
-       {:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name when used in forms"}
-       {:name "value"
-        :type "string"
-        :default "-"
-        :description "Form field value when used in forms"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Appearance × flavor"
+       :span 4
+       :description [:span "Solid for the main action, outlined for the alternative, ghost for everything else. The default flavor is "
+                     [:code "neutral"] "."]
+       :code "<ty-button flavor=\"primary\">Save</ty-button>
+<ty-button appearance=\"outlined\">Preview</ty-button>
+<ty-button appearance=\"ghost\">Cancel</ty-button>"}
+      [:div.flex.flex-col.gap-3
+       (for [appearance ["solid" "outlined" "ghost"]]
+         [:div.flex.flex-wrap.gap-2 {:replicant/key appearance}
+          (for [f flavors]
+            [:ty-button {:replicant/key f :flavor f :appearance appearance}
+             (str/capitalize f)])])])
 
-    [:div.mb-6
-     (section-label "Events")
-     (event-table
-      [{:name "click"
-        :payload "MouseEvent"
-        :when-fired "When button is clicked"}
-       {:name "focus"
-        :payload "FocusEvent"
-        :when-fired "When button receives focus"}
-       {:name "blur"
-        :payload "FocusEvent"
-        :when-fired "When button loses focus"}])]
+     (example
+      {:title "Tones"
+       :span 2
+       :description [:span "Append " [:code "+"] " for a stronger fill, " [:code "-"] " for a softer one."]
+       :code "<ty-button flavor=\"primary+\">
+<ty-button flavor=\"primary\">
+<ty-button flavor=\"primary-\">"}
+      [:div.flex.flex-col.items-start.gap-2
+       (for [t ["primary+" "primary" "primary-"]]
+         [:ty-button {:replicant/key t :flavor t} t])])
 
-    [:div
-     (section-label "Slots")
-     (slot-table
-      [{:name "start"
-        :description "Content placed before the button text (typically an icon)"}
-       {:name "(default)"
-        :description "Main button content"}
-       {:name "end"
-        :description "Content placed after the button text (typically an icon)"}])]]
+     (example
+      {:title "Icon-only"
+       :span 2
+       :description [:span [:code "action"] " makes it square and centers the icon. Give it an " [:code "aria-label"] "."]
+       :code "<ty-button action aria-label=\"Edit\">
+  <ty-icon name=\"edit\"></ty-icon>
+</ty-button>"}
+      [:div.flex.flex-wrap.items-center.gap-2
+       (for [[icon flavor appearance] [["plus" "primary" "solid"] ["edit" "neutral" "outlined"]
+                                       ["trash" "danger" "ghost"] ["check" "success" "solid"]]]
+         [:ty-button {:replicant/key icon :action "" :flavor flavor :appearance appearance :aria-label icon}
+          [:ty-icon {:name icon :size "sm"}]])
+       [:ty-button {:action "" :pill "" :flavor "primary" :size "lg" :aria-label "Add"}
+        [:ty-icon {:name "plus" :size "md"}]]])
 
-   (doc-section "Basic Usage"
-                [:div.ty-content.rounded-lg.p-4
-                 (code-block "<ty-button>Click me</ty-button>")
-                 (demo-area
-                  [:ty-button {:on {:click #(js/alert "It works!")}} "Try it out"])])
-
-   (doc-section "Examples"
-                [:div.space-y-6
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Button Flavors")
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:ty-button "Default"]
-                    [:ty-button {:flavor "primary"} "Primary"]
-                    [:ty-button {:flavor "danger"} "Danger"]
-                    [:ty-button {:flavor "success"} "Success"]
-                    [:ty-button {:flavor "warning"} "Warning"]
-                    [:ty-button {:flavor "neutral"} "Neutral"]])
-                  (code-block "<ty-button>Default</ty-button>
-<ty-button flavor=\"primary\">Primary</ty-button>
-<ty-button flavor=\"danger\">Danger</ty-button>
-<ty-button flavor=\"success\">Success</ty-button>
-<ty-button flavor=\"warning\">Warning</ty-button>
-<ty-button flavor=\"neutral\">Neutral</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Complete Matrix")
-                  [:p.ty-text-.mb-4
-                   {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
-                   "Every appearance × flavor × tone combination. Three appearance variants — "
-                   [:code.font-mono "solid"] ", " [:code.font-mono "outlined"] ", " [:code.font-mono "ghost"]
-                   " — each with three tones via the flavor suffix: "
-                   [:code.font-mono "-"] " (soft), base, "
-                   [:code.font-mono "+"] " (strong). Useful for inspecting contrast in light vs dark mode."]
-                  [:div.space-y-6
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"
-                                                :letter-spacing "0.05em"}} "Solid"]
-                    [:div.grid.gap-3.items-center
-                     {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
-                     [:div]
-                     [:div.text-xs.ty-text-.font-medium "Soft (–)"]
-                     [:div.text-xs.ty-text-.font-medium "Base"]
-                     [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-                       (list
-                        [:div.text-sm.font-mono.ty-text {:key (str "solid-" flavor "-label")} flavor]
-                        [:ty-button {:key (str "solid-" flavor "-soft") :flavor (str flavor "-")} flavor]
-                        [:ty-button {:key (str "solid-" flavor "-base") :flavor flavor} flavor]
-                        [:ty-button {:key (str "solid-" flavor "-strong") :flavor (str flavor "+")} flavor]))]]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"
-                                                :letter-spacing "0.05em"}} "Outlined"]
-                    [:div.grid.gap-3.items-center
-                     {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
-                     [:div]
-                     [:div.text-xs.ty-text-.font-medium "Soft (–)"]
-                     [:div.text-xs.ty-text-.font-medium "Base"]
-                     [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-                       (list
-                        [:div.text-sm.font-mono.ty-text {:key (str "outlined-" flavor "-label")} flavor]
-                        [:ty-button {:key (str "outlined-" flavor "-soft") :flavor (str flavor "-") :appearance "outlined"} flavor]
-                        [:ty-button {:key (str "outlined-" flavor "-base") :flavor flavor :appearance "outlined"} flavor]
-                        [:ty-button {:key (str "outlined-" flavor "-strong") :flavor (str flavor "+") :appearance "outlined"} flavor]))]]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"
-                                                :letter-spacing "0.05em"}} "Ghost"]
-                    [:div.grid.gap-3.items-center
-                     {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
-                     [:div]
-                     [:div.text-xs.ty-text-.font-medium "Soft (–)"]
-                     [:div.text-xs.ty-text-.font-medium "Base"]
-                     [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-                     (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-                       (list
-                        [:div.text-sm.font-mono.ty-text {:key (str "ghost-" flavor "-label")} flavor]
-                        [:ty-button {:key (str "ghost-" flavor "-soft") :flavor (str flavor "-") :appearance "ghost"} flavor]
-                        [:ty-button {:key (str "ghost-" flavor "-base") :flavor flavor :appearance "ghost"} flavor]
-                        [:ty-button {:key (str "ghost-" flavor "-strong") :flavor (str flavor "+") :appearance "ghost"} flavor]))]]]
-
-                  (code-block "<!-- Solid is the default appearance -->
-<ty-button flavor=\"primary\">Primary</ty-button>
-<ty-button flavor=\"primary+\">Stronger</ty-button>
-<ty-button flavor=\"primary-\">Softer</ty-button>
-
-<!-- Outlined and ghost via the appearance attribute -->
-<ty-button appearance=\"outlined\" flavor=\"success+\">Success outlined</ty-button>
-<ty-button appearance=\"ghost\" flavor=\"danger\">Danger ghost</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Muted (suppress until interaction)")
-                  [:p.ty-text-.mb-4
-                   {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
-                   "Add " [:code.font-mono "muted"] " to desaturate a button's flavor color at rest. Hover it back to color (mouse/trackpad only — touch has no hover) or press it — "
-                   [:code.font-mono ":active"] " and " [:code.font-mono ":focus-visible"] " always reveal the real color, so touch users still see it on tap. Try hovering the buttons below."]
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:ty-button {:flavor "primary" :muted true} "Primary muted"]
-                    [:ty-button {:flavor "danger" :appearance "outlined" :muted true} "Danger outlined muted"]
-                    [:ty-button {:flavor "success" :appearance "ghost" :muted true} "Success ghost muted"]
-                    [:ty-button {:action true :flavor "neutral" :muted true}
-                     [:ty-icon {:name "more-vertical" :size "sm"}]]])
-                  (code-block "<ty-button flavor=\"primary\" muted>Primary muted</ty-button>
-<ty-button flavor=\"danger\" appearance=\"outlined\" muted>Danger outlined muted</ty-button>
-<ty-button flavor=\"success\" appearance=\"ghost\" muted>Success ghost muted</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Custom Colors via CSS Variables")
-                  [:p.ty-text-.mb-4
-                   {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
-                   "Override colors per button by setting any of these CSS variables on the host. Useful for one-off brand colors, A/B tests, or theming a button outside the semantic palette."]
-                  [:ul.list-disc.list-inside.ty-text-.mb-4.space-y-1
-                   {:style {:font-size "0.8125rem"}}
-                   [:li [:code.font-mono "--ty-button-bg"] " — background color (solid)"]
-                   [:li [:code.font-mono "--ty-button-bg-hover"] " — hover background"]
-                   [:li [:code.font-mono "--ty-button-color"] " — text color"]
-                   [:li [:code.font-mono "--ty-button-border"] " — border color (outlined)"]]
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:ty-button {:style {:--ty-button-bg "#ff6600"
-                                         :--ty-button-color "white"
-                                         :--ty-button-bg-hover "#e65c00"}}
-                     "Brand orange"]
-                    [:ty-button {:flavor "primary" :appearance "outlined"
-                                 :style {:--ty-button-color "#6366f1"
-                                         :--ty-button-border "#6366f1"}}
-                     "Indigo outlined"]
-                    [:ty-button {:style {:--ty-button-bg "#ec4899"
-                                         :--ty-button-color "white"
-                                         :--ty-button-bg-hover "#db2777"}}
-                     "Pink solid"]
-                    [:ty-button {:style {:--ty-button-bg "linear-gradient(135deg, #667eea, #764ba2)"}}
-                     "Gradient"]])
-                  (code-block "<!-- One-off brand color -->
-<ty-button style=\"--ty-button-bg: #ff6600;
-                  --ty-button-color: white;
-                  --ty-button-bg-hover: #e65c00;\">
-  Brand orange
+     (example
+      {:title "Icons"
+       :span 4
+       :description [:span "Slot icons into " [:code "start"] " or " [:code "end"] ". Gap and size follow the button."]
+       :code "<ty-button flavor=\"primary\">
+  <ty-icon slot=\"start\" name=\"download\"></ty-icon>
+  Download
 </ty-button>
-
-<!-- Even gradients work -->
-<ty-button style=\"--ty-button-bg: linear-gradient(135deg, #667eea, #764ba2);\">
-  Gradient
-</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Custom Flavors")
-                  [:p.ty-text-.mb-4
-                   {:style {:font-size "0.8125rem"
-                            :line-height "1.6"}}
-                   "Pass any string as " [:code.font-mono "flavor"] " — even if it's not built-in. Define the flavor's " [:em "tokens"] " and every appearance follows: solid reads " [:code.font-mono "--ty-solid-X"] ", outlined/ghost read " [:code.font-mono "--ty-color-X"] " for ink + border and " [:code.font-mono "--ty-bg-X-soft"] " for their hover tint. (The " [:code.font-mono "--ty-button-*"] " variables above are per-instance overrides that apply to " [:em "every"] " appearance — don't use them to define a flavor, or solid's white text and saturated hover will leak into outlined.)"]
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:style "ty-button[flavor=\"brand\"] {
-   --ty-solid-brand: #7c3aed;
-   --ty-solid-brand-hover: #6d28d9;
-   --ty-solid-brand-fg: white;
-   --ty-color-brand: #7c3aed;
-   --ty-bg-brand-soft: #f3e8ff;
- }
- ty-button[flavor=\"teal\"] {
-   --ty-solid-teal: #0d9488;
-   --ty-solid-teal-hover: #0f766e;
-   --ty-solid-teal-fg: white;
-   --ty-color-teal: #0d9488;
-   --ty-bg-teal-soft: #ccfbf1;
- }
- ty-button[flavor=\"sunset\"] {
-   --ty-solid-sunset: #f97316;
-   --ty-solid-sunset-hover: #ea580c;
-   --ty-solid-sunset-fg: white;
-   --ty-color-sunset: #c2410c;
-   --ty-bg-sunset-soft: #ffedd5;
- }"]
-                    [:ty-button {:flavor "brand"} "Brand"]
-                    [:ty-button {:flavor "teal"} "Teal"]
-                    [:ty-button {:flavor "sunset"} "Sunset"]
-                    [:ty-button {:flavor "brand" :appearance "outlined"} "Brand outlined"]
-                    [:ty-button {:flavor "teal" :pill true} "Teal pill"]])
-                  (code-block "<style>
-  /* Flavor TOKENS — appearance-aware. Solid reads --ty-solid-*,
-     outlined/ghost read --ty-color-* (ink+border) and
-     --ty-bg-*-soft (hover tint). */
-  ty-button[flavor=\"brand\"] {
-    --ty-solid-brand: #7c3aed;
-    --ty-solid-brand-hover: #6d28d9;
-    --ty-solid-brand-fg: white;
-    --ty-color-brand: #7c3aed;
-    --ty-bg-brand-soft: #f3e8ff;
-  }
-</style>
-
-<ty-button flavor=\"brand\">Brand</ty-button>
-<ty-button flavor=\"brand\" appearance=\"outlined\">Brand outlined</ty-button>")
-                  [:p.ty-text--.mt-3 {:style {:font-size "0.8125rem"}}
-                   "Loading " [:code.font-mono "tyrell-theme.css"] "? Then one line replaces all of this — "
-                   [:code.font-mono "--ty-brand-seed: #7c3aed"] " derives the full ramp, dark mode included. See the Theming page's Flavor pack builder."]]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Button Sizes")
-                  (demo-area
-                   [:div.flex.flex-wrap.items-center.gap-3
-                    [:ty-button {:size "xs"} "Extra Small"]
-                    [:ty-button {:size "sm"} "Small"]
-                    [:ty-button "Default"]
-                    [:ty-button {:size "lg"} "Large"]
-                    [:ty-button {:size "xl"} "Extra Large"]])
-                  (code-block "<ty-button size=\"xs\">Extra Small</ty-button>
-<ty-button size=\"sm\">Small</ty-button>
-<ty-button>Default</ty-button>
-<ty-button size=\"lg\">Large</ty-button>
-<ty-button size=\"xl\">Extra Large</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Action Buttons (Icon-only)")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "Action buttons are circular icon-only buttons, perfect for floating action buttons or toolbar actions."]
-                  (demo-area
-                   [:div.flex.flex-wrap.items-center.gap-3
-                    [:ty-button {:action true :flavor "primary" :size "lg"}
-                     [:ty-icon {:name "plus" :size "md"}]]
-                    [:ty-button {:action true :flavor "neutral"}
-                     [:ty-icon {:name "edit" :size "sm"}]]
-                    [:ty-button {:action true :flavor "danger"}
-                     [:ty-icon {:name "trash" :size "sm"}]]
-                    [:ty-button {:action true :flavor "success"}
-                     [:ty-icon {:name "check" :size "sm"}]]
-                    [:ty-button {:action true :size "xs"}
-                     [:ty-icon {:name "x" :size "xs"}]]])
-                  (code-block "<!-- Large Primary FAB -->
-<ty-button action=\"true\" flavor=\"primary\" size=\"lg\">
-  <ty-icon name=\"plus\" size=\"md\"></ty-icon>
-</ty-button>
-
-<!-- Regular Action Buttons -->
-<ty-button action=\"true\" flavor=\"neutral\">
-  <ty-icon name=\"edit\" size=\"sm\"></ty-icon>
-</ty-button>
-
-<ty-button action=\"true\" flavor=\"danger\">
-  <ty-icon name=\"trash\" size=\"sm\"></ty-icon>
-</ty-button>
-
-<!-- Small Close Button -->
-<ty-button action=\"true\" size=\"xs\">
-  <ty-icon name=\"x\" size=\"xs\"></ty-icon>
-</ty-button>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Buttons with Icons")
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:ty-button {:flavor "primary"}
-                     [:ty-icon {:slot "start" :name "save" :size "sm"}]
-                     "Save"]
-                    [:ty-button {:flavor "neutral"}
-                     [:ty-icon {:slot "start" :name "download" :size "sm"}]
-                     "Download"]
-                    [:ty-button {:flavor "danger"}
-                     [:ty-icon {:slot "start" :name "trash" :size "sm"}]
-                     "Delete"]
-                    [:ty-button
-                     "Next"
-                     [:ty-icon {:slot "end" :name "arrow-right" :size "sm"}]]])
-                  (code-block "<ty-button flavor=\"primary\">
-  <ty-icon slot=\"start\" name=\"save\" size=\"sm\"></ty-icon>
-  Save
-</ty-button>
-
 <ty-button>
   Next
-  <ty-icon slot=\"end\" name=\"arrow-right\" size=\"sm\"></ty-icon>
-</ty-button>")]
+  <ty-icon slot=\"end\" name=\"arrow-right\"></ty-icon>
+</ty-button>"}
+      [:div.flex.flex-wrap.gap-2
+       [:ty-button {:flavor "primary"} [:ty-icon {:slot "start" :name "download" :size "sm"}] "Download"]
+       [:ty-button {:appearance "outlined"} [:ty-icon {:slot "start" :name "share-2" :size "sm"}] "Share"]
+       [:ty-button "Next" [:ty-icon {:slot "end" :name "arrow-right" :size "sm"}]]])
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Button States")
-                  (demo-area
-                   [:div.flex.flex-wrap.gap-3
-                    [:ty-button {:disabled true} "Disabled"]
-                    [:ty-button {:flavor "primary" :loading ""} "Saving"]
-                    [:ty-button {:flavor "neutral" :loading ""} "Processing"]
-                    [:ty-button {:flavor "success" :disabled true} "Success Disabled"]])
-                  (code-block "<ty-button disabled>Disabled</ty-button>
+     (example
+      {:title "Loading"
+       :span 2
+       :description "Spinner on top, width kept, clicks blocked, aria-busy set."
+       :code "<ty-button loading>Saving</ty-button>
 
-<!-- Built-in loading state — see the dedicated section below for details -->
-<ty-button flavor=\"primary\" loading>Saving</ty-button>
-<ty-button flavor=\"neutral\" loading>Processing</ty-button>
+// swap the spinner everywhere
+setLoaderSvg('<svg>…</svg>');"}
+      (let [saving? (get-in @state/state [:button-doc :saving])]
+        [:ty-button (cond-> {:flavor "primary" :size "md" :on {:click fake-save!}}
+                      saving? (assoc :loading ""))
+         "Save changes"]))
 
-<ty-button flavor=\"success\" disabled>Success Disabled</ty-button>")]
+     (example
+      {:title "Muted"
+       :span 2
+       :description "Grey at rest, color on hover, press or focus. For actions that shouldn't compete."
+       :code "<ty-button flavor=\"danger\" muted>
+  Delete
+</ty-button>"}
+      [:div.flex.flex-wrap.gap-2
+       [:ty-button {:flavor "danger" :muted ""} "Delete"]
+       [:ty-button {:flavor "primary" :appearance "outlined" :muted ""} "Edit"]])
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Wide Buttons")
-                  [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "Wide buttons expand to take full available width. Perfect for mobile layouts, forms, and call-to-action sections."]
+     (example
+      {:title "Sizes"
+       :span 2
+       :description "One ladder with the fields: 24 to 40px."
+       :code "size=\"xs | sm | md | lg | xl\""}
+      [:div.flex.flex-wrap.items-center.gap-2
+       (for [s ["xs" "sm" "md" "lg" "xl"]]
+         [:ty-button {:replicant/key s :size s :flavor "primary" :appearance "outlined"} s])])
 
-                  [:div.space-y-4
+     (example
+      {:title "Form actions"
+       :span 6
+       :description [:span "A " [:code "ty-button"] " submits by default (" [:code "type=\"submit\""] "). With "
+                     [:code "name"] " and " [:code "value"] ", the pressed button is in FormData, so one form can have several intents."]
+       :code "<form>
+  <ty-input name=\"title\" label=\"Title\" required></ty-input>
+  <ty-button type=\"reset\" appearance=\"ghost\">Reset</ty-button>
+  <ty-button name=\"intent\" value=\"draft\" appearance=\"outlined\">Save draft</ty-button>
+  <ty-button name=\"intent\" value=\"publish\" flavor=\"primary\">Publish</ty-button>
+</form>
+<!-- FormData: title=…&intent=publish -->"}
+      (let [sent (get-in @state/state [:button-doc :sent])]
+        [:form.flex.flex-col.gap-4.w-full
+         {:on {:submit (fn [^js e]
+                         (.preventDefault e)
+                         (swap! state/state assoc-in [:button-doc :sent]
+                                (->> (js/FormData. (.-target e))
+                                     (.entries)
+                                     (js/Array.from)
+                                     (map (fn [[k v]] (str k "=" v)))
+                                     (str/join "&"))))}}
+         [:div.flex.flex-wrap.items-end.gap-3
+          [:ty-input {:name "title" :label "Title" :value "Release notes" :size "sm" :style {:min-width "240px"}}]
+          [:ty-button {:type "reset" :appearance "ghost" :size "md"} "Reset"]
+          [:ty-button {:name "intent" :value "draft" :appearance "outlined" :size "md"} "Save draft"]
+          [:ty-button {:name "intent" :value "publish" :flavor "primary" :size "md"} "Publish"]]
+         [:code.ty-text-.text-xs (if sent (str "FormData: " sent) "Press a button to submit.")]]))
 
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Single wide"]
-                    (demo-area
-                     [:ty-button {:wide true :flavor "primary"}
-                      [:ty-icon {:slot "start" :name "log-in" :size "sm"}]
-                      "Sign In"])
-                    (code-block "<ty-button wide=\"true\" flavor=\"primary\">
-  <ty-icon slot=\"start\" name=\"log-in\" size=\"sm\"></ty-icon>
-  Sign In
-</ty-button>")]
+     (example
+      {:title "Wide"
+       :span 6
+       :description [:span [:code "wide"] " grows to fill a flex row. Share the space evenly, or let one action take the rest."]
+       :code "<div style=\"display: flex; gap: 8px\">
+  <ty-button appearance=\"outlined\">Back</ty-button>
+  <ty-button wide flavor=\"primary\">Continue</ty-button>
+</div>"}
+      [:div.flex.flex-col.gap-3.w-full
+       [:div.flex.gap-2
+        [:ty-button {:appearance "outlined" :size "md"} "Back"]
+        [:ty-button {:wide "" :flavor "primary" :size "md"} "Continue"]]
+       [:div.flex.gap-2
+        (for [[label icon] [["GitHub" "github"] ["Google" "globe"] ["Email" "mail"]]]
+          [:ty-button {:replicant/key label :wide "" :appearance "outlined" :size "md"}
+           [:ty-icon {:slot "start" :name icon :size "sm"}] label])]])))
 
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Two-column grid"]
-                    (demo-area
-                     [:div.grid.grid-cols-2.gap-3
-                      [:ty-button {:wide true :flavor "primary"}
-                       [:ty-icon {:slot "start" :name "check" :size "sm"}]
-                       "Confirm"]
-                      [:ty-button {:wide true :flavor "neutral"}
-                       [:ty-icon {:slot "start" :name "x" :size "sm"}]
-                       "Cancel"]])
-                    (code-block "<div class=\"grid grid-cols-2 gap-3\">
-  <ty-button wide=\"true\" flavor=\"primary\">
-    <ty-icon slot=\"start\" name=\"check\" size=\"sm\"></ty-icon>
-    Confirm
-  </ty-button>
-  <ty-button wide=\"true\" flavor=\"neutral\">
-    <ty-icon slot=\"start\" name=\"x\" size=\"sm\"></ty-icon>
-    Cancel
-  </ty-button>
-</div>")]
+   (page-section
+    {:title "Theming" :sub "CSS variables. No build step." :dark? true}
+    (example
+     {:title "Custom flavor"
+      :side? true
+      :lang "css"
+      :description [:span "Any string is a flavor. Give it tokens and all three appearances follow. With "
+                    [:code "tyrell-theme.css"] ", " [:code "--ty-teal-seed: #0d9488"] " derives the whole set, dark mode included."]
+      :code custom-flavor-css}
+     [:div.flex.flex-wrap.gap-2
+      [:style custom-flavor-css]
+      [:ty-button {:flavor "teal"} "Teal"]
+      [:ty-button {:flavor "teal" :appearance "outlined"} "Outlined"]
+      [:ty-button {:flavor "teal" :appearance "ghost"} "Ghost"]])
 
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Action panel (three buttons)"]
-                    (demo-area
-                     [:div.grid.grid-cols-3.gap-2
-                      [:ty-button {:wide true :flavor "success"}
-                       [:ty-icon {:slot "start" :name "download" :size "sm"}]
-                       "Download"]
-                      [:ty-button {:wide true :flavor "neutral"}
-                       [:ty-icon {:slot "start" :name "share-2" :size "sm"}]
-                       "Share"]
-                      [:ty-button {:wide true :flavor "danger"}
-                       [:ty-icon {:slot "start" :name "trash" :size "sm"}]
-                       "Delete"]])
-                    (code-block "<div class=\"grid grid-cols-3 gap-2\">
-  <ty-button wide=\"true\" flavor=\"success\">Download</ty-button>
-  <ty-button wide=\"true\" flavor=\"neutral\">Share</ty-button>
-  <ty-button wide=\"true\" flavor=\"danger\">Delete</ty-button>
-</div>")]
+    (example
+     {:title "One-off colors"
+      :side? true
+      :lang "css"
+      :description [:span "Per-instance overrides for a single button. They apply to every appearance, so don't use them to define a flavor."]
+      :code ".cta {
+  --ty-button-bg: #f97316;
+  --ty-button-bg-hover: #ea580c;
+  --ty-button-color: #1c1917;
+}"}
+     [:div.flex.flex-wrap.gap-2
+      [:ty-button {:size "md" :style {"--ty-button-bg" "#f97316"
+                                      "--ty-button-bg-hover" "#ea580c"
+                                      "--ty-button-color" "#1c1917"}}
+       "Start free trial"]])
 
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Mobile form layout"]
-                    (demo-area
-                     [:div.max-w-sm.space-y-2
-                      [:ty-button {:wide true :flavor "primary" :size "lg"}
-                       [:ty-icon {:slot "start" :name "log-in" :size "sm"}]
-                       "Sign In with Email"]
-                      [:ty-button {:wide true :flavor "neutral" :size "lg"}
-                       [:ty-icon {:slot "start" :name "github" :size "sm"}]
-                       "Sign In with GitHub"]
-                      [:ty-button {:wide true :flavor "neutral" :size "lg"}
-                       [:ty-icon {:slot "start" :name "mail" :size "sm"}]
-                       "Sign In with Google"]])
-                    (code-block "<div class=\"space-y-2\">
-  <ty-button wide=\"true\" flavor=\"primary\" size=\"lg\">
-    <ty-icon slot=\"start\" name=\"log-in\" size=\"sm\"></ty-icon>
-    Sign In with Email
-  </ty-button>
-  <ty-button wide=\"true\" flavor=\"neutral\" size=\"lg\">
-    <ty-icon slot=\"start\" name=\"github\" size=\"sm\"></ty-icon>
-    Sign In with GitHub
-  </ty-button>
-  <ty-button wide=\"true\" flavor=\"neutral\" size=\"lg\">
-    <ty-icon slot=\"start\" name=\"mail\" size=\"sm\"></ty-icon>
-    Sign In with Google
-  </ty-button>
-</div>")]]]
+    (example
+     {:title "Depth & radius"
+      :side? true
+      :lang "css"
+      :description [:span [:code "--ty-button-depth"] " scales the solid border and shadow (0 is flat, default 0.35). Radius is set per size."]
+      :code ":root {
+  --ty-button-depth: 0;
+  --ty-button-radius-md: 999px;
+}"}
+     [:div.flex.flex-wrap.gap-2
+      (for [[label depth radius] [["Flat" "0" "999px"] ["Default" "0.35" nil] ["Deep" "1" "4px"]]]
+        [:ty-button {:replicant/key label
+                     :flavor "primary"
+                     :size "md"
+                     :style (cond-> {"--ty-button-depth" depth}
+                              radius (assoc "--ty-button-radius-md" radius))}
+         label])]))
 
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Form Integration")
-                  [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "ty-button fully supports HTML form integration with type, name, and value attributes. Default type is 'submit' like native HTML buttons."]
-
-                  [:div.space-y-5
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Basic form with submit"]
-                    (demo-area
-                     [:form.ty-elevated.rounded-lg.p-4
-                      {:on {:submit (fn [e]
-                                      (.preventDefault e)
-                                      (let [form-data (js/FormData. (.-target e))
-                                            data (js/Object.fromEntries form-data)]
-                                        (js/alert (str "Form submitted!\n" (js/JSON.stringify data nil 2)))))}}
-                      [:div.space-y-3
-                       [:div
-                        [:label.block.ty-text+.text-sm.mb-1 {:for "username"} "Username"]
-                        [:input#username.ty-input.ty-border.border.rounded.px-3.py-2.w-full
-                         {:name "username" :required true :placeholder "Enter username"}]]
-                       [:div
-                        [:label.block.ty-text+.text-sm.mb-1 {:for "email"} "Email"]
-                        [:input#email.ty-input.ty-border.border.rounded.px-3.py-2.w-full
-                         {:name "email" :type "email" :required true :placeholder "Enter email"}]]
-                       [:div.flex.gap-2
-                        [:ty-button {:type "submit" :flavor "primary"}
-                         [:ty-icon {:slot "start" :name "check" :size "sm"}]
-                         "Submit"]
-                        [:ty-button {:type "reset" :flavor "neutral"}
-                         [:ty-icon {:slot "start" :name "x" :size "sm"}]
-                         "Reset"]
-                        [:ty-button {:type "button" :flavor "neutral"}
-                         "Cancel"]]]])
-                    (code-block "<form>
-  <input name=\"username\" required>
-  <input name=\"email\" type=\"email\" required>
-
-  <!-- type=\"submit\" (default) - submits the form -->
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-
-  <!-- type=\"reset\" - clears the form -->
-  <ty-button type=\"reset\" flavor=\"neutral\">Reset</ty-button>
-
-  <!-- type=\"button\" - does nothing, for custom JS -->
-  <ty-button type=\"button\" flavor=\"neutral\">Cancel</ty-button>
-</form>")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Multiple submit buttons with name/value"]
-                    (demo-area
-                     [:form.ty-elevated.rounded-lg.p-4
-                      {:on {:submit (fn [e]
-                                      (.preventDefault e)
-                                      (let [form-data (js/FormData. (.-target e))
-                                            data (js/Object.fromEntries form-data)]
-                                        (js/alert (str "Action: " (or (.-action data) "none") "\n\n" (js/JSON.stringify data nil 2)))))}}
-                      [:div.space-y-3
-                       [:div
-                        [:label.block.ty-text+.text-sm.mb-1 {:for "comment"} "Your Comment"]
-                        [:textarea#comment.ty-input.ty-border.border.rounded.px-3.py-2.w-full
-                         {:name "comment" :rows 3 :required true :placeholder "Enter your comment"}]]
-                       [:div.flex.flex-wrap.gap-2
-                        [:ty-button {:type "submit" :name "action" :value "save_draft" :flavor "neutral"}
-                         [:ty-icon {:slot "start" :name "save" :size "sm"}]
-                         "Save Draft"]
-                        [:ty-button {:type "submit" :name "action" :value "publish" :flavor "primary"}
-                         [:ty-icon {:slot "start" :name "send" :size "sm"}]
-                         "Publish"]
-                        [:ty-button {:type "submit" :name "action" :value "schedule" :flavor "neutral"}
-                         [:ty-icon {:slot "start" :name "clock" :size "sm"}]
-                         "Schedule"]]]])
-                    (code-block "<form>
-  <textarea name=\"comment\" required></textarea>
-
-  <!-- Each button can have different name/value -->
-  <!-- Only the clicked button's value is submitted -->
-  <ty-button type=\"submit\" name=\"action\" value=\"save_draft\">
-    Save Draft
-  </ty-button>
-
-  <ty-button type=\"submit\" name=\"action\" value=\"publish\">
-    Publish
-  </ty-button>
-
-  <ty-button type=\"submit\" name=\"action\" value=\"schedule\">
-    Schedule
-  </ty-button>
-</form>")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Button types comparison"]
-                    [:div.ty-elevated.rounded.p-4.mb-3
-                     [:table.w-full
-                      {:style {:font-size "0.8125rem"}}
-                      [:thead
-                       [:tr {:style {:border-bottom "1px solid var(--ty-border-soft)"}}
-                        [:th.text-left.px-2.py-2.ty-text+ "Type"]
-                        [:th.text-left.px-2.py-2.ty-text+ "Behavior"]
-                        [:th.text-left.px-2.py-2.ty-text+ "Use Case"]]]
-                      [:tbody
-                       [:tr {:style {:border-bottom "1px solid var(--ty-border-soft)"}}
-                        [:td.px-2.py-2.ty-text.font-mono "submit"]
-                        [:td.px-2.py-2.ty-text- "Submits the form"]
-                        [:td.px-2.py-2.ty-text- "Primary action, save data"]]
-                       [:tr {:style {:border-bottom "1px solid var(--ty-border-soft)"}}
-                        [:td.px-2.py-2.ty-text.font-mono "reset"]
-                        [:td.px-2.py-2.ty-text- "Clears all fields"]
-                        [:td.px-2.py-2.ty-text- "Reset form to initial state"]]
-                       [:tr
-                        [:td.px-2.py-2.ty-text.font-mono "button"]
-                        [:td.px-2.py-2.ty-text- "Does nothing"]
-                        [:td.px-2.py-2.ty-text- "Custom JavaScript actions"]]]]]
-                    (code-block "<ty-button>Submit Form</ty-button>
-
-<!-- Explicitly set type -->
-<ty-button type=\"submit\">Submit</ty-button>
-<ty-button type=\"reset\">Clear</ty-button>
-<ty-button type=\"button\">Custom Action</ty-button>")]]]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Loading State")
-                  [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "Add the " [:code.font-mono "loading"] " attribute to overlay a centered spinner, block clicks, and set "
-                   [:code.font-mono "aria-busy"] ". The button keeps its width — your label stays in the layout, just hidden, so there is no layout shift."]
-
-                  [:div.space-y-5
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Static (loading attribute set)"]
-                    (demo-area
-                     [:div.flex.flex-wrap.gap-3
-                      [:ty-button {:flavor "primary" :loading ""} "Save"]
-                      [:ty-button {:flavor "neutral" :loading ""} "Syncing"]
-                      [:ty-button {:flavor "danger" :appearance "outlined" :loading ""} "Delete"]
-                      [:ty-button {:action true :flavor "primary" :loading ""}
-                       [:ty-icon {:name "save" :size "md"}]]])
-                    (code-block "<ty-button flavor=\"primary\" loading>Save</ty-button>
-<ty-button flavor=\"neutral\" loading>Syncing</ty-button>
-<ty-button flavor=\"danger\" appearance=\"outlined\" loading>Delete</ty-button>
-
-<!-- Action (icon-only) buttons too -->
-<ty-button action loading flavor=\"primary\">
-  <ty-icon name=\"save\" size=\"md\"></ty-icon>
-</ty-button>")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Interactive — click to simulate a 2s save"]
-                    (demo-area
-                     [:div.flex.flex-wrap.gap-3
-                      [:ty-button {:flavor "primary"
-                                   :on {:click (fn [^js e]
-                                                 (when-let [btn ^js (.closest (.-target e) "ty-button")]
-                                                   (set! (.-loading btn) true)
-                                                   (js/setTimeout #(set! (.-loading btn) false) 2000)))}}
-                       [:ty-icon {:slot "start" :name "save" :size "sm"}]
-                       "Save"]
-                      [:ty-button {:flavor "success"
-                                   :on {:click (fn [^js e]
-                                                 (when-let [btn (.closest (.-target e) "ty-button")]
-                                                   (set! (.-loading btn) true)
-                                                   (js/setTimeout #(set! (.-loading btn) false) 2000)))}}
-                       [:ty-icon {:slot "start" :name "send" :size "sm"}]
-                       "Publish"]])
-                    (code-block "// Vanilla JS — toggle the property, NOT the attribute
-const btn = document.querySelector('ty-button');
-btn.addEventListener('click', async () => {
-  btn.loading = true;
-  await save();
-  btn.loading = false;
-});")]
-
-                   [:div
-                    [:p.ty-text--.mb-2 {:style {:font-size "0.6875rem"
-                                                :font-weight "500"}} "Customize the spinner globally"]
-                    [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                                               :line-height "1.6"}}
-                     "All loading-aware components — " [:code.font-mono "ty-button"] ", "
-                     [:code.font-mono "ty-dropdown"] ", " [:code.font-mono "ty-multiselect"]
-                     " — pull from a global SVG registry. Set it once at app boot to use your own spinner everywhere. The component still spins the wrapper, so register a "
-                     [:strong "static"] " SVG that uses " [:code.font-mono "currentColor"] " for the stroke or fill."]
-                    (code-block "// ESM (NPM)
-import { setLoaderSvg } from 'tyrell-components';
-
-setLoaderSvg(`
-  <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\">
-    <circle cx=\"4\"  cy=\"12\" r=\"2\"/>
-    <circle cx=\"12\" cy=\"12\" r=\"2\"/>
-    <circle cx=\"20\" cy=\"12\" r=\"2\"/>
-  </svg>`);
-
-setLoaderSvg(null); // back to default" "javascript")
-                    (code-block "<!-- CDN / vanilla / HTMX / Datastar -->
-<script src=\"https://unpkg.com/tyrell-components/dist/tyrell.js\"></script>
-<script>
-  window.tyLoader.set('<svg viewBox=\"0 0 24 24\">...</svg>');
-  window.tyLoader.reset();
-</script>" "html")
-                    (code-block ";; ClojureScript
-(ns my.app
-  (:require [\"tyrell-components\" :as ty]))
-
-(ty/setLoaderSvg \"<svg viewBox=\\\"0 0 24 24\\\">...</svg>\")")]
-
-                   [:div.ty-elevated.rounded.p-3
-                    {:style {:font-size "0.8125rem"}}
-                    [:p.ty-text+.mb-1 {:style {:font-weight "600"}} "Notes"]
-                    [:ul.list-disc.list-inside.ty-text-.space-y-1
-                     [:li [:code.font-mono "loading"] " does not imply " [:code.font-mono "disabled"] " — they style differently. Loading is " [:code.font-mono "cursor: wait"] " and blocks the click handler; disabled greys the button out."]
-                     [:li "If your registered SVG already has its own animation, override the wrapper rotation with the CSS variable " [:code.font-mono "--ty-loader-animation: none"] "."]
-                     [:li "When set, the spinner inherits text color via " [:code.font-mono "currentColor"] " — so it adapts to your button flavor automatically."]]]]]])
-
-   (doc-section "Common Use Cases"
-                [:div.space-y-6
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Floating Action Button (FAB)")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "Use action buttons with primary flavor and large size for main floating actions."]
-                  (demo-area
-                   [:div.relative.h-28.ty-elevated.rounded-lg
-                    [:ty-button {:action true :flavor "primary" :size "lg"
-                                 :style {:position "absolute"
-                                         :bottom "1rem"
-                                         :right "1rem"}}
-                     [:ty-icon {:name "plus" :size "md"}]]])
-                  (code-block "<!-- Positioned FAB -->
-<div class=\"relative\">
-  <!-- Your content -->
-  <ty-button action=\"true\" flavor=\"primary\" size=\"lg\"
-             class=\"absolute bottom-4 right-4\">
-    <ty-icon name=\"plus\" size=\"md\"></ty-icon>
-  </ty-button>
-</div>")]
-
-                 [:div.ty-content.rounded-lg.p-5
-                  (section-label "Toolbar Actions")
-                  [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem"
-                                             :line-height "1.6"}}
-                   "Combine text buttons with action buttons in toolbars."]
-                  (demo-area
-                   [:div.ty-elevated.rounded.p-3.flex.items-center.justify-between
-                    [:div.flex.gap-2
-                     [:ty-button {:size "sm"} "Edit"]
-                     [:ty-button {:size "sm"} "Share"]]
-                    [:div.flex.gap-1
-                     [:ty-button {:action true :size "sm"}
-                      [:ty-icon {:name "search" :size "xs"}]]
-                     [:ty-button {:action true :size "sm"}
-                      [:ty-icon {:name "filter" :size "xs"}]]
-                     [:ty-button {:action true :size "sm"}
-                      [:ty-icon {:name "more-vertical" :size "xs"}]]]])
-                  (code-block "<div class=\"flex items-center justify-between\">
-  <div class=\"flex gap-2\">
-    <ty-button size=\"sm\">Edit</ty-button>
-    <ty-button size=\"sm\">Share</ty-button>
-  </div>
-  <div class=\"flex gap-1\">
-    <ty-button action=\"true\" size=\"sm\">
-      <ty-icon name=\"search\" size=\"xs\"></ty-icon>
-    </ty-button>
-    <ty-button action=\"true\" size=\"sm\">
-      <ty-icon name=\"more-vertical\" size=\"xs\"></ty-icon>
-    </ty-button>
-  </div>
-</div>")]])
-))
+   (api-section
+    {:attributes ["Appearance"
+                  ["flavor" "string" "\"neutral\"" "primary, success, danger, warning, neutral, or any custom flavor. Append + or - for a stronger or softer tone."]
+                  ["appearance" "string" "\"solid\"" "solid, outlined or ghost."]
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl. Same height ladder as the fields."]
+                  ["pill" "boolean" "false" "Fully rounded ends."]
+                  ["action" "boolean" "false" "Square, icon-only button."]
+                  ["wide" "boolean" "false" "Grow to fill the parent flex row."]
+                  ["muted" "boolean" "false" "Desaturated at rest; color returns on hover, press and focus."]
+                  "State"
+                  ["disabled" "boolean" "false" "Not focusable, no click."]
+                  ["loading" "boolean" "false" "Spinner overlay, clicks blocked, aria-busy. Width is kept."]
+                  "Form"
+                  ["type" "string" "\"submit\"" "submit, reset or button. Set button for actions inside a form that shouldn't submit."]
+                  ["name" "string" "Field name sent with the pressing button's value."]
+                  ["value" "string" "Value sent when this button submits the form."]]
+     :events [["click" "{originalEvent}" "Bubbles and crosses shadow roots. Not fired while disabled or loading."]]
+     :slots [["start" "Before the label, usually an icon."]
+             ["(default)" "The label."]
+             ["end" "After the label."]]
+     :keyboard [["Enter / Space" "Activate, like a native button."]
+                ["Tab" "Focus ring appears on keyboard focus only."]]
+     :css-vars [["--ty-button-bg / -bg-hover" "Fill, per instance."]
+                ["--ty-button-color" "Label and icon color."]
+                ["--ty-button-border" "Border color (outlined)."]
+                ["--ty-button-depth" "Solid border and shadow strength, 0–1. Default 0.35."]
+                ["--ty-button-radius-{xs…xl}" "Corner radius per size."]
+                ["--ty-solid-{flavor} / -hover / -fg" "Flavor tokens for solid."]
+                ["--ty-color-{flavor} / --ty-bg-{flavor}-soft" "Flavor tokens for outlined and ghost."]]})))

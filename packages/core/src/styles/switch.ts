@@ -41,7 +41,12 @@ ${inputStyles}
 
 /* The switch container is just the visual */
 .switch-container {
-  display: inline-block;
+  /* One line box of the surrounding text, track centered in it — lines up
+     with the first line of a wrapping <label> (same fix as ty-checkbox). */
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.25em;
+  min-height: 1lh;
   cursor: pointer;
   user-select: none;
   outline: none;
@@ -63,7 +68,7 @@ ${inputStyles}
   flex-shrink: 0;
   width: 36px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--ty-radius-full, 999px);
   background: var(--ty-color-neutral-soft, var(--ty-input-border));
   transition: var(--ty-local-transition, background-color 0.18s ease-in-out);
   box-sizing: border-box;
@@ -75,7 +80,7 @@ ${inputStyles}
   left: 2px;
   width: 16px;
   height: 16px;
-  border-radius: 50%;
+  border-radius: min(50%, var(--ty-radius-full, 50%));
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   transition: var(--ty-local-transition, transform 0.18s ease-in-out, background-color 0.18s ease-in-out);

@@ -1,158 +1,144 @@
 (ns tyrell.site.docs.resize-observer
   "Documentation for ty-resize-observer component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table
-                                             doc-section docs-page component-header section-label]]))
+  (:require [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.state :as state]))
+
+(defn- doc-state [k] (get-in @state/state [:resize-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:resize-doc k] v))
+
+(defn- watch!
+  "Subscribe to the registry for id, keep the latest size in state under k.
+   Returns the unsubscribe fn so on-unmount can call it."
+  [id k]
+  (when-let [^js api (.-tyResizeObserver js/window)]
+    (.onResize api id (fn [^js s] (set-doc! k {:w (js/Math.round (.-width s)) :h (js/Math.round (.-height s))})))))
+
+(defn- subscribed
+  "Replicant lifecycle: subscribe on mount, unsubscribe on unmount."
+  [id k]
+  {:replicant/on-mount (fn [{:replicant/keys [node]}]
+                         (set! (.-__tyUnsub ^js node) (watch! id k)))
+   :replicant/on-unmount (fn [{:replicant/keys [node]}]
+                           (when-let [f (.-__tyUnsub ^js node)] (f)))})
+
+(defn- breakpoint [w]
+  (cond (nil? w) "—" (< w 320) "compact" (< w 520) "medium" :else "wide"))
+
+(defn- snippets [{:keys [debounce]}]
+  (let [d (when (not= debounce "0") (str " debounce=\"" debounce "\""))]
+    [["html" "HTML" "html"
+      (str "<ty-resize-observer id=\"panel\"" d ">\n  …\n</ty-resize-observer>\n\n"
+           "<script>\n  tyResizeObserver.onResize('panel', ({ width, height }) => {\n"
+           "    chart.resize(width, height);\n  });\n</script>")]
+     ["react" "React" "javascript"
+      (str "import { TyResizeObserver } from 'tyrell-react'\nimport { onResize } from '@gersak/ty'\n\n"
+           "useEffect(() => onResize('panel', ({ width }) => setWidth(width)), []);\n\n"
+           "<TyResizeObserver id=\"panel\"" d ">…</TyResizeObserver>")]
+     ["reagent" "Reagent" "clojure"
+      (str "(:require [tyrell.react :as ty])\n\n"
+           "[:> ty/ResizeObserver {:id \"panel\"" (when d (str " :debounce " debounce)) "}\n chart]")]
+     ["replicant" "Replicant" "clojure"
+      (str "[:ty-resize-observer {:id \"panel\"" (when d (str " :debounce \"" debounce "\"")) "}\n chart]\n\n"
+           ";; tyrell.layout reads the same registry:\n(layout/with-container \"panel\"\n  (layout/container-breakpoint))")]
+     ["datastar" "Datastar" "html"
+      (str "<ty-resize-observer id=\"panel\"" d ">…</ty-resize-observer>")]]))
+
+(defn- render-playground [{:keys [debounce]}]
+  (let [{:keys [w h]} (doc-state :play)]
+    [:div.flex.flex-col.items-center.gap-3.w-full
+     [:div.rounded-xl.border.ty-border.overflow-auto
+      {:style {:resize "both" :width "340px" :height "160px" :min-width "140px" :min-height "80px" :max-width "100%"}}
+      [:ty-resize-observer (merge {:id "doc-resize-play" :debounce debounce :style {:display "block" :height "100%"}}
+                                  (subscribed "doc-resize-play" :play))
+       [:div.flex.h-full.flex-col.items-center.justify-center.gap-1.p-4
+        [:span.font-mono.text-2xl.font-semibold.ty-text++ (if w (str w " × " h) "drag ↘")]
+        [:span.text-xs.ty-text- (str "breakpoint: " (breakpoint w))]]]]
+     [:span.text-xs.ty-text-- "Drag the bottom-right corner."]]))
 
 (defn view []
-  (docs-page
-   (component-header "ty-resize-observer"
-                     "Self-observing element that tracks its own dimensions in a global registry with debounce support. Used internally for responsive layouts — subscribe via the JS module API, not DOM events.")
+  (component-page
+   {:title "Resize Observer"
+    :group "Layout primitives"
+    :tag "ty-resize-observer"
+    :description "Measures itself and publishes the size under its id. Read it once, subscribe to changes, or let tyrell.layout pick a breakpoint from it. Container queries without CSS."
+    :chips [["Registry by id" "layers"] ["Debounce" "zap"] ["TyResizeObserver (React)" "atom"]]
+    :source "packages/core/src/components/resize-observer.ts"
+    :mark "⤡"
+    :demo [:div.flex.flex-col.gap-2 {:style {:width "300px"}}
+           [:div.ty-floating.rounded-xl.p-4.flex.items-center.justify-between
+            [:span.font-mono.text-lg.font-semibold.ty-text++ "640 × 360"]
+            [:ty-tag {:flavor "primary-" :size "sm"} "wide"]]
+           [:code.text-xs.ty-text- "getSize('panel') → {width: 640, height: 360}"]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :resize
+     :defaults {:debounce "0"}
+     :controls [{:key :debounce :options ["0" "150" "400"]}]
+     :sub "Resize the box; the numbers come from the registry. Try a debounce."
+     :render render-playground
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "id"
-        :type "string"
-        :required true
-        :default "-"
-        :description "Unique identifier — required to query or subscribe to this element's size in the registry"}
-       {:name "debounce"
-        :type "number"
-        :default "0"
-        :description "Milliseconds to debounce resize callbacks — reduces update frequency for expensive operations"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Layout by container width"
+       :span 4
+       :description "Switch layout by the container's width, not the window's. The same card can live in a sidebar or a main column."
+       :code "onResize('card', ({ width }) => {
+  card.dataset.layout = width < 360 ? 'stack' : 'row';
+});"}
+      (let [{:keys [w]} (doc-state :card)
+            stack? (and w (< w 360))]
+        [:div.rounded-xl.border.ty-border-.overflow-auto.w-full
+         {:style {:resize "horizontal" :min-width "200px" :max-width "100%"}}
+         [:ty-resize-observer (merge {:id "doc-resize-card" :style {:display "block"}}
+                                     (subscribed "doc-resize-card" :card))
+          [:div.p-4.gap-4 {:class (if stack? ["flex" "flex-col"] ["flex" "items-center"])}
+           [:span.flex.items-center.justify-center.rounded-xl.ty-bg-primary-.ty-text-primary.font-semibold
+            {:style {:width "56px" :height "56px"}} "AL"]
+           [:div.flex.flex-col.gap-1.text-sm
+            [:span.font-semibold.ty-text++ "Ada Lovelace"]
+            [:span.ty-text- "First programmer. Drag this card's right edge."]]
+           [:span.text-xs.font-mono.ty-text-- {:class (when-not stack? ["ml-auto"])} (str (or w "…") "px · " (if stack? "stack" "row"))]]]]))
 
-    [:div
-     (section-label "JavaScript API")
-     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
-      [:div.flex.items-start.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :white-space "nowrap"}} "getSize(id)"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Returns " [:code "{width, height}"] " for the element with the given id — synchronous snapshot"]]]
-     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
-      [:div.flex.items-start.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :white-space "nowrap"}} "onResize(id, fn)"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Subscribe to size changes — calls " [:code "fn({width, height})"] " on each resize. Returns an unsubscribe function"]]]
-     [:div {:style {:padding "0.5rem 0"}}
-      [:div.flex.items-start.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :white-space "nowrap"}} "getAllSizes()"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Returns all registered sizes as an object — useful for debugging"]]]]]
+     (example
+      {:title "Debounce"
+       :span 2
+       :description [:span [:code "debounce"] " (ms) waits for resizing to settle. Use it when the reaction is expensive, like redrawing a chart."]
+       :code "<ty-resize-observer id=\"chart\"
+  debounce=\"200\">"}
+      [:p.text-sm.ty-text- "Set it in the playground above: at 400 the numbers update only after you stop dragging."])
 
-   (doc-section "Examples"
-     [:div.space-y-6
+     (example
+      {:title "ClojureScript layout"
+       :span 3
+       :lang "clojure"
+       :description [:span [:code "tyrell.layout"] " reads the same registry: breakpoints, orientation and density of a container."]
+       :code "(require '[tyrell.layout :as layout])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "One-Time Size Query")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Use " [:code "getSize(id)"] " for a synchronous snapshot — useful after mount when you just need current dimensions once."]
-       (code-block "import { getSize } from 'tyrell-components';
+(layout/with-container \"panel\"
+  (case (layout/container-breakpoint)
+    :xs (compact-view)
+    (full-view)))"}
+      [:p.text-sm.ty-text- "Wrap a subtree in with-container and read container-width, container-breakpoint or portrait? inside it."])
 
-const size = getSize('my-container');
-console.log(size); // { width: 480, height: 320 }" "javascript")]
+     (example
+      {:title "Without a framework"
+       :span 3
+       :lang "javascript"
+       :description [:span "The CDN bundle exposes the registry as " [:code "window.tyResizeObserver"] "."]
+       :code "const size = tyResizeObserver.getSize('panel');
+const stop = tyResizeObserver.onResize('panel', draw);
+tyResizeObserver.getAllSizes();   // debugging
+stop();"}
+      [:p.text-sm.ty-text- "ES module users import the same functions: getSize, onResize, getAllSizes from @gersak/ty."])))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Reactive Subscription")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Use " [:code "onResize(id, fn)"] " to subscribe to changes. The callback fires whenever the element resizes. Always call the returned unsubscribe function on cleanup."]
-       (code-block "<ty-resize-observer id=\"sidebar\">
-  <aside>...</aside>
-</ty-resize-observer>
-
-<script type=\"module\">
-import { onResize } from 'tyrell-components';
-
-// Subscribe — fires on every resize
-const unsubscribe = onResize('sidebar', ({ width, height }) => {
-  sidebar.classList.toggle('compact', width < 200);
-});
-
-// Clean up when done
-// unsubscribe();
-</script>" "javascript")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Debounced for Expensive Operations")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "debounce"] " to limit how often callbacks fire during active resizing — ideal for API calls, chart re-renders, or layout recalculations."]
-       (code-block "<ty-resize-observer id=\"chart-area\" debounce=\"300\">
-  <canvas id=\"chart\"></canvas>
-</ty-resize-observer>
-
-<script type=\"module\">
-import { onResize } from 'tyrell-components';
-
-// Fires at most once per 300ms pause in resizing
-onResize('chart-area', ({ width, height }) => {
-  rerenderChart(width, height); // expensive operation
-});
-</script>" "javascript")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Window API (CDN / Script Tag)")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "When using the CDN bundle, the registry is available at " [:code "window.tyResizeObserver"] "."]
-       (code-block "<!-- No import needed with the CDN bundle -->
-<ty-resize-observer id=\"panel\">
-  <div>...</div>
-</ty-resize-observer>
-
-<script>
-// One-time query
-const size = window.tyResizeObserver.getSize('panel');
-
-// Subscribe
-const unsub = window.tyResizeObserver.onResize('panel', (size) => {
-  console.log(size.width, size.height);
-});
-
-// Debug all registered sizes
-console.log(window.tyResizeObserver.getAllSizes());
-</script>")]])
-
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Container-Based Responsive Layout")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Unlike CSS media queries (window width), ty-resize-observer tracks the " [:em "element's"] " own width — independent of the viewport. Useful for components that live in resizable sidebars or panels."]
-       (code-block "<ty-resize-observer id=\"data-grid\">
-  <div id=\"grid\">...</div>
-</ty-resize-observer>
-
-<script type=\"module\">
-import { onResize } from 'tyrell-components';
-
-onResize('data-grid', ({ width }) => {
-  const grid = document.getElementById('grid');
-  // Adjust columns based on the component's own width
-  const cols = width >= 800 ? 4 : width >= 500 ? 2 : 1;
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-});
-</script>" "javascript")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "ClojureScript / Replicant")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Use " [:code "replicant/on-mount"] " and " [:code "replicant/on-unmount"] " lifecycle hooks to wire subscriptions. Store the unsubscribe function on the element for cleanup."]
-       (code-block ";; Component that subscribes on mount, cleans up on unmount
-[:ty-resize-observer {:id \"my-panel\"
-                      :replicant/on-mount
-                      (fn [{^js el :replicant/node}]
-                        (when js/window.tyResizeObserver
-                          (let [unsub (js/window.tyResizeObserver.onResize
-                                        \"my-panel\"
-                                        (fn [size]
-                                          (reset! panel-width (.-width size))))]
-                            (set! (.-_unsub el) unsub))))
-                      :replicant/on-unmount
-                      (fn [{^js el :replicant/node}]
-                        (when-let [unsub (.-_unsub el)]
-                          (unsub)
-                          (set! (.-_unsub el) nil)))}
- [:div ...panel content...]]")]])
-))
+   (api-section
+    {:attributes [["id" "string" "Required. The key its size is published under. Renaming moves the entry."]
+                  ["debounce" "number" "0" "Wait this many ms after the last resize before publishing."]]
+     :properties [["getSize(id)" "(string) => {width, height} | undefined" "Current size, synchronously."]
+                  ["onResize(id, fn)" "(string, fn) => unsubscribe" "Call fn on every published change."]
+                  ["getAllSizes()" "() => Record<string, {width, height}>" "Every registered size."]]
+     :slots [["(default)" "Content to measure. The element itself is what's observed."]]})))

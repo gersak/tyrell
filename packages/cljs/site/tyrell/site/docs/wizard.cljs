@@ -1,353 +1,235 @@
 (ns tyrell.site.docs.wizard
-  "Documentation for ty-wizard and ty-step components"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  "Documentation for ty-wizard and ty-step"
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.state :as state]))
 
-;; The wizard is fully controlled — we set the `active` and `completed`
-;; attributes directly from event handlers. Replicant doesn't re-render the
-;; web component on attribute changes, but ty-wizard observes its own
-;; attributes and updates in place.
+(defn- doc-state [k] (get-in @state/state [:wizard-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:wizard-doc k] v))
 
-(defn- $ [id] (.getElementById js/document id))
+(def ^:private steps
+  [["account" "Account" "Who you are"]
+   ["plan" "Plan" "Pick a tier"]
+   ["payment" "Payment" "Card details"]
+   ["done" "Done" "All set"]])
 
-(defn- go-to-step
-  "Returns an event handler that sets the wizard's active step and completed list.
-   ty-wizard observes attributes (not JS properties), so we must use setAttribute."
-  [wizard-id step completed]
-  (fn []
-    (when-let [w ($ wizard-id)]
-      (.setAttribute w "active" step)
-      (.setAttribute w "completed" completed))))
+(def ^:private step-ids (mapv first steps))
 
-(defn- read-input-value [id fallback]
-  (let [el ($ id)
-        v (when el (.-value el))]
-    (if (and v (not= "" v)) v fallback)))
+(defn- flow
+  "Checkout flow driven from state: active step, completed set, validation."
+  [prefix {:keys [orientation]}]
+  (let [k (keyword prefix)
+        {:keys [active completed error]} (or (doc-state k) {:active "account" :completed #{}})
+        i (.indexOf step-ids active)
+        go! (fn [to done] (set-doc! k {:active to :completed done :error nil}))
+        email (or (doc-state [k :email]) "")]
+    [:div.flex.flex-col.gap-4.w-full
+     [:ty-wizard (cond-> {:active active :completed (str/join "," completed)
+                          :orientation (or orientation "horizontal")
+                          :on {:ty-wizard-step-change
+                               (fn [^js e]
+                                 ;; Indicator clicks only report; allow going back to finished steps.
+                                 (let [to (.. e -detail -activeId)]
+                                   (when (or (contains? completed to) (< (.indexOf step-ids to) i))
+                                     (go! to completed))))}})
+      (for [[id label desc] steps]
+        [:ty-step (cond-> {:replicant/key id :id id :label label :description desc}
+                    (and error (= id "account")) (assoc :status "error"))
+         [:div.flex.flex-col.gap-3.p-6.text-sm
+          (case id
+            "account" [:ty-input {:label "Work email" :type "email" :value email :size "sm"
+                                  :error (or error "")
+                                  :on {:input #(set-doc! [k :email] (.. % -detail -value))}}]
+            "plan" [:ty-radio-group {:value "pro" :orientation "horizontal"}
+                    (for [p ["Starter" "Pro" "Team"]]
+                      [:label.flex.items-start.gap-2.cursor-pointer {:replicant/key p}
+                       [:ty-radio {:value (str/lower-case p)}] [:span.ty-text+ p]])]
+            "payment" [:ty-input {:label "Card number" :placeholder "4242 4242 4242 4242" :size "sm"}]
+            "done" [:span.ty-text+ "You're in. Check your inbox."])]])]
+     [:div.flex.items-center.justify-between
+      [:ty-button {:appearance "ghost" :size "md" :disabled (when (zero? i) "")
+                   :on {:click #(go! (nth step-ids (max 0 (dec i))) completed)}} "Back"]
+      (if (= active "done")
+        [:ty-button {:size "md" :on {:click #(go! "account" #{})}} "Start over"]
+        [:ty-button {:flavor "primary" :size "md"
+                     :on {:click (fn []
+                                   (if (and (= active "account") (not (re-find #"@" email)))
+                                     (set-doc! k {:active active :completed completed :error "Enter an email to continue"})
+                                     (go! (nth step-ids (inc i)) (conj completed active))))}}
+         "Next"])]]))
 
-(defn- read-radio-group-value [id fallback]
-  (or (some-> ($ id) .-value) fallback))
-
-(defn- read-switch-on?
-  "ty-switch exposes its checked state via its `checked` boolean property."
-  [id]
-  (boolean (some-> ($ id) .-checked)))
-
-(defn- update-done-summary!
-  "Read the values entered in earlier steps and write them into the
-   summary spans/tags inside the Done step. Called when transitioning to step-4."
-  []
-  (let [name (read-input-value "demo-wiz-name" "—")
-        email (read-input-value "demo-wiz-email" "—")
-        role-el ($ "demo-wiz-role")
-        role (or (when role-el (.-value role-el)) "Engineering")
-        theme (read-radio-group-value "demo-wiz-theme" "system")
-        notify? (read-switch-on? "demo-wiz-notify")]
-    (when-let [el ($ "demo-wiz-sum-name")] (set! (.-textContent el) name))
-    (when-let [el ($ "demo-wiz-sum-email")] (set! (.-textContent el) email))
-    (when-let [el ($ "demo-wiz-sum-role")] (set! (.-textContent el) role))
-    (when-let [el ($ "demo-wiz-sum-theme")] (set! (.-textContent el) theme))
-    (when-let [el ($ "demo-wiz-sum-notify")]
-      (set! (.-textContent el) (if notify? "enabled" "off"))
-      (.setAttribute el "flavor" (if notify? "success" "neutral")))))
+(defn- snippets [{:keys [orientation]}]
+  (let [o (when (= orientation "vertical") " orientation=\"vertical\"")]
+    [["html" "HTML" "html"
+      (str "<ty-wizard active=\"plan\" completed=\"account\"" o ">\n"
+           (str/join "\n" (for [[id l d] steps] (str "  <ty-step id=\"" id "\" label=\"" l "\" description=\"" d "\">…</ty-step>")))
+           "\n</ty-wizard>")]
+     ["react" "React" "javascript"
+      (str "import { TyWizard, TyStep } from 'tyrell-react'\n\n"
+           "<TyWizard active={step} completed={done.join(',')}" o ">\n"
+           (str/join "\n" (for [[id l] steps] (str "  <TyStep id=\"" id "\" label=\"" l "\">…</TyStep>")))
+           "\n</TyWizard>")]
+     ["reagent" "Reagent" "clojure"
+      (str "(:require [tyrell.react :as ty])\n\n"
+           "[:> ty/Wizard {:active @step :completed (str/join \",\" @done)"
+           (when o " :orientation \"vertical\"") "}"
+           (str/join (for [[id l] steps] (str "\n [:> ty/Step {:id \"" id "\" :label \"" l "\"} …]"))) "]")]
+     ["replicant" "Replicant" "clojure"
+      (str "[:ty-wizard {:active step :completed (str/join \",\" done)"
+           (when o " :orientation \"vertical\"") "}"
+           (str/join (for [[id l] steps] (str "\n [:ty-step {:id \"" id "\" :label \"" l "\"} …]"))) "]")]
+     ["datastar" "Datastar" "html"
+      (str "<ty-wizard data-attr:active=\"$step\" data-attr:completed=\"$done\"" o ">\n  …\n</ty-wizard>")]]))
 
 (defn view []
-  (docs-page
-   (component-header "ty-wizard"
-                     "Multi-step wizard with progress line, step indicators, completion tracking, and horizontal/vertical orientation. Uses ty-step children — each step is a panel with id, label, and optional description.")
+  (component-page
+   {:title "Wizard"
+    :group "Layout primitives"
+    :tag "ty-wizard"
+    :description "A stepper for multi-step flows: an inline rail of steps that collapses to Step N of M when space runs out, and panels sized to the tallest step, so nothing jumps. It renders and reports; your code decides when a step is done."
+    :chips [["Controlled" "sliders-horizontal"] ["Error states" "zap"] ["TyWizard (React)" "atom"]]
+    :source "packages/core/src/components/wizard.ts"
+    :mark "→"
+    :demo [:div {:style {:width "380px"}}
+           [:ty-wizard {:active "plan" :completed "account"}
+            (for [[id l] (take 3 steps)]
+              [:ty-step {:replicant/key id :id id :label l}
+               [:div.p-4.text-sm.ty-text- (str l " step")]])]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :wizard
+     :defaults {:orientation "horizontal"}
+     :controls [{:key :orientation :options ["horizontal" "vertical"]}]
+     :sub "Next validates the email first. Click a finished step to go back."
+     :render (fn [props]
+               [:div {:style {:width "100%" :max-width "620px"}}
+                (flow "play" props)])
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "ty-wizard Attributes")
-     (attribute-table
-      [{:name "active"
-        :type "string"
-        :default "first step id"
-        :description "ID of the currently active step — you control this attribute to advance or retreat"}
-       {:name "completed"
-        :type "string"
-        :default "\"\""
-        :description "Comma-separated IDs of completed steps — drives the progress line and indicator state"}
-       {:name "width"
-        :type "string"
-        :default "\"100%\""
-        :description "Container width (px or %)"}
-       {:name "height"
-        :type "string"
-        :default "\"700px\""
-        :description "Container height"}
-       {:name "orientation"
-        :type "string"
-        :default "\"horizontal\""
-        :description "Step indicator layout: horizontal or vertical"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "You drive it"
+       :span 3
+       :lang "javascript"
+       :description [:span "Clicking an indicator only fires " [:code "ty-wizard-step-change"]
+                     ". Decide whether to move, then set " [:code "active"] " and " [:code "completed"] "."]
+       :code "wizard.addEventListener('ty-wizard-step-change', (e) => {
+  const { activeId } = e.detail;
+  if (done.has(activeId)) wizard.setAttribute('active', activeId);
+});
 
-    [:div.mb-6
-     (section-label "ty-step Attributes")
-     (attribute-table
-      [{:name "id"
-        :type "string"
-        :required true
-        :default "-"
-        :description "Unique identifier — referenced by ty-wizard active and completed attributes"}
-       {:name "label"
-        :type "string"
-        :default "-"
-        :description "Text shown below the step indicator circle"}
-       {:name "description"
-        :type "string"
-        :default "-"
-        :description "Secondary text shown beneath the label in the step indicator"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Prevent this step from being activated"}])]
+next.onclick = () => {
+  if (!valid(current)) return step.setAttribute('status', 'error');
+  done.add(current);
+  wizard.setAttribute('completed', [...done].join(','));
+  wizard.setAttribute('active', nextId);
+};"}
+      [:div.flex.flex-col.gap-2
+       [:p.text-sm.ty-text- "The playground above is exactly this. The wizard never navigates on its own, so validation stays in your code."]])
 
-    [:div
-     (section-label "Events")
-     (event-table
-      [{:name "ty-wizard-step-change"
-        :payload "{activeId, activeIndex, previousId, previousIndex, direction}"
-        :when-fired "Fires when the active step changes"}])]]
+     (example
+      {:title "Step status"
+       :span 3
+       :description [:span [:code "status"] " on a step overrides the derived state: completed, active, pending or error."]
+       :code "<ty-step id=\"pay\" status=\"error\">"}
+      [:ty-wizard {:active "b" :completed "a"}
+       [:ty-step {:id "a" :label "Done"} [:div.p-4.text-sm.ty-text- "Finished."]]
+       [:ty-step {:id "b" :label "Now"} [:div.p-4.text-sm.ty-text- "You are here."]]
+       [:ty-step {:id "c" :label "Failed" :status "error"} [:div.p-4.text-sm.ty-text- "Needs attention."]]])
 
-   (doc-section "Examples"
-     [:div.space-y-6
+     (example
+      {:title "Custom indicators"
+       :span 6
+       :description [:span "Replace a step's number with anything via " [:code "slot=\"indicator-{id}\""]
+                     " on the wizard. It gets " [:code "data-active"] " so you can style it."]
+       :code "<ty-wizard>
+  <ty-icon slot=\"indicator-ship\" name=\"truck\"></ty-icon>
+  <ty-step id=\"ship\" label=\"Shipping\">…</ty-step>
+</ty-wizard>"}
+      [:ty-wizard {:active "ship" :completed "cart"}
+       (for [[id icon] [["cart" "archive"] ["ship" "truck"] ["pay" "lock"] ["ok" "check"]]]
+         [:ty-icon {:replicant/key (str "i-" id) :slot (str "indicator-" id) :name icon :size "sm"}])
+       (for [[id l] [["cart" "Cart"] ["ship" "Shipping"] ["pay" "Payment"] ["ok" "Confirm"]]]
+         [:ty-step {:replicant/key id :id id :label l} [:div.p-3.text-sm.ty-text- l]])])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "The wizard is fully controlled — you manage " [:code "active"] " and " [:code "completed"] " from outside. Buttons inside each step set these attributes to navigate. Add " [:code "description"] " to each step for a secondary line beneath the indicator label."]
-       (demo-area
-        [:ty-wizard {:id "demo-wizard" :width "100%" :height "560px"
-                     :active "step-1" :completed ""}
+     (example
+      {:title "Vertical"
+       :span 3
+       :description [:span [:code "orientation=\"vertical\""] " puts the rail on the left. Every label stays visible; good for long flows."]
+       :code "<ty-wizard orientation=\"vertical\">"}
+      [:ty-wizard {:active "plan" :completed "account" :orientation "vertical"}
+       (for [[id l d] steps]
+         [:ty-step {:replicant/key id :id id :label l :description d}
+          [:div.p-5.text-sm.ty-text- d]])])
 
-         [:ty-step {:id "step-1" :label "Welcome" :description "Quick intro"}
-          [:div.flex.flex-col.items-center.gap-5.text-center
-           {:style {:padding "2rem 1.5rem" :max-width "32rem" :margin "0 auto"}}
+     (example
+      {:title "Narrow containers"
+       :span 3
+       :description "When the labels don't fit, the rail becomes Step N of M over a segment bar. No attribute; it measures itself."
+       :code "<!-- same markup, smaller box -->
+<div style=\"width: 300px\">
+  <ty-wizard active=\"plan\" completed=\"account\">…</ty-wizard>
+</div>"}
+      [:div {:style {:width "100%" :max-width "300px"}}
+       [:ty-wizard {:active "plan" :completed "account"}
+        (for [[id l d] steps]
+          [:ty-step {:replicant/key id :id id :label l :description d}
+           [:div.p-4.text-sm.ty-text- d]])]])
 
-           [:div.flex.items-center.justify-center.rounded-full.ty-bg-primary-
-            {:style {:width "72px" :height "72px"}}
-            [:ty-icon.ty-text-primary+ {:name "compass" :size "lg"}]]
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const wizard = document.querySelector('ty-wizard');
 
-           [:div
-            [:h3.ty-text++ {:style {:font-size "1.5rem" :font-weight "700"}} "Welcome to the team"]
-            [:p.ty-text- {:style {:font-size "0.9375rem" :margin-top "0.5rem" :max-width "26rem"}}
-             "We'll set up your account in three quick steps. Takes about a minute — you can change everything later."]]
+wizard.setAttribute('active', 'payment');
+wizard.setAttribute('completed', 'account,plan');
 
-           [:div.grid.grid-cols-3.gap-3.w-full
-            {:style {:margin-top "0.5rem" :max-width "28rem"}}
-            [:div.ty-elevated.rounded-lg.flex.flex-col.items-center.gap-1.5
-             {:style {:padding "0.75rem"}}
-             [:ty-icon.ty-text-primary {:name "user" :size "md"}]
-             [:p.ty-text {:style {:font-size "0.75rem" :font-weight "600"}} "Profile"]
-             [:p.ty-text-- {:style {:font-size "0.6875rem"}} "Name & email"]]
-            [:div.ty-elevated.rounded-lg.flex.flex-col.items-center.gap-1.5
-             {:style {:padding "0.75rem"}}
-             [:ty-icon.ty-text-primary {:name "settings" :size "md"}]
-             [:p.ty-text {:style {:font-size "0.75rem" :font-weight "600"}} "Preferences"]
-             [:p.ty-text-- {:style {:font-size "0.6875rem"}} "Theme & alerts"]]
-            [:div.ty-elevated.rounded-lg.flex.flex-col.items-center.gap-1.5
-             {:style {:padding "0.75rem"}}
-             [:ty-icon.ty-text-success {:name "check" :size "md"}]
-             [:p.ty-text {:style {:font-size "0.75rem" :font-weight "600"}} "Done"]
-             [:p.ty-text-- {:style {:font-size "0.6875rem"}} "Ready to go"]]]
-
-           [:ty-button {:flavor "primary" :size "lg"
-                        :style {:margin-top "0.5rem"}
-                        :on {:click (go-to-step "demo-wizard" "step-2" "step-1")}}
-            "Get started"]]]
-
-         [:ty-step {:id "step-2" :label "Profile" :description "About you"}
-          [:div.flex.flex-col.gap-4
-           {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
-
-           [:div
-            [:h3.ty-text++ {:style {:font-size "1.25rem" :font-weight "700"}} "About you"]
-            [:p.ty-text-- {:style {:font-size "0.8125rem" :margin-top "0.25rem"}}
-             "We use this to personalize your workspace."]]
-
-           [:ty-input {:id "demo-wiz-name"
-                       :label "Full name" :placeholder "Jane Doe"
-                       :required ""}
-            [:ty-icon {:slot "start" :name "user"}]]
-
-           [:ty-input {:id "demo-wiz-email"
-                       :label "Work email" :type "email"
-                       :placeholder "you@company.com"
-                       :required ""}
-            [:ty-icon {:slot "start" :name "mail"}]]
-
-           [:ty-select {:id "demo-wiz-role"
-                          :label "Role" :value "Engineering"}
-            [:ty-option {:value "Engineering"} "Engineering"]
-            [:ty-option {:value "Design"} "Design"]
-            [:ty-option {:value "Product"} "Product"]
-            [:ty-option {:value "Support"} "Support"]
-            [:ty-option {:value "Other"} "Other"]]
-
-           [:div.flex.justify-between.gap-3
-            {:style {:margin-top "0.75rem"}}
-            [:ty-button {:flavor "neutral" :outlined ""
-                         :on {:click (go-to-step "demo-wizard" "step-1" "")}}
-             "Back"]
-            [:ty-button {:flavor "primary"
-                         :on {:click (go-to-step "demo-wizard" "step-3" "step-1,step-2")}}
-             "Continue"]]]]
-
-         [:ty-step {:id "step-3" :label "Preferences" :description "Theme & alerts"}
-          [:div.flex.flex-col.gap-5
-           {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
-
-           [:div
-            [:h3.ty-text++ {:style {:font-size "1.25rem" :font-weight "700"}} "Preferences"]
-            [:p.ty-text-- {:style {:font-size "0.8125rem" :margin-top "0.25rem"}}
-             "You can change these later from settings."]]
-
-           [:div.flex.flex-col.gap-2
-            [:p.ty-text {:style {:font-size "0.875rem" :font-weight "500"}} "Theme"]
-            [:ty-radio-group {:id "demo-wiz-theme" :value "system" :orientation "horizontal"}
-             [:label.flex.items-center.gap-2 {:style {:cursor "pointer"}}
-              [:ty-radio {:value "light"}] "Light"]
-             [:label.flex.items-center.gap-2 {:style {:cursor "pointer"}}
-              [:ty-radio {:value "dark"}] "Dark"]
-             [:label.flex.items-center.gap-2 {:style {:cursor "pointer"}}
-              [:ty-radio {:value "system"}] "System"]]]
-
-           [:label.flex.items-center.justify-between.gap-3
-            {:style {:cursor "pointer" :padding-top "0.75rem" :border-top "1px solid var(--ty-border-)"}}
-            [:div
-             [:p.ty-text {:style {:font-size "0.875rem" :font-weight "500"}} "Weekly digest"]
-             [:p.ty-text-- {:style {:font-size "0.75rem"}} "A Monday summary of activity"]]
-            [:ty-switch {:id "demo-wiz-notify" :checked ""}]]
-
-           [:div.flex.justify-between.gap-3
-            {:style {:margin-top "0.5rem"}}
-            [:ty-button {:flavor "neutral" :outlined ""
-                         :on {:click (go-to-step "demo-wizard" "step-2" "step-1")}}
-             "Back"]
-            [:ty-button {:flavor "primary"
-                         :on {:click (fn []
-                                       (update-done-summary!)
-                                       ((go-to-step "demo-wizard" "step-4" "step-1,step-2,step-3")))}}
-             "Continue"]]]]
-
-         [:ty-step {:id "step-4" :label "Done" :description "All set"}
-          [:div.flex.flex-col.gap-5
-           {:style {:padding "1.5rem" :max-width "26rem" :margin "0 auto"}}
-
-           [:div.flex.flex-col.items-center.gap-3.text-center
-            [:div.flex.items-center.justify-center.rounded-full.ty-bg-success-
-             {:style {:width "64px" :height "64px"}}
-             [:ty-icon.ty-text-success+ {:name "check" :size "lg"}]]
-            [:div
-             [:h3.ty-text++ {:style {:font-size "1.5rem" :font-weight "700"}} "You're all set!"]
-             [:p.ty-text- {:style {:font-size "0.875rem" :margin-top "0.25rem"}}
-              "Your account is ready. Here's a summary of your details."]]]
-
-           [:div.ty-elevated.rounded-xl.flex.flex-col.gap-2
-            {:style {:padding "1rem"}}
-            [:div.flex.items-center.gap-1.5 {:style {:margin-bottom "0.25rem"}}
-             [:ty-icon.ty-text-warning {:name "sparkles" :size "xs"}]
-             [:p.ty-text-- {:style {:font-size "0.6875rem" :font-weight "600"
-                                    :text-transform "uppercase" :letter-spacing "0.05em"}}
-              "Your details"]]
-            [:div.flex.items-center.justify-between
-             [:span.ty-text- {:style {:font-size "0.8125rem"}} "Name"]
-             [:span#demo-wiz-sum-name.ty-text {:style {:font-size "0.8125rem" :font-weight "500"}} "—"]]
-            [:div.flex.items-center.justify-between
-             [:span.ty-text- {:style {:font-size "0.8125rem"}} "Email"]
-             [:span#demo-wiz-sum-email.ty-text {:style {:font-size "0.75rem" :font-weight "500"
-                                                        :font-family "ui-monospace, monospace"}} "—"]]
-            [:div.flex.items-center.justify-between
-             [:span.ty-text- {:style {:font-size "0.8125rem"}} "Role"]
-             [:ty-tag {:size "xs" :flavor "primary" :pill ""}
-              [:span#demo-wiz-sum-role "Engineering"]]]
-            [:div.flex.items-center.justify-between
-             {:style {:padding-top "0.5rem" :border-top "1px solid var(--ty-border-)"}}
-             [:span.ty-text- {:style {:font-size "0.8125rem"}} "Theme"]
-             [:ty-tag {:size "xs" :flavor "neutral" :pill ""}
-              [:span#demo-wiz-sum-theme "system"]]]
-            [:div.flex.items-center.justify-between
-             [:span.ty-text- {:style {:font-size "0.8125rem"}} "Weekly digest"]
-             [:ty-tag#demo-wiz-sum-notify {:size "xs" :flavor "success" :pill ""} "enabled"]]]
-
-           [:div.flex.justify-center.gap-3
-            [:ty-button {:flavor "neutral" :outlined ""
-                         :on {:click (go-to-step "demo-wizard" "step-1" "")}}
-             "Start over"]
-            [:ty-button {:flavor "primary"} "Go to dashboard"]]]]])
-       (code-block "<ty-wizard id=\"wizard\" width=\"100%\" height=\"560px\"
-            active=\"step-1\" completed=\"\">
-
-  <ty-step id=\"step-1\" label=\"Welcome\" description=\"Quick intro\">
-    <!-- Hero icon, value-prop cards, big Get Started button -->
-    ...
-    <ty-button onclick=\"wizard.setAttribute('active','step-2');
-                         wizard.setAttribute('completed','step-1')\">
-      Get started
-    </ty-button>
-  </ty-step>
-
-  <ty-step id=\"step-2\" label=\"Profile\" description=\"About you\">
-    <ty-input id=\"name\" label=\"Full name\" required>
-      <ty-icon slot=\"start\" name=\"user\"></ty-icon>
-    </ty-input>
-    <ty-input id=\"email\" label=\"Work email\" type=\"email\" required>
-      <ty-icon slot=\"start\" name=\"mail\"></ty-icon>
-    </ty-input>
-    <ty-select id=\"role\" label=\"Role\" value=\"Engineering\">
-      <ty-option value=\"Engineering\">Engineering</ty-option>
-      ...
-    </ty-select>
-    <!-- Back / Continue buttons -->
-  </ty-step>
-
-  <ty-step id=\"step-3\" label=\"Preferences\" description=\"Theme & alerts\">
-    <ty-radio-group id=\"theme\" value=\"system\" orientation=\"horizontal\">
-      <label><ty-radio value=\"light\"></ty-radio> Light</label>
-      <label><ty-radio value=\"dark\"></ty-radio> Dark</label>
-      <label><ty-radio value=\"system\"></ty-radio> System</label>
-    </ty-radio-group>
-    <label><ty-switch id=\"notify\" checked></ty-switch> Weekly digest</label>
-  </ty-step>
-
-  <ty-step id=\"step-4\" label=\"Done\" description=\"All set\">
-    <!-- Success hero + summary card reading values from earlier steps -->
-  </ty-step>
-
-</ty-wizard>")]])
-
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "JavaScript API")
-       (code-block "const wizard = document.querySelector('ty-wizard');
-
-// Navigate programmatically
-wizard.setAttribute('active', 'step-2');
-wizard.setAttribute('completed', 'step-1');
-
-// Listen for step changes
 wizard.addEventListener('ty-wizard-step-change', (e) => {
   const { activeId, activeIndex, previousId, direction } = e.detail;
-  console.log('moved', direction, 'to', activeId);
-});" "javascript")]
+});"}
+      nil)))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Framework Integration")
-       (code-block ";; ClojureScript — maintain active/completed in a local atom
-(let [active (atom \"step-1\")
-      completed (atom #{})]
+   (page-section
+    {:title "Theming" :sub "Accents per state, plus geometry." :dark? true}
+    (example
+     {:title "State accents"
+      :lang "css"
+      :description "Each state has its own accent. Connectors and segments follow the completed accent unless you set the progress fill."
+      :code "ty-wizard {
+  --ty-wizard-active-accent: #2dd4bf;
+  --ty-wizard-completed-accent: #14b8a6;
+  --ty-wizard-circle-size: 28px;
+}"}
+     [:div {:style {:width "100%" :max-width "440px"}}
+      [:ty-wizard {:active "b" :completed "a"
+                   :style {"--ty-wizard-active-accent" "#2dd4bf"
+                           "--ty-wizard-completed-accent" "#14b8a6"
+                           "--ty-wizard-circle-size" "28px"}}
+       (for [[id l] [["a" "Cart"] ["b" "Ship"] ["c" "Pay"]]]
+         [:ty-step {:replicant/key id :id id :label l} [:div.p-4.text-sm.ty-text- (str l " step")]])]]))
 
-  [:ty-wizard {:width \"100%\" :height \"400px\"
-               :active @active
-               :completed (clojure.string/join \",\" @completed)
-               :on {:ty-wizard-step-change
-                    #(reset! active (-> % .-detail .-activeId))}}
-   [:ty-step {:id \"step-1\" :label \"Account\"} ...]
-   [:ty-step {:id \"step-2\" :label \"Profile\"} ...]])")]])
-))
+   (api-section
+    {:attributes ["ty-wizard"
+                  ["active" "string" "first step" "id of the current step."]
+                  ["completed" "string" "Comma-separated ids of finished steps."]
+                  ["orientation" "string" "\"horizontal\"" "Rail on top (horizontal) or on the left (vertical)."]
+                  ["width" "string" "\"100%\"" "Wizard width."]
+                  ["height" "string" "Panel height, header excluded. Unset: panels size to the tallest step."]
+                  "ty-step"
+                  ["id" "string" "Required. What active and completed refer to."]
+                  ["label" "string" "Indicator label."]
+                  ["description" "string" "Second line, shown for the active step (and on error)."]
+                  ["status" "string" "Override: completed, active, pending or error."]
+                  ["disabled" "boolean" "false" "Shown, not reachable."]]
+     :events [["ty-wizard-step-change" "{activeId, activeIndex, previousId, previousIndex, direction}" "An indicator was clicked (it doesn't navigate), or active changed. direction: forward, backward or none."]]
+     :slots [["indicator-{id}" "On ty-wizard: replaces that step's number."]
+             ["(default)" "ty-step children; each step's children are its panel."]]
+     :css-vars [["--ty-wizard-active-accent / -completed-accent / -pending-accent / -error-accent" "Indicator colors per state. Completed defaults to the strong text color."]
+                ["--ty-wizard-progress-track / -fill / -height" "Connectors between steps and the compact segment bar."]
+                ["--ty-wizard-circle-size / -border-width" "Indicator geometry (24px, 1.5px)."]
+                ["--ty-wizard-transition-duration / -easing" "Panel slide, same as ty-tabs (300ms)."]
+                ["--ty-wizard-bg / -border / -radius / -shadow" "Container surface. No shadow by default."]
+                ["--ty-wizard-header-bg / -border / -padding" "Rail area."]]})))

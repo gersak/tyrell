@@ -14,6 +14,7 @@ test.describe('ty-calendar — nav + month composed, edge cases', () => {
     const errors: string[] = []
     page.on('pageerror', (e) => errors.push(e.message))
     await mount(page, `<ty-calendar id="cal" value="2026-07-15"></ty-calendar>`)
+    await page.locator('#cal ty-calendar-navigation').locator('.nav-title').click()
     await page.locator('#cal ty-calendar-navigation').locator('.nav-year-next').click()
     await page.locator('#cal ty-calendar-navigation').locator('.nav-year-prev').click()
     expect(errors).toEqual([])

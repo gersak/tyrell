@@ -736,7 +736,12 @@ html:root,
    * Inputs — tied to neutral ramp so form controls retint with primary.
    * --------------------------------------------------------------*/
   --ty-input-bg: var(--ty-surface-input);
-  --ty-input-color: var(--ty-color-neutral-strong);
+  /* Value text and placeholder ride the TEXT ladder, like the static
+     palette (#111827 / #9ca3af). The neutral ink ramp they used before is
+     scaled by --ty-neutral-l-factor (0.8 in dark), which put typed text at
+     L 0.58 — dimmer than the field's own label — and the placeholder at
+     L 0.37 on an L 0.18 surface. */
+  --ty-input-color: var(--ty-text);
   /* Borders come from the BORDER family, not the neutral ink ramp: ink is
      multiplied by --ty-neutral-l-factor (0.8 in dark), which crushed the
      resting input border to L 0.24 against an L 0.18 input surface — half
@@ -746,7 +751,7 @@ html:root,
   --ty-input-border: var(--ty-border-soft);
   --ty-input-border-hover: var(--ty-border);
   --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-placeholder: var(--ty-color-neutral-soft);
+  --ty-input-placeholder: var(--ty-text-faint);
   --ty-input-disabled-bg: var(--ty-color-neutral-faint);
   --ty-input-disabled-border: var(--ty-color-neutral-faint);
   --ty-input-disabled-color: var(--ty-color-neutral-bold);

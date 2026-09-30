@@ -1,230 +1,193 @@
 (ns tyrell.site.views.event-booking
   (:require
-    [cljs-bean.core :refer [->clj]]
-    [clojure.string :as str]
-    [tyrell.i18n :as i18n]
-    [tyrell.i18n.time]
-    [tyrell.site.state :refer [state]])
+   [cljs-bean.core :refer [->clj]]
+   [clojure.string :as str]
+   [tyrell.i18n :as i18n]
+   [tyrell.i18n.time]
+   [tyrell.site.state :refer [state]]
+   [tyrell.site.views.kit :as kit])
   (:require-macros [tyrell.css :refer [defstyles]]))
-
-(def ^:private service-config
-  {:stripe {:public-key (or (get js/window "STRIPE_PUBLIC_KEY")
-                            (get (.-dataset (.-documentElement js/document)) "stripePublicKey")
-                            "pk_test_51234567890abcdef")}
-   :api {:booking-endpoint "/api/bookings/create"
-         :timeout 30000}})
-
-(defn date->context
-  "Extract year/month/day from a JavaScript Date object.
-  Returns a map with :year, :month (1-indexed), and :day."
-  [^js date]
-  {:year (.getFullYear date)
-   :month (inc (.getMonth date)) ; JavaScript months are 0-indexed
-   :day (.getDate date)})
-
-(defn context->date
-  "Create a JavaScript Date from year/month/day context.
-  Month should be 1-indexed (1 = January)."
-  [year month day]
-  (js/Date. year (dec month) day))
-
-(defn add-days
-  "Add specified number of days to a date and return new Date object."
-  [^js date days]
-  (let [ms-per-day (* 24 60 60 1000)
-        new-ms (+ (.getTime date) (* days ms-per-day))]
-    (js/Date. new-ms)))
-
-(defn get-stripe-key []
-  (get-in service-config [:stripe :public-key]))
-
-(defn get-api-config []
-  (get service-config :api))
 
 (defstyles event-booking-styles "tyrell/site/views/event_booking.css")
 
-(defn- section-divider [label]
-  [:div.flex.items-center.gap-3.mb-3
-   {:style {:margin-top "1.25rem"}}
-   [:span.text-xs.font-semibold.tracking-widest.uppercase.ty-text-- label]
-   [:div.flex-1
-    {:style {:height "1px"
-             :background "var(--ty-border)"}}]])
+;; --- Data --------------------------------------------------------------------
+
+(def ^:private event-types
+  [{:id "meeting"    :label "Business Meeting" :rate 50  :icon "user"  :bg "ty-bg-primary"}
+   {:id "workshop"   :label "Workshop"         :rate 75  :icon "star"  :bg "ty-bg-success"}
+   {:id "conference" :label "Conference Room"  :rate 100 :icon "globe" :bg "ty-bg-warning"}
+   {:id "event"      :label "Special Event"    :rate 200 :icon "star"  :bg "ty-bg-neutral"}])
+
+(def ^:private add-ons
+  "cost: (fn [hours attendees]) in dollars."
+  [{:id "av-equipment" :label "A/V Equipment" :flavor "primary" :icon "video"          :price "+$25"     :cost (constantly 25)}
+   {:id "catering"     :label "Catering"      :flavor "success" :icon "utensils"       :price "+$15/pp"  :cost #(* 15 %2)}
+   {:id "wifi-upgrade" :label "Premium Wi-Fi" :flavor "warning" :icon "satellite-dish" :price "+$10"     :cost (constantly 10)}
+   {:id "parking"      :label "Parking"       :flavor "warning" :icon "car"            :price "+$5/spot" :cost #(* 5 %2)}
+   {:id "security"     :label "Security"      :flavor "danger"  :icon "shield"         :price "+$50/hr"  :cost #(* 50 %1)}
+   {:id "recording"    :label "Recording"     :flavor "neutral" :icon "video"          :price "+$75"     :cost (constantly 75)}
+   {:id "translation"  :label "Translation"   :flavor "danger"  :icon "globe"          :price "+$100"    :cost (constantly 100)}])
+
+(def ^:private durations [["30" "30 min"] ["60" "1 hour"] ["120" "2 hours"] ["240" "4 hours"] ["480" "8 hours"]])
+
+(def ^:private time-slots
+  [["9:00 AM" "available"] ["10:00 AM" "available"] ["11:00 AM" "limited" "2 spots left"] ["12:00 PM" "booked"]
+   ["1:00 PM" "available"] ["2:00 PM" "available"] ["3:00 PM" "limited" "1 spot left"] ["4:00 PM" "available"]])
+
+(def ^:private legend
+  [["available" "Available" "success"] ["limited" "Few spots" "warning"] ["booked" "Fully booked" "danger"]])
+
+(defn- date->context [^js d] {:year (.getFullYear d) :month (inc (.getMonth d)) :day (.getDate d)})
+(defn- days-from-now [n] (date->context (doto (js/Date.) (.setDate (+ (.getDate (js/Date.)) n)))))
+
+(kit/init! :event-booking
+           {:date (days-from-now 5) :time "10:00 AM" :add-ons #{"av-equipment" "catering"} :attendees 15
+            :event-type "workshop" :duration "240"
+            :contact-name "Alex Martinez" :contact-email "alex.martinez@techconference.org"
+            :requests "We'll need extra power outlets for laptops and a presentation setup with dual screens, plus a coffee station for the afternoon break.\n\nReliable high-speed internet is crucial. If possible, arrange the room in a U-shape for group discussions."})
+
+;; --- Helpers -----------------------------------------------------------------
+
+(defn- by-id [xs id] (some #(when (= id (:id %)) %) xs))
+(defn- money [n] (str "$" (.toFixed n 2)))
+(defn- duration-label [minutes] (if (< minutes 60) (str minutes " min") (str (/ minutes 60) "h")))
+(defn- put! [k v] (swap! state assoc-in [:event-booking k] v))
+
+(defn- date-label [{:keys [year month day]}]
+  (when year (i18n/translate (js/Date. year (dec month) day) "full")))
+
+(defn- availability
+  "Demo availability, stable per date: weekends fill up, a few days are gone."
+  [year month day]
+  (let [h (mod (+ (* year 7) (* month 31) (* day 13)) 10)]
+    (cond (< h 2) "booked"
+          (or (#{0 6} (.getDay (js/Date. year (dec month) day))) (< h 4)) "limited"
+          :else "available")))
+
+(defn- slots-for
+  "The day's time slots, following its calendar availability."
+  [{:keys [year month day]}]
+  (let [status (if year (availability year month day) "available")]
+    (map-indexed (fn [i [t slot-status note]]
+                   (case status
+                     "booked" [t "booked"]
+                     "limited" (if (odd? (+ i day)) [t "booked"] [t "limited" "Last spot"])
+                     [t slot-status note]))
+                 time-slots)))
+
+(defn- day-content
+  "ty-calendar dayContentFn: day number plus an availability dot for this month's days."
+  [day-context]
+  (let [{:keys [otherMonth today dayInMonth year month]} (->clj day-context)
+        el (fn [class text] (doto (.createElement js/document "div") (-> .-className (set! class)) (-> .-textContent (set! text))))
+        cell (el (str "availability-day" (when otherMonth " other-month") (when today " today")) nil)]
+    (.appendChild cell (el "day-num" (str dayInMonth)))
+    (when-not otherMonth
+      (.appendChild cell (el (str "availability-indicator " (availability year month dayInMonth)) nil)))
+    cell))
+
+(defn- quote-for
+  "Price breakdown for the current booking."
+  [{:keys [event-type duration attendees] selected :add-ons}]
+  (let [minutes (js/parseInt (or duration "60"))
+        hours (/ minutes 60)
+        base (* (:rate (by-id event-types event-type) 50) hours)
+        extras (for [id selected :let [{:keys [label cost]} (by-id add-ons id)]] [label (cost hours attendees)])
+        subtotal (+ base (reduce + (map second extras)))
+        tax (* subtotal 0.0875)]
+    {:minutes minutes :base base :extras extras :tax tax :total (+ subtotal tax)}))
+
+(defn- heading [label & [aside]]
+  [:div.flex.items-baseline.justify-between.gap-3.mb-3.mt-6
+   [:h4.text-sm.font-semibold.ty-text++ label] aside])
+
+;; --- View --------------------------------------------------------------------
 
 (defn view []
-  (let [{:keys [selected-services booking-data]
-         {:keys [year month day]} :selected-date
-         :as booking-state} (get @state :event-booking)]
+  (let [{:keys [date event-type modal] :as b} (:event-booking @state)
+        slots (slots-for date)
+        ;; a slot picked on another day may be booked on this one
+        slot-time (some (fn [[t status]] (when (and (= t (:time b)) (not= status "booked")) t)) slots)
+        {:keys [minutes base extras tax total]} (quote-for b)
+        bind (fn [k attrs & [event]]
+               (merge attrs {:value (get b k) :on {(or event :change) #(put! k (kit/value %))}}))
+        type-label (:label (by-id event-types event-type) "Meeting")]
     [:div
-     [:div.grid.grid-cols-1.lg:grid-cols-2.gap-6
-      ;; Left Column - Calendar & Time
+     [:div.gap-6 {:class ["grid" "grid-cols-1" "lg:grid-cols-2"]}
+      ;; Left: date and time
       [:div
-       (section-divider "Date")
-       [:div.border.ty-border.rounded-lg
-        [:ty-calendar
-         {:on {:change #(let [^js d (.. ^js % -detail)]
-                          (swap! state assoc-in [:event-booking :selected-date]
-                                 {:year (.-year d)
-                                  :month (.-month d)
-                                  :day (.-day d)}))}
-          :month month :year year :day day
-          :replicant/on-mount (fn [{^js el :replicant/node}]
-                                (set! (.-dayContentFn el)
-                                      (fn [day-context]
-                                        (let [{other-month :otherMont
-                                               today? :today
-                                               day-in-month :dayInMonth} (->clj day-context)
-                                              availability (cond
-                                                             (< day-in-month 5)  "booked"
-                                                             (< day-in-month 15) "available"
-                                                             (< day-in-month 25) "limited"
-                                                             :else "available")
-                                              container  (.createElement js/document "div")
-                                              day-number (.createElement js/document "div")
-                                              indicator  (when-not other-month (.createElement js/document "div"))]
-                                          (set! (.-className container)
-                                                (str "availability-day"
-                                                     (when other-month " other-month")
-                                                     (when today? " today")))
-                                          (set! (.-className day-number) "day-num")
-                                          (set! (.-textContent day-number) (str day-in-month))
-                                          (.appendChild container day-number)
-                                          (when-not other-month
-                                            (set! (.-className indicator) (str "availability-indicator " availability))
-                                            (.appendChild container indicator))
-                                          container)))
-                                (set! (.-customCSS el) event-booking-styles))}]]
+       (heading "Date")
+       [:div.border.ty-border.rounded-xl.overflow-hidden
+        [:div.flex.justify-center.px-4.py-5
+         {:style {:background "radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in oklch, var(--ty-color-primary) 7%, transparent), transparent 70%)"}}
+         [:ty-calendar
+          (merge date
+                 {:width "340px"
+                  :min (let [{:keys [year month day]} (days-from-now 0)]
+                         (str/join "-" [year (.padStart (str month) 2 "0") (.padStart (str day) 2 "0")]))
+                  :on {:change (fn [^js e] (let [d (.-detail e)] (put! :date {:year (.-year d) :month (.-month d) :day (.-day d)})))}
+                  :replicant/on-mount (fn [{^js el :replicant/node}]
+                                        (set! (.-dayContentFn el) day-content)
+                                        (set! (.-customCSS el) event-booking-styles))})]]
+        [:div.flex.flex-wrap.items-center.justify-between.gap-3.px-4.py-3.border-t.ty-border
+         {:style {:background "color-mix(in oklch, var(--ty-text-strong) 3%, transparent)"}}
+         [:div.flex.flex-wrap.items-center.gap-x-4.gap-y-1
+          (for [[k label flavor] legend]
+            [:span.inline-flex.items-center.text-xs.ty-text- {:class ["gap-1.5"] :replicant/key k}
+             [:span.inline-block.rounded-full {:class ["w-1.5" "h-1.5"] :style {:background (str "var(--ty-color-" flavor ")")}}]
+             label])]
+         [:div.flex.items-center.gap-1
+          (for [[label n] [["Today" 0] ["Tomorrow" 1] ["Next week" 7]]]
+            [:button.text-xs.font-medium.py-1.rounded-full.border.ty-border.ty-text.cursor-pointer.hover:ty-border-primary.hover:ty-text-primary.transition-colors {:class ["px-2.5"] :replicant/key label :type "button" :on {:click #(put! :date (days-from-now n))}}
+             label])]]]
 
-       [:div.flex.flex-wrap.gap-2.mt-3
-        [:ty-button {:flavor "primary" :outlined true :filled true :size "sm"
-                     :on {:click #(swap! state assoc-in [:event-booking :selected-date]
-                                         (date->context (js/Date.)))}}
-         "Today"]
-        [:ty-button {:flavor "success" :outlined true :filled true :size "sm"
-                     :on {:click #(swap! state assoc-in [:event-booking :selected-date]
-                                         (date->context (add-days (js/Date.) 1)))}}
-         "Tomorrow"]
-        [:ty-button {:size "sm"
-                     :on {:click #(swap! state assoc-in [:event-booking :selected-date]
-                                         (date->context (add-days (js/Date.) 7)))}}
-         "Next Week"]]
+       (heading "Time Slot"
+                [:span.inline-flex.items-center.text-xs.font-medium.ty-text-primary {:class ["gap-1.5"]}
+                 [:ty-icon {:name "calendar" :size "xs"}] (date-label date)])
+       (kit/cols
+        (for [[slot status note] slots
+              :let [booked? (= status "booked") selected? (= slot slot-time)]]
+          [:button.p-2.rounded-lg.text-center.text-xs.border.transition-colors
+           {:replicant/key slot :type "button" :disabled booked?
+            :class (cond booked? ["ty-content" "ty-border" "opacity-50" "cursor-not-allowed"]
+                         selected? ["ty-border-primary" "cursor-pointer"]
+                         :else ["ty-content" "ty-border" "cursor-pointer" "hover:ty-border-primary"])
+            ;; same solid tokens as the calendar's selected day
+            :style (when selected? {:background "var(--ty-solid-primary, var(--ty-color-primary))"
+                                    :color "var(--ty-solid-primary-fg, white)"
+                                    :box-shadow "0 8px 18px -8px color-mix(in oklch, var(--ty-color-primary) 80%, transparent)"})
+            :on {:click #(put! :time slot)}}
+           [:div.font-medium {:class (when-not selected? "ty-text")} slot]
+           [:div {:class (cond selected? "opacity-80" booked? "ty-text-danger"
+                               (= status "limited") "ty-text-warning" :else "ty-text-success")}
+            (cond selected? "Selected" booked? "Booked" note note :else "Available")]]))]
 
-       (when-let [{:keys [year month day]} (:selected-date booking-state)]
-         [:div.mt-3.p-2.ty-bg-primary-.rounded-lg.flex.items-center.gap-2
-          [:ty-icon.ty-text-primary {:name "calendar" :size "xs"}]
-          [:span.text-xs.ty-text-primary.font-medium
-           (i18n/translate (context->date year month day) "full")]])
-
-       (section-divider "Time Slot")
-       (let [selected-time (:selected-time booking-state)
-             time-slots [{:time "9:00 AM"  :status "available"}
-                         {:time "10:00 AM" :status "available"}
-                         {:time "11:00 AM" :status "limited" :note "2 spots left"}
-                         {:time "12:00 PM" :status "booked"}
-                         {:time "1:00 PM"  :status "available"}
-                         {:time "2:00 PM"  :status "available"}
-                         {:time "3:00 PM"  :status "limited" :note "1 spot left"}
-                         {:time "4:00 PM"  :status "available"}]]
-         [:div.grid.grid-cols-2.gap-2
-          (for [{:keys [time status note]} time-slots]
-            ^{:key time}
-            (if (= status "booked")
-              [:div.ty-content.p-2.rounded-lg.text-center.opacity-50.cursor-not-allowed
-               [:div.text-xs.font-medium.ty-text- time]
-               [:div.text-xs.ty-text-danger "Booked"]]
-              [:div.ty-content.p-2.rounded-lg.text-center.cursor-pointer.transition-colors.border.ty-border.hover:ty-elevated.hover:ty-border-primary
-               {:class (when (= selected-time time) ["ty-bg-primary-" "ty-border-primary"])
-                :on {:click #(swap! state assoc-in [:event-booking :selected-time] time)}}
-               [:div.text-xs.font-medium
-                {:class (if (= selected-time time) "ty-text-primary" "ty-text")}
-                time]
-               [:div.text-xs
-                {:class (cond
-                          (= selected-time time) "ty-text-primary"
-                          (= status "available") "ty-text-success"
-                          (= status "limited")   "ty-text-warning")}
-                (cond
-                  (= selected-time time) "Selected"
-                  (= status "available") "Available"
-                  (= status "limited")   note)]]))])]
-
-      ;; Right Column - Details, Add-ons & Summary
+      ;; Right: details, add-ons and summary
       [:div
-       (section-divider "Details")
-       [:div.space-y-3
-        [:ty-select {:label "Event Type" :value (:event-type booking-data)
-                     :placeholder "Select event type"
-                     :on {:change #(swap! state assoc-in [:event-booking :booking-data :event-type]
-                                          (.. ^js % -detail -value))}}
-         [:ty-option {:value "meeting"}
-          [:div.flex.items-center.gap-2
-           [:div.w-6.h-6.ty-bg-primary.rounded.flex.items-center.justify-center
-            [:ty-icon {:name "user" :size "xs"}]]
-           [:div [:div.font-medium "Business Meeting"] [:div.text-xs.ty-text- "$50/hr"]]]]
-         [:ty-option {:value "workshop"}
-          [:div.flex.items-center.gap-2
-           [:div.w-6.h-6.ty-bg-success.rounded.flex.items-center.justify-center
-            [:ty-icon {:name "star" :size "xs"}]]
-           [:div [:div.font-medium "Workshop"] [:div.text-xs.ty-text- "$75/hr"]]]]
-         [:ty-option {:value "conference"}
-          [:div.flex.items-center.gap-2
-           [:div.w-6.h-6.ty-bg-warning.rounded.flex.items-center.justify-center
-            [:ty-icon {:name "globe" :size "xs"}]]
-           [:div [:div.font-medium "Conference Room"] [:div.text-xs.ty-text- "$100/hr"]]]]
-         [:ty-option {:value "event"}
-          [:div.flex.items-center.gap-2
-           [:div.w-6.h-6.ty-bg-neutral.rounded.flex.items-center.justify-center
-            [:ty-icon {:name "star" :size "xs"}]]
-           [:div [:div.font-medium "Special Event"] [:div.text-xs.ty-text- "$200/hr"]]]]]
+       (heading "Details")
+       [:div.flex.flex-col.gap-3
+        [:ty-select (bind :event-type {:label "Event Type" :placeholder "Select event type"})
+         (for [{:keys [id label rate icon bg]} event-types]
+           [:ty-option {:replicant/key id :value id}
+            [:div.flex.items-center.gap-2
+             [:div.w-6.h-6.rounded.flex.items-center.justify-center {:class bg} [:ty-icon {:name icon :size "xs"}]]
+             [:div [:div.font-medium label] [:div.text-xs.ty-text- (str "$" rate "/hr")]]]])]
+        (kit/cols
+         [:ty-select (bind :duration {:label "Duration"})
+          (for [[v label] durations] [:ty-option {:replicant/key v :value v} label])]
+         [:ty-input (bind :attendees {:type "number" :label "Attendees" :min "1" :max "50"})])
+        (kit/cols
+         [:ty-input (bind :contact-name {:label "Contact Name" :required true})]
+         [:ty-input (bind :contact-email {:type "email" :label "Contact Email" :required true})])
+        [:ty-textarea (bind :requests {:label "Special Requests" :min-height "80px" :max-height "160px"} :input)]]
 
-        [:div.grid.grid-cols-2.gap-3
-         [:ty-select {:label "Duration" :value (:duration booking-data)
-                      :placeholder "Duration"
-                      :on {:change (fn [e]
-                                     (let [value (.. ^js e -detail -value)]
-                                       (swap! state assoc-in [:event-booking :booking-data :duration] value)))}}
-          [:ty-option {:value "30"}  "30 min"]
-          [:ty-option {:value "60"}  "1 hour"]
-          [:ty-option {:value "120"} "2 hours"]
-          [:ty-option {:value "240"} "4 hours"]
-          [:ty-option {:value "480"} "8 hours"]]
-         [:ty-input {:type "number" :label "Attendees" :value (:attendee-count booking-state)
-                     :min "1" :max "50" :placeholder "Count"
-                     :on {:change #(swap! state assoc-in [:event-booking :attendee-count]
-                                          (js/parseInt (.. ^js % -detail -value)))}}]]
-
-        [:div.grid.grid-cols-2.gap-3
-         [:ty-input {:type "text" :label "Contact Name" :value (:contact-name booking-data)
-                     :placeholder "Full name" :required true
-                     :on {:change #(swap! state assoc-in [:event-booking :booking-data :contact-name]
-                                          (.. ^js % -detail -value))}}]
-         [:ty-input {:type "email" :label "Contact Email" :value (:contact-email booking-data)
-                     :placeholder "email@company.com" :required true
-                     :on {:change #(swap! state assoc-in [:event-booking :booking-data :contact-email]
-                                          (.. ^js % -detail -value))}}]]
-
-        [:ty-textarea {:label "Special Requests" :value (:special-requests booking-data)
-                       :placeholder "Any special requirements..."
-                       :min-height "80px" :max-height "160px"
-                       :on {:change #(swap! state assoc-in [:event-booking :booking-data :special-requests]
-                                            (.. ^js % -detail -value))}}]]
-
-       (section-divider "Add-ons")
-       ;; ty-select (multiple + compact) with templated out-of-band chips —
-       ;; option data-* attributes feed the chip template below.
-       [:ty-select {:id "booking-addons"
-                    :multiple true
-                    :placeholder "Add services..."
-                    :value (str/join "," selected-services)
-                    :on {:change #(let [values (set (array-seq (.. ^js % -detail -values)))]
-                                    (swap! state assoc-in [:event-booking :selected-services] values))}}
-        [:ty-option {:value "av-equipment" :flavor "primary" :data-icon "video" :data-price "+$25"} "A/V Equipment"]
-        [:ty-option {:value "catering" :flavor "success" :data-icon "utensils" :data-price "+$15/pp"} "Catering"]
-        [:ty-option {:value "wifi-upgrade" :flavor "warning" :data-icon "satellite-dish" :data-price "+$10"} "Premium Wi-Fi"]
-        [:ty-option {:value "parking" :flavor "warning" :data-icon "car" :data-price "+$5/spot"} "Parking"]
-        [:ty-option {:value "security" :flavor "danger" :data-icon "shield" :data-price "+$50/hr"} "Security"]
-        [:ty-option {:value "recording" :flavor "neutral" :data-icon "video" :data-price "+$75"} "Recording"]
-        [:ty-option {:value "translation" :flavor "danger" :data-icon "globe" :data-price "+$100"} "Translation"]]
+       (heading "Add-ons")
+       ;; Multiple + templated chips: option data-* attributes feed the chip template
+       [:ty-select {:id "booking-addons" :multiple true :placeholder "Add services..."
+                    :value (str/join "," (:add-ons b))
+                    :on {:change (fn [^js e] (put! :add-ons (set (.. e -detail -values))))}}
+        (for [{:keys [id label flavor icon price]} add-ons]
+          [:ty-option {:replicant/key id :value id :flavor flavor :data-icon icon :data-price price} label])]
        [:div.flex.flex-wrap.gap-2.mt-3
         [:ty-selected-options {:for "booking-addons"}
          [:template
@@ -233,136 +196,31 @@
            "{label}"
            [:span.ty-text-- {:slot "end" :style {:font-size "0.6875rem"}} "{data-price}"]]]]]
 
-       (section-divider "Summary")
-       (let [event-type      (:event-type booking-data)
-             duration-minutes (js/parseInt (:duration booking-data "60"))
-             duration-hours  (/ duration-minutes 60)
-             attendee-count  (:attendee-count booking-state)
-             base-rates      {"meeting" 50 "workshop" 75 "conference" 100 "event" 200}
-             base-rate       (get base-rates event-type 50)
-             base-cost       (* base-rate duration-hours)
-             service-prices  {"av-equipment" 25
-                              "catering"     (* 15 attendee-count)
-                              "wifi-upgrade" 10
-                              "parking"      (* 5 attendee-count)
-                              "security"     (* 50 duration-hours)
-                              "recording"    75
-                              "translation"  100}
-             service-costs   (for [s selected-services] [s (get service-prices s 0)])
-             subtotal        (+ base-cost (reduce + (map second service-costs)))
-             tax             (* subtotal 0.0875)
-             total           (+ subtotal tax)]
-         [:div.space-y-2
-          [:div.flex.justify-between.text-sm
-           [:span.ty-text
-            (str (case event-type
-                   "meeting"    "Business Meeting"
-                   "workshop"   "Workshop"
-                   "conference" "Conference"
-                   "event"      "Special Event"
-                   "Meeting")
-                 " ("
-                 (if (< duration-minutes 60)
-                   (str duration-minutes " min")
-                   (str (int duration-hours) "h"))
-                 ")")]
-           [:span.font-medium.ty-text (str "$" (.toFixed base-cost 2))]]
-          (for [[service cost] service-costs]
-            ^{:key service}
-            [:div.flex.justify-between.text-xs
-             [:span.ty-text-
-              (case service
-                "av-equipment" "A/V Equipment"
-                "catering"     "Catering"
-                "wifi-upgrade" "Premium Wi-Fi"
-                "parking"      "Parking"
-                "security"     "Security"
-                "recording"    "Recording"
-                "translation"  "Translation"
-                service)]
-             [:span.ty-text- (str "$" (.toFixed cost 2))]])
-          [:div.border-t.ty-border.pt-2.mt-2]
-          [:div.flex.justify-between.text-xs.ty-text-
-           [:span "Tax (8.75%)"] [:span (str "$" (.toFixed tax 2))]]
-          [:div.flex.justify-between.items-center.font-semibold
-           [:span.ty-text "Total"]
-           [:span.ty-text-primary (str "$" (.toFixed total 2))]]
-          [:ty-button.w-full.mt-3
-           {:flavor "primary" :wide true
-            :on {:click #(swap! state assoc-in [:event-booking :confirmation-modal-open] true)}}
-           [:ty-icon.mr-2 {:name "check"}]
-           "Confirm Booking"]
-          [:p.text-xs.ty-text--.text-center.mt-1 "Free cancellation up to 24 hours before event"]])]]
+       (heading "Summary")
+       [:div.flex.flex-col.gap-2
+        [:div.flex.justify-between.text-sm
+         [:span.ty-text (str type-label " (" (duration-label minutes) ")")]
+         [:span.font-medium.ty-text (money base)]]
+        (for [[label cost] extras]
+          [:div.flex.justify-between.text-xs.ty-text- {:replicant/key label} [:span label] [:span (money cost)]])
+        [:div.flex.justify-between.text-xs.ty-text-.border-t.ty-border.pt-2.mt-1
+         [:span "Tax (8.75%)"] [:span (money tax)]]
+        [:div.flex.justify-between.items-center.font-semibold
+         [:span.ty-text "Total"] [:span.ty-text-primary (money total)]]
+        [:ty-button.w-full.mt-3 {:flavor "neutral+" :wide true :disabled (nil? slot-time) :on {:click #(put! :modal true)}}
+         [:ty-icon {:slot "start" :name (if slot-time "check" "clock")}] (if slot-time "Confirm Booking" "Pick a time")]
+        [:p.text-xs.ty-text--.text-center "Free cancellation up to 24 hours before event"]]]]
 
-     [:div.grid.grid-cols-2.gap-3
-      {:style {:margin-top "1.5rem"}}
-      (for [[icon color label desc]
-            [["calendar"     "ty-bg-success"  "Calendar Interface" "Date selection with availability indicators."]
-             ["clock"        "ty-bg-primary"  "Smart Time Slots"   "Visual availability and real-time status."]
-             ["settings"     "ty-bg-warning"  "Service Config"     "Select with templated chips and pricing."]
-             ["check-circle" "ty-bg-info"     "Booking Flow"       "Dynamic summary with modal confirmation."]]]
-        ^{:key label}
-        [:div.ty-elevated.p-4.rounded-lg
-         [:div.w-8.h-8.rounded-lg.flex.items-center.justify-center.mb-3
-          {:class color}
-          [:ty-icon {:name icon :size "sm"}]]
-         [:p.text-sm.font-semibold.ty-text.mb-1 label]
-         [:p.text-xs.ty-text- desc]])]
-
-     [:ty-modal {:open (get-in @state [:event-booking :confirmation-modal-open] false)
-                 :on {:close #(swap! state assoc-in [:event-booking :confirmation-modal-open] false)}}
-      [:div.p-5.ty-elevated.rounded-lg
-       {:style {:max-width "480px"}}
-       [:div.flex.items-center.gap-3.mb-4
-        [:div.w-9.h-9.ty-bg-success.rounded-full.flex.items-center.justify-center
-         [:ty-icon {:name "check" :size "sm"}]]
-        [:div
-         [:h3.text-base.font-semibold.ty-text "Booking Confirmed"]
-         [:p.text-xs.ty-text- "Details sent to your email."]]]
-       [:div.ty-content.p-3.rounded-lg.grid.grid-cols-2.gap-2.text-sm.mb-4
-        [:div [:p.text-xs.ty-text--.mb-0.5 "Event Type"]
-         [:p.font-medium.ty-text
-          (case (:event-type booking-data)
-            "meeting"    "Business Meeting"
-            "workshop"   "Workshop"
-            "conference" "Conference"
-            "event"      "Special Event"
-            "Business Meeting")]]
-        [:div [:p.text-xs.ty-text--.mb-0.5 "Date & Time"]
-         [:p.font-medium.ty-text
-          (let [{:keys [year month day]} (:selected-date booking-state)
-                date-str (if (and year month day)
-                           (.toLocaleDateString (context->date year month day)
-                                                "en-US"
-                                                #js {:year "numeric"
-                                                     :month "long"
-                                                     :day "numeric"})
-                           "Today")]
-            (str date-str
-                 (when-let [t (:selected-time booking-state)] (str ", " t))))]]
-        [:div [:p.text-xs.ty-text--.mb-0.5 "Duration"]
-         [:p.font-medium.ty-text
-          (let [dm (js/parseInt (:duration booking-data "60"))]
-            (if (< dm 60) (str dm " min") (str (int (/ dm 60)) "h")))]]
-        [:div [:p.text-xs.ty-text--.mb-0.5 "Contact"]
-         [:p.font-medium.ty-text (or (:contact-name booking-data) "N/A")]]
-        [:div.col-span-2 [:p.text-xs.ty-text--.mb-0.5 "Ref"]
-         [:p.font-medium.font-mono.ty-text "BK-2024-001234"]]]
-       (when (seq selected-services)
-         [:div.flex.flex-wrap.gap-1.mb-4
-          (for [s selected-services]
-            ^{:key s}
-            [:span.px-2.py-0.5.ty-bg-primary-.ty-text-primary.rounded.text-xs
-             (case s
-               "av-equipment" "A/V" "catering" "Catering"
-               "wifi-upgrade" "Wi-Fi" "parking" "Parking"
-               "security" "Security" "recording" "Recording"
-               "translation" "Translation" s)])])
-       [:div.flex.gap-2.justify-end
-        [:ty-button {:flavor "neutral" :size "sm"
-                     :on {:click #(swap! state assoc-in [:event-booking :confirmation-modal-open] false)}}
-         "Close"]
-        [:ty-button {:flavor "neutral" :size "sm"}
-         [:ty-icon.mr-1 {:name "download" :size "xs"}] "Receipt"]
-        [:ty-button {:flavor "primary" :size "sm"}
-         [:ty-icon.mr-1 {:name "calendar" :size "xs"}] "Add to Cal"]]]]]))
+     (kit/result-modal
+      {:open (boolean modal) :on-close #(put! :modal false) :icon "check" :flavor "success"
+       :title "Booking Confirmed" :subtitle "Details sent to your email."
+       :actions [[:ty-button {:flavor "neutral" :size "sm" :on {:click #(put! :modal false)}} "Close"]
+                 [:ty-button {:flavor "neutral" :size "sm"} [:ty-icon {:slot "start" :name "download" :size "xs"}] "Receipt"]
+                 [:ty-button {:flavor "primary" :size "sm"} [:ty-icon {:slot "start" :name "calendar" :size "xs"}] "Add to Cal"]]}
+      (kit/summary [["Event Type" type-label]
+                    ["Date & Time" (str (date-label date) ", " slot-time)]
+                    ["Duration" (duration-label minutes)]
+                    ["Contact" (:contact-name b)]
+                    ["Ref" (str "BK-" (:year date) "-001234")]])
+      [:div.flex.flex-wrap.gap-1.mt-3
+       (for [[label] extras] [:span.px-2.ty-bg-primary-.ty-text-primary.rounded.text-xs {:class ["py-0.5"] :replicant/key label} label])])]))

@@ -10,6 +10,7 @@
  */
 
 import { PropertyManager, PropertyConfig, PropertyChange } from '../utils/property-manager.js'
+import { ValidityController } from '../utils/validity.js'
 
 /**
  * Base class for all Ty components with unified property lifecycle
@@ -24,6 +25,8 @@ export abstract class TyComponent<T = any> extends HTMLElement {
 
   protected _internals: ElementInternals
 
+  private _validity: ValidityController
+
   protected _connected = false
 
   protected _rendered = false
@@ -35,6 +38,7 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     this.props = new PropertyManager<T>(ctor.properties)
 
     this._internals = this.attachInternals()
+    this._validity = new ValidityController(this, this._internals)
     
     // Setup shadow DOM (subclasses can override by checking if shadowRoot exists)
     if (!this.shadowRoot) {
@@ -307,6 +311,45 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    */
   get form(): HTMLFormElement | null {
     return this._internals.form
+  }
+
+  // --- Constraint validation (same API as native form controls) -------------
+
+  /** Form-associated? Non-FACE internals throw on validity access. */
+  private get _validates(): boolean {
+    return (this.constructor as typeof TyComponent).formAssociated === true
+  }
+
+  /** Subclasses report their own validity here, not via _internals directly,
+   *  so a user's setCustomValidity() survives re-validation. */
+  protected applyValidity(flags: ValidityStateFlags, message?: string, anchor?: HTMLElement): void {
+    this._validity.set(flags, message, anchor)
+  }
+
+  get validity(): ValidityState | undefined {
+    return this._validates ? this._internals.validity : undefined
+  }
+
+  get validationMessage(): string {
+    return this._validates ? this._internals.validationMessage : ''
+  }
+
+  get willValidate(): boolean {
+    return this._validates ? this._internals.willValidate : false
+  }
+
+  checkValidity(): boolean {
+    return this._validates ? this._internals.checkValidity() : true
+  }
+
+  /** Like native, but shows the message in the component's `error` display
+   *  when it has one (and clears it once valid) instead of the browser bubble. */
+  reportValidity(): boolean {
+    return this._validates ? this._validity.report() : true
+  }
+
+  setCustomValidity(message: string): void {
+    if (this._validates) this._validity.setCustom(message)
   }
 
   /**

@@ -13,31 +13,39 @@ const calendarMonthFlavor = (f: string, fb?: string) => {
     fb
       ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
       : `var(--ty-color-${f}${s})`;
-  const bg = (s: string) =>
+  const solid = (s: string) =>
     fb
-      ? `var(--ty-bg-${f}${s}, var(--ty-bg-${fb}${s}))`
-      : `var(--ty-bg-${f}${s})`;
+      ? `var(--ty-solid-${f}${s}, var(--ty-solid-${fb}${s}))`
+      : `var(--ty-solid-${f}${s})`;
+  /* Selected is a solid fill on the same tokens as a solid button, so a
+     selected day and a primary button always match. Hover for the +/-
+     tones (no dedicated -hover token) mixes the fill toward its own
+     foreground: darker in light mode, lighter in dark mode. */
   return `
 :host([flavor="${f}"]) {
   --calendar-month-accent: ${color("")};
-  --calendar-month-selected-bg: ${bg("")};
-  --calendar-month-selected-color: ${color("-strong")};
-  --calendar-month-selected-hover-bg: ${bg("-bold")};
+  --calendar-month-selected-bg: ${solid("")};
+  --calendar-month-selected-color: ${solid("-fg")};
+  --calendar-month-selected-hover-bg: ${solid("-hover")};
 }
 :host([flavor="${f}+"]) {
   --calendar-month-accent: ${color("-strong")};
-  --calendar-month-selected-bg: ${bg("-bold")};
-  --calendar-month-selected-color: ${color("-strong")};
-  --calendar-month-selected-hover-bg: ${bg("-bold")};
+  --calendar-month-selected-bg: ${solid("-strong")};
+  --calendar-month-selected-color: ${solid("-strong-fg")};
+  --calendar-month-selected-hover-bg: color-mix(in oklab, ${solid("-strong")} 85%, ${solid("-strong-fg")});
 }
 :host([flavor="${f}-"]) {
   --calendar-month-accent: ${color("-soft")};
-  --calendar-month-selected-bg: ${bg("-soft")};
-  --calendar-month-selected-color: ${color("")};
-  --calendar-month-selected-hover-bg: ${bg("")};
+  --calendar-month-selected-bg: ${solid("-soft")};
+  --calendar-month-selected-color: ${solid("-soft-fg")};
+  --calendar-month-selected-hover-bg: color-mix(in oklab, ${solid("-soft")} 85%, ${solid("-soft-fg")});
 }
 `;
 };
+
+/** Built-in flavor rules — also used by ty-calendar's month/year grid, so
+    the selected month and the selected day share one fill. */
+export const calendarMonthFlavorCss = FLAVORS.map((f) => calendarMonthFlavor(f)).join("");
 
 /** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
 export const calendarMonthCustomFlavorCss = (base: string) => calendarMonthFlavor(base, "neutral");
@@ -94,9 +102,7 @@ export const calendarMonthStyles = `
 .calendar-header-cell {
   text-align: center;
   font-weight: 500;
-  text-transform: uppercase;
   padding: 0.25rem;
-  letter-spacing: 0.05em;
 }
 
 .calendar-day-cell {
@@ -121,11 +127,12 @@ export const calendarMonthStyles = `
   font-variant-numeric: tabular-nums;
 }
 
-/* Hover: soft rounded pill, no border flash */
+/* Hover: a visible neutral pill, no border flash */
 .calendar-day-cell:hover {
   color: var(--ty-calendar-day-hover-color, var(--ty-text-strong));
-  background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
+  background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral));
   border-color: var(--ty-calendar-day-hover-border, transparent);
+  font-weight: 500;
 }
 
 /* Keyboard focus ring (roving tabindex — see calendar-month.ts's render()).
@@ -136,8 +143,8 @@ export const calendarMonthStyles = `
   box-shadow: 0 0 0 2px var(--calendar-month-accent, var(--ty-color-primary));
 }
 
-/* Today: accent number, no slab — never collides with hover, and the
-   selected pill wins when today is picked */
+/* Today: accent number plus a dot under it (built-in content only). The dot
+   is currentColor, so it turns light on the selected fill. */
 .calendar-day-cell.today {
   background-color: var(--ty-calendar-today-bg, transparent);
   color: var(--ty-calendar-today-color, var(--ty-calendar-today-accent, var(--calendar-month-accent, var(--ty-color-primary))));
@@ -145,47 +152,68 @@ export const calendarMonthStyles = `
   font-weight: 600;
 }
 
+.calendar-day-cell.today:hover {
+  background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral));
+}
+
+.calendar-day-cell.today.default-content::after {
+  content: "";
+  position: absolute;
+  /* Anchored to the number (em), not the cell, so the gap holds at every size */
+  top: calc(50% + 0.72em);
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 /* Weekend: no distinction by default (hook kept for theming) */
 .calendar-day-cell.weekend {
   color: var(--ty-calendar-weekend-color, var(--ty-calendar-day-color, var(--ty-text)));
 }
 
-/* Other Month - Muted.
-   Was color: var(--ty-color-neutral-faint) at opacity 0.5 — -faint alone is
-   only ~2.5:1 against the content surface (already under the 4.5:1 AA text
-   minimum), and blending it toward the background via opacity made it
-   worse (~1.5:1 in light mode). --ty-calendar-other-month-color is its own
-   token (tyrell.css :root / html.dark) calibrated to actually pass, with
-   opacity dropped rather than layered on top. */
+/* Other month: recedes at rest, comes back on hover. Deliberately below the
+   4.5:1 text minimum — these days are secondary context (the current month
+   is the content), and they stay clickable. Override with
+   --ty-calendar-other-month-color for a stronger value. */
 .calendar-day-cell.other-month {
-  color: var(--ty-calendar-other-month-color, #6b7280);
+  color: var(--ty-calendar-other-month-color, color-mix(in oklab, var(--ty-text-faint) 65%, transparent));
 }
 
-.calendar-day-cell.other-month:hover { 
-  color: var(--ty-calendar-day-hover-color, var(--ty-color-neutral-strong));
+.calendar-day-cell.other-month:hover {
+  color: var(--ty-calendar-day-hover-color, var(--ty-text-soft, var(--ty-text-)));
   background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
-  opacity: 0.7;
 }
 
 /* Disabled - outside min/max bounds */
+/* Out of min/max range: still legible (so the range reads at a glance),
+   struck through so it can't be mistaken for an adjacent-month day. */
 .calendar-day-cell.disabled {
-  color: var(--ty-calendar-disabled-color, var(--ty-color-neutral-faint));
-  opacity: var(--ty-calendar-disabled-opacity, 0.35);
+  color: var(--ty-calendar-disabled-color, var(--ty-text-faint));
+  opacity: var(--ty-calendar-disabled-opacity, 0.7);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, currentColor 60%, transparent);
   cursor: default;
   pointer-events: none;
 }
 
-/* Selected: the one strong element in the grid */
+/* Selected: the one strong element in the grid — a solid fill on the solid
+   button tokens. Override order: --ty-calendar-selected-bg, then
+   --ty-calendar-accent, then flavor, then primary. Hover darkens the fill
+   and keeps the shape (no border swap). */
 .calendar-day-cell.selected {
-  background-color: var(--ty-calendar-selected-bg, var(--calendar-month-selected-bg, var(--ty-bg-primary)));
-  color: var(--ty-calendar-selected-color, var(--calendar-month-selected-color, var(--ty-color-primary-strong)));
-  border-color: var(--ty-calendar-selected-border, var(--ty-calendar-accent, var(--calendar-month-accent, transparent)));
+  background-color: var(--ty-calendar-selected-bg, var(--ty-calendar-accent, var(--calendar-month-selected-bg, var(--ty-solid-primary, var(--ty-color-primary)))));
+  color: var(--ty-calendar-selected-color, var(--calendar-month-selected-color, var(--ty-solid-primary-fg, white)));
+  border-color: var(--ty-calendar-selected-border, transparent);
   font-weight: 600;
 }
 
 .calendar-day-cell.selected:hover {
-  background-color: var(--ty-calendar-selected-hover-bg, var(--calendar-month-selected-hover-bg, var(--ty-bg-primary-bold)));
-  border-color: var(--ty-calendar-selected-hover-border, transparent);
+  background-color: var(--ty-calendar-selected-hover-bg, var(--calendar-month-selected-hover-bg, color-mix(in oklab, var(--ty-calendar-selected-bg, var(--ty-calendar-accent, var(--calendar-month-selected-bg, var(--ty-solid-primary, var(--ty-color-primary))))) 85%, var(--ty-calendar-selected-color, var(--calendar-month-selected-color, var(--ty-solid-primary-fg, white))))));
+  color: var(--ty-calendar-selected-color, var(--calendar-month-selected-color, var(--ty-solid-primary-fg, white)));
+  border-color: var(--ty-calendar-selected-hover-border, var(--ty-calendar-selected-border, transparent));
 }
 
 .calendar-day-cell.selected.other-month {
@@ -261,5 +289,5 @@ export const calendarMonthStyles = `
 }
 
 /* Flavor variants set --calendar-month-*, consumed above */
-${FLAVORS.map((f) => calendarMonthFlavor(f)).join("")}
+${calendarMonthFlavorCss}
 `;

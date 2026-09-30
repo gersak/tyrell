@@ -121,10 +121,14 @@ function closePopup(el: TyPopup, force = false): void {
   const anchor = getAnchorElement(el);
   if (anchor?.hasAttribute('aria-haspopup')) anchor.setAttribute('aria-expanded', 'false');
 
+  // Wait out the exit transition: the longest of the dialog's transition
+  // durations, so a custom --ty-popup-duration isn't cut short.
+  const exitMs = Math.max(0, ...getComputedStyle(dialog).transitionDuration
+    .split(',').map((d) => parseFloat(d) * (d.trim().endsWith('ms') ? 1 : 1000)));
   setTimeout(() => {
     dialog.classList.remove('position-calculated');
     dialog.close(); // fires the dialog 'close' listener: unlock + emit 'close'
-  }, 200); // ≥ --ty-popup-duration (180ms) so the exit transition completes
+  }, exitMs + 20);
 }
 
 /**
@@ -153,6 +157,8 @@ function openPopup(el: TyPopup): void {
 
     // Step 3: Add scale transform for animation prep
     dialog.classList.add('preparing-animation');
+    // Commit the prep pose before .open so the entrance starts from it.
+    void dialog.offsetWidth;
 
     // Step 4: Third RAF - THEN add open class for smooth scale animation
     requestAnimationFrame(() => {

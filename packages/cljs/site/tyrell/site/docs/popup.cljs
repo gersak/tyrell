@@ -1,217 +1,199 @@
 (ns tyrell.site.docs.popup
   "Documentation for ty-popup component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.state :as state]))
+
+(def ^:private placements ["top" "bottom" "left" "right"])
+
+(defn- doc-state [k] (get-in @state/state [:popup-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:popup-doc k] v))
+
+(defn- close-from-inside!
+  "Content closes its popup by dispatching ty:close-popup (bubbles to the popup)."
+  [^js e]
+  (.dispatchEvent (.-currentTarget e) (js/CustomEvent. "ty:close-popup" #js {:bubbles true :composed true})))
+
+(defn- card [& children]
+  (into [:div.ty-floating.rounded-xl.p-4.flex.flex-col.gap-3.text-sm {:style {:min-width "220px"}}] children))
+
+(defn- menu-item [icon label & [flavor]]
+  [:button.flex.items-center.gap-2.w-full.rounded-md.px-2.text-left.cursor-pointer.hover:ty-bg-neutral- {:replicant/key label :class (into ["py-1.5"] (if flavor [(str "ty-text-" flavor)] ["ty-text+"]))
+    :on {:click close-from-inside!}}
+   [:ty-icon {:name icon :size "sm"}] label])
+
+(defn- snippets [{:keys [placement offset manual]}]
+  (let [attrs (str (when (not= placement "bottom") (str " placement=\"" placement "\""))
+                   (when (not= offset "8") (str " offset=\"" offset "\""))
+                   (when manual " manual"))]
+    [["html" "HTML" "html"
+      (str "<ty-button>\n  Share\n  <ty-popup" attrs ">\n    <div class=\"card\">…</div>\n  </ty-popup>\n</ty-button>")]
+     ["react" "React" "javascript"
+      (str "import { TyButton, TyPopup } from 'tyrell-react'\n\n"
+           "<TyButton>\n  Share\n  <TyPopup" attrs ">\n    <div className=\"card\">…</div>\n  </TyPopup>\n</TyButton>")]
+     ["reagent" "Reagent" "clojure"
+      (str "(:require [tyrell.react :as ty])\n\n"
+           "[:> ty/Button \"Share\"\n [:> ty/Popup {"
+           (str/triml (str (when (not= placement "bottom") (str ":placement \"" placement "\" "))
+                           (when (not= offset "8") (str ":offset " offset " "))
+                           (when manual ":manual true")))
+           "}\n  [:div.card …]]]")]
+     ["replicant" "Replicant" "clojure"
+      (str "[:ty-button \"Share\"\n [:ty-popup {"
+           (str/triml (str (when (not= placement "bottom") (str ":placement \"" placement "\" "))
+                           (when (not= offset "8") (str ":offset \"" offset "\" "))
+                           (when manual ":manual \"\"")))
+           "}\n  [:div.card …]]]")]
+     ["datastar" "Datastar" "html"
+      (str "<ty-button>\n  Share\n  <ty-popup" attrs " data-on:open=\"@get('/share-links')\">\n    <div id=\"share-card\">…</div>\n  </ty-popup>\n</ty-button>")]]))
+
+(defn- render-playground [{:keys [placement offset manual]}]
+  [:div.flex.flex-col.items-center.gap-3
+   [:ty-button {:flavor "primary" :size "md" :id "doc-popup-trigger"}
+    [:ty-icon {:slot "start" :name "share-2"}] "Share"
+    [:ty-popup (cond-> {:placement placement :offset offset :id "doc-popup-play"}
+                 manual (assoc :manual ""))
+     (card [:span.font-semibold.ty-text++ "Share “Release notes”"]
+           [:ty-copy {:value "https://tyrell.dev/n/7f3a" :size "sm"}]
+           [:div.flex.justify-end
+            [:ty-button {:size "sm" :appearance "ghost" :on {:click close-from-inside!}} "Done"]])]]
+   (when manual
+     [:ty-button {:size "sm" :appearance "outlined"
+                  :on {:click #(.togglePopup (js/document.getElementById "doc-popup-play"))}}
+      "togglePopup()"])])
 
 (defn view []
-  (docs-page
-   (component-header "ty-popup"
-                     "Click-triggered popup with smart edge-aware positioning, scroll locking, ESC/backdrop close, and manual control mode. Nest ty-popup inside any trigger element — clicking the trigger opens the popup.")
+  (component-page
+   {:title "Popup"
+    :group "Overlays"
+    :tag "ty-popup"
+    :description "Click-triggered content anchored to its parent. Menus, share cards, quick forms. Picks the side with room, closes on outside click and Escape."
+    :chips [["Top layer" "layers"] ["Keyboard" "zap"] ["TyPopup (React)" "atom"]]
+    :source "packages/core/src/components/popup.ts"
+    :mark "⌃"
+    :demo [:div.flex.flex-col.items-start.gap-2
+           [:ty-button {:size "md" :appearance "outlined"} "Actions" [:ty-icon {:slot "end" :name "chevron-down"}]]
+           (card (menu-item "edit" "Rename")
+                 (menu-item "copy" "Duplicate")
+                 (menu-item "archive" "Archive")
+                 (menu-item "trash" "Delete" "danger"))]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :popup
+     :defaults {:placement "bottom" :offset "8" :manual false}
+     :controls [{:key :placement :options placements}
+                {:key :offset :options ["4" "8" "16"]}
+                {:key :manual :switch? true}]
+     :sub "Click Share. With manual on, only the API opens it."
+     :render render-playground
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "placement"
-        :type "string"
-        :default "\"bottom\""
-        :description "Side plus optional cross-axis alignment: top, right, bottom, left — each also as -start / -end (e.g. bottom-start, left-end). Bare side = centered on the trigger; -start aligns leading edges, -end aligns trailing edges. Auto-flips if it would overflow, keeping the alignment: left-start tries right-start before falling back to the other axis."}
-       {:name "offset"
-        :type "number"
-        :default "8"
-        :description "Distance in pixels between the popup and its trigger element"}
-       {:name "manual"
-        :type "boolean"
-        :default "false"
-        :description "Disable the click trigger — popup opens only via openPopup() / togglePopup()"}
-       {:name "disable-close"
-        :type "boolean"
-        :default "false"
-        :description "Disable ESC and backdrop-click close — popup closes only via closePopup()"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Action menu"
+       :span 3
+       :description [:span "A popup inside an icon button. Items close it by dispatching "
+                     [:code "ty:close-popup"] "."]
+       :code "<ty-button action aria-label=\"More\">
+  <ty-icon name=\"more-vertical\"></ty-icon>
+  <ty-popup placement=\"bottom-end\">…</ty-popup>
+</ty-button>
 
-    [:div.mb-6
-     (section-label "Methods")
-     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
-      [:div.flex.items-center.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "openPopup()"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Open the popup programmatically"]]]
-     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.5rem 0"}}
-      [:div.flex.items-center.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "closePopup()"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Close the popup programmatically"]]]
-     [:div {:style {:padding "0.5rem 0"}}
-      [:div.flex.items-center.gap-3
-       [:code.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "togglePopup()"]
-       [:span.ty-text- {:style {:font-size "0.8125rem"}} "Toggle open/closed"]]]]
+item.dispatchEvent(new CustomEvent(
+  'ty:close-popup', { bubbles: true }));"}
+      [:ty-button {:action "" :appearance "outlined" :size "md" :aria-label "More"}
+       [:ty-icon {:name "more-vertical"}]
+       [:ty-popup {:placement "bottom-end"}
+        (card (menu-item "edit" "Rename")
+              (menu-item "copy" "Duplicate")
+              (menu-item "trash" "Delete" "danger"))]])
 
-    [:div
-     (section-label "Events")
-     (event-table
-      [{:name "open"
-        :payload "{}"
-        :when-fired "Fires when the popup opens"}
-       {:name "close"
-        :payload "{}"
-        :when-fired "Fires when the popup closes. Does not bubble (native <dialog> semantics) — listen on the element itself, so a popup closing inside a ty-modal never trips the modal's own close listener."}])]]
-
-   (doc-section "Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Nest " [:code "ty-popup"] " inside any trigger element. Click to open; ESC or click outside to close. Content inside ty-popup renders in the popup panel."]
-       (demo-area
-        [:ty-button
-         "Open popup"
-         [:ty-popup {:placement "bottom"}
-          [:div.ty-elevated.rounded-lg.p-4 {:style {:min-width "200px"}}
-           [:p.ty-text- {:style {:font-size "0.875rem"}} "Popup content goes here."]]]])
-       (code-block "<ty-button>
-  Open popup
-  <ty-popup placement=\"bottom\">
-    <div class=\"ty-elevated rounded-lg p-4\" style=\"min-width: 200px\">
-      Popup content goes here.
-    </div>
+     (example
+      {:title "Quick form"
+       :span 3
+       :description "Fields work inside; the popup only closes on outside click, Escape, or when you say so."
+       :code "<ty-button>
+  Add label
+  <ty-popup>
+    <form>…</form>
   </ty-popup>
-</ty-button>")]
+</ty-button>"}
+      (let [labels (or (doc-state :labels) ["bug" "docs"])]
+        [:div.flex.flex-wrap.items-center.gap-2
+         (for [l labels] [:ty-tag {:replicant/key l :size "sm"} l])
+         [:ty-button {:size "sm" :appearance "ghost"}
+          [:ty-icon {:slot "start" :name "plus"}] "Add label"
+          [:ty-popup {:placement "bottom-start"}
+           [:form.ty-floating.rounded-xl.p-4.flex.flex-col.gap-3 {:style {:width "240px"}
+                                                                   :on {:submit (fn [^js e]
+                                                                                  (.preventDefault e)
+                                                                                  (let [v (.get (js/FormData. (.-target e)) "label")]
+                                                                                    (when (seq v) (set-doc! :labels (conj labels v))))
+                                                                                  (close-from-inside! e))}}
+            [:ty-input {:name "label" :label "New label" :placeholder "e.g. design" :size "sm"}]
+            [:ty-button {:size "md" :flavor "primary"} "Add"]]]]]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Placement")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "A placement is a "
-        [:strong "side"] " plus an optional "
-        [:strong "cross-axis alignment"] ". The bare side centers the popup on the trigger; "
-        [:code "-start"] " lines up the leading edges and " [:code "-end"] " the trailing edges — "
-        "so " [:code "bottom-start"] " hangs below with left edges flush, and "
-        [:code "left-end"] " sits to the left with bottom edges flush. Twelve combinations in total."]
-       (demo-area
-        [:div.flex.flex-col.gap-3
-         (for [[side variants] [["bottom" ["bottom-start" "bottom" "bottom-end"]]
-                                ["top" ["top-start" "top" "top-end"]]
-                                ["left" ["left-start" "left" "left-end"]]
-                                ["right" ["right-start" "right" "right-end"]]]]
-           ^{:key side}
-           [:div.flex.flex-wrap.items-center.gap-2
-            [:span.ty-text--.font-mono {:style {:font-size "0.6875rem" :width "3.5rem"}} side]
-            (for [p variants]
-              ^{:key p}
-              [:ty-button {:size "sm"} p
-               [:ty-popup {:placement p}
-                [:div.ty-elevated.rounded-lg.p-3 {:style {:min-width "130px"}}
-                 [:p.ty-text.font-mono {:style {:font-size "0.75rem"}} p]]]])])])
-       [:p.ty-text--.mb-3 {:style {:font-size "0.75rem" :line-height "1.6"}}
-        "Alignment survives the auto-flip: a " [:code "left-start"] " popup with no room on the left "
-        "becomes " [:code "right-start"] " — still top-aligned — before it gives up on the axis entirely."]
-       (code-block "<!-- side only — centered on the trigger -->
-<ty-popup placement=\"bottom\">...</ty-popup>
+     (example
+      {:title "Twelve placements"
+       :span 6
+       :description [:span "A side plus an optional alignment. When there's no room it flips to the opposite side and keeps the alignment."]
+       :code "placement=\"top | top-start | top-end | bottom… | left… | right…\""}
+      [:div.flex.flex-wrap.gap-2
+       (for [p ["top-start" "top" "top-end" "bottom-start" "bottom" "bottom-end" "left" "right"]]
+         [:ty-button {:replicant/key p :size "sm" :appearance "outlined"} p
+          [:ty-popup {:placement p}
+           [:div.ty-floating.rounded-lg.px-3.py-2.font-mono.text-xs.ty-text p]]])])
 
-<!-- side + alignment -->
-<ty-popup placement=\"bottom-start\">...</ty-popup>   <!-- below, left edges flush  -->
-<ty-popup placement=\"bottom-end\">...</ty-popup>     <!-- below, right edges flush -->
-<ty-popup placement=\"top-start\">...</ty-popup>      <!-- above, left edges flush  -->
-<ty-popup placement=\"left-start\">...</ty-popup>     <!-- left,  top edges flush   -->
-<ty-popup placement=\"left-end\">...</ty-popup>       <!-- left,  bottom edges flush -->
-<ty-popup placement=\"right-end\">...</ty-popup>      <!-- right, bottom edges flush -->")]
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const popup = document.querySelector('ty-popup');
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Action Menu")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Common pattern — actions inside the popup close it via " [:code ".closePopup()"] " on the nearest " [:code "ty-popup"] " ancestor."]
-       (demo-area
-        [:ty-button {:action ""}
-         [:ty-icon {:name "more-horizontal" :size "sm"}]
-         [:ty-popup {:placement "bottom"}
-          [:div.ty-elevated.rounded-lg.py-1 {:style {:min-width "160px"}}
-           [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
-                                    :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "edit" :size "xs"}] "Edit"]
-           [:button.w-full.ty-text {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
-                                    :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "copy" :size "xs"}] "Duplicate"]
-           [:div {:style {:height "1px" :background "var(--ty-border-soft)" :margin "0.25rem 0"}}]
-           [:button.w-full.ty-text-danger {:style {:display "flex" :align-items "center" :gap "0.5rem" :padding "0.5rem 0.75rem" :font-size "0.8125rem" :background "none" :border "none" :cursor "pointer" :text-align "left"}
-                                           :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-            [:ty-icon {:name "trash-2" :size "xs"}] "Delete"]]]])
-       (code-block "<ty-button action>
-  <ty-icon name=\"more-horizontal\" size=\"sm\"></ty-icon>
-  <ty-popup placement=\"bottom\">
-    <div class=\"ty-elevated rounded-lg py-1\" style=\"min-width: 160px\">
-      <button onclick=\"this.closest('ty-popup').closePopup()\">Edit</button>
-      <button onclick=\"this.closest('ty-popup').closePopup()\">Duplicate</button>
-      <button onclick=\"this.closest('ty-popup').closePopup()\">Delete</button>
-    </div>
-  </ty-popup>
-</ty-button>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Confirm Dialog")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Use " [:code "disable-close"] " to prevent accidental dismissal — the user must make an explicit choice."]
-       (demo-area
-        [:ty-button {:flavor "danger"}
-         "Delete item"
-         [:ty-popup {:placement "bottom" :disable-close ""}
-          [:div.ty-elevated.rounded-lg.p-5 {:style {:max-width "280px"}}
-           [:p.ty-text+ {:style {:font-weight "600" :margin-bottom "0.5rem"}} "Delete this item?"]
-           [:p.ty-text- {:style {:font-size "0.8125rem" :margin-bottom "1rem"}} "This action cannot be undone."]
-           [:div.flex.justify-end.gap-2
-            [:ty-button {:flavor "neutral" :size "sm"
-                         :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-             "Cancel"]
-            [:ty-button {:flavor "danger" :size "sm"
-                         :on {:click #(.closePopup ^js (.closest (.-target %) "ty-popup"))}}
-             "Delete"]]]]])
-       (code-block "<ty-button flavor=\"danger\">
-  Delete item
-  <ty-popup placement=\"bottom\" disable-close>
-    <div class=\"ty-elevated rounded-lg p-5\" style=\"max-width: 280px\">
-      <p>Delete this item?</p>
-      <p>This action cannot be undone.</p>
-      <div class=\"flex justify-end gap-2\">
-        <ty-button flavor=\"neutral\" size=\"sm\"
-                   onclick=\"this.closest('ty-popup').closePopup()\">Cancel</ty-button>
-        <ty-button flavor=\"danger\" size=\"sm\"
-                   onclick=\"this.closest('ty-popup').closePopup()\">Delete</ty-button>
-      </div>
-    </div>
-  </ty-popup>
-</ty-button>")]])
-
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Manual Control")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "manual"] " to take full control of open/close via the JS API. Useful when the trigger lives outside the popup's DOM subtree."]
-       (code-block "const popup = document.querySelector('ty-popup');
-
-// Open / close / toggle
 popup.openPopup();
 popup.closePopup();
 popup.togglePopup();
 
-// Listen for lifecycle events
-popup.addEventListener('open', () => console.log('opened'));
-popup.addEventListener('close', () => console.log('closed'));" "javascript")]
+popup.addEventListener('open', () => loadShareLinks());
+popup.addEventListener('close', () => track('share-closed'));"}
+      nil)))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Framework Binding")
-       (code-block ";; ClojureScript / Replicant
-[:ty-button {:on {:click #(.openPopup (.getElementById js/document \"my-popup\"))}}
- \"Open\"]
-[:ty-popup {:id \"my-popup\" :manual \"\" :disable-close \"\"}
- [:div.ty-elevated.rounded-lg.p-5 ...]]
+   (page-section
+    {:title "Theming" :sub "Motion only; the panel is yours." :dark? true}
+    (example
+     {:title "Motion"
+      :side? true
+      :lang "css"
+      :description [:span "ty-popup draws nothing but the positioned layer. Duration, easing and starting scale of the entrance are variables; a lower scale gives the spring room to overshoot."]
+      :code "ty-popup {
+  --ty-popup-duration: 420ms;
+  --ty-popup-ease: cubic-bezier(.2, 1.6, .4, 1);
+  --ty-popup-scale: .8;
+}"}
+     [:ty-button {:size "md"} "Bouncy popup"
+      [:ty-popup {:style {"--ty-popup-duration" "420ms"
+                          "--ty-popup-ease" "cubic-bezier(.2, 1.6, .4, 1)"
+                          "--ty-popup-scale" ".8"}}
+       (card [:span.ty-text+ "Springy entrance."])]]))
 
-<!-- React -->
-<button onClick={() => popupRef.current.openPopup()}>Open</button>
-<TyPopup ref={popupRef} manual disable-close>
-  <div class=\"ty-elevated rounded-lg p-5\">...</div>
-</TyPopup>")]])
-))
+   (api-section
+    {:attributes ["Position"
+                  ["placement" "string" "\"bottom\"" "top, bottom, left, right, each with optional -start / -end. Flips when there's no room."]
+                  ["offset" "number" "8" "Gap to the anchor, in px."]
+                  "Behavior"
+                  ["manual" "boolean" "false" "The parent doesn't open it; use the methods."]
+                  ["disable-close" "boolean" "false" "Outside click and Escape don't close it."]]
+     :properties [["openPopup()" "() => void" "Open."]
+                  ["closePopup()" "() => void" "Close."]
+                  ["togglePopup()" "() => void" "Toggle."]]
+     :events [["open" "—" "Opened and positioned. Doesn't bubble."]
+              ["close" "—" "Closed. Doesn't bubble."]
+              ["ty:close-popup" "—" "Dispatch it (bubbling) from inside the content to close the popup."]]
+     :slots [["(default)" "The popup content. The anchor is the popup's parent element."]]
+     :keyboard [["Enter / Space on the anchor" "Open."]
+                ["Esc" "Close, unless disable-close."]]
+     :css-vars [["--ty-popup-duration" "Entrance and exit duration."]
+                ["--ty-popup-ease" "Entrance easing."]
+                ["--ty-popup-scale" "Starting scale of the entrance (.96)."]]})))

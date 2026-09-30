@@ -444,24 +444,19 @@ DESIGN SYSTEM TOKENS
   --ty-tooltip-bg: #262626;
   --ty-tooltip-color: #f5f5f5;
   --ty-tooltip-border: #404040;
-
-  /* =================================================================
-  CALENDAR — "other month" day de-emphasis
-  --ty-color-neutral-faint alone is only ~2.5:1 against white — already
-  below the 4.5:1 WCAG AA text minimum before the (now-removed) opacity
-  fade made it worse still. This is its own token, calibrated to actually
-  pass, rather than reusing -faint here. Real bug, caught by adding
-  axe-core coverage for the first time, not a design choice being revised.
-  ================================================================= */
-  --ty-calendar-other-month-color: #6b7280; /* 4.83:1 vs white */
 }
 
 /* =================================================================
 DARK THEME OVERRIDES
 ================================================================= */
 
+/* [data-ty-theme].dark scopes dark mode to a subtree, matching the selectors
+   in tyrell-theme.css — without it, colors flip there but labels, modals,
+   shadows and scrollbars keep their light values. */
 html.dark,
-html[data-theme="dark"] {
+html[data-theme="dark"],
+[data-ty-theme].dark,
+[data-ty-theme][data-theme="dark"] {
   /* Weight dials flip with the mode — light-on-dark text blooms, so dark
      mode runs genuinely lighter. See the :root definitions. */
   --ty-weight-action: var(--ty-font-normal);
@@ -530,10 +525,6 @@ html[data-theme="dark"] {
     rgba(0, 0, 0, 0),
     transparent
   );
-
-  /* Calendar "other month" de-emphasis — see the :root definition for why
-     this is its own token instead of --ty-color-neutral-faint. */
-  --ty-calendar-other-month-color: #8a8a8a; /* 5.04:1 vs dark content bg (#1a1a1a) */
 }
 
 /* =================================================================

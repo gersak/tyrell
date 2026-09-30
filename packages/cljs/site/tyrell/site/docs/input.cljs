@@ -1,449 +1,288 @@
 (ns tyrell.site.docs.input
   "Documentation for ty-input component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table slot-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
 
-;; API Reference (stands alone as a card, not in doc-section)
+(def ^:private flavors ["neutral" "primary" "success" "danger" "warning"])
 
-(defn- api-reference []
-  [:div.ty-elevated.rounded-lg.p-6
-   [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-    [:h2.scroll-mt-6
-     {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-     [:span.ty-text-- "API Reference"]]]
+(def ^:private lineup
+  "Playground stage: the shapes a field takes, sharing the live props."
+  [{:label "Full name" :placeholder "Ada Lovelace"}
+   {:label "Email" :type "email" :placeholder "ada@example.com" :start "mail"}
+   {:label "Weight" :type "number" :value "72.5" :end "kg"}
+   {:label "Password" :type "password" :value "hunter2" :start "lock"}])
 
-   [:div.mb-6
-    (section-label "Attributes")
-    (attribute-table
-     [{:name "type"
-       :type "string"
-       :default "'text'"
-       :description "Input type: text, number, currency, percent, compact, password, email, tel, url"}
-      {:name "value"
-       :type "string"
-       :default "null"
-       :description "Initial value of the input"}
-      {:name "placeholder"
-       :type "string"
-       :default "null"
-       :description "Placeholder text"}
-      {:name "label"
-       :type "string"
-       :default "null"
-       :description "Label displayed above the input"}
-      {:name "name"
-       :type "string"
-       :default "null"
-       :description "Name for form submission"}
-      {:name "disabled"
-       :type "boolean"
-       :default "false"
-       :description "Whether the input is disabled"}
-      {:name "required"
-       :type "boolean"
-       :default "false"
-       :description "Marks the field as required (shows asterisk)"}
-      {:name "error"
-       :type "string"
-       :default "null"
-       :description "Error message to display — automatically applies danger flavor"}
-      {:name "size"
-       :type "string"
-       :default "'sm'"
-       :description "Size variant: xs, sm, md, lg, xl"}
-      {:name "flavor"
-       :type "string"
-       :default "'neutral'"
-       :description "Semantic flavor: primary, success, danger, warning, neutral"}
-      {:name "currency"
-       :type "string"
-       :default "'USD'"
-       :description "Currency code for type='currency' (e.g. USD, EUR, GBP)"}
-      {:name "locale"
-       :type "string"
-       :default "browser locale"
-       :description "Locale for number formatting (e.g. en-US, de-DE)"}
-      {:name "precision"
-       :type "number"
-       :default "null"
-       :description "Decimal places for numeric types. precision=\"0\" gives integer-only input."}
-      {:name "debounce"
-       :type "number"
-       :default "0"
-       :description "Debounce delay in milliseconds (0–5000) for input/change events. Events fire immediately on blur."}])]
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor required disabled error]}]
+  (cond-> {}
+    (not= size "sm") (assoc :size size)
+    (not= flavor "neutral") (assoc :flavor flavor)
+    required (assoc :required true)
+    disabled (assoc :disabled true)
+    error (assoc :error "Check this field")))
 
-   [:div.mb-6
-    (section-label "Events")
-    (event-table
-     [{:name "input"
-       :payload "{value, formattedValue?, rawValue, originalEvent}"
-       :when-fired "On each keystroke (respects debounce)"}
-      {:name "change"
-       :payload "{value, formattedValue?, rawValue, originalEvent}"
-       :when-fired "When input loses focus after a change (respects debounce)"}
-      {:name "focus"
-       :payload "FocusEvent"
-       :when-fired "When input gains focus"}
-      {:name "blur"
-       :payload "FocusEvent"
-       :when-fired "When input loses focus — fires any pending debounced events immediately"}])]
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label type value placeholder start end]} lineup]
+       [:ty-input (merge {:label label :type type :value value :placeholder placeholder} attrs)
+        (when start [:ty-icon {:slot "start" :name start}])
+        (when end [:span {:slot "end"} end])])
+     :datastar (str "<ty-input label=\"Full name\"" (snippets/attr-str attrs)
+                    "\n  data-bind=\"name\"\n  data-on:change=\"$name = evt.detail.value\">\n</ty-input>"))))
 
-   [:div
-    (section-label "Slots")
-    (slot-table
-     [{:name "start"
-       :description "Content before the input field — typically an icon"}
-      {:name "end"
-       :description "Content after the input field — typically an icon"}])]])
+(defn- render-lineup [{:keys [size flavor required disabled error]}]
+  (let [base (cond-> {:size size :flavor flavor}
+               required (assoc :required "")
+               disabled (assoc :disabled "")
+               error (assoc :error "Check this field"))]
+    [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "340px"}}
+     (for [{:keys [label type value placeholder start end]} lineup]
+       [:ty-input (cond-> (assoc base :replicant/key label :label label)
+                    type (assoc :type type)
+                    value (assoc :value value)
+                    placeholder (assoc :placeholder placeholder))
+        (when start [:ty-icon {:slot "start" :name start}])
+        (when end [:span {:slot "end"} end])])]))
 
-(defn- basic-usage-content []
-  [:div.space-y-5
+;; Interactive examples -------------------------------------------------------
 
-   [:div.ty-content.rounded-lg.p-5
-    (section-label "Simple text input")
-    (demo-area
-     [:ty-input {:placeholder "Enter your name" :label "Name"}])
-    (code-block "<ty-input placeholder=\"Enter your name\" label=\"Name\"></ty-input>")]
+(defn- doc-state [k] (get-in @state/state [:input-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:input-doc k] v))
 
-   [:div.ty-content.rounded-lg.p-5
-    (section-label "Required with initial value")
-    (demo-area
-     [:ty-input {:value "john@example.com" :label "Email" :required "true" :type "email"}])
-    (code-block "<ty-input value=\"john@example.com\" label=\"Email\" required=\"true\" type=\"email\"></ty-input>")]
-
-   [:div.ty-content.rounded-lg.p-5
-    (section-label "Error state")
-    (demo-area
-     [:ty-input {:label "Username" :error "Username is already taken" :value "admin"}])
-    (code-block "<ty-input label=\"Username\" error=\"Username is already taken\" value=\"admin\"></ty-input>")]])
-
-(defn- icon-slots-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Use start and end slots to add icons or other content before/after the input."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:label "Search" :placeholder "Search..." :type "text"}
-      [:ty-icon {:slot "start" :name "search" :size "sm"}]]
-     [:ty-input {:label "Email" :placeholder "email@example.com" :type "email"}
-      [:ty-icon {:slot "start" :name "mail" :size "sm"}]]
-     [:ty-input {:label "Password" :placeholder "Enter password" :type "password"}
-      [:ty-icon {:slot "start" :name "lock" :size "sm"}]]
-     [:ty-input {:label "Website" :placeholder "https://" :type "text"}
-      [:ty-icon {:slot "start" :name "globe" :size "sm"}]
-      [:ty-icon {:slot "end" :name "external-link" :size "sm"}]]])
-   (code-block "<ty-input label=\"Search\" placeholder=\"Search...\">
-  <ty-icon slot=\"start\" name=\"search\" size=\"sm\"></ty-icon>
-</ty-input>
-
-<ty-input label=\"Password\" placeholder=\"Enter password\" type=\"password\">
-  <ty-icon slot=\"start\" name=\"lock\" size=\"sm\"></ty-icon>
-</ty-input>
-
-<ty-input label=\"Website\" placeholder=\"https://\">
-  <ty-icon slot=\"start\" name=\"globe\" size=\"sm\"></ty-icon>
-  <ty-icon slot=\"end\" name=\"external-link\" size=\"sm\"></ty-icon>
-</ty-input>")])
-
-(defn- button-slot-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Drop a "
-    [:code "ty-button"]
-    " into the end slot for an inline action — submit, send, apply. The button "
-    "keeps its own flavor and sizing independent of the field."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:label "Your rating" :type "number" :placeholder "Rate 1–5"}
-      [:ty-icon {:slot "start" :name "star" :size "sm"}]
-      [:ty-button {:slot "end" :flavor "primary" :size "sm"}
-       [:ty-icon {:name "check" :size "sm"}]
-       "Submit"]]
-     [:ty-input {:label "Search" :placeholder "Search..." :type "text"}
-      [:ty-icon {:slot "start" :name "search" :size "sm"}]
-      [:ty-button {:slot "end" :flavor "neutral" :size "sm"}
-       [:ty-icon {:name "send" :size "sm"}]
-       "Go"]]
-     [:ty-input {:label "Promo code" :flavor "success" :placeholder "Enter code"}
-      [:ty-button {:slot "end" :flavor "success" :size "sm"} "Apply"]]])
-   (code-block "<ty-input label=\"Your rating\" type=\"number\" placeholder=\"Rate 1–5\">
-  <ty-icon slot=\"start\" name=\"star\" size=\"sm\"></ty-icon>
-  <ty-button slot=\"end\" flavor=\"primary\" size=\"sm\">
-    <ty-icon name=\"check\" size=\"sm\"></ty-icon>
-    Submit
-  </ty-button>
-</ty-input>")])
-
-(defn- debounce-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "The debounce attribute (0–5000ms) delays input and change events. Events fire immediately on blur."]
-   (demo-area
-    [:div.grid.gap-4
-     [:div
-      [:ty-input {:id "search-instant" :label "Instant (no debounce)" :placeholder "Type to search..." :debounce "0"}
-       [:ty-icon {:slot "start" :name "search" :size "sm"}]]
-      [:div.ty-text-.mt-1 {:style {:font-size "0.75rem"}} "Events fired: " [:span#instant-count "0"]]]
-     [:div
-      [:ty-input {:id "search-300" :label "300ms debounce" :placeholder "Type to search..." :debounce "300"}
-       [:ty-icon {:slot "start" :name "search" :size "sm"}]]
-      [:div.ty-text-.mt-1 {:style {:font-size "0.75rem"}} "Events fired: " [:span#debounce-300-count "0"]]]
-     [:div
-      [:ty-input {:id "search-1000" :label "1000ms debounce" :placeholder "Type to search..." :debounce "1000"}
-       [:ty-icon {:slot "start" :name "search" :size "sm"}]]
-      [:div.ty-text-.mt-1 {:style {:font-size "0.75rem"}} "Events fired: " [:span#debounce-1000-count "0"]]]])
-   [:script "(function(){
-  let a=0,b=0,c=0;
-  document.getElementById('search-instant')?.addEventListener('input',()=>{document.getElementById('instant-count').textContent=++a});
-  document.getElementById('search-300')?.addEventListener('input',()=>{document.getElementById('debounce-300-count').textContent=++b});
-  document.getElementById('search-1000')?.addEventListener('input',()=>{document.getElementById('debounce-1000-count').textContent=++c});
-})();"]
-   (code-block "<ty-input label=\"300ms debounce\" debounce=\"300\" placeholder=\"Search...\">
-  <ty-icon slot=\"start\" name=\"search\" size=\"sm\"></ty-icon>
-</ty-input>
-
-<script>
-document.querySelector('ty-input').addEventListener('input', (e) => {
-  console.log('Debounced:', e.detail.value);
-});
-</script>")
-   [:div.ty-elevated.rounded.p-4.mt-3
-    (section-label "Delay guide")
-    [:div.space-y-1.ty-text- {:style {:font-size "0.8125rem"}}
-     [:p "0–100ms — real-time feedback, validation"]
-     [:p "300–500ms — search inputs, typeahead"]
-     [:p "500–1000ms — API calls, expensive operations"]]]])
-
-(defn- text-types-content []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Text types")
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:type "text" :label "Text" :placeholder "Enter text..."}]
-     [:ty-input {:type "password" :label "Password" :placeholder "Enter password..." :value "secret123"}]
-     [:ty-input {:type "email" :label "Email" :placeholder "email@example.com"}]])
-   (code-block "<ty-input type=\"text\" label=\"Text\" placeholder=\"Enter text...\"></ty-input>
-<ty-input type=\"password\" label=\"Password\" placeholder=\"Enter password...\"></ty-input>
-<ty-input type=\"email\" label=\"Email\" placeholder=\"email@example.com\"></ty-input>")])
-
-(defn- numeric-types-content []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Numeric formatting")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Numeric inputs format values when blurred and maintain a shadow value for calculations."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:type "number" :label "Number" :value "1234567.89" :precision "2"}]
-     [:ty-input {:type "currency" :label "Price (USD)" :value "1234.56" :currency "USD"}]
-     [:ty-input {:type "currency" :label "Price (EUR)" :value "999.99" :currency "EUR" :locale "de-DE"}]
-     [:ty-input {:type "percent" :label "Percentage" :value "85.5" :precision "1"}]
-     [:ty-input {:type "compact" :label "Compact Number" :value "1234567"}]
-     [:ty-input {:type "number" :label "Integer (precision=0)" :value "42" :precision "0" :placeholder "Whole numbers only"}]])
-   [:div.rounded.p-3.mt-3 {:style {:background-color "var(--ty-bg-primary-)" :border "1px solid var(--ty-border-primary)"}}
-    [:p.ty-text-primary {:style {:font-size "0.8125rem"}}
-     "Both " [:code.font-mono "."] " and " [:code.font-mono ","] " work as decimal separators — useful for mobile keyboards that use commas."]]
-   (code-block "<ty-input type=\"number\" label=\"Number\" value=\"1234567.89\" precision=\"2\"></ty-input>
-<ty-input type=\"currency\" label=\"Price (USD)\" value=\"1234.56\" currency=\"USD\"></ty-input>
-<ty-input type=\"currency\" label=\"Price (EUR)\" value=\"999.99\" currency=\"EUR\" locale=\"de-DE\"></ty-input>
-<ty-input type=\"percent\" label=\"Percentage\" value=\"85.5\" precision=\"1\"></ty-input>
-<ty-input type=\"compact\" label=\"Compact Number\" value=\"1234567\"></ty-input>
-<ty-input type=\"number\" label=\"Quantity\" precision=\"0\"></ty-input>")])
-
-(defn- sizes-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Five size variants for different contexts and layouts."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:size "xs" :value "Extra small — 28px" :label "Size XS"}]
-     [:ty-input {:size "sm" :value "Small — 32px" :label "Size SM (default)"}]
-     [:ty-input {:size "md" :value "Medium — 36px" :label "Size MD"}]
-     [:ty-input {:size "lg" :value "Large — 40px" :label "Size LG"}]
-     [:ty-input {:size "xl" :value "Extra large — 44px" :label "Size XL"}]])
-   (code-block "<ty-input size=\"xs\" value=\"Extra small\" label=\"Size XS\"></ty-input>
-<ty-input size=\"sm\" value=\"Small\" label=\"Size SM\"></ty-input>
-<ty-input size=\"md\" value=\"Medium\" label=\"Size MD\"></ty-input>
-<ty-input size=\"lg\" value=\"Large\" label=\"Size LG\"></ty-input>
-<ty-input size=\"xl\" value=\"Extra large\" label=\"Size XL\"></ty-input>")])
-
-(defn- flavors-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Semantic colors for different states and purposes. The error attribute automatically applies danger flavor."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:flavor "neutral" :placeholder "Default neutral" :label "Neutral"}]
-     [:ty-input {:flavor "primary" :placeholder "Primary action" :label "Primary"}]
-     [:ty-input {:flavor "success" :value "Valid input" :label "Success"}]
-     [:ty-input {:flavor "warning" :value "Check this" :label "Warning"}]
-     [:ty-input {:flavor "danger" :value "Invalid data" :label "Danger"}]])
-   (code-block "<ty-input flavor=\"neutral\" placeholder=\"Default neutral\" label=\"Neutral\"></ty-input>
-<ty-input flavor=\"primary\" placeholder=\"Primary action\" label=\"Primary\"></ty-input>
-<ty-input flavor=\"success\" value=\"Valid input\" label=\"Success\"></ty-input>
-<ty-input flavor=\"warning\" value=\"Check this\" label=\"Warning\"></ty-input>
-<ty-input flavor=\"danger\" value=\"Invalid data\" label=\"Danger\"></ty-input>")])
-
-(defn- form-integration-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "ty-input is fully form-associated — works with FormData, form submission, and reset like native inputs."]
-   (demo-area
-    [:form.space-y-4 {:on {:submit (fn [^js e]
-                                     (.preventDefault e)
-                                     (let [fd (js/FormData. (.-target e))]
-                                       (js/alert (str "Submitted: " (js/JSON.stringify (js/Object.fromEntries fd) nil 2)))))}}
-     [:ty-input {:name "fullname" :label "Full Name" :required "true"}]
-     [:ty-input {:name "email" :type "email" :label "Email" :required "true"}]
-     [:ty-input {:name "age" :type "number" :label "Age" :min "18" :max "120"}]
-     [:ty-input {:name "salary" :type "currency" :label "Expected Salary" :currency "USD"}]
-     [:div.flex.gap-2.pt-1
-      [:ty-button {:type "submit" :flavor "primary"} "Submit"]
-      [:ty-button {:type "reset" :flavor "neutral"} "Reset"]]])
-   (code-block "<form>
-  <ty-input name=\"fullname\" label=\"Full Name\" required=\"true\"></ty-input>
-  <ty-input name=\"email\" type=\"email\" label=\"Email\" required=\"true\"></ty-input>
-  <ty-input name=\"salary\" type=\"currency\" label=\"Salary\" currency=\"USD\"></ty-input>
-
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-  <ty-button type=\"reset\" flavor=\"neutral\">Reset</ty-button>
-</form>
-
-<script>
-document.querySelector('form').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target));
-  console.log(data);
-});
-</script>")])
-
-(defn- mobile-keyboard-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "ty-input automatically sets the correct inputmode for each type — controls which keyboard appears on mobile."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:type "text" :label "Text — default keyboard" :placeholder "Full keyboard..."}]
-     [:ty-input {:type "number" :label "Number — decimal keypad" :placeholder "0.00"}]
-     [:ty-input {:type "currency" :label "Currency — decimal keypad" :currency "USD" :placeholder "0.00"}]
-     [:ty-input {:type "email" :label "Email — @ keyboard" :placeholder "email@example.com"}]
-     [:ty-input {:type "tel" :label "Telephone — phone dialer" :placeholder "+1 555 000 0000"}]
-     [:ty-input {:type "url" :label "URL — url keyboard" :placeholder "https://example.com"}]])
-   (code-block "<ty-input type=\"text\"></ty-input>    <!-- default keyboard -->
-<ty-input type=\"number\"></ty-input>  <!-- decimal keypad -->
-<ty-input type=\"currency\"></ty-input> <!-- decimal keypad -->
-<ty-input type=\"email\"></ty-input>   <!-- @ keyboard -->
-<ty-input type=\"tel\"></ty-input>     <!-- phone dialer -->
-<ty-input type=\"url\"></ty-input>     <!-- url keyboard -->")])
-
-(defn- validation-content []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Live validation")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "ty-input displays errors via the error attribute. You control validation logic."]
-   (demo-area
-    [:div
-     [:ty-input {:id "username-input" :label "Username (3–20 chars)" :placeholder "Enter username..."}]
-     [:p.ty-text--.mt-1 {:style {:font-size "0.75rem"}} "Type to see validation"]])
-   [:script "
-document.getElementById('username-input')?.addEventListener('input', (e) => {
-  const v = e.detail.value;
-  const el = e.target;
-  if (v && v.length < 3) el.setAttribute('error', 'At least 3 characters');
-  else if (v && v.length > 20) el.setAttribute('error', 'Max 20 characters');
-  else el.removeAttribute('error');
-});"]
-   (code-block "<ty-input id=\"username\" label=\"Username (3–20 chars)\"></ty-input>
-
-<script>
-document.getElementById('username').addEventListener('input', (e) => {
-  const v = e.detail.value;
-  if (v && v.length < 3) e.target.setAttribute('error', 'At least 3 characters');
-  else if (v && v.length > 20) e.target.setAttribute('error', 'Max 20 characters');
-  else e.target.removeAttribute('error');
-});
-</script>" "javascript")])
-
-(defn- currency-converter-content []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Currency converter")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Numeric inputs maintain a shadow value — the unformatted number — accessible via event.detail.value."]
-   (demo-area
-    [:div.grid.gap-4
-     [:ty-input {:id "usd-amount" :type "currency" :label "USD Amount" :currency "USD" :value "100"
-                 ;; Inline <script> injected via Replicant hiccup never executes, so
-                 ;; wire the live conversion through an on-mount lifecycle hook instead.
-                 :replicant/on-mount
-                 (fn [{^js node :replicant/node}]
-                   (.addEventListener
-                     node "input"
-                     (fn [^js e]
-                       (let [v (js/parseFloat (.. e -detail -value))
-                             eur (js/document.getElementById "eur-amount")]
-                         (when (and eur (not (js/isNaN v)))
-                           (set! (.-value eur) (.toFixed (* v 0.93) 2)))))))}]
-     [:ty-input {:id "eur-amount" :type "currency" :label "EUR (at 0.93 rate)" :currency "EUR" :locale "de-DE" :disabled "true" :value "93.00"}]])
-   (code-block "<ty-input id=\"usd\" type=\"currency\" label=\"USD\" currency=\"USD\"></ty-input>
-<ty-input id=\"eur\" type=\"currency\" label=\"EUR\" currency=\"EUR\" locale=\"de-DE\" disabled=\"true\"></ty-input>
-
-<script>
-document.getElementById('usd').addEventListener('input', (e) => {
-  // e.detail.value is the raw number, not the formatted string
-  document.getElementById('eur').value = (e.detail.value * 0.93).toFixed(2);
-});
-</script>" "javascript")])
-
-
-(defn- tips-content []
-  [:div.ty-content.rounded-lg.p-5
-   [:div.space-y-4
-    (for [[title body] [["Shadow values for numbers"
-                         "Numeric inputs maintain a shadow value — the actual number. Access it via event.detail.value for calculations, not the formatted display string."]
-                        ["Formatting behavior"
-                         "Numeric inputs show formatted values when blurred (e.g. $1,234.56) and raw values when focused (1234.56) for easier entry."]
-                        ["Form association"
-                         "ty-input is fully form-associated. Works with FormData, form submission, and form reset exactly like native inputs."]
-                        ["Error display"
-                         "The error attribute displays a message and applies danger styling. It's stateless — set it or remove it based on your own validation logic."]]]
-      [:div
-       [:p.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600" :margin-bottom "0.25rem"}} title]
-       [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} body]])]])
+(defn- email-error [v]
+  (when (and (seq v) (not (re-matches #"[^@\s]+@[^@\s]+\.[^@\s]+" v)))
+    "That doesn't look like an email address"))
 
 (defn view []
-  (docs-page
-   (component-header "ty-input"
-                     "Form-associated input with automatic numeric formatting, semantic styling, and debounce. Supports text, number, currency, percent, password, email, tel, and url types.")
+  (component-page
+   {:title "Input"
+    :group "Text input"
+    :tag "ty-input"
+    :description "Text, email, password and numbers that format themselves: currency, percent, compact. Label, error, icon slots, debounced events, real form value."
+    :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyInput (React)" "atom"]]
+    :source "packages/core/src/components/input.ts"
+    :mark "Aa"
+    :demo [:div.flex.flex-col.gap-3 {:style {:width "300px"}}
+           [:ty-input {:label "Email" :type "email" :value "ada@example.com" :size "md"}
+            [:ty-icon {:slot "start" :name "mail"}]]
+           [:ty-input {:label "Budget" :type "currency" :currency "EUR" :locale "de-DE" :value "2500" :size "md"}]
+           [:ty-input {:label "Handle" :value "ada lovelace" :size "md" :flavor "danger"
+                       :error "No spaces, please"}]]}
 
-   (api-reference)
+   (playground
+    {:id :input
+     :defaults {:size "md" :flavor "neutral" :required false :disabled false :error false}
+     :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :required :switch? true}
+                {:key :disabled :switch? true}
+                {:key :error :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-   (doc-section "Basic Usage" (basic-usage-content))
-   (doc-section "Icon Slots" (icon-slots-content))
-   (doc-section "Action Button in Slot" (button-slot-content))
-   (doc-section "Debounce" (debounce-content))
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Numbers that format"
+       :span 4
+       :description [:span "Formatted at rest, the plain number while you type. " [:code "value"]
+                     " and the form value are always the number; percent is in percent units (" [:code "7.5"] " → 7.5%)."]
+       :code "<ty-input type=\"currency\" value=\"2500\"
+  currency=\"EUR\" locale=\"de-DE\">
+<ty-input type=\"percent\" value=\"7.5\" precision=\"1\">
+<ty-input type=\"compact\" value=\"1250000\">"}
+      (let [last-v (doc-state :number)]
+        [:div.flex.flex-col.gap-3.w-full
+         [:div.md:grid-cols-3.gap-3 {:style {:display "grid"}}
+          (for [[label attrs] [["Price" {:type "currency" :currency "EUR" :locale "de-DE" :value "2500"}]
+                               ["Rate" {:type "percent" :value "7.5" :precision "1"}]
+                               ["Reach" {:type "compact" :value "1250000"}]]]
+            [:ty-input (merge attrs {:replicant/key label :label label
+                                     :on {:change #(set-doc! :number (str label ": " (.. % -detail -value)))}})])]
+         [:code.ty-text-.text-xs (or last-v "Edit a field, then leave it.")]]))
 
-   (doc-section "Input Types"
-     [:div.space-y-5
-      (text-types-content)
-      (numeric-types-content)])
+     (example
+      {:title "Slots"
+       :span 2
+       :description [:span "Icons, units or a whole button in " [:code "start"] " and " [:code "end"] "."]
+       :code "<ty-input>
+  <ty-icon slot=\"start\"
+    name=\"search\"></ty-icon>
+  <span slot=\"end\">.dev</span>
+</ty-input>"}
+      [:div.flex.flex-col.gap-3.w-full
+       [:ty-input {:placeholder "Search docs"}
+        [:ty-icon {:slot "start" :name "search"}]
+        [:ty-button {:slot "end" :action "" :size "xs" :appearance "ghost" :aria-label "Go"}
+         [:ty-icon {:name "arrow-right"}]]]
+       [:ty-input {:placeholder "example" :value "tyrell"}
+        [:span {:slot "start"} "https://"]
+        [:span {:slot "end"} ".dev"]]])
 
-   (doc-section "Sizes" (sizes-content))
-   (doc-section "Semantic Flavors" (flavors-content))
-   (doc-section "Form Integration" (form-integration-content))
-   (doc-section "Mobile Keyboard Modes" (mobile-keyboard-content))
+     (example
+      {:title "Validation"
+       :span 3
+       :description [:span "The field checks " [:code "required"] ". Everything else is yours: set "
+                     [:code "error"] " and it shows under the field."]
+       :code "email.addEventListener('input', (e) => {
+  const ok = isEmail(e.detail.value);
+  email.error = ok ? '' : 'Not an email';
+});"}
+      (let [v (doc-state :email)]
+        [:ty-input {:label "Work email" :type "email" :required "" :placeholder "you@company.com"
+                    :value (or v "ada@")
+                    :error (or (email-error (or v "ada@")) "")
+                    :flavor (cond (email-error (or v "ada@")) "danger"
+                                  (seq v) "success"
+                                  :else "neutral")
+                    :on {:input #(set-doc! :email (.. % -detail -value))}}]))
 
-   (doc-section "Advanced Examples"
-     [:div.space-y-5
-      (validation-content)
-      (currency-converter-content)])
+     (example
+      {:title "Debounce"
+       :span 3
+       :description [:span [:code "debounce"] " (ms) delays " [:code "input"] " and " [:code "change"]
+                     " until typing pauses. Blur fires anything pending."]
+       :code "<ty-input debounce=\"400\">
+</ty-input>"}
+      (let [{:keys [n q]} (doc-state :debounce)]
+        [:div.flex.flex-col.gap-3.w-full
+         [:ty-input {:debounce "400" :placeholder "Type fast…"
+                     :on {:input #(set-doc! :debounce {:n (inc (or n 0)) :q (.. % -detail -value)})}}
+          [:ty-icon {:slot "start" :name "search"}]]
+         [:code.ty-text-.text-xs (str (or n 0) " event" (when (not= 1 n) "s") (when q (str " · \"" q "\"")))]]))
 
-   (doc-section "Tips & Tricks" (tips-content))
+     (example
+      {:title "Sizes with buttons"
+       :span 6
+       :description [:span "Fields and buttons share one height ladder. Pair a field with the button "
+                     [:em "one size up"] " for balanced weight: an " [:code "sm"] " field with an " [:code "md"] " button."]
+       :code "<ty-input size=\"sm\"></ty-input>
+<ty-button size=\"md\">Subscribe</ty-button>"}
+      [:div.flex.flex-col.gap-3.w-full
+       (for [[fs bs] [["xs" "sm"] ["sm" "md"] ["md" "lg"] ["lg" "xl"]]]
+         [:div.flex.items-center.gap-3 {:replicant/key fs}
+          [:span.font-mono.text-xs.ty-text--.shrink-0 {:style {:width "4.5rem"}} (str fs " + " bs)]
+          [:ty-input {:size fs :placeholder "you@example.com" :style {:flex "1"}}]
+          [:ty-button {:size bs :flavor "primary"} "Subscribe"]])])
 
-   [:div.p-4.ty-border.border.rounded-lg
-    (section-label "Related Components")
-    [:div.flex.flex-wrap.gap-4
-     {:style {:font-size "0.875rem"}}
-     [:a.ty-text-primary.hover:underline {:href "/docs/checkbox"} "ty-checkbox →"]
-     [:a.ty-text-primary.hover:underline {:href "/docs/copy"} "ty-copy →"]
-     [:a.ty-text-primary.hover:underline {:href "/docs/textarea"} "ty-textarea →"]
-     [:a.ty-text-primary.hover:underline {:href "/docs/dropdown"} "ty-dropdown →"]
-     [:a.ty-text-primary.hover:underline {:href "/components/select"} "ty-select →"]]]))
+     (example
+      {:title "With an HTML form"
+       :span 6
+       :description [:span "Form-associated: set " [:code "name"] " and the value is in FormData. "
+                     [:code "required"] " blocks submission like a native field."]
+       :code "<form>
+  <ty-input name=\"name\" label=\"Name\" required></ty-input>
+  <ty-input name=\"salary\" label=\"Salary\" type=\"currency\"></ty-input>
+  <ty-button size=\"md\" flavor=\"primary\">Send</ty-button>
+</form>
+<!-- FormData: name=Ada&salary=85000 -->"}
+      (let [sent (doc-state :sent)]
+        [:form.flex.flex-col.gap-4.w-full
+         {:on {:submit (fn [^js e]
+                         (.preventDefault e)
+                         (set-doc! :sent (->> (js/FormData. (.-target e))
+                                              (.entries)
+                                              (js/Array.from)
+                                              (map (fn [[k v]] (str k "=" v)))
+                                              (str/join "&"))))}}
+         [:div.flex.flex-wrap.items-end.gap-3
+          [:ty-input {:name "name" :label "Name" :required "" :value "Ada" :style {:flex "1" :min-width "180px"}}]
+          [:ty-input {:name "salary" :label "Salary" :type "currency" :value "85000" :style {:flex "1" :min-width "180px"}}]
+          [:ty-button {:size "md" :flavor "primary"} "Send"]]
+         [:code.ty-text-.text-xs (if sent (str "FormData: " sent) "Press Send. Clear Name first to see required at work.")]]))
+
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const input = document.querySelector('ty-input');
+
+input.value = '42';
+input.error = 'Too low';        // '' clears it
+
+input.addEventListener('input', (e) => {
+  const { value, formattedValue, rawValue } = e.detail;
+  // value: 1234.5 · formattedValue: '$1,234.50' · rawValue: what was typed
+});
+input.addEventListener('change', (e) => save(e.detail.value));"}
+      nil)))
+
+   (page-section
+    {:title "Theming" :sub "CSS variables. No build step." :dark? true}
+    (example
+     {:title "Field tokens"
+      :side? true
+      :lang "css"
+      :description [:span "Surface, border and focus ring. Scope them to one field, a form, or " [:code ":root"] "."]
+      :code ".signup ty-input {
+  --ty-input-bg: #0c1f1d;
+  --ty-input-border: #115e59;
+  --ty-input-border-hover: #0f766e;
+  --ty-input-border-focus: #2dd4bf;
+  --ty-input-shadow-focus: #2dd4bf40;
+}"}
+     [:div.flex.flex-col.gap-3 {:style {:width "100%" :max-width "320px"}}
+      (for [[label ph] [["Email" "ada@example.com"] ["Company" "Analytical Engines Ltd."]]]
+        [:ty-input {:replicant/key label
+                    :label label :placeholder ph
+                    :style {"--ty-input-bg" "#0c1f1d"
+                            "--ty-input-border" "#115e59"
+                            "--ty-input-border-hover" "#0f766e"
+                            "--ty-input-border-focus" "#2dd4bf"
+                            "--ty-input-shadow-focus" "#2dd4bf40"}}])])
+
+    (example
+     {:title "Flavored fields"
+      :side? true
+      :lang "html"
+      :description "A flavor tints the border at rest and the focus ring. Use it for state, not decoration."
+      :code "<ty-input flavor=\"success\">
+<ty-input flavor=\"warning\">
+<ty-input flavor=\"danger\"
+  error=\"Taken\">"}
+     [:div.flex.flex-col.gap-3 {:style {:width "100%" :max-width "320px"}}
+      [:ty-input {:label "Username" :flavor "success" :value "ada"}
+       [:ty-icon {:slot "end" :name "check"}]]
+      [:ty-input {:label "Display name" :flavor "warning" :value "ada.lovelace"}]
+      [:ty-input {:label "Handle" :flavor "danger" :value "admin" :error "Taken"}]]))
+
+   (api-section
+    {:properties validation-properties
+     :attributes ["Value"
+                  ["type" "string" "\"text\"" "text, email, password, tel, url, or a formatted number: number, currency, percent, compact."]
+                  ["value" "string" "\"\"" "Current value. Numeric types hold the plain number."]
+                  ["name" "string" "Form field name."]
+                  ["placeholder" "string" "Hint shown while empty."]
+                  "Label & state"
+                  ["label" "string" "Label above the field."]
+                  ["required" "boolean" "false" "Marks the label and blocks form submission while empty."]
+                  ["error" "string" "Message under the field. Empty string clears it."]
+                  ["disabled" "boolean" "false" "Not editable, left out of the form."]
+                  "Appearance"
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl. Shared ladder with buttons and other fields."]
+                  ["flavor" "string" "\"neutral\"" "Tints border and focus ring: primary, success, danger, warning or a custom flavor."]
+                  "Numbers"
+                  ["currency" "string" "\"USD\"" "ISO currency code for type=\"currency\"."]
+                  ["locale" "string" "\"en-US\"" "Number formatting locale."]
+                  ["precision" "number" "Fraction digits, 0–10."]
+                  "Events"
+                  ["debounce" "number" "0" "Delay input and change until typing pauses, in ms (max 5000)."]]
+     :events [["input" "{value, formattedValue, rawValue, originalEvent}" "Every keystroke, or after the debounce."]
+              ["change" "{value, formattedValue, rawValue, originalEvent}" "Committed value, on blur or Enter."]
+              ["focus / blur" "{originalEvent}" "Focus moved in or out. Blur flushes pending debounced events."]]
+     :slots [["start" "Before the text: icon, prefix."]
+             ["end" "After the text: unit, suffix, a button."]]
+     :keyboard [["Password eye" "Toggles visibility; focus stays in the field."]
+                ["Numeric types" "Mobile keyboards open the decimal pad."]]
+     :css-vars [["--ty-input-bg" "Field background."]
+                ["--ty-input-color" "Text color."]
+                ["--ty-input-placeholder" "Placeholder color."]
+                ["--ty-input-border / -hover / -focus" "Border by state."]
+                ["--ty-input-shadow-focus" "Focus ring."]
+                ["--ty-input-disabled-bg / -border / -color" "Disabled look."]]})))

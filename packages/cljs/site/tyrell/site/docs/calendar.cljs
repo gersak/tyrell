@@ -1,173 +1,292 @@
 (ns tyrell.site.docs.calendar
   "Documentation for ty-calendar component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.state :as state]))
+
+(defn- attrs->html
+  "Render playground props as an attribute string, skipping defaults."
+  [{:keys [size flavor locale navigation]}]
+  (str/join "" [(when (not= size "md") (str " size=\"" size "\""))
+                (when (not= flavor "primary") (str " flavor=\"" flavor "\""))
+                (when (not= locale "en-US") (str " locale=\"" locale "\""))
+                (when-not navigation " show-navigation=\"false\"")]))
+
+(defn- snippets [{:keys [size flavor locale navigation] :as props}]
+  (let [kv (fn [k v] (str "\n  " k " \"" v "\""))]
+    [["html" "HTML" "html"
+      (str "<ty-calendar" (attrs->html props) ">\n</ty-calendar>")]
+     ["react" "React" "javascript"
+      (str "import { TyCalendar } from 'tyrell-react'\n\n"
+           "<TyCalendar"
+           (when (not= size "md") (str "\n  size=\"" size "\""))
+           (when (not= flavor "primary") (str "\n  flavor=\"" flavor "\""))
+           (when (not= locale "en-US") (str "\n  locale=\"" locale "\""))
+           (when-not navigation "\n  showNavigation={false}")
+           "\n  onChange={(e) => setDate(e.detail)}\n/>")]
+     ["reagent" "Reagent" "clojure"
+      (str "(:require [tyrell.react :as ty])\n\n"
+           "[:> ty/Calendar\n {"
+           (str/triml
+            (str (when (not= size "md") (kv ":size" size))
+                 (when (not= flavor "primary") (kv ":flavor" flavor))
+                 (when (not= locale "en-US") (kv ":locale" locale))
+                 (when-not navigation "\n  :show-navigation false")
+                 "\n  :on-change #(reset! date (.-detail %))"))
+           "}]")]
+     ["replicant" "Replicant" "clojure"
+      (str "[:ty-calendar\n {"
+           (str/triml
+            (str (when (not= size "md") (kv ":size" size))
+                 (when (not= flavor "primary") (kv ":flavor" flavor))
+                 (when (not= locale "en-US") (kv ":locale" locale))
+                 (when-not navigation (kv ":show-navigation" "false"))
+                 "\n  :on {:change #(set-date! (.-detail %))}"))
+           "}]")]
+     ["datastar" "Datastar" "html"
+      (str "<ty-calendar" (attrs->html props)
+           "\n  data-on:change=\"$day = evt.detail.day\">\n</ty-calendar>")]]))
+
+(defn- iso
+  "Local YYYY-MM-DD (toISOString is UTC and can land on the wrong day)."
+  [^js d]
+  (let [pad #(.padStart (str %) 2 "0")]
+    (str (.getFullYear d) "-" (pad (inc (.getMonth d))) "-" (pad (.getDate d)))))
+
+(defn- near-today
+  "A day in the current month other than today, so both markers show."
+  []
+  (let [d (js/Date.)
+        day (.getDate d)]
+    (.setDate d (if (> day 3) (- day 2) (+ day 2)))
+    (iso d)))
+
+(defn- today+ [days]
+  (let [d (js/Date.)]
+    (.setDate d (+ (.getDate d) days))
+    (iso d)))
+
+(defn- nightly-rate
+  "Deterministic demo price: weekends cost more, a few mid-week dips."
+  [^js ctx]
+  (+ (if (.-weekend ctx) 149 109)
+     (* 10 (mod (* 7 (.-dayInMonth ctx)) 4))))
+
+(defn- price-day
+  "dayContentFn for the pricing example: day number over its nightly rate."
+  [^js ctx]
+  (let [el (js/document.createElement "div")
+        rate (nightly-rate ctx)]
+    (set! (.. el -style -cssText)
+          "display:flex;flex-direction:column;align-items:center;line-height:1.1;gap:2px")
+    (set! (.-innerHTML el)
+          (str "<span>" (.-dayInMonth ctx) "</span>"
+               "<span style=\"font-size:0.62em;opacity:" (if (.-otherMonth ctx) 0 0.7) "\">€" rate "</span>"))
+    el))
 
 (defn view []
-  (docs-page
-   (component-header "ty-calendar"
-                     "Complete date picker combining navigation and a month grid with date selection, form integration, and ISO date API. Can be stateless for full external control.")
+  (component-page
+   {:title "Calendar"
+    :group "Date & time"
+    :tag "ty-calendar"
+    :description "An inline month grid with a month and year view. Localized, keyboard-driven, form-associated. Controlled or self-managed."
+    :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyCalendar (React)" "atom"]]
+    :source "packages/core/src/components/calendar.ts"
+    :mark "31"
+    :demo [:ty-calendar {:value (near-today)}]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :calendar
+     :defaults {:size "md" :flavor "primary" :locale "en-US" :navigation true}
+     :controls [{:key :size :options ["sm" "md" "lg"]}
+                {:key :flavor :options ["primary" "success" "danger" "warning"] :swatch? true :tones? true}
+                {:key :locale :options ["en-US" "de-DE" "ja-JP"]}
+                {:key :navigation :switch? true}]
+     :render (fn [{:keys [size flavor locale navigation]}]
+               [:ty-calendar {:value (near-today)
+                              :size size
+                              :flavor flavor
+                              :locale locale
+                              :show-navigation (if navigation "true" "false")}])
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "value"
-        :type "string"
-        :default "\"\""
-        :description "Selected date as ISO string (YYYY-MM-DD). Preferred over year/month/day"}
-       {:name "year"
-        :type "number"
-        :default "current year"
-        :description "Initially displayed year — use value for the selected date"}
-       {:name "month"
-        :type "number"
-        :default "current month"
-        :description "Initially displayed month (1–12)"}
-       {:name "day"
-        :type "number"
-        :default "-"
-        :description "Initially selected day (1–31)"}
-       {:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name — submits selected date as ISO string in FormData"}
-       {:name "size"
-        :type "string"
-        :default "\"md\""
-        :description "Predefined size: sm, md, lg"}
-       {:name "locale"
-        :type "string"
-        :default "\"en-US\""
-        :description "Locale for day/month names (e.g. \"de-DE\", \"fr-FR\")"}
-       {:name "min"
-        :type "string"
-        :default "-"
-        :description "Earliest selectable date (ISO YYYY-MM-DD) — earlier days disabled, navigation clamped"}
-       {:name "max"
-        :type "string"
-        :default "-"
-        :description "Latest selectable date (ISO YYYY-MM-DD) — later days disabled, navigation clamped"}
-       {:name "show-navigation"
-        :type "boolean"
-        :default "true"
-        :description "Show or hide the month/year navigation bar"}
-       {:name "stateless"
-        :type "boolean"
-        :default "false"
-        :description "Disable internal state — parent controls all state via attributes and events"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Month & year view"
+       :span 4
+       :description [:span "Click the title to jump by month. The arrows step whole years there; "
+                     [:kbd "Esc"] " goes back to days."]
+       :code "<ty-calendar value=\"2026-09-24\"></ty-calendar>"}
+      [:ty-calendar {:value (near-today)}])
 
-    [:div
-     (section-label "Events")
-     (event-table
-      [{:name "change"
-        :payload "{year, month, day, action: 'select', source: 'day-click', dayContext}"
-        :when-fired "Fires when a day is selected by clicking"}
-       {:name "navigate"
-        :payload "{month, year, action: 'navigate', source: 'navigation'}"
-        :when-fired "Fires when navigating between months or years"}])]]
+     (example
+      {:title "Min & max"
+       :span 2
+       :description "Days outside the range are disabled; navigation stops at the edges."
+       :code (str "<ty-calendar min=\"" (today+ -3) "\"\n  max=\"" (today+ 21) "\">")}
+      [:ty-calendar {:size "sm" :min (today+ -3) :max (today+ 21)}])
 
-   (doc-section "Examples"
-     [:div.space-y-6
+     (example
+      {:title "Custom day content"
+       :span 6
+       :lang "javascript"
+       :description [:span "Set " [:code "dayContentFn"] " (a property, not an attribute) to render anything in a day cell. It receives a "
+                     [:code "DayContext"] ": " [:code "year"] ", " [:code "month"] ", " [:code "dayInMonth"] ", "
+                     [:code "weekend"] ", " [:code "otherMonth"] ", " [:code "today"] ", " [:code "value"] "."]
+       :code "const cal = document.querySelector('ty-calendar');
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Displays the current month by default. Selected date is exposed as an ISO string via the " [:code "value"] " property and emitted in the " [:code "change"] " event."]
-       (demo-area
-        [:div.flex.justify-center
-         [:ty-calendar]])
-       (code-block "<ty-calendar></ty-calendar>
+cal.dayContentFn = (ctx) => {
+  const el = document.createElement('div');
+  el.innerHTML = `<span>${ctx.dayInMonth}</span>
+    <small>€${rateFor(ctx)}</small>`;
+  return el;
+};"}
+      [:ty-calendar {:size "lg"
+                     :replicant/on-mount (fn [{:replicant/keys [node]}]
+                                           (set! (.-dayContentFn ^js node) price-day))}])
 
-<!-- Pre-select a date -->
-<ty-calendar value=\"2025-06-15\"></ty-calendar>")]
+     (example
+      {:title "Controlled"
+       :span 3
+       :description [:span "With " [:code "stateless"] " the calendar only reports. Clicks fire "
+                     [:code "day-click"] "; you write " [:code "value"] " back."]
+       :code "<ty-calendar stateless value=\"2026-09-24\"></ty-calendar>
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Three predefined sizes — " [:code "sm"] " for compact spaces, " [:code "lg"] " for prominent date pickers."]
-       (demo-area
-        [:div.flex.flex-wrap.items-start.gap-6
-         [:div.flex.flex-col.items-center.gap-2
-          [:ty-calendar {:size "sm"}]
-          [:span.ty-text-- {:style {:font-size "0.75rem"}} "sm"]]
-         [:div.flex.flex-col.items-center.gap-2
-          [:ty-calendar {:size "md"}]
-          [:span.ty-text-- {:style {:font-size "0.75rem"}} "md"]]
-         [:div.flex.flex-col.items-center.gap-2
-          [:ty-calendar {:size "lg"}]
-          [:span.ty-text-- {:style {:font-size "0.75rem"}} "lg"]]])
-       (code-block "<ty-calendar size=\"sm\"></ty-calendar>
-<ty-calendar size=\"md\"></ty-calendar>
-<ty-calendar size=\"lg\"></ty-calendar>")]
+cal.addEventListener('day-click', (e) => {
+  const { year, month, day } = e.detail;
+  cal.value = toISO(year, month, day);
+});"}
+      (let [value (or (get-in @state/state [:calendar-doc :controlled]) (near-today))]
+        [:div.flex.flex-col.items-start.gap-3
+         [:ty-calendar {:stateless ""
+                        :size "sm"
+                        :value value
+                        :on {:day-click (fn [^js e]
+                                          (let [d (.-detail e)
+                                                pad #(.padStart (str %) 2 "0")]
+                                            (swap! state/state assoc-in [:calendar-doc :controlled]
+                                                   (str (.-year d) "-" (pad (.-month d)) "-" (pad (.-day d))))))}}]
+         [:code.ty-text-.text-xs (str "value = \"" value "\"")]]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Locale")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "locale"] " to localize day and month names. Weeks always start on Monday."]
-       (demo-area
-        [:div.flex.flex-wrap.items-start.gap-6
-         [:div.flex.flex-col.items-center.gap-2
-          [:ty-calendar {:locale "de-DE"}]
-          [:span.ty-text-- {:style {:font-size "0.75rem"}} "de-DE"]]
-         [:div.flex.flex-col.items-center.gap-2
-          [:ty-calendar {:locale "ja-JP"}]
-          [:span.ty-text-- {:style {:font-size "0.75rem"}} "ja-JP"]]])
-       (code-block "<ty-calendar locale=\"de-DE\"></ty-calendar>
-<ty-calendar locale=\"ja-JP\"></ty-calendar>")]
+     (example
+      {:title "With an HTML form"
+       :span 3
+       :description [:span "Set " [:code "name"] " and the ISO date is in FormData on submit."]
+       :code "<form>
+  <ty-calendar name=\"event-date\"></ty-calendar>
+  <ty-button type=\"submit\" size=\"md\">Submit</ty-button>
+</form>
+<!-- FormData: event-date=2026-09-24 -->"}
+      [:form.flex.flex-col.items-start.gap-3
+       {:on {:submit (fn [e]
+                       (.preventDefault e)
+                       (let [data (js/FormData. (.-target e))]
+                         (js/alert (str "Date: " (.get data "event-date")))))}}
+       [:ty-calendar {:name "event-date" :size "sm" :value (near-today)}]
+       [:ty-button {:type "submit" :flavor "primary" :size "md"} "Submit"]])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Without Navigation")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "show-navigation=\"false\""] " to hide the navigation bar — useful when you control the displayed month externally."]
-       (demo-area
-        [:div.flex.justify-center
-         [:ty-calendar {:show-navigation "false"}]])
-       (code-block "<ty-calendar show-navigation=\"false\"></ty-calendar>")]])
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const cal = document.querySelector('ty-calendar');
 
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Stateless / Controlled Mode")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "stateless"] " to take full control. The calendar emits " [:code "change"] " and " [:code "navigate"] " events but never updates its own attributes — your code does that."]
-       (code-block "const cal = document.querySelector('ty-calendar');
+cal.value = '2026-12-24';           // select and show that month
+cal.min = '2026-01-01';             // clamp selection and navigation
 
 cal.addEventListener('change', (e) => {
-  const { year, month, day } = e.detail;
-  selectedDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  // reflect state back onto the element
-  cal.setAttribute('value', selectedDate);
+  const { year, month, day, dayContext } = e.detail;
 });
 
 cal.addEventListener('navigate', (e) => {
-  const { year, month } = e.detail;
-  cal.setAttribute('year', year);
-  cal.setAttribute('month', month);
-});" "javascript")]
+  const { year, month } = e.detail; // fires for arrows, month view, Page Up/Down
+});"}
+      nil)))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Form Integration")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "name"] " to participate in form submission. The value is an ISO date string (YYYY-MM-DD)."]
-       (demo-area
-        [:form.space-y-4
-         {:on {:submit (fn [e]
-                         (.preventDefault e)
-                         (let [data (js/FormData. (.-target e))
-                               date (.get data "event-date")]
-                           (js/alert (str "Selected: " date))))}}
-         [:ty-calendar {:name "event-date" :value "2025-06-15"}]
-         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
-       (code-block "<form>
-  <ty-calendar name=\"event-date\"></ty-calendar>
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-</form>
-<!-- FormData: event-date=2025-06-15 -->")]])
-))
+   (page-section
+    {:title "Theming" :sub "CSS variables. No build step." :dark? true}
+    (example
+     {:title "Accent"
+      :side? true
+      :lang "css"
+      :description "Selected day and today marker, independent of the flavor."
+      :code "ty-calendar {
+  --ty-calendar-accent: hotpink;
+  --ty-calendar-today-accent: gold;
+}"}
+     [:ty-calendar {:style {"--ty-calendar-accent" "hotpink"
+                            "--ty-calendar-today-accent" "gold"}
+                    :value (near-today)}])
+
+    (example
+     {:title "Day cells"
+      :side? true
+      :lang "css"
+      :description "Shape and colors of the grid itself. Weekends can carry their own tone."
+      :code "ty-calendar {
+  --ty-calendar-day-radius: 999px;
+  --ty-calendar-day-hover-bg: #7c2d12;
+  --ty-calendar-weekend-color: #fb923c;
+}"}
+     [:ty-calendar {:style {"--ty-calendar-day-radius" "999px"
+                            "--ty-calendar-day-hover-bg" "#7c2d12"
+                            "--ty-calendar-day-hover-color" "#ffedd5"
+                            "--ty-calendar-weekend-color" "#fb923c"}
+                    :value (near-today)}])
+
+    (example
+     {:title "Navigation"
+      :side? true
+      :lang "css"
+      :description "Title, year and arrow buttons. The focus outline follows the accent unless set."
+      :code "ty-calendar {
+  --ty-calendar-nav-title-color: #5eead4;
+  --ty-calendar-nav-year-color: #2dd4bf;
+  --ty-calendar-nav-border: #115e59;
+  --ty-calendar-nav-hover-bg: #134e4a;
+}"}
+     [:ty-calendar {:style {"--ty-calendar-nav-title-color" "#5eead4"
+                            "--ty-calendar-nav-year-color" "#2dd4bf"
+                            "--ty-calendar-nav-border" "#115e59"
+                            "--ty-calendar-nav-hover-bg" "#134e4a"
+                            "--ty-calendar-nav-hover-color" "#ccfbf1"
+                            "--ty-calendar-accent" "#14b8a6"}
+                    :value (near-today)}]))
+
+   (api-section
+    {:properties validation-properties
+     :attributes ["Value"
+                  ["value" "string" "\"\"" "Selected date as ISO YYYY-MM-DD. Also sets the displayed month."]
+                  ["name" "string" "Form field name. Submits the ISO value with its form."]
+                  ["min" "string" "Earliest selectable date (ISO). Earlier days are disabled and navigation is clamped."]
+                  ["max" "string" "Latest selectable date (ISO). Later days are disabled and navigation is clamped."]
+                  ["year / month / day" "number" "current" "Displayed month and selected day as separate numbers. Prefer value."]
+                  "Appearance"
+                  ["size" "string" "\"md\"" "sm, md or lg. Clears width."]
+                  ["width" "string" "Explicit width, e.g. 320px. Clears size."]
+                  ["flavor" "string" "\"primary\"" "Selected-day fill: any flavor, with + and - tones (success+, danger-)."]
+                  ["locale" "string" "\"en-US\"" "Day and month names, e.g. de-DE. Falls back to the nearest lang attribute."]
+                  ["show-navigation" "boolean" "true" "Show the title and arrow bar."]
+                  "Behavior"
+                  ["stateless" "boolean" "false" "Never updates itself. Clicks fire day-click; the parent sets value."]]
+     :events [["change" "{year, month, day, action, source, dayContext}" "A day was selected (not fired in stateless mode)."]
+              ["navigate" "{year, month, action, source}" "The displayed month changed: arrows, month view or Page Up/Down."]
+              ["day-click" "{year, month, day, value, dayContext}" "Stateless mode only: a day was clicked. Cancelable."]]
+     :keyboard [["Arrows" "Move between days; in the month view, between months."]
+                ["Enter / Space" "Select the focused day or month."]
+                ["Page Up / Page Down" "Previous / next month."]
+                ["Shift + Page Up / Down" "Previous / next year."]
+                ["Title button" "Opens the month/year view. Arrows there step years; Escape goes back to days."]]
+     :css-vars [["--ty-calendar-accent" "Selected day. Overrides the flavor."]
+                ["--ty-calendar-today-accent" "Today dot and outline."]
+                ["--ty-calendar-selected-bg / -color" "Selected fill and text, when accent isn't enough."]
+                ["--ty-calendar-day-radius" "Day cell corner radius."]
+                ["--ty-calendar-day-color / -hover-bg / -hover-color" "Day text and hover."]
+                ["--ty-calendar-weekend-color" "Saturday and Sunday text."]
+                ["--ty-calendar-other-month-color" "Leading and trailing days of adjacent months."]
+                ["--ty-calendar-header-color" "Weekday header row."]
+                ["--ty-calendar-nav-title-color / -year-color" "Title month and year."]
+                ["--ty-calendar-nav-border / -hover-bg / -color" "Arrow buttons."]]})))

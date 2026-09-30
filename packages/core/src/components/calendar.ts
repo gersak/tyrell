@@ -10,9 +10,10 @@ import { calendarStyles } from '../styles/calendar.js';
 import './calendar-month.js';
 import './calendar-navigation.js';
 import type { DayContentFn, DayClickDetail, CalendarSize } from './calendar-month.js';
-import type { NavigationChangeDetail } from './calendar-navigation.js';
-import { parseISODate, type DayContext } from '../utils/calendar-utils.js';
+import type { NavigationChangeDetail, CalendarView } from './calendar-navigation.js';
+import { parseISODate, getMonthName, type DayContext } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
+import { ValidityController } from '../utils/validity.js';
 
 /**
  * Internal calendar state
@@ -103,8 +104,15 @@ export class TyCalendar extends HTMLElement {
 
   private _navigation?: HTMLElement;
   private _monthDisplay?: HTMLElement;
+  private _container?: HTMLElement;
+
+  // Day grid, or the month/year grid opened from the title
+  private _view: CalendarView = 'days';
+  private _monthGrid?: HTMLElement;
+  private _dayGridHeight = 0;
 
   private _internals?: ElementInternals;
+  private _validity?: ValidityController;
   
   // Locale observer cleanup
   private _localeObserver?: () => void;
@@ -128,6 +136,7 @@ export class TyCalendar extends HTMLElement {
 
     if ('attachInternals' in this) {
       this._internals = this.attachInternals();
+      this._validity = new ValidityController(this, this._internals);
     }
   }
 
@@ -195,6 +204,9 @@ export class TyCalendar extends HTMLElement {
     
     this._navigation = undefined;
     this._monthDisplay = undefined;
+    this._monthGrid = undefined;
+    this._container = undefined;
+    this._view = 'days';
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
@@ -596,6 +608,11 @@ export class TyCalendar extends HTMLElement {
       (this._navigation as any).max = this._max ?? '';
       // Always sync width (set or clear)
       (this._navigation as any).width = this._width;
+      (this._navigation as any).view = this._view;
+    }
+
+    if (this._monthGrid) {
+      this.showBody();
     }
 
     if (this._monthDisplay) {
@@ -661,14 +678,14 @@ export class TyCalendar extends HTMLElement {
       const max = this._max ? parseISODate(this._max) : null;
 
       if (min && sel < Date.UTC(min.year, min.month - 1, min.day)) {
-        this._internals.setValidity(
+        this._validity!.set(
           { rangeUnderflow: true },
           `Date must be ${this._min} or later`,
         );
         return;
       }
       if (max && sel > Date.UTC(max.year, max.month - 1, max.day)) {
-        this._internals.setValidity(
+        this._validity!.set(
           { rangeOverflow: true },
           `Date must be ${this._max} or earlier`,
         );
@@ -676,15 +693,30 @@ export class TyCalendar extends HTMLElement {
       }
     }
 
-    this._internals.setValidity({});
+    this._validity!.set({});
   }
+
+  // --- Constraint validation (same API as native form controls) -------------
+
+  get form(): HTMLFormElement | null { return this._internals?.form ?? null; }
+  get validity(): ValidityState | undefined { return this._internals?.validity; }
+  get validationMessage(): string { return this._internals?.validationMessage ?? ''; }
+  get willValidate(): boolean { return this._internals?.willValidate ?? false; }
+  checkValidity(): boolean { return this._internals?.checkValidity() ?? true; }
+  reportValidity(): boolean { return this._validity?.report() ?? true; }
+  setCustomValidity(message: string): void { this._validity?.setCustom(message); }
 
   private handleNavigationChange(event: CustomEvent<NavigationChangeDetail>): void {
     event.preventDefault();
     event.stopPropagation();
 
     const { month, year } = event.detail;
+    this.goTo(month, year);
+  }
 
+  /** Show a month (and emit navigate). Shared by the arrows, the month grid
+      and Page Up / Page Down. */
+  private goTo(month: number, year: number): void {
     this._state.displayMonth = month;
     this._state.displayYear = year;
 
@@ -782,7 +814,13 @@ export class TyCalendar extends HTMLElement {
       (nav as any).width = this._width;
     }
 
+    (nav as any).view = this._view;
+
     nav.addEventListener('change', (e) => this.handleNavigationChange(e as CustomEvent<NavigationChangeDetail>));
+    nav.addEventListener('view-toggle', (e) => {
+      this.setView((e as CustomEvent<{ view: CalendarView }>).detail.view);
+      this.focusNavTitle();
+    });
 
     this._navigation = nav;
 
@@ -833,9 +871,12 @@ export class TyCalendar extends HTMLElement {
     ensureStyles(root, { css: calendarStyles, id: 'ty-calendar' });
 
     root.innerHTML = '';
+    this._monthGrid = undefined;
 
     const container = document.createElement('div');
     container.className = 'calendar-container';
+    container.addEventListener('keydown', (e) => this.handleKeydown(e as KeyboardEvent));
+    this._container = container;
 
     if (this._showNavigation) {
       const nav = this.createNavigation();
@@ -846,6 +887,168 @@ export class TyCalendar extends HTMLElement {
     container.appendChild(month);
 
     root.appendChild(container);
+
+    if (this._view === 'months') this.showBody();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Month/year view
+  // ---------------------------------------------------------------------------
+
+  private setView(view: CalendarView): void {
+    if (view === this._view) return;
+    if (view === 'months' && this._monthDisplay) {
+      // Keep the popup the same height while the grid is swapped
+      this._dayGridHeight = this._monthDisplay.getBoundingClientRect().height;
+    }
+    this._view = view;
+    if (this._navigation) (this._navigation as any).view = view;
+    this.showBody();
+  }
+
+  /** Put the day grid or a freshly built month grid under the navigation. */
+  private showBody(): void {
+    const container = this._container;
+    if (!container || !this._monthDisplay) return;
+
+    if (this._view === 'days') {
+      this._monthGrid?.remove();
+      this._monthGrid = undefined;
+      if (!this._monthDisplay.isConnected) container.appendChild(this._monthDisplay);
+      return;
+    }
+
+    const grid = this.buildMonthGrid();
+    if (this._monthGrid) this._monthGrid.replaceWith(grid);
+    else {
+      this._monthDisplay.remove();
+      container.appendChild(grid);
+    }
+    this._monthGrid = grid;
+  }
+
+  private static monthIndex(year: number, month: number): number {
+    return year * 12 + (month - 1);
+  }
+
+  /** min/max as month indices (null when unset) */
+  private boundIndices(): { minIdx: number | null; maxIdx: number | null } {
+    const min = this._min ? parseISODate(this._min) : null;
+    const max = this._max ? parseISODate(this._max) : null;
+    return {
+      minIdx: min ? TyCalendar.monthIndex(min.year, min.month) : null,
+      maxIdx: max ? TyCalendar.monthIndex(max.year, max.month) : null,
+    };
+  }
+
+  private buildMonthGrid(): HTMLElement {
+    const { displayYear, displayMonth, selectedYear, selectedMonth } = this._state;
+    const today = getCurrentDate();
+    const { minIdx, maxIdx } = this.boundIndices();
+
+    const grid = document.createElement('div');
+    grid.className = `month-grid size-${this._size}`;
+    grid.setAttribute('role', 'grid');
+    grid.setAttribute('aria-label', String(displayYear));
+    if (this._dayGridHeight) grid.style.minHeight = `${this._dayGridHeight}px`;
+    if (this._width) grid.style.setProperty('--calendar-width', this._width);
+
+    for (let month = 1; month <= 12; month++) {
+      const idx = TyCalendar.monthIndex(displayYear, month);
+      const disabled = (minIdx !== null && idx < minIdx) || (maxIdx !== null && idx > maxIdx);
+      const selected = selectedYear === displayYear && selectedMonth === month;
+
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'month-cell';
+      cell.setAttribute('role', 'gridcell');
+      cell.setAttribute('aria-selected', String(selected));
+      cell.setAttribute('aria-label', `${getMonthName(month, this.locale, 'long')} ${displayYear}`);
+      cell.dataset.month = String(month);
+      cell.tabIndex = month === displayMonth ? 0 : -1;
+      cell.disabled = disabled;
+      if (selected) cell.classList.add('selected');
+      if (today.year === displayYear && today.month === month) cell.classList.add('current');
+      cell.textContent = getMonthName(month, this.locale, 'short');
+      cell.addEventListener('click', () => this.pickMonth(month));
+      grid.appendChild(cell);
+    }
+
+    // Arrows move within the 3-column grid
+    grid.addEventListener('keydown', (e: KeyboardEvent) => {
+      const delta =
+        e.key === 'ArrowLeft' ? -1 :
+        e.key === 'ArrowRight' ? 1 :
+        e.key === 'ArrowUp' ? -3 :
+        e.key === 'ArrowDown' ? 3 :
+        0;
+      if (!delta) return;
+      const cells = Array.from(grid.querySelectorAll<HTMLButtonElement>('.month-cell'));
+      const current = cells.findIndex(c => c === (this.shadowRoot as ShadowRoot).activeElement);
+      const next = cells[(current === -1 ? displayMonth - 1 : current) + delta];
+      if (!next || next.disabled) return;
+      e.preventDefault();
+      cells.forEach(c => (c.tabIndex = -1));
+      next.tabIndex = 0;
+      next.focus();
+    });
+
+    return grid;
+  }
+
+  private pickMonth(month: number): void {
+    this.setView('days');
+    this.goTo(month, this._state.displayYear);
+    this.focusDayGrid();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Keyboard: Page Up/Down = month (year in the month view), Shift = year,
+  // Escape closes the month view (and stops there, so a surrounding
+  // date-picker popup stays open).
+  // ---------------------------------------------------------------------------
+
+  private handleKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape' && this._view === 'months') {
+      e.preventDefault();
+      e.stopPropagation();
+      this.setView('days');
+      this.focusNavTitle();
+      return;
+    }
+
+    if (e.key !== 'PageUp' && e.key !== 'PageDown') return;
+    e.preventDefault();
+
+    const sign = e.key === 'PageUp' ? -1 : 1;
+    const step = e.shiftKey || this._view === 'months' ? 12 : 1;
+    const current = TyCalendar.monthIndex(this._state.displayYear, this._state.displayMonth);
+    const { minIdx, maxIdx } = this.boundIndices();
+    let target = current + sign * step;
+    if (minIdx !== null && target < minIdx) target = minIdx;
+    if (maxIdx !== null && target > maxIdx) target = maxIdx;
+    if (target === current) return;
+
+    this.goTo((target % 12) + 1, Math.floor(target / 12));
+    if (this._view === 'months') {
+      const cell = this._monthGrid?.querySelector<HTMLElement>('.month-cell[tabindex="0"]');
+      cell?.focus();
+    } else {
+      this.focusDayGrid();
+    }
+  }
+
+  private focusNavTitle(): void {
+    requestAnimationFrame(() => {
+      (this._navigation?.shadowRoot?.querySelector('.nav-title') as HTMLElement | null)?.focus();
+    });
+  }
+
+  private focusDayGrid(): void {
+    requestAnimationFrame(() => {
+      const cell = this._monthDisplay?.shadowRoot?.querySelector('.calendar-day-cell[tabindex="0"]') as HTMLElement | null;
+      cell?.focus();
+    });
   }
 }
 

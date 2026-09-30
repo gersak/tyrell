@@ -163,49 +163,20 @@ button.addEventListener('ty-click', (e) => {
 
 ### Icon System
 
-The core package includes the icon registry utility but **not the icon libraries** themselves (to keep package size small).
+Every icon set ships in this package as named exports. Import the ones you use and register them; the rest is tree-shaken.
 
-**Option 1: Use the separate icon package** (coming soon):
-```bash
-npm install tyrell-components/icons
-```
-
-```typescript
-import { check, heart, star } from 'tyrell-components/icons/lucide'
+```js
 import { registerIcons } from 'tyrell-components/icons/registry'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-registerIcons({ check, heart, star })
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
 
-**Option 2: Bring your own SVG icons**:
-```typescript
-import { registerIcons } from 'tyrell-components/icons/registry'
-
-registerIcons({
-  'check': '<svg xmlns="http://www.w3.org/2000/svg">...</svg>',
-  'custom-logo': '<svg>...</svg>'
-})
-```
-
-**Option 3: Use the global API**:
 ```html
-<script src="https://cdn.jsdelivr.net/npm/tyrell-components/dist/tyrell.js"></script>
-<script>
-  window.tyIcons.register({
-    'check': '<svg>...</svg>',
-    'heart': '<svg>...</svg>'
-  })
-  
-  console.log(window.tyVersion)              // '0.2.0'
-  console.log(window.tyIcons.has('check'))   // true
-  console.log(window.tyIcons.list())         // ['check', 'heart']
-</script>
+<ty-icon name="check"></ty-icon>
 ```
 
-**Why separate packages?**
-- Core package stays lightweight (~2.6MB)
-- Install icons only if you need them
-- Or use your own custom SVG icons
+CDN build: `window.tyIcons.register({ … })`. Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](https://github.com/gersak/ty/blob/master/guides/ICONS_GUIDE.md).
 
 ## Browser Support
 

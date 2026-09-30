@@ -211,39 +211,14 @@ interface TyButtonElement extends HTMLElement {
 
 ## 🎯 Icon System
 
-The core package includes the **icon registry utility** but not the icon libraries (to keep package size small).
-
-### Using Icons
-
-```typescript
-// Option 1: Tree-shakeable imports (Recommended)
-import { check, heart, star } from 'tyrell-components/icons/lucide'
+```js
 import { registerIcons } from 'tyrell-components/icons/registry'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-registerIcons({ check, heart, star })  // ~0.5-1KB per icon
-
-// Option 2: Bring your own SVG
-registerIcons({
-  'my-icon': '<svg xmlns="http://www.w3.org/2000/svg">...</svg>'
-})
-
-// Option 3: Global API (CDN usage)
-window.tyIcons.register({
-  'check': '<svg>...</svg>',
-  'heart': '<svg>...</svg>'
-})
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
 
-**Available Libraries:**
-- **Lucide**: 1,636 icons (recommended)
-- **Heroicons**: 4 variants (outline, solid, mini, micro)
-- **Material Design**: 5 variants
-- **FontAwesome**: 3 variants (solid, regular, brands)
-
-**Why separate?**
-- Core package stays lightweight (~2.6MB)
-- Install only icons you need
-- Or use custom SVG icons
+CDN build: `window.tyIcons.register({ … })`. Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../../../guides/ICONS_GUIDE.md).
 
 ---
 

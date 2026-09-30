@@ -1,246 +1,202 @@
 (ns tyrell.site.docs.radio
-  "Documentation for ty-radio-group and ty-radio components"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  "Documentation for ty-radio and ty-radio-group"
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
+
+(def ^:private plans [["starter" "Starter" "Free, up to 3 projects."]
+                      ["pro" "Pro" "$12 a month, unlimited projects."]
+                      ["team" "Team" "$40 a month, shared workspaces."]])
+
+(defn- prop-attrs
+  "Non-default group props, as they appear in the snippets."
+  [{:keys [size flavor orientation required disabled]}]
+  (cond-> {}
+    (not= orientation "vertical") (assoc :orientation orientation)
+    (not= size "sm") (assoc :size size)
+    (not= flavor "primary") (assoc :flavor flavor)
+    required (assoc :required true)
+    disabled (assoc :disabled true)))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     [(into [:ty-radio-group (merge {:label "Plan" :name "plan" :value "pro"} attrs)]
+            (for [[v label] plans] [:label {:snippet/inline true} [:ty-radio {:value v}] label]))]
+     :datastar (str "<ty-radio-group name=\"plan\"" (snippets/attr-str attrs)
+                    "\n  data-on:change=\"$plan = evt.detail.value\">\n  …\n</ty-radio-group>"))))
+
+(defn- option
+  "A labeled radio with an optional hint line."
+  [value text & [hint]]
+  [:label.flex.items-start.gap-3.cursor-pointer.text-sm {:replicant/key value}
+   [:ty-radio {:value value}]
+   [:span.flex.flex-col {:class ["gap-0.5"]}
+    [:span.ty-text+ text]
+    (when hint [:span.text-xs.ty-text- hint])]])
+
+(defn- render-lineup [{:keys [size flavor orientation required disabled]}]
+  [:ty-radio-group (cond-> {:label "Plan" :name "plan" :value "pro"
+                            :size size :flavor flavor :orientation orientation}
+                     required (assoc :required "")
+                     disabled (assoc :disabled ""))
+   (for [[v label hint] plans]
+     (option v label (when (= orientation "vertical") hint)))])
+
+(defn- doc-state [k] (get-in @state/state [:radio-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:radio-doc k] v))
 
 (defn view []
-  (docs-page
-   (component-header "ty-radio-group"
-                     "Exclusive single-choice selection. The group owns the form field abstraction — label, error, value, form participation. ty-radio is just the circle; wrap each in a <label>.")
+  (component-page
+   {:title "Radio"
+    :group "Toggles"
+    :tag "ty-radio-group"
+    :description "Pick exactly one. A group owns the value, the name and the keyboard; each radio is a circle you wrap in a label."
+    :chips [["Form-associated" "send"] ["Arrow keys" "zap"] ["TyRadioGroup (React)" "atom"]]
+    :source "packages/core/src/components/radio.ts"
+    :mark "◉"
+    :demo [:div {:style {:width "300px"}}
+           [:ty-radio-group {:label "Delivery" :value "express" :size "md"}
+            (option "standard" "Standard" "3–5 days, free")
+            (option "express" "Express" "Tomorrow, $9")
+            (option "pickup" "Pick up" "Ready in 2 hours")]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :radio
+     :defaults {:size "md" :flavor "primary" :orientation "vertical" :required false :disabled false}
+     :controls [{:key :orientation :options ["vertical" "horizontal"]}
+                {:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :required :switch? true}
+                {:key :disabled :switch? true}]
+     :sub "Click, or Tab in and use the arrow keys."
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "ty-radio-group Attributes")
-     (attribute-table
-      [{:name "value"
-        :type "string"
-        :default "-"
-        :description "Currently selected radio's value"}
-       {:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name — shared across all child radios"}
-       {:name "label"
-        :type "string"
-        :default "-"
-        :description "Group label rendered above the options"}
-       {:name "error"
-        :type "string"
-        :default "-"
-        :description "Error message rendered below the options"}
-       {:name "orientation"
-        :type "string"
-        :default "\"vertical\""
-        :description "Layout: vertical (default) or horizontal"}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Size applied to all child ty-radio elements: xs, sm, md, lg, xl"}
-       {:name "flavor"
-        :type "string"
-        :default "\"primary\""
-        :description "Semantic color applied to all child ty-radio elements"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disable all options in the group"}
-       {:name "required"
-        :type "boolean"
-        :default "false"
-        :description "Marks the group as required for form validation"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Choice cards"
+       :span 4
+       :description [:span "The label can be anything, including a whole card. Style the selected one from your state; the group keeps the value."]
+       :code "<ty-radio-group name=\"plan\" orientation=\"horizontal\">
+  <label class=\"card\">
+    <ty-radio value=\"pro\"></ty-radio>
+    <b>Pro</b> $12 / month
+  </label>
+  …
+</ty-radio-group>"}
+      (let [plan (or (doc-state :plan) "pro")]
+        [:ty-radio-group {:value plan :orientation "horizontal"
+                          :on {:change #(set-doc! :plan (.. % -detail -value))}}
+         (for [[v label hint] plans]
+           [:label.flex.flex-col.gap-2.rounded-xl.p-4.cursor-pointer.border.text-sm
+            {:replicant/key v
+             :class (if (= v plan) ["ty-border-primary" "ty-bg-primary-"] ["ty-border-"])
+             :style {:min-width "150px"}}
+            [:span.flex.items-center.gap-2 [:ty-radio {:value v}] [:span.font-semibold.ty-text++ label]]
+            [:span.text-xs.ty-text- hint]])]))
 
-    [:div.mb-6
-     (section-label "ty-radio Attributes")
-     (attribute-table
-      [{:name "value"
-        :type "string"
-        :required true
-        :default "-"
-        :description "Identifies this option — required, used as the group's value when selected"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disable only this option while others remain selectable"}])]
+     (example
+      {:title "Horizontal"
+       :span 2
+       :description [:span [:code "orientation=\"horizontal\""] " for short options. Arrow keys still work both ways."]
+       :code "<ty-radio-group
+  orientation=\"horizontal\">"}
+      [:ty-radio-group {:value "m" :orientation "horizontal"}
+       (for [s ["S" "M" "L" "XL"]]
+         [:label.flex.items-start.gap-2.cursor-pointer.text-sm {:replicant/key s}
+          [:ty-radio {:value (str/lower-case s)}] [:span.ty-text+ s]])])
 
-    [:div
-     (section-label "Events (ty-radio-group)")
-     (event-table
-      [{:name "change"
-        :payload "{value: string, formValue: string}"
-        :when-fired "Fires when the selected option changes"}
-       {:name "input"
-        :payload "{value: string, formValue: string}"
-        :when-fired "Fires on every selection interaction"}])]]
+     (example
+      {:title "Keyboard"
+       :span 3
+       :description "Tab lands once on the group, on the selected radio. Arrows move focus and selection together; Space selects the focused one."
+       :code "<!-- no code: the group handles it -->
+<ty-radio-group value=\"week\">"}
+      [:ty-radio-group {:label "Report every" :value "week"}
+       (option "day" "Day")
+       (option "week" "Week")
+       (option "month" "Month")])
 
-   (doc-section "Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Place " [:code "ty-radio"] " children inside " [:code "ty-radio-group"] ". Arrow keys navigate AND change selection — no extra wiring needed."]
-       (demo-area
-        [:ty-radio-group {:label "Plan" :name "plan" :value "pro"}
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-radio {:value "free"}] [:span.whitespace-nowrap "Free"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-radio {:value "pro"}] [:span.whitespace-nowrap "Pro"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-radio {:value "team"}] [:span.whitespace-nowrap "Team"]]])
-       (code-block "<ty-radio-group label=\"Plan\" name=\"plan\" value=\"pro\">
-  <label><ty-radio value=\"free\"></ty-radio> Free</label>
-  <label><ty-radio value=\"pro\"></ty-radio> Pro</label>
-  <label><ty-radio value=\"team\"></ty-radio> Team</label>
-</ty-radio-group>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Horizontal Orientation")
-       (demo-area
-        [:div.space-y-4
-         [:ty-radio-group {:label "Theme" :orientation "horizontal" :value "auto"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "light"}] [:span.whitespace-nowrap "Light"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "dark"}] [:span.whitespace-nowrap "Dark"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "auto"}] [:span.whitespace-nowrap "System"]]]])
-       (code-block "<ty-radio-group label=\"Theme\" orientation=\"horizontal\" value=\"auto\">
-  <label><ty-radio value=\"light\"></ty-radio> Light</label>
-  <label><ty-radio value=\"dark\"></ty-radio> Dark</label>
-  <label><ty-radio value=\"auto\"></ty-radio> System</label>
-</ty-radio-group>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code.ty-text "size"] " on the group and every child radio follows — "
-        "the same ladder every field component shares."]
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         (for [[size label] [["xs" "Extra small"] ["sm" "Small (default)"] ["md" "Medium"]
-                             ["lg" "Large"] ["xl" "Extra large"]]]
-           [:ty-radio-group {:size size :orientation "horizontal" :value "a"}
-            [:label.inline-flex.items-center.gap-2.cursor-pointer.font-medium
-             {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}
-             [:ty-radio {:value "a"}] [:span.whitespace-nowrap label]]])])
-       (code-block "<ty-radio-group size=\"xs\">...</ty-radio-group>
-<ty-radio-group size=\"sm\">...</ty-radio-group>
-<ty-radio-group size=\"md\">...</ty-radio-group>
-<ty-radio-group size=\"lg\">...</ty-radio-group>
-<ty-radio-group size=\"xl\">...</ty-radio-group>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Semantic Flavors")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Flavor is applied to all child radios — use it to reinforce the meaning of the choice."]
-       (demo-area
-        [:div.grid.gap-5
-         {:style {:grid-template-columns "repeat(auto-fill, minmax(200px, 1fr))"}}
-         [:ty-radio-group {:label "Priority" :flavor "danger" :value "high"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "low"}] [:span.whitespace-nowrap "Low"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "med"}] [:span.whitespace-nowrap "Medium"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "high"}] [:span.whitespace-nowrap "High"]]]
-         [:ty-radio-group {:label "Environment" :flavor "success" :value "prod"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "dev"}] [:span.whitespace-nowrap "Development"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "staging"}] [:span.whitespace-nowrap "Staging"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "prod"}] [:span.whitespace-nowrap "Production"]]]
-         [:ty-radio-group {:label "Role" :flavor "primary" :orientation "vertical"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "viewer"}] [:span.whitespace-nowrap "Viewer"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "editor"}] [:span.whitespace-nowrap "Editor"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "admin"}] [:span.whitespace-nowrap "Admin"]]]])
-       (code-block "<ty-radio-group label=\"Priority\" flavor=\"danger\" value=\"high\">
-  <label><ty-radio value=\"low\"></ty-radio> Low</label>
-  <label><ty-radio value=\"med\"></ty-radio> Medium</label>
-  <label><ty-radio value=\"high\"></ty-radio> High</label>
-</ty-radio-group>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Error & Disabled Options")
-       (demo-area
-        [:div.grid.gap-5
-         {:style {:grid-template-columns "repeat(auto-fill, minmax(200px, 1fr))"}}
-         [:ty-radio-group {:label "Billing cycle" :value "" :error "Please select a billing cycle"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "monthly"}] [:span.whitespace-nowrap "Monthly"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "yearly"}] [:span.whitespace-nowrap "Yearly"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "lifetime"}] [:span.whitespace-nowrap "Lifetime"]]]
-         [:ty-radio-group {:label "Account type" :value "personal"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "personal"}] [:span.whitespace-nowrap "Personal"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-50
-           [:ty-radio {:value "team" :disabled ""}] [:span.whitespace-nowrap "Team (coming soon)"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-50
-           [:ty-radio {:value "enterprise" :disabled ""}] [:span.whitespace-nowrap "Enterprise (contact us)"]]]])
-       (code-block "<ty-radio-group label=\"Billing cycle\" error=\"Please select a billing cycle\">
-  <label><ty-radio value=\"monthly\"></ty-radio> Monthly</label>
-  <label><ty-radio value=\"yearly\"></ty-radio> Yearly</label>
-</ty-radio-group>
-
-<!-- Per-option disabled -->
-<ty-radio-group label=\"Account type\" value=\"personal\">
-  <label><ty-radio value=\"personal\"></ty-radio> Personal</label>
-  <label><ty-radio value=\"team\" disabled></ty-radio> Team (coming soon)</label>
-</ty-radio-group>")]])
-
-   (doc-section "Form Integration"
-     [:div.space-y-5
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "With HTML Form")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "The group is fully form-associated — its selected value appears in FormData under the " [:code "name"] " attribute."]
-       (demo-area
-        [:form.space-y-4
-         {:on {:submit (fn [e]
+     (example
+      {:title "Required in a form"
+       :span 3
+       :description [:span "The group submits " [:code "name=value"] ". " [:code "required"]
+                     " blocks submission until one is picked."]
+       :code "<ty-radio-group name=\"seat\" required>
+  …
+</ty-radio-group>"}
+      (let [status (doc-state :status)]
+        [:form.flex.flex-col.gap-3.w-full
+         {:on {:submit (fn [^js e]
                          (.preventDefault e)
-                         (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
-                           (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
-         [:ty-radio-group {:label "Preferred contact" :name "contact" :required true :value "email"}
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "email"}] [:span "Email"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "phone"}] [:span "Phone"]]
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-radio {:value "sms"}] [:span "SMS"]]]
-         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
-       (code-block "<form>
-  <ty-radio-group name=\"contact\" label=\"Preferred contact\" required value=\"email\">
-    <label><ty-radio value=\"email\"></ty-radio> Email</label>
-    <label><ty-radio value=\"phone\"></ty-radio> Phone</label>
-    <label><ty-radio value=\"sms\"></ty-radio> SMS</label>
-  </ty-radio-group>
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-</form>")]
+                         (set-doc! :status (str "Sent: seat=" (.get (js/FormData. (.-target e)) "seat"))))}}
+         [:ty-radio-group {:label "Seat" :name "seat" :required "" :orientation "horizontal"
+                           :on {:invalid #(set-doc! :status "Blocked: pick a seat")}}
+          (for [s ["Window" "Aisle"]]
+            [:label.flex.items-start.gap-2.cursor-pointer.text-sm {:replicant/key s}
+             [:ty-radio {:value (str/lower-case s)}] [:span.ty-text+ s]])]
+         [:div.flex.items-center.gap-3
+          [:ty-button {:size "md" :flavor "primary"} "Book"]
+          [:code.ty-text-.text-xs (or status "Press Book with nothing picked.")]]]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "JavaScript API")
-       (code-block "const group = document.querySelector('ty-radio-group');
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const group = document.querySelector('ty-radio-group');
 
-// Read current value
-console.log(group.value);
+group.value = 'team';          // checks the matching ty-radio
+group.error = 'Pick a plan';   // message under the group
 
-// Set value programmatically
-group.value = 'pro';
-
-// Listen for changes
 group.addEventListener('change', (e) => {
-  console.log(e.detail.value);     // selected radio's value
-  console.log(e.detail.formValue); // same — what gets submitted
-});" "javascript")]])
-))
+  const { value } = e.detail;   // click, arrow keys or Space
+});"}
+      nil)))
+
+   (page-section
+    {:title "Theming" :sub "Two variables." :dark? true}
+    (example
+     {:title "Dot and ring"
+      :side? true
+      :lang "css"
+      :description [:span "Flavors set " [:code "--radio-color"] " for the selected ring and dot. The unchecked ring is neutral; override it with " [:code "--radio-ring-off"] "."]
+      :code "ty-radio-group.brand {
+  --radio-color: #2dd4bf;
+  --radio-ring-off: #3f807a;
+}"}
+     [:div {:style {"--radio-color" "#2dd4bf" "--radio-ring-off" "#3f807a"}}
+      [:ty-radio-group {:value "b"}
+       (option "a" "Weekly digest")
+       (option "b" "Daily digest")
+       (option "c" "Off")]]))
+
+   (api-section
+    {:properties validation-properties
+     :attributes ["ty-radio-group"
+                  ["value" "string" "\"\"" "Value of the selected radio."]
+                  ["name" "string" "Form field name."]
+                  ["label" "string" "Group label."]
+                  ["required" "boolean" "false" "Blocks form submission until one is picked."]
+                  ["error" "string" "Message under the group."]
+                  ["disabled" "boolean" "false" "Disables every radio in the group."]
+                  ["orientation" "string" "\"vertical\"" "vertical or horizontal."]
+                  ["size" "string" "\"sm\"" "xs to xl, applied to every radio."]
+                  ["flavor" "string" "\"primary\"" "Selected color, applied to every radio."]
+                  "ty-radio"
+                  ["value" "string" "What the group takes when this radio is picked."]
+                  ["disabled" "boolean" "false" "Skip this one; arrow keys jump over it."]]
+     :events [["change" "{value, formValue, originalEvent}" "On the group: selection changed by click, arrows or Space."]]
+     :keyboard [["Tab" "One stop per group, on the selected radio (or the first)."]
+                ["Arrow keys" "Move focus and selection to the next / previous radio, wrapping."]
+                ["Space / Enter" "Select the focused radio."]]
+     :css-vars [["--radio-color" "Selected ring and dot."]
+                ["--radio-ring-off" "Unchecked ring. Default: 45% of body text."]
+                ["--radio-ring-off-hover" "Unchecked ring on hover."]
+                ["--ty-input-shadow-focus" "Focus ring."]]})))

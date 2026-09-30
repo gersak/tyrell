@@ -153,23 +153,20 @@ Tailwind-matching breakpoints, `:orientation` and `:density` derived automatical
 
 ## Icons — tree-shaken, not downloaded
 
-`<ty-icon name="check">` looks icons up in a runtime registry. Register only what you use — with `:advanced` compilation, the other 12,000 defs are eliminated by Closure:
-
 ```clojure
 (ns my-app.icons
   (:require [tyrell.icons :as icons]
             [tyrell.lucide :as lucide]))
 
 (icons/register! {:check lucide/check
-                  :x     lucide/x
-                  :plus  lucide/plus})
+                  :user  lucide/user})   ; the key is the name
 ```
 
 ```clojure
 [:ty-icon {:name "check" :size "md"}]
 ```
 
-Sets: `tyrell.lucide` (1,636), `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*`.
+With `:advanced`, every def you don't reference is dropped. Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](https://github.com/gersak/ty/blob/master/guides/ICONS_GUIDE.md#in-clojure).
 
 ## Build your own components — `tyrell.shim`
 

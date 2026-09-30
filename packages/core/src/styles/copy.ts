@@ -43,8 +43,17 @@ export const copyStyles = `
   margin: 0;
   background: transparent;
   border: none;
-  color: inherit;
+  /* Field text token, like ty-input's <input>. inherit took the ambient page
+     color, so inside a scoped dark block on a light page the value went dark. */
+  color: var(--input-color, var(--ty-input-color));
   font-family: inherit;
+}
+
+/* format="code": the reset above set font-family: inherit on the <code>
+   too, so "code" rendered exactly like "text". */
+code.copy-field-value {
+  font-family: var(--ty-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: calc(var(--ty-field-font) * 0.93);
 }
 
 .copy-field-value.multiline {

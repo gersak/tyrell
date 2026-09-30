@@ -343,38 +343,74 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
 
 .time-section {
   display: flex;
-  min-height: 2.5rem;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-top: 1px solid var(--ty-calendar-time-border);
-  background-color: var(--ty-calendar-time-bg);
+  flex-direction: column;
+  gap: 0.375rem;
   width: 100%;
   box-sizing: border-box;
-  position: relative;
+  padding: 0.75rem 1rem 0.875rem;
+  border-top: 1px solid var(--ty-calendar-time-border);
+  background-color: var(--ty-calendar-time-bg);
+}
+
+.time-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .time-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: var(--ty-font-sm);
   font-weight: 500;
   color: var(--ty-calendar-time-label-color);
-  flex-shrink: 0;
+}
+
+.time-icon {
+  display: flex;
+  color: var(--ty-calendar-time-icon-color);
+  width: 1rem;
+  height: 1rem;
+}
+
+.time-fields {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.time-colon {
+  font-weight: 600;
+  color: var(--ty-calendar-time-label-color);
 }
 
 .time-input {
-  width: 3.5rem;
+  width: 2.75rem;
+  height: 2.125rem;
+  box-sizing: border-box;
   border: 1px solid var(--ty-input-border);
-  border-radius: var(--ty-radius-sm);
+  border-radius: var(--ty-radius-md, 0.5rem);
   background: var(--ty-input-bg);
   color: var(--ty-calendar-time-input-color);
   font-family: inherit;
-  font-size: var(--ty-font-sm);
+  font-size: var(--ty-font-base, 0.9375rem);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  padding: 0.25rem 0.375rem;
+  padding: 0;
   outline: none;
+  caret-color: transparent;
   transition: var(--ty-transition-all);
+}
+
+.time-input::selection {
+  background: var(--ty-bg-primary-soft, var(--ty-bg-primary));
+}
+
+.time-input:hover {
+  border-color: var(--ty-input-border-hover, var(--ty-input-border));
 }
 
 .time-input:focus {
@@ -382,16 +418,16 @@ ${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join(""
   box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
 }
 
-.time-input::placeholder {
-  color: var(--ty-calendar-time-placeholder-color);
+.time-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: var(--ty-font-xs, 0.75rem);
+  color: var(--ty-calendar-time-label-color);
 }
 
-.time-icon {
-  display: flex;
-  align-items: center;
-  color: var(--ty-calendar-time-icon-color);
-  width: 1rem;
-  height: 1rem;
-  flex-shrink: 0;
+.time-summary-iso {
+  font-family: var(--ty-font-mono, ui-monospace, SFMono-Regular, monospace);
+  color: var(--ty-calendar-time-placeholder-color);
 }
 `;

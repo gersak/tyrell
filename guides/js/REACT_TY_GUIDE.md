@@ -672,113 +672,23 @@ to read, and the scrollable default with its `…` menu is the right tool:
 
 ## Icons
 
-`tyrell-components` ships icon libraries as tree-shakeable individual exports — only the icons you import end up in your bundle:
+Register once, from the same client-side entry that imports `tyrell-components` (in Next.js, a `'use client'` module):
 
-| Library | Import path | Variants |
-|---------|------------|----------|
-| Lucide (1,600+) | `tyrell-components/icons/lucide` | single file |
-| Heroicons | `tyrell-components/icons/heroicons/{outline,solid,mini,micro}` | 4 styles |
-| Material | `tyrell-components/icons/material/{filled,outlined,round,sharp,two-tone}` | 5 styles |
-| FontAwesome | `tyrell-components/icons/fontawesome/{brands,regular,solid}` | 3 styles |
-
-### Register at app startup
-
-How you register depends on which setup option you picked above.
-
-#### With bundler imports (recommended)
-
-`registerIcons` and the components share the same module graph, so registration is synchronous — no timing dance:
-
-```tsx
-// lib/icons.ts
+```js
 import { registerIcons } from 'tyrell-components/icons/registry'
-import { check, heart, star, chevronRight, chevronLeft, alertCircle } from 'tyrell-components/icons/lucide'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-registerIcons({
-  check,
-  heart,
-  star,
-  'chevron-right': chevronRight,
-  'chevron-left': chevronLeft,
-  'alert-circle': alertCircle,
-})
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
-
-Import this file once from your app entry to execute the registration:
-
-```tsx
-// app/layout.tsx (Next.js)
-import 'tyrell-components/css/tyrell.css'
-import 'tyrell-components/css/tyrell-theme.css'
-import 'tyrell-components'
-import '@/lib/icons'   // runs registerIcons at module-eval time
-```
-
-Import names follow camelCase from Lucide; rename to kebab-case in the registration map if that's how you want to reference them in markup (`<TyIcon name="chevron-right" />`).
-
-#### With CDN script tag
-
-The CDN bundle owns the registry the components read from. Use `window.tyIcons.register` so writes land in that registry — *not* `registerIcons` imported from `tyrell-components/icons/registry`, which would create a separate module instance with its own registry that `<ty-icon>` can't see.
-
-```tsx
-// lib/icons.ts
-import { check, heart, star, chevronRight } from 'tyrell-components/icons/lucide'
-
-export function registerAppIcons() {
-  window.tyIcons.register({
-    check,
-    heart,
-    star,
-    'chevron-right': chevronRight,
-  })
-}
-```
-
-Mount this from a client component in your root layout — `useEffect` waits until the CDN script has loaded `window.tyIcons`:
-
-```tsx
-// components/IconRegistry.tsx
-'use client'
-import { useEffect } from 'react'
-import { registerAppIcons } from '@/lib/icons'
-
-export function IconRegistry() {
-  useEffect(() => {
-    if (window.tyIcons) return registerAppIcons()
-    const id = setInterval(() => {
-      if (window.tyIcons) {
-        clearInterval(id)
-        registerAppIcons()
-      }
-    }, 50)
-    return () => clearInterval(id)
-  }, [])
-  return null
-}
-```
-
-Add this once in a `.d.ts` so `window.tyIcons` is typed:
-
-```ts
-declare global {
-  interface Window {
-    tyIcons: {
-      register: (icons: Record<string, string>) => void
-      get: (name: string) => string | undefined
-      has: (name: string) => boolean
-      list: () => string[]
-    }
-  }
-}
-```
-
-### Use icons
 
 ```tsx
 <TyIcon name="check" size="sm" />
-<TyIcon name="heart" size="lg" pulse />
-<TyIcon name="chevron-right" />
+<TyIcon name="action-down" />
 ```
+
+On the CDN setup, register with `window.tyIcons.register` instead: `registerIcons` from npm would write to a second copy of the registry that the CDN components never read.
+
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-javascript).
 
 ## Slots
 

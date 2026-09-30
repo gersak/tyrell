@@ -6,6 +6,8 @@
    [tyrell.layout :as layout]
    [tyrell.router :as router]
    [tyrell.site.docs :as docs]
+   [tyrell.site.docs.common :as docs-common]
+   [tyrell.site.docs.quickstart :as quickstart]
    [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.state :refer [state]]
    [tyrell.site.styles :as styles]
@@ -23,8 +25,42 @@
 (goog-define ROUTER_BASE "")
 (goog-define PRODUCTION false)
 
+(def ^:private sandbox-routes
+  "Throwaway integration-testing pages, reachable only by typing the URL and
+   never in nav or search. Dev builds only: PRODUCTION folds this away, and
+   the sandbox views with it."
+  [{:id ::sandbox-sizing
+    :segment "internal/sizing"
+    :name "Sizing Sandbox (hidden)"
+    :view sandbox-sizing/view}
+
+   {:id ::sandbox-tabs
+    :segment "internal/tabs"
+    :name "Tabs Resize/Overflow Verify (hidden)"
+    :view sandbox-tabs/view}
+
+   {:id ::sandbox-toggles
+    :segment "internal/toggles"
+    :name "Switch/Checkbox Double-fire Verify (hidden)"
+    :view sandbox-toggles/view}
+
+   {:id ::sandbox-polish
+    :segment "internal/polish"
+    :name "Open Polish Issues (hidden)"
+    :view sandbox-polish/view}
+
+   {:id ::sandbox-modal
+    :segment "internal/modal"
+    :name "Modal prevent-* Verify (hidden)"
+    :view sandbox-modal/view}
+
+   {:id ::sandbox-modal-tabs
+    :segment "internal/modal-tabs"
+    :name "Tabs Marker-in-Modal Snap Verify (hidden)"
+    :view sandbox-modal-tabs/view}])
+
 (def site-routes
-  [;; Main landing page
+  (cond-> [;; Main landing page
    {:id ::landing
     :segment "welcome"
     :hash "top"
@@ -58,40 +94,8 @@
     :segment "components"
     :name "Components"
     :icon "grid"
-    :view components-index/view}
-
-   ;; HIDDEN — deliberately absent from nav-items below and from every route
-   ;; list used to render nav/search. Reachable only by typing the URL.
-   ;; Throwaway integration-testing page; delete once its question is settled.
-   {:id ::sandbox-sizing
-    :segment "internal/sizing"
-    :name "Sizing Sandbox (hidden)"
-    :view sandbox-sizing/view}
-
-   {:id ::sandbox-tabs
-    :segment "internal/tabs"
-    :name "Tabs Resize/Overflow Verify (hidden)"
-    :view sandbox-tabs/view}
-
-   {:id ::sandbox-toggles
-    :segment "internal/toggles"
-    :name "Switch/Checkbox Double-fire Verify (hidden)"
-    :view sandbox-toggles/view}
-
-   {:id ::sandbox-polish
-    :segment "internal/polish"
-    :name "Open Polish Issues (hidden)"
-    :view sandbox-polish/view}
-
-   {:id ::sandbox-modal
-    :segment "internal/modal"
-    :name "Modal prevent-* Verify (hidden)"
-    :view sandbox-modal/view}
-
-   {:id ::sandbox-modal-tabs
-    :segment "internal/modal-tabs"
-    :name "Tabs Marker-in-Modal Snap Verify (hidden)"
-    :view sandbox-modal-tabs/view}])
+    :view components-index/view}]
+    (not PRODUCTION) (into sandbox-routes)))
 
 (def component-routes docs/docs-components)
 
@@ -107,7 +111,14 @@
               (map (fn [route]
                      (-> route
                          (select-keys [:id :segment :name])
-                         (update :segment (fn [segment] (str "guides/" segment))))) guide-routes)))
+                         (update :segment (fn [segment] (str "guides/" segment)))))
+                   (concat guide-routes docs/legacy-guides))))
+
+(defn- redirect-legacy-guide!
+  "Old per-stack guide URLs land on Getting started with that stack."
+  []
+  (when-let [{:keys [stack]} (some #(when (router/rendered? (:id %) true) %) docs/legacy-guides)]
+    (quickstart/open! stack true)))
 
 (defn toggle-theme! []
   (let [root (.-documentElement js/document)]
@@ -124,12 +135,6 @@
     (let [raw (js/parseFloat (.getPropertyValue (js/getComputedStyle root) "--ty-theme-transition"))
           ms (if (js/isNaN raw) 450 (* 1000 raw))]
       (js/setTimeout #(.remove (.-classList root) "ty-theme-switching") ms))))
-
-(defn get-open-section-from-storage
-  "Read the open navigation section from localStorage"
-  []
-  (when-let [stored (.getItem js/localStorage "ty-nav-open-section")]
-    (keyword stored)))
 
 (defn set-open-section-in-storage!
   "Write the open navigation section to localStorage"
@@ -161,16 +166,18 @@
   (when-let [el (.getElementById js/document anchor)]
     (.scrollIntoView el #js {:behavior "smooth" :block "start"})))
 
-(defn toc-item [{:keys [anchor label route-id category?]}]
+(defn toc-item [{:keys [anchor label route-id category? level]}]
   (if category?
-    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.pb-0.5.text-xs.font-semibold.uppercase.tracking-wide.ty-text-primary+.transition-colors.cursor-pointer.hover:ty-text-primary++
-     {:on {:click #(scroll-to-anchor! anchor)}}
+    [:button.block.w-full.text-left.pl-4.pr-2.pt-3.text-xs.font-semibold.uppercase.tracking-wide.ty-text-primary+.transition-colors.cursor-pointer.hover:ty-text-primary++ {:class ["pb-0.5"] :on {:click #(scroll-to-anchor! anchor)}}
      label]
     (let [active? (when route-id (router/rendered? route-id true))]
-      [:button.block.w-full.text-left.text-xs.py-1.pl-8.pr-2.transition-colors.cursor-pointer
-       {:class (if active?
-                 ["ty-text++" "font-medium"]
-                 ["ty-text-" "hover:ty-text++"])
+      [:button.block.w-full.text-left.text-xs.py-1.pr-2.transition-colors.cursor-pointer
+       {:class (concat
+                (if (= level 2) ["pl-4"] ["pl-8"])
+                (cond
+                  active? ["ty-text++" "font-medium"]
+                  (= level 2) ["ty-text" "font-medium" "hover:ty-text++"]
+                  :else ["ty-text-" "hover:ty-text++"]))
         :on {:click (fn []
                       (if route-id
                         (router/navigate! route-id)
@@ -184,8 +191,7 @@
       title])
    [:div
     (for [item items]
-      ^{:key (or (:anchor item) (:label item))}
-      (toc-item item))]])
+      (docs-common/keyed (or (:anchor item) (:label item)) (toc-item item)))]])
 
 (defn toggle-nav-section!
   "Toggle a navigation section open/closed and navigate to first/last item"
@@ -237,38 +243,36 @@
               [route]))
           routes))
 
-(defn- component-toc-items []
-  (let [comp-map (components-index/by-id-map)]
-    (mapcat (fn [{:keys [title ids]}]
-              (cons {:anchor (-> title str/lower-case (str/replace #"\s+" "-"))
-                     :label title
-                     :category? true}
-                    (for [id ids
-                          :let [comp (get comp-map id)]
-                          :when comp]
-                      {:label (:name comp)
-                       :route-id id})))
-            components-index/category-groups)))
+(defn landing-page?
+  "The welcome page renders full-width, without the docs sidebars."
+  []
+  (or (router/rendered? ::landing true)
+      (router/rendered? ::landing-user-profile true)
+      (router/rendered? ::landing-event-booking true)
+      (router/rendered? ::landing-contact-form true)))
+
+(def ^:private theming-route-id :tyrell.site.docs/theming)
 
 (defn current-toc
   "Returns {:title optional-string :items [...]} for the current route, or nil."
   []
   (cond
-    (or (router/rendered? ::landing true)
-        (router/rendered? ::landing-user-profile true)
-        (router/rendered? ::landing-event-booking true)
-        (router/rendered? ::landing-contact-form true))
+    (landing-page?)
     {:title "Check out examples"
      :items [{:anchor "top" :label "Overview" :route-id ::landing}
              {:anchor "user-profile" :label "User Profile" :route-id ::landing-user-profile}
              {:anchor "event-booking" :label "Event Booking" :route-id ::landing-event-booking}
              {:anchor "contact-form" :label "Contact Form" :route-id ::landing-contact-form}]}
 
-    (or (router/rendered? ::components true)
-        (route-in-tree? (some #(when (router/rendered? (:id %) true) (:id %))
+    ;; Component pages (and guides on the v2 template): sections of the
+    ;; current page. The component list itself lives in the left sidebar
+    ;; (component-nav).
+    (or (route-in-tree? (some #(when (router/rendered? (:id %) true) (:id %))
                               (flatten-routes component-routes))
-                        component-routes))
-    {:title nil :items (component-toc-items)}
+                        component-routes)
+        (router/rendered? theming-route-id true)
+        (router/rendered? :tyrell.site.docs/getting-started true))
+    {:title "On this page" :items (seq @docs-common/page-sections) :spy? true}
 
     :else nil))
 
@@ -296,9 +300,11 @@
     (nil? (:hash route))))
 
 (defn nav-item
-  [{:keys [route-id label icon indented? section-key featured? also-active-for]}]
-  (let [active? (or (router/rendered? route-id true)
-                    (some #(router/rendered? % true) also-active-for))
+  [{:keys [route-id label icon indented? section-key featured? also-active-for active? on-click]}]
+  (let [active? (if (some? active?)
+                  active?
+                  (or (router/rendered? route-id true)
+                      (some #(router/rendered? % true) also-active-for)))
         display-label (str/lower-case (str label))]
     [:button.w-full.text-left.rounded-md.transition-colors.duration-150.cursor-pointer.flex.items-center.gap-3.px-3.py-2
      {:class (concat
@@ -314,7 +320,7 @@
       :on {:click (fn []
                     (when section-key
                       (set-last-visited-route! section-key route-id))
-                    (router/navigate! route-id)
+                    (if on-click (on-click) (router/navigate! route-id))
                     (swap! state assoc :mobile-menu-open false))}}
      [:ty-icon {:name icon
                 :size "sm"
@@ -356,34 +362,6 @@
                      100)]
     (max available 150)))
 
-(defn scroll-shadow-hooks
-  "Create on-mount/on-unmount hooks for scroll shadow tracking"
-  [section-key]
-  (let [update-shadows (fn [^js event]
-                         (when-let [el (.-target event)]
-                           (let [scroll-top (.-scrollTop el)
-                                 scroll-height (.-scrollHeight el)
-                                 client-height (.-clientHeight el)
-                                 can-scroll-up (> scroll-top 0)
-                                 can-scroll-down (< (+ scroll-top client-height)
-                                                    (- scroll-height 1))
-                                 final {:up can-scroll-up
-                                        :down can-scroll-down}]
-                             (when-not (= final (:scroll-shadows @state))
-                               (swap! state assoc-in [:scroll-shadows section-key] final)))))]
-    {:replicant/on-mount
-     (fn [{^js el :replicant/node}]
-       (update-shadows el)
-       (.addEventListener el "scroll" update-shadows)
-       (set! (.-_scrollHandler el) update-shadows))
-
-     :replicant/on-unmount
-     (fn [{^js el :replicant/node}]
-       (when-let [handler (.-_scrollHandler el)]
-         (.removeEventListener el "scroll" handler)
-         (set! (.-_scrollHandler el) nil))
-       (swap! state update :scroll-shadows dissoc section-key))}))
-
 (defn nav-section
   "Render a navigation section with optional children and collapsible behavior"
   [{:keys [title items collapsible? section-key]}]
@@ -419,28 +397,24 @@
             :style {:min-height 0}}
            [:ty-scroll-container.mt-2 {:max-height (str (- available-height 8) "px")
                                        :hide-scrollbar true}
-            [:div.space-y-1.5
+            [:div {:class ["space-y-1.5"]}
              (for [item items]
                (let [has-children? (seq (:children item))]
-                 ^{:key (:label item)}
-                 [:div
+                 [:div {:replicant/key (:label item)}
                   (nav-item (assoc item :indented? false :section-key section-key))
                   (when has-children?
-                    [:div.space-y-1.5
+                    [:div {:class ["space-y-1.5"]}
                      (for [child (:children item)]
-                       ^{:key (:label child)}
-                       (nav-item (assoc child :indented? true :section-key section-key)))])]))]]]])
-       [:div.space-y-1.5
+                       (docs-common/keyed (:label child) (nav-item (assoc child :indented? true :section-key section-key))))])]))]]]])
+       [:div {:class ["space-y-1.5"]}
         (for [item items]
           (let [has-children? (seq (:children item))]
-            ^{:key (:label item)}
-            [:div
+            [:div {:replicant/key (:label item)}
              (nav-item (assoc item :indented? false))
              (when has-children?
-               [:div.space-y-1.5
+               [:div {:class ["space-y-1.5"]}
                 (for [child (:children item)]
-                  ^{:key (:label child)}
-                  (nav-item (assoc child :indented? true)))])]))])]))
+                  (docs-common/keyed (:label child) (nav-item (assoc child :indented? true))))])]))])]))
 
 (defn resize-observer-hooks
   "Create on-mount/on-unmount hooks for a resize observer that updates state"
@@ -460,7 +434,42 @@
        (unsubscribe)
        (set! (.-_resizeUnsub el) nil)))})
 
-(def ^:private theming-route-id :tyrell.site.docs/theming)
+(defn- component-nav
+  "Grouped component list, shown in the left sidebar on component pages."
+  []
+  (let [comp-map (components-index/by-id-map)]
+    [:div.flex.flex-col.gap-4
+     (for [{:keys [title ids]} components-index/category-groups]
+       [:div {:replicant/key title}
+        [:h3.px-3.pb-1.text-xs.font-medium.ty-text--.tracking-wide (str/lower-case title)]
+        (for [id ids
+              :let [{:keys [name]} (get comp-map id)
+                    active? (router/rendered? id true)]
+              :when name]
+          [:button.block.w-full.text-left.rounded-md.px-3.py-1.text-xs.cursor-pointer.transition-colors
+           {:replicant/key (str id)
+            :class (if active?
+                     ["ty-bg-primary-" "ty-text-primary+" "font-semibold"]
+                     ["ty-text-" "hover:ty-text++"])
+            :on {:click #(router/navigate! id)}}
+           name])])]))
+
+(defn- component-pager
+  "Prev/next cards on component pages, in the sidebar's component order."
+  []
+  (let [comp-map (components-index/by-id-map)
+        ids (vec (filter comp-map (mapcat :ids components-index/category-groups)))
+        i (first (keep-indexed #(when (router/rendered? %2 true) %1) ids))
+        card (fn [j label]
+               (when-let [id (and i (get ids j))]
+                 {:label (str label " · " (.padStart (str (inc j)) 2 "0"))
+                  :title (:name (get comp-map id))
+                  :on-click #(router/navigate! id)}))]
+    (when i
+      [:div.mx-auto {:style {:max-width "1080px"
+                             :padding (if (layout/breakpoint>= :lg) "0 0 96px" "0 12px 64px")}}
+       (docs-common/pager {:prev (card (dec i) "Previous")
+                           :next (card (inc i) "Next")})])))
 
 (defn nav-items []
   [:div.space-y-6
@@ -490,16 +499,24 @@
                 :icon "droplet"
                 :featured? true}]})]]
 
-   ;; Quickstart (route navigation) - Always visible.
-   ;; Theming lives in the featured top section, so we filter it out of
-   ;; the Quickstart list.
+   ;; Quickstart - one item per Getting started stack. The active one
+   ;; follows the stack chosen on the page.
    (nav-section
     {:title "Quickstart"
-     :items (for [route guide-routes
-                  :when (not= theming-route-id (:id route))]
-              {:route-id (:id route)
-               :label (:name route)
-               :icon (:icon route)})})])
+     :items (let [on-page? (router/rendered? :tyrell.site.docs/getting-started true)
+                  chosen (:id (quickstart/current))]
+              (for [{:keys [id label icon]} quickstart/stacks]
+                {:route-id :tyrell.site.docs/getting-started
+                 :label label
+                 :icon icon
+                 :active? (and on-page? (= id chosen))
+                 :on-click #(quickstart/open! id)}))})
+
+   (when (or (router/rendered? ::components true)
+             (= :components (route->section
+                             (some #(when (router/rendered? (:id %) true) (:id %))
+                                   (flatten-routes component-routes)))))
+     (component-nav))])
 
 (defn render
   "Render the appropriate view based on current route (like docs/render)"
@@ -507,7 +524,11 @@
   (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
         current-route (some #(when (router/rendered? (:id %) true) %) all-routes)
         view (:view current-route)]
-    (when (ifn? view) (view))))
+    ;; Keyed by view: switching pages replaces the page instead of diffing two
+    ;; unrelated trees (that diff desynced replicant between playgrounds and
+    ;; froze every later render). Routes sharing a view, like the landing
+    ;; examples, still diff in place.
+    (when (ifn? view) (docs-common/keyed view (view)))))
 
 (defn sidebar-content []
   [:nav.px-3.pt-8.pb-8
@@ -550,6 +571,14 @@
       :segment (:segment route)
       :description (:description route)
       :tags (or (:tags route) [])})
+   (for [{:keys [id label icon how tags]} quickstart/stacks]
+     {:id (keyword "quickstart" id)
+      :stack id
+      :name label
+      :type :guide
+      :icon icon
+      :description (str "Getting started with " label " (" how ")")
+      :tags tags})
    (mapcat
     (fn [route]
       (let [parent {:id (:id route)
@@ -648,9 +677,7 @@
      :components (filter #(= :component (:type %)) scored)}))
 
 (defn open-search! []
-  (swap! state assoc-in [:search :open] true)
-  (swap! state assoc-in [:search :query] "")
-  (swap! state assoc-in [:search :selected-index] 0)
+  (swap! state update :search assoc :open true :query "" :selected-index 0)
   ;; Focus the input after render
   (js/setTimeout
    #(when-let [input (.getElementById js/document "search-input")]
@@ -663,7 +690,9 @@
 (defn select-search-result!
   "Navigate to selected search result"
   [result]
-  (router/navigate! (:id result))
+  (if-let [stack (:stack result)]
+    (quickstart/open! stack)
+    (router/navigate! (:id result)))
   (close-search!))
 
 (defn search-result-item
@@ -709,16 +738,16 @@
                :max-height "80vh"}}
       [:div.p-4.border-b.ty-border-
        [:div.flex.items-center.gap-3
-        [:ty-icon {:name "search"
-                   :size "sm"
-                   :class "ty-text-"}]
+        [:ty-icon.ty-text- {:name "search"
+                   :size "sm"}]
         [:input#search-input.flex-1.bg-transparent.outline-none.text-lg.ty-text
          {:type "text"
           :placeholder "Search components and guides..."
           :value query
           :on {:input (fn [e]
-                        (swap! state assoc-in [:search :query] (.. e -target -value))
-                        (swap! state assoc-in [:search :selected-index] 0))
+                        (swap! state update :search assoc
+                               :query (.. e -target -value)
+                               :selected-index 0))
                :keydown (fn [e]
                           (let [key (.-key e)]
                             (cond
@@ -750,8 +779,7 @@
               "Guides"]
              [:ul
               (for [[idx result] (map-indexed vector guides)]
-                ^{:key (:id result)}
-                (search-result-item result idx selected-index query))]])
+                (docs-common/keyed (:id result) (search-result-item result idx selected-index query)))]])
           (when (seq components)
             [:div {:class (when (seq guides) "mt-2")}
              [:div.px-4.py-2.text-xs.font-medium.ty-text-.uppercase.tracking-wide
@@ -759,12 +787,10 @@
              [:ul
               (let [offset (count guides)]
                 (for [[idx result] (map-indexed vector components)]
-                  ^{:key (:id result)}
-                  (search-result-item result (+ offset idx) selected-index query)))]])]
+                  (docs-common/keyed (:id result) (search-result-item result (+ offset idx) selected-index query))))]])]
          [:div.flex.flex-col.items-center.justify-center.gap-3.h-full.ty-text-
-          [:ty-icon {:name "search"
-                     :size "xl"
-                     :class "opacity-20"}]
+          [:ty-icon.opacity-20 {:name "search"
+                     :size "xl"}]
           [:div.text-center
            [:p.font-medium "No results found"]
            [:p.text-sm.ty-text--.mt-1
@@ -817,7 +843,11 @@
                              (.preventDefault e)
                              (if (get-in @state [:search :open])
                                (close-search!)
-                               (open-search!))))))))
+                               (open-search!)))
+                           ;; ⌘B / Ctrl+B toggles the theme; left alone in fields (bold)
+                           (when (and cmd-or-ctrl? (= key "b") (not in-input?))
+                             (.preventDefault e)
+                             (toggle-theme!)))))))
 
 (defn mobile-menu []
   [:div.lg:hidden.site-chrome {:data-ty-theme true}
@@ -827,11 +857,10 @@
      {:style {:width "300px"
               :max-height "85vh"}}
      [:div.flex.items-center.gap-3.pb-4.border-b.ty-border-.flex-shrink-0
-      [:ty-icon {:name "ty-logo"
+      [:ty-icon.ty-text-primary {:name "ty-logo"
                  :style {:width 40
                          :height 20
-                         :margin-top 3}
-                 :class "ty-text-primary"}]
+                         :margin-top 3}}]
       [:span.text-xs.ty-text-- "web components"]]
 
      [:div.flex-1.overflow-y-auto.pt-4.min-h-0
@@ -872,21 +901,21 @@
        (when-let [title (page-title-text)]
          [:h2.text-sm.font-medium.ty-text-.truncate title])))))
 
+(defn- shortcut
+  "Keyboard shortcut label for the platform: ⌘K on Mac, Ctrl+K elsewhere."
+  [k]
+  (str (if (str/includes? (str (.-userAgent js/navigator)) "Mac") "⌘" "Ctrl+") k))
+
 (defn header-actions []
   [:div.flex.items-center.gap-2.flex-shrink-0
-   [:button.transition-all.duration-150.group
+   ;; ty colors have hover: variants but no group-hover:, so the button carries
+   ;; the hover color and the icon + label inherit it.
+   [:button.inline-flex.items-center.gap-2.rounded-md.border.ty-border.ty-elevated.ty-text-.cursor-pointer.transition-colors.hover:ty-border-primary.hover:ty-text-primary
     {:on {:click open-search!}
-     :style {:display "inline-flex"
-             :align-items "center"
-             :gap "8px"
-             :padding "5px 10px"
-             :border-radius "6px"
-             :background "var(--ty-surface-elevated)"
-             :border "1px solid var(--ty-border)"}}
-    [:ty-icon {:name "search"
-               :size "sm"
-               :class ["ty-text--" "group-hover:ty-text-primary" "transition-colors"]}]
-    [:span.ty-text-.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
+     :title (str "Search (" (shortcut "K") ")")
+     :style {:padding "5px 10px"}}
+    [:ty-icon {:name "search" :size "sm"}]
+    [:span.font-medium {:style {:font-size "10px" :line-height "1" :margin-top "2px"}} "Search"]
     [:span.ty-text--.rounded
      {:style {:font-size "8px"
               :line-height "1"
@@ -894,9 +923,7 @@
               :font-family "inherit"
               :background "var(--ty-surface-floating)"
               :border "1px solid var(--ty-border)"}}
-     (if (.-userAgent js/navigator)
-       (if (str/includes? (.-userAgent js/navigator) "Mac") "⌘K" "Ctrl+K")
-       "⌘K")]]
+     (shortcut "K")]]
    [:a.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors
     {:href "https://github.com/gersak/tyrell"
      :target "_blank"
@@ -904,10 +931,33 @@
      :title "View on GitHub"}
     [:ty-icon {:name "github"
                :size "sm"}]]
-   [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors
-    {:on {:click toggle-theme!}}
+   [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors.cursor-pointer
+    {:on {:click toggle-theme!}
+     :title (str "Toggle theme (" (shortcut "B") ")")}
     [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
                :size "sm"}]]])
+
+(defn- landing-header []
+  [:div.mx-auto.px-8.py-2.flex.items-center.gap-10
+   {:style {:max-width "1280px"}}
+   [:a.flex.items-center.cursor-pointer
+    {:on {:click (fn [e]
+                   (.preventDefault e)
+                   (router/navigate! ::landing))}}
+    [:ty-icon.ty-text-primary {:name "ty-logo"
+               
+               :style {:height 40
+                       :width 120}}]]
+   [:nav.flex-1.flex.items-center.justify-center.gap-8
+    (for [[label route-id] [["Components" ::components]
+                            ["Getting started" :tyrell.site.docs/getting-started]
+                            ["Theming" :tyrell.site.docs/theming]
+                            ["Examples" ::landing-user-profile]]]
+      [:button.text-sm.font-medium.ty-text.hover:ty-text-primary.transition-colors.cursor-pointer
+       {:replicant/key label
+        :on {:click #(router/navigate! route-id)}}
+       label])]
+   (header-actions)])
 
 (defn header []
   (let [show-sidebar? (layout/breakpoint>= :lg)
@@ -918,15 +968,19 @@
      [:header.border-b.ty-border-soft.site-chrome
       {:data-ty-theme true
        :style {:background-color "var(--ty-surface-canvas)"}}
-      (if show-sidebar?
+      (cond
+        (and show-sidebar? (landing-page?))
+        (landing-header)
+
+        show-sidebar?
         ;; Desktop: Grid layout matching content columns
         [:div.mx-auto.px-5.lg:px-8
-         {:style {:max-width "1200px"
+         {:style {:max-width "1600px"
                   :display "grid"
                   :grid-template-columns (if has-toc?
                                            "220px minmax(0, 1fr) 180px"
                                            "220px minmax(0, 1fr)")
-                  :gap "40px"
+                  :gap "32px"
                   :align-items "center"}}
          ;; Logo area (aligns with sidebar)
          [:a.flex.items-center.gap-3.cursor-pointer
@@ -934,8 +988,8 @@
                          (.preventDefault e)
                          (router/navigate! ::landing))}}
           [:div.flex.justify-center.align-center.h-8.pl-4
-           [:ty-icon {:name "ty-logo"
-                      :class "ty-text-primary"
+           [:ty-icon.ty-text-primary {:name "ty-logo"
+                      
                       :style {:height 40
                               :width 120}}]]]
          ;; Content header area — title only when right sidebar present
@@ -950,9 +1004,10 @@
            [:div.flex.items-center.justify-end.py-2
             (header-actions)])]
 
+        :else
         ;; Mobile: Single row flex layout
         [:div.mx-auto.px-4.py-3.flex.items-center.gap-3
-         {:style {:max-width "1200px"}}
+         {:style {:max-width "1400px"}}
          ;; Logo doubles as the mobile menu trigger (was a separate hamburger
          ;; button + logo-navigates-home; one tap target now opens the nav).
          [:a.flex.items-center.flex-shrink-0.cursor-pointer
@@ -960,35 +1015,35 @@
                          (.preventDefault e)
                          (toggle-mobile-menu!))}
            :style {:margin-top "0.18rem"}}
-          [:ty-icon {:name "ty-logo"
-                     :class "ty-text-primary"
+          [:ty-icon.ty-text-primary {:name "ty-logo"
+                     
                      :style {:height 28
                              :width 48}}]]
          [:div.flex-1.min-w-0
           (header-title)]
          [:button.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:on {:click open-search!}}
-          [:ty-icon {:name "search"
-                     :size "sm"
-                     :class "ty-text-"}]]
+          [:ty-icon.ty-text- {:name "search"
+                     :size "sm"}]]
          [:a.p-2.rounded-md.hover:ty-bg-primary-.transition-colors.flex-shrink-0
           {:href "https://github.com/gersak/tyrell"
            :target "_blank"
            :rel "noopener noreferrer"
            :title "View on GitHub"}
-          [:ty-icon {:name "github"
-                     :size "sm"
-                     :class "ty-text-"}]]
-         [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors.flex-shrink-0
-          {:on {:click toggle-theme!}}
+          [:ty-icon.ty-text- {:name "github"
+                     :size "sm"}]]
+         [:button.p-2.rounded-md.ty-text-.hover:ty-text-primary.transition-colors.flex-shrink-0.cursor-pointer
+          {:on {:click toggle-theme!}
+           :title (str "Toggle theme (" (shortcut "B") ")")}
           [:ty-icon {:name (if (= (:theme @state) "light") "moon" "sun")
                      :size "sm"}]]])]]))
 
 (defn app []
   (layout/with-window
-    (let [show-sidebar? (layout/breakpoint>= :lg)
+    (let [landing? (landing-page?)
+          show-sidebar? (and (not landing?) (layout/breakpoint>= :lg))
           toc (current-toc)
-          has-toc? (and (layout/breakpoint>= :xl) (seq (:items toc)))
+          has-toc? (and (not landing?) (layout/breakpoint>= :xl) (seq (:items toc)))
           header-height (if (layout/breakpoint>= :lg) 60 52)
           content-padding (if (layout/breakpoint>= :lg) 48 24)
           sidebar-max-h (str "calc(100vh - " header-height "px)")]
@@ -1009,11 +1064,16 @@
                                            (and show-sidebar? has-toc?) "220px minmax(0, 1fr) 180px"
                                            show-sidebar? "220px minmax(0, 1fr)"
                                            :else "1fr")
-                  :max-width "1200px"
+                  ;; The landing page is full-bleed: its bands run edge to
+                  ;; edge and hold their own content column.
+                  :max-width (if landing? "none" "1600px")
                   :min-height "100%"
-                  :gap (if show-sidebar? "40px" "0px")
+                  :gap (if show-sidebar? "32px" "0px")
                   ;; No vertical padding — sidebars start at top-0 and stick immediately
-                  :padding (if show-sidebar? "0 32px" "8px 4px")}}
+                  :padding (cond
+                             landing? "0"
+                             show-sidebar? "0 32px"
+                             :else "8px 4px")}}
          (when show-sidebar?
            [:div.sticky.top-0.self-start.site-chrome
             {:data-ty-theme true
@@ -1022,21 +1082,23 @@
                      :scrollbar-width "none"}}
             (sidebar-content)])
          [:main.min-w-0
-          {:style {:padding "32px 0"}}
+          {:style {:padding (if landing? "0" "32px 0")}}
           (layout/with-container
             {:width (cond
                       (and show-sidebar? has-toc?) (- (layout/container-width) 220 180 content-padding)
                       show-sidebar? (- (layout/container-width) 220 content-padding)
                       :else (- (layout/container-width) content-padding))
              :height (- (layout/container-height) header-height content-padding)}
-            (render))]
+            [:div (render) (component-pager)])]
          (when has-toc?
            [:div.sticky.top-0.self-start.site-chrome
             {:data-ty-theme true
              :style {:max-height sidebar-max-h
                      :overflow-y "auto"
                      :scrollbar-width "none"}}
-            (right-sidebar toc)])]]])))
+            (if (:spy? toc)
+              (docs-common/on-this-page)
+              (right-sidebar toc))])]]])))
 
 (defn render-app! []
   (binding [router/*roles* (:user/roles @state)]
@@ -1058,6 +1120,7 @@
       (.remove (.-classList js/document.documentElement) "dark")))
 
   (router/init! (when-not (str/blank? ROUTER_BASE) ROUTER_BASE))
+  (redirect-legacy-guide!)
 
   (auto-expand-section!)
 
@@ -1071,10 +1134,17 @@
                        current-route (some #(when (router/rendered? (:id %) true) %) all-routes)]
                    (when (should-scroll-for-route? (:id current-route))
                      (js/setTimeout scroll-main-to-top! 100))))
+               (redirect-legacy-guide!)
                (auto-expand-section!)
                (render-app!)))
 
   (add-watch state ::render
+             (fn [_ _ _ _] (render-app!)))
+
+  ;; "On this page" rail: sections are collected after the page renders.
+  (add-watch docs-common/page-sections ::render
+             (fn [_ _ _ _] (render-app!)))
+  (add-watch docs-common/active-section ::render
              (fn [_ _ _ _] (render-app!)))
 
 ;; Watch window size changes for responsive layout (fixes sidebar toggle)

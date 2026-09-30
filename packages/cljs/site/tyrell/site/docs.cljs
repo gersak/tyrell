@@ -6,14 +6,11 @@
    [tyrell.site.docs.calendar :as calendar-docs]
    [tyrell.site.docs.calendar-month :as calendar-month-docs]
    [tyrell.site.docs.checkbox :as checkbox-docs]
-   [tyrell.site.docs.clojurescript :as clojurescript-docs]
    [tyrell.site.docs.copy-field :as copy-field-docs]
    [tyrell.site.docs.file-upload :as file-upload-docs]
    [tyrell.site.docs.date-picker :as date-picker-docs]
-   [tyrell.site.docs.html :as html-docs]
    [tyrell.site.docs.icon :as icon-docs]
    [tyrell.site.docs.input :as input-docs]
-   [tyrell.site.docs.js-react :as js-react-docs]
    [tyrell.site.docs.modal :as modal-docs]
    [tyrell.site.docs.popup :as popup-docs]
    [tyrell.site.docs.select :as select-docs]
@@ -27,7 +24,7 @@
    [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.docs.tooltip :as tooltip-docs]
    [tyrell.site.docs.wizard :as wizard-docs]
-   [tyrell.site.views.getting-started :as getting-started]))
+   [tyrell.site.docs.quickstart :as quickstart]))
 
 ;; Component picker previews
 ;; Each preview is a plain hiccup vector rendered inside a bento cell in the
@@ -116,10 +113,9 @@
    [:ty-icon {:slot "start"
               :name "search"
               :size "sm"}]
-   [:ty-icon {:slot "end"
+   [:ty-icon.ty-text-- {:slot "end"
               :name "x"
-              :size "sm"
-              :class "ty-text--"}]])
+              :size "sm"}]])
 
 (def ^:private textarea-preview
   [:ty-textarea {:label "Description"
@@ -263,19 +259,17 @@
             :box-shadow "0 12px 32px rgba(0,0,0,0.18)"}}
    [:div.flex.items-center.justify-between
     [:div.text-sm.font-semibold.ty-text "Confirm delete"]
-    [:ty-icon {:name "x"
-               :size "xs"
-               :class "ty-text--"}]]
+    [:ty-icon.ty-text-- {:name "x"
+               :size "xs"}]]
    [:p.text-xs.ty-text-.leading-relaxed
     "This action can't be undone. Your project will be permanently removed."]
    [:div.flex.justify-end.gap-2.pt-1
-    [:div.text-xs.font-medium.px-3.py-1.5.rounded.ty-text- "Cancel"]
-    [:div.text-xs.font-medium.px-3.py-1.5.rounded.ty-bg-danger
-     {:class "ty-text-danger++"} "Delete"]]])
+    [:div.text-xs.font-medium.px-3.rounded.ty-text- {:class ["py-1.5"]} "Cancel"]
+    [:div.text-xs.font-medium.px-3.rounded.ty-bg-danger.ty-text-danger++ {:class ["py-1.5"]} "Delete"]]])
 
 (def ^:private popup-preview
   [:div.flex.items-start.gap-3
-   [:div.flex.items-center.gap-1.text-xs.font-medium.px-2.5.py-1.5.rounded-md.ty-input.border.ty-border
+   [:div.flex.items-center.gap-1.text-xs.font-medium.rounded-md.ty-input.border.ty-border {:class ["px-2.5" "py-1.5"]}
     "Menu"
     [:ty-icon {:name "chevron-down"
                :size "xs"
@@ -283,30 +277,26 @@
    [:div.ty-floating.rounded-md.flex.flex-col.text-xs.py-1
     {:style {:min-width "140px"
              :box-shadow "0 8px 20px rgba(0,0,0,0.12)"}}
-    [:div.flex.items-center.gap-2.px-3.py-1.5.ty-text
-     [:ty-icon {:name "edit"
-                :size "xs"
-                :class "ty-text--"}]
+    [:div.flex.items-center.gap-2.px-3.ty-text {:class ["py-1.5"]}
+     [:ty-icon.ty-text-- {:name "edit"
+                :size "xs"}]
      "Edit"]
-    [:div.flex.items-center.gap-2.px-3.py-1.5.ty-text
-     [:ty-icon {:name "copy"
-                :size "xs"
-                :class "ty-text--"}]
+    [:div.flex.items-center.gap-2.px-3.ty-text {:class ["py-1.5"]}
+     [:ty-icon.ty-text-- {:name "copy"
+                :size "xs"}]
      "Duplicate"]
     [:div.h-px.ty-bg-neutral-.my-1]
-    [:div.flex.items-center.gap-2.px-3.py-1.5.ty-text-danger
+    [:div.flex.items-center.gap-2.px-3.ty-text-danger {:class ["py-1.5"]}
      [:ty-icon {:name "trash"
                 :size "xs"}]
      "Delete"]]])
 
 (def ^:private tooltip-preview
   [:div.flex.items-center.gap-3
-   [:ty-icon {:name "info"
-              :size "lg"
-              :class "ty-text-"}]
+   [:ty-icon.ty-text- {:name "info"
+              :size "lg"}]
    [:div.relative
-    [:div.ty-floating.rounded.px-2.5.py-1.5.text-xs.font-medium.ty-text
-     {:style {:box-shadow "0 4px 12px rgba(0,0,0,0.12)"}}
+    [:div.ty-floating.rounded.text-xs.font-medium.ty-text {:class ["px-2.5" "py-1.5"] :style {:box-shadow "0 4px 12px rgba(0,0,0,0.12)"}}
      "Helpful hint"]
     [:div.absolute
      {:style {:left "-5px"
@@ -339,15 +329,12 @@
     [:div.flex.items-center.justify-center.rounded-full.ty-bg-success
      {:style {:width "26px"
               :height "26px"}}
-     [:ty-icon {:name "check"
-                :size "xs"
-                :class "ty-text-success++"}]]
+     [:ty-icon.ty-text-success++ {:name "check"
+                :size "xs"}]]
     [:span.text-xs.ty-text- "Plan"]]
    [:div.flex-1.h-px.ty-bg-success {:style {:margin-bottom "16px"}}]
    [:div.flex.flex-col.items-center.gap-1
-    [:div.flex.items-center.justify-center.rounded-full.ty-bg-primary.text-xs.font-bold
-     {:class "ty-text-primary++"
-      :style {:width "26px"
+    [:div.flex.items-center.justify-center.rounded-full.ty-bg-primary.text-xs.font-bold.ty-text-primary++ {:style {:width "26px"
               :height "26px"}}
      "2"]
     [:span.text-xs.ty-text.font-medium "Build"]]
@@ -368,9 +355,8 @@
     {:style {:padding-top "12px"
              :padding-bottom "12px"}}
     (for [[i flavor] (map-indexed vector ["primary" "success" "warning" "info" "danger" "neutral"])]
-      ^{:key i}
       [:div.flex-shrink-0.rounded
-       {:class (str "ty-bg-" flavor "-")
+       {:replicant/key i :class (str "ty-bg-" flavor "-")
         :style {:width "60px"
                 :height "100%"}}])]
    [:div.absolute.left-0.top-0.bottom-0
@@ -403,31 +389,28 @@
 (def ^:private icon-preview
   [:div.flex.flex-wrap.items-center.gap-4
    {:style {:width "260px"}}
-   [:ty-icon {:name "star"
+   [:ty-icon.ty-text-primary {:name "star"
+              :size "lg"}]
+   [:ty-icon.ty-text-danger {:name "heart"
               :size "lg"
-              :class "ty-text-primary"}]
-   [:ty-icon {:name "heart"
-              :size "lg"
-              :class "ty-text-danger"
+              
               :pulse true}]
-   [:ty-icon {:name "loader-2"
+   [:ty-icon.ty-text-info {:name "loader-2"
               :size "lg"
-              :class "ty-text-info"
+              
               :spin true}]
-   [:ty-icon {:name "check-circle"
+   [:ty-icon.ty-text-success {:name "check-circle"
+              :size "lg"}]
+   [:ty-icon.ty-text- {:name "settings"
               :size "lg"
-              :class "ty-text-success"}]
-   [:ty-icon {:name "settings"
-              :size "lg"
-              :class "ty-text-"
+              
               :spin true
               :tempo "slow"}]
-   [:ty-icon {:name "github"
+   [:ty-icon.ty-text {:name "github"
+              :size "lg"}]
+   [:ty-icon.ty-text-warning {:name "bell"
               :size "lg"
-              :class "ty-text"}]
-   [:ty-icon {:name "bell"
-              :size "lg"
-              :class "ty-text-warning"
+              
               :pulse true
               :tempo "slow"}]])
 
@@ -629,28 +612,7 @@
     :icon "rocket"
     :description "Installation and basic setup"
     :tags ["install" "setup" "npm" "quick start"]
-    :view #(getting-started/view)}
-   {:id :tyrell.site.docs/javascript
-    :segment "javascript"
-    :name "JavaScript/TypeScript"
-    :icon "code"
-    :description "Web components for every JS framework — install, bundlers, React wrappers"
-    :tags ["javascript" "typescript" "react" "vue" "svelte" "astro" "jsx" "npm"]
-    :view js-react-docs/view}
-   {:id :tyrell.site.docs/clojurescript
-    :segment "clojurescript"
-    :name "ClojureScript"
-    :icon "clojure"
-    :description "Web components and CLJS-native infrastructure for every CLJS framework"
-    :tags ["clojure" "clojurescript" "reagent" "re-frame" "uix" "helix" "replicant"]
-    :view clojurescript-docs/view}
-   {:id :tyrell.site.docs/html
-    :segment "html"
-    :name "HTML / Server-side"
-    :icon "server"
-    :description "HTMX, Datastar, Flask, Django, Rails, Phoenix, PHP — render HTML on the server, hydrate as web components"
-    :tags ["htmx" "datastar" "server" "html" "ssr" "backend" "flask" "django" "rails" "phoenix" "php" "laravel"]
-    :view html-docs/view}
+    :view #(quickstart/view)}
    {:id :tyrell.site.docs/theming
     :segment "theming"
     :name "Theming (OKLCH)"
@@ -659,14 +621,16 @@
     :tags ["theme" "oklch" "brand" "colors" "playground" "dark mode"]
     :view #(theming-docs/view)}])
 
-(defn in-docs? []
-  (router/rendered? :tyrell.site/docs false))
-
-;; Render function - fallback for docs routes not handled by site.core.cljs
+;; The old per-stack guide pages. Their URLs still resolve and redirect to
+;; Getting started with the matching stack (core.cljs).
+(def legacy-guides
+  [{:id :tyrell.site.docs/clojurescript :segment "clojurescript" :stack "clojure"}
+   {:id :tyrell.site.docs/html :segment "html" :stack "html"}
+   {:id :tyrell.site.docs/javascript :segment "javascript" :stack "react"}])
 
 (defn render
   "Render the appropriate docs view based on current route"
   []
   ;; No global highlighting needed - individual code blocks handle it via :replicant/on-mount
   (let [{view :view} (some #(when (router/rendered? (:id %) true) %) (concat docs-components guide-components))]
-    (if view (view) (getting-started/view))))
+    (if view (view) (quickstart/view))))

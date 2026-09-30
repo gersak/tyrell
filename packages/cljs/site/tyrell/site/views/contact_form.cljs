@@ -1,272 +1,148 @@
 (ns tyrell.site.views.contact-form
   (:require
    [clojure.string :as str]
-   [tyrell.site.state :as state]))
+   [tyrell.site.state :as state]
+   [tyrell.site.views.kit :as kit]))
 
-(defn validate-email [email]
-  (let [email-regex #"^[^\s@]+@[^\s@]+\.[^\s@]+$"]
-    (and (not-empty email) (re-matches email-regex email))))
+(def ^:private rules
+  {:full-name [(kit/min-len 2 "Full name")]
+   :email     [(kit/required "Email") kit/email]
+   :company   [(kit/required "Company")]
+   :subject   [(kit/min-len 5 "Subject")]
+   :message   [(kit/min-len 20 "Message") (kit/max-len 2000 "Message")]})
 
-(defn validate-field [field-key value]
-  (case field-key
-    :full-name (if (or (empty? value) (< (count (clojure.string/trim value)) 2))
-                 "Full name must be at least 2 characters long"
-                 nil)
-    :email (cond
-             (empty? value) "Email address is required"
-             (not (validate-email value)) "Please enter a valid email address"
-             :else nil)
-    :company (if (empty? value)
-               "Company name is required"
-               nil)
-    :subject (if (or (empty? value) (< (count (clojure.string/trim value)) 5))
-               "Subject must be at least 5 characters long"
-               nil)
-    :message (cond
-               (empty? value) "Message is required"
-               (< (count (clojure.string/trim value)) 20) "Message must be at least 20 characters long"
-               (> (count value) 2000) "Message must not exceed 2000 characters"
-               :else nil)
-    nil))
+(def ^:private initial
+  {:form-data {:full-name "Sarah Chen"
+               :email "sarah.chen@designstudio.com"
+               :company "Creative Design Studio"
+               :subject "Partnership: Tyrell for our client dashboards"
+               :message "Hi! We're rebuilding our client dashboards and Tyrell looks like the right fit: real web components, theming through CSS variables, and a ClojureScript story on top.\n\nCould we get a quick call about a partnership? We'd love to talk about React wrappers and a shared design system for our team.\n\nThanks,\nSarah"
+               :priority "high"
+               :department #{"partnership" "sales"}
+               :newsletter true}})
 
-(defn validate-form [form-data]
-  (->> form-data
-       (map (fn [[k v]] [k (validate-field k v)]))
-       (filter (fn [[_ v]] v))
-       (into {})))
+(kit/init! :contact-form initial)
 
-(defn handle-field-change [field-key]
-  (fn [event]
-    (let [value (-> event .-detail .-value)]
-      (swap! state/state update-in [:contact-form :form-data] assoc field-key value)
-      (swap! state/state update-in [:contact-form :touched-fields] conj field-key)
-      (let [error (validate-field field-key value)]
-        (if error
-          (swap! state/state assoc-in [:contact-form :validation-errors field-key] error)
-          (swap! state/state update-in [:contact-form :validation-errors] dissoc field-key))))))
+(def ^:private priorities
+  [["low" "Low" "success"] ["medium" "Medium" "primary"] ["high" "High" "warning"] ["critical" "Critical" "danger"]])
 
-(defn handle-checkbox-change [field-key]
-  (fn [event]
-    (let [checked (-> event .-detail .-value)]
-      (swap! state/state assoc-in [:contact-form :form-data field-key] checked))))
+(def ^:private departments
+  [["sales" "primary" "Sales"] ["support" "success" "Support"] ["technical" "neutral" "Engineering"]
+   ["billing" "warning" "Billing"] ["partnership" "neutral" "Partnerships"]])
 
-(defn handle-priority-change [^js event]
-  ;; ty-select: detail.value is the scalar selected value (single select)
-  (let [value (-> event .-detail .-value)]
-    (swap! state/state assoc-in [:contact-form :form-data :priority] value)))
+(defn- put! [k v] (swap! state/state assoc-in [:contact-form k] v))
+(defn- put-data! [k v] (swap! state/state assoc-in [:contact-form :form-data k] v))
+(defn- field [tag k attrs & children] (apply kit/field tag :contact-form rules k attrs children))
+(defn- clear! [] (swap! state/state assoc :contact-form {:form-data {}}))
 
-(defn handle-department-change [departments]
-  (swap! state/state assoc-in [:contact-form :form-data :department] departments))
+(defn- submit! [e]
+  (.preventDefault e)
+  (when (empty? (kit/validate! :contact-form rules))
+    (put! :sending? true)
+    ;; Fake API call: succeeds nine times out of ten
+    (js/setTimeout
+     #(if (< (js/Math.random) 0.9)
+        (swap! state/state update :contact-form assoc
+               :sending? false :status nil :sent (get-in @state/state [:contact-form :form-data]))
+        (swap! state/state update :contact-form assoc
+               :sending? false
+               :status "Sorry, there was an error sending your message. Please try again."))
+     2000)))
 
-(defn simulate-form-submission [_]
-  (js/Promise.
-   (fn [resolve reject]
-     (js/setTimeout
-      (fn []
-        ;; Simulate 90% success rate
-        (if (> (js/Math.random) 0.1)
-          (resolve {:success true
-                    :message "Thank you! Your message has been sent successfully. We'll get back to you within 24 hours."})
-          (reject {:success false
-                   :message "Sorry, there was an error sending your message. Please try again or contact us directly at support@example.com."})))
-      2000))))
+(defn- step [n label & children]
+  [:div
+   [:div.flex.items-center.mb-3 {:class ["gap-2.5"]}
+    [:span.w-6.h-6.rounded-full.flex.items-center.justify-center.text-xs.font-semibold.ty-text-primary
+     {:style {:background "color-mix(in oklch, var(--ty-color-primary) 14%, transparent)"}}
+     n]
+    [:h4.text-sm.font-semibold.ty-text++ label]]
+   (into [:div.flex.flex-col.gap-3] children)])
 
-(defn handle-form-submit [event]
-  (.preventDefault event)
-  (let [form-data (get-in @state/state [:contact-form :form-data])
-        errors (validate-form form-data)]
-
-    (swap! state/state assoc-in [:contact-form :touched-fields]
-           #{:full-name :email :company :subject :message})
-
-    (if (empty? errors)
-      (do
-        (swap! state/state assoc-in [:contact-form :is-submitting] true)
-        (swap! state/state assoc-in [:contact-form :submission-status] nil)
-
-        ;; Simulate API call
-        (-> (simulate-form-submission form-data)
-            (.then (fn [result]
-                     (swap! state/state assoc-in [:contact-form :is-submitting] false)
-                     (swap! state/state assoc-in [:contact-form :submission-status] :success)
-                     (swap! state/state assoc-in [:contact-form :submission-message] (:message result))
-                     (swap! state/state assoc-in [:contact-form :submitted-data] form-data)
-                     (swap! state/state assoc-in [:contact-form :success-modal-open] true)
-                     (swap! state/state assoc-in [:contact-form :form-data]
-                            {:full-name ""
-                             :email ""
-                             :company ""
-                             :subject ""
-                             :message ""
-                             :priority ""
-                             :department #{}
-                             :newsletter-consent false})
-                     (swap! state/state assoc-in [:contact-form :touched-fields] #{})
-                     (swap! state/state assoc-in [:contact-form :validation-errors] {})))
-            (.catch (fn [error]
-                      (swap! state/state assoc-in [:contact-form :is-submitting] false)
-                      (swap! state/state assoc-in [:contact-form :submission-status] :error)
-                      (swap! state/state assoc-in [:contact-form :submission-message] (:message error))))))
-      (swap! state/state assoc-in [:contact-form :validation-errors] errors))))
-
-(defn close-success-modal []
-  (swap! state/state assoc-in [:contact-form :success-modal-open] false)
-  (swap! state/state assoc-in [:contact-form :submitted-data] nil)
-  (swap! state/state assoc-in [:contact-form :submission-status] nil))
-
-(defn reset-form []
-  (swap! state/state assoc :contact-form
-         {:form-data {:full-name ""
-                      :email ""
-                      :company ""
-                      :subject ""
-                      :message ""
-                      :priority ""
-                      :department #{}
-                      :newsletter-consent false}
-          :validation-errors {}
-          :touched-fields #{}
-          :is-submitting false
-          :submission-status nil
-          :submission-message ""
-          :success-modal-open false
-          :submitted-data nil}))
-
-(defn- section-divider [label]
-  [:div.flex.items-center.gap-3.mb-3
-   {:style {:margin-top "1.25rem"}}
-   [:span.text-xs.font-semibold.tracking-widest.uppercase.ty-text-- label]
-   [:div.flex-1
-    {:style {:height "1px"
-             :background "var(--ty-border)"}}]])
-
-(defn success-modal-content [submitted-data close-success-modal reset-form]
-  [:ty-modal {:open true :on {:close close-success-modal}}
-   [:div.p-5.ty-elevated.rounded-lg
-    {:style {:max-width "480px"}}
-    [:div.flex.items-center.gap-3.mb-4
-     [:div.w-9.h-9.ty-bg-success.rounded-full.flex.items-center.justify-center
-      [:ty-icon {:name "check" :size "sm" :class "ty-text++"}]]
-     [:div
-      [:h3.text-base.font-semibold.ty-text "Message Sent"]
-      [:p.text-xs.ty-text- "We'll respond within 24 hours."]]]
-    (when submitted-data
-      [:div.ty-content.p-3.rounded-lg.grid.grid-cols-2.gap-2.mb-4
-       [:div [:p.text-xs.ty-text--.mb-0.5 "Name"] [:p.text-sm.ty-text (:full-name submitted-data)]]
-       [:div [:p.text-xs.ty-text--.mb-0.5 "Email"] [:p.text-sm.ty-text (:email submitted-data)]]
-       [:div [:p.text-xs.ty-text--.mb-0.5 "Company"] [:p.text-sm.ty-text (:company submitted-data)]]
-       [:div [:p.text-xs.ty-text--.mb-0.5 "Priority"]
-        [:span.text-xs.px-1.5.py-0.5.rounded
-         {:class (case (:priority submitted-data)
-                   "low"      ["ty-bg-neutral-" "ty-text-neutral"]
-                   "medium"   ["ty-bg-info-"    "ty-text"]
-                   "high"     ["ty-bg-warning-" "ty-text-warning"]
-                   "critical" ["ty-bg-danger-"  "ty-text-danger"]
-                              ["ty-bg-neutral-" "ty-text-neutral"])}
-         (or (:priority submitted-data) "—")]]])
-    [:div.flex.gap-2.justify-end
-     [:ty-button {:flavor "neutral" :size "sm" :on {:click close-success-modal}} "Close"]
-     [:ty-button {:flavor "primary" :size "sm"
-                  :on {:click (fn [] (close-success-modal) (reset-form))}}
-      "Send Another"]]]])
+(defn- aside
+  "Dark side panel: who you're writing to and how else to reach them."
+  []
+  [:aside.dark.ty-canvas.ty-text.h-full.rounded-2xl.p-6.flex.flex-col.gap-7
+   {:data-ty-theme ""
+    :style {:--ty-primary-hue "inherit"
+            :--ty-primary-chroma "inherit"
+            :background (str "radial-gradient(ellipse 90% 60% at 0% 0%, color-mix(in oklch, var(--ty-color-primary) 22%, transparent), transparent 70%), "
+                             "var(--ty-surface-canvas)")}}
+   [:div.flex.flex-col.gap-3
+    [:span.text-xs.font-semibold.uppercase.ty-text-primary {:style {:letter-spacing "0.14em"}} "Contact"]
+    [:h3.text-2xl.font-bold.ty-text++ {:style {:letter-spacing "-0.02em" :line-height "1.15"}} "Let's build something."]
+    [:p.text-sm.ty-text-.leading-relaxed "Tell us what you're working on. A human reads every message."]]
+   [:ul.flex.flex-col.gap-4
+    (for [[icon title detail] [["mail" "hello@example.com" "Email"]
+                               ["github" "gersak/tyrell" "GitHub discussions"]
+                               ["map-pin" "Zagreb, Croatia" "Studio, CET"]]]
+      [:li.flex.items-center.gap-3 {:replicant/key title}
+       [:span.w-9.h-9.rounded-xl.flex.items-center.justify-center.shrink-0.ty-text
+        {:style {:background "color-mix(in oklch, var(--ty-text-strong) 8%, transparent)"}}
+        [:ty-icon {:name icon :size "sm"}]]
+       [:span.flex.flex-col.min-w-0
+        [:span.text-sm.font-medium.ty-text++.truncate title]
+        [:span.text-xs.ty-text- detail]]])]
+   [:div.flex-1]
+   [:div.flex.items-center.gap-3.pt-5.border-t.ty-border
+    [:div.flex {:style {:padding-left "6px"}}
+     (for [[initials flavor] [["RG" "warning"] ["AK" "primary"] ["MS" "success"]]]
+       [:span.w-8.h-8.rounded-full.flex.items-center.justify-center.text-xs.font-semibold
+        {:replicant/key initials
+         :class [(str "ty-bg-" flavor) (str "ty-text-" flavor "++")]
+         :style {:margin-left "-6px" :border "2px solid var(--ty-surface-canvas)"}}
+        initials])]
+    [:span.text-xs.ty-text-.leading-snug "Usually replies" [:br] "within a day"]]])
 
 (defn view []
-  (let [{:keys [form-data validation-errors touched-fields is-submitting submission-status submission-message
-                success-modal-open submitted-data]}
-        (:contact-form @state/state)]
-    [:div
-     (when submission-status
-       [:div.flex.items-center.gap-3.p-3.rounded-lg.mb-4
-        {:class (if (= submission-status :success) ["ty-bg-success-"] ["ty-bg-danger-"])}
-        [:ty-icon {:name (if (= submission-status :success) "check-circle" "alert-circle")
-                   :size "sm"
-                   :class (if (= submission-status :success) "ty-text-success" "ty-text-danger")}]
-        [:p.text-sm.flex-1
-         {:class (if (= submission-status :success) "ty-text-success" "ty-text-danger")}
-         submission-message]
-        (when (= submission-status :error)
-          [:button.text-xs.underline.ty-text-danger
-           {:on {:click #(swap! state/state assoc-in [:contact-form :submission-status] nil)}}
-           "Dismiss"])])
-
-     [:form {:on {:submit handle-form-submit}}
-      (section-divider "Contact")
-      [:div.grid.grid-cols-2.gap-3
-       [:ty-input {:type "text" :label "Full Name" :value (:full-name form-data)
-                   :placeholder "Your full name" :required true :icon "user"
-                   :error (when (contains? touched-fields :full-name) (:full-name validation-errors))
-                   :on {:input (handle-field-change :full-name)}}]
-       [:ty-input {:type "email" :label "Email" :value (:email form-data)
-                   :placeholder "your@email.com" :required true :icon "mail"
-                   :error (when (contains? touched-fields :email) (:email validation-errors))
-                   :on {:input (handle-field-change :email)}}]
-       [:ty-input {:type "text" :label "Company" :value (:company form-data)
-                   :placeholder "Company name" :required true :icon "building"
-                   :error (when (contains? touched-fields :company) (:company validation-errors))
-                   :on {:input (handle-field-change :company)}}]
-       [:ty-input {:type "text" :label "Subject" :value (:subject form-data)
-                   :placeholder "Brief description" :required true
-                   :error (when (contains? touched-fields :subject) (:subject validation-errors))
-                   :on {:input (handle-field-change :subject)}}]]
-
-      (section-divider "Request")
-      [:div.grid.grid-cols-2.gap-3
-       [:ty-select {:label "Priority" :value (:priority form-data)
-                    :on {:change handle-priority-change}}
-        [:ty-option {:value "low"}
-         [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-green-500.rounded-full] [:span "Low"]]]
-        [:ty-option {:value "medium"}
-         [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-blue-500.rounded-full] [:span "Medium"]]]
-        [:ty-option {:value "high"}
-         [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-yellow-500.rounded-full] [:span "High"]]]
-        [:ty-option {:value "critical"}
-         [:div.flex.items-center.gap-2 [:div.w-2.h-2.bg-red-500.rounded-full] [:span "Critical"]]]]
-       [:ty-select {:id "contact-departments"
-                    :multiple true
-                    :label "Department(s)"
-                    :placeholder "Department(s)..."
-                    :value (str/join "," (:department form-data))
-                    :on {:change (fn [event]
-                                   (let [values (-> event .-detail .-values)]
-                                     (handle-department-change (set values))))}}
-        [:ty-option {:value "sales"       :flavor "primary"}   "Sales"]
-        [:ty-option {:value "support"     :flavor "success"}   "Support"]
-        [:ty-option {:value "technical"   :flavor "neutral"} "Engineering"]
-        [:ty-option {:value "billing"     :flavor "warning"}   "Billing"]
-        [:ty-option {:value "partnership" :flavor "neutral"}   "Partnerships"]]]
-      ;; Dismissible chips for the selection — default template, flavors carry
-      [:div.flex.flex-wrap.gap-2.mt-2
-       [:ty-selected-options {:for "contact-departments"}]]
-
-      (section-divider "Message")
-      [:ty-textarea {:label "Message" :value (:message form-data)
-                     :placeholder "Describe your inquiry in detail..."
-                     :min-height "140px" :max-height "240px" :required true
-                     :error (when (contains? touched-fields :message) (:message validation-errors))
-                     :on {:change (handle-field-change :message)}}]
-      [:div.flex.justify-end.mt-1
-       [:span.text-xs
-        {:class (if (> (count (:message form-data "")) 1800) "ty-text-warning" "ty-text--")}
-        (str (count (:message form-data "")) "/2000")]]
-
-      [:div.flex.items-center.justify-between.pt-4.border-t.ty-border
-       {:style {:margin-top "1.25rem"}}
-       [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text-
-        [:ty-checkbox {:checked (:newsletter-consent form-data)
-                       :on {:change (handle-checkbox-change :newsletter-consent)}}]
-        "Newsletter updates"]
-       [:div.flex.gap-2
-        [:ty-button {:type "button" :flavor "neutral" :size "sm" :on {:click reset-form}}
-         "Reset"]
-        [:ty-button {:type "submit" :flavor "primary" :size "sm" :disabled is-submitting}
-         (if is-submitting
-           [:div.flex.items-center.gap-1
-            [:ty-icon {:name "loader-2" :spin true :size "xs"}]
-            "Sending…"]
-           [:div.flex.items-center.gap-1
-            [:ty-icon {:name "send" :size "xs"}]
-            "Send"])]]]]
-
-     (when success-modal-open
-       (success-modal-content submitted-data close-success-modal reset-form))]))
-
+  (let [{:keys [form-data sending? status sent]} (:contact-form @state/state)
+        {:keys [message priority department newsletter]} form-data]
+    [:div {:class ["@container"]}
+     (when status
+       [:div.flex.items-center.gap-3.p-3.rounded-lg.mb-4.ty-bg-danger-
+        [:ty-icon.ty-text-danger {:name "alert-circle" :size "sm"}]
+        [:p.text-sm.flex-1.ty-text-danger status]
+        [:button.text-xs.underline.ty-text-danger {:on {:click #(put! :status nil)}} "Dismiss"]])
+     [:div.flex.flex-col.gap-8 {:class ["@3xl:flex-row"]}
+      [:div.shrink-0 {:class ["@3xl:w-72"]} (aside)]
+      [:form.flex-1.min-w-0.flex.flex-col.gap-7 {:on {:submit submit!}}
+       (step "1" "About you"
+             (kit/cols
+              (field :ty-input :full-name {:label "Full Name" :placeholder "Your full name" :required true} (kit/icon "user"))
+              (field :ty-input :email {:type "email" :label "Email" :placeholder "your@email.com" :required true} (kit/icon "mail"))
+              (field :ty-input :company {:label "Company" :placeholder "Company name" :required true} (kit/icon "building"))
+              [:ty-select {:label "Priority" :value priority :on {:change #(put-data! :priority (kit/value %))}}
+               (for [[v label flavor] priorities]
+                 [:ty-option {:replicant/key v :value v}
+                  [:div.flex.items-center.gap-2
+                   [:span.inline-block.w-2.h-2.rounded-full {:style {:background (str "var(--ty-color-" flavor ")")}}]
+                   [:span label]]])]))
+       (step "2" "Your request"
+             (field :ty-input :subject {:label "Subject" :placeholder "Brief description" :required true} (kit/icon "message-square"))
+             [:ty-select {:id "contact-departments" :multiple true :label "Route it to"
+                          :placeholder "Pick one or more teams..." :value (str/join "," department)
+                          :on {:change (fn [^js e] (put-data! :department (set (.. e -detail -values))))}}
+              (for [[v flavor label] departments] [:ty-option {:replicant/key v :value v :flavor flavor} label])]
+             ;; Dismissible chips for the selection — default template, flavors carry
+             [:div.flex.flex-wrap.gap-2 [:ty-selected-options {:for "contact-departments"}]])
+       (step "3" "Message"
+             [:div
+              (field :ty-textarea :message {:placeholder "Describe your inquiry in detail..." :required true
+                                            :min-height "140px" :max-height "240px"})
+              [:p.text-xs.text-right.mt-1 {:class (if (> (count message) 1800) "ty-text-warning" "ty-text--")}
+               (str (count message) "/2000")]])
+       [:div.flex.flex-wrap.items-center.justify-between.gap-3.pt-5.border-t.ty-border
+        [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.ty-text-
+         [:ty-checkbox {:checked newsletter :on {:change #(put-data! :newsletter (kit/value %))}}]
+         "Send me the monthly newsletter"]
+        [:div.flex.gap-2
+         [:ty-button {:type "button" :flavor "neutral" :appearance "outlined" :size "sm" :on {:click clear!}} "Reset"]
+         [:ty-button {:type "submit" :flavor "neutral+" :size "sm" :disabled (boolean sending?)}
+          [:ty-icon {:name (if sending? "loader-2" "send") :spin sending? :size "xs" :slot "start"}]
+          (if sending? "Sending…" "Send message")]]]]]
+     (kit/result-modal
+      {:open (some? sent) :on-close #(put! :sent nil) :icon "check" :flavor "success"
+       :title "Message Sent" :subtitle "We'll respond within 24 hours."
+       :actions [[:ty-button {:flavor "neutral" :size "sm" :on {:click #(put! :sent nil)}} "Close"]
+                 [:ty-button {:flavor "primary" :size "sm" :on {:click clear!}} "Send Another"]]}
+      (kit/summary [["Name" (:full-name sent)] ["Email" (:email sent)] ["Company" (:company sent)]
+                    ["Priority" (or (:priority sent) "—")]]))]))

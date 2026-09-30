@@ -39,6 +39,7 @@ interface MarkerPosition {
 const eventHandlers = new WeakMap<TyTabs, {
   tabClickHandlers: Map<string, (e: Event) => void>;
   tabKeyClickHandlers: Map<string, (e: Event) => void>;
+  tabKeydownHandlers: Map<string, (e: Event) => void>;
 }>();
 
 const resizeObservers = new WeakMap<TyTabs, ResizeObserver>();
@@ -176,9 +177,36 @@ function cleanupEventListeners(el: TyTabs): void {
       button.removeEventListener('click', handler);
     }
   });
+  handlers.tabKeydownHandlers.forEach((handler, tabId) => {
+    const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-tab-id='${tabId}']`);
+    if (button) {
+      button.removeEventListener('keydown', handler);
+    }
+  });
 
   handlers.tabClickHandlers.clear();
   handlers.tabKeyClickHandlers.clear();
+  handlers.tabKeydownHandlers.clear();
+}
+
+function handleTabKeydown(el: TyTabs, shadowRoot: ShadowRoot, tabId: string, e: KeyboardEvent): void {
+  if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
+  const ids = Array.from(
+    shadowRoot.querySelectorAll<HTMLButtonElement>('.tab-buttons [data-tab-id]:not([disabled])'),
+  ).map((b) => b.getAttribute('data-tab-id')!);
+  const i = ids.indexOf(tabId);
+  if (i < 0 || ids.length === 0) return;
+  e.preventDefault();
+  const next =
+    e.key === 'Home' ? ids[0]
+    : e.key === 'End' ? ids[ids.length - 1]
+    : e.key === 'ArrowRight' ? ids[(i + 1) % ids.length]
+    : ids[(i - 1 + ids.length) % ids.length];
+  if (next === tabId) return;
+  handleTabClick(el, next, e);
+  requestAnimationFrame(() => {
+    shadowRoot.querySelector<HTMLButtonElement>(`.tab-buttons [data-tab-id='${next}']`)?.focus();
+  });
 }
 
 function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLElement[]): void {
@@ -187,6 +215,7 @@ function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLEleme
   const handlers = {
     tabClickHandlers: new Map<string, (e: Event) => void>(),
     tabKeyClickHandlers: new Map<string, (e: Event) => void>(),
+    tabKeydownHandlers: new Map<string, (e: Event) => void>(),
   };
 
   tabs.forEach((tab) => {
@@ -206,10 +235,16 @@ function setupEventListeners(el: TyTabs, shadowRoot: ShadowRoot, tabs: HTMLEleme
       const keyClickHandler = (e: Event) => {
         if ((e as MouseEvent).detail === 0) handleTabClick(el, tabId, e);
       };
+      // Arrow keys / Home / End (WAI-ARIA tabs, automatic activation). The
+      // buttons use a roving tabindex — only the active one is tabbable — so
+      // without this, keyboard users could never reach the other tabs.
+      const keydownHandler = (e: Event) => handleTabKeydown(el, shadowRoot, tabId, e as KeyboardEvent);
       button.addEventListener('pointerdown', handler);
       button.addEventListener('click', keyClickHandler);
+      button.addEventListener('keydown', keydownHandler);
       handlers.tabClickHandlers.set(tabId, handler);
       handlers.tabKeyClickHandlers.set(tabId, keyClickHandler);
+      handlers.tabKeydownHandlers.set(tabId, keydownHandler);
     }
   });
 

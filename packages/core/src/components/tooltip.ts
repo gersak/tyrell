@@ -10,10 +10,11 @@ import { tooltipStyles } from '../styles/tooltip.js';
 import type { Flavor } from '../types/common.js';
 
 /**
- * Tooltip flavors: dark (default) / light / info plus any Flavor —
- * built-in semantic colors or a custom flavor backed by --ty-*-X tokens.
+ * Tooltip flavors are the standard ones: neutral (default) / primary /
+ * success / danger / warning with + and - tones, or a custom flavor.
+ * 'dark' is kept as a silent alias for neutral.
  */
-export type TooltipFlavor = 'dark' | 'light' | 'info' | Flavor;
+export type TooltipFlavor = 'dark' | Flavor;
 
 /**
  * Tooltip attributes configuration
@@ -46,12 +47,12 @@ const anchorElements = new WeakMap<TyTooltip, HTMLElement>();
  * Normalize the flavor attribute. Any plain identifier (with optional +/-
  * shade suffix) is accepted — built-ins and custom flavors alike get their
  * colors from tokens in applyFlavorStyles(). Anything else (including
- * would-be CSS injection through the attribute) falls back to 'dark'.
+ * would-be CSS injection through the attribute) falls back to 'neutral'.
  */
 function validateFlavor(flavor: string | null): TooltipFlavor {
-  const full = flavor || 'dark';
+  const full = flavor || 'neutral';
   const base = full.replace(/[+-]$/, '');
-  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(base) ? (full as TooltipFlavor) : 'dark';
+  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(base) ? (full as TooltipFlavor) : 'neutral';
 }
 
 function getTimeoutState(el: TyTooltip): TimeoutState {
@@ -208,49 +209,36 @@ function getOrCreatePopover(el: TyTooltip): HTMLElement {
 /**
  * Apply flavor-specific styles to popover.
  *
- * dark / light / info are hand-written extras; every other flavor —
- * built-in semantic or custom — is one token formula, with neutral
- * fallbacks so a custom flavor with missing tokens degrades gracefully.
- * flavor has passed validateFlavor's identifier guard, so interpolating
- * it into var() names is safe.
+ * Same flavors as every other component. neutral (the default, and the
+ * legacy 'dark') is a fixed dark chip on the --ty-tooltip-* tokens — a
+ * tooltip should pop whether the page is light or dark. Every other flavor
+ * — primary / success / danger / warning or custom, with + / - tones — is a
+ * SOLID fill on the solid-button tokens (--ty-solid-X, -fg, -strong, -soft):
+ * the popover floats over arbitrary content, so the translucent --ty-bg-X
+ * tints it used before went unreadable. Custom flavors with missing tokens
+ * fall back to the neutral chip. The flavor has passed validateFlavor's
+ * identifier guard, so interpolating it into var() names is safe.
  */
 function applyFlavorStyles(popover: HTMLElement, flavor: TooltipFlavor): void {
-  // Reset to defaults first
   popover.style.removeProperty('background');
   popover.style.removeProperty('color');
   popover.style.removeProperty('border-color');
 
-  switch (flavor) {
-    case 'dark':
-      // Default look — theme-INDEPENDENT on purpose (matches Material/
-      // Bootstrap/Ant/Shoelace: a tooltip stays a fixed dark chip whether
-      // the page is light or dark, so it always pops). Routed through the
-      // --ty-tooltip-* tokens (defined once in :root, not redeclared in
-      // html.dark) so consumers can retheme without a flavor.
-      popover.style.background = 'var(--ty-tooltip-bg, #262626)';
-      popover.style.color = 'var(--ty-tooltip-color, #f5f5f5)';
-      popover.style.borderColor = 'var(--ty-tooltip-border, #404040)';
-      break;
-    case 'light':
-      popover.style.background = 'var(--ty-surface-elevated, #ffffff)';
-      popover.style.color = 'var(--ty-text-strong, #111827)';
-      popover.style.borderColor = 'var(--ty-border, #e5e7eb)';
-      break;
-    case 'info':
-      popover.style.background = 'var(--ty-bg-info, #06b6d4)';
-      popover.style.color = 'var(--ty-text-strong, #f0f9ff)';
-      popover.style.borderColor = 'var(--ty-border-info, #22d3ee)';
-      break;
-    default: {
-      const base = flavor.replace(/[+-]$/, '');
-      const shade = flavor.slice(base.length);
-      const bgSfx = shade === '+' ? '-bold' : shade === '-' ? '-soft' : '';
-      popover.style.background = `var(--ty-bg-${base}${bgSfx}, var(--ty-bg-neutral))`;
-      popover.style.color = `var(--ty-color-${base}-strong, var(--ty-color-neutral-strong))`;
-      popover.style.borderColor = `var(--ty-border-${base}, var(--ty-color-${base}))`;
-      break;
-    }
+  const base = flavor.replace(/[+-]$/, '');
+  const shade = flavor.slice(base.length);
+
+  if ((base === 'neutral' || base === 'dark') && shade === '') {
+    popover.style.background = 'var(--ty-tooltip-bg, #262626)';
+    popover.style.color = 'var(--ty-tooltip-color, #f5f5f5)';
+    popover.style.borderColor = 'var(--ty-tooltip-border, #404040)';
+    return;
   }
+
+  const f = base === 'dark' ? 'neutral' : base;
+  const sfx = shade === '+' ? '-strong' : shade === '-' ? '-soft' : '';
+  popover.style.background = `var(--ty-solid-${f}${sfx}, var(--ty-tooltip-bg, #262626))`;
+  popover.style.color = `var(--ty-solid-${f}${sfx}-fg, var(--ty-solid-${f}-fg, var(--ty-tooltip-color, #f5f5f5)))`;
+  popover.style.borderColor = 'transparent';
 }
 
 function updatePosition(el: TyTooltip): void {
@@ -357,6 +345,29 @@ function clearTimeouts(el: TyTooltip): void {
   }
 }
 
+/** Escape dismisses an open tooltip without moving focus or the pointer
+    (WCAG 1.4.13 "dismissible"). One document listener per open tooltip. */
+const escapeHandlers = new WeakMap<TyTooltip, (e: KeyboardEvent) => void>();
+
+function listenForEscape(el: TyTooltip): void {
+  if (escapeHandlers.has(el)) return;
+  const handler = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      clearTimeouts(el);
+      hideTooltip(el);
+    }
+  };
+  escapeHandlers.set(el, handler);
+  document.addEventListener('keydown', handler, true);
+}
+
+function stopListeningForEscape(el: TyTooltip): void {
+  const handler = escapeHandlers.get(el);
+  if (!handler) return;
+  document.removeEventListener('keydown', handler, true);
+  escapeHandlers.delete(el);
+}
+
 /** Show immediately (no delay). */
 function showTooltip(el: TyTooltip): void {
   const { disabled } = getTooltipAttributes(el);
@@ -370,6 +381,7 @@ function showTooltip(el: TyTooltip): void {
 
     updatePosition(el);
     setupAutoUpdate(el);
+    listenForEscape(el);
   } catch (e) {
     console.warn('[ty-tooltip] Failed to show popover', e);
   }
@@ -377,6 +389,7 @@ function showTooltip(el: TyTooltip): void {
 
 /** Hide immediately (no delay). */
 function hideTooltip(el: TyTooltip): void {
+  stopListeningForEscape(el);
   const popover = popoverElements.get(el);
   if (!popover) return;
 
@@ -431,6 +444,7 @@ function setupEvents(el: TyTooltip): void {
 function cleanup(el: TyTooltip): void {
   clearTimeouts(el);
   cleanupAutoUpdate(el);
+  stopListeningForEscape(el);
 
   const eventsCleanup = eventCleanup.get(el);
   if (eventsCleanup) {

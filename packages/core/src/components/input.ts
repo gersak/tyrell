@@ -811,18 +811,18 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   private updateValidity(): void {
     const inputEl = this.shadowRoot?.querySelector('input') as HTMLInputElement | null
     if (this.disabled) {
-      this._internals.setValidity({})
+      this.applyValidity({})
       return
     }
     const current = inputEl ? inputEl.value : String(this.getProperty('value') ?? '')
     if (this.required && current.trim() === '') {
-      this._internals.setValidity(
+      this.applyValidity(
         { valueMissing: true },
         'Please fill out this field',
         inputEl ?? undefined
       )
     } else {
-      this._internals.setValidity({})
+      this.applyValidity({})
     }
   }
 }

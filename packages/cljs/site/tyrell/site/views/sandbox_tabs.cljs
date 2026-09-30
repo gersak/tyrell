@@ -204,8 +204,7 @@
       [:div {:style {:padding "16px 0"}}
        [:ty-tabs#sandbox-tabs {:active "a" :width "100%" :height "200px"}
         (for [[id label] tab-defs]
-          ^{:key id}
-          [:ty-tab {:id id :label label}
+          [:ty-tab {:replicant/key id :id id :label label}
            [:div.p-4.ty-text- {:style {:font-size "0.875rem"}} (str label " panel")]])]]]
 
      [:div.ty-elevated.rounded-lg.p-4.space-y-1

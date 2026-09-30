@@ -11,7 +11,8 @@
    rules to a generated file is fragile. This namespace owns its own styles,
    gets hot-reloaded by shadow-cljs, and is visible right next to the CLJS code
    that consumes the resulting variables (the (c \"...\") helper, etc.)."
-  (:require [tyrell.css :as css]))
+  (:require [tyrell.css :as css]
+            [tyrell.site.docs.theming :as theming]))
 
 ;; Inline <code> in prose — styles every <code> that's not a hljs code block.
 ;; Variables live on :root with a .dark override so the page's existing theme
@@ -98,15 +99,16 @@ code:not(.hljs) {
 (def ^:private chrome-pin-css
   "
 [data-ty-theme].site-chrome {
+  --ty-primary-seed: initial;    /* a playground hex seed must not recolor the chrome */
   --ty-primary-hue: 42.1;
   --ty-primary-chroma: 0.163;    /* 0.163 * 0.92   = 0.150 */
   --ty-primary-l-factor: 1.2778; /* 0.54  * 1.2778 = 0.690 */
   --ty-success-hue: 145;
   --ty-warning-hue: 76;
   --ty-danger-hue: 31;
-  --ty-success-chroma: 0.162;
+  --ty-success-chroma: 0.13;     /* was 0.162 / 0.293 — neon, and danger */
   --ty-warning-chroma: 0.333;
-  --ty-danger-chroma: 0.293;
+  --ty-danger-chroma: 0.2;       /* sat far outside sRGB, clipping to pure red */
   --ty-success-l-factor: 1;
   --ty-warning-l-factor: 1.3;
   --ty-danger-l-factor: 1.01;
@@ -127,13 +129,14 @@ code:not(.hljs) {
 }
 
 .dark [data-ty-theme].site-chrome,
-[data-theme=\"dark\"] [data-ty-theme].site-chrome {
+[data-theme=\"dark\"] [data-ty-theme].site-chrome,
+[data-ty-theme].site-chrome.dark {
   --ty-primary-hue: 42.2;
   --ty-primary-chroma: 0.1413;   /* 0.1413 * 0.92   = 0.130 */
   --ty-primary-l-factor: 1.1452; /* 0.62   * 1.1452 = 0.710 */
-  --ty-success-chroma: 0.173;
+  --ty-success-chroma: 0.12;
   --ty-warning-chroma: 0.355;
-  --ty-danger-chroma: 0.312;
+  --ty-danger-chroma: 0.19;
   --ty-l-strong: 0.72;
   --ty-l-bold: 0.66;
   --ty-l-base: 0.62;
@@ -144,10 +147,69 @@ code:not(.hljs) {
 }
 ")
 
+;; Component demos that sit INSIDE the chrome (the hero card on component
+;; pages) are components, not the Tyrell identity: .site-demo puts them back
+;; on the library defaults. Built from the playground's own default maps, so
+;; they match content demos after "Reset". Needs data-ty-theme on the same
+;; element so the derived colors re-resolve there instead of inheriting the
+;; chrome's.
+(defn- dial-lines [m]
+  (apply str
+         (for [[k v] (sort-by key (select-keys m theming/curve-keys))]
+           (str "  --ty-" (name k) ": " v ";\n"))))
+
+(def ^:private demo-pin-css
+  (str "
+[data-ty-theme].site-demo {
+  --ty-primary-seed: initial;
+" (dial-lines theming/default-seeds) "
+  /* Same solid-fill lift as page content (index.html :root). */
+  --ty-solid-l: 0.16;
+}
+
+.dark [data-ty-theme].site-demo,
+[data-theme=\"dark\"] [data-ty-theme].site-demo,
+[data-ty-theme].site-demo.dark {
+" (dial-lines (merge theming/default-seeds theming/dark-curve-defaults)) "
+  --ty-solid-l: -0.2;
+}
+"))
+
+;; Keyboard focus in the brand color instead of the browser's default blue.
+;; Opt-in per element with .site-focus.
+(def ^:private focus-css
+  "
+.site-focus:focus-visible {
+  outline: 2px solid var(--ty-color-primary);
+  outline-offset: 2px;
+}
+")
+
+;; The identity color as one page-wide variable, for accents that live in page
+;; content but should read as Tyrell (e.g. the live examples' Inspect mode).
+;; Same swatches as chrome-pin-css above; keep them in sync.
+(def ^:private brand-css
+  "
+:root { --tyrell-brand: oklch(0.69 0.15 42.1); }
+.dark, [data-theme=\"dark\"] { --tyrell-brand: oklch(0.71 0.13 42.2); }
+")
+
+;; ty ships hover:ty-* but no group-hover:ty-* variants; the two the site uses.
+;; !important matches the library's own color utilities.
+(def ^:private group-hover-css
+  "
+.group:hover .group-hover\\:ty-text { color: var(--ty-text) !important; }
+.group:hover .group-hover\\:ty-text-primary { color: var(--ty-color-primary) !important; }
+")
+
 (defn install!
   "Inject all site-chrome styles into document.head. Idempotent and hot-reloadable
    — calling repeatedly updates the <style> element's content rather than appending
    duplicates. Call from core/init."
   []
   (css/ensure-document-styles! inline-code-css "tyrell-site-inline-code")
-  (css/ensure-document-styles! chrome-pin-css "tyrell-site-chrome-pin"))
+  (css/ensure-document-styles! chrome-pin-css "tyrell-site-chrome-pin")
+  (css/ensure-document-styles! demo-pin-css "tyrell-site-demo-pin")
+  (css/ensure-document-styles! focus-css "tyrell-site-focus")
+  (css/ensure-document-styles! brand-css "tyrell-site-brand")
+  (css/ensure-document-styles! group-hover-css "tyrell-site-group-hover"))

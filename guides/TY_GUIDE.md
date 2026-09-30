@@ -574,28 +574,29 @@ Attrs: `id` (required), `debounce`. Query: `window.tyResizeObserver.getSize(id)`
 
 ## Icon System
 
-Register icons before components render:
-
-```javascript
-// JavaScript
-window.tyIcons.register({ 'heart': '<svg>...</svg>', 'star': '<svg>...</svg>' });
-
-// ES Modules
-import { registerIcons } from 'tyrell-components';
-registerIcons({ 'heart': '<svg>...</svg>' });
-```
-
 ```clojure
-;; ClojureScript (recommended — auto-retries until tyrell.js loads)
-(require '[tyrell.icons :as icons] '[tyrell.lucide :as lucide])
-(icons/register-async! {:check lucide/check :heart lucide/heart})
+(ns my-app.icons
+  (:require [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]))
+
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-**Icon sets (ClojureScript, tree-shakeable):** `tyrell.lucide`, `tyrell.heroicons.outline`, `tyrell.heroicons.solid`, `tyrell.material.*`, `tyrell.fav6.brands`, `tyrell.fav6.regular`, `tyrell.fav6.solid`
+```js
+import { registerIcons } from 'tyrell-components/icons/registry'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-**JS libraries:** `lucide-static`, `@fortawesome/free-solid-svg-icons`, `heroicons`, `@mdi/svg`
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
+```
 
-**API:** `window.tyIcons.has(name)`, `.get(name)`, `.list()`, `.cacheInfo()`, `.clearCache()`
+```html
+<ty-icon name="check" size="sm"></ty-icon>
+```
+
+Registry API on `window.tyIcons`: `register`, `has`, `get`, `list`, `cacheInfo`, `clearCache`.
+
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](ICONS_GUIDE.md).
 
 ---
 

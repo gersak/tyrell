@@ -47,11 +47,14 @@ describe('ty-calendar', () => {
       await nextFrame();
       const nav = el.shadowRoot.querySelector('ty-calendar-navigation') as any;
       const btn = (sel: string) => nav.shadowRoot.querySelector(sel) as HTMLButtonElement;
-      // Displaying June 2025, min month June 2025 → both prev buttons dead
+      // Displaying June 2025, min month June 2025 → prev month dead
       expect(btn('.nav-month-prev').disabled, 'prev month').to.be.true;
-      expect(btn('.nav-year-prev').disabled, 'prev year').to.be.true;
-      // July 2025 is within max → next month alive, next year clamps to July → alive
+      // July 2025 is within max → next month alive
       expect(btn('.nav-month-next').disabled, 'next month').to.be.false;
+      // Year arrows live in the month/year view, opened from the title
+      btn('.nav-title').click();
+      await nextFrame();
+      expect(btn('.nav-year-prev').disabled, 'prev year').to.be.true;
       expect(btn('.nav-year-next').disabled, 'next year (clamps)').to.be.false;
     });
 
@@ -79,6 +82,8 @@ describe('ty-calendar', () => {
       const el = await mount();
       await nextFrame();
       const nav = el.shadowRoot.querySelector('ty-calendar-navigation') as any;
+      (nav.shadowRoot.querySelector('.nav-title') as HTMLButtonElement).click();
+      await nextFrame();
       (nav.shadowRoot.querySelector('.nav-year-next') as HTMLButtonElement).click();
       await nextFrame();
       // +12 months from June 2025 clamps to max month July 2025
@@ -134,6 +139,59 @@ describe('ty-calendar', () => {
       await nextFrame();
       const month = el.shadowRoot.querySelector('ty-calendar-month') as any;
       expect(selectedBg(month)).to.equal('rgb(9, 9, 9)');
+    });
+  });
+
+  describe('month/year view', () => {
+    const mountCal = async () => {
+      const el = (await fixture(html`<ty-calendar value="2026-09-23"></ty-calendar>`)) as any;
+      await nextFrame();
+      const nav = el.shadowRoot.querySelector('ty-calendar-navigation') as any;
+      const title = () => nav.shadowRoot.querySelector('.nav-title') as HTMLButtonElement;
+      return { el, nav, title };
+    };
+
+    it('title opens the month grid and picking a month returns to days', async () => {
+      const { el, nav, title } = await mountCal();
+      title().click();
+      await nextFrame();
+      expect(el.shadowRoot.querySelector('.month-grid'), 'grid shown').to.exist;
+      expect(el.shadowRoot.querySelector('ty-calendar-month'), 'days hidden').to.not.exist;
+      expect(el.shadowRoot.querySelector('.month-cell.selected')?.textContent).to.equal('Sep');
+
+      let navigated: any = null;
+      el.addEventListener('navigate', (e: CustomEvent) => (navigated = e.detail));
+      (el.shadowRoot.querySelector('.month-cell[data-month="3"]') as HTMLButtonElement).click();
+      await nextFrame();
+      expect(el.shadowRoot.querySelector('.month-grid'), 'grid closed').to.not.exist;
+      expect(nav.displayMonth).to.equal(3);
+      expect(navigated).to.include({ month: 3, year: 2026 });
+      expect(el.value, 'selection untouched').to.equal('2026-09-23');
+    });
+
+    it('Page Up / Down step months, Shift steps years', async () => {
+      const { el, nav } = await mountCal();
+      const container = el.shadowRoot.querySelector('.calendar-container') as HTMLElement;
+      const key = (k: string, shiftKey = false) =>
+        container.dispatchEvent(new KeyboardEvent('keydown', { key: k, shiftKey, bubbles: true }));
+      key('PageDown');
+      expect([nav.displayMonth, nav.displayYear]).to.deep.equal([10, 2026]);
+      key('PageUp', true);
+      expect([nav.displayMonth, nav.displayYear]).to.deep.equal([10, 2025]);
+    });
+
+    it('Escape closes the month grid without escaping the calendar', async () => {
+      const { el, title } = await mountCal();
+      title().click();
+      await nextFrame();
+      let leaked = false;
+      const onKey = () => (leaked = true);
+      document.addEventListener('keydown', onKey);
+      (el.shadowRoot.querySelector('.month-grid') as HTMLElement).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true }));
+      document.removeEventListener('keydown', onKey);
+      expect(el.shadowRoot.querySelector('.month-grid')).to.not.exist;
+      expect(leaked, 'Escape stopped at the calendar').to.be.false;
     });
   });
 });

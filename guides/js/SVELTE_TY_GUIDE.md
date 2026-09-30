@@ -149,36 +149,20 @@ Slotted children work naturally — `{#each}` blocks render reactive options:
 
 ## Icons
 
-Register at app startup:
+Register at startup, next to the component import:
 
 ```js
-// src/app.js or src/main.ts
-import 'tyrell-components/css/tyrell.css'
-import 'tyrell-components/css/tyrell-theme.css'
-import 'tyrell-components'
-
 import { registerIcons } from 'tyrell-components/icons/registry'
-import { check, x, plus, search } from 'tyrell-components/icons/lucide'
-import { userCircle } from 'tyrell-components/icons/heroicons/outline'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-registerIcons({
-  check, x, plus, search,
-  user: userCircle,
-})
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
-
-Use them anywhere:
 
 ```svelte
 <ty-icon name="check" size="md" />
-
-<ty-button flavor="primary">
-  <ty-icon name="plus" slot="start" />
-  Add Item
-</ty-button>
 ```
 
-See [JAVASCRIPT_GUIDE.md § Icon tree-shaking](./JAVASCRIPT_GUIDE.md#icon-tree-shaking).
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-javascript).
 
 ## Refs and imperative API
 

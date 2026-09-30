@@ -35,17 +35,6 @@ interface DatePickerState extends DateComponents {
   open: boolean;
 }
 
-/**
- * Time input internal state
- */
-interface TimeInputState {
-  hour: number;
-  minute: number;
-  caretPosition: number; // 0-5 (internal positions: 0,1,3,4,5)
-  displayValue: string;  // "HH:mm"
-  rawDigits: string;     // "HHmm"
-}
-
 type DatePickerSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 /**
@@ -234,332 +223,125 @@ function formatDisplayValue(
 }
 
 /**
- * Parse hour and minute from raw digits (4 chars: "HHmm")
+ * TimeFields drives the two time inputs (hours, minutes) in the popup footer.
+ * Each field takes two digits: a first digit that can't start a valid
+ * two-digit value (3-9 for hours, 6-9 for minutes) completes the field at
+ * once, and a completed hour moves focus to minutes. Arrow Up/Down step the
+ * value (wrapping), Backspace in an untouched minutes field goes back to
+ * hours, Left/Right cross between the fields.
  */
-function parseTimeComponents(rawDigits: string): { hour: number; minute: number } | null {
-  if (!rawDigits || rawDigits.length !== 4) return null;
+class TimeFields {
+  private hour: number;
+  private minute: number;
+  private typed = '';
 
-  const hourStr = rawDigits.substring(0, 2);
-  const minuteStr = rawDigits.substring(2, 4);
-  const hour = parseInt(hourStr, 10);
-  const minute = parseInt(minuteStr, 10);
-
-  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-    return null;
+  constructor(
+    private hourEl: HTMLInputElement,
+    private minuteEl: HTMLInputElement,
+    private onChange: (hour: number, minute: number) => void,
+    hour = 0,
+    minute = 0,
+  ) {
+    this.hour = hour;
+    this.minute = minute;
+    this.paint();
+    this.wire(hourEl, 'hour');
+    this.wire(minuteEl, 'minute');
   }
 
-  return { hour, minute };
-}
-
-/**
- * Validate if digit is valid for given position
- * Position 0: first hour digit (0-2)
- * Position 1: second hour digit (0-9, but 0-3 if first is 2)
- * Position 3: first minute digit (0-5)
- * Position 4: second minute digit (0-9)
- */
-function validateTimeDigit(digit: number, position: number, currentDigits: string): boolean {
-  switch (position) {
-    case 0:
-      return digit <= 2; // First hour digit: 0-2
-    case 1: {
-      const firstHour = parseInt(currentDigits[0], 10);
-      return firstHour === 2 ? digit <= 3 : true; // If hour starts with 2, max 23
-    }
-    case 3:
-      return digit <= 5; // First minute digit: 0-5
-    case 4:
-      return true; // Second minute digit: 0-9
-    default:
-      return false;
-  }
-}
-
-/**
- * Format hour and minute into "HH:mm" display
- */
-function formatTimeDisplay(hour: number, minute: number): string {
-  const hourStr = hour.toString().padStart(2, '0');
-  const minuteStr = minute.toString().padStart(2, '0');
-  return `${hourStr}:${minuteStr}`;
-}
-
-/**
- * Find next editable position, skipping delimiter at position 2
- */
-function findNextEditablePosition(currentPos: number): number {
-  switch (currentPos) {
-    case 0: return 1; // 0 -> 1 (within hour)
-    case 1: return 3; // 1 -> 3 (skip delimiter, go to minute)
-    case 3: return 4; // 3 -> 4 (within minute)
-    case 4: return 5; // 4 -> 5 (after last digit)
-    case 5: return 5; // 5 -> 5 (stay at end)
-    default: return currentPos;
-  }
-}
-
-/**
- * Find previous editable position, skipping delimiter at position 2
- */
-function findPrevEditablePosition(currentPos: number): number {
-  switch (currentPos) {
-    case 5: return 4; // 5 -> 4 (from after last digit)
-    case 4: return 3; // 4 -> 3 (within minute)
-    case 3: return 1; // 3 -> 1 (skip delimiter, go to hour)
-    case 1: return 0; // 1 -> 0 (within hour)
-    case 0: return 0; // 0 -> 0 (stay at start)
-    default: return currentPos;
-  }
-}
-
-/**
- * Convert internal position (0,1,3,4) to raw digits index (0,1,2,3)
- */
-function positionToRawDigitIndex(internalPos: number): number {
-  switch (internalPos) {
-    case 0: return 0; // Position 0 → raw digit 0 (first hour)
-    case 1: return 1; // Position 1 → raw digit 1 (second hour)
-    case 3: return 2; // Position 3 → raw digit 2 (first minute)
-    case 4: return 3; // Position 4 → raw digit 3 (second minute)
-    default: return 0;
-  }
-}
-
-/**
- * TimeInput manages the state and behavior of the time input element.
- * Handles smart cursor navigation, digit replacement, and validation.
- */
-class TimeInput {
-  private element: HTMLInputElement;
-  private state: TimeInputState;
-  private datePickerElement: TyDatePicker;
-
-  constructor(element: HTMLInputElement, datePickerElement: TyDatePicker, hour: number = 0, minute: number = 0) {
-    this.element = element;
-    this.datePickerElement = datePickerElement;
-
-    const display = formatTimeDisplay(hour, minute);
-    const rawDigits = hour.toString().padStart(2, '0') + minute.toString().padStart(2, '0');
-
-    this.state = {
-      hour,
-      minute,
-      caretPosition: 0,
-      displayValue: display,
-      rawDigits,
-    };
-
-    this.element.value = display;
-
-    this.setupEventListeners();
+  private static pad(n: number): string {
+    return n.toString().padStart(2, '0');
   }
 
-  private setupEventListeners(): void {
-    this.element.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    this.element.addEventListener('input', (e) => this.handleInput(e));
-    this.element.addEventListener('click', () => this.handleClick());
-    this.element.addEventListener('focus', () => this.handleFocus());
+  private paint(): void {
+    this.hourEl.value = TimeFields.pad(this.hour);
+    this.minuteEl.value = TimeFields.pad(this.minute);
   }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    const key = event.key;
+  private wire(el: HTMLInputElement, part: 'hour' | 'minute'): void {
+    const max = part === 'hour' ? 23 : 59;
+    // Largest first digit that can still take a second one (2x hours, 5x minutes)
+    const maxLead = part === 'hour' ? 2 : 5;
 
-    switch (key) {
-      case 'ArrowRight':
-        this.handleArrowRight(event);
-        break;
-      case 'ArrowLeft':
-        this.handleArrowLeft(event);
-        break;
-      case 'Backspace':
-        this.handleBackspace(event);
-        break;
-      case 'Delete':
-        this.handleDelete(event);
-        break;
-      case 'Home':
-        event.preventDefault();
-        this.updateState({ caretPosition: 0 });
-        break;
-      case 'End':
-        event.preventDefault();
-        this.updateState({ caretPosition: 5 });
-        break;
-      case 'Tab':
-        // Allow default tab behavior
-        break;
-      default:
-        if (/^\d$/.test(key)) {
-          this.handleDigitInput(event, parseInt(key, 10));
+    el.addEventListener('focus', () => {
+      this.typed = '';
+      el.select();
+    });
+    el.addEventListener('click', () => el.select());
+    el.addEventListener('blur', () => { this.typed = ''; });
+    // Everything goes through keydown; swallow stray input (IME, paste)
+    el.addEventListener('input', () => this.paint());
+
+    el.addEventListener('keydown', (e: KeyboardEvent) => {
+      const set = (v: number) => {
+        if (part === 'hour') this.hour = v; else this.minute = v;
+        this.paint();
+        this.onChange(this.hour, this.minute);
+      };
+      const current = part === 'hour' ? this.hour : this.minute;
+
+      if (/^\d$/.test(e.key)) {
+        e.preventDefault();
+        const digit = Number(e.key);
+        const next = this.typed + e.key;
+        const complete = next.length === 2 || (next.length === 1 && digit > maxLead);
+        set(Math.min(Number(next), max));
+        if (complete) {
+          this.typed = '';
+          if (part === 'hour') this.minuteEl.focus();
+          else el.select();
+        } else {
+          this.typed = next;
         }
-        break;
-    }
-  }
+        return;
+      }
 
-  /**
-   * Handle input events (prevent default browser input)
-   */
-  private handleInput(event: Event): void {
-    event.preventDefault();
-  }
-
-  /**
-   * Handle click events - position cursor at first digit
-   */
-  private handleClick(): void {
-    this.updateState({ caretPosition: 0 });
-  }
-
-  /**
-   * Handle focus events - position cursor at first digit
-   */
-  private handleFocus(): void {
-    this.updateState({ caretPosition: 0 });
-  }
-
-  /**
-   * Handle arrow right - move to next editable position
-   */
-  private handleArrowRight(event: KeyboardEvent): void {
-    event.preventDefault();
-    const nextPos = findNextEditablePosition(this.state.caretPosition);
-    this.updateState({ caretPosition: nextPos });
-  }
-
-  /**
-   * Handle arrow left - move to previous editable position
-   */
-  private handleArrowLeft(event: KeyboardEvent): void {
-    event.preventDefault();
-    const prevPos = findPrevEditablePosition(this.state.caretPosition);
-    this.updateState({ caretPosition: prevPos });
-  }
-
-  /**
-   * Handle digit input - replace digit at cursor position
-   */
-  private handleDigitInput(event: KeyboardEvent, digit: number): void {
-    event.preventDefault();
-
-    const currentPos = this.state.caretPosition;
-
-    if (![0, 1, 3, 4].includes(currentPos)) return;
-    if (!validateTimeDigit(digit, currentPos, this.state.rawDigits)) return;
-
-    const newState = this.replaceDigitAtPosition(currentPos, digit);
-    if (!newState) return;
-
-    const nextPos = findNextEditablePosition(currentPos);
-    this.updateState({ ...newState, caretPosition: nextPos });
-
-    this.notifyTimeChange();
-  }
-
-  /**
-   * Handle backspace - zero digit and move back
-   */
-  private handleBackspace(event: KeyboardEvent): void {
-    event.preventDefault();
-
-    const currentPos = this.state.caretPosition;
-
-    // Can't go back from position 0
-    if (currentPos === 0) return;
-
-    const targetPos = currentPos === 1 ? 0 :
-      currentPos === 3 ? 1 :
-        currentPos === 4 ? 3 :
-          currentPos === 5 ? 4 : 0;
-
-    const newState = this.zeroDigitAtPosition(targetPos);
-    if (!newState) return;
-
-    this.updateState({ ...newState, caretPosition: targetPos });
-    this.notifyTimeChange();
-  }
-
-  /**
-   * Handle delete - zero digit at current position
-   */
-  private handleDelete(event: KeyboardEvent): void {
-    event.preventDefault();
-
-    const currentPos = this.state.caretPosition;
-
-    if (![0, 1, 3, 4].includes(currentPos)) return;
-
-    const newState = this.zeroDigitAtPosition(currentPos);
-    if (!newState) return;
-
-    this.updateState({ ...newState, caretPosition: currentPos });
-    this.notifyTimeChange();
-  }
-
-  private replaceDigitAtPosition(position: number, newDigit: number): Partial<TimeInputState> | null {
-    const rawIndex = positionToRawDigitIndex(position);
-    const digitsArray = this.state.rawDigits.split('');
-    digitsArray[rawIndex] = newDigit.toString();
-    const newDigits = digitsArray.join('');
-
-    const parsed = parseTimeComponents(newDigits);
-    if (!parsed) return null;
-
-    return {
-      rawDigits: newDigits,
-      hour: parsed.hour,
-      minute: parsed.minute,
-      displayValue: formatTimeDisplay(parsed.hour, parsed.minute),
-    };
-  }
-
-  private zeroDigitAtPosition(position: number): Partial<TimeInputState> | null {
-    return this.replaceDigitAtPosition(position, 0);
-  }
-
-  /**
-   * Update internal state and refresh display
-   */
-  private updateState(updates: Partial<TimeInputState>): void {
-    this.state = { ...this.state, ...updates };
-
-    this.element.value = this.state.displayValue;
-
-    // Set cursor position, mapping internal positions to DOM positions
-    const caretPos = this.state.caretPosition;
-    const actualPos = caretPos === 0 ? 0 :
-      caretPos === 1 ? 1 :
-        caretPos === 2 ? 3 :
-          caretPos === 3 ? 3 :
-            caretPos === 4 ? 4 :
-              caretPos === 5 ? 5 : caretPos;
-
-    this.element.setSelectionRange(actualPos, actualPos);
-  }
-
-  private notifyTimeChange(): void {
-    (this.datePickerElement as any).handleTimeInputChange(this.state.hour, this.state.minute);
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'ArrowDown': {
+          e.preventDefault();
+          const delta = e.key === 'ArrowUp' ? 1 : -1;
+          this.typed = '';
+          set((current + delta + max + 1) % (max + 1));
+          el.select();
+          return;
+        }
+        case 'Backspace':
+        case 'Delete':
+          e.preventDefault();
+          if (part === 'minute' && this.typed === '' && e.key === 'Backspace' && current === 0) {
+            this.hourEl.focus();
+            return;
+          }
+          this.typed = '';
+          set(0);
+          el.select();
+          return;
+        case 'ArrowLeft':
+          if (part === 'minute') { e.preventDefault(); this.hourEl.focus(); }
+          return;
+        case 'ArrowRight':
+          if (part === 'hour') { e.preventDefault(); this.minuteEl.focus(); }
+          return;
+        case 'Tab':
+        case 'Escape':
+        case 'Enter':
+          return;
+        default:
+          // Letters, ':' etc. — the fields only take digits
+          if (e.key.length === 1 && !e.metaKey && !e.ctrlKey) e.preventDefault();
+      }
+    });
   }
 
   getTime(): { hour: number; minute: number } {
-    return {
-      hour: this.state.hour,
-      minute: this.state.minute,
-    };
+    return { hour: this.hour, minute: this.minute };
   }
 
   setTime(hour: number, minute: number): void {
-    const display = formatTimeDisplay(hour, minute);
-    const rawDigits = hour.toString().padStart(2, '0') + minute.toString().padStart(2, '0');
-
-    this.state = {
-      ...this.state,
-      hour,
-      minute,
-      displayValue: display,
-      rawDigits,
-    };
-
-    this.element.value = display;
+    this.hour = hour;
+    this.minute = minute;
+    this.paint();
   }
 }
 
@@ -688,7 +470,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   // Reopen guard — prevents click event from reopening after pointerdown close
   private _closeTimestamp = 0;
 
-  private _timeInput?: TimeInput;
+  private _timeInput?: TimeFields;
 
   // Locale observer cleanup
   private _localeObserver?: () => void;
@@ -710,6 +492,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     this.initializeState();
 
     this.render();
+    this.updateValidity();
 
     // Setup locale observer to watch for ancestor lang changes
     this._localeObserver = observeLocaleChanges(this, () => {
@@ -754,6 +537,9 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
         case 'placeholder':
         case 'required':
         case 'disabled':
+          this.updateValidity();
+          break;
+
         case 'clearable':
         case 'format':
         case 'locale':
@@ -835,6 +621,24 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
    */
   protected getFormValue(): FormDataEntryValue | null {
     return componentsToOutputValue(this.getComponents());
+  }
+
+  protected updateFormValue(): void {
+    super.updateFormValue();
+    this.updateValidity();
+  }
+
+  /**
+   * `required` used to be cosmetic: nothing reported valueMissing, so an empty
+   * required picker never blocked its form. Disabled pickers don't validate.
+   */
+  private updateValidity(): void {
+    if (this.getProperty('disabled') || !this.getProperty('required') || this.getFormValue()) {
+      this.applyValidity({});
+      return;
+    }
+    const anchor = this.shadowRoot?.querySelector<HTMLElement>('.date-picker-stub, .native-date-input');
+    this.applyValidity({ valueMissing: true }, 'Please select a date', anchor ?? undefined);
   }
 
   private getComponents(): DateComponents {
@@ -929,7 +733,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
 
   /**
-   * Handle time input changes from TimeInput class
+   * Handle time changes from the footer's hour/minute fields
    */
   handleTimeInputChange(hour: number, minute: number): void {
     if (!this.hasDate()) return;
@@ -937,6 +741,26 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const components = { ...this.getComponents(), hour, minute };
     this.updateState(components, true);
     this.emitChangeEvent(components, 'time-change');
+    this.updateTimeSummary();
+  }
+
+  /** Footer summary under the time fields: "Wed, Sep 23 · 14:30" + local ISO. */
+  private updateTimeSummary(summary: Element | null | undefined = this.shadowRoot?.querySelector('.time-summary')): void {
+    if (!summary) return;
+    const c = this.getComponents();
+    const text = summary.querySelector('.time-summary-date') as HTMLElement;
+    const iso = summary.querySelector('.time-summary-iso') as HTMLElement;
+    if (!c.year || !c.month || !c.day) {
+      text.textContent = 'Pick a day';
+      iso.textContent = '';
+      return;
+    }
+    const locale = getEffectiveLocale(this, this.getProperty('locale')) || undefined;
+    const date = new Date(c.year, c.month - 1, c.day, c.hour ?? 0, c.minute ?? 0);
+    const day = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(date);
+    const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(date);
+    text.textContent = `${day} · ${time}`;
+    iso.textContent = componentsToLocalValue(c, true) ?? '';
   }
 
   private emitChangeEvent(components: DateComponents | null, source: 'selection' | 'time-change' | 'clear' | 'external'): void {
@@ -1123,39 +947,71 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     return stub;
   }
 
-  private createTimeInputElement(): HTMLInputElement {
+  private createTimeField(part: 'hour' | 'minute'): HTMLInputElement {
     const input = document.createElement('input');
     input.type = 'text';
-    input.className = 'time-input';
-    input.placeholder = 'HH:mm';
+    input.className = `time-input time-${part}`;
+    input.inputMode = 'numeric';
     input.autocomplete = 'off';
-    input.maxLength = 5;
-
+    input.maxLength = 2;
+    input.setAttribute('aria-label', part === 'hour' ? 'Hours' : 'Minutes');
     return input;
   }
 
+  /** Footer: clock + "Time" on the left, HH : MM on the right, summary below. */
   private renderTimeSection(): HTMLElement {
     const timeSection = document.createElement('div');
     timeSection.className = 'time-section';
+    timeSection.setAttribute('role', 'group');
+    timeSection.setAttribute('aria-label', 'Time');
 
-    const timeLabel = document.createElement('label');
-    timeLabel.className = 'time-label';
-    timeLabel.textContent = 'Time:';
+    const row = document.createElement('div');
+    row.className = 'time-row';
 
-    const timeInputElement = this.createTimeInputElement();
+    const label = document.createElement('span');
+    label.className = 'time-label';
+    const icon = document.createElement('span');
+    icon.className = 'time-icon';
+    icon.innerHTML = SCHEDULE_ICON_SVG;
+    label.appendChild(icon);
+    label.appendChild(document.createTextNode('Time'));
 
-    const hour = this._state.hour || 0;
-    const minute = this._state.minute || 0;
-    this._timeInput = new TimeInput(timeInputElement, this, hour, minute);
+    const fields = document.createElement('div');
+    fields.className = 'time-fields';
+    const hourEl = this.createTimeField('hour');
+    const minuteEl = this.createTimeField('minute');
+    const colon = document.createElement('span');
+    colon.className = 'time-colon';
+    colon.textContent = ':';
+    fields.appendChild(hourEl);
+    fields.appendChild(colon);
+    fields.appendChild(minuteEl);
 
-    const timeIcon = document.createElement('span');
-    timeIcon.className = 'time-icon';
-    timeIcon.innerHTML = SCHEDULE_ICON_SVG;
+    this._timeInput = new TimeFields(
+      hourEl,
+      minuteEl,
+      (hour, minute) => this.handleTimeInputChange(hour, minute),
+      this._state.hour || 0,
+      this._state.minute || 0,
+    );
 
-    timeSection.appendChild(timeLabel);
-    timeSection.appendChild(timeInputElement);
-    timeSection.appendChild(timeIcon);
+    row.appendChild(label);
+    row.appendChild(fields);
 
+    const summary = document.createElement('div');
+    summary.className = 'time-summary';
+    summary.setAttribute('aria-live', 'polite');
+    const summaryDate = document.createElement('span');
+    summaryDate.className = 'time-summary-date';
+    const summaryIso = document.createElement('span');
+    summaryIso.className = 'time-summary-iso';
+    summary.appendChild(summaryDate);
+    summary.appendChild(summaryIso);
+
+    this.updateTimeSummary(summary);
+
+    timeSection.appendChild(row);
+    timeSection.appendChild(summary);
     return timeSection;
   }
 
@@ -1468,6 +1324,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     if (this._timeInput && this._state.hour !== undefined && this._state.minute !== undefined) {
       this._timeInput.setTime(this._state.hour, this._state.minute);
     }
+    this.updateTimeSummary();
   }
 
   private setupEventListeners(): void {
@@ -1564,7 +1421,8 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       // Auto-focus time input after date selection
       requestAnimationFrame(() => {
         if (!this.shadowRoot) return;
-        const timeInput = this.shadowRoot.querySelector('.time-input') as HTMLInputElement;
+        this.updateTimeSummary();
+        const timeInput = this.shadowRoot.querySelector('.time-hour') as HTMLInputElement;
         if (timeInput) {
           timeInput.focus();
         }

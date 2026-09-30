@@ -53,6 +53,14 @@ export interface TyCopyElement extends HTMLElement {
   required: boolean
 }
 
+/** Escape text for insertion into an innerHTML template. */
+function escapeText(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
 /**
  * Ty Copy Field Component
  */
@@ -313,9 +321,12 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       this.multiline ? 'multiline' : '',
       this.horizontalScroll ? 'horizontal-scroll' : '',
     ].filter(Boolean).join(' ')
+    // The value is shown as TEXT: it's often markup or code (`<ty-button>`),
+    // which unescaped would render as elements — or run, for untrusted values.
+    const shown = escapeText(this.value || '')
     const displayElement = this.format === 'code'
-      ? `<code class="${valueClass}">${this.value || ''}</code>`
-      : `<div class="${valueClass}">${this.value || ''}</div>`
+      ? `<code class="${valueClass}">${shown}</code>`
+      : `<div class="${valueClass}">${shown}</div>`
 
     const labelHtml = this.label ? `
       <label class="ty-field-label">

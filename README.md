@@ -152,7 +152,7 @@ Add to `deps.edn`:
 That single dep brings:
 - Routing, i18n, layout, icon registry, shim — `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`
 - The `tyrell.components` shim that side-effect-imports the npm package
-- 12,000+ tree-shakeable icons (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*`)
+- 12,000+ tree-shakeable icons (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fav6.*`)
 
 The npm `tyrell-components` package is declared in this artifact's `deps.cljs`, so shadow-cljs auto-installs it on first build.
 
@@ -165,23 +165,16 @@ The npm `tyrell-components` package is declared in this artifact's `deps.cljs`, 
 
 ### Icon registration
 
-`<ty-icon name="check">` is a runtime registry lookup. Register the icons you reference at app startup:
-
 ```clojure
-(ns my-app.core
-  (:require [tyrell.components]            ; side-effect: registers all <ty-*> elements
-            [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.heroicons.outline :as ho]))
+(ns my-app.icons
+  (:require [tyrell.icons :as icons]
+            [tyrell.lucide :as lucide]))
 
-(defn register-icons! []
-  (icons/register!
-    {:check  lucide/check
-     :search lucide/search
-     :user   ho/user-circle}))
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Shadow-cljs `:advanced` removes unused icons automatically — you only pay for what you reference. See [CLOJURESCRIPT_GUIDE → Icon registration](guides/clj/CLOJURESCRIPT_GUIDE.md#icon-registration-in-cljs).
+With `:advanced`, every def you don't reference is dropped. Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](guides/ICONS_GUIDE.md).
 
 ### Build Your Own Components
 

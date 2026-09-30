@@ -44,23 +44,30 @@ export const popupStyles = `
 /* Entrance prep (right before .open): scale + a short slide from the anchor
    side. data-side is the RESOLVED side (post-flip), set by updatePosition. */
 .popup-dialog.preparing-animation {
-  transform: scale(0.96);
+  transform: scale(var(--ty-popup-scale, 0.96));
+}
+
+/* The prep pose must land instantly. Transitioned, it had barely left
+   scale(1) when .open arrived a frame later, so the entrance (and any
+   springy --ty-popup-ease) ran over almost no distance. */
+.popup-dialog.preparing-animation:not(.open) {
+  transition: none;
 }
 
 .popup-dialog[data-side="bottom"].preparing-animation:not(.open) {
-  transform: translateY(-6px) scale(0.96);
+  transform: translateY(-6px) scale(var(--ty-popup-scale, 0.96));
 }
 
 .popup-dialog[data-side="top"].preparing-animation:not(.open) {
-  transform: translateY(6px) scale(0.96);
+  transform: translateY(6px) scale(var(--ty-popup-scale, 0.96));
 }
 
 .popup-dialog[data-side="left"].preparing-animation:not(.open) {
-  transform: translateX(6px) scale(0.96);
+  transform: translateX(6px) scale(var(--ty-popup-scale, 0.96));
 }
 
 .popup-dialog[data-side="right"].preparing-animation:not(.open) {
-  transform: translateX(-6px) scale(0.96);
+  transform: translateX(-6px) scale(var(--ty-popup-scale, 0.96));
 }
 
 .popup-dialog.open {

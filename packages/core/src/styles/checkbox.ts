@@ -8,8 +8,9 @@
 
 import { FLAVORS } from "../types/common.js";
 
-/* Flavor rules only set --checkbox-color (checked) / --checkbox-color-off
-   (unchecked) / --checkbox-ring (focus ring); the base rules below consume
+/* Flavor rules only set --checkbox-color (checked) / --checkbox-ring (focus
+   ring). Unchecked stays neutral for every flavor — a tinted unchecked tick
+   was the dimmest thing on the page. The base rules below consume
    them. Doubles as the per-instance override API: `ty-checkbox {
    --checkbox-color: … }`. --checkbox-ring pre-resolves the color-mix() here
    (rather than inlining a nested var(...,fallback) as a color-mix argument
@@ -22,9 +23,9 @@ const checkboxFlavor = (f: string, fb?: string) => {
       ? `var(--ty-color-${f}${s}, var(--ty-color-${fb}${s}))`
       : `var(--ty-color-${f}${s})`;
   return `
-:host([flavor="${f}"])  { --checkbox-color: ${tok("")}; --checkbox-color-off: ${tok("-soft")}; --checkbox-ring: color-mix(in oklab, ${tok("")} 25%, transparent); }
-:host([flavor="${f}+"]) { --checkbox-color: ${tok("-strong")}; --checkbox-color-off: ${tok("-soft")}; --checkbox-ring: color-mix(in oklab, ${tok("-strong")} 25%, transparent); }
-:host([flavor="${f}-"]) { --checkbox-color: ${tok("-soft")}; --checkbox-color-off: ${tok("-faint")}; --checkbox-ring: color-mix(in oklab, ${tok("-soft")} 25%, transparent); }
+:host([flavor="${f}"])  { --checkbox-color: ${tok("-strong")}; --checkbox-ring: color-mix(in oklab, ${tok("")} 25%, transparent); }
+:host([flavor="${f}+"]) { --checkbox-color: ${tok("-strong")}; --checkbox-ring: color-mix(in oklab, ${tok("-strong")} 25%, transparent); }
+:host([flavor="${f}-"]) { --checkbox-color: ${tok("")}; --checkbox-ring: color-mix(in oklab, ${tok("")} 25%, transparent); }
 `;
 };
 
@@ -41,6 +42,12 @@ export const checkboxStyles = `
 .checkbox-container {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  /* One line box of the surrounding text (inherited line-height), tick
+     centered in it: next to a <label> the tick sits on the first line's
+     middle instead of 2px high (a 16px box top-aligned with a 20px line). */
+  min-height: 1.25em;
+  min-height: 1lh;
   outline: none;
   transition: var(--ty-local-transition, all 0.15s ease-in-out);
   user-select: none;
@@ -49,11 +56,27 @@ export const checkboxStyles = `
   gap: var(--ty-spacing-1);
   /* Default (no flavor attribute) is neutral — defaults don't reflect to the
      host attribute, so the fallbacks here carry the default look. */
-  color: var(--checkbox-color-off, var(--ty-color-neutral-soft));
+  /* Unchecked: neutral tick at ~3:1 against the surface in both modes
+     (55% of body text over the background). */
+  color: var(--checkbox-color-off, color-mix(in oklab, var(--ty-text) 45%, transparent));
+  /* Room for the hover pill, inside the one-line height (border-box). */
+  box-sizing: border-box;
+  padding: 2px;
+  border-radius: 5px;
 }
 
+.checkbox-container:hover {
+  background: var(--checkbox-hover-bg, color-mix(in oklab, var(--ty-text) 8%, transparent));
+}
+
+.checkbox-container:not([aria-checked="true"]):not([aria-checked="mixed"]):hover {
+  color: var(--checkbox-color-off-hover, color-mix(in oklab, var(--ty-text) 80%, transparent));
+}
+
+/* Checked is the flavor's STRONG tone (neutral: body text) so it sits far
+   from the mid-tone unchecked tick in lightness, not only in hue. */
 .checkbox-container[aria-checked="true"] {
-  color: var(--checkbox-color, var(--ty-color-neutral));
+  color: var(--checkbox-color, var(--ty-text));
 }
 
 /* Visible focus ring (keyboard) — .focused is toggled by the component.
@@ -102,14 +125,10 @@ export const checkboxStyles = `
 /* Semantic flavors set --checkbox-color[-off], consumed above */
 ${FLAVORS.map((f) => checkboxFlavor(f)).join("")}
 
-/* Clean tick: no box outline, just the checkmark. Inactive = faint tick. */
-.checkbox-container:not([aria-checked="true"]) {
-  opacity: 0.35;
-}
-
-/* Indeterminate (dash) sits between unchecked and checked */
+/* Clean tick: no box, just the mark. Checked and mixed carry the flavor
+   color; unchecked is the neutral tick set on the container above. */
 .checkbox-container[aria-checked="mixed"] {
-  opacity: 0.7;
+  color: var(--checkbox-color, var(--ty-text));
 }
 
 /* Disabled must stay distinguishable from merely-unchecked: grayscale kills
@@ -122,7 +141,11 @@ ${FLAVORS.map((f) => checkboxFlavor(f)).join("")}
 }
 
 .checkbox-container.disabled:not([aria-checked="true"]) {
-  opacity: 0.2;
+  opacity: 0.45;
+}
+
+.checkbox-container.disabled:hover {
+  background: none;
 }
 
 .checkbox-container.error .checkbox-icon {

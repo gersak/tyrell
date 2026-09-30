@@ -246,6 +246,7 @@ Views should combine `rendered?` with `authorized?` for defense in depth:
      [:h2 "Admin Panel"]
      ;; admin content
      ]))
+```
 
 ## Watching Router Changes
 

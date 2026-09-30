@@ -7,8 +7,8 @@ export const calendarNavigationStyles = `
    block inherited overrides. --ty-calendar-accent still cascades in. */
 
 :host([data-size="md"]) {
-  --nav-btn-size: 2rem;
-  --nav-btn-icon-size: 1.25rem;
+  --nav-btn-size: 1.875rem;
+  --nav-btn-icon-size: 1.125rem;
   --nav-font-size: 1rem;
   --nav-padding: 0.5rem 0.75rem;
   --nav-default-width: 280px;
@@ -16,15 +16,15 @@ export const calendarNavigationStyles = `
 
 :host([data-size="sm"]) {
   --nav-btn-size: 1.5rem;
-  --nav-btn-icon-size: 1rem;
+  --nav-btn-icon-size: 0.9375rem;
   --nav-font-size: 0.875rem;
   --nav-padding: 0.375rem 0.5rem;
   --nav-default-width: 240px;
 }
 
 :host([data-size="lg"]) {
-  --nav-btn-size: 2.5rem;
-  --nav-btn-icon-size: 1.5rem;
+  --nav-btn-size: 2.25rem;
+  --nav-btn-icon-size: 1.25rem;
   --nav-font-size: 1.125rem;
   --nav-padding: 0.625rem 1rem;
   --nav-default-width: 360px;
@@ -41,21 +41,69 @@ export const calendarNavigationStyles = `
   box-sizing: border-box;
 }
 
-/* Navigation groups: left, center, right */
+/* Title (left) opens the month/year view; arrows (right) step months, or
+   years while that view is open. */
 .nav-group {
   display: flex;
   align-items: center;
   gap: 0.25rem;
-}
-
-.nav-group-left,
-.nav-group-right {
   flex: 0 0 auto;
 }
 
-.nav-group-center {
-  flex: 1;
-  justify-content: center;
+.nav-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  margin-left: -0.375rem;
+  padding: 0.25rem 0.375rem;
+  border: none;
+  border-radius: var(--ty-radius-base);
+  background: transparent;
+  font-family: inherit;
+  font-size: var(--nav-font-size);
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: var(--ty-local-transition, background-color 0.15s ease);
+  outline: none;
+}
+
+.nav-title:hover,
+.nav-title[aria-expanded="true"] {
+  background-color: var(--ty-calendar-nav-hover-bg, var(--ty-bg-neutral-soft));
+}
+
+.nav-title:focus-visible {
+  outline: 2px solid var(--ty-calendar-nav-focus-outline, var(--ty-calendar-accent, var(--ty-color-primary)));
+  outline-offset: 2px;
+}
+
+.nav-title-month {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ty-calendar-nav-title-color, var(--ty-text-strong, var(--ty-color-neutral-strong)));
+}
+
+.nav-title-year {
+  font-weight: 400;
+  color: var(--ty-calendar-nav-year-color, var(--ty-text-soft, var(--ty-color-neutral)));
+}
+
+.nav-caret {
+  display: inline-flex;
+  color: var(--ty-calendar-nav-color, var(--ty-color-neutral));
+  transition: transform 0.15s ease;
+}
+
+.nav-caret svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
+.nav-title[aria-expanded="true"] .nav-caret {
+  transform: rotate(180deg);
 }
 
 .nav-btn {
@@ -65,10 +113,10 @@ export const calendarNavigationStyles = `
   width: var(--nav-btn-size);
   height: var(--nav-btn-size);
   padding: 0;
-  border: none;
+  border: 1px solid var(--ty-calendar-nav-border, var(--ty-border));
   border-radius: var(--ty-radius-base);
   background-color: transparent;
-  color: var(--ty-calendar-nav-color, var(--ty-color-neutral));
+  color: var(--ty-calendar-nav-color, var(--ty-color-neutral-strong));
   cursor: pointer;
   transition: var(--ty-local-transition, all 0.15s ease);
   outline: none;
@@ -99,14 +147,5 @@ export const calendarNavigationStyles = `
   width: var(--nav-btn-icon-size);
   height: var(--nav-btn-icon-size);
   display: block;
-}
-
-.month-year-display {
-  font-size: var(--nav-font-size);
-  font-weight: 600;
-  color: var(--ty-calendar-nav-title-color, var(--ty-color-neutral-strong));
-  text-align: center;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
 }
 `;

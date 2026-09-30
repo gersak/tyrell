@@ -1,315 +1,231 @@
 (ns tyrell.site.docs.textarea
   "Documentation for ty-textarea component"
-  (:require
-   [tyrell.site.docs.common
-    :refer [code-block attribute-table event-table
-            doc-section docs-page component-header section-label demo-area]]))
+  (:require [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private lineup
+  "Playground stage: a plain field and one with footer actions."
+  [{:label "Message" :placeholder "Write something…"}
+   {:label "Reply" :value "Looks good to me. Shipping it after lunch." :footer? true}])
+
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size resize required disabled error]}]
+  (cond-> {}
+    (not= size "sm") (assoc :size size)
+    (not= resize "none") (assoc :resize resize)
+    required (assoc :required true)
+    disabled (assoc :disabled true)
+    error (assoc :error "Tell us a bit more")))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label value placeholder footer?]} lineup]
+       [:ty-textarea (merge {:label label :value value :placeholder placeholder} attrs)
+        (when footer? [:div {:slot "footer"} [:ty-button {:size "sm" :flavor "primary"} "Send"]])])
+     :datastar (str "<ty-textarea label=\"Message\"" (snippets/attr-str attrs)
+                    "\n  data-on:input=\"$message = evt.detail.value\">\n</ty-textarea>"))))
+
+(defn- footer-bar [& {:keys [left button]}]
+  [:div.flex.items-center.justify-between.gap-2 {:slot "footer" :style {:width "100%"}}
+   [:div.flex.items-center.gap-1 left]
+   button])
+
+(defn- render-lineup [{:keys [size resize required disabled error]}]
+  (let [base (cond-> {:size size :resize resize}
+               required (assoc :required "")
+               disabled (assoc :disabled "")
+               error (assoc :error "Tell us a bit more"))]
+    [:div.flex.flex-col.gap-5 {:style {:width "100%" :max-width "420px"}}
+     (for [{:keys [label value placeholder footer?]} lineup]
+       [:ty-textarea (cond-> (assoc base :replicant/key label :label label)
+                       value (assoc :value value)
+                       placeholder (assoc :placeholder placeholder))
+        (when footer?
+          (footer-bar :left [:span.text-xs.ty-text-- "Markdown supported"]
+                      :button [:ty-button {:size "sm" :flavor "primary"} "Send"]))])]))
+
+;; Interactive examples -------------------------------------------------------
+
+(def ^:private limit 140)
+
+(defn- doc-state [k] (get-in @state/state [:textarea-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:textarea-doc k] v))
+
+(def ^:private long-text
+  "Tyrell grows the field as you write. Paste a paragraph, add a few lines, and the box follows until it reaches max-height; from there it scrolls.
+
+Delete the text and it shrinks back to min-height.")
 
 (defn view []
-  (docs-page
-   (component-header "ty-textarea"
-                     "Auto-resizing textarea that grows with content. No scrollbars, no manual resizing — just a clean, form-associated input that fits your text.")
+  (component-page
+   {:title "Textarea"
+    :group "Text input"
+    :tag "ty-textarea"
+    :description "Multi-line text that grows as you type, between the heights you set. Header and footer slots for toolbars and counters. Same label, error and sizes as Input."
+    :chips [["Form-associated" "send"] ["Auto-resize" "move-vertical"] ["TyTextarea (React)" "atom"]]
+    :source "packages/core/src/components/textarea.ts"
+    :mark "¶"
+    :demo [:div {:style {:width "340px"}}
+           [:ty-textarea {:label "Comment" :size "md" :value "Nice work on the calendar. The month view is much faster to use."}
+            (footer-bar :left [:span.text-xs.ty-text-- "62 / 280"]
+                        :button [:ty-button {:size "sm" :flavor "primary"}
+                                 [:ty-icon {:slot "start" :name "send"}] "Post"])]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :textarea
+     :defaults {:size "md" :resize "none" :required false :disabled false :error false}
+     :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :resize :options ["none" "vertical" "both"]}
+                {:key :required :switch? true}
+                {:key :disabled :switch? true}
+                {:key :error :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name for submission"}
-       {:name "value"
-        :type "string"
-        :default "\"\""
-        :description "Current textarea value"}
-       {:name "placeholder"
-        :type "string"
-        :default "-"
-        :description "Placeholder text when empty"}
-       {:name "label"
-        :type "string"
-        :default "-"
-        :description "Label displayed above the textarea"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disables the textarea"}
-       {:name "required"
-        :type "boolean"
-        :default "false"
-        :description "Marks field as required — shows asterisk on label"}
-       {:name "error"
-        :type "string"
-        :default "-"
-        :description "Error message displayed below; applies danger styling"}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Size variant: xs, sm, md, lg, xl"}
-       {:name "rows"
-        :type "string"
-        :default "\"3\""
-        :description "Initial visible row count"}
-       {:name "min-height"
-        :type "string"
-        :default "-"
-        :description "Minimum height constraint (e.g. \"100px\")"}
-       {:name "max-height"
-        :type "string"
-        :default "-"
-        :description "Maximum height before scrolling kicks in (e.g. \"300px\")"}
-       {:name "resize"
-        :type "string"
-        :default "\"none\""
-        :description "Manual resize handle: none, both, vertical, horizontal"}])]
-
-    [:div.mb-6
-     (section-label "Events")
-     (event-table
-      [{:name "input"
-        :payload "{value: string, originalEvent: Event}"
-        :when-fired "Fires on every keystroke"}
-       {:name "change"
-        :payload "{value: string, originalEvent: Event}"
-        :when-fired "Fires when focus leaves after value changed"}])]
-
-    [:div
-     (section-label "Properties")
-     [:div {:style {:border-bottom "1px solid var(--ty-border-soft)" :padding "0.625rem 0"}}
-      [:div.flex.flex-wrap.items-center.gap-2 {:style {:margin-bottom "0.25rem"}}
-       [:code.font-mono.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "value"]
-       [:span.text-xs.font-mono.ty-text-- "string"]]
-      [:p.ty-text- {:style {:font-size "0.8125rem" :line-height "1.6"}} "Get/set the current value programmatically"]]]]
-
-   (doc-section "Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Auto Resize")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "The textarea expands as you type — no scrollbars, no manual resize needed."]
-       (demo-area
-        [:ty-textarea
-         {:placeholder "Start typing and watch me grow...\n\nAdd new lines...\n\nI expand automatically!"
-          :label "Auto-resizing textarea"}])
-       (code-block "<ty-textarea
-  label=\"Auto-resizing textarea\"
-  placeholder=\"Start typing and watch me grow...\">
-</ty-textarea>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Height Constraints")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Combine auto-resize with min/max height for predictable layouts."]
-       (demo-area
-        [:div.grid.gap-4
-         {:style {:grid-template-columns "repeat(auto-fill, minmax(200px, 1fr))"}}
-         [:div
-          [:p.ty-text-- {:style {:font-size "0.75rem" :margin-bottom "0.375rem"}} "min-height: 100px"]
-          [:ty-textarea {:placeholder "Starts tall..." :min-height "100px"}]]
-         [:div
-          [:p.ty-text-- {:style {:font-size "0.75rem" :margin-bottom "0.375rem"}} "max-height: 120px"]
-          [:ty-textarea {:placeholder "Stops growing..."
-                         :max-height "120px"
-                         :value "Line 1\nLine 2\nLine 3\nLine 4\nLine 5\nScroll appears here"}]]
-         [:div
-          [:p.ty-text-- {:style {:font-size "0.75rem" :margin-bottom "0.375rem"}} "Both constraints"]
-          [:ty-textarea {:placeholder "100px → 200px range"
-                         :min-height "100px"
-                         :max-height "200px"}]]])
-       (code-block "<ty-textarea min-height=\"100px\"></ty-textarea>
-<ty-textarea max-height=\"120px\"></ty-textarea>
-<ty-textarea min-height=\"100px\" max-height=\"200px\"></ty-textarea>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       (demo-area
-        [:div.space-y-3
-         (for [size ["xs" "sm" "md" "lg" "xl"]]
-           [:ty-textarea {:placeholder (str "Size: " size) :size size}])])
-       (code-block "<ty-textarea size=\"xs\"></ty-textarea>
-<ty-textarea size=\"sm\"></ty-textarea>
-<ty-textarea size=\"md\"></ty-textarea>
-<ty-textarea size=\"lg\"></ty-textarea>
-<ty-textarea size=\"xl\"></ty-textarea>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "States")
-       (demo-area
-        [:div.grid.gap-4
-         {:style {:grid-template-columns "repeat(auto-fill, minmax(220px, 1fr))"}}
-         [:ty-textarea {:label "Required" :placeholder "This field is required" :required true}]
-         [:ty-textarea {:label "With Error"
-                        :placeholder "Something went wrong..."
-                        :error "Please enter at least 10 characters"
-                        :value "Too short"}]
-         [:ty-textarea {:label "Disabled" :disabled true :value "This field is disabled"}]])
-       (code-block "<ty-textarea label=\"Required\" required></ty-textarea>
-<ty-textarea label=\"With Error\" error=\"Please enter at least 10 characters\"></ty-textarea>
-<ty-textarea label=\"Disabled\" disabled></ty-textarea>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Custom Scrollbar")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "When content exceeds max-height a styled scrollbar appears — fades in, supports drag, disappears when idle."]
-       (demo-area
-        [:ty-textarea
-         {:max-height "150px"
-          :label "Custom scrollbar"
-          :value "Line 1: The custom scrollbar appears when content overflows.\nLine 2: It auto-hides after you stop scrolling.\nLine 3: Drag the thumb to scroll.\nLine 4: Click the track to jump.\nLine 5: Works on all browsers consistently.\nLine 6: Hidden on touch devices — native scroll is better there.\nLine 7: Respects prefers-reduced-motion.\nLine 8: Try it by resizing this window."}])
-       (code-block "<ty-textarea max-height=\"150px\" label=\"Scrollable\"></ty-textarea>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Header / Footer slots")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Put actions in the "
-        [:code "header"] " / " [:code "footer"]
-        " slots — both sit INSIDE the field border (composer layout). The focus "
-        "ring shows only while the textarea itself is focused, not when you tab to "
-        "a footer button. The footer is space-between (tools left, submit right); a "
-        [:code "wide"] " button becomes a full-width bottom submit."]
-       (demo-area
-        [:div.grid.gap-4
-         [:ty-textarea {:label "Comment" :placeholder "Write a comment…" :min-height "90px"}
-          [:span.ty-text- {:slot "footer" :style {:font-size "0.75rem"}} "Markdown supported"]
-          [:ty-button {:slot "footer" :flavor "primary" :size "sm"}
-           [:ty-icon {:name "send" :size "sm"}] "Comment"]]
-         [:ty-textarea {:label "Feedback" :placeholder "Tell us what you think…" :min-height "80px"}
-          [:ty-button {:slot "footer" :flavor "success" :wide "true"}
-           [:ty-icon {:name "check" :size "sm"}] "Submit feedback"]]])
-       (code-block "<ty-textarea label=\"Comment\" placeholder=\"Write a comment…\">
-  <span slot=\"footer\">Markdown supported</span>
-  <ty-button slot=\"footer\" flavor=\"primary\" size=\"sm\">
-    <ty-icon name=\"send\" size=\"sm\"></ty-icon> Comment
-  </ty-button>
-</ty-textarea>
-
-<ty-textarea label=\"Feedback\">
-  <ty-button slot=\"footer\" flavor=\"success\" wide=\"true\">Submit feedback</ty-button>
-</ty-textarea>")]])
-
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Character Counter")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Pair with a counter element — use the change event to update it live."]
-       (demo-area
-        [:div
-         [:ty-textarea
-          {:id "tweet-textarea"
-           :label "Compose"
-           :placeholder "What's happening?"
-           :max-height "150px"}]
-         [:div.flex.justify-between.items-center {:style {:margin-top "0.5rem"}}
-          [:span.ty-text-- {:id "tweet-count" :style {:font-size "0.75rem"}} "0 / 280"]
-          [:ty-button {:id "tweet-btn" :flavor "primary" :size "sm" :disabled true} "Post"]]
-         [:script
-          "(function() {
-  const ta = document.getElementById('tweet-textarea');
-  const counter = document.getElementById('tweet-count');
-  const btn = document.getElementById('tweet-btn');
-  if (!ta) return;
-  ta.addEventListener('change', (e) => {
-    const n = e.detail.value.length;
-    counter.textContent = n + ' / 280';
-    counter.className = n > 280 ? 'ty-text-danger' : 'ty-text--';
-    btn.disabled = n === 0 || n > 280;
-  });
-})();"]])
-       (code-block "textarea.addEventListener('change', (e) => {
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Character counter"
+       :span 4
+       :description [:span "Count in the " [:code "footer"] " slot, and set " [:code "error"] " when it runs over."]
+       :code "note.addEventListener('input', (e) => {
   const n = e.detail.value.length;
-  counter.textContent = `${n} / 280`;
-  btn.disabled = n === 0 || n > 280;
-});" "javascript")]
+  counter.textContent = `${n} / 140`;
+  note.error = n > 140 ? 'Too long' : '';
+});"}
+      (let [v (or (doc-state :note) "Shipped the new calendar today. Month view, keyboard years, and a cleaner selected day.")
+            n (count v)
+            over? (> n limit)]
+        [:ty-textarea {:label "Status update"
+                       :value v
+                       :error (if over? (str (- n limit) " characters over") "")
+                       :on {:input #(set-doc! :note (.. % -detail -value))}}
+         (footer-bar :left [:span.text-xs {:class (if over? "ty-text-danger" "ty-text--")} (str n " / " limit)]
+                     :button [:ty-button {:size "sm" :flavor "primary" :disabled (when over? "")} "Post"])]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Auto-save Draft")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Debounce the input event to save to localStorage with visual feedback."]
-       (demo-area
-        [:div
-         [:ty-textarea
-          {:id "draft-textarea"
-           :label "Article Draft"
-           :placeholder "Start writing your article..."
-           :min-height "120px"}]
-         [:div.flex.items-center.gap-2 {:style {:margin-top "0.5rem"}}
-          [:span.ty-text-- {:id "save-status" :style {:font-size "0.75rem"}} "Ready"]]
-         [:script
-          "(function() {
-  const ta = document.getElementById('draft-textarea');
-  const status = document.getElementById('save-status');
-  if (!ta) return;
-  const saved = localStorage.getItem('ty-docs-draft');
-  if (saved) { ta.value = saved; status.textContent = 'Draft loaded'; }
-  let t;
-  ta.addEventListener('input', () => {
-    clearTimeout(t);
-    status.textContent = 'Typing...';
-    t = setTimeout(() => {
-      localStorage.setItem('ty-docs-draft', ta.value);
-      status.textContent = 'Saved ✓';
-    }, 1000);
-  });
-})();"]])
-       (code-block "let saveTimeout;
-textarea.addEventListener('input', () => {
-  clearTimeout(saveTimeout);
-  showStatus('Typing...');
-  saveTimeout = setTimeout(() => {
-    localStorage.setItem('draft', textarea.value);
-    showStatus('Saved ✓');
-  }, 1000);
-});" "javascript")]
+     (example
+      {:title "Sizes"
+       :span 2
+       :description "The field ladder, from xs to xl."
+       :code "size=\"xs | sm | md | lg | xl\""}
+      [:div.flex.flex-col.gap-3.w-full
+       (for [s ["xs" "md" "xl"]]
+         [:ty-textarea {:replicant/key s :size s :rows "1" :placeholder (str "size=\"" s "\"")}])])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Dynamic Validation")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set or remove the error attribute based on your validation logic."]
-       (demo-area
-        [:ty-textarea
-         {:label "Bio (10–200 characters)"
-          :placeholder "Tell us about yourself..."
-          :on {:change (fn [e]
-                         (let [el (.-target e)
-                               n  (count (.. e -detail -value))]
-                           (cond
-                             (< n 10)
-                             (.setAttribute el "error" (str (- 10 n) " more characters needed"))
-                             (> n 200)
-                             (.setAttribute el "error" (str "Too long by " (- n 200) " characters"))
-                             :else
-                             (.removeAttribute el "error"))))}}])
-       (code-block "textarea.addEventListener('change', (e) => {
-  const n = e.detail.value.length;
-  if (n < 10) textarea.setAttribute('error', `${10 - n} more needed`);
-  else if (n > 200) textarea.setAttribute('error', `Too long by ${n - 200}`);
-  else textarea.removeAttribute('error');
-});" "javascript")]
+     (example
+      {:title "Grows with the text"
+       :span 3
+       :description [:span "No scrollbar until " [:code "max-height"] ". Below " [:code "min-height"] " it never shrinks."]
+       :code "<ty-textarea min-height=\"80px\"
+  max-height=\"200px\">
+</ty-textarea>"}
+      [:ty-textarea {:label "Notes" :min-height "80px" :max-height "200px" :value long-text}])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Form Integration")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Fully form-associated — works with FormData, submit, reset, and validation like native elements."]
-       (demo-area
-        [:form.space-y-3
-         {:on {:submit (fn [e]
+     (example
+      {:title "Header & footer"
+       :span 3
+       :description [:span "Slots sit inside the border, split by a divider. Empty slots take no space."]
+       :code "<ty-textarea>
+  <div slot=\"header\">To: design</div>
+  <div slot=\"footer\">…</div>
+</ty-textarea>"}
+      [:ty-textarea {:placeholder "Write a reply…" :rows "2"}
+       [:div.flex.items-center.gap-2.text-xs.ty-text- {:slot "header"}
+        "To:" [:ty-tag {:size "xs"} "design"] [:ty-tag {:size "xs"} "eng"]]
+       (footer-bar :left (for [i ["paperclip" "smile" "at-sign"]]
+                           [:ty-button {:replicant/key i :action "" :size "xs" :appearance "ghost" :aria-label i}
+                            [:ty-icon {:name i}]])
+                   :button [:ty-button {:size "sm" :flavor "primary"} "Reply"])])
+
+     (example
+      {:title "With an HTML form"
+       :span 6
+       :description [:span "Set " [:code "name"] " and the text is in FormData. " [:code "required"]
+                     " blocks submission while empty."]
+       :code "<form>
+  <ty-textarea name=\"feedback\" label=\"Feedback\" required></ty-textarea>
+  <ty-button size=\"md\" flavor=\"primary\">Send</ty-button>
+</form>
+<!-- FormData: feedback=… -->"}
+      (let [sent (doc-state :sent)]
+        [:form.flex.flex-col.gap-4.w-full
+         {:on {:submit (fn [^js e]
                          (.preventDefault e)
-                         (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
-                           (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
-         [:ty-textarea {:label "Message" :name "message" :placeholder "Write your message..." :required true}]
-         [:ty-textarea {:label "Notes (optional)" :name "notes" :placeholder "Additional info..." :rows "2"}]
-         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
-       (code-block "<form>
-  <ty-textarea name=\"message\" label=\"Message\" required></ty-textarea>
-  <ty-textarea name=\"notes\" label=\"Notes\"></ty-textarea>
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-</form>")]])
-))
+                         (set-doc! :sent (.get (js/FormData. (.-target e)) "feedback")))}}
+         [:div.flex.items-end.gap-3
+          [:ty-textarea {:name "feedback" :label "Feedback" :required "" :rows "2"
+                         :value "The new calendar is great." :style {:flex "1"}}]
+          [:ty-button {:size "md" :flavor "primary"} "Send"]]
+         [:code.ty-text-.text-xs (if sent (str "FormData: feedback=" (pr-str sent)) "Press Send. Clear the text first to see required at work.")]]))
+
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const ta = document.querySelector('ty-textarea');
+
+ta.value = 'Hello';
+ta.error = '';                     // set a message to show it
+
+// input on every edit; change on blur, if the value changed
+ta.addEventListener('input', (e) => preview(e.detail.value));
+ta.addEventListener('change', (e) => save(e.detail.value));"}
+      nil)))
+
+   (page-section
+    {:title "Theming" :sub "Shares the field tokens with ty-input." :dark? true}
+    (example
+     {:title "Field tokens"
+      :side? true
+      :lang "css"
+      :description [:span "The " [:code "--ty-input-*"] " tokens style every field. Set them once and inputs and textareas match."]
+      :code ".composer {
+  --ty-input-bg: #1c1410;
+  --ty-input-border: #7c2d12;
+  --ty-input-border-focus: #fb923c;
+  --ty-input-shadow-focus: #fb923c40;
+  --ty-textarea-divider: #7c2d12;
+}"}
+     [:div.flex.flex-col.gap-3 {:style {:width "100%" :max-width "340px"
+                                         "--ty-input-bg" "#1c1410"
+                                         "--ty-input-border" "#7c2d12"
+                                         "--ty-input-border-hover" "#9a3412"
+                                         "--ty-input-border-focus" "#fb923c"
+                                         "--ty-input-shadow-focus" "#fb923c40"
+                                         "--ty-textarea-divider" "#7c2d12"}}
+      [:ty-input {:label "Subject" :value "Release notes"}]
+      [:ty-textarea {:label "Body" :value "Month view, keyboard years, a cleaner selected day." :rows "2"}
+       (footer-bar :left [:span.text-xs.ty-text-- "Draft saved"]
+                   :button [:ty-button {:size "sm" :flavor "primary"} "Publish"])]]))
+
+   (api-section
+    {:properties validation-properties
+     :attributes ["Value"
+                  ["value" "string" "\"\"" "Current text."]
+                  ["name" "string" "Form field name."]
+                  ["placeholder" "string" "Hint shown while empty."]
+                  "Label & state"
+                  ["label" "string" "Label above the field."]
+                  ["required" "boolean" "false" "Marks the label and blocks form submission while empty."]
+                  ["error" "string" "Message under the field. Empty string clears it."]
+                  ["disabled" "boolean" "false" "Not editable, left out of the form."]
+                  "Size & growth"
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
+                  ["rows" "number" "3" "Starting height in lines."]
+                  ["cols" "number" "Width in characters, like the native attribute."]
+                  ["min-height" "string" "Never shorter than this, e.g. 80px."]
+                  ["max-height" "string" "Grows up to this, then scrolls."]
+                  ["resize" "string" "\"none\"" "Manual resize handle: none, vertical, horizontal or both."]]
+     :events [["input" "{value, originalEvent}" "Every edit."]
+              ["change" "{value, originalEvent}" "On blur, if the value changed since focus (like native)."]]
+     :slots [["header" "Inside the border, above the text: recipients, a title."]
+             ["footer" "Inside the border, below the text: counter, actions."]]
+     :css-vars [["--ty-input-bg / -color / -placeholder" "Shared with ty-input."]
+                ["--ty-input-border / -focus" "Border and focus border."]
+                ["--ty-input-shadow-focus" "Focus ring."]
+                ["--ty-textarea-divider" "Line between header, text and footer."]]})))

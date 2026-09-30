@@ -262,11 +262,11 @@ export class TySwitch
   /** required + unchecked => valueMissing; otherwise valid. */
   private updateValidity(): void {
     const anchor = this.shadowRoot?.querySelector(".switch-container") as HTMLElement | null;
-    if (this.disabled) { this._internals.setValidity({}); return; }
+    if (this.disabled) { this.applyValidity({}); return; }
     if (this.required && !this.checked) {
-      this._internals.setValidity({ valueMissing: true }, "Please turn this on", anchor ?? undefined);
+      this.applyValidity({ valueMissing: true }, "Please turn this on", anchor ?? undefined);
     } else {
-      this._internals.setValidity({});
+      this.applyValidity({});
     }
   }
 

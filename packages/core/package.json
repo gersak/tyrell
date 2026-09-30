@@ -105,9 +105,30 @@
       "types": "./lib/icons/lucide.d.ts",
       "import": "./lib/icons/lucide.js"
     },
-    "./icons/heroicons/*": "./lib/icons/heroicons/*",
-    "./icons/material/*": "./lib/icons/material/*",
-    "./icons/fontawesome/*": "./lib/icons/fontawesome/*",
+    "./icons/heroicons/*.js": {
+      "types": "./lib/icons/heroicons/*.d.ts",
+      "import": "./lib/icons/heroicons/*.js"
+    },
+    "./icons/heroicons/*": {
+      "types": "./lib/icons/heroicons/*.d.ts",
+      "import": "./lib/icons/heroicons/*.js"
+    },
+    "./icons/material/*.js": {
+      "types": "./lib/icons/material/*.d.ts",
+      "import": "./lib/icons/material/*.js"
+    },
+    "./icons/material/*": {
+      "types": "./lib/icons/material/*.d.ts",
+      "import": "./lib/icons/material/*.js"
+    },
+    "./icons/fontawesome/*.js": {
+      "types": "./lib/icons/fontawesome/*.d.ts",
+      "import": "./lib/icons/fontawesome/*.js"
+    },
+    "./icons/fontawesome/*": {
+      "types": "./lib/icons/fontawesome/*.d.ts",
+      "import": "./lib/icons/fontawesome/*.js"
+    },
     "./cdn": "./dist/tyrell.js"
   },
   "files": [

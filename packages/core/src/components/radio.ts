@@ -61,11 +61,29 @@ export class TyRadio
   private _clickHandler: ((e: Event) => void) | null = null;
   private _focusHandler: (() => void) | null = null;
   private _blurHandler: (() => void) | null = null;
+  // Roving tab stop, set by the owning ty-radio-group: one radio per group
+  // is in the Tab order (the checked one, else the first). Standalone
+  // radios keep their own stop.
+  private _tabStop = true;
 
   constructor() {
     super();
     const shadow = this.shadowRoot!;
     ensureStyles(shadow, { css: radioStyles, id: "ty-radio" });
+  }
+
+  /** @internal Group-managed roving tabindex. */
+  setTabStop(on: boolean): void {
+    this._tabStop = on;
+    const el = this.shadowRoot?.querySelector(".radio-container") as HTMLElement | null;
+    if (el) el.tabIndex = this.disabled || !on ? -1 : 0;
+  }
+
+  /** Focus the radio itself (the host is not focusable; its role element is). */
+  focus(options?: FocusOptions): void {
+    const el = this.shadowRoot?.querySelector(".radio-container") as HTMLElement | null;
+    if (el) el.focus(options);
+    else super.focus(options);
   }
 
   protected onConnect(): void {
@@ -170,7 +188,7 @@ export class TyRadio
     if (!radioEl) {
       radioEl = document.createElement("div");
       radioEl.className = "radio-container " + classes;
-      radioEl.tabIndex = this.disabled ? -1 : 0;
+      radioEl.tabIndex = this.disabled || !this._tabStop ? -1 : 0;
       radioEl.setAttribute("role", "radio");
       radioEl.setAttribute("aria-checked", String(this.checked));
       radioEl.setAttribute("aria-disabled", String(this.disabled));
@@ -182,7 +200,7 @@ export class TyRadio
       shadow.appendChild(radioEl);
     } else {
       radioEl.className = "radio-container " + classes;
-      radioEl.tabIndex = this.disabled ? -1 : 0;
+      radioEl.tabIndex = this.disabled || !this._tabStop ? -1 : 0;
       radioEl.setAttribute("aria-checked", String(this.checked));
       radioEl.setAttribute("aria-disabled", String(this.disabled));
     }
@@ -295,7 +313,7 @@ export class TyRadioGroup
   }
 
   protected onPropertiesChanged(changes: PropertyChange[]): void {
-    if (changes.some((c) => c.name === "value" || c.name === "size" || c.name === "flavor" || c.name === "disabled")) {
+    if (changes.some((c) => c.name === "value" || c.name === "size" || c.name === "flavor" || c.name === "disabled" || c.name === "required")) {
       this.syncChildren();
     }
   }
@@ -330,6 +348,23 @@ export class TyRadioGroup
       }
       radio.size = this.size;
       radio.flavor = this.flavor;
+    }
+    // One Tab stop per group: the checked radio, else the first enabled one.
+    const enabled = radios.filter((r) => !r.disabled);
+    const stop = enabled.find((r) => r.checked) ?? enabled[0];
+    for (const radio of radios) radio.setTabStop(radio === stop);
+    this.updateValidity();
+  }
+
+  /** Report `required` to the owning form — without this the asterisk
+      showed but an empty group submitted anyway. */
+  private updateValidity(): void {
+    if (this.required && !this.disabled && !this.value) {
+      const anchor = this.getRadios().find((r) => !r.disabled);
+      const target = anchor?.shadowRoot?.querySelector(".radio-container") as HTMLElement | null;
+      this.applyValidity({ valueMissing: true }, "Please select an option", target ?? undefined);
+    } else {
+      this.applyValidity({});
     }
   }
 

@@ -25,7 +25,7 @@ The infrastructure — routing, i18n, layout, icons — comes from `dev.gersak/t
 
 That single dep brings the CLJS side:
 - `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.components`, `tyrell.react` — infrastructure + shims
-- `tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*` — 12,000+ tree-shakeable icon defs (transitive via `dev.gersak/tyrell-icons`)
+- `tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fav6.*` — 12,000+ tree-shakeable icon defs (transitive via `dev.gersak/tyrell-icons`)
 - npm `tyrell-components` — declared in `deps.cljs`, shadow-cljs auto-installs it into your `package.json` on first build. No manual `npm install` for components.
 
 Don't want the icons artifact? Exclude it:
@@ -217,40 +217,18 @@ For action-dispatch idioms (`:on {:change [:set-email]}` + `replicant.dom/set-di
 
 ## Icons (both tracks)
 
-Two CLJS-friendly icon paths — both tree-shake. Pick one:
-
-### Option 1 — Clojars (recommended for CLJS)
-
-`dev.gersak/tyrell-icons` is pure CLJS. Closure `:advanced` removes unused icons natively.
-
 ```clojure
 (ns my-app.icons
   (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.heroicons.outline :as ho]))
+            [tyrell.lucide :as lucide]))
 
-(defn register! []
-  (icons/register!
-    {:check  lucide/check
-     :search lucide/search
-     :user   ho/user-circle}))
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Call `(register!)` once at app startup, then use `[:ty-icon {:name "check"}]` (or `[:> Icon {:name "check"}]` on Track A) anywhere.
+Call it once at startup, then `[:ty-icon {:name "check"}]` (or `[:> ty/Icon {:name "check"}]` on Track A). `:advanced` drops every def you don't reference.
 
-### Option 2 — npm leaf modules
-
-```clojure
-(ns my-app.icons
-  (:require ["tyrell-components/icons/lucide" :refer [check search]]))
-
-(defn register! []
-  (.register js/window.tyIcons #js {:check check :search search}))
-```
-
-Tree-shakes via shadow-cljs because `./lib/icons/**` has no side-effects in `package.json` and you're using named imports.
-
-**Don't** dynamically construct icon names (e.g. `(symbol "lucide" name)`) — that defeats DCE. Register every icon you might use upfront.
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ---
 

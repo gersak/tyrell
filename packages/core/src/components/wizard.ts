@@ -1,8 +1,9 @@
 /**
- * Wizard Component — carousel-based stepper with sliding transitions, an
- * animated progress line, and step completion tracking. Expects `ty-step`
- * children. "Dumb" like ty-tabs: it renders and fires events; all navigation
- * and validation is the consumer's.
+ * Wizard Component — stepper with an inline indicator rail (compact
+ * "Step N of M" header in narrow containers), sliding panels (carousel, like
+ * ty-tabs), and step completion tracking. Expects `ty-step` children.
+ * "Dumb" like ty-tabs: it renders and fires events; all navigation and
+ * validation is the consumer's.
  */
 
 import { ensureStyles } from '../utils/styles.js';
@@ -12,11 +13,11 @@ import { wizardStyles } from '../styles/wizard.js';
  * Wizard container attributes configuration
  */
 export interface WizardAttributes {
-  width: string;              // Content area width (accepts px or %)
-  height: string;             // Total container height including step indicators
+  width: string;              // Wizard width (px or %)
+  height: string;             // Panel height; empty = tallest step
   active: string | null;      // ID of currently active step
   completed: string;          // Comma-separated IDs of completed steps
-  orientation: 'horizontal' | 'vertical'; // Step indicator layout (horizontal only for now)
+  orientation: 'horizontal' | 'vertical'; // Rail on top, or on the left
 }
 
 /**
@@ -34,12 +35,10 @@ const eventHandlers = new WeakMap<TyWizard, {
   stepClickHandlers: Map<string, (e: Event) => void>;
 }>();
 
-const resizeObservers = new WeakMap<TyWizard, ResizeObserver>();
-
 function getWizardAttributes(el: TyWizard): WizardAttributes {
   return {
     width: el.getAttribute('width') || '100%',
-    height: el.getAttribute('height') || '700px',
+    height: el.getAttribute('height') || '',
     active: el.getAttribute('active'),
     completed: el.getAttribute('completed') || '',
     orientation: (el.getAttribute('orientation') || 'horizontal') as 'horizontal' | 'vertical',
@@ -95,20 +94,6 @@ function getActiveStepId(el: TyWizard, steps: HTMLElement[]): string | null {
 
 function setActiveStep(el: TyWizard, stepId: string): void {
   el.setAttribute('active', stepId);
-}
-
-/** Progress percentage for the progress-line overlay. */
-function calculateProgressPercent(
-  steps: HTMLElement[],
-  activeId: string | null,
-  completedIds: Set<string>
-): number {
-  if (steps.length <= 1 || !activeId) return 0;
-
-  const activeIndex = steps.findIndex(s => getStepId(s) === activeId);
-
-  // Progress bar shows progress up to the currently active step
-  return (activeIndex / (steps.length - 1)) * 100;
 }
 
 function dispatchStepChangeEvent(
@@ -180,6 +165,7 @@ function cleanupEventListeners(el: TyWizard): void {
     const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-step-id='${stepId}']`);
     if (button) {
       button.removeEventListener('pointerdown', handler);
+      button.removeEventListener('click', handler);
     }
   });
 
@@ -199,8 +185,14 @@ function setupEventListeners(el: TyWizard, shadowRoot: ShadowRoot, steps: HTMLEl
 
     const button = shadowRoot.querySelector<HTMLButtonElement>(`[data-step-id='${stepId}']`);
     if (button) {
-      const handler = (e: Event) => handleStepClick(el, stepId, e);
+      // pointerdown for pointers; click only when it came from the keyboard
+      // (Enter/Space report detail 0), so a mouse click doesn't fire twice.
+      const handler = (e: Event) => {
+        if (e.type === 'click' && (e as MouseEvent).detail !== 0) return;
+        handleStepClick(el, stepId, e);
+      };
       button.addEventListener('pointerdown', handler);
+      button.addEventListener('click', handler);
       handlers.stepClickHandlers.set(stepId, handler);
     }
   });
@@ -208,41 +200,11 @@ function setupEventListeners(el: TyWizard, shadowRoot: ShadowRoot, steps: HTMLEl
   eventHandlers.set(el, handlers);
 }
 
-function updateTransform(el: TyWizard, activeIndex: number): void {
-  const shadowRoot = el.shadowRoot;
-  if (!shadowRoot) return;
-
-  const panelsWrapper = shadowRoot.querySelector<HTMLElement>('.panels-wrapper');
-  if (!panelsWrapper) return;
-
-  const containerWidth = el.offsetWidth;
-  const offsetPx = activeIndex * containerWidth;
-
-  panelsWrapper.style.transform = `translateX(-${offsetPx}px)`;
-}
-
-function updateProgressLine(el: TyWizard): void {
-  const shadowRoot = el.shadowRoot;
-  if (!shadowRoot) return;
-
-  const progressOverlay = shadowRoot.querySelector<HTMLElement>('.progress-overlay');
-  if (!progressOverlay) return;
-
-  const steps = getChildSteps(el);
-  const activeId = getActiveStepId(el, steps);
-  const completedIds = getCompletedStepIds(el);
-
-  const progressPercent = calculateProgressPercent(steps, activeId, completedIds);
-  progressOverlay.style.width = `${progressPercent}%`;
-}
-
 /** Update ARIA/state attributes on step indicators without re-rendering. */
 function updateStepIndicators(el: TyWizard, shadowRoot: ShadowRoot, activeId: string): void {
   const steps = getChildSteps(el);
   const completedIds = getCompletedStepIds(el);
-  const activeIndex = activeId ? steps.findIndex(s => getStepId(s) === activeId) : 0;
-
-  steps.forEach((step, index) => {
+  steps.forEach((step) => {
     const stepId = getStepId(step);
     if (!stepId) return;
 
@@ -256,11 +218,10 @@ function updateStepIndicators(el: TyWizard, shadowRoot: ShadowRoot, activeId: st
       button.setAttribute('data-active', String(isActive));
     }
 
-    if (circle) {
-      // Use same status logic as rendering (respects user's status attribute)
-      const state = getStepStatus(step, stepId, activeId, completedIds);
-      circle.setAttribute('data-state', state);
-    }
+    // Same status logic as rendering (respects the step's status attribute)
+    const state = getStepStatus(step, stepId, activeId, completedIds);
+    button?.setAttribute('data-state', state);
+    circle?.setAttribute('data-state', state);
 
     const slottedIndicator = el.querySelector(`[slot='indicator-${stepId}']`);
     if (slottedIndicator) {
@@ -269,26 +230,13 @@ function updateStepIndicators(el: TyWizard, shadowRoot: ShadowRoot, activeId: st
   });
 }
 
-/** Update pointer-events, opacity and data-active on step panels without re-rendering. */
+/** Mark the active panel. data-active hides off-screen steps (wizard CSS) and
+ *  framework conditional rendering. */
 function updatePanelInteraction(el: TyWizard, activeId: string): void {
-  const steps = getChildSteps(el);
-
-  steps.forEach((step) => {
+  getChildSteps(el).forEach((step) => {
     const stepId = getStepId(step);
     if (!stepId) return;
-
-    const isActive = stepId === activeId;
-
-    // data-active drives framework conditional rendering
-    step.setAttribute('data-active', String(isActive));
-
-    if (isActive) {
-      (step as HTMLElement).style.pointerEvents = 'auto';
-      (step as HTMLElement).style.opacity = '1';
-    } else {
-      (step as HTMLElement).style.pointerEvents = 'none';
-      (step as HTMLElement).style.opacity = '0';
-    }
+    step.setAttribute('data-active', String(stepId === activeId));
   });
 }
 
@@ -309,9 +257,7 @@ function updateActiveStepState(el: TyWizard, stepId: string): void {
   if (currentActive === stepId || newIndex === undefined) return;
 
   el.style.setProperty('--ty-wizard-active-index', String(newIndex));
-  updateTransform(el, newIndex);
   updateStepIndicators(el, shadowRoot, stepId);
-  updateProgressLine(el);
   updatePanelInteraction(el, stepId);
 
   // Reset scroll position of new active panel
@@ -329,43 +275,6 @@ function updateActiveStepState(el: TyWizard, stepId: string): void {
   );
 }
 
-function setupResizeObserver(el: TyWizard): void {
-  const oldObserver = resizeObservers.get(el);
-  if (oldObserver) {
-    oldObserver.disconnect();
-  }
-
-  const { width } = getWizardAttributes(el);
-
-  // Only setup observer for percentage widths
-  if (width.includes('%')) {
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      const measuredWidth = entry.contentRect.width;
-      const steps = getChildSteps(el);
-      const activeId = getActiveStepId(el, steps);
-      const activeIndex = activeId ? findStepIndex(steps, activeId) : 0;
-
-      el.style.setProperty('--ty-wizard-width', `${measuredWidth}px`);
-
-      if (activeIndex !== undefined) {
-        updateTransform(el, activeIndex);
-      }
-    });
-
-    observer.observe(el);
-    resizeObservers.set(el, observer);
-  }
-}
-
-function cleanupResizeObserver(el: TyWizard): void {
-  const observer = resizeObservers.get(el);
-  if (observer) {
-    observer.disconnect();
-    resizeObservers.delete(el);
-  }
-}
-
 /** Step status: the explicit `status` attribute wins, otherwise it's derived. */
 function getStepStatus(step: HTMLElement, stepId: string, activeId: string | null, completedIds: Set<string>): string {
   const explicitStatus = step.getAttribute('status');
@@ -375,11 +284,23 @@ function getStepStatus(step: HTMLElement, stepId: string, activeId: string | nul
 
   const isActive = stepId === activeId;
   const isCompleted = completedIds.has(stepId);
-  return isCompleted ? 'completed' : isActive ? 'active' : 'pending';
+  // Active wins: revisiting a finished step shows where you are.
+  return isActive ? 'active' : isCompleted ? 'completed' : 'pending';
 }
 
+const CHECK_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+const ALERT_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="13"></line><line x1="12" y1="18.5" x2="12" y2="18.6"></line></svg>`;
+
+const STATE_TEXT: Record<string, string> = {
+  completed: 'completed',
+  active: 'current',
+  pending: 'not started',
+  error: 'has an error',
+};
+
 function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId: string | null, completedIds: Set<string>): string {
-  const activeIndex = activeId ? steps.findIndex(s => getStepId(s) === activeId) : 0;
+  const total = steps.length;
+  const activeIndex = Math.max(0, activeId ? steps.findIndex(s => getStepId(s) === activeId) : 0);
 
   const indicators = steps.map((step, index) => {
     const stepId = getStepId(step);
@@ -389,64 +310,64 @@ function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId
     const description = step.getAttribute('description') || '';
     const disabled = isStepDisabled(step);
     const isActive = stepId === activeId;
-    const hasCustom = hasCustomIndicator(wizardEl, stepId);
-
     const state = getStepStatus(step, stepId, activeId, completedIds);
 
-    let circleContent = '';
-    if (hasCustom) {
-      circleContent = `<slot name="indicator-${stepId}"></slot>`;
-    } else if (state === 'completed') {
-      // Checkmark for completed
-      circleContent = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-    } else if (state === 'error') {
-      // X icon for error
-      circleContent = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-    } else {
-      // Number for active/pending
-      circleContent = `<span style="font-size: 12px; font-weight: 700;">${index + 1}</span>`;
-    }
+    const circleContent = hasCustomIndicator(wizardEl, stepId)
+      ? `<slot name="indicator-${stepId}"></slot>`
+      : state === 'completed' ? CHECK_SVG
+      : state === 'error' ? ALERT_SVG
+      : `<span aria-hidden="true">${index + 1}</span>`;
 
-    // No aria-controls: the button lives in shadow DOM, the panel (<ty-step>,
-    // see the render() step below) is light DOM — ARIA id-references don't
-    // resolve across a shadow-tree boundary, so a cross-boundary reference
-    // here is spec-invalid even though getElementById can technically find
-    // the target (axe's aria-valid-attr-value correctly flags it). The
-    // load-bearing relationship is role=tab + aria-selected here, and
-    // aria-labelledby (pointing back at this button) on the <ty-step> side.
+    // No aria-controls: the button lives in shadow DOM, the panel (<ty-step>)
+    // is light DOM — ARIA id-references don't resolve across a shadow-tree
+    // boundary. role=tab + aria-selected here, aria-labelledby on the step.
+    // The connector to the next step is this button's ::after, so the
+    // tablist owns nothing but tabs.
     return `<button
       class="step-indicator"
       role="tab"
+      type="button"
       data-step-id="${stepId}"
       id="step-${stepId}"
+      data-state="${state}"
+      data-done="${state === 'completed' || (state === 'active' && completedIds.has(stepId))}"
       aria-selected="${isActive}"
       tabindex="${isActive ? '0' : '-1'}"
       data-active="${isActive}"
       ${disabled ? 'disabled aria-disabled="true"' : ''}
     >
-      <div class="step-circle" data-state="${state}" part="step-circle">
-        ${circleContent}
-      </div>
-      <div class="step-text">
+      <span class="step-circle" data-state="${state}" part="step-circle">${circleContent}</span>
+      <span class="step-text">
         <span class="step-label">${label}</span>
         ${description ? `<span class="step-description">${description}</span>` : ''}
-      </div>
+        <span class="sr-only">, step ${index + 1} of ${total}, ${STATE_TEXT[state] ?? state}</span>
+      </span>
     </button>`;
   }).join('');
 
-  const progressPercent = calculateProgressPercent(steps, activeId, completedIds);
-
-  const stepCount = steps.length;
+  // Compact header for narrow containers: "Step N of M · Label" + segments.
+  const active = steps[activeIndex];
+  const activeLabel = active ? (active.getAttribute('label') || `Step ${activeIndex + 1}`) : '';
+  const activeDescription = active?.getAttribute('description') || '';
+  const segments = steps.map((step) => {
+    const stepId = getStepId(step) || '';
+    return `<span class="compact-segment" data-state="${getStepStatus(step, stepId, activeId, completedIds)}"></span>`;
+  }).join('');
 
   return `
     <div class="step-indicators-wrapper" part="indicators-wrapper">
-      <div class="step-indicators" style="--ty-wizard-step-count: ${stepCount}">
-        <div class="progress-line" part="progress-line" role="progressbar" aria-label="Wizard progress" aria-valuenow="${Math.round(progressPercent)}" aria-valuemin="0" aria-valuemax="100">
-          <div class="progress-overlay" style="width: ${progressPercent}%"></div>
+      <div class="step-indicators" role="tablist" aria-label="Steps">
+        ${indicators}
+      </div>
+      <div class="step-compact">
+        <div class="compact-top">
+          <span class="compact-where">
+            <span class="compact-count">Step ${total ? activeIndex + 1 : 0} of ${total}</span>
+            <span class="compact-label">${activeLabel}</span>
+          </span>
+          ${activeDescription ? `<span class="compact-description">${activeDescription}</span>` : ''}
         </div>
-        <div class="step-tablist" role="tablist" style="display: contents;">
-          ${indicators}
-        </div>
+        <div class="compact-segments" part="progress">${segments}</div>
       </div>
     </div>
   `;
@@ -454,7 +375,8 @@ function renderStepIndicators(wizardEl: TyWizard, steps: HTMLElement[], activeId
 
 /**
  * Render the wizard container with step indicators and panel viewport.
- * Smart rendering: checks if structure exists and only updates when needed.
+ * The indicator strip is rebuilt on every render; the panel viewport (and its
+ * slot) is created once.
  */
 function render(el: TyWizard): void {
   const shadowRoot = el.shadowRoot;
@@ -463,12 +385,10 @@ function render(el: TyWizard): void {
   const { width, height } = getWizardAttributes(el);
   const steps = getChildSteps(el);
   const activeId = getActiveStepId(el, steps);
-  const activeIndex = activeId ? (findStepIndex(steps, activeId) ?? 0) : 0;
   const completedIds = getCompletedStepIds(el);
 
-  // Each <ty-step> IS its tabpanel (single catch-all <slot> in the carousel
-  // viewport below) — same pattern and same rationale as ty-tabs. `id` is
-  // also the stepId (getStepId reads it directly), so it's never reassigned.
+  // Each <ty-step> IS its tabpanel (single catch-all <slot> in the viewport)
+  // — same pattern and rationale as ty-tabs.
   steps.forEach((step) => {
     const stepId = getStepId(step);
     if (!stepId) return;
@@ -477,51 +397,20 @@ function render(el: TyWizard): void {
     step.setAttribute('tabindex', '0');
   });
 
-  const existingContainer = shadowRoot.querySelector('.wizard-container');
-  const existingIndicators = shadowRoot.querySelector('.step-indicators-wrapper');
-  const existingViewport = shadowRoot.querySelector('.panels-viewport');
-
   ensureStyles(shadowRoot, { css: wizardStyles, id: 'ty-wizard' });
 
-  el.style.setProperty('--ty-wizard-width', width.includes('%') ? '100%' : width);
-  el.style.setProperty('--ty-wizard-height', height);
-  el.style.setProperty('--ty-wizard-active-index', String(activeIndex));
-  el.style.setProperty('--ty-wizard-step-count', String(steps.length));
+  el.style.setProperty('--ty-wizard-width', width);
+  el.style.setProperty('--ty-wizard-active-index', String(Math.max(0, activeId ? steps.findIndex(s => getStepId(s) === activeId) : 0)));
+  // height sizes the panels only; unset = the tallest step.
+  if (height) el.style.setProperty('--ty-wizard-panel-height', height);
+  else el.style.removeProperty('--ty-wizard-panel-height');
 
-  if (existingContainer && existingIndicators && existingViewport) {
-    // === SMART UPDATE: Structure exists, only update what changed ===
+  let container = shadowRoot.querySelector('.wizard-container');
+  let viewport = shadowRoot.querySelector('.panels-viewport');
 
-    existingIndicators.remove();
-    const newIndicatorsHtml = renderStepIndicators(el, steps, activeId, completedIds);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = newIndicatorsHtml;
-    existingContainer.insertBefore(tempDiv.firstElementChild!, existingViewport);
-
-    // Re-setup event listeners (indicators were recreated)
-    setupEventListeners(el, shadowRoot, steps);
-    updateStepIndicators(el, shadowRoot, activeId || '');
-
-    requestAnimationFrame(() => {
-      const indicators = shadowRoot.querySelector('.step-indicators-wrapper');
-      if (indicators) {
-        const indicatorsHeight = (indicators as HTMLElement).offsetHeight;
-        el.style.setProperty('--ty-wizard-indicators-height', `${indicatorsHeight}px`);
-      }
-
-      updateTransform(el, activeIndex);
-      updateProgressLine(el);
-    });
-
-    if (activeId) {
-      updatePanelInteraction(el, activeId);
-    }
-
-  } else {
-    // === FULL RENDER: First time or structure missing ===
-
+  if (!container || !viewport) {
     shadowRoot.innerHTML = `
       <div class="wizard-container">
-        ${renderStepIndicators(el, steps, activeId, completedIds)}
         <div class="panels-viewport" part="panels-container">
           <div class="panels-wrapper">
             <slot></slot>
@@ -529,31 +418,74 @@ function render(el: TyWizard): void {
         </div>
       </div>
     `;
-
-    requestAnimationFrame(() => {
-      const indicators = shadowRoot.querySelector('.step-indicators-wrapper');
-      if (indicators) {
-        const indicatorsHeight = (indicators as HTMLElement).offsetHeight;
-        el.style.setProperty('--ty-wizard-indicators-height', `${indicatorsHeight}px`);
-      }
-
-      updateTransform(el, activeIndex);
-      updateProgressLine(el);
-    });
-
-    setupEventListeners(el, shadowRoot, steps);
-    updateStepIndicators(el, shadowRoot, activeId || '');
-    setupResizeObserver(el);
-
-    if (activeId) {
-      updatePanelInteraction(el, activeId);
-    }
+    container = shadowRoot.querySelector('.wizard-container')!;
+    viewport = shadowRoot.querySelector('.panels-viewport')!;
   }
+
+  shadowRoot.querySelector('.step-indicators-wrapper')?.remove();
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderStepIndicators(el, steps, activeId, completedIds);
+  container.insertBefore(tmp.firstElementChild!, viewport);
+
+  setupEventListeners(el, shadowRoot, steps);
+  updateStepIndicators(el, shadowRoot, activeId || '');
+  if (activeId) updatePanelInteraction(el, activeId);
+
+  if (!resizeObservers.has(el)) {
+    const ro = new ResizeObserver(() => updateCompact(el));
+    ro.observe(el);
+    resizeObservers.set(el, ro);
+    // Label widths change once web fonts arrive; the host size doesn't.
+    document.fonts?.ready.then(() => el.isConnected && updateCompact(el));
+  }
+  updateCompact(el);
 }
+
+/**
+ * Collapse to the compact header when the rail doesn't fit: its natural
+ * width (circles + full label text + minimum connectors) exceeds the header's
+ * content box. Vertical wizards collapse under 360px, where rail + panel
+ * side by side get cramped.
+ */
+function updateCompact(el: TyWizard): void {
+  const shadowRoot = el.shadowRoot;
+  const container = shadowRoot?.querySelector<HTMLElement>('.wizard-container');
+  const wrapper = shadowRoot?.querySelector<HTMLElement>('.step-indicators-wrapper');
+  const rail = shadowRoot?.querySelector<HTMLElement>('.step-indicators');
+  if (!container || !wrapper || !rail) return;
+
+  let compact: boolean;
+  if (el.getAttribute('orientation') === 'vertical') {
+    compact = el.clientWidth < 360;
+  } else {
+    // Sum the parts: flex intrinsic sizing with flex-basis 0 undercounts.
+    // Labels are overflow:hidden, so scrollWidth is their full text width.
+    const buttons = Array.from(rail.querySelectorAll<HTMLElement>('.step-indicator'));
+    const px = (v: string) => parseFloat(v) || 0;
+    let natural = px(getComputedStyle(rail).columnGap) * Math.max(0, buttons.length - 1);
+    buttons.forEach((b, i) => {
+      const circle = b.querySelector<HTMLElement>('.step-circle');
+      const texts = Array.from(b.querySelectorAll<HTMLElement>('.step-label, .step-description'));
+      natural += (circle?.offsetWidth ?? 0) + px(getComputedStyle(b).columnGap)
+        + Math.max(0, ...texts.map((t) => t.scrollWidth));
+      if (i < buttons.length - 1) {
+        const after = getComputedStyle(b, '::after');
+        natural += px(getComputedStyle(b).columnGap) + px(after.minWidth) + px(after.marginLeft);
+      }
+    });
+    const cs = getComputedStyle(wrapper);
+    const available = wrapper.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    compact = natural > available + 0.5;
+  }
+  container.classList.toggle('compact', compact);
+}
+
+const resizeObservers = new WeakMap<TyWizard, ResizeObserver>();
 
 function cleanup(el: TyWizard): void {
   cleanupEventListeners(el);
-  cleanupResizeObserver(el);
+  resizeObservers.get(el)?.disconnect();
+  resizeObservers.delete(el);
 }
 
 /**
@@ -578,15 +510,27 @@ export class TyWizard extends HTMLElement {
     // Frameworks add/remove ty-step children dynamically — the indicator
     // strip renders from light DOM, so watch it. Batched on a microtask;
     // render() only touches shadow DOM, so no observer feedback loop.
-    this._childObserver = new MutationObserver(() => {
-      if (this._childRenderQueued) return;
+    this._childObserver = new MutationObserver((records) => {
+      // Re-render for added/removed steps, and for attribute changes on a
+      // direct ty-step child (status/label/description/disabled) — frameworks
+      // may update a step's status after the wizard's own active/completed,
+      // which left a stale indicator (e.g. an error X on a completed step).
+      const relevant = records.some((r) =>
+        (r.type === 'childList' && r.target === this) ||
+        ((r.target as Element).tagName === 'TY-STEP' && (r.target as Element).parentElement === this));
+      if (!relevant || this._childRenderQueued) return;
       this._childRenderQueued = true;
       queueMicrotask(() => {
         this._childRenderQueued = false;
         if (this.isConnected) render(this);
       });
     });
-    this._childObserver.observe(this, { childList: true });
+    this._childObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['status', 'label', 'description', 'disabled'],
+    });
   }
 
   disconnectedCallback() {

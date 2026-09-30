@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
 
 export interface TyWizardProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
-  /** Content area width (accepts px or %) */
+  /** Wizard width (px or %) */
   width?: string;
 
-  /** Total container height including step indicators */
+  /** Panel height, header excluded. Unset: panels size to the tallest step. */
   height?: string;
 
   /** ID of currently active step */

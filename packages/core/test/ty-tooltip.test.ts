@@ -16,7 +16,7 @@ describe('ty-tooltip', () => {
   });
 });
 
-describe('ty-tooltip default ("dark") flavor is theme-independent', () => {
+describe('ty-tooltip default (neutral) flavor is theme-independent', () => {
   const showViaFocus = async (delay = '0') => {
     const wrap = (await fixture(html`
       <div><button>Hover me</button><ty-tooltip delay=${delay}>Tip text</ty-tooltip></div>

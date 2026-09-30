@@ -48,6 +48,7 @@
  {;; Core navigation icons
   :home lucide/home
   :user lucide/user
+  :user-plus lucide/user-plus
   :calendar lucide/calendar
   :calendar-check lucide/calendar-check
   :mail lucide/mail
@@ -64,6 +65,7 @@
   :moon lucide/moon
   :sun lucide/sun
   :chevron-down lucide/chevron-down
+  :chevron-left lucide/chevron-left
   :chevron-right lucide/chevron-right
 
      ;; Component/UI icons (for docs)
@@ -74,6 +76,13 @@
   :message-square lucide/message-square
   :hand lucide/hand
   :tag lucide/tag
+  :bold lucide/bold
+  :italic lucide/italic
+  :archive lucide/archive
+  :paperclip lucide/paperclip
+  :smile lucide/smile
+  :at-sign lucide/at-sign
+  :truck lucide/truck
   :align-left lucide/align-left
   :type lucide/type
   :image lucide/image
@@ -103,6 +112,10 @@
   :check-circle lucide/check-circle
   :x-circle lucide/x-circle
   :alert-triangle lucide/alert-triangle
+  :circle-slash lucide/circle-slash
+  :braces lucide/braces
+  :bookmark lucide/bookmark
+  :arrow-up-right lucide/arrow-up-right
   :alert-circle lucide/alert-circle
   :circle lucide/circle
   :circle-dot lucide/circle-dot
@@ -123,6 +136,7 @@
   :clock lucide/clock
   :arrow-left lucide/arrow-left
   :arrow-right lucide/arrow-right
+  :arrow-up lucide/arrow-up
   :bell lucide/bell
   :wifi-off lucide/wifi-off
   :database lucide/database
@@ -158,6 +172,8 @@
   :form-input lucide/form-input
   :book-open lucide/book-open
   :zap lucide/zap
+  :keyboard lucide/keyboard
+  :scan-eye lucide/scan-eye
   :feather lucide/feather
   :shuffle lucide/shuffle
   :lambda lucide/square-function
@@ -180,6 +196,9 @@
   :copy lucide/copy
   :clipboard lucide/clipboard
   :rotate-ccw lucide/rotate-ccw
+  :rotate-cw lucide/rotate-cw
+  :move-vertical lucide/move-vertical
+  :sliders-horizontal lucide/sliders-horizontal
   :share-2 lucide/share-2
   :box lucide/box
   :diamond lucide/diamond-plus

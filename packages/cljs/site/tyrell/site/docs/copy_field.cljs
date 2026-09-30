@@ -1,258 +1,167 @@
 (ns tyrell.site.docs.copy-field
   "Documentation for ty-copy component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
 
-(defn api-reference []
-  [:div.ty-elevated.rounded-lg.p-6
-   [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-    [:h2.scroll-mt-6
-     {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-     [:span.ty-text-- "API Reference"]]]
+(def ^:private flavors ["neutral" "primary" "success" "danger" "warning"])
 
-   [:div.mb-6
-    (section-label "Attributes")
-    (attribute-table
-     [{:name "value"
-       :type "string"
-       :default "\"\""
-       :description "The text to display and copy to clipboard"}
-      {:name "label"
-       :type "string"
-       :default "-"
-       :description "Label displayed above the field"}
-      {:name "format"
-       :type "string"
-       :default "\"text\""
-       :description "Display format: text (default) or code (monospace font)"}
-      {:name "multiline"
-       :type "boolean"
-       :default "false"
-       :description "Allow text to wrap — useful for SSH keys, certificates, long tokens. Copy icon stays pinned to the top-right corner."}
-      {:name "horizontal-scroll"
-       :type "boolean"
-       :default "false"
-       :description "Scroll long content sideways instead of clipping with an ellipsis. Combine with multiline for two-axis code blocks."}
-      {:name "size"
-       :type "string"
-       :default "\"sm\""
-       :description "Size variant: xs, sm, md, lg, xl"}
-      {:name "flavor"
-       :type "string"
-       :default "\"neutral\""
-       :description "Semantic color: primary, success, danger, warning, neutral"}])]
+(def ^:private lineup
+  "Playground stage: the values people actually copy."
+  [{:label "API key" :value "sk_live_51HqT2xK9vB3mN8pQ4rL7w" :format "code"}
+   {:label "Share link" :value "https://tyrell.dev/components/copy-field"}
+   {:label "Install" :value "npm install @gersak/ty" :format "code"}])
 
-   [:div
-    (section-label "Events")
-    (event-table
-     [{:name "copy-success"
-       :payload "{value: string}"
-       :when-fired "Text successfully copied to clipboard"}
-      {:name "copy-error"
-       :payload "{error: Error}"
-       :when-fired "Copy operation failed — handle for fallback UX"}])]])
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor]}]
+  (cond-> {}
+    (not= size "sm") (assoc :size size)
+    (not= flavor "neutral") (assoc :flavor flavor)))
 
-(defn example-basic []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Basic")
-   (demo-area
-    [:div.space-y-3
-     [:ty-copy {:label "API Key" :value "sk_live_1234567890abcdef"}]
-     [:ty-copy {:label "Website URL" :value "https://tyrell.gersak.dev"}]
-     [:ty-copy {:label "Access Token" :value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"}]])
-   (code-block "<ty-copy label=\"API Key\" value=\"sk_live_1234567890abcdef\"></ty-copy>
-<ty-copy label=\"Website URL\" value=\"https://tyrell.gersak.dev\"></ty-copy>")])
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label value format]} lineup]
+       [:ty-copy (merge {:label label :value value :format format} attrs)])
+     :datastar (str "<ty-copy label=\"Invite link\"" (snippets/attr-str attrs)
+                    "\n  data-attr:value=\"$inviteUrl\"\n  data-on:copy-success=\"$copied = true\">\n</ty-copy>"))))
 
-(defn example-code-format []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Code Format")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Applies monospace font and tighter tracking — ideal for commands, hashes, and connection strings."]
-   (demo-area
-    [:div.space-y-3
-     [:ty-copy {:label "Install" :value "npm install tyrell-components" :format "code"}]
-     [:ty-copy {:label "Clone" :value "git clone https://github.com/gersak/tyrell.git" :format "code"}]
-     [:ty-copy {:label "Connection String" :value "postgresql://user:pass@localhost:5432/db" :format "code"}]])
-   (code-block "<ty-copy
-  label=\"Install\"
-  value=\"npm install tyrell-components\"
-  format=\"code\">
-</ty-copy>")])
+(defn- render-lineup [{:keys [size flavor]}]
+  [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "420px"}}
+   (for [{:keys [label value format]} lineup]
+     [:ty-copy (cond-> {:replicant/key label :label label :value value :size size :flavor flavor}
+                 format (assoc :format format))])])
 
-(defn example-multiline []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Multiline")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "By default ty-copy is a single compact row — a long value is clipped with an "
-    "ellipsis so it can't grow the layout. Add " [:code.ty-text "multiline"]
-    " and the whole value wraps instead, breaking mid-token when there's nothing "
-    "to break on (which is exactly what a base64 key is). Past 200px it scrolls "
-    "vertically and the copy button stays pinned top-right."]
-   (demo-area
-    [:div.space-y-3
-     [:ty-copy {:label "Deploy key — default (clipped)"
-                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
-                :format "code"}]
-     [:ty-copy {:label "Deploy key — multiline (wraps)"
-                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
-                :format "code"
-                :multiline true}]])
-   (code-block "<!-- default: one row, ellipsized -->
-<ty-copy label=\"Deploy key\" value=\"ssh-rsa AAAA...\" format=\"code\"></ty-copy>
+(defn- doc-state [k] (get-in @state/state [:copy-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:copy-doc k] v))
 
-<!-- multiline: wraps to as many rows as it needs -->
-<ty-copy label=\"Deploy key\" value=\"ssh-rsa AAAA...\" format=\"code\" multiline></ty-copy>")])
+(def ^:private snippet
+  "<ty-button flavor=\"primary\">
+  Save changes
+</ty-button>")
 
-(defn example-horizontal-scroll []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Horizontal Scroll")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Scroll long single-line values sideways instead of clipping them. Combine with "
-    [:code.ty-text "multiline"] " for code blocks that keep their line breaks and scroll on both axes — the copy icon stays pinned top-right."]
-   (demo-area
-    [:div.space-y-3
-     [:ty-copy {:label "Deploy key — horizontal-scroll (one row, drag sideways)"
-                :value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQAbhJexhWiAjSA3g/mZhgs3pctbydnY7Qr+Oanp4eMHSdrb31i1wSpl2sG5vU6Wpt4SfkLycobbLP4dNdOD5zv6zyhJIs1fykdLMnHVdjjmgLis0vrbALaXBGYMJPACikNaK4yoEG9Izx9/02h161XdiVbgTTjbnz6kFx/sBObCYDVadY8Mj4MYV1QPowEps/ykAWMeNI+pyaJ+Xb7xMJkG+OyhV8KAAPPOI+fB4m616n2hqDh0KI8uzYL2mDvlMOy2UCx8oZVhg81fX3GLd9FHtGBBt1K5sVLOhAUQqCV9tIwZftV5O1F3f/vpmE6+LkRVa3hQrVRvm+917+3cSC2CxYLHpbi3ykrclb deploy@example.com"
-                :format "code"
-                :horizontal-scroll true}]
-     [:ty-copy {:label "Connection String"
-                :value "postgresql://admin:s3cr3t@db.internal.example.com:5432/production?sslmode=require&application_name=tyrell"
-                :format "code"
-                :horizontal-scroll true}]
-     [:ty-copy {:label "Deployment Command"
-                :value "kubectl apply -f deploy.yaml && kubectl rollout status deployment/api --namespace=production --timeout=300s\ndocker build -t registry.example.com/api:latest . && docker push registry.example.com/api:latest"
-                :format "code"
-                :multiline true
-                :horizontal-scroll true}]])
-   (code-block "<!-- Single line, scroll sideways -->
-<ty-copy
-  label=\"Connection String\"
-  value=\"postgresql://admin:...\"
-  format=\"code\"
-  horizontal-scroll>
-</ty-copy>
-
-<!-- Code block: keep line breaks, scroll both axes -->
-<ty-copy
-  label=\"Deployment Command\"
-  value=\"kubectl apply -f ...\"
-  format=\"code\"
-  multiline
-  horizontal-scroll>
-</ty-copy>")])
-
-(defn examples []
-  (doc-section "Examples"
-               [:div.space-y-6
-                (example-basic)
-                (example-code-format)
-                (example-multiline)
-                (example-horizontal-scroll)]))
-
-(defn sizes []
-  (doc-section "Sizes"
-               [:div.ty-content.rounded-lg.p-5
-                (demo-area
-                 [:div.space-y-3
-                  (for [[size label] [["xs" "Extra Small"] ["sm" "Small (default)"] ["md" "Medium"]
-                                      ["lg" "Large"] ["xl" "Extra Large"]]]
-                    [:ty-copy {:size size :label label :value (str size "-value-example-123")}])])
-                (code-block "<ty-copy size=\"xs\" label=\"Extra Small\" value=\"...\"></ty-copy>
-<ty-copy size=\"sm\" label=\"Small\" value=\"...\"></ty-copy>
-<ty-copy size=\"md\" label=\"Medium\" value=\"...\"></ty-copy>
-<ty-copy size=\"lg\" label=\"Large\" value=\"...\"></ty-copy>
-<ty-copy size=\"xl\" label=\"Extra Large\" value=\"...\"></ty-copy>")]))
-
-(defn semantic-flavors []
-  (doc-section "Semantic Flavors"
-               [:div.ty-content.rounded-lg.p-5
-                [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-                 "Use colors to signal environment, access level, or sensitivity at a glance."]
-                (demo-area
-                 [:div.space-y-3
-                  [:ty-copy {:flavor "neutral" :label "Neutral (default)" :value "neutral-value-1234"}]
-                  [:ty-copy {:flavor "primary" :label "Primary API Key" :value "pk_live_primary_abc123"}]
-                  [:ty-copy {:flavor "success" :label "Production URL" :value "https://production.example.com"}]
-                  [:ty-copy {:flavor "warning" :label "Staging Environment" :value "https://staging.example.com"}]
-                  [:ty-copy {:flavor "danger" :label "Delete Token" :value "delete_token_dangerous_abc123"}]])
-                (code-block "<ty-copy flavor=\"success\" label=\"Production URL\" value=\"https://prod.example.com\"></ty-copy>
-<ty-copy flavor=\"warning\" label=\"Staging\" value=\"https://staging.example.com\"></ty-copy>
-<ty-copy flavor=\"danger\" label=\"Delete Token\" value=\"delete_token_abc\"></ty-copy>")]))
-
-(defn advanced-api-keys-dashboard []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "API Keys Dashboard")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Group related keys with semantic flavors to communicate access level at a glance."]
-   (demo-area
-    [:div.ty-elevated.rounded-lg.p-4.space-y-4
-     [:div
-      [:p.ty-text-- {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em"
-                             :text-transform "uppercase" :margin-bottom "0.5rem"}} "Production"]
-      [:div.space-y-2
-       [:ty-copy {:size "sm" :flavor "success" :label "Public Key" :value "pk_live_public_key_abc123"}]
-       [:ty-copy {:size "sm" :flavor "danger" :label "Secret Key"
-                  :value "sk_live_secret_key_xyz789" :format "code"}]]]
-     [:div
-      [:p.ty-text-- {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em"
-                             :text-transform "uppercase" :margin-bottom "0.5rem"}} "Development"]
-      [:div.space-y-2
-       [:ty-copy {:size "sm" :flavor "neutral" :label "Test Public Key" :value "pk_test_public_key_def456"}]
-       [:ty-copy {:size "sm" :flavor "warning" :label "Test Secret Key"
-                  :value "sk_test_secret_key_uvw321" :format "code"}]]]])
-   (code-block "<ty-copy size=\"sm\" flavor=\"success\" label=\"Public Key\" value=\"pk_live_...\"></ty-copy>
-<ty-copy size=\"sm\" flavor=\"danger\" label=\"Secret Key\" value=\"sk_live_...\" format=\"code\"></ty-copy>")])
-
-(defn advanced-event-handling []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Event Handling")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-    "Listen to copy-success and copy-error for analytics, toasts, or fallback behavior."]
-   (demo-area
-    [:div.space-y-3
-     [:ty-copy {:id "event-copy" :label "API Key (try copying)" :value "sk_live_event_example_123"}]
-     [:div.flex.gap-4
-      [:div.ty-elevated.rounded.px-3.py-2 {:style {:font-size "0.8125rem"}}
-       [:span.ty-text-- "Last: "] [:span#copy-status "waiting..."]]
-      [:div.ty-elevated.rounded.px-3.py-2 {:style {:font-size "0.8125rem"}}
-       [:span.ty-text-- "Count: "] [:span#copy-count "0"]]]
-     [:script
-      "(function() {
-  let n = 0;
-  const el = document.getElementById('event-copy');
-  const status = document.getElementById('copy-status');
-  const count = document.getElementById('copy-count');
-  if (!el) return;
-  el.addEventListener('copy-success', (e) => {
-    n++;
-    status.textContent = e.detail.value.substring(0, 20) + '...';
-    count.textContent = n;
-  });
-  el.addEventListener('copy-error', (e) => {
-    status.textContent = 'Error: ' + e.detail.error.message;
-  });
-})();"]])
-   (code-block "const copy = document.querySelector('ty-copy');
-copy.addEventListener('copy-success', (e) => {
-  showToast(`Copied: ${e.detail.value}`);
-  analytics.track('copy', { field: copy.label });
-});
-copy.addEventListener('copy-error', (e) => {
-  showFallback(copy.value); // prompt manual selection
-});" "javascript")])
-
-(defn advanced-examples []
-  (doc-section "Advanced Examples"
-               [:div.space-y-6
-                (advanced-api-keys-dashboard)
-                (advanced-event-handling)]))
+(def ^:private config
+  "{\"theme\": \"dark\", \"primary\": \"#e0473e\", \"radius\": 8, \"font\": \"Inter\", \"density\": \"comfortable\"}")
 
 (defn view []
-  (docs-page
-   (component-header "ty-copy"
-                     "Read-only field with one-click copy-to-clipboard. Perfect for API keys, tokens, URLs, and install commands. Icon animates copy → check on success.")
-   (api-reference)
-   (examples)
-   (sizes)
-   (semantic-flavors)
-   (advanced-examples)))
+  (component-page
+   {:title "Copy Field"
+    :group "Text input"
+    :tag "ty-copy"
+    :description "A read-only field with a copy button. Click anywhere on it to copy. Tokens, links, commands and code, single or multi-line."
+    :chips [["Clipboard" "copy"] ["Keyboard" "zap"] ["TyCopy (React)" "atom"]]
+    :source "packages/core/src/components/copy.ts"
+    :mark "⧉"
+    :demo [:div.flex.flex-col.gap-3 {:style {:width "340px"}}
+           [:ty-copy {:label "API key" :value "sk_live_51HqT2xK9vB3mN8pQ" :format "code" :size "md"}]
+           [:ty-copy {:label "Invite link" :value "https://tyrell.dev/join/7f3a" :size "md" :flavor "primary"}]]}
+
+   (playground
+    {:id :copy
+     :defaults {:size "md" :flavor "neutral"}
+     :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}]
+     :sub "Click a field to copy. The icon confirms."
+     :render render-lineup
+     :snippets snippets})
+
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Multi-line code"
+       :span 4
+       :description [:span [:code "multiline"] " keeps line breaks; " [:code "format=\"code\""]
+                     " sets it in monospace. The value is shown as text, so markup stays markup."]
+       :code "<ty-copy format=\"code\" multiline
+  value=\"<ty-button flavor=&quot;primary&quot;>…\">
+</ty-copy>"}
+      [:ty-copy {:label "Snippet" :format "code" :multiline "" :value snippet}])
+
+     (example
+      {:title "Long values"
+       :span 2
+       :description [:span [:code "horizontal-scroll"] " scrolls instead of truncating."]
+       :code "<ty-copy horizontal-scroll
+  format=\"code\" value=\"…\">"}
+      [:ty-copy {:label "Config" :format "code" :horizontal-scroll "" :value config}])
+
+     (example
+      {:title "Confirm the copy"
+       :span 3
+       :description [:span "The icon turns into a check for two seconds. Listen for "
+                     [:code "copy-success"] " to show more, like a toast."]
+       :code "field.addEventListener(
+  'copy-success',
+  (e) => toast(e.detail.value));"}
+      (let [n (doc-state :copies)]
+        [:div.flex.flex-col.gap-3.w-full
+         [:ty-copy {:label "Coupon" :value "SPRING-25" :format "code" :flavor "success"
+                    :on {:copy-success #(set-doc! :copies (inc (or n 0)))}}]
+         [:code.ty-text-.text-xs (if n (str "copy-success × " n) "Click the field.")]]))
+
+     (example
+      {:title "Flavors"
+       :span 3
+       :description "Flavor colors the icon and its hover. Keep neutral unless the value means something."
+       :code "<ty-copy flavor=\"primary\" value=\"…\">
+<ty-copy flavor=\"danger\" value=\"…\">"}
+      [:div.flex.flex-col.gap-3.w-full
+       [:ty-copy {:value "Public key: pk_7f3a9c" :flavor "primary"}]
+       [:ty-copy {:value "Secret: sk_live_9b2e" :flavor "danger"}]])
+
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const field = document.querySelector('ty-copy');
+
+field.value = token;          // shown as text, copied verbatim
+
+field.addEventListener('copy-success', (e) => log(e.detail.value));
+field.addEventListener('copy-error', (e) => {
+  // no clipboard permission and the fallback failed too
+  console.warn(e.detail.error);
+});"}
+      nil)))
+
+   (page-section
+    {:title "Theming" :sub "Field tokens plus the copy icon." :dark? true}
+    (example
+     {:title "Icon color"
+      :side? true
+      :lang "css"
+      :description [:span "The field rides " [:code "--ty-input-*"] "; the icon has its own three variables."]
+      :code "ty-copy.brand {
+  --copy-color: #fb923c;
+  --copy-color-hover: #fdba74;
+  --copy-bg-hover: #431407;
+  --ty-input-border: #7c2d12;
+}"}
+     [:div {:style {:width "100%" :max-width "340px"}}
+      [:ty-copy {:label "Webhook secret" :format "code" :value "whsec_4f9a2c81e7"
+                 :style {"--copy-color" "#fb923c"
+                         "--copy-color-hover" "#fdba74"
+                         "--copy-bg-hover" "#431407"
+                         "--ty-input-border" "#7c2d12"}}]]))
+
+   (api-section
+    {:attributes ["Value"
+                  ["value" "string" "\"\"" "Text shown and copied. Rendered as text, never as markup."]
+                  ["label" "string" "Label above the field."]
+                  "Display"
+                  ["format" "string" "\"text\"" "text or code (monospace)."]
+                  ["multiline" "boolean" "false" "Keep line breaks; the field grows."]
+                  ["horizontal-scroll" "boolean" "false" "Scroll long values instead of truncating."]
+                  "Appearance"
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl. Same ladder as the other fields."]
+                  ["flavor" "string" "\"neutral\"" "Colors the copy icon: primary, success, danger, warning or custom."]
+                  ["disabled" "boolean" "false" "No copying."]]
+     :events [["copy-success" "{value}" "The value is on the clipboard."]
+              ["copy-error" "{error}" "Clipboard API and the execCommand fallback both failed."]]
+     :keyboard [["Tab" "Focus the copy button."]
+                ["Enter / Space" "Copy."]]
+     :css-vars [["--copy-color / -color-hover" "Copy icon."]
+                ["--copy-bg-hover" "Icon button hover fill."]
+                ["--ty-input-bg / -border / -color" "The field, shared with ty-input."]]})))

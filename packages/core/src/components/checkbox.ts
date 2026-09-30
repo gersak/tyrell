@@ -358,11 +358,11 @@ export class TyCheckbox
   /** required + unchecked => valueMissing; otherwise valid. */
   private updateValidity(): void {
     const anchor = this.shadowRoot?.querySelector(".checkbox-container") as HTMLElement | null;
-    if (this.disabled) { this._internals.setValidity({}); return; }
+    if (this.disabled) { this.applyValidity({}); return; }
     if (this.required && !this.checked) {
-      this._internals.setValidity({ valueMissing: true }, "Please check this box", anchor ?? undefined);
+      this.applyValidity({ valueMissing: true }, "Please check this box", anchor ?? undefined);
     } else {
-      this._internals.setValidity({});
+      this.applyValidity({});
     }
   }
 

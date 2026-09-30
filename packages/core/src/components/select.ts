@@ -1659,8 +1659,52 @@ export class TySelect extends TyComponent<SelectState> {
     // Loading wrapper is rendered dynamically — re-apply each render
     this.applyLoadingState();
 
+    // The shadow DOM is built once; attributes toggled later are patched in.
+    this.syncFieldChrome();
+
     // Reflect constraint validation (required) to the owning <form>.
     this.updateValidity();
+  }
+
+  /**
+   * Patch label, required marker and disabled/compact state onto the
+   * already-built shadow DOM. renderDesktop/renderMobile only write markup on
+   * first render, so without this toggling `required`, `label`, `disabled` or
+   * `compact` after connect never showed up.
+   */
+  private syncFieldChrome(): void {
+    const shadow = this.shadowRoot;
+    const container = shadow?.querySelector(".select-container");
+    if (!shadow || !container) return;
+
+    const labelId = `select-label-${getElementHash(this)}`;
+    let label = container.querySelector(":scope > .ty-field-label") as HTMLLabelElement | null;
+    if (this._label) {
+      if (!label) {
+        label = document.createElement("label");
+        label.className = "ty-field-label";
+        label.id = labelId;
+        container.prepend(label);
+      }
+      label.innerHTML = `${this._label}${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}`;
+    } else {
+      label?.remove();
+    }
+
+    const stub = shadow.querySelector(".select-stub") as HTMLElement | null;
+    if (stub) {
+      stub.classList.toggle("disabled", this._disabled);
+      stub.classList.toggle("compact", this._compact);
+      stub.tabIndex = this._disabled ? -1 : 0;
+      stub.toggleAttribute("disabled", this._disabled);
+      if (this._disabled) stub.setAttribute("aria-disabled", "true");
+      else stub.removeAttribute("aria-disabled");
+      if (this._label) stub.setAttribute("aria-labelledby", labelId);
+      else stub.removeAttribute("aria-labelledby");
+    }
+    shadow
+      .querySelectorAll<HTMLInputElement>(".dropdown-search-input, .mobile-search-input")
+      .forEach((input) => (input.disabled = this._disabled));
   }
 
   /**
@@ -1672,18 +1716,18 @@ export class TySelect extends TyComponent<SelectState> {
    */
   private updateValidity(): void {
     if (this.disabled) {
-      this._internals.setValidity({});
+      this.applyValidity({});
       return;
     }
     if (this.required && this.getSelectedValues().length === 0) {
       const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
-      this._internals.setValidity(
+      this.applyValidity(
         { valueMissing: true },
         "Please select a value",
         stub ?? undefined,
       );
     } else {
-      this._internals.setValidity({});
+      this.applyValidity({});
     }
   }
 

@@ -24,7 +24,7 @@ export interface TyTooltipProps extends React.HTMLAttributes<HTMLElement> {
   disabled?: boolean;
   
   /** Semantic styling variant */
-  flavor?: 'dark' | 'light' | 'info' | ShadedFlavor | (string & {});
+  flavor?: ShadedFlavor | (string & {});
   
   /** Tooltip content */
   children?: React.ReactNode;

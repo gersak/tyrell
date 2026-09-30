@@ -18,7 +18,7 @@ CLJS users add **one Clojars dep** — `dev.gersak/tyrell` — and that brings e
 | 12,000+ tree-shakeable icon defs | Transitive Clojars dep `dev.gersak/tyrell-icons`. Excludable if unwanted |
 | React wrappers — `tyrell.react/Button`, `tyrell.react/Input`, ... | CLJS namespace re-exporting npm `tyrell-react`. Track A (React-based CLJS) only — npm package is **not** auto-pulled (opt-in) |
 
-`dev.gersak/tyrell-icons` is a separate Clojars artifact containing icon namespaces (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fontawesome.*`). Each icon is an individual CLJS `def` — shadow-cljs `:advanced` removes unused ones automatically.
+`dev.gersak/tyrell-icons` is a separate Clojars artifact containing icon namespaces (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fav6.*`). Each icon is an individual CLJS `def` — shadow-cljs `:advanced` removes unused ones automatically.
 
 > **How npm auto-install works.** The `dev.gersak/tyrell` JAR ships with a `deps.cljs` at the classpath root that declares `{:npm-deps {"tyrell-components" "<pinned-version>"}}`. shadow-cljs reads it on each build and runs `npm install --save --save-exact tyrell-components@<version>`, so you never write that line manually. The entry will appear in your `package.json` after the first build — that's the standard shadow-cljs contract for library-declared npm deps.
 
@@ -202,68 +202,20 @@ Track B users (Replicant, vanilla) skip this step. Each wrapper exports under bo
 
 ## Icon registration in CLJS
 
-`<ty-icon name="check">` is a runtime registry lookup. The compiler can't connect the string `"check"` to an icon export — you must register explicitly.
-
-Each icon is a CLJS `def` returning an SVG string:
+`<ty-icon name="…">` is a runtime lookup, so register the icons you use. Each icon is a `def` holding an SVG string; `:advanced` drops the ones you don't reference.
 
 ```clojure
 (ns my-app.icons
   (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.heroicons.outline :as ho]
-            [tyrell.fontawesome.brands :as fa-brands]))
+            [tyrell.lucide :as lucide]))
 
-(defn register! []
-  (icons/register!
-    {:check        lucide/check
-     :x            lucide/x
-     :plus         lucide/plus
-     :search       lucide/search
-     :user         ho/user-circle
-     :github       fa-brands/github
-     :slack        fa-brands/slack}))
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Call `register!` at app startup, before rendering. Use the icons anywhere:
+Don't build names at runtime (`(symbol "lucide" name)`): the compiler can't see them. Register every candidate up front.
 
-```clojure
-[:ty-icon {:name "check" :size "md"}]
-[:ty-button {:flavor "primary"}
- [:ty-icon {:name "plus" :slot "start"}]
- "Add Item"]
-```
-
-### Tree-shaking
-
-Shadow-cljs `:advanced` compilation removes unused icons automatically — you only pay for what you reference. Two rules to keep this working:
-
-1. **Use the qualified namespace** (`lucide/check`, not aliasing). Aliases preserve tree-shaking; namespace requires that pull `:as :all` do not.
-2. **Don't dynamically construct icon names.** `(symbol "lucide" name)` defeats DCE — the compiler can't see what's referenced. If you need dynamic icons, register every candidate up front.
-
-Available icon namespaces in `dev.gersak/tyrell-icons`:
-
-```
-tyrell.lucide                   1,636 icons
-tyrell.heroicons.outline          324 icons
-tyrell.heroicons.solid            324 icons
-tyrell.heroicons.mini             230 icons
-tyrell.heroicons.micro            230 icons
-tyrell.material.filled          2,400+ icons
-tyrell.material.outlined        2,400+ icons
-tyrell.material.round           2,400+ icons
-tyrell.material.sharp           2,400+ icons
-tyrell.material.two-tone        2,400+ icons
-tyrell.fontawesome.solid        1,400+ icons
-tyrell.fontawesome.regular        163 icons
-tyrell.fontawesome.brands         500+ icons
-```
-
-### Custom SVGs
-
-```clojure
-(icons/register!
-  {:company-logo "<svg viewBox=\"0 0 24 24\">...</svg>"})
-```
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ## Shadow-cljs configuration tips
 

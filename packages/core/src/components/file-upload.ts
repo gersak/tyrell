@@ -124,6 +124,26 @@ export class TyFileUpload
     if (fileInput) fileInput.value = "";
   }
 
+  protected updateFormValue(): void {
+    super.updateFormValue();
+    this.updateValidity();
+  }
+
+  /** Report `required` to the owning form, like ty-input and ty-textarea
+      do — without this the asterisk showed but submission went through. */
+  private updateValidity(): void {
+    if (this.required && !this.disabled && this._files.length === 0) {
+      const anchor = this.shadowRoot?.querySelector(".drop-zone") as HTMLElement | null;
+      this.applyValidity(
+        { valueMissing: true },
+        "Please select a file",
+        anchor ?? undefined,
+      );
+    } else {
+      this.applyValidity({});
+    }
+  }
+
   protected getFormValue(): FormData | string | null {
     // Native fidelity: an unnamed control is excluded from submission.
     if (this._files.length === 0 || !this.name) return null;
@@ -527,6 +547,9 @@ export class TyFileUpload
     const errorEl = container.querySelector(".error-message") as HTMLElement;
     errorEl.textContent = this.error;
     errorEl.style.display = this.error ? "" : "none";
+
+    // required / disabled may have changed without a file change.
+    this.updateValidity();
   }
 }
 

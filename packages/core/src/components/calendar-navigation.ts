@@ -39,31 +39,12 @@ const CHEVRON_RIGHT_SVG = `<?xml version='1.0' encoding='UTF-8'?>
 <path d='M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z'/>
 </svg>`;
 
-const CHEVRONS_LEFT_SVG = `<?xml version='1.0' encoding='UTF-8'?>
-<svg width='24' viewBox='0 0 24 24' height='24' enable-background='new 0 0 24 24' xmlns='http://www.w3.org/2000/svg' stroke-width='0' stroke='currentColor' fill='currentColor'>
-<g>
-<rect width='24' height='24' fill='none'/>
-</g>
-<g>
-<g>
-<polygon points='17.59,18 19,16.59 14.42,12 19,7.41 17.59,6 11.59,12'/>
-<polygon points='11,18 12.41,16.59 7.83,12 12.41,7.41 11,6 5,12'/>
-</g>
-</g>
+const CARET_DOWN_SVG = `<svg width='24' viewBox='0 0 24 24' height='24' xmlns='http://www.w3.org/2000/svg' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>
+<path d='m6 9 6 6 6-6'/>
 </svg>`;
 
-const CHEVRONS_RIGHT_SVG = `<?xml version='1.0' encoding='UTF-8'?>
-<svg width='24' viewBox='0 0 24 24' height='24' enable-background='new 0 0 24 24' xmlns='http://www.w3.org/2000/svg' stroke-width='0' stroke='currentColor' fill='currentColor'>
-<g>
-<rect width='24' height='24' fill='none'/>
-</g>
-<g>
-<g>
-<polygon points='6.41,6 5,7.41 9.58,12 5,16.59 6.41,18 12.41,12'/>
-<polygon points='13,6 11.59,7.41 16.17,12 11.59,16.59 13,18 19,12'/>
-</g>
-</g>
-</svg>`;
+/** Which grid the calendar shows: days of a month, or the months of a year. */
+export type CalendarView = 'days' | 'months';
 
 /**
  * TyCalendarNavigation Web Component
@@ -131,6 +112,17 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       default: ''
     },
 
+    // Which grid the parent shows. 'days': title opens the month/year view,
+    // arrows step months. 'months': title shows the year and closes the
+    // view, arrows step years.
+    view: {
+      type: 'string' as const,
+      visual: true,
+      default: 'days',
+      validate: (v: any) => v === 'days' || v === 'months',
+      coerce: (v: any) => (v === 'months' ? 'months' : 'days')
+    },
+
     // Navigation bounds — ISO dates. Buttons that would move the display
     // entirely outside [min, max] months are disabled; year jumps clamp.
     min: {
@@ -196,6 +188,7 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
         case 'locale':
         case 'size':
         case 'width':
+        case 'view':
           // These properties just affect rendering
           // TyComponent will call render() automatically for visual properties
           break;
@@ -242,6 +235,14 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
 
   set width(value: string) {
     this.setProperty('width', value);
+  }
+
+  get view(): CalendarView {
+    return this.getProperty('view') as CalendarView;
+  }
+
+  set view(value: CalendarView) {
+    this.setProperty('view', value);
   }
 
   get min(): string {
@@ -338,8 +339,10 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     disabled = false
   ): HTMLButtonElement {
     const button = document.createElement('button');
+    button.type = 'button';
     button.className = className;
     button.title = title;
+    button.setAttribute('aria-label', title);
     button.innerHTML = svg;
     button.disabled = disabled;
     button.addEventListener('click', onClick);
@@ -362,74 +365,71 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       this.style.removeProperty('--nav-width');
     }
     
+    const months = this.view === 'months';
     const monthName = getMonthName(this._state.displayMonth, this.locale, 'long');
-    
+
     root.innerHTML = '';
-    
+
     const header = document.createElement('div');
     header.className = 'calendar-navigation-header';
-    
-    // Left group: [⟪ ‹]
-    const leftGroup = document.createElement('div');
-    leftGroup.className = 'nav-group nav-group-left';
-    
-    leftGroup.appendChild(
-      this.createButton(
-        'nav-btn nav-year-prev',
-        'Previous year',
-        CHEVRONS_LEFT_SVG,
-        () => this.navigateBy(-12),
-        this.isNavDisabled(-12)
-      )
-    );
 
-    leftGroup.appendChild(
+    // Title: a button that flips the parent between the day grid and the
+    // month/year grid (the parent listens for 'view-toggle').
+    const title = document.createElement('button');
+    title.type = 'button';
+    title.className = 'nav-title';
+    title.setAttribute('aria-expanded', String(months));
+    title.setAttribute('aria-label', months ? 'Back to days' : 'Choose month and year');
+
+    if (!months) {
+      const month = document.createElement('span');
+      month.className = 'nav-title-month';
+      month.textContent = monthName;
+      title.appendChild(month);
+    }
+    const year = document.createElement('span');
+    year.className = months ? 'nav-title-month' : 'nav-title-year';
+    year.textContent = String(this._state.displayYear);
+    title.appendChild(year);
+
+    const caret = document.createElement('span');
+    caret.className = 'nav-caret';
+    caret.innerHTML = CARET_DOWN_SVG;
+    title.appendChild(caret);
+
+    title.addEventListener('click', () => {
+      this.dispatchEvent(new CustomEvent('view-toggle', {
+        detail: { view: months ? 'days' : 'months' },
+      }));
+    });
+
+    // Arrows: months in the day view, years in the month view.
+    const step = months ? 12 : 1;
+    const unit = months ? 'year' : 'month';
+    const arrows = document.createElement('div');
+    arrows.className = 'nav-group nav-arrows';
+    arrows.appendChild(
       this.createButton(
-        'nav-btn nav-month-prev',
-        'Previous month',
+        `nav-btn nav-${unit}-prev`,
+        `Previous ${unit}`,
         CHEVRON_LEFT_SVG,
-        () => this.navigateBy(-1),
-        this.isNavDisabled(-1)
+        () => this.navigateBy(-step),
+        this.isNavDisabled(-step)
       )
     );
-    
-    // Center group: [Month Year]
-    const centerGroup = document.createElement('div');
-    centerGroup.className = 'nav-group nav-group-center';
-    
-    const monthYearDisplay = document.createElement('div');
-    monthYearDisplay.className = 'month-year-display';
-    monthYearDisplay.textContent = `${monthName} ${this._state.displayYear}`;
-    centerGroup.appendChild(monthYearDisplay);
-    
-    // Right group: [› ⟫]
-    const rightGroup = document.createElement('div');
-    rightGroup.className = 'nav-group nav-group-right';
-    
-    rightGroup.appendChild(
+    arrows.appendChild(
       this.createButton(
-        'nav-btn nav-month-next',
-        'Next month',
+        `nav-btn nav-${unit}-next`,
+        `Next ${unit}`,
         CHEVRON_RIGHT_SVG,
-        () => this.navigateBy(1),
-        this.isNavDisabled(1)
+        () => this.navigateBy(step),
+        this.isNavDisabled(step)
       )
     );
 
-    rightGroup.appendChild(
-      this.createButton(
-        'nav-btn nav-year-next',
-        'Next year',
-        CHEVRONS_RIGHT_SVG,
-        () => this.navigateBy(12),
-        this.isNavDisabled(12)
-      )
-    );
-    
-    header.appendChild(leftGroup);
-    header.appendChild(centerGroup);
-    header.appendChild(rightGroup);
-    
+    header.appendChild(title);
+    header.appendChild(arrows);
+
     root.appendChild(header);
   }
 }

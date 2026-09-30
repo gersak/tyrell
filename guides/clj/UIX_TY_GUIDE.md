@@ -275,24 +275,17 @@ This is the same approach the [`examples/uix/`](../../examples/uix/) app uses to
 ## Icons — register at startup
 
 ```clojure
-(ns my-app.core
+(ns my-app.icons
   (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.heroicons.outline :as ho]))
+            [tyrell.lucide :as lucide]))
 
-(defn register-icons! []
-  (icons/register!
-    {:check  lucide/check
-     :send   lucide/send
-     :user   ho/user-circle}))
-
-(defn ^:export init []
-  (register-icons!)
-  ;; ...
-  )
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Use `($ ty/Icon {:name "check"})`, or `[:ty-icon {:name "check"}]` for raw DOM. Keep references qualified (`lucide/check`) so shadow-cljs `:advanced` removes unused defs — see [CLOJURESCRIPT_GUIDE → Icon registration](CLOJURESCRIPT_GUIDE.md#icon-registration-in-cljs).
+Call it in `init` before the first render. Then `($ ty/Icon {:name "check"})`, or `($ :ty-icon {:name "check"})` for the plain element.
+
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ## Lazy loading — UIx native
 

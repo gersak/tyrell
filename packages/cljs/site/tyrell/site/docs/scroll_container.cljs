@@ -1,189 +1,195 @@
 (ns tyrell.site.docs.scroll-container
   "Documentation for ty-scroll-container component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.state :as state]))
+
+(defn- doc-state [k] (get-in @state/state [:scroll-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:scroll-doc k] v))
+
+(def ^:private people
+  ["Ada Lovelace" "Alan Turing" "Grace Hopper" "Edsger Dijkstra" "Barbara Liskov" "Donald Knuth"
+   "Margaret Hamilton" "Ken Thompson" "Frances Allen" "John McCarthy" "Radia Perlman" "Rich Hickey"])
+
+(defn- row [i text & [sub]]
+  [:div.flex.items-center.gap-3.px-4.border-b.ty-border-.text-sm {:class ["py-2.5"] :replicant/key (str i text)}
+   [:span.flex.items-center.justify-center.rounded-full.text-xs.font-semibold.ty-bg-primary-.ty-text-primary
+    {:style {:width "28px" :height "28px"}} (subs text 0 1)]
+   [:span.flex.flex-col
+    [:span.ty-text+ text]
+    (when sub [:span.text-xs.ty-text- sub])]])
+
+(defn- snippets [{:keys [shadow custom height]}]
+  (let [attrs (str " max-height=\"" height "\""
+                   (when-not shadow " shadow=\"false\"")
+                   (when custom " custom-scrollbar"))]
+    [["html" "HTML" "html" (str "<ty-scroll-container" attrs ">\n  …long content…\n</ty-scroll-container>")]
+     ["react" "React" "javascript"
+      (str "import { TyScrollContainer } from 'tyrell-react'\n\n<TyScrollContainer" attrs ">\n  {rows}\n</TyScrollContainer>")]
+     ["reagent" "Reagent" "clojure"
+      (str "(:require [tyrell.react :as ty])\n\n[:> ty/ScrollContainer {:max-height \"" height "\""
+           (when-not shadow " :shadow false") (when custom " :custom-scrollbar true") "}\n rows]")]
+     ["replicant" "Replicant" "clojure"
+      (str "[:ty-scroll-container {:max-height \"" height "\""
+           (when-not shadow " :shadow \"false\"") (when custom " :custom-scrollbar \"\"") "}\n rows]")]
+     ["datastar" "Datastar" "html"
+      (str "<ty-scroll-container" attrs "\n  data-on:nearend=\"@get('/people?after=' + $cursor)\">\n  …\n</ty-scroll-container>")]]))
+
+(defn- render-playground [{:keys [shadow custom height]}]
+  [:div.rounded-xl.border.ty-border-.overflow-hidden {:style {:width "100%" :max-width "360px"}}
+   [:ty-scroll-container (cond-> {:max-height height}
+                           (not shadow) (assoc :shadow "false")
+                           custom (assoc :custom-scrollbar ""))
+    (map-indexed (fn [i p] (row i p "Computer scientist")) people)]])
+
+(defn- load-more! []
+  (when-not (doc-state :loading)
+    (set-doc! :loading true)
+    (js/setTimeout #(do (set-doc! :count (+ 10 (or (doc-state :count) 10)))
+                        (set-doc! :loading false))
+                   500)))
 
 (defn view []
-  (docs-page
-   (component-header "ty-scroll-container"
-                     "Scroll wrapper with edge shadow indicators, optional custom scrollbar overlay, and horizontal overflow control. Drop any content inside — the container manages scroll behavior.")
+  (component-page
+   {:title "Scroll Container"
+    :group "Layout primitives"
+    :tag "ty-scroll-container"
+    :description "A scrolling region that shows where there's more: edge shadows, an optional custom scrollbar, near-edge events for infinite lists, and anchoring for content added above."
+    :chips [["Infinite scroll" "move-vertical"] ["Scroll anchoring" "layers"] ["TyScrollContainer (React)" "atom"]]
+    :source "packages/core/src/components/scroll-container.ts"
+    :mark "↕"
+    :demo [:div.rounded-xl.border.ty-border-.overflow-hidden.ty-floating {:style {:width "300px"}}
+           [:ty-scroll-container {:max-height "220px"}
+            (map-indexed (fn [i p] (row i p)) people)]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :scroll
+     :defaults {:shadow true :custom false :height "240px"}
+     :controls [{:key :height :options ["160px" "240px" "320px"]}
+                {:key :shadow :switch? true}
+                {:key :custom :switch? true}]
+     :sub "Scroll the list. The fade shows there's more above or below. custom = custom-scrollbar."
+     :render render-playground
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "max-height"
-        :type "string"
-        :default "-"
-        :description "Maximum height of the scrollable area — required to enable vertical scrolling (e.g. \"300px\", \"50vh\")"}
-       {:name "shadow"
-        :type "string"
-        :default "\"true\""
-        :description "Show edge shadow indicators when content overflows — set to \"false\" to disable"}
-       {:name "custom-scrollbar"
-        :type "boolean"
-        :default "false"
-        :description "Replace the native scrollbar with a custom styled overlay scrollbar"}
-       {:name "hide-scrollbar"
-        :type "boolean"
-        :default "false"
-        :description "Hide the native scrollbar without replacing it — content still scrolls"}
-       {:name "overflow-x"
-        :type "boolean"
-        :default "false"
-        :description "Enable horizontal scrolling — also adds a horizontal custom scrollbar when custom-scrollbar is set"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Infinite list"
+       :span 3
+       :description [:span [:code "nearend"] " fires once when you get within " [:code "near-edge-threshold"]
+                     " px of the bottom, and re-arms after the list grows."]
+       :code "list.addEventListener('nearend', async () => {
+  list.append(...await nextPage());
+});"}
+      (let [n (or (doc-state :count) 10)]
+        [:div.rounded-xl.border.ty-border-.overflow-hidden.w-full
+         [:ty-scroll-container {:max-height "220px" :on {:nearend load-more!}}
+          (for [i (range n)] (row i (str "Item " (inc i)) (str "Loaded in page " (inc (quot i 10)))))
+          (when (doc-state :loading)
+            [:div.flex.justify-center.py-3.text-xs.ty-text- "Loading…"])]]))
 
-    [:div
-     (section-label "CSS Custom Properties")
-     (attribute-table
-      [{:name "--ty-scrollbar-width"
-        :type "length"
-        :default "8px"
-        :description "Custom scrollbar track width"}
-       {:name "--ty-scrollbar-radius"
-        :type "length"
-        :default "4px"
-        :description "Thumb and track border radius"}
-       {:name "--ty-scrollbar-thumb"
-        :type "color"
-        :default "var(--ty-border)"
-        :description "Thumb color at rest"}
-       {:name "--ty-scrollbar-thumb-hover"
-        :type "color"
-        :default "var(--ty-border-strong)"
-        :description "Thumb color on hover"}
-       {:name "--ty-scrollbar-track"
-        :type "color"
-        :default "transparent"
-        :description "Track background"}])]]
+     (example
+      {:title "Load older, keep your place"
+       :span 3
+       :description [:span "With " [:code "scroll-anchoring"] ", items added above the viewport push the scroll position down by their height, so what you're reading doesn't move."]
+       :code "<ty-scroll-container scroll-anchoring>
+  …messages…
+</ty-scroll-container>
 
-   (doc-section "Examples"
-     [:div.space-y-6
+chat.prepend(...olderMessages);"}
+      (let [older (or (doc-state :older) 0)
+            msgs (concat (for [i (range older 0 -1)] (str "Older message " i))
+                         ["Hi! Is the calendar redesign merged?" "Yes, this morning."
+                          "Month view looks great." "Thanks! Years are one click now." "Ship it."])]
+        [:div.flex.flex-col.gap-2.w-full
+         [:div.rounded-xl.border.ty-border-.overflow-hidden
+          [:ty-scroll-container {:max-height "180px" :scroll-anchoring ""}
+           (map-indexed (fn [i m] [:div.px-4.py-2.text-sm.ty-text {:replicant/key m} m]) msgs)]]
+         [:ty-button {:size "sm" :appearance "outlined" :on {:click #(set-doc! :older (+ older 3))}}
+          [:ty-icon {:slot "start" :name "arrow-up"}] "Load 3 older"]]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "max-height"] " to constrain the area and enable scrolling. Edge shadows appear automatically when content overflows."]
-       (demo-area
-        [:ty-scroll-container {:max-height "200px"}
-         [:div.space-y-2.p-2
-          (for [i (range 1 13)]
-            [:div.ty-elevated.rounded.p-3 {:key i}
-             [:p.ty-text {:style {:font-size "0.875rem"}} (str "List item " i)]])]])
-       (code-block "<ty-scroll-container max-height=\"200px\">
-  <!-- your content -->
-</ty-scroll-container>")]
+     (example
+      {:title "Horizontal"
+       :span 4
+       :description [:span [:code "overflow-x"] " for rows of cards; the shadows move to the left and right edges."]
+       :code "<ty-scroll-container overflow-x>
+  <div style=\"display:flex; gap:12px\">…</div>
+</ty-scroll-container>"}
+      [:div.w-full
+       [:ty-scroll-container {:overflow-x ""}
+        [:div.flex.gap-3.py-1
+         (for [p people]
+           [:div.ty-floating.rounded-xl.p-4.flex.flex-col.gap-1.shrink-0 {:replicant/key p :style {:width "150px"}}
+            [:span.text-sm.font-semibold.ty-text++ p]
+            [:span.text-xs.ty-text- "Pioneer"]])]]])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Custom Scrollbar")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "custom-scrollbar"] " to replace the native scrollbar with a styled overlay scrollbar that matches the design system."]
-       (demo-area
-        [:ty-scroll-container {:max-height "200px" :custom-scrollbar ""}
-         [:div.space-y-2.p-2
-          (for [i (range 1 13)]
-            [:div.ty-elevated.rounded.p-3 {:key i}
-             [:p.ty-text {:style {:font-size "0.875rem"}} (str "Item " i " — custom scrollbar")]])]])
-       (code-block "<ty-scroll-container max-height=\"200px\" custom-scrollbar>
-  <!-- your content -->
-</ty-scroll-container>")]
+     (example
+      {:title "Scroll from code"
+       :span 2
+       :description "Methods scroll the inner element, smoothly by default."
+       :code "list.scrollToBottom();
+list.scrollToTop(false);  // jump
+list.scrollToElement('#row-7');"}
+      [:div.flex.flex-col.gap-2.w-full
+       [:div.rounded-xl.border.ty-border-.overflow-hidden
+        [:ty-scroll-container {:id "doc-scroll-methods" :max-height "120px"}
+         (map-indexed (fn [i p] (row i p)) people)]]
+       [:div.flex.gap-2
+        [:ty-button {:size "sm" :appearance "outlined" :on {:click #(.scrollToTop (js/document.getElementById "doc-scroll-methods"))}} "Top"]
+        [:ty-button {:size "sm" :appearance "outlined" :on {:click #(.scrollToBottom (js/document.getElementById "doc-scroll-methods"))}} "Bottom"]]])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Without Shadows")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "shadow=\"false\""] " to disable the edge shadow indicators when they interfere with your layout."]
-       (demo-area
-        [:ty-scroll-container {:max-height "200px" :shadow "false" :custom-scrollbar ""}
-         [:div.space-y-2.p-2
-          (for [i (range 1 13)]
-            [:div.ty-elevated.rounded.p-3 {:key i}
-             [:p.ty-text {:style {:font-size "0.875rem"}} (str "No shadow — item " i)]])]])
-       (code-block "<ty-scroll-container max-height=\"200px\" shadow=\"false\">
-  <!-- your content -->
-</ty-scroll-container>")]
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const box = document.querySelector('ty-scroll-container');
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Horizontal Scroll")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Set " [:code "overflow-x"] " to allow horizontal scrolling — useful for wide tables or code blocks."]
-       (demo-area
-        [:ty-scroll-container {:overflow-x "" :custom-scrollbar ""}
-         [:div.flex.gap-3 {:style {:width "max-content"}}
-          (for [i (range 1 9)]
-            [:div.ty-elevated.rounded.p-4 {:key i :style {:min-width "120px"}}
-             [:p.ty-text {:style {:font-size "0.875rem"}} (str "Card " i)]])]])
-       (code-block "<ty-scroll-container overflow-x custom-scrollbar>
-  <div style=\"width: max-content\">
-    <!-- wide content -->
-  </div>
-</ty-scroll-container>")]])
+box.maxHeight = '400px';
+box.nearEdgeThreshold = 200;          // px
+box.scrollElement.scrollTop;          // the element that actually scrolls
+box.updateShadows();                  // after changing content size yourself
 
-   (doc-section "Advanced Examples"
-     [:div.space-y-6
+box.addEventListener('nearstart', (e) => loadNewer(e.detail.distance));"}
+      nil)))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Infinite Scroll + Anchoring")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Scroll DOWN → "
-        [:code "nearend"]
-        " appends newer items. Scroll UP → "
-        [:code "nearstart"]
-        " prepends older items, and because "
-        [:code "scroll-anchoring"]
-        " is on, the row you were reading stays put — no jump. Both are edge-triggered "
-        "and re-arm as content grows; tune with "
-        [:code "near-edge-threshold"]
-        " (px)."]
-       (demo-area
-        [:ty-scroll-container
-         {:max-height "240px" :custom-scrollbar true :scroll-anchoring true :near-edge-threshold "120"
-          :replicant/on-mount
-          (fn [{^js node :replicant/node}]
-            (let [low (atom 1)
-                  high (atom 20)
-                  mk (fn [i]
-                       (let [row (js/document.createElement "div")]
-                         (set! (.-className row) "px-3 py-2 ty-text ty-border border-b")
-                         (set! (.. row -style -fontSize) "0.8125rem")
-                         (set! (.-textContent row) (str "Item " i))
-                         row))
-                  append! (fn [k] (dotimes [_ k] (.appendChild node (mk (swap! high inc)))))
-                  prepend! (fn [k] (dotimes [_ k] (.insertBefore node (mk (swap! low dec)) (.-firstChild node))))]
-              ;; seed items 1..20, then start scrolled down a bit so nearstart
-              ;; doesn't fire on mount — leaves room to scroll up into it.
-              (dotimes [i 20] (.appendChild node (mk (inc i))))
-              (js/setTimeout #(when-let [w (.-scrollElement node)] (set! (.-scrollTop w) 160)) 0)
-              (.addEventListener node "nearend"
-                                 (fn [_] (when (< @high 300) (js/setTimeout #(append! 12) 150))))
-              (.addEventListener node "nearstart"
-                                 (fn [_] (when (> @low -300) (js/setTimeout #(prepend! 12) 150))))))}])
-       (code-block "<ty-scroll-container scroll-anchoring near-edge-threshold=\"120\">…</ty-scroll-container>
+   (page-section
+    {:title "Theming" :sub "Shadows and scrollbar." :dark? true}
+    (example
+     {:title "Edge shadows"
+      :side? true
+      :lang "css"
+      :description "Each edge's gradient and the fade timing, plus the custom scrollbar width."
+      :code "ty-scroll-container {
+  --ty-scroll-shadow-top: linear-gradient(#2dd4bf33, transparent);
+  --ty-scroll-shadow-bottom: linear-gradient(transparent, #2dd4bf33);
+  --ty-scrollbar-width: 10px;
+}"}
+     [:div.rounded-xl.border.ty-border-.overflow-hidden {:style {:width "100%" :max-width "320px"}}
+      [:ty-scroll-container {:max-height "180px" :custom-scrollbar ""
+                             :style {"--ty-scroll-shadow-top" "linear-gradient(#2dd4bf33, transparent)"
+                                     "--ty-scroll-shadow-bottom" "linear-gradient(transparent, #2dd4bf33)"
+                                     "--ty-scrollbar-width" "10px"}}
+       (map-indexed (fn [i p] (row i p)) people)]]))
 
-const sc = document.querySelector('ty-scroll-container');
-sc.addEventListener('nearend',   () => appendNewer());  // scroll down
-sc.addEventListener('nearstart', () => prependOlder()); // scroll up — anchored, no jump")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Custom Scrollbar Styling")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Override the CSS custom properties to match your brand or surface context."]
-       (code-block "<ty-scroll-container max-height=\"300px\" custom-scrollbar
-    style=\"--ty-scrollbar-width: 4px;
-           --ty-scrollbar-thumb: var(--ty-color-primary);
-           --ty-scrollbar-radius: 2px\">
-  <!-- your content -->
-</ty-scroll-container>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Code Block Wrapper")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Wrap pre/code blocks to control overflow without clipping shadows or breaking layout."]
-       (code-block "<ty-scroll-container overflow-x hide-scrollbar>
-  <pre><code>...long code line...</code></pre>
-</ty-scroll-container>")]])
-))
+   (api-section
+    {:attributes ["Size"
+                  ["max-height" "string" "Height at which it starts scrolling, e.g. 320px."]
+                  ["overflow-x" "boolean" "false" "Scroll horizontally instead."]
+                  "Look"
+                  ["shadow" "boolean" "true" "Edge shadows where there's more content. shadow=\"false\" to turn off."]
+                  ["custom-scrollbar" "boolean" "false" "Themed overlay scrollbar instead of the native one."]
+                  ["hide-scrollbar" "boolean" "false" "No visible scrollbar; still scrolls."]
+                  "Behavior"
+                  ["near-edge-threshold" "number" "100" "Distance in px that triggers nearstart / nearend."]
+                  ["scroll-anchoring" "boolean" "false" "Keep the visible content in place when items are added above it."]]
+     :properties [["scrollToTop / Bottom / Left / Right(smooth?)" "(boolean) => void" "Scroll to an edge. Smooth unless false."]
+                  ["scrollToElement(target, smooth?)" "(Element | string) => void" "Scroll a child (or selector) into view."]
+                  ["scrollElement" "HTMLElement" "The inner element that scrolls."]
+                  ["updateShadows()" "() => void" "Recompute shadows after an external size change."]]
+     :events [["nearend" "{distance, scrollTop, scrollHeight, clientHeight}" "Entered the bottom zone. Once per entry."]
+              ["nearstart" "{distance, scrollTop, scrollHeight, clientHeight}" "Entered the top zone. Once per entry."]]
+     :css-vars [["--ty-scroll-shadow-top / -bottom / -left / -right" "Edge shadow backgrounds."]
+                ["--ty-scroll-shadow-transition" "Shadow fade."]
+                ["--ty-scrollbar-width" "Custom scrollbar width."]]})))

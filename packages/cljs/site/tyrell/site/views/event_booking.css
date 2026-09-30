@@ -1,38 +1,32 @@
-/* Event Booking Calendar Styles - Custom CSS for availability indicators */
+/* Event Booking Calendar Styles - availability indicators inside ty-calendar */
 .availability-day {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
-  padding: 4px;
+  gap: 3px;
   width: 100%;
   height: 100%;
-  max-width: 50px;
-  max-height: 50px;
+  min-height: 42px;
   box-sizing: border-box;
-}
-
-.calendar-day-cell:hover .availability-day .day-num,
-.calendar-day-cell.selected .availability-day .day-num {
-  color: var(--ty-text-strong);
-}
-
-.selected .availability-day {
-  border-color: var(--ty-color-primary-faint);
-  border-radius: 50%;
 }
 
 .availability-day .day-num {
   font-size: 14px;
   font-weight: 500;
-  color: var(--ty-color-neutral);
+  line-height: 1;
+  color: var(--ty-text);
+}
+
+.calendar-day-cell:hover .availability-day .day-num {
+  color: var(--ty-text-strong);
 }
 
 .availability-day.other-month .day-num {
-  font-size: 12px;
-  color: var(--ty-color-neutral-faint);
+  font-weight: 400;
+  color: var(--ty-text-faint, var(--ty-color-neutral-faint));
+  opacity: 0.55;
 }
 
 .availability-day.today .day-num {
@@ -40,30 +34,49 @@
   color: var(--ty-color-primary);
 }
 
-.availability-day.today::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-bottom: 2px solid var(--ty-color-primary-faint);
+/* Selected: solid primary cell, so number and dot turn light */
+.calendar-day-cell.selected .availability-day .day-num {
+  color: var(--ty-solid-primary-fg, white);
+  font-weight: 600;
 }
 
-/* Availability indicators */
+.calendar-day-cell.selected .availability-indicator {
+  background-color: var(--ty-solid-primary-fg, white) !important;
+  opacity: 0.85;
+}
+
+/* Days before min are disabled by ty-calendar */
+.calendar-day-cell.disabled .availability-day {
+  opacity: 0.35;
+}
+
+.calendar-day-cell.disabled .availability-indicator {
+  visibility: hidden;
+}
+
 .availability-indicator {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  margin-top: 2px;
 }
 
-.availability-indicator.available {
-  background-color: #10b981;
+.availability-indicator.available { background-color: var(--ty-color-success); }
+.availability-indicator.limited   { background-color: var(--ty-color-warning); }
+.availability-indicator.booked    { background-color: var(--ty-color-danger); }
+
+/* Compact rows instead of square cells, soft rounded day cells */
+.calendar-day-cell {
+  aspect-ratio: auto;
+  height: 42px;
+  border-radius: 12px;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.availability-indicator.limited {
-  background-color: #f59e0b;
+.calendar-day-cell:not(.disabled):not(.selected):not(.other-month):hover {
+  background-color: color-mix(in oklch, var(--ty-color-primary) 10%, transparent);
 }
 
-.availability-indicator.booked {
-  background-color: #ef4444;
-  /* Red */
+.calendar-day-cell.selected {
+  border-radius: 12px;
+  box-shadow: 0 8px 18px -8px color-mix(in oklch, var(--ty-color-primary) 80%, transparent);
 }

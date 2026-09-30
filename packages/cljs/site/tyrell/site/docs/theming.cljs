@@ -4,19 +4,20 @@
    [clojure.string :as str]
    [tyrell.router :as router]
    [tyrell.site.state :as state]
-   [tyrell.site.docs.common :refer [code-block doc-section docs-page
-                                    component-header section-label]]))
+   [tyrell.site.docs.common :as common]
+   [tyrell.site.docs.tokens :as tokens]))
 
 ;; Seeds the user can drag. We persist them in the global state atom so the
 ;; slider remembers its position across re-renders.
 
-(def ^:private default-seeds
+(def default-seeds
   {;; SEEDS — mirror tyrell-theme.css's OWN :root defaults exactly (not a
    ;; separate site pick) so the CONTENT area starts from the library's
    ;; shipped default and the playground is purely "tweak away from here."
    ;; Also mirrored as :root overrides in packages/cljs/public/index.html
    ;; so first paint matches before CLJS boots. Chrome is the one exception
-   ;; — it's pinned to the Tyrell identity orange, see styles.cljs.
+   ;; — it's pinned to the Tyrell identity orange, see styles.cljs. Demos
+   ;; inside the chrome (.site-demo) are pinned to this map.
    :primary-hue 252
    :primary-chroma 0.08
    ;; PER-FLAVOR HUES + CHROMA — every flavor is a standalone hue+chroma
@@ -31,10 +32,10 @@
    :danger-chroma  0.134
    ;; PER-FLAVOR L-FACTOR — Tier 4. One multiplier shifts all 5 shades of
    ;; a flavor up/down without touching the shared curve.
-   :primary-l-factor 1
+   :primary-l-factor 0.96
    :success-l-factor 1
    :warning-l-factor 1.3
-   :danger-l-factor  1.01
+   :danger-l-factor  0.93
    ;; L-CURVE (light-mode defaults; dark-mode defaults live in
    ;; dark-curve-defaults below — curve edits are stored per theme).
    :l-strong 0.38
@@ -61,7 +62,7 @@
 ;; blocks. An inline style on <html> would clobber BOTH themes at once,
 ;; which is why nothing here writes to documentElement.style anymore
 ;; except the legacy-hygiene path in reset-all!.
-(def ^:private curve-keys
+(def curve-keys
   #{:primary-hue :primary-chroma
     :success-hue :warning-hue :danger-hue
     :success-chroma :warning-chroma :danger-chroma
@@ -70,7 +71,7 @@
     :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult})
 
 ;; Mirror of the html.dark block in tyrell-theme.css.
-(def ^:private dark-curve-defaults
+(def dark-curve-defaults
   {:primary-hue 226 :primary-chroma 0.065
    :success-hue 129 :warning-hue 82 :danger-hue 13
    :success-chroma 0.092 :warning-chroma 0.195 :danger-chroma 0.101
@@ -86,7 +87,7 @@
   "Merged seed view for the ACTIVE theme: flavor defaults, dark curve
    defaults when dark, then the user's per-theme curve overrides."
   []
-  (let [st (get-in @state/state [:brand-playground] {})
+  (let [st (:brand-playground @state/state)
         theme (active-theme)]
     (merge default-seeds
            (when (= theme :dark) dark-curve-defaults)
@@ -94,33 +95,9 @@
            (get-in st [:curves theme]))))
 
 (defn- key->var
-  "Map a state key to the CSS variable it drives. Returns nil for keys
-   that are UI-only (panels expanded, etc.)."
+  "Map a dial key to the CSS variable it drives. Nil for UI-only keys."
   [k]
-  (case k
-    :primary-hue      "--ty-primary-hue"
-    :primary-chroma   "--ty-primary-chroma"
-    :success-hue      "--ty-success-hue"
-    :warning-hue      "--ty-warning-hue"
-    :danger-hue       "--ty-danger-hue"
-    :success-chroma   "--ty-success-chroma"
-    :warning-chroma   "--ty-warning-chroma"
-    :danger-chroma    "--ty-danger-chroma"
-    :primary-l-factor "--ty-primary-l-factor"
-    :success-l-factor "--ty-success-l-factor"
-    :warning-l-factor "--ty-warning-l-factor"
-    :danger-l-factor  "--ty-danger-l-factor"
-    :l-strong        "--ty-l-strong"
-    :l-bold          "--ty-l-bold"
-    :l-base          "--ty-l-base"
-    :l-soft          "--ty-l-soft"
-    :l-faint         "--ty-l-faint"
-    :c-strong-mult   "--ty-c-strong-mult"
-    :c-bold-mult     "--ty-c-bold-mult"
-    :c-base-mult     "--ty-c-base-mult"
-    :c-soft-mult     "--ty-c-soft-mult"
-    :c-faint-mult    "--ty-c-faint-mult"
-    nil))
+  (when (curve-keys k) (str "--ty-" (name k))))
 
 (def ^:private hue-keys #{:primary-hue :success-hue :warning-hue :danger-hue})
 (def ^:private chroma-keys #{:primary-chroma :success-chroma :warning-chroma :danger-chroma})
@@ -128,18 +105,13 @@
 ;; One formatter shared by the live <style> writer (curve-css) and the
 ;; export text (theme-dial-lines) — hues are integers, chromas get 3
 ;; decimals (their slider step is 0.001–0.005), everything else 2.
-(defn- dial-value-line [k v]
-  (let [fmt (cond
-              (hue-keys k) (str (int v))
-              (chroma-keys k) (.toFixed v 3)
-              :else (.toFixed v 2))]
-    (str "  " (key->var k) ": " fmt ";")))
+(defn- fmt-dial-value [k v]
+  (cond (hue-keys k) (str (int v))
+        (chroma-keys k) (.toFixed v 3)
+        :else (.toFixed v 2)))
 
-(defn- apply-seed!
-  "Write a single CSS variable to documentElement.style. Always live."
-  [k value]
-  (when-let [css-name (key->var k)]
-    (.setProperty (.-style (.-documentElement js/document)) css-name (str value))))
+(defn- dial-value-line [k v]
+  (str "  " (key->var k) ": " (fmt-dial-value k v) ";"))
 
 (defn- clear-seed!
   "Remove the inline override so the theme engine's default takes back over."
@@ -148,15 +120,18 @@
     (.removeProperty (.-style (.-documentElement js/document)) css-name)))
 
 (defn- curve-css
-  "Render the per-theme curve overrides as :root / html.dark blocks."
+  "Render the per-theme curve overrides as :root / html.dark blocks. The dark
+   block also targets scoped [data-ty-theme].dark sections, which declare their
+   own dark dials and would otherwise ignore the playground."
   [st]
-  (let [block (fn [sel m]
-                (when (seq m)
-                  (str sel " {\n"
-                       (str/join "\n" (for [[k v] m] (dial-value-line k v)))
-                       "\n}")))]
-    (str/join "\n" (remove nil? [(block ":root" (get-in st [:curves :light]))
-                                 (block "html.dark" (get-in st [:curves :dark]))]))))
+  (let [block (fn [sel lines]
+                (when (seq lines)
+                  (str sel " {\n" (str/join "\n" lines) "\n}")))
+        lines (fn [m] (for [[k v] m] (dial-value-line k v)))
+        ;; A hex seed is theme-invariant: the curve still sets lightness.
+        seed (when-let [c (:primary-seed st)] [(str "  --ty-primary-seed: " c ";")])]
+    (str/join "\n" (remove nil? [(block ":root" (concat (lines (get-in st [:curves :light])) seed))
+                                 (block "html.dark, [data-ty-theme].dark" (lines (get-in st [:curves :dark])))]))))
 
 (defn- sync-curve-style!
   "Write curve overrides into <style id=ty-playground-curves> appended to
@@ -168,45 +143,38 @@
                  (set! (.-id e) "ty-playground-curves")
                  (.appendChild (.-head js/document) e)
                  e))]
-    (set! (.-textContent el) (curve-css (get-in @state/state [:brand-playground] {})))))
+    (set! (.-textContent el) (curve-css (:brand-playground @state/state)))))
+
+(defn- set-dial!
+  "Write one dial for the ACTIVE theme: state + the live style tag."
+  [k v]
+  (swap! state/state assoc-in [:brand-playground :curves (active-theme) k] v)
+  (sync-curve-style!))
 
 (defn- set-by-key!
-  "Generic onChange — write the parsed number into both state and CSS.
-   Curve keys (currently every dial on this page) go to the active theme's
-   override map + style tag; anything not in curve-keys falls back to the
-   theme-invariant inline path, for any future UI-only/non-dial key."
+  "Range-input onInput handler for dial K."
   [k]
-  (fn [^js e]
-    (let [v (js/parseFloat (.. e -target -value))]
-      (if (contains? curve-keys k)
-        (do (swap! state/state assoc-in [:brand-playground :curves (active-theme) k] v)
-            (sync-curve-style!))
-        (do (swap! state/state assoc-in [:brand-playground k] v)
-            (apply-seed! k v))))))
-
-;; primary-hue/primary-chroma are curve-keys like everything else now —
-;; drag on the LEFT theme only. (set-by-key! :primary-hue) would do the
-;; same thing; these two names stay because they're the site's most-used
-;; sliders and read better at their call sites.
-(def ^:private set-primary-hue! (set-by-key! :primary-hue))
-(def ^:private set-primary-chroma! (set-by-key! :primary-chroma))
+  (fn [^js e] (set-dial! k (js/parseFloat (.. e -target -value)))))
 
 (defn- preset! [hue chroma]
-  (swap! state/state update-in [:brand-playground :curves (active-theme)] assoc
-         :primary-hue hue :primary-chroma chroma)
+  (swap! state/state (fn [st]
+                       (-> st
+                           (update :brand-playground dissoc :primary-seed)
+                           (update-in [:brand-playground :curves (active-theme)] assoc
+                                      :primary-hue hue :primary-chroma chroma))))
+  (sync-curve-style!))
+
+(defn- set-primary-seed!
+  "Hex seed for primary (nil = back to hue/chroma)."
+  [color]
+  (swap! state/state update :brand-playground
+         #(if color (assoc % :primary-seed color) (dissoc % :primary-seed)))
   (sync-curve-style!))
 
 (defn- reset-all! [_]
   (swap! state/state assoc :brand-playground default-seeds)
-  ;; Curve keys included for hygiene: older builds wrote them inline on <html>.
-  (doseq [k [:primary-hue :primary-chroma
-             :secondary-offset :secondary-hue :secondary-chroma ;; pre-TC37 hygiene
-             :success-hue :warning-hue :danger-hue
-             :success-chroma :warning-chroma :danger-chroma
-             :primary-l-factor :success-l-factor :warning-l-factor :danger-l-factor
-             :l-strong :l-bold :l-base :l-soft :l-faint
-             :c-strong-mult :c-bold-mult :c-base-mult :c-soft-mult :c-faint-mult]]
-    (clear-seed! k))
+  ;; The legacy theming page still writes dials inline on <html>.
+  (run! clear-seed! curve-keys)
   ;; Pre-TC49 builds could have written these directly-named custom
   ;; properties inline; key->var no longer maps to them (renamed to
   ;; --ty-primary-*, chroma multipliers flattened to literals), so
@@ -226,23 +194,11 @@
 (defn- toggle-floating! [_] (toggle-key! :floating-open?))
 (defn- toggle-ladder!   [_] (toggle-key! :show-ladder?))
 (defn- toggle-curve!    [_] (toggle-key! :show-curve?))
-(defn- toggle-anchors!  [_] (toggle-key! :show-anchors?))
 
 ;; The inline seeds-panel on THIS page duplicates the floating widget — close
 ;; the float on mount so the page lands clean. Users can still pop it back open.
 (defn- close-floating-on-mount! [_]
   (swap! state/state assoc-in [:brand-playground :floating-open?] false))
-
-(defn- swatch
-  "A tiny color swatch derived from the same OKLCH formula the theme
-   engine uses. Drawn inline so the page is its own ground-truth preview."
-  [label l c h]
-  [:div.flex.flex-col.items-center.gap-1
-   [:div.rounded-md
-    {:style {:width "44px" :height "44px"
-             :background (str "oklch(" l " " c " " h ")")
-             :border "1px solid var(--ty-border-soft)"}}]
-   [:span.ty-text-- {:style {:font-size "0.6875rem"}} label]])
 
 (defn- theme-dial-lines
   "Seed + curve dials that differ from the theme engine's defaults, as CSS
@@ -251,15 +207,16 @@
    everything else, in both themes, is diff-only against tyrell-theme.css's
    own defaults."
   [seeds]
-  (let [always-light [(dial-value-line :primary-hue (:primary-hue seeds))
-                       (dial-value-line :primary-chroma (:primary-chroma seeds))]
+  (let [always-light (if-let [c (:primary-seed seeds)]
+                       [(str "  --ty-primary-seed: " c ";")]
+                       [(dial-value-line :primary-hue (:primary-hue seeds))
+                        (dial-value-line :primary-chroma (:primary-chroma seeds))])
         diff-lines (fn [theme]
                      (let [defaults (cond-> default-seeds
                                       (= theme :dark) (merge dark-curve-defaults))
-                           touched (get-in @state/state [:brand-playground :curves theme])
                            ;; light's primary-hue/chroma are already covered by
                            ;; always-light above — skip so they don't double up.
-                           touched (cond-> touched
+                           touched (cond-> (get-in @state/state [:brand-playground :curves theme])
                                      (= theme :light) (dissoc :primary-hue :primary-chroma))]
                        (for [[k v] touched
                              :when (not= v (get defaults k))]
@@ -292,330 +249,25 @@
          (when (seq dark)
            (str "\n" cls ".dark,\n.dark " cls " {\n" (str/join "\n" dark) "\n}")))))
 
-(defn seeds-panel
-  "Interactive flavor-seeds widget. Exported so the CSS Guide page can embed
-   it as a sticky side rail — drag the sliders, scroll through the design
-   system, watch every swatch/ramp retint in place."
-  []
-  (let [{:keys [primary-hue primary-chroma primary-l-factor
-                success-hue warning-hue danger-hue
-                success-chroma warning-chroma danger-chroma
-                success-l-factor warning-l-factor danger-l-factor
-                show-anchors? show-ladder? show-curve?]} (get-seeds)]
-    [:div.ty-elevated.rounded-xl.p-5
-     [:div.mb-3
-      [:h2.ty-text++ {:style {:font-size "1rem" :font-weight 600 :margin 0}}
-       "Seeds"]
-      [:p.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem" :line-height 1.5}}
-       "Drag the sliders — every component retints. Every dial is "
-       "per-theme, same as the light/dark toggle: dragging one only "
-       "touches the theme you're currently viewing."]]
-
-     [:div {:style {:margin-bottom "0.75rem"}}
-      [:div.flex.justify-between.items-center.mb-1
-       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
-        [:code "--ty-primary-hue"]]
-       [:code.ty-text+
-        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
-                 :padding "0.125rem 0.5rem" :border-radius "4px"}}
-        (str (int primary-hue) "°")]]
-      [:input
-       {:type "range" :min 0 :max 360 :step 1
-        :value primary-hue
-        :on {:input set-primary-hue!}
-        :style {:width "100%"
-                :background (str "linear-gradient(to right,"
-                                 " oklch(0.6 0.18 0),"
-                                 " oklch(0.6 0.18 60),"
-                                 " oklch(0.6 0.18 120),"
-                                 " oklch(0.6 0.18 180),"
-                                 " oklch(0.6 0.18 240),"
-                                 " oklch(0.6 0.18 300),"
-                                 " oklch(0.6 0.18 360))")
-                :border-radius "4px" :height "8px"
-                :appearance "none" :outline "none"}}]]
-
-     [:div {:style {:margin-bottom "0.75rem"}}
-      [:div.flex.justify-between.items-center.mb-1
-       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
-        [:code "--ty-primary-chroma"]]
-       [:code.ty-text+
-        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
-                 :padding "0.125rem 0.5rem" :border-radius "4px"}}
-        (.toFixed primary-chroma 3)]]
-      [:input
-       {:type "range" :min 0 :max 0.3 :step 0.005
-        :value primary-chroma
-        :on {:input set-primary-chroma!}
-        :style {:width "100%"
-                :background (str "linear-gradient(to right,"
-                                 " oklch(0.6 0 " primary-hue "),"
-                                 " oklch(0.6 0.3 " primary-hue "))")
-                :border-radius "4px" :height "8px"
-                :appearance "none" :outline "none"}}]]
-
-     [:div {:style {:margin-bottom "0.75rem"}}
-      [:div.flex.justify-between.items-center.mb-1
-       [:label.ty-text {:style {:font-size "0.75rem" :font-weight 500}}
-        [:code "--ty-primary-l-factor"]]
-       [:code.ty-text+
-        {:style {:font-size "0.75rem" :background "var(--ty-bg-neutral)"
-                 :padding "0.125rem 0.5rem" :border-radius "4px"}}
-        (.toFixed primary-l-factor 2)]]
-      [:input
-       {:type "range" :min 0.5 :max 1.5 :step 0.01
-        :value primary-l-factor
-        :on {:input (set-by-key! :primary-l-factor)}
-        :style {:width "100%" :height "8px"}}]]
-
-     ;; Presets — inline chip row, no separate header
-     [:div.flex.flex-wrap.gap-1 {:style {:margin-bottom "0.75rem"}}
-      (for [[label hue chroma]
-            [["Tyrell" 230 0.13] ["Teal" 200 0.13] ["Indigo" 260 0.14]
-             ["Emerald" 145 0.13] ["Orange" 30 0.16] ["Rose" 350 0.16]
-             ["Violet" 290 0.14]]]
-        [:button
-         {:key (str "preset-" label)
-          :style {:background (str "oklch(0.52 " chroma " " hue ")")
-                  :color "white"
-                  :border "1px solid var(--ty-border-soft)"
-                  :border-radius "999px"
-                  :font-size "0.6875rem"
-                  :font-weight 500
-                  :padding "0.25rem 0.625rem"
-                  :cursor "pointer"}
-          :on {:click #(preset! hue chroma)}}
-         label])]
-
-     ;; Per-flavor tuning — collapsible. Power-user surface for retinting
-     ;; semantic colors (success/warning/danger): hue, chroma (its own
-     ;; standalone value — not derived from primary), and l-factor
-     ;; (Tier 4, shifts all 5 shades of a flavor without touching the
-     ;; shared curve). Like every other dial on this page, these are
-     ;; per-theme — dragging one only touches the ACTIVE theme; toggle
-     ;; dark/light to tune each side. Neutral has no controls here — it's
-     ;; achromatic by default, not a hue to retint.
-     [:div {:style {:padding "0.5rem 0.75rem"
-                    :background "var(--ty-bg-neutral-soft)"
-                    :border-radius "8px"
-                    :margin-top "0.75rem"
-                    :margin-bottom "0.75rem"}}
-      [:button.w-full.flex.items-center.justify-between
-       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
-        :on {:click toggle-anchors!}}
-       [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                :letter-spacing "0.08em" :text-transform "uppercase"}}
-        "Per-flavor tuning"]
-       [:span.ty-text- {:style {:font-size "0.75rem"}}
-        (if show-anchors? "−" "+")]]
-      (when show-anchors?
-        [:div {:style {:margin-top "0.625rem"}}
-         (for [[hk ck lfk label hue chroma lfactor]
-               ;; success → danger → warning — matches the flavor order
-               ;; the component previews below use (buttons/tags/text ramps).
-               [[:success-hue :success-chroma :success-l-factor
-                 "success" success-hue success-chroma success-l-factor]
-                [:danger-hue :danger-chroma :danger-l-factor
-                 "danger" danger-hue danger-chroma danger-l-factor]
-                [:warning-hue :warning-chroma :warning-l-factor
-                 "warning" warning-hue warning-chroma warning-l-factor]]]
-           [:div {:key (name hk)
-                  :style {:margin-bottom "0.75rem" :padding-bottom "0.5rem"
-                          :border-bottom "1px solid var(--ty-border-soft)"}}
-            [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                     :text-transform "capitalize" :display "block"
-                                     :margin-bottom "0.375rem"}}
-             label]
-            [:div {:style {:margin-bottom "0.375rem"}}
-             [:div.flex.justify-between.items-center.mb-1
-              [:label.ty-text- {:style {:font-size "0.625rem"}} "hue"]
-              [:code.ty-text {:style {:font-size "0.625rem"}} (str (int hue) "°")]]
-             [:input
-              {:type "range" :min 0 :max 360 :step 1 :value hue
-               :on {:input (set-by-key! hk)}
-               :style {:width "100%" :height "6px"
-                       :background (str "linear-gradient(to right,"
-                                        " oklch(0.6 0.15 0),"
-                                        " oklch(0.6 0.15 60),"
-                                        " oklch(0.6 0.15 120),"
-                                        " oklch(0.6 0.15 180),"
-                                        " oklch(0.6 0.15 240),"
-                                        " oklch(0.6 0.15 300),"
-                                        " oklch(0.6 0.15 360))")
-                       :border-radius "4px"
-                       :appearance "none" :outline "none"}}]]
-            [:div {:style {:margin-bottom "0.375rem"}}
-             [:div.flex.justify-between.items-center.mb-1
-              [:label.ty-text- {:style {:font-size "0.625rem"}} "chroma"]
-              [:code.ty-text {:style {:font-size "0.625rem"}} (.toFixed chroma 3)]]
-             [:input
-              {:type "range" :min 0 :max 0.35 :step 0.001 :value chroma
-               :on {:input (set-by-key! ck)}
-               :style {:width "100%" :height "6px"}}]]
-            [:div
-             [:div.flex.justify-between.items-center.mb-1
-              [:label.ty-text- {:style {:font-size "0.625rem"}} "l-factor"]
-              [:code.ty-text {:style {:font-size "0.625rem"}} (.toFixed lfactor 2)]]
-             [:input
-              {:type "range" :min 0.5 :max 1.5 :step 0.01 :value lfactor
-               :on {:input (set-by-key! lfk)}
-               :style {:width "100%" :height "6px"}}]]])
-         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
-                                :margin "0 0 0"}}
-          "Chroma is this flavor's own value, independent of primary. "
-          "L-factor shifts all 5 shades of a flavor without touching the "
-          "shared curve."]])]
-
-     ;; L-curve — 5 lightness stops. Collapsed by default; matches the
-     ;; floating-widget pattern.
-     [:div {:style {:padding "0.5rem 0.75rem"
-                    :background "var(--ty-bg-neutral-soft)"
-                    :border-radius "8px"
-                    :margin-bottom "0.75rem"}}
-      [:button.w-full.flex.items-start.justify-between.gap-2
-       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0
-                :text-align "left"}
-        :on {:click toggle-ladder!}}
-       [:div.flex-1
-        [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                 :letter-spacing "0.08em" :text-transform "uppercase"
-                                 :display "block"}}
-         "L-curve"]
-        [:span.ty-text- {:style {:font-size "0.625rem" :line-height 1.4
-                                 :display "block" :margin-top "0.25rem"
-                                 :text-transform "none" :letter-spacing 0
-                                 :font-weight 400}}
-         "Dark↔light contrast for each emphasis step. Lower = punchier headings, higher = airier."]]
-       [:span.ty-text- {:style {:font-size "0.75rem" :flex-shrink 0}}
-        (if show-ladder? "−" "+")]]
-      (when show-ladder?
-        [:div {:style {:margin-top "0.625rem"}}
-         (for [[k label] [[:l-strong "strong (++)"]
-                          [:l-bold   "bold (+)"]
-                          [:l-base   "base"]
-                          [:l-soft   "soft (-)"]
-                          [:l-faint  "faint (--)"]]
-               :let [v (get (get-seeds) k)]]
-           [:div {:key (name k) :style {:margin-bottom "0.5rem"}}
-            [:div.flex.justify-between.items-center.mb-1
-             [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
-             [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
-            [:input
-             {:type "range" :min 0 :max 1 :step 0.01 :value v
-              :on {:input (set-by-key! k)}
-              :style {:width "100%" :height "6px"}}]])
-         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
-                                :margin "0.375rem 0 0"}}
-          "Lightness per shade for the ACTIVE theme — toggle dark/light to "
-          "tune each side independently. Light: lower L = more emphasis."]])]
-
-     ;; Saturation curve — per-shade chroma multipliers.
-     [:div {:style {:padding "0.5rem 0.75rem"
-                    :background "var(--ty-bg-neutral-soft)"
-                    :border-radius "8px"
-                    :margin-bottom "0.75rem"}}
-      [:button.w-full.flex.items-start.justify-between.gap-2
-       {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0
-                :text-align "left"}
-        :on {:click toggle-curve!}}
-       [:div.flex-1
-        [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                 :letter-spacing "0.08em" :text-transform "uppercase"
-                                 :display "block"}}
-         "Saturation curve"]
-        [:span.ty-text- {:style {:font-size "0.625rem" :line-height 1.4
-                                 :display "block" :margin-top "0.25rem"
-                                 :text-transform "none" :letter-spacing 0
-                                 :font-weight 400}}
-         "Per-shade chroma multiplier. Higher = more vivid headings, lower = greyer."]]
-       [:span.ty-text- {:style {:font-size "0.75rem" :flex-shrink 0}}
-        (if show-curve? "−" "+")]]
-      (when show-curve?
-        [:div {:style {:margin-top "0.625rem"}}
-         (for [[k label] [[:c-strong-mult "× strong (++)"]
-                          [:c-bold-mult   "× bold (+)"]
-                          [:c-base-mult   "× base"]
-                          [:c-soft-mult   "× soft (-)"]
-                          [:c-faint-mult  "× faint (--)"]]
-               :let [v (get (get-seeds) k)]]
-           [:div {:key (name k) :style {:margin-bottom "0.5rem"}}
-            [:div.flex.justify-between.items-center.mb-1
-             [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
-             [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
-            [:input
-             {:type "range" :min 0 :max 1.5 :step 0.01 :value v
-              :on {:input (set-by-key! k)}
-              :style {:width "100%" :height "6px"}}]])
-         [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.5
-                                :margin "0.375rem 0 0"}}
-          "Each shade's chroma = flavor-chroma × this multiplier. Drops near "
-          "the extremes so near-white and near-black can hold their tint."]])]
-
-     [:button.px-3.py-2.rounded-md.text-sm.ty-text-.border.ty-border-soft
-      {:style {:cursor "pointer" :width "100%"}
-       :on {:click reset-all!}}
-      "Reset to defaults"]
-
-     ;; Theme export — paste-ready snippet, either as global :root overrides
-     ;; or as a NAMED theme pack (usable on <html> or any [data-ty-theme]
-     ;; subtree; switches crossfade thanks to the @property-typed dials).
-     (let [named? (get-in @state/state [:brand-playground :export-named?] false)
-           theme-name (get-in @state/state [:brand-playground :export-name] "my-theme")]
-       [:div {:style {:margin-top "0.75rem"}}
-        [:div.flex.items-center.gap-2.mb-2
-         [:ty-button {:size "xs" :flavor "neutral"
-                      :appearance (if named? "outlined" "solid")
-                      :on {:click (fn [_] (swap! state/state assoc-in
-                                                 [:brand-playground :export-named?] false))}}
-          ":root"]
-         [:ty-button {:size "xs" :flavor "neutral"
-                      :appearance (if named? "solid" "outlined")
-                      :on {:click (fn [_] (swap! state/state assoc-in
-                                                 [:brand-playground :export-named?] true))}}
-          "named theme"]
-         (when named?
-           [:input {:type "text" :value theme-name
-                    :placeholder "theme name"
-                    :style {:flex 1 :min-width "0" :font-size "0.75rem"
-                            :padding "0.25rem 0.5rem"
-                            :border "1px solid var(--ty-border-soft)"
-                            :border-radius "6px"
-                            :background "var(--ty-surface-input)"
-                            :color "var(--ty-text)"}
-                    :on {:input (fn [^js e]
-                                  (swap! state/state assoc-in
-                                         [:brand-playground :export-name]
-                                         (.. e -target -value)))}}])]
-        [:p.ty-text- {:style {:font-size "0.75rem" :margin-bottom "0.5rem"}}
-         (if named?
-           "Theme pack — a class usable on <html> or any subtree"
-           "Theme snippet — paste into your :root")]
-        (code-block (if named?
-                      (build-named-theme-css (get-seeds) theme-name)
-                      (build-theme-css (get-seeds)))
-                    "css")])]))
-
 ;; Flavor pack builder — the CSS_GUIDE "flavor pack" template, generated live.
 ;; A custom flavor declared this way gets FULL engine parity: shared L-curve,
 ;; saturation curve, dark mode via the same dial flips (no dark block of its
 ;; own), solid interaction states, auto-contrast foregrounds, theme scoping.
 
-(defn- fpb-name []      (get-in @state/state [:flavor-pack :name] "love"))
-(defn- fpb-color []     (get-in @state/state [:flavor-pack :color] "#76467c"))
-;; OKLCH-native seed — an alternative to the hex picker for people who
-;; think in hue/chroma rather than eyeballing a hex. Whichever mode is
-;; active is what gets exported as the seed line.
-(defn- fpb-mode []      (get-in @state/state [:flavor-pack :mode] "hex"))
-(defn- fpb-hue []       (get-in @state/state [:flavor-pack :hue] 315))
-(defn- fpb-chroma []    (get-in @state/state [:flavor-pack :chroma] 0.1))
-(defn- fpb-l-factor []  (get-in @state/state [:flavor-pack :l-factor] 1))
+(def ^:private flavor-pack-defaults
+  ;; :mode "oklch" is an OKLCH-native seed — an alternative to the hex picker
+  ;; for people who think in hue/chroma. The active mode is what gets exported.
+  {:name "love" :color "#e0473e" :mode "hex" :hue 27 :chroma 0.19 :l-factor 1})
+
+(defn- flavor-pack []
+  (merge flavor-pack-defaults (:flavor-pack @state/state)))
 
 (defn- fpb-seed
   "The seed CSS value, per the active mode."
-  []
-  (if (= (fpb-mode) "oklch")
-    (str "oklch(0.5 " (.toFixed (fpb-chroma) 3) " " (int (fpb-hue)) ")")
-    (fpb-color)))
+  [{:keys [mode hue chroma color]}]
+  (if (= mode "oklch")
+    (str "oklch(0.5 " (.toFixed chroma 3) " " (int hue) ")")
+    color))
 
 (defn- fpb-set! [k]
   (fn [^js e]
@@ -671,9 +323,9 @@
    an optional L-FACTOR — the same template CSS_GUIDE documents. The
    exported seed (+ l-factor, when touched) is the entire per-project
    surface; the ramp is engine boilerplate."
-  [nm seed l-factor]
+  [nm seed l-factor hex?]
   (str ":root {\n"
-       "  --ty-" nm "-seed: " seed ";" (when (= (fpb-mode) "hex") " /* the one color you pick */") "\n"
+       "  --ty-" nm "-seed: " seed ";" (when hex? " /* the one color you pick */") "\n"
        (when (not= l-factor 1)
          (str "  --ty-" nm "-l-factor: " l-factor "; /* shifts all 5 shades at once */\n"))
        "}\n\n"
@@ -681,119 +333,17 @@
        (str/join "\n" (flavor-pack-ramp-lines nm))
        "\n}"))
 
-(defn flavor-pack-builder []
-  (let [nm (fpb-name) mode (fpb-mode) seed (fpb-seed) l-factor (fpb-l-factor)
-        css (flavor-pack-css nm seed l-factor)]
-    [:div.ty-content.rounded-lg.p-5
-     ;; LIVE: the generated pack applies to the real page via this style tag,
-     ;; so the preview row below is the actual engine at work — dark toggle,
-     ;; theme scopes and animated transitions all reach it.
-     [:style css]
-     [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height 1.6}}
-      "The built-in flavors are pre-installed instances of one template. A name and "
-      [:strong "one color"] " in, a full flavor out. The seed contributes hue + chroma; "
-      "every shade's lightness comes from the shared, mode-flipped curve — which is why "
-      "any seed, light or dark, gets correct dark mode, correct " [:code "+"] "/" [:code "−"]
-      " tones and auto-contrast text, with " [:strong "no dark block of its own"]
-      ". Everything below is LIVE — the generated CSS is applied to this page."]
-     [:div.grid.gap-6 {:style {:grid-template-columns "minmax(260px, 340px) 1fr"
-                               :align-items "start"}}
-      [:div
-       [:div {:style {:margin-bottom "0.75rem"}}
-        [:label.ty-text-.block.mb-1 {:style {:font-size "0.6875rem"}} "flavor name"]
-        [:input {:type "text" :value nm
-                 :style {:width "100%" :font-size "0.8125rem" :padding "0.375rem 0.5rem"
-                         :border "1px solid var(--ty-border-soft)" :border-radius "6px"
-                         :background "var(--ty-surface-input)" :color "var(--ty-text)"}
-                 :on {:input (fpb-set! :name)}}]]
-       [:div {:style {:margin-bottom "0.75rem"}}
-        [:div.flex.justify-between.items-center.mb-1
-         [:label.ty-text- {:style {:font-size "0.6875rem"}}
-          [:code (str "--ty-" nm "-seed")]]
-         [:code.ty-text {:style {:font-size "0.6875rem"}} seed]]
-        [:div.flex.items-center.gap-2.mb-2
-         [:ty-button {:size "xs" :flavor "neutral"
-                      :appearance (if (= mode "hex") "solid" "outlined")
-                      :on {:click (fpb-set-mode! "hex")}}
-          "hex"]
-         [:ty-button {:size "xs" :flavor "neutral"
-                      :appearance (if (= mode "oklch") "solid" "outlined")
-                      :on {:click (fpb-set-mode! "oklch")}}
-          "hue/chroma"]]
-        (if (= mode "hex")
-          [:input {:type "color" :value (fpb-color)
-                   :style {:width "100%" :height "2rem" :padding 0 :border "none"
-                           :border-radius "6px" :cursor "pointer" :background "none"}
-                   :on {:input (fpb-set! :color)}}]
-          [:div
-           [:div {:style {:margin-bottom "0.375rem"}}
-            [:div.flex.justify-between.items-center.mb-1
-             [:label.ty-text- {:style {:font-size "0.625rem"}} "hue"]
-             [:code.ty-text {:style {:font-size "0.625rem"}} (str (int (fpb-hue)) "°")]]
-            [:input
-             {:type "range" :min 0 :max 360 :step 1 :value (fpb-hue)
-              :on {:input (fpb-set-num! :hue)}
-              :style {:width "100%" :height "6px"
-                      :background (str "linear-gradient(to right,"
-                                       " oklch(0.6 0.15 0),"
-                                       " oklch(0.6 0.15 60),"
-                                       " oklch(0.6 0.15 120),"
-                                       " oklch(0.6 0.15 180),"
-                                       " oklch(0.6 0.15 240),"
-                                       " oklch(0.6 0.15 300),"
-                                       " oklch(0.6 0.15 360))")
-                      :border-radius "4px"
-                      :appearance "none" :outline "none"}}]]
-           [:div
-            [:div.flex.justify-between.items-center.mb-1
-             [:label.ty-text- {:style {:font-size "0.625rem"}} "chroma"]
-             [:code.ty-text {:style {:font-size "0.625rem"}} (.toFixed (fpb-chroma) 3)]]
-            [:input
-             {:type "range" :min 0 :max 0.3 :step 0.005 :value (fpb-chroma)
-              :on {:input (fpb-set-num! :chroma)}
-              :style {:width "100%" :height "6px"
-                      :background (str "linear-gradient(to right,"
-                                       " oklch(0.6 0 " (fpb-hue) "),"
-                                       " oklch(0.6 0.3 " (fpb-hue) "))")
-                      :border-radius "4px"
-                      :appearance "none" :outline "none"}}]]])]
-       [:div {:style {:margin-bottom "0.75rem"}}
-        [:div.flex.justify-between.items-center.mb-1
-         [:label.ty-text- {:style {:font-size "0.6875rem"}}
-          [:code (str "--ty-" nm "-l-factor")]]
-         [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed l-factor 2)]]
-        [:input
-         {:type "range" :min 0.5 :max 1.5 :step 0.01 :value l-factor
-          :on {:input (fpb-set-num! :l-factor)}
-          :style {:width "100%" :height "6px"}}]
-        [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.4 :margin "0.25rem 0 0"}}
-         "Shifts all 5 shades of this flavor without touching the shared curve."]]
-       ;; live preview — real components using the generated flavor
-       (when (seq nm)
-         [:div.space-y-3.mt-4
-          ;; − base + — ascending emphasis, matching the matrix column order
-          [:div.flex.flex-wrap.gap-2
-           [:ty-button {:flavor (str nm "-")} (str nm "-")]
-           [:ty-button {:flavor nm} nm]
-           [:ty-button {:flavor (str nm "+")} (str nm "+")]]
-          [:div.flex.flex-wrap.gap-2
-           [:ty-button {:flavor nm :appearance "outlined"} "outlined"]
-           [:ty-button {:flavor nm :appearance "ghost"} "ghost"]
-           [:ty-tag {:flavor nm} nm]]
-          [:ty-input {:flavor nm :placeholder (str "themed " nm " input")}]])]
-      [:div
-       (when (seq nm)
-         [:div
-          [:p.ty-text- {:style {:font-size "0.75rem" :margin-bottom "0.5rem"}}
-           "The pack — paste anywhere tyrell-theme.css loads"]
-          (code-block css "css")])]]]))
+(defn- hue-gradient [l c]
+  (str "linear-gradient(to right,"
+       (str/join "," (for [h (range 0 361 30)] (str " oklch(" l " " c " " h ")")))
+       ")"))
 
 (defn floating-seeds
   "Compact always-on widget pinned to the bottom-right corner. Collapses to a
    small chip on click. Use this on docs pages where you want the visitor to
    tweak the theme while scrolling the page contents (e.g. the CSS Guide)."
   []
-  (let [{:keys [primary-hue primary-chroma floating-open?]} (get-seeds)]
+  (let [{:keys [primary-hue primary-chroma floating-open? show-ladder? show-curve?] :as seeds} (get-seeds)]
     [:div
      {:style {:position "fixed"
               :bottom "1.25rem"
@@ -844,16 +394,9 @@
            (str (int primary-hue) "°")]]
          [:input
           {:type "range" :min 0 :max 360 :step 1 :value primary-hue
-           :on {:input set-primary-hue!}
+           :on {:input (set-by-key! :primary-hue)}
            :style {:width "100%"
-                   :background (str "linear-gradient(to right,"
-                                    " oklch(0.6 0.18 0),"
-                                    " oklch(0.6 0.18 60),"
-                                    " oklch(0.6 0.18 120),"
-                                    " oklch(0.6 0.18 180),"
-                                    " oklch(0.6 0.18 240),"
-                                    " oklch(0.6 0.18 300),"
-                                    " oklch(0.6 0.18 360))")
+                   :background (hue-gradient 0.6 0.18)
                    :border-radius "4px" :height "6px"
                    :appearance "none" :outline "none"}}]]
 
@@ -865,7 +408,7 @@
            (.toFixed primary-chroma 3)]]
          [:input
           {:type "range" :min 0 :max 0.3 :step 0.005 :value primary-chroma
-           :on {:input set-primary-chroma!}
+           :on {:input (set-by-key! :primary-chroma)}
            :style {:width "100%"
                    :background (str "linear-gradient(to right,"
                                     " oklch(0.6 0 " primary-hue "),"
@@ -879,7 +422,7 @@
                 ["Emerald" 145 0.13] ["Orange" 30 0.16] ["Rose" 350 0.16]
                 ["Violet" 290 0.14]]]
            [:button
-            {:key (str label)
+            {:replicant/key label
              :style {:background (str "oklch(0.52 " chroma " " hue ")")
                      :color "white"
                      :border "1px solid transparent"
@@ -891,68 +434,66 @@
             label])]
 
         ;; L-CURVE section — collapsible.
-        (let [{:keys [show-ladder? l-strong l-bold l-base l-soft l-faint]} (get-seeds)]
-          [:div {:style {:margin-bottom "0.5rem" :padding "0.5rem 0.625rem"
-                         :background "var(--ty-bg-neutral-soft)" :border-radius "8px"}}
-           [:button.w-full.flex.items-center.justify-between
-            {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
-             :on {:click toggle-ladder!}}
-            [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                     :letter-spacing "0.08em" :text-transform "uppercase"}}
-             "L-curve"]
-            [:span.ty-text- {:style {:font-size "0.6875rem"}}
-             (if show-ladder? "−" "+")]]
-           (when show-ladder?
-             [:div {:style {:margin-top "0.5rem"}}
-              (for [[k label] [[:l-strong "strong (++)"]
-                               [:l-bold   "bold (+)"]
-                               [:l-base   "base"]
-                               [:l-soft   "soft (-)"]
-                               [:l-faint  "faint (--)"]]
-                    :let [v (get (get-seeds) k)]]
-                [:div {:key (name k) :style {:margin-bottom "0.375rem"}}
-                 [:div.flex.justify-between.items-center
-                  [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
-                  [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
-                 [:input
-                  {:type "range" :min 0 :max 1 :step 0.01 :value v
-                   :on {:input (set-by-key! k)}
-                   :style {:width "100%" :height "4px"}}]])
-              [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.4
-                                     :margin "0.375rem 0 0"}}
-               "Lower L = more emphasis in light mode; higher L = more emphasis in dark."]])])
+        [:div {:style {:margin-bottom "0.5rem" :padding "0.5rem 0.625rem"
+                       :background "var(--ty-bg-neutral-soft)" :border-radius "8px"}}
+         [:button.w-full.flex.items-center.justify-between
+          {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
+           :on {:click toggle-ladder!}}
+          [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
+                                   :letter-spacing "0.08em" :text-transform "uppercase"}}
+           "L-curve"]
+          [:span.ty-text- {:style {:font-size "0.6875rem"}}
+           (if show-ladder? "−" "+")]]
+         (when show-ladder?
+           [:div {:style {:margin-top "0.5rem"}}
+            (for [[k label] [[:l-strong "strong (++)"]
+                             [:l-bold   "bold (+)"]
+                             [:l-base   "base"]
+                             [:l-soft   "soft (-)"]
+                             [:l-faint  "faint (--)"]]
+                  :let [v (get seeds k)]]
+              [:div {:replicant/key (name k) :style {:margin-bottom "0.375rem"}}
+               [:div.flex.justify-between.items-center
+                [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
+                [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
+               [:input
+                {:type "range" :min 0 :max 1 :step 0.01 :value v
+                 :on {:input (set-by-key! k)}
+                 :style {:width "100%" :height "4px"}}]])
+            [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.4
+                                   :margin "0.375rem 0 0"}}
+             "Lower L = more emphasis in light mode; higher L = more emphasis in dark."]])]
 
         ;; SATURATION CURVE section — collapsible.
-        (let [{:keys [show-curve?]} (get-seeds)]
-          [:div {:style {:margin-bottom "0.75rem" :padding "0.5rem 0.625rem"
-                         :background "var(--ty-bg-neutral-soft)" :border-radius "8px"}}
-           [:button.w-full.flex.items-center.justify-between
-            {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
-             :on {:click toggle-curve!}}
-            [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
-                                     :letter-spacing "0.08em" :text-transform "uppercase"}}
-             "Saturation curve"]
-            [:span.ty-text- {:style {:font-size "0.6875rem"}}
-             (if show-curve? "−" "+")]]
-           (when show-curve?
-             [:div {:style {:margin-top "0.5rem"}}
-              (for [[k label] [[:c-strong-mult "× strong (++)"]
-                               [:c-bold-mult   "× bold (+)"]
-                               [:c-base-mult   "× base"]
-                               [:c-soft-mult   "× soft (-)"]
-                               [:c-faint-mult  "× faint (--)"]]
-                    :let [v (get (get-seeds) k)]]
-                [:div {:key (name k) :style {:margin-bottom "0.375rem"}}
-                 [:div.flex.justify-between.items-center
-                  [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
-                  [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
-                 [:input
-                  {:type "range" :min 0 :max 1.5 :step 0.01 :value v
-                   :on {:input (set-by-key! k)}
-                   :style {:width "100%" :height "4px"}}]])
-              [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.4
-                                     :margin "0.375rem 0 0"}}
-               "Per-shade chroma multipliers. Each shade's chroma = flavor-chroma × multiplier."]])])
+        [:div {:style {:margin-bottom "0.75rem" :padding "0.5rem 0.625rem"
+                       :background "var(--ty-bg-neutral-soft)" :border-radius "8px"}}
+         [:button.w-full.flex.items-center.justify-between
+          {:style {:background "transparent" :border "none" :cursor "pointer" :padding 0}
+           :on {:click toggle-curve!}}
+          [:span.ty-text+ {:style {:font-size "0.6875rem" :font-weight 600
+                                   :letter-spacing "0.08em" :text-transform "uppercase"}}
+           "Saturation curve"]
+          [:span.ty-text- {:style {:font-size "0.6875rem"}}
+           (if show-curve? "−" "+")]]
+         (when show-curve?
+           [:div {:style {:margin-top "0.5rem"}}
+            (for [[k label] [[:c-strong-mult "× strong (++)"]
+                             [:c-bold-mult   "× bold (+)"]
+                             [:c-base-mult   "× base"]
+                             [:c-soft-mult   "× soft (-)"]
+                             [:c-faint-mult  "× faint (--)"]]
+                  :let [v (get seeds k)]]
+              [:div {:replicant/key (name k) :style {:margin-bottom "0.375rem"}}
+               [:div.flex.justify-between.items-center
+                [:label.ty-text- {:style {:font-size "0.6875rem"}} label]
+                [:code.ty-text {:style {:font-size "0.6875rem"}} (.toFixed v 2)]]
+               [:input
+                {:type "range" :min 0 :max 1.5 :step 0.01 :value v
+                 :on {:input (set-by-key! k)}
+                 :style {:width "100%" :height "4px"}}]])
+            [:p.ty-text-- {:style {:font-size "0.625rem" :line-height 1.4
+                                   :margin "0.375rem 0 0"}}
+             "Per-shade chroma multipliers. Each shade's chroma = flavor-chroma × multiplier."]])]
 
         [:div.flex.justify-between.items-center
          [:a.ty-text-primary {:href "#"
@@ -970,129 +511,6 @@
 ;; Live preview — these elements all use the same --ty-* tokens that the
 ;; theme engine drives. They retint as the seeds change.
 
-(defn- preview-buttons []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Buttons — solid / outlined / flavors")
-   [:div.flex.flex-wrap.gap-2
-    [:ty-button {:flavor "primary"}   "Primary"]
-    [:ty-button {:flavor "success"}   "Success"]
-    [:ty-button {:flavor "danger"}    "Danger"]
-    [:ty-button {:flavor "warning"}   "Warning"]
-    [:ty-button {:flavor "neutral"}   "Neutral"]]
-   [:div.flex.flex-wrap.gap-2 {:style {:margin-top "0.75rem"}}
-    [:ty-button {:flavor "primary"   :appearance "outlined"} "Primary"]
-    [:ty-button {:flavor "success"   :appearance "outlined"} "Success"]
-    [:ty-button {:flavor "danger"    :appearance "outlined"} "Danger"]
-    [:ty-button {:flavor "warning"   :appearance "outlined"} "Warning"]
-    [:ty-button {:flavor "neutral"   :appearance "outlined"} "Neutral"]]])
-
-(defn- preview-tags []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Tags / chips")
-   [:div.flex.flex-wrap.gap-2
-    [:ty-tag {:flavor "primary"   :pill ""} "primary"]
-    [:ty-tag {:flavor "success"   :pill ""} "success"]
-    [:ty-tag {:flavor "danger"    :pill ""} "danger"]
-    [:ty-tag {:flavor "warning"   :pill ""} "warning"]
-    [:ty-tag {:flavor "neutral"   :pill ""} "neutral"]]])
-
-(defn- preview-text-ramps []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Text emphasis ramps (--ty-text-{flavor}-*)")
-   [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(160px, 1fr))"}}
-    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-      [:div {:key flavor}
-       [:p {:class (str "ty-text-" flavor "++") :style {:font-weight 600}} flavor "++"]
-       [:p {:class (str "ty-text-" flavor "+")}  flavor "+"]
-       [:p {:class (str "ty-text-" flavor)}      flavor]
-       [:p {:class (str "ty-text-" flavor "-")}  flavor "-"]
-       [:p {:class (str "ty-text-" flavor "--") :style {:font-size "0.8125rem"}} flavor "--"]])]])
-
-(defn- preview-bg-variants []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Background tints (--ty-bg-{flavor}-*)")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-    "Three intensities per flavor — " [:code "+"] " / base / " [:code "-"] " — for soft-tint "
-    "chips, banners and hover states that need color without the weight of a solid fill."]
-   [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(140px, 1fr))"}}
-    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-      [:div.space-y-1 {:key flavor}
-       [:div {:class (str "ty-bg-" flavor "+") :style {:padding "0.5rem" :border-radius "6px" :font-size "0.75rem"}}
-        [:span {:class (str "ty-text-" flavor "++")} (str "ty-bg-" flavor "+")]]
-       [:div {:class (str "ty-bg-" flavor) :style {:padding "0.5rem" :border-radius "6px" :font-size "0.75rem"}}
-        [:span {:class (str "ty-text-" flavor "++")} (str "ty-bg-" flavor)]]
-       [:div {:class (str "ty-bg-" flavor "-") :style {:padding "0.5rem" :border-radius "6px" :font-size "0.75rem"}}
-        [:span {:class (str "ty-text-" flavor "++")} (str "ty-bg-" flavor "-")]]])]])
-
-(defn- preview-borders []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Borders — an independent family")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-    "Borders are not a shade of text. " [:code "ty-border"] " through " [:code "ty-border--"]
-    " share the text ladder's 5-step suffix, but resolve from independent "
-    [:code "--ty-l-border-*"] " dials — reshaping the L-curve or tuning "
-    [:code "--ty-neutral-l-factor"] " no longer drags app chrome (cards, dividers) along with it."]
-   [:div.flex.flex-wrap.gap-4.mb-4
-    (for [[suffix token] [["++" "strong"] ["+" "bold"] ["" ""] ["-" "soft"] ["--" "faint"]]]
-      [:div.flex.flex-col.items-center.gap-1 {:key (str "border" suffix)}
-       [:div {:class (str "ty-border" suffix)
-              :style {:width "44px" :height "44px" :border-radius "8px"
-                      :background "var(--ty-surface-content)"
-                      :border-width "1px" :border-style "solid"}}]
-       [:code.ty-text-- {:style {:font-size "0.625rem"}} (str "ty-border" suffix)]])]
-   [:p.ty-text-.mb-2 {:style {:font-size "0.75rem"}} "Per-flavor accent borders still track that flavor's own ink:"]
-   [:div.flex.flex-wrap.gap-3
-    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-      [:div {:key flavor
-             :class (str "ty-border-" flavor)
-             :style {:width "44px" :height "44px" :border-radius "8px"
-                     :background "var(--ty-surface-content)"
-                     :border-width "1px" :border-style "solid"}}])]])
-
-(defn- preview-solid-muted []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Solid fills — auto-contrast + muted")
-   [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-    "Solid text is computed, not fixed white: each fill picks black or white off its OWN "
-    "lightness (" [:code "--ty-solid-fg-threshold"] ", default " [:code "0.57"] "), so a pale "
-    [:code "flavor=\"…-\""] " tone can't end up with unreadable text by accident."]
-   [:div.flex.flex-wrap.gap-2.mb-4
-    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-      [:ty-button {:key (str flavor "-soft") :flavor (str flavor "-")} flavor])]
-   [:p.ty-text-.mb-2 {:style {:font-size "0.8125rem" :line-height 1.6}}
-    [:code "muted"] " suppresses the flavor to neutral at rest, revealing it on hover "
-    "(pointer devices only) or on press — touch still gets the real color on tap:"]
-   [:div.flex.flex-wrap.gap-2
-    (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-      [:ty-button {:key flavor :flavor flavor :muted true} flavor])]])
-
-(defn- preview-inputs []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Form controls")
-   [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(220px, 1fr))"}}
-    [:ty-input {:label "Project name" :placeholder "Eg. Q3 launch site"}]
-    [:ty-select {:label "Priority" :value "medium"}
-     [:ty-option {:value "low"}    "Low"]
-     [:ty-option {:value "medium"} "Medium"]
-     [:ty-option {:value "high"}   "High"]]
-    [:ty-input {:label "Email" :placeholder "you@example.com" :type "email"}]]])
-
-(defn- preview-surfaces []
-  [:div.ty-content.rounded-lg.p-5
-   (section-label "Surface levels")
-   [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(150px, 1fr))"}}
-    (for [[surface label] [["canvas"   "ty-canvas"]
-                           ["content"  "ty-content"]
-                           ["elevated" "ty-elevated"]
-                           ["floating" "ty-floating"]]]
-      [:div {:key surface
-             :class (str "ty-" surface)
-             :style {:padding "1rem" :border-radius "8px"
-                     :border "1px solid var(--ty-border-soft)"
-                     :font-size "0.8125rem"}}
-       [:strong.ty-text+ label]
-       [:div.ty-text- {:style {:font-size "0.75rem" :margin-top "0.25rem"}} "Surface"]])]])
-
 ;; Type & shape — two non-color tokens, no OKLCH derivation needed. Same
 ;; "minimal variable surface" point as the seeds above, just for
 ;; --ty-font-sans and --ty-radius-{base,md}, the literal tokens every
@@ -1106,18 +524,10 @@
 (def ^:private radius-presets
   [["0" "Sharp"] ["4" "Subtle"] ["8" "Default"] ["16" "Soft"] ["9999" "Pill"]])
 
-(defn- tp-font []   (get-in @state/state [:typography-picker :font] "sans"))
-(defn- tp-radius [] (get-in @state/state [:typography-picker :radius] "8"))
-(defn- tp-set-font!   [f] (swap! state/state assoc-in [:typography-picker :font] f))
-(defn- tp-set-radius! [r] (swap! state/state assoc-in [:typography-picker :radius] r))
+(defn- tp-set! [k v] (swap! state/state assoc-in [:typography-picker k] v))
 
-(defn- tp-font-value []
-  (some (fn [[k _ v]] (when (= k (tp-font)) v)) font-presets))
-
-(defn- typography-picker-style []
-  (cond-> {"--ty-radius-base" (str (tp-radius) "px")
-           "--ty-radius-md"   (str (tp-radius) "px")}
-    (tp-font-value) (assoc "--ty-font-sans" (tp-font-value))))
+(defn- font-stack [font]
+  (some (fn [[k _ v]] (when (= k font) v)) font-presets))
 
 (defn- tp-chip [selected? label on-click]
   [:ty-button {:size "xs" :flavor "neutral"
@@ -1125,168 +535,608 @@
                :on {:click on-click}}
    label])
 
-(defn- typography-shape-demo []
-  [:div.ty-elevated.rounded-xl.p-6
-   {:style (typography-picker-style)}
-   [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem" :line-height 1.6}}
-    "No color-mix ramp needed here — " [:code "--ty-font-sans"] " and "
-    [:code "--ty-radius-{base,md}"] " are the literal tokens every component already "
-    "reads. Change them once, everything below follows — including the field "
-    [:code "label"] ", not just the input text. Scrollbars are the one layer left "
-    "deliberately unwired from the OKLCH engine — " [:code "--ty-scrollbar-thumb"] "/"
-    [:code "-track"] " are plain alpha overlays, no hue/chroma to retint."]
+;; ---------------------------------------------------------------------------
+;; v2 page — hero, quick start, playground studio, live formula, flavor
+;; packs, recipes, type & shape. Section shell/rail come from docs.common.
+;; ---------------------------------------------------------------------------
 
-   [:div.flex.flex-wrap.items-center.gap-x-6.gap-y-3.mb-6
-    [:div.flex.items-center.gap-2
-     [:span.ty-text--.text-xs "Font"]
-     (for [[k label _] font-presets]
-       (tp-chip (= k (tp-font)) label (fn [_] (tp-set-font! k))))]
-    [:div.flex.items-center.gap-2
-     [:span.ty-text--.text-xs "Radius"]
-     (for [[v label] radius-presets]
-       (tp-chip (= v (tp-radius)) label (fn [_] (tp-set-radius! v))))]]
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
 
-   [:div.grid.gap-6.md:grid-cols-2
-    [:div.space-y-4
-     [:div.flex.flex-wrap.items-center.gap-2
-      [:ty-button {:flavor "primary"} "Primary"]
-      [:ty-button {:flavor "neutral" :appearance "outlined"} "Neutral"]
-      [:ty-tag {:flavor "primary"} "Tag"]]
-     [:ty-input {:label "Name" :placeholder "Type here…"}]
-     [:ty-select {:label "Country" :placeholder "Choose…"}
-      [:ty-option {:value "a"} "Option A"]
-      [:ty-option {:value "b"} "Option B"]]]
-    [:div.space-y-3
-     (section-label "The entire integration")
-     (code-block
-      (str ":root {\n"
-           (when-let [v (tp-font-value)] (str "  --ty-font-sans: " v ";\n"))
-           "  --ty-radius-base: " (tp-radius) "px;\n"
-           "  --ty-radius-md: " (tp-radius) "px;\n"
-           "}")
-      "css")]]])
+(def ^:private shades
+  "[label token-suffix l-key c-key] — strongest to faintest."
+  [["++" "-strong" :l-strong :c-strong-mult]
+   ["+" "-bold" :l-bold :c-bold-mult]
+   ["base" "" :l-base :c-base-mult]
+   ["-" "-soft" :l-soft :c-soft-mult]
+   ["--" "-faint" :l-faint :c-faint-mult]])
+
+(def ^:private presets
+  [["Tyrell" 42 0.15] ["Teal" 200 0.13] ["Indigo" 265 0.14] ["Emerald" 155 0.13]
+   ["Rose" 5 0.15] ["Amber" 80 0.15] ["Graphite" 252 0.02]])
+
+(def ^:private page-css
+  "Range inputs styled once for the whole page."
+  ".th-range { appearance: none; -webkit-appearance: none; width: 100%; height: 8px; border-radius: 999px; background: var(--ty-bg-neutral); outline: none; margin: 0; }
+.th-range::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid rgb(0 0 0 / 0.2); box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); cursor: pointer; }
+.th-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 1px solid rgb(0 0 0 / 0.2); box-shadow: 0 1px 3px rgb(0 0 0 / 0.25); cursor: pointer; }")
+
+(defn- preset-active? [{:keys [primary-hue primary-chroma primary-seed]} [_ h c]]
+  (and (not primary-seed)
+       (= (int primary-hue) h) (= (.toFixed primary-chroma 3) (.toFixed c 3))))
+
+(defn- on-color
+  "Black or white text on a token's color, picked from its own lightness."
+  [token]
+  (str "oklch(from var(" token ") clamp(0, (0.62 - l) * 1000, 1) 0 0)"))
+
+(defn- fmt-dial [k v]
+  (str (fmt-dial-value k v) (when (hue-keys k) "°")))
+
+(defn- range-input [k v {:keys [min max step background]}]
+  [:input.th-range {:type "range" :min min :max max :step step :value v
+                    :on {:input (set-by-key! k)}
+                    :style (when background {:background background})}])
+
+(defn- dial [label k v opts]
+  [:div.flex.flex-col.gap-2 {:replicant/key (name k)}
+   [:div.flex.justify-between.font-mono.text-xs
+    [:span.ty-text label]
+    [:span.ty-text++.font-semibold (fmt-dial k v)]]
+   (range-input k v opts)])
+
+(defn- kicker [text]
+  [:span.text-xs.font-semibold.uppercase.tracking-widest.ty-text-- text])
+
+;; --- Hero ---------------------------------------------------------------------
+
+(defn- spectrum-card
+  "A real button, switch and selected day scoped to one hue — click to
+   load that hue into the playground."
+  [[label hue chroma] active?]
+  [:button.flex.flex-col.gap-3.rounded-2xl.border.p-3.text-left.cursor-pointer.transition-colors
+   {:replicant/key label
+    :data-ty-theme ""
+    :class (if active? ["ty-border-primary"] ["ty-border-"])
+    :style {"--ty-primary-hue" (str hue) "--ty-primary-chroma" (str chroma)
+            ;; a playground hex seed would override the card's own hue
+            "--ty-primary-seed" "initial"
+            :background "var(--ty-surface-elevated)"}
+    :on {:click #(preset! hue chroma)}}
+   [:span.flex.items-center.justify-between.gap-2
+    [:span.flex.items-center.text-xs.font-semibold.ty-text++ {:class ["gap-1.5"]}
+     [:span.w-2.h-2.rounded-full {:style {:background "var(--ty-color-primary)"}}] label]
+    [:span.font-mono.ty-text-- {:style {:font-size "0.625rem"}} (str "h " hue)]]
+   [:ty-button {:flavor "primary" :size "sm" :style {:width "100%"}} "Save"]
+   [:span.flex.items-center.justify-between
+    [:ty-switch {:checked "" :size "sm"}]
+    [:span.inline-flex.items-center.justify-center.rounded-md.text-xs.font-semibold
+     {:style {:width "1.75rem" :height "1.75rem"
+              :background "var(--ty-solid-primary)" :color "var(--ty-solid-primary-fg)"}}
+     "24"]]])
+
+(defn- theming-hero [{:keys [primary-hue primary-chroma primary-seed] :as seeds}]
+  (common/hero-shell
+   [:div.relative.flex.flex-col.gap-8.p-8.md:p-12
+    [:div.flex.flex-col.gap-4
+     [:span.text-xs.font-semibold.uppercase.ty-text-primary {:style {:letter-spacing "0.16em"}}
+      "Guides · Theming"]
+     [:h1.ty-text++.font-bold
+      {:style {:font-size "clamp(2.5rem, 5.5vw, 4rem)" :line-height "1.02" :letter-spacing "-0.045em"}}
+      "Two variables." [:br] "Every component."]]
+    [:div.flex.flex-col.lg:flex-row.lg:items-end.justify-between.gap-6
+     [:p.ty-text-.leading-relaxed {:style {:max-width "30rem"}}
+      "Hue and chroma in, a full OKLCH palette out — five flavors, five shades each, light and dark. No build step, no JavaScript."]
+     [:div.relative.rounded-xl.border.ty-border-.pl-5.pr-12.py-4.font-mono.text-sm.leading-6.shrink-0.whitespace-pre
+      {:style {:background "color-mix(in oklch, var(--ty-text-strong) 5%, transparent)"}}
+      [:div.absolute.top-2.right-2
+       (common/copy-button (if primary-seed
+                             (str ":root {\n  --ty-primary-seed: " primary-seed ";\n}")
+                             (str ":root {\n  --ty-primary-hue: " (int primary-hue)
+                                  ";\n  --ty-primary-chroma: " (.toFixed primary-chroma 3) ";\n}")))]
+      [:div [:span.ty-text-primary ":root"] [:span.ty-text- " {"]]
+      (if primary-seed
+        [:div "  " [:span.ty-text-success "--ty-primary-seed"] [:span.ty-text- ": "]
+         [:span.ty-text++ primary-seed] [:span.ty-text- ";"]]
+        (list
+         [:div "  " [:span.ty-text-success "--ty-primary-hue"] [:span.ty-text- ": "]
+          [:span.ty-text++ (int primary-hue)] [:span.ty-text- ";"]]
+         [:div "  " [:span.ty-text-success "--ty-primary-chroma"] [:span.ty-text- ": "]
+          [:span.ty-text++ (.toFixed primary-chroma 3)] [:span.ty-text- ";"]]))
+      [:div.ty-text- "}"]]]
+    [:div.grid.gap-3 {:style {:display "grid" :grid-template-columns "repeat(auto-fit, minmax(8rem, 1fr))"}}
+     (for [p (map presets [0 1 2 3 5])]
+       (spectrum-card p (preset-active? seeds p)))]
+    [:div.flex.flex-wrap.gap-x-6.gap-y-2.text-xs.ty-text-
+     (for [[t icon] [["No build step" "zap"] ["Light + dark from one seed" "moon"]
+                     ["OKLCH, perceptually even" "sliders-horizontal"]
+                     ["Scoped anywhere the cascade reaches" "layers"]]]
+       [:span.inline-flex.items-center {:class ["gap-1.5"] :replicant/key t}
+        [:ty-icon {:name icon :size "xs"}] t])]]))
+
+;; --- 01 Quick start -------------------------------------------------------------
+
+(defn- step-card [n title desc & body]
+  (into
+   [:div.flex.flex-col.gap-3.rounded-2xl.border.ty-border-.p-5.min-w-0
+    {:style {:background "var(--ty-surface-content)"}}
+    [:div.flex.items-center {:class ["gap-2.5"]}
+     [:span.inline-flex.items-center.justify-center.w-6.h-6.rounded-full.font-mono.text-xs.font-semibold
+      {:style {:background "var(--ty-text-strong)" :color "var(--ty-surface-content)"}} n]
+     [:h3.text-base.font-semibold.ty-text++.scroll-mt-6 title]]
+    [:p.text-sm.ty-text-.leading-relaxed desc]]
+   body))
+
+(defn- mini-code [code]
+  [:div.rounded-lg.border.ty-border-.site-chrome.overflow-hidden
+   {:data-ty-theme "" :style {:background "var(--ty-surface-canvas)"}}
+   (common/code-view code (if (str/starts-with? code "<") "html" "css") {:compact? true})])
+
+(defn- quick-start []
+  (common/page-section
+   {:title "Quick start" :sub "Two files, two variables."}
+   [:div.md:grid-cols-3.gap-4 {:style {:display "grid"}}
+    (step-card 1 "Load the CSS" "Base tokens, then the theme engine on top."
+               (mini-code "@import \"tyrell.css\";\n@import \"tyrell-theme.css\";"))
+    (step-card 2 "Set two seeds" "Hue picks the color, chroma how loud it is."
+               (mini-code ":root {\n  --ty-primary-hue: 200;\n  --ty-primary-chroma: 0.13;\n}"))
+    (step-card 3 "Dark mode comes free" "Same seeds, flipped lightness curve — on the page or any subtree."
+               [:div.flex.flex-col.gap-2.rounded-lg.p-3.dark
+                {:data-ty-theme "" :style {:background "var(--ty-surface-canvas)"}}
+                [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} "<html class=\"dark\">"]
+                [:div.flex.gap-2
+                 [:ty-button {:flavor "primary" :size "sm"} "Save"]
+                 [:ty-button {:flavor "neutral" :appearance "outlined" :size "sm"} "Cancel"]]])]))
+
+;; --- 02 Playground --------------------------------------------------------------
+
+(defn- flavor-row [flavor seeds open]
+  (let [hk (keyword (str flavor "-hue")) ck (keyword (str flavor "-chroma"))
+        lk (keyword (str flavor "-l-factor"))
+        tunable? (not= flavor "neutral")
+        open? (= open flavor)]
+    [:div.flex.flex-col.rounded-lg.border
+     {:replicant/key flavor
+      :class (when open? "ty-border-")
+      :style (if open?
+               {:background "var(--ty-surface-content)"}
+               {:border-color "transparent"})}
+     [:button.flex.items-center.py-2.text-left {:class ["gap-2.5" "px-2.5" (when tunable? "cursor-pointer")]
+       :disabled (not tunable?)
+       :on {:click #(swap! state/state assoc-in [:brand-playground :open-flavor] (when-not open? flavor))}}
+      [:span.rounded-full.shrink-0 {:class ["w-2.5" "h-2.5"] :style {:background (str "var(--ty-color-" flavor ")")}}]
+      [:span.text-sm.font-medium.ty-text++.flex-1 flavor]
+      [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}}
+       (if tunable? (str "h " (int (get seeds hk)) " · c " (.toFixed (get seeds ck) 2)) "achromatic")]
+      (when tunable?
+        [:ty-icon.ty-text-- {:name "chevron-right" :size "xs"
+                             :style {:transform (when open? "rotate(90deg)") :transition "transform 0.15s"}}])]
+     (when open?
+       [:div.flex.flex-col.gap-3.pb-3 {:class ["px-2.5"]}
+        (dial "hue" hk (get seeds hk) {:min 0 :max 360 :step 1 :background (hue-gradient 0.62 0.15)})
+        (dial "chroma" ck (get seeds ck) {:min 0 :max 0.35 :step 0.001})
+        (dial "l-factor" lk (get seeds lk) {:min 0.5 :max 1.5 :step 0.01})])]))
+
+(defn- seed-mode-toggle
+  "hue | hex — the two ways to seed a flavor."
+  [mode {:keys [hue hex]}]
+  [:div.flex.rounded-md.ty-bg-neutral- {:class ["p-0.5" "gap-0.5"]}
+   (for [[label m on-click] [["hue" :hue hue] ["hex" :hex hex]]]
+     [:button.px-2.rounded.text-xs.font-mono.cursor-pointer {:replicant/key label
+       :class (into ["py-0.5"] (if (= mode m) ["ty-elevated" "ty-text++" "font-semibold"] ["ty-text-"]))
+       :on {:click on-click}}
+      label])])
+
+(defn- custom-flavor-row
+  "The flavor built in Custom flavors, listed with the built-ins."
+  [nm]
+  [:button.flex.items-center.rounded-lg.border.py-2.text-left.cursor-pointer {:class ["gap-2.5" "px-2.5"] :replicant/key (str "custom-" nm)
+    :style {:border-color "transparent"}
+    :on {:click #(common/scroll-to! "custom-flavors")}}
+   [:span.rounded-full.shrink-0 {:class ["w-2.5" "h-2.5"] :style {:background (str "var(--ty-color-" nm ")")}}]
+   [:span.text-sm.font-medium.ty-text++.flex-1 nm]
+   [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} "custom ↓"]])
+
+(defn- dock [seeds]
+  (let [{:keys [primary-hue primary-chroma primary-l-factor primary-seed open-flavor]} seeds
+        {named? :export-named? theme-name :export-name :or {theme-name "my-theme"}} seeds
+        css (if named? (build-named-theme-css seeds theme-name) (build-theme-css seeds))]
+    [:aside.flex.flex-col.gap-5.p-5.shrink-0.border-b.md:border-b-0.md:border-r.ty-border-.md:w-72 {:style {:background "var(--ty-surface-canvas)"}}
+     [:div.flex.items-center.justify-between
+      (kicker "Primary seed")
+      (seed-mode-toggle (if primary-seed :hex :hue)
+                        {:hue #(set-primary-seed! nil)
+                         :hex #(set-primary-seed! (or primary-seed "#e0473e"))})]
+     (if primary-seed
+       [:label.flex.items-center.gap-2.rounded-lg.border.ty-border-.px-2.cursor-pointer {:class ["py-1.5"] :style {:background "var(--ty-surface-content)"}}
+        [:input {:type "color" :value primary-seed
+                 :on {:input #(set-primary-seed! (.. ^js % -target -value))}
+                 :style {:width "1.5rem" :height "1.5rem" :border "none" :padding 0 :background "none" :cursor "pointer"}}]
+        [:span.font-mono.text-xs.ty-text++ "--ty-primary-seed: " primary-seed]]
+       (list
+        (dial "--ty-primary-hue" :primary-hue primary-hue
+              {:min 0 :max 360 :step 1 :background (hue-gradient 0.62 0.15)})
+        (dial "--ty-primary-chroma" :primary-chroma primary-chroma
+              {:min 0 :max 0.3 :step 0.005
+               :background (str "linear-gradient(to right, oklch(0.62 0 " primary-hue "), oklch(0.62 0.3 " primary-hue "))")})))
+     (dial "--ty-primary-l-factor" :primary-l-factor primary-l-factor
+           {:min 0.5 :max 1.5 :step 0.01
+            :background (str "linear-gradient(to right, oklch(0.3 " primary-chroma " " primary-hue "), oklch(0.85 " primary-chroma " " primary-hue "))")})
+     [:div.flex.flex-wrap.gap-2
+      (for [[label h c :as p] presets
+            :let [active? (preset-active? seeds p)]]
+        [:button.w-6.h-6.rounded-full.cursor-pointer
+         {:replicant/key label :title label
+          :style {:background (str "oklch(0.58 " c " " h ")")
+                  :outline (if active? "2px solid var(--ty-text-strong)" "2px solid transparent")
+                  :outline-offset "2px"}
+          :on {:click #(preset! h c)}}])]
+     [:div.border-t.ty-border-]
+     (kicker "Flavors")
+     [:div.flex.flex-col.gap-1 {:style {:margin-top "-0.5rem"}}
+      (for [f (rest flavors)] (flavor-row f seeds open-flavor))
+      (when-let [nm (not-empty (:name (flavor-pack)))] (custom-flavor-row nm))]
+     [:div.flex.gap-2
+      [:ty-button {:flavor "neutral+" :size "sm" :style {:flex "1"}
+                   :on {:click #(js/navigator.clipboard.writeText css)}}
+       [:ty-icon {:name "copy" :size "xs" :slot "start"}] "Copy CSS"]
+      [:ty-button {:flavor "neutral" :appearance "outlined" :size "sm" :on {:click reset-all!}} "Reset"]]
+     [:details.text-xs
+      [:summary.cursor-pointer.ty-text-.font-medium "Show CSS"]
+      [:div.flex.flex-col.gap-2.mt-3
+       [:div.flex.gap-1
+        (for [[label v] [[":root" false] ["named theme" true]]]
+          [:button.px-2.rounded.font-mono.cursor-pointer {:replicant/key label
+            :class (into ["py-0.5"] (if (= named? v) ["ty-bg-neutral" "ty-text++"] ["ty-text-"]))
+            :on {:click #(swap! state/state assoc-in [:brand-playground :export-named?] v)}}
+           label])]
+       (when named?
+         [:ty-input {:size "xs" :value theme-name :placeholder "theme name"
+                     :on {:input #(swap! state/state assoc-in [:brand-playground :export-name]
+                                         (.. ^js % -target -value))}}])
+       (mini-code css)]]]))
+
+(defn- spec-card [title & children]
+  (into [:div.flex.flex-col.gap-3.rounded-xl.border.ty-border-.p-4.min-w-0 (kicker title)] children))
+
+(defn- specimen []
+  ;; The custom flavor (if named) sits next to the built-ins: same components,
+  ;; same shade row — the proof it's a first-class flavor.
+  (let [custom (not-empty (:name (flavor-pack)))
+        flavors (cond-> flavors custom (conj custom))]
+    [:div.flex-1.min-w-0.flex.flex-col.gap-3.p-5
+     (spec-card "Buttons & tags"
+                [:div.flex.flex-wrap.gap-2
+                 (for [f flavors] [:ty-button {:replicant/key f :flavor f :size "sm"} (str/capitalize f)])]
+                [:div.flex.flex-wrap.gap-2
+                 (for [f flavors] [:ty-button {:replicant/key f :flavor f :size "sm" :appearance "outlined"} (str/capitalize f)])]
+                [:div.flex.flex-wrap.gap-2
+                 (for [f flavors] [:ty-tag {:replicant/key f :flavor f :pill ""} f])])
+     (spec-card "Shades — five flavors × five steps"
+                [:div.flex.flex-col {:class ["gap-1.5"]}
+                 [:div.flex {:class ["gap-1.5"]}
+                  [:span.shrink-0 {:style {:width "4.5rem"}}]
+                  (for [[label] shades]
+                    [:span.flex-1.text-center.font-mono.ty-text-- {:replicant/key label :style {:font-size "0.6875rem"}} label])]
+                 (for [f flavors]
+                   [:div.flex.items-center {:class ["gap-1.5"] :replicant/key f}
+                    [:span.shrink-0.font-mono.text-xs.ty-text {:style {:width "4.5rem"}} f]
+                    (for [[label suffix] shades
+                          :let [token (str "--ty-color-" f suffix)]]
+                      [:span.flex-1.flex.items-center.px-2.rounded-md.text-xs.font-semibold
+                       {:replicant/key label :title token
+                        :style {:height "2rem" :background (str "var(" token ")") :color (on-color token)}}
+                       "Aa"])])])
+     [:div.md:grid-cols-2.gap-3 {:style {:display "grid"}}
+      (spec-card "Form"
+                 [:ty-input {:label "Project name" :value "Q3 launch site"}]
+                 [:ty-select {:label "Priority" :value "medium"}
+                  [:ty-option {:value "low"} "Low"]
+                  [:ty-option {:value "medium"} "Medium"]
+                  [:ty-option {:value "high"} "High"]])
+      (spec-card "Surfaces"
+                 [:div.rounded-lg {:class ["p-2.5"] :style {:background "var(--ty-surface-canvas)"}}
+                  [:div.flex.flex-col.gap-2.rounded-lg.border.ty-border- {:class ["p-2.5"] :style {:background "var(--ty-surface-content)"}}
+                   [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} "canvas › content"]
+                   [:div.flex.flex-col.gap-2.rounded-lg.border.ty-border-.shadow-sm {:class ["p-2.5"] :style {:background "var(--ty-surface-elevated)"}}
+                    [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} "elevated"]
+                    [:div.rounded-lg.border.ty-border-.shadow-lg {:class ["p-2.5"] :style {:background "var(--ty-surface-floating)"}}
+                     [:span.font-mono.ty-text- {:style {:font-size "0.6875rem"}} "floating"]]]]])]]))
+
+(defn- playground [seeds]
+  (common/page-section
+   {:title "Playground" :sub "Drag a seed. The whole library follows."}
+   [:div.flex.flex-col.md:flex-row.rounded-2xl.border.ty-border-.overflow-hidden
+    {:style {:background "var(--ty-surface-content)"}}
+    (dock seeds)
+    (specimen)]
+   [:p.text-xs.ty-text-- "Every dial is per theme — dragging one only changes the mode you're looking at. Toggle dark to tune the other side."]))
+
+;; --- 03 The formula (live) ---------------------------------------------------------
+
+(defonce ^:private dragging (atom nil))
+
+(defn- drag-handlers
+  "Pointer handlers that call (set-from! event) while K is being dragged."
+  [k set-from!]
+  {:pointerdown (fn [^js e]
+                  (.setPointerCapture (.-currentTarget e) (.-pointerId e))
+                  (reset! dragging k)
+                  (set-from! e))
+   :pointermove (fn [e] (when (= @dragging k) (set-from! e)))
+   :pointerup (fn [_] (reset! dragging nil))
+   :pointercancel (fn [_] (reset! dragging nil))})
+
+(defn- bar-drag-handlers
+  "Vertical drag on a bar column → dial value. The column's .th-track is the 0..1 scale."
+  [k lo hi]
+  (drag-handlers k (fn [^js e]
+                     (let [r (.getBoundingClientRect (.querySelector (.-currentTarget e) ".th-track"))
+                           frac (-> (/ (- (.-bottom r) (.-clientY e)) (.-height r)) (max 0) (min 1))]
+                       (set-dial! k (js/parseFloat (.toFixed (+ lo (* frac (- hi lo))) 2)))))))
+
+(defn- shade-color
+  "The primary shade computed straight from the seeds, so the bars show the
+   ACTIVE theme's colors even inside the dark band."
+  [{:keys [primary-hue primary-chroma primary-l-factor] :as seeds} [_ _ lk ck]]
+  (str "oklch(" (* (get seeds lk) primary-l-factor) " "
+       (* primary-chroma (get seeds ck)) " " primary-hue ")"))
+
+(defn- curve-bars
+  "Five draggable bars, one per shade, each painted in that primary shade."
+  [seeds key-idx lo hi]
+  [:div.flex.items-end.gap-2
+   (for [[label :as shade] shades
+         :let [k (nth shade key-idx) v (get seeds k)
+               frac (/ (- v lo) (- hi lo))]]
+     [:div.flex-1.flex.flex-col.items-center.gap-1.select-none.cursor-ns-resize
+      {:replicant/key label :style {:touch-action "none"} :on (bar-drag-handlers k lo hi)}
+      [:span.font-mono.ty-text {:style {:font-size "0.625rem"}} (.toFixed v 2)]
+      [:div.th-track.w-full.flex.items-end {:style {:height "5rem"}}
+       [:div.w-full.rounded-md.flex.justify-center.pt-1
+        {:style {:height (str (max 6 (* 100 frac)) "%")
+                 :background (shade-color seeds shade)}}
+        [:span.rounded-full {:style {:width "0.875rem" :height "3px"
+                                     :background "rgb(255 255 255 / 0.6)"}}]]]
+      [:span.font-mono.ty-text-- {:style {:font-size "0.625rem"}} label]])])
+
+(defn- hue-wheel [hue]
+  (let [size 96 r 39
+        rad (* hue (/ js/Math.PI 180))]
+    [:div.relative.shrink-0.cursor-grab.select-none
+     {:style {:width (str size "px") :height (str size "px") :touch-action "none"}
+      :on (drag-handlers :primary-hue
+                         (fn [^js e]
+                           (let [rect (.getBoundingClientRect (.-currentTarget e))
+                                 dx (- (.-clientX e) (+ (.-left rect) (/ (.-width rect) 2)))
+                                 dy (- (.-clientY e) (+ (.-top rect) (/ (.-height rect) 2)))
+                                 deg (mod (+ 360 (* (/ 180 js/Math.PI) (js/Math.atan2 dx (- dy)))) 360)]
+                             (set-dial! :primary-hue (js/Math.round deg)))))}
+     [:div.absolute.inset-0.rounded-full
+      {:style {:background (str "conic-gradient("
+                                (str/join "," (for [h (range 0 361 30)] (str "oklch(0.68 0.15 " h ")")))
+                                ")")
+               :mask "radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px))"
+               :-webkit-mask "radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px))"}}]
+     [:div.absolute.rounded-full
+      {:style {:width "18px" :height "18px"
+               :left (str (- (+ (/ size 2) (* r (js/Math.sin rad))) 9) "px")
+               :top (str (- (- (/ size 2) (* r (js/Math.cos rad))) 9) "px")
+               :background "var(--ty-color-primary)"
+               :border "2px solid white"
+               :box-shadow "0 1px 4px rgb(0 0 0 / 0.4)"}}]]))
+
+(defn- dials-css
+  "Selected dials for the ACTIVE theme as a paste-ready block."
+  [seeds ks]
+  (str (if (= :dark (active-theme)) "html.dark" ":root") " {\n"
+       (str/join "\n" (for [k ks] (dial-value-line k (get seeds k))))
+       "\n}"))
+
+(defn- term-card [letter color-class title expr hint desc viz copy-text]
+  [:div.flex.flex-col.gap-3.rounded-2xl.border.ty-border-.p-5.min-w-0
+   {:style {:background "color-mix(in oklch, var(--ty-text-strong) 4%, transparent)"}}
+   [:div.flex.items-center.justify-between.gap-2
+    [:div.flex.items-center {:class ["gap-2.5"]}
+     [:span.font-mono.text-2xl.font-bold {:class color-class} letter]
+     [:h3.text-sm.font-semibold.ty-text++.scroll-mt-6 title]]
+    [:div.flex.items-center.gap-1
+     [:span.inline-flex.items-center.gap-1.rounded-full.px-2.ty-text- {:class ["py-0.5"] :style {:font-size "0.6875rem" :background "color-mix(in oklch, var(--ty-text-strong) 8%, transparent)"}}
+      [:ty-icon {:name (if (= letter "H") "rotate-cw" "move-vertical") :size "xs"}] hint]
+     [:span {:title (str "Copy " (str/lower-case title) " CSS")} (common/copy-button copy-text)]]]
+   [:span.font-mono.text-xs {:class color-class} expr]
+   viz
+   [:p.text-xs.ty-text-.leading-relaxed desc]])
+
+(defn- formula [seeds]
+  (let [{:keys [l-bold warning-l-factor warning-chroma c-bold-mult warning-hue]} seeds
+        ;; The browser clamps oklch L to 1; show what it actually paints.
+        l (min 1 (* l-bold warning-l-factor)) c (* warning-chroma c-bold-mult)]
+    (common/page-section
+     {:title "The formula" :sub "One computation behind every color — and it's live." :dark? true}
+     [:div.flex.justify-center.font-mono.font-medium.py-2
+      {:style {:font-size "clamp(1.5rem, 3vw, 2rem)"}}
+      [:span.ty-text- "oklch("]
+      [:span.ty-text-warning.font-bold " L"] [:span.ty-text-- " · "]
+      [:span.ty-text-success.font-bold "C"] [:span.ty-text-- " · "]
+      [:span.ty-text-primary.font-bold "H"] [:span.ty-text- " )"]]
+     [:div.md:grid-cols-3.gap-4 {:style {:display "grid"}}
+      (term-card "L" "ty-text-warning" "Lightness" "L-curve[shade] × l-factor" "drag a bar"
+                 "The shade picks a step on the curve; l-factor slides a whole flavor lighter or darker."
+                 (curve-bars seeds 2 0 1)
+                 (dials-css seeds (map #(nth % 2) shades)))
+      (term-card "C" "ty-text-success" "Chroma" "chroma × saturation[shade]" "drag a bar"
+                 "How much color. The curve keeps the extremes calm so headings and tints both read."
+                 (curve-bars seeds 3 0 1.5)
+                 (dials-css seeds (map #(nth % 3) shades)))
+      (term-card "H" "ty-text-primary" "Hue" "flavor hue, 0–360" "drag the knob"
+                 "The seed. One number per flavor; dark mode reuses it untouched."
+                 [:div.flex.items-center.gap-4
+                  (hue-wheel (:primary-hue seeds))
+                  [:div.flex.flex-col {:class ["gap-1.5"]}
+                   (for [f ["primary" "success" "warning" "danger"]]
+                     [:span.flex.items-center.gap-2.font-mono.ty-text- {:replicant/key f :style {:font-size "0.6875rem"}}
+                      [:span.w-2.h-2.rounded-full {:style {:background (str "var(--ty-color-" f ")")}}]
+                      (str f " " (int (get seeds (keyword (str f "-hue")))))])]]
+                 (dials-css seeds [:primary-hue :success-hue :warning-hue :danger-hue]))]
+     [:div.flex.flex-wrap.items-center.gap-x-4.gap-y-2.rounded-xl.px-4.py-3
+      {:style {:background "color-mix(in oklch, var(--ty-text-strong) 5%, transparent)"}}
+      [:span.w-7.h-7.rounded-md.shrink-0 {:style {:background (str "oklch(" l " " c " " warning-hue ")")}}]
+      [:span.font-mono.text-sm.ty-text
+       "--ty-color-warning-bold = oklch(" (.toFixed l 2) " " (.toFixed c 3) " " (int warning-hue) ")"]
+      [:span.text-xs.ty-text--.md:ml-auto "html.dark flips the L-curve — seeds carry through"]])))
+
+;; --- 04 Custom flavors -----------------------------------------------------------
+
+(defn- flavor-packs []
+  (let [{nm :name :keys [mode color hue chroma l-factor] :as fp} (flavor-pack)
+        seed (fpb-seed fp)
+        css (flavor-pack-css nm seed l-factor (= mode "hex"))
+        seed-css (str ":root {\n  --ty-" nm "-seed: " seed ";"
+                      (when (not= l-factor 1) (str "\n  --ty-" nm "-l-factor: " l-factor ";"))
+                      "\n}")]
+    (common/page-section
+     {:title "Custom flavors" :sub "A name and one color → a full flavor."}
+     ;; LIVE: the generated pack applies to the page, so the preview is the engine at work.
+     [:style css]
+     [:div.flex.flex-col.md:flex-row.rounded-2xl.border.ty-border-.overflow-hidden
+      {:style {:background "var(--ty-surface-content)"}}
+      [:div.flex.flex-col.gap-4.p-5.shrink-0.border-b.md:border-b-0.md:border-r.ty-border-.md:w-64 {:style {:background "var(--ty-surface-canvas)"}}
+       [:ty-input {:label "Name" :size "sm" :value nm :on {:input (fpb-set! :name)}}]
+       [:div.flex.rounded-lg.ty-bg-neutral- {:class ["p-0.5" "gap-0.5"]}
+        (for [[label m] [["hex" "hex"] ["hue + chroma" "oklch"]]]
+          [:button.flex-1.px-2.py-1.rounded-md.text-xs.font-mono.cursor-pointer
+           {:replicant/key m
+            :class (if (= mode m) ["ty-elevated" "ty-text++" "font-semibold" "shadow-sm"] ["ty-text-"])
+            :on {:click (fpb-set-mode! m)}}
+           label])]
+       (if (= mode "hex")
+         [:label.flex.items-center.gap-2.rounded-lg.border.ty-border-.px-2.cursor-pointer {:class ["py-1.5"] :style {:background "var(--ty-surface-content)"}}
+          [:input {:type "color" :value color :on {:input (fpb-set! :color)}
+                   :style {:width "1.5rem" :height "1.5rem" :border "none" :padding 0 :background "none" :cursor "pointer"}}]
+          [:span.font-mono.text-sm.ty-text++ color]]
+         [:div.flex.flex-col.gap-3
+          [:div.flex.flex-col.gap-2
+           [:div.flex.justify-between.font-mono.text-xs [:span.ty-text "hue"] [:span.ty-text++ (str (int hue) "°")]]
+           [:input.th-range {:type "range" :min 0 :max 360 :step 1 :value hue
+                             :on {:input (fpb-set-num! :hue)} :style {:background (hue-gradient 0.62 0.15)}}]]
+          [:div.flex.flex-col.gap-2
+           [:div.flex.justify-between.font-mono.text-xs [:span.ty-text "chroma"] [:span.ty-text++ (.toFixed chroma 3)]]
+           [:input.th-range {:type "range" :min 0 :max 0.3 :step 0.005 :value chroma
+                             :on {:input (fpb-set-num! :chroma)}}]]])
+       [:div.flex.flex-col.gap-2
+        [:div.flex.justify-between.font-mono.text-xs [:span.ty-text "l-factor"] [:span.ty-text++ (.toFixed l-factor 2)]]
+        [:input.th-range {:type "range" :min 0.5 :max 1.5 :step 0.01 :value l-factor
+                          :on {:input (fpb-set-num! :l-factor)}}]]]
+      (when (seq nm)
+        [:div.flex-1.min-w-0.flex.flex-col.gap-4.p-5
+         [:div.flex.rounded-xl.overflow-hidden
+          (for [[label suffix] shades
+                :let [token (str "--ty-color-" nm suffix)]]
+            [:div.flex-1.flex.items-end.p-3.font-mono.text-xs.font-semibold
+             {:replicant/key label :style {:height "4.5rem" :background (str "var(" token ")") :color (on-color token)}}
+             label])]
+         [:div.flex.flex-wrap.items-center.gap-2
+          [:ty-button {:flavor nm :size "sm"} (str "flavor=\"" nm "\"")]
+          [:ty-button {:flavor nm :size "sm" :appearance "outlined"} "outlined"]
+          [:ty-button {:flavor nm :size "sm" :appearance "ghost"} "ghost"]
+          [:ty-tag {:flavor nm :pill ""} nm]]
+         [:div.flex.flex-col.gap-2
+          (mini-code seed-css)
+          [:details.text-xs
+           [:summary.cursor-pointer.ty-text-.font-medium
+            (str "Full pack · " (count (str/split-lines css)) " lines — the ramp is engine boilerplate")]
+           [:div.mt-2.flex.flex-col.gap-2
+            [:div.flex.justify-end (common/copy-button css)]
+            (mini-code css)]]]])]
+     [:div.flex.flex-col.rounded-xl.border.ty-border-.overflow-hidden
+      (for [[name desc us?] [["Material UI" "createTheme() + ThemeProvider — JavaScript, React only" false]
+                             ["Shoelace / Web Awesome" "variants are a fixed list; a new one means per-component overrides" false]
+                             ["Tailwind" "edit the config, re-run the build" false]
+                             ["Tyrell" "a few CSS custom properties, scoped anywhere the cascade reaches" true]]]
+        [:div.flex.flex-col.sm:flex-row.gap-1.sm:gap-4.px-4.py-3.border-b.ty-border-.last:border-b-0.site-chrome
+         {:replicant/key name :data-ty-theme ""
+          :class (when us? "ty-bg-primary-")}
+         [:span.text-sm.font-semibold.shrink-0 {:class (if us? "ty-text-primary" "ty-text++") :style {:width "12rem"}} name]
+         [:span.text-sm {:class (if us? "ty-text++" "ty-text-")} desc]])])))
+
+;; --- 05 Recipes ------------------------------------------------------------------
+
+(def ^:private recipes
+  [["Rotate primary" "Usually all you need." ["oklch(0.58 0.13 200)" "oklch(0.45 0.1 200)"]
+    ":root {\n  --ty-primary-hue: 200;\n  --ty-primary-chroma: 0.13;\n}"]
+   ["Seed from any color" "Hex, name, rgb — hue and chroma are read from it." ["#e0473e" "crimson"]
+    ":root {\n  --ty-primary-seed: #e0473e;\n  --ty-danger-seed: crimson;\n}"]
+   ["Independent flavors" "Each flavor is its own seed." ["oklch(0.55 0.2 31)"]
+    ":root {\n  --ty-danger-chroma: 0.2;\n}"]
+   ["Pull toward primary" "Semantic flavors can follow the brand." ["oklch(0.58 0.13 200)" "oklch(0.58 0.1 175)"]
+    ":root {\n  --ty-success-hue:\n    var(--ty-primary-hue);\n}"]
+   ["Pin one token" "The cascade still wins." ["#003344"]
+    ":root {\n  --ty-color-primary-strong:\n    #003344;\n}"]
+   ["Scope a subtree" "Theme one section, not the page." ["oklch(0.62 0.15 42)" "oklch(0.58 0.13 200)"]
+    "[data-ty-theme].promo {\n  --ty-primary-hue: 42;\n}"]])
+
+(defn- recipe-cards []
+  (common/page-section
+   {:title "Recipes" :sub "Copy what you need."}
+   (apply common/bento
+          (for [[title desc chips code] recipes]
+            (common/example
+             {:title title :span 2 :lang "css" :code code
+              :description desc}
+             [:div.flex {:class ["gap-1.5"]}
+              (for [c chips]
+                [:span.w-5.h-5.rounded-md {:replicant/key c :style {:background c}}])])))))
+
+;; --- 06 Type & shape -----------------------------------------------------------------
+
+(defn- type-and-shape []
+  (let [{:keys [font radius] :or {font "sans" radius "8"}} (:typography-picker @state/state)
+        stack (font-stack font)
+        px (str radius "px")]
+    (common/page-section
+     {:title "Type & shape" :sub "Font and radius are tokens too."}
+     [:div.flex.flex-col.md:flex-row.rounded-2xl.border.ty-border-.overflow-hidden
+      {:style {:background "var(--ty-surface-content)"}}
+      [:div.flex.flex-col.gap-5.p-5.shrink-0.border-b.md:border-b-0.md:border-r.ty-border-.md:w-64 {:style {:background "var(--ty-surface-canvas)"}}
+       [:div.flex.flex-col.gap-2
+        (kicker "Font")
+        [:div.flex.flex-wrap {:class ["gap-1.5"]}
+         (for [[k label _] font-presets]
+           (tp-chip (= k font) (first (str/split label #" ")) (fn [_] (tp-set! :font k))))]]
+       [:div.flex.flex-col.gap-2
+        (kicker "Radius")
+        [:div.flex.flex-wrap {:class ["gap-1.5"]}
+         (for [[v _] radius-presets]
+           (tp-chip (= v radius) (if (= v "9999") "pill" v) (fn [_] (tp-set! :radius v))))]]
+       (mini-code (str ":root {\n"
+                       (when stack (str "  --ty-font-sans: " stack ";\n"))
+                       "  --ty-radius-base: " px ";\n"
+                       "  --ty-radius-md: " px ";\n}"))]
+      [:div.flex-1.min-w-0.flex.flex-col.justify-center.gap-4.p-8
+       {:style (cond-> {"--ty-radius-base" px "--ty-radius-md" px}
+                 stack (assoc "--ty-font-sans" stack))}
+       [:h3.text-2xl.font-semibold.ty-text++.scroll-mt-6
+        {:style {:font-family "var(--ty-font-sans)" :letter-spacing "-0.02em"}}
+        "Book the reading room"]
+       [:p.ty-text-.leading-relaxed {:style {:font-family "var(--ty-font-sans)"}}
+        "Same components, a different voice and corners — two tokens."]
+       [:div.flex.flex-wrap.items-end.gap-3
+        [:div.flex-1 {:style {:min-width "12rem"}}
+         [:ty-date-picker {:label "When" :size "md" :value "2026-10-03"}]]
+        [:ty-button {:flavor "primary" :size "lg"} "Reserve"]]]])))
+
+;; --- Page ------------------------------------------------------------------------
 
 (defn view []
-  (docs-page
-   (component-header "Theming"
-                     "Two CSS variables rebrand every component — light and dark, no build step, no JS. Everything on this page is live: drag the seeds, watch the library follow.")
-
-   [:div.ty-elevated.rounded-xl.p-6
-    [:div.mb-3
-     (section-label "30-second start")]
-    (code-block "<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell.css\">
-<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/tyrell-components/css/tyrell-theme.css\">
-
-<style>
-  :root {
-    --ty-primary-hue: 200;        /* teal */
-    --ty-primary-chroma: 0.13;
-  }
-</style>")
-    [:p.ty-text-.mt-3 {:style {:font-size "0.8125rem"}}
-     "That's the whole rebrand. Via npm: "
-     [:code "import 'tyrell-components/css/tyrell-theme.css'"] " after tyrell.css."]
-    [:p.ty-text--.mt-2 {:style {:font-size "0.75rem"}}
-     "This page is the interactive playground for the theme engine specifically. For the "
-     "full written reference — surfaces vs. backgrounds, the text/border/background "
-     "families, dark mode, per-component overrides — see the "
-     [:a.ty-text-primary {:href "https://github.com/gersak/tyrell/blob/master/guides/CSS_GUIDE.md"
-                          :target "_blank" :rel "noopener"}
-      "CSS Guide"] " on GitHub."]]
-
-   (doc-section "Playground"
-                [:div.grid.gap-6 {:replicant/on-mount close-floating-on-mount!
-                                  :style {:grid-template-columns "minmax(280px, 360px) 1fr"
-                                          :align-items "start"}}
-       ;; LEFT: seeds — sticky, natural height. If the panel exceeds the
-       ;; viewport the bottom controls fall below the fold (sticky pins the
-       ;; top edge). Keep the panel content tight enough to fit.
-                 [:div {:style {:position "sticky" :top "1rem"}}
-                  (seeds-panel)]
-
-       ;; RIGHT: live preview — short cards share rows, wide previews go full-width.
-                 [:div.space-y-4
-                  [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
-                   (preview-buttons)
-                   (preview-tags)]
-                  [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(280px, 1fr))"}}
-                   (preview-inputs)
-                   (preview-surfaces)]
-        ;; Row 3: full-width — needs horizontal room
-                  (preview-text-ramps)
-                  (preview-bg-variants)
-                  (preview-borders)
-                  (preview-solid-muted)]])
-
-    ;; Flavor pack builder — name + two seeds in, a full engine-parity
-    ;; flavor out, applied LIVE via an injected <style>.
-   (doc-section "Flavor pack builder"
-                [:div
-                 (flavor-pack-builder)
-                 [:div.ty-content.rounded-lg.p-5.mt-4
-                  (section-label "The same job elsewhere")
-                  [:div.grid.gap-x-6.gap-y-1.sm:grid-cols-2.text-sm
-                   [:div [:span.ty-text.font-medium "Material UI"]
-                    [:span.ty-text- " — createTheme() + ThemeProvider, JS, React-only"]]
-                   [:div [:span.ty-text.font-medium "Shoelace / Web Awesome"]
-                    [:span.ty-text- " — variant names are a fixed enum; new ones need per-component overrides"]]
-                   [:div [:span.ty-text.font-medium "Tailwind"]
-                    [:span.ty-text- " — edit config, re-run the build"]]
-                   [:div [:span.ty-text.font-medium "Tyrell"]
-                    [:span.ty-text- " — a dozen CSS custom properties, scoped anywhere the cascade reaches"]]]]])
-
-    ;; The formula — how every color is computed
-   (doc-section "The formula"
-                [:div.ty-content.rounded-lg.p-5
-                 [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                  "Every color in the library is one computation: a flavor (primary … neutral) "
-                  "brings hue + chroma, a shade (++ … --) brings the emphasis step."]
-                 (code-block "oklch(
-  L = L-curve[shade] × flavor-l-factor
-  C = flavor-chroma  × saturation-curve[shade]
-  H = flavor-hue
-)"
-                             "css")
-                 [:p.ty-text-.mt-4.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                  "So " [:code "--ty-color-warning-bold"] " = oklch(0.46 0.26 75) — and one seed "
-                  "moves a whole flavor: " [:code "--ty-warning-l-factor: 0.85"] " darkens every "
-                  "warning shade in step, nothing else moves."]
-                 [:div.flex.flex-wrap.gap-3
-                  (swatch "L 0.46 (default)" 0.46 0.26 75)
-                  (swatch "L 0.39 (×0.85)" 0.39 0.26 75)]
-                 [:p.ty-text-.mt-4 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                  "Dark mode is the same formula — " [:code "html.dark"] " swaps in a flipped "
-                  "L-curve, your seeds carry through untouched."]])
-
-    ;; Override recipes — one block, copy what you need
-   (doc-section "Recipes"
-                [:div.ty-content.rounded-lg.p-5
-                 (code-block ":root {
-  /* rotate primary — usually all you need */
-  --ty-primary-hue: 200;
-  --ty-primary-chroma: 0.13;
-
-  /* every flavor is an independent seed */
-  --ty-danger-chroma: 0.2;
-
-  /* pull a semantic flavor toward primary */
-  --ty-success-hue: var(--ty-primary-hue);
-
-  /* pin one derived token — cascade still wins */
-  --ty-color-primary-strong: #003344;
-}" "css")
-                 [:p.ty-text-.mt-4.mb-3 {:style {:font-size "0.8125rem" :line-height 1.6}}
-                  "Have a color instead of a hue/chroma pair? Skip the split — seed any flavor "
-                  "directly, in any format. The dials above are still read; a seed just bypasses "
-                  "them for that one flavor."]
-                 (code-block ":root {
-  /* one hex, done — hue + chroma read from it,
-     lightness still comes from the L-curve */
-  --ty-primary-seed: #76467c;
-
-  /* any CSS color works */
-  --ty-danger-seed: crimson;
-}" "css")])
-
-   (doc-section "Type & shape"
-                (typography-shape-demo))))
+  (let [seeds (get-seeds)]
+    (common/doc-page
+     [:style page-css]
+     [:div {:replicant/on-mount close-floating-on-mount!}
+      (theming-hero seeds)]
+     (quick-start)
+     (playground seeds)
+     (formula seeds)
+     (flavor-packs)
+     (recipe-cards)
+     (type-and-shape)
+     (tokens/section))))

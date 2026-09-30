@@ -1,327 +1,267 @@
 (ns tyrell.site.docs.tag
-  "Documentation for the ty-tag component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table slot-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  "Documentation for ty-tag component"
+  (:require [clojure.string :as str]
+            [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
+
+(def ^:private lineup
+  "Playground stage: the shapes a tag takes, sharing the live props."
+  [{:label "Design"}
+   {:label "Approved" :start "check"}
+   {:label "Ada Lovelace" :start "user"}
+   {:label "Inbox" :end "12"}
+   {:label "v2.4.0" :start "tag"}])
+
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor pill clickable dismissible disabled]}]
+  (cond-> {}
+    (not= flavor "neutral") (assoc :flavor flavor)
+    (not= size "sm") (assoc :size size)
+    (not pill) (assoc :not-pill true)
+    clickable (assoc :clickable true)
+    dismissible (assoc :dismissible true)
+    disabled (assoc :disabled true)))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label start end]} lineup]
+       [:ty-tag attrs
+        (when start [:ty-icon {:slot "start" :name start}])
+        label
+        (when end [:b {:slot "end"} end])])
+     :datastar (str "<ty-tag" (snippets/attr-str attrs) " dismissible\n"
+                    "  data-on:dismiss=\"@delete('/filters/design')\">Design</ty-tag>"))))
+
+(defn- render-lineup [{:keys [size flavor pill clickable dismissible disabled]}]
+  (let [base (cond-> {:flavor flavor :size size}
+               (not pill) (assoc :not-pill "")
+               clickable (assoc :clickable "")
+               dismissible (assoc :dismissible "")
+               disabled (assoc :disabled ""))]
+    [:div.flex.flex-wrap.items-center.justify-center.gap-3
+     (for [{:keys [label start end]} lineup]
+       [:ty-tag (assoc base :replicant/key label)
+        (when start [:ty-icon {:slot "start" :name start}])
+        label
+        (when end [:b {:slot "end"} end])])]))
+
+;; Interactive examples -------------------------------------------------------
+
+(def ^:private all-filters ["Design" "Engineering" "Remote" "Full-time" "Europe"])
+
+(defn- filters [] (get-in @state/state [:tag-doc :filters] all-filters))
+
+(defn- toggle! [topic]
+  (swap! state/state update-in [:tag-doc :topics]
+         #(if (contains? (or % #{"React"}) topic)
+            (disj (or % #{"React"}) topic)
+            (conj (or % #{"React"}) topic))))
+
+(def ^:private custom-flavor-css
+  "ty-tag[flavor=\"teal\"] {
+  --ty-bg-teal: #134e4a;
+  --ty-bg-teal-bold: #115e59;
+  --ty-color-teal: #5eead4;
+  --ty-border-teal: #0f766e;
+}")
 
 (defn view []
-  (docs-page
-   (component-header "ty-tag"
-                     "Versatile tag component for labels, badges, and removable chips. Supports semantic flavors, multiple sizes, and interactive click/dismiss events.")
+  (component-page
+   {:title "Tag"
+    :group "Action"
+    :tag "ty-tag"
+    :description "Labels, statuses, filters and counts. Five flavors with tones, icon and count slots, clickable and dismissible with the keyboard."
+    :chips [["Keyboard" "zap"] ["TyTag (React)" "atom"]]
+    :source "packages/core/src/components/tag.ts"
+    :mark "#"
+    :demo [:div.flex.flex-col.items-start.gap-3
+           [:div.flex.flex-wrap.gap-2
+            [:ty-tag {:flavor "success" :size "md"} [:ty-icon {:slot "start" :name "check"}] "Paid"]
+            [:ty-tag {:flavor "warning" :size "md"} [:ty-icon {:slot "start" :name "clock"}] "Pending"]
+            [:ty-tag {:flavor "primary" :size "md"} "Shipped"]]
+           [:div.flex.flex-wrap.gap-2
+            [:ty-tag {:size "md" :dismissible ""} "Design"]
+            [:ty-tag {:size "md" :dismissible ""} "Remote"]
+            [:ty-tag {:size "md" :flavor "primary-"} "Inbox" [:b {:slot "end"} "12"]]]]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :tag
+     :defaults {:size "md" :flavor "primary" :pill true
+                :clickable false :dismissible false :disabled false}
+     :controls [{:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :pill :switch? true}
+                {:key :clickable :switch? true}
+                {:key :dismissible :switch? true}
+                {:key :disabled :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "flavor"
-        :type "string"
-        :default "\"neutral\""
-        :description "Semantic color theme: primary, success, danger, warning, neutral"}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Tag size: xs, sm, md, lg, xl"}
-       {:name "pill"
-        :type "boolean"
-        :default "true"
-        :description "Use pill shape (fully rounded) instead of rectangular with rounded corners"}
-       {:name "clickable"
-        :type "boolean"
-        :default "false"
-        :description "Makes the tag clickable with hover/active states"}
-       {:name "dismissible"
-        :type "boolean"
-        :default "false"
-        :description "Shows a dismiss button (×) that triggers the dismiss event"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disables all interactions"}
-       {:name "value"
-        :type "string"
-        :default "null"
-        :description "Value for the tag — used in multiselect contexts"}
-       {:name "selected"
-        :type "boolean"
-        :default "false"
-        :description "Selected state, primarily for multiselect integration"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Filter chips"
+       :span 4
+       :description [:span [:code "dismissible"] " adds the ×. The tag fires " [:code "dismiss"]
+                     " and your code removes it. Backspace and Delete work when it's focused."]
+       :code "<ty-tag dismissible>Design</ty-tag>
 
-    [:div.mb-6
-     (section-label "Events")
-     (event-table
-      [{:name "pointerdown"
-        :payload "{target: HTMLElement}"
-        :when-fired "When a clickable tag is pressed"}
-       {:name "click"
-        :payload "{target: HTMLElement}"
-        :when-fired "When a clickable tag is clicked"}
-       {:name "dismiss"
-        :payload "{target: HTMLElement}"
-        :when-fired "When the dismiss (×) button is clicked"}])]
+container.addEventListener('dismiss', (e) => {
+  e.target.remove();
+});"}
+      (let [fs (filters)]
+        [:div.flex.flex-col.items-start.gap-3
+         [:div.flex.flex-wrap.gap-2 {:style {:min-height "28px"}}
+          (for [f fs]
+            [:ty-tag {:replicant/key f
+                      :dismissible ""
+                      :on {:dismiss #(swap! state/state assoc-in [:tag-doc :filters] (vec (remove #{f} fs)))}}
+             f])]
+         (when (< (count fs) (count all-filters))
+           [:ty-button {:size "sm" :appearance "ghost"
+                        :on {:click #(swap! state/state assoc-in [:tag-doc :filters] all-filters)}}
+            [:ty-icon {:slot "start" :name "rotate-cw"}] "Reset"])]))
 
-    [:div
-     (section-label "Slots")
-     (slot-table
-      [{:name "default"
-        :description "Main tag content"}
-       {:name "start"
-        :description "Content before the main text — icons, emojis"}
-       {:name "end"
-        :description "Content after the main text — badges, counts"}])]]
-
-   (doc-section "Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Semantic Flavors")
-       (demo-area
-        [:div.flex.flex-wrap.gap-3
-         [:ty-tag {:flavor "primary"} "Primary"]
-         [:ty-tag {:flavor "success"} "Success"]
-         [:ty-tag {:flavor "danger"} "Danger"]
-         [:ty-tag {:flavor "warning"} "Warning"]
-         [:ty-tag {:flavor "neutral"} "Neutral"]])
-       (code-block "<ty-tag flavor=\"primary\">Primary</ty-tag>
-<ty-tag flavor=\"success\">Success</ty-tag>
-<ty-tag flavor=\"danger\">Danger</ty-tag>
-<ty-tag flavor=\"warning\">Warning</ty-tag>
-<ty-tag flavor=\"neutral\">Neutral</ty-tag>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Complete Matrix")
-       [:p.ty-text-.mb-4 {:style {:font-size "0.8125rem"
-                                  :line-height "1.6"}}
-        "Every flavor × tone combination. Six flavors — "
-        [:code.font-mono "primary"] ", "
-        [:code.font-mono "success"] ", " [:code.font-mono "danger"] ", "
-        [:code.font-mono "warning"] ", " [:code.font-mono "neutral"]
-        " — each with three tones via the flavor suffix: "
-        [:code.font-mono "-"] " (soft), base, "
-        [:code.font-mono "+"] " (strong). Useful for inspecting contrast in light vs dark mode."]
-       [:div.grid.gap-3.items-center
-        {:style {:grid-template-columns "6rem repeat(3, max-content)"}}
-        [:div]
-        [:div.text-xs.ty-text-.font-medium "Soft (–)"]
-        [:div.text-xs.ty-text-.font-medium "Base"]
-        [:div.text-xs.ty-text-.font-medium "Strong (+)"]
-        (for [flavor ["primary" "success" "danger" "warning" "neutral"]]
-          (list
-           [:div.text-sm.font-mono.ty-text {:key (str "tag-" flavor "-label")} flavor]
-           [:ty-tag {:key (str "tag-" flavor "-soft") :flavor (str flavor "-")} flavor]
-           [:ty-tag {:key (str "tag-" flavor "-base") :flavor flavor} flavor]
-           [:ty-tag {:key (str "tag-" flavor "-strong") :flavor (str flavor "+")} flavor]))]
-       (code-block "<!-- Base flavor -->
-<ty-tag flavor=\"primary\">Primary</ty-tag>
-
-<!-- Tone modifiers -->
-<ty-tag flavor=\"primary-\">Softer</ty-tag>
-<ty-tag flavor=\"primary+\">Stronger</ty-tag>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       (demo-area
-        [:div.flex.flex-wrap.items-center.gap-3
-         [:ty-tag {:size "xs" :flavor "primary"} "Extra Small"]
-         [:ty-tag {:size "sm" :flavor "primary"} "Small"]
-         [:ty-tag {:size "md" :flavor "primary"} "Medium"]
-         [:ty-tag {:size "lg" :flavor "primary"} "Large"]
-         [:ty-tag {:size "xl" :flavor "primary"} "Extra Large"]])
-       (code-block "<ty-tag size=\"xs\" flavor=\"primary\">Extra Small</ty-tag>
-<ty-tag size=\"sm\" flavor=\"primary\">Small</ty-tag>
-<ty-tag size=\"md\" flavor=\"primary\">Medium</ty-tag>
-<ty-tag size=\"lg\" flavor=\"primary\">Large</ty-tag>
-<ty-tag size=\"xl\" flavor=\"primary\">Extra Large</ty-tag>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Shape Variants")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Tags default to pill shape but can be rectangular."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-3
-         [:ty-tag {:flavor "primary"} "Pill (default)"]
-         [:ty-tag {:flavor "primary" :pill "false"} "Rectangular"]
-         [:ty-tag {:flavor "success" :not-pill "true"} "Also Rectangular"]])
-       (code-block "<!-- Pill shape (default) -->
-<ty-tag flavor=\"primary\">Pill (default)</ty-tag>
-
-<!-- Rectangular shape -->
-<ty-tag flavor=\"primary\" pill=\"false\">Rectangular</ty-tag>
-<ty-tag flavor=\"success\" not-pill=\"true\">Also Rectangular</ty-tag>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Interactive Tags")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Tags can be clickable, dismissible, or both."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-3
-         [:ty-tag {:flavor "primary"
-                   :clickable "true"
-                   :on {:pointerdown #(js/alert "Tag clicked")}}
-          "Click me"]
-         [:ty-tag {:flavor "danger"
-                   :dismissible "true"
-                   :on {:dismiss (fn [^js e] (.remove (.-target e)))}}
-          "Dismiss me"]
-         [:ty-tag {:flavor "success" :clickable "true" :dismissible "true"} "Both"]
-         [:ty-tag {:flavor "warning" :clickable "true" :disabled "true"} "Disabled"]])
-       (code-block "<!-- Clickable -->
-<ty-tag flavor=\"primary\" clickable onclick=\"alert('clicked!')\">
-  Click me
-</ty-tag>
-
-<!-- Dismissible -->
-<ty-tag id=\"t\" flavor=\"danger\" dismissible>Dismiss me</ty-tag>
-<script>
-  document.getElementById('t').addEventListener('dismiss', e => e.target.remove());
-</script>
-
-<!-- Both -->
-<ty-tag flavor=\"success\" clickable dismissible>Both</ty-tag>
-
-<!-- Disabled -->
-<ty-tag flavor=\"warning\" clickable disabled>Disabled</ty-tag>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Icons and Slots")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Use start/end slots for icons, emojis, or count badges."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-3
-         [:ty-tag {:flavor "primary" :size "sm"}
-          [:span {:slot "start"} "🚀"] "Launch"]
-         [:ty-tag {:flavor "success"}
-          [:ty-icon {:slot "start" :name "check" :size "16"}]
-          "Verified"]
-         [:ty-tag {:flavor "warning"}
-          "In Progress"
-          [:span.ty-text--.ml-1 {:slot "end"} "(3)"]]
-         [:ty-tag {:flavor "danger" :dismissible "true"}
-          [:ty-icon {:slot "start" :name "alert-circle" :size "16"}]
-          "Error"]])
-       (code-block "<ty-tag flavor=\"primary\" size=\"sm\">
-  <span slot=\"start\">🚀</span>
-  Launch
-</ty-tag>
-
+     (example
+      {:title "Tones"
+       :span 2
+       :description [:span [:code "+"] " is bolder, " [:code "-"] " quieter."]
+       :code "<ty-tag flavor=\"success+\">
 <ty-tag flavor=\"success\">
-  <ty-icon slot=\"start\" name=\"check\" size=\"16\"></ty-icon>
-  Verified
+<ty-tag flavor=\"success-\">"}
+      [:div.flex.flex-col.items-start.gap-2
+       (for [t ["success+" "success" "success-"]]
+         [:ty-tag {:replicant/key t :flavor t} t])])
+
+     (example
+      {:title "Flavors"
+       :span 3
+       :description [:span "The default is " [:code "neutral"] ". Any other string is a custom flavor, see Theming."]
+       :code "<ty-tag flavor=\"primary\">
+<ty-tag flavor=\"danger\">
+<ty-tag flavor=\"my-brand\">"}
+      [:div.flex.flex-wrap.gap-2
+       (for [f flavors]
+         [:ty-tag {:replicant/key f :flavor f} (str/capitalize f)])])
+
+     (example
+      {:title "Toggle chips"
+       :span 3
+       :description [:span [:code "clickable"] " makes it focusable and fires " [:code "click"]
+                     " on click, Enter or Space. Show the state with the flavor."]
+       :code "<ty-tag clickable flavor=\"primary+\">
+  React
 </ty-tag>
+<ty-tag clickable>Vue</ty-tag>"}
+      (let [on (get-in @state/state [:tag-doc :topics] #{"React"})]
+        [:div.flex.flex-wrap.gap-2
+         (for [t ["React" "Vue" "Svelte" "HTMX" "ClojureScript"]]
+           [:ty-tag {:replicant/key t
+                     :clickable ""
+                     :flavor (if (on t) "primary+" "neutral")
+                     :on {:click #(toggle! t)}}
+            (when (on t) [:ty-icon {:slot "start" :name "check"}])
+            t])]))
 
-<ty-tag flavor=\"warning\">
-  In Progress
-  <span slot=\"end\" class=\"ty-text-- ml-1\">(3)</span>
-</ty-tag>
+     (example
+      {:title "Status"
+       :span 4
+       :description [:span "An icon in " [:code "start"] " carries the meaning for people who don't see color."]
+       :code "<ty-tag flavor=\"success\">
+  <ty-icon slot=\"start\" name=\"check\"></ty-icon>
+  Paid
+</ty-tag>"}
+      [:div.flex.flex-wrap.gap-2
+       (for [[label flavor icon] [["Paid" "success" "check"] ["Pending" "warning" "clock"]
+                                  ["Failed" "danger" "x"] ["Shipped" "primary" "truck"]
+                                  ["Draft" "neutral" "edit"]]]
+         [:ty-tag {:replicant/key label :flavor flavor}
+          [:ty-icon {:slot "start" :name icon}] label])])
 
-<ty-tag flavor=\"danger\" dismissible>
-  <ty-icon slot=\"start\" name=\"alert-circle\" size=\"16\"></ty-icon>
-  Error
-</ty-tag>")]
+     (example
+      {:title "Sizes & shape"
+       :span 2
+       :description [:span "Pill by default. " [:code "not-pill"] " for square corners."]
+       :code "size=\"xs | sm | md | lg | xl\"
+<ty-tag not-pill>v2.4</ty-tag>"}
+      [:div.flex.flex-col.items-start.gap-2
+       [:div.flex.flex-wrap.items-center {:class ["gap-1.5"]}
+        (for [s ["xs" "sm" "md" "lg" "xl"]]
+          [:ty-tag {:replicant/key s :size s :flavor "primary-"} s])]
+       [:ty-tag {:not-pill "" :flavor "neutral"} [:ty-icon {:slot "start" :name "tag"}] "v2.4.0"]])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Select Integration")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Tags render the selection of a ty-select via ty-selected-options — option flavors carry through to the chips."]
-       (demo-area
-        [:div.space-y-2 {:style {:min-width "300px"}}
-         [:ty-select {:placeholder "Select skills..."
-                      :multiple true
-                      :id "tag-select-demo"
-                      :value "javascript,react"}
-          [:ty-option {:value "javascript" :flavor "warning"} "📜 JavaScript"]
-          [:ty-option {:value "typescript" :flavor "primary"} "🔷 TypeScript"]
-          [:ty-option {:value "react" :flavor "success"} "⚛️ React"]
-          [:ty-option {:value "vue" :flavor "success"} "🟢 Vue.js"]
-          [:ty-option {:value "python" :flavor "neutral"} "🐍 Python"]]
-         [:div.flex.flex-wrap.gap-2
-          [:ty-selected-options {:for "tag-select-demo"}]]])
-       (code-block "<ty-select placeholder=\"Select skills...\" multiple id=\"skills\" value=\"javascript,react\">
-  <ty-option value=\"javascript\" flavor=\"warning\">📜 JavaScript</ty-option>
-  <ty-option value=\"react\" flavor=\"success\">⚛️ React</ty-option>
-</ty-select>
-<ty-selected-options for=\"skills\"></ty-selected-options>")]])
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const tag = document.querySelector('ty-tag');
 
-   (doc-section "Common Use Cases"
-     [:div.grid.gap-5
-      {:style {:grid-template-columns "repeat(auto-fill, minmax(280px, 1fr))"}}
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Status Indicators")
-       [:div.space-y-3
-        [:div.flex.items-center.gap-2
-         [:span.ty-text- {:style {:font-size "0.875rem"}} "User Status:"]
-         [:ty-tag {:flavor "success" :size "sm"} "Active"]]
-        [:div.flex.items-center.gap-2
-         [:span.ty-text- {:style {:font-size "0.875rem"}} "Deployment:"]
-         [:ty-tag {:flavor "warning" :size "sm"} "Pending"]]
-        [:div.flex.items-center.gap-2
-         [:span.ty-text- {:style {:font-size "0.875rem"}} "Service:"]
-         [:ty-tag {:flavor "danger" :size "sm"} "Offline"]]]]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Category Labels")
-       [:div.flex.flex-wrap.gap-2
-        [:ty-tag {:flavor "primary" :size "sm" :pill "false"} "Technology"]
-        [:ty-tag {:flavor "neutral" :size "sm" :pill "false"} "Design"]
-        [:ty-tag {:flavor "success" :size "sm" :pill "false"} "Marketing"]
-        [:ty-tag {:flavor "warning" :size "sm" :pill "false"} "Sales"]]]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Skill Badges")
-       [:div.flex.flex-wrap.gap-2
-        [:ty-tag {:flavor "neutral" :size "sm"} "HTML/CSS"]
-        [:ty-tag {:flavor "neutral" :size "sm"} "JavaScript"]
-        [:ty-tag {:flavor "neutral" :size "sm"} "React"]
-        [:ty-tag {:flavor "neutral" :size "sm"} "Node.js"]]]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Active Filters")
-       [:div.flex.flex-wrap.gap-2
-        [:ty-tag {:flavor "primary" :dismissible "true" :size "sm"} "Price < $100"]
-        [:ty-tag {:flavor "primary" :dismissible "true" :size "sm"} "In Stock"]
-        [:ty-tag {:flavor "primary" :dismissible "true" :size "sm"} "Free Shipping"]]]])
-
-   (doc-section "JavaScript API"
-     [:div.ty-elevated.rounded-lg.p-5
-      [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-       "Programmatic interaction with ty-tag:"]
-      (code-block
-       "// Properties
-const tag = document.querySelector('ty-tag');
-tag.value = 'my-value';
-tag.selected = true;
-
-// Events
-tag.addEventListener('click', (e) => console.log('clicked:', e.detail.target));
-tag.addEventListener('dismiss', (e) => e.target.remove());
-
-// Dynamic creation
-const tag = document.createElement('ty-tag');
 tag.flavor = 'success';
 tag.dismissible = true;
-tag.textContent = 'New Tag';
-tag.addEventListener('dismiss', (e) => e.target.remove());
-document.body.appendChild(tag);
 
-// Keyboard (built-in)
-// Enter/Space → click  |  Delete/Backspace → dismiss"
-       "javascript")])
+// both bubble out of shadow roots, and both are cancelable
+tag.addEventListener('dismiss', (e) => e.detail.target.remove());
+tag.addEventListener('click', (e) => toggle(e.detail.target.value));"}
+      nil)))
 
+   (page-section
+    {:title "Theming" :sub "CSS variables. No build step." :dark? true}
+    (example
+     {:title "Custom flavor"
+      :side? true
+      :lang "css"
+      :description [:span "Name a flavor and give it " [:code "--ty-bg-*"] ", " [:code "--ty-color-*"] " and "
+                    [:code "--ty-border-*"] " tokens. Tones and hover follow."]
+      :code custom-flavor-css}
+     [:div.flex.flex-wrap.gap-2
+      [:style custom-flavor-css]
+      [:ty-tag {:flavor "teal"} "Teal"]
+      [:ty-tag {:flavor "teal" :dismissible ""} "Dismissible"]
+      [:ty-tag {:flavor "teal" :clickable ""} "Clickable"]])
 
-   (doc-section "Accessibility"
-     [:div.ty-content.rounded-lg.p-5
-      [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-       "ty-tag includes built-in accessibility features:"]
-      [:div.space-y-2
-       (for [item ["Keyboard navigation — Enter/Space for click, Delete/Backspace for dismiss"
-                   "ARIA attributes reflect disabled state"
-                   "Proper focus management for interactive tags"
-                   "Screen-reader-friendly dismiss button labels"
-                   "High contrast support via semantic color variables"]]
-         [:div.flex.items-start.gap-2
-          [:ty-icon.ty-text-success.mt-px {:name "check" :size "14"}]
-          [:p.ty-text- {:style {:font-size "0.8125rem"}} item]])]])))
+    (example
+     {:title "One-off colors"
+      :side? true
+      :lang "css"
+      :description "Three variables recolor a single tag, whatever its flavor."
+      :code ".beta {
+  --tag-bg: #431407;
+  --tag-color: #fdba74;
+  --tag-border-color: #9a3412;
+}"}
+     [:div.flex.flex-wrap.gap-2
+      [:ty-tag {:style {"--tag-bg" "#431407"
+                        "--tag-color" "#fdba74"
+                        "--tag-border-color" "#9a3412"}}
+       [:ty-icon {:slot "start" :name "zap"}] "Beta"]]))
+
+   (api-section
+    {:attributes ["Appearance"
+                  ["flavor" "string" "\"neutral\"" "primary, success, danger, warning, neutral, or any custom flavor. Append + or - for a stronger or softer tone."]
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
+                  ["pill" "boolean" "true" "Fully rounded. Use not-pill (or pill=\"false\") for square corners."]
+                  "Behavior"
+                  ["clickable" "boolean" "false" "Focusable; fires click on click, Enter or Space."]
+                  ["dismissible" "boolean" "false" "Shows × and fires dismiss on it, or on Backspace / Delete."]
+                  ["disabled" "boolean" "false" "No click or dismiss."]
+                  "Data"
+                  ["value" "string" "Identifies the tag, e.g. inside ty-multiselect."]
+                  ["selected" "boolean" "false" "Selection state used by ty-multiselect. No visual change on its own."]]
+     :events [["click" "{target}" "Clickable tags only. Bubbles, composed, cancelable."]
+              ["dismiss" "{target}" "The × was pressed, or Backspace / Delete. The tag stays until you remove it."]]
+     :slots [["start" "Before the label: icon, avatar, dot."]
+             ["(default)" "The label."]
+             ["end" "After the label: a count or badge."]]
+     :keyboard [["Enter / Space" "Fire click (clickable)."]
+                ["Backspace / Delete" "Fire dismiss (dismissible)."]]
+     :css-vars [["--tag-bg" "Background, per instance."]
+                ["--tag-color" "Text and icon color."]
+                ["--tag-border-color" "Border."]
+                ["--ty-bg-{flavor} / -bold / -soft" "Flavor fills for a custom flavor and its tones."]
+                ["--ty-color-{flavor} / --ty-border-{flavor}" "Flavor text and border."]]})))

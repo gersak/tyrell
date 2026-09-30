@@ -1,224 +1,219 @@
 (ns tyrell.site.docs.checkbox
   "Documentation for ty-checkbox component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private flavors ["neutral" "primary" "success" "danger" "warning"])
+
+(def ^:private lineup
+  "Playground stage: the three states, each with its label."
+  [{:label "Email me release notes" :checked? true}
+   {:label "Weekly digest"}
+   {:label "All notifications" :indeterminate? true}])
+
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor required disabled]}]
+  (cond-> {}
+    (not= size "sm") (assoc :size size)
+    (not= flavor "neutral") (assoc :flavor flavor)
+    required (assoc :required true)
+    disabled (assoc :disabled true)))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label checked? indeterminate?]} lineup]
+       [:label [:ty-checkbox (merge {:checked checked? :indeterminate indeterminate?} attrs {:jsx/onChange "{toggle}"})] label])
+     :datastar (str "<label>\n  <ty-checkbox" (snippets/attr-str attrs)
+                    "\n    data-on:change=\"$releaseNotes = evt.detail.checked\">\n  </ty-checkbox>\n  Email me release notes\n</label>"))))
+
+(defn- row
+  "A labeled checkbox: the <label> delegates clicks to the box."
+  [attrs text & [hint]]
+  [:label.flex.items-start.gap-3.cursor-pointer.text-sm {:replicant/key text}
+   [:ty-checkbox attrs]
+   [:span.flex.flex-col {:class ["gap-0.5"]}
+    [:span.text-sm.ty-text+ text]
+    (when hint [:span.text-xs.ty-text- hint])]])
+
+(defn- render-lineup [{:keys [size flavor required disabled]}]
+  (let [base (cond-> {:size size :flavor flavor}
+               required (assoc :required "")
+               disabled (assoc :disabled ""))]
+    [:div.flex.flex-col.gap-4
+     (for [{:keys [label checked? indeterminate?]} lineup]
+       (row (cond-> base
+              checked? (assoc :checked "")
+              indeterminate? (assoc :indeterminate ""))
+            label))]))
+
+;; Interactive examples -------------------------------------------------------
+
+(def ^:private perms ["Read" "Write" "Delete"])
+
+(defn- doc-state [k] (get-in @state/state [:checkbox-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:checkbox-doc k] v))
 
 (defn view []
-  (docs-page
-   (component-header "ty-checkbox"
-                     "Just the tick. Boolean primitive rendered as a single checkmark — full flavor color when checked, faint when unchecked, grayscale when disabled. Wrap in a <label> for click-on-text behavior.")
+  (component-page
+   {:title "Checkbox"
+    :group "Toggles"
+    :tag "ty-checkbox"
+    :description "Just the tick, no box. Checked takes the flavor color, unchecked stays a quiet neutral tick. Wrap it in a label; it submits its value and respects required."
+    :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyCheckbox (React)" "atom"]]
+    :source "packages/core/src/components/checkbox.ts"
+    :mark "✓"
+    :demo [:div.flex.flex-col.gap-4
+           (row {:checked "" :size "md" :flavor "primary"} "Email me release notes" "Once a month, no spam.")
+           (row {:size "md" :flavor "primary"} "Weekly digest" "Top discussions from your teams.")
+           (row {:indeterminate "" :size "md" :flavor "primary"} "Product updates" "2 of 4 selected.")]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :checkbox
+     :defaults {:size "md" :flavor "primary" :required false :disabled false}
+     :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :required :switch? true}
+                {:key :disabled :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "checked"
-        :type "boolean"
-        :default "false"
-        :description "Current checked state"}
-       {:name "value"
-        :type "string"
-        :default "\"on\""
-        :description "Value submitted with the form when checked"}
-       {:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name"}
-       {:name "indeterminate"
-        :type "boolean"
-        :default "false"
-        :description "Mixed state (dash) — visual/ARIA only, clicking resolves to checked"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disable interaction"}
-       {:name "required"
-        :type "boolean"
-        :default "false"
-        :description "Sets aria-required and participates in form validation"}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Size variant: xs, sm, md, lg, xl"}
-       {:name "flavor"
-        :type "string"
-        :default "\"neutral\""
-        :description "Semantic color: primary, success, danger, warning, neutral"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Select all"
+       :span 4
+       :description [:span "The parent is " [:code "indeterminate"] " while some children are on. Clicking a mixed box checks it, like the native one."]
+       :code "const all = document.querySelector('#all');
+const items = [...document.querySelectorAll('.perm')];
 
-    [:div
-     (section-label "Events")
-     (event-table
-      [{:name "change"
-        :payload "{value: boolean, checked: boolean, formValue: string | null}"
-        :when-fired "Fires when checked state changes"}
-       {:name "input"
-        :payload "{value: boolean, checked: boolean, formValue: string | null}"
-        :when-fired "Fires on every interaction (same as change for checkboxes)"}])]]
+function sync() {
+  const on = items.filter((c) => c.checked).length;
+  all.checked = on === items.length;
+  all.indeterminate = on > 0 && on < items.length;
+}
+all.addEventListener('change', (e) =>
+  items.forEach((c) => (c.checked = e.detail.checked)));"}
+      (let [on (or (doc-state :perms) #{"Read"})
+            n (count on)
+            set-all! #(set-doc! :perms (if % (set perms) #{}))]
+        [:div.flex.flex-col.gap-3
+         (row (cond-> {:flavor "primary"
+                       :on {:change #(set-all! (.. % -detail -checked))}}
+                (= n (count perms)) (assoc :checked "")
+                (< 0 n (count perms)) (assoc :indeterminate ""))
+              "Repository access" (str n " of " (count perms) " permissions"))
+         [:div.flex.flex-col.gap-2.pl-8
+          (for [p perms]
+            (row (cond-> {:flavor "primary"
+                          :on {:change #(set-doc! :perms ((if (.. % -detail -checked) conj disj) on p))}}
+                   (on p) (assoc :checked ""))
+                 p))]]))
 
-   (doc-section "Examples"
-     [:div.space-y-6
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Wrap in a " [:code "<label>"] " — the browser delegates label clicks to the form-associated child."]
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox] [:span.whitespace-nowrap "Subscribe to newsletter"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:checked ""}] [:span.whitespace-nowrap "Pre-checked option"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:indeterminate ""}] [:span.whitespace-nowrap "Indeterminate state"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-60
-          [:ty-checkbox {:disabled ""}] [:span.whitespace-nowrap "Disabled"]]])
-       (code-block "<label>
+     (example
+      {:title "Labels"
+       :span 2
+       :description [:span "The box has no text of its own. A wrapping " [:code "<label>"] " makes the whole line clickable and names it for screen readers."]
+       :code "<label>
   <ty-checkbox></ty-checkbox>
-  Subscribe to newsletter
-</label>
+  Remember me
+</label>"}
+      [:div.flex.flex-col.gap-3
+       (row {} "Remember me")
+       (row {:checked ""} "Keep me signed in" "For 30 days on this device.")])
 
-<label>
-  <ty-checkbox checked></ty-checkbox>
-  Pre-checked option
-</label>
-
-<label>
-  <ty-checkbox indeterminate></ty-checkbox>
-  Indeterminate state
-</label>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Rich Labels")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Interactive descendants inside the label (links, buttons) do not toggle the checkbox — they handle their own clicks normally."]
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:required "" :flavor "primary"}]
-          [:span.whitespace-nowrap
-           "I agree to the "
-           [:a.ty-text-primary.underline {:href "#" :on {:click #(.preventDefault %)}} "Terms of Service"]
-           " and "
-           [:a.ty-text-primary.underline {:href "#" :on {:click #(.preventDefault %)}} "Privacy Policy"]
-           "."]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:flavor "success"}]
-          [:span.whitespace-nowrap.inline-flex.items-center.gap-1
-           [:ty-icon.ty-text-success {:name "shield-check" :size "14"}]
-           "Enable two-factor authentication"]]])
-       (code-block "<label>
-  <ty-checkbox required></ty-checkbox>
-  I agree to the <a href=\"/terms\">Terms</a> and <a href=\"/privacy\">Privacy</a>.
-</label>
-
-<label>
-  <ty-checkbox flavor=\"success\"></ty-checkbox>
-  <ty-icon name=\"shield-check\"></ty-icon> Enable two-factor authentication
-</label>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Semantic Flavors")
-       (demo-area
-        [:div.flex.flex-wrap.gap-4
-         (for [[flavor label] [["primary" "Primary"] ["success" "Success"]
-                               ["danger" "Danger"] ["warning" "Warning"] ["neutral" "Neutral"]]]
-           [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-            [:ty-checkbox {:flavor flavor :checked ""}]
-            [:span.whitespace-nowrap label]])])
-       (code-block "<ty-checkbox flavor=\"primary\" checked></ty-checkbox>
-<ty-checkbox flavor=\"success\" checked></ty-checkbox>
-<ty-checkbox flavor=\"danger\" checked></ty-checkbox>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         (for [[size label] [["xs" "Extra small"] ["sm" "Small (default)"] ["md" "Medium"]
-                             ["lg" "Large"] ["xl" "Extra large"]]]
-           [:label.inline-flex.items-center.gap-2.cursor-pointer.font-medium
-            {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}
-            [:ty-checkbox {:size size :checked ""}]
-            [:span.whitespace-nowrap label]])])
-       (code-block "<ty-checkbox size=\"xs\"></ty-checkbox>
-<ty-checkbox size=\"sm\"></ty-checkbox>
-<ty-checkbox size=\"md\"></ty-checkbox>
-<ty-checkbox size=\"lg\"></ty-checkbox>
-<ty-checkbox size=\"xl\"></ty-checkbox>")]
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Validation States")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Validation UI is the consumer's responsibility — render the asterisk, error, and required indicator yourself."]
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-4
-         [:div
-          [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-           [:ty-checkbox {:required "" :flavor "primary"}]
-           [:span.whitespace-nowrap "Accept terms "
-            [:span.ty-text-danger "*"]]]
-          [:p.ty-text-danger {:style {:font-size "0.75rem" :margin-top "0.25rem"}} "You must accept the terms to continue."]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium.opacity-50
-          [:ty-checkbox {:disabled "" :checked ""}]
-          [:span.whitespace-nowrap "Locked setting (admin only)"]]])
-       (code-block "<label>
-  <ty-checkbox required flavor=\"danger\"></ty-checkbox>
-  Accept terms <span class=\"required\">*</span>
-</label>
-<p class=\"ty-text-danger\">You must accept the terms to continue.</p>")]])
-
-   (doc-section "Form Integration"
-     [:div.space-y-5
-
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "With HTML Form")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Fully form-associated — participates in FormData, submit, reset, and constraint validation like a native checkbox."]
-       (demo-area
-        [:form.flex.flex-wrap.items-center.gap-4
-         {:on {:submit (fn [e]
+     (example
+      {:title "Required in a form"
+       :span 3
+       :description [:span "Submits " [:code "name=value"] " when checked (value defaults to " [:code "on"] "). "
+                     [:code "required"] " blocks submission while unchecked."]
+       :code "<label>
+  <ty-checkbox name=\"terms\"
+    value=\"yes\" required>
+  </ty-checkbox>
+  I accept the terms
+</label>"}
+      (let [status (doc-state :status)]
+        [:form.flex.flex-col.gap-3
+         {:on {:submit (fn [^js e]
                          (.preventDefault e)
-                         (let [data (js/Object.fromEntries (js/FormData. (.-target e)))]
-                           (js/alert (str "Submitted:\n" (js/JSON.stringify data nil 2)))))}}
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:name "newsletter" :value "yes"}]
-          [:span "Subscribe to newsletter"]]
-         [:label.inline-flex.items-center.gap-2.cursor-pointer.text-sm.font-medium
-          [:ty-checkbox {:name "terms" :required ""}]
-          [:span "I accept the terms "
-           [:span.ty-text-danger "*"]]]
-         [:ty-button {:type "submit" :flavor "primary"} "Submit"]])
-       (code-block "<form>
-  <label>
-    <ty-checkbox name=\"newsletter\" value=\"yes\"></ty-checkbox>
-    Subscribe to newsletter
-  </label>
-  <label>
-    <ty-checkbox name=\"terms\" required></ty-checkbox>
-    I accept the terms
-  </label>
-  <ty-button type=\"submit\" flavor=\"primary\">Submit</ty-button>
-</form>")]
+                         (set-doc! :status (str "Sent: terms=" (.get (js/FormData. (.-target e)) "terms"))))}}
+         (row {:name "terms" :value "yes" :required "" :flavor "primary"
+               :on {:invalid #(set-doc! :status "Blocked: terms not accepted")}}
+              "I accept the terms")
+         [:div.flex.items-center.gap-3
+          [:ty-button {:size "md" :flavor "primary"} "Continue"]
+          [:code.ty-text-.text-xs (or status "Press Continue unchecked first.")]]]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "JavaScript API")
-       (code-block "const checkbox = document.querySelector('ty-checkbox');
+     (example
+      {:title "Flavors & sizes"
+       :span 3
+       :description "Flavor colors the checked tick; unchecked is the same neutral tick for every flavor. The box is one text line tall, so it lines up with its label."
+       :code "<ty-checkbox checked
+  flavor=\"success\" size=\"lg\">"}
+      [:div.flex.flex-col.gap-3
+       [:div.flex.flex-wrap.items-center.gap-4
+        (for [f flavors]
+          [:ty-checkbox {:replicant/key f :checked "" :flavor f :aria-label f}])]
+       [:div.flex.flex-wrap.items-center.gap-4
+        (for [s ["xs" "sm" "md" "lg" "xl"]]
+          [:ty-checkbox {:replicant/key s :checked "" :size s :flavor "primary" :aria-label s}])]])
 
-// Read state
-console.log(checkbox.checked);   // true | false
-console.log(checkbox.value);     // form value when checked
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const box = document.querySelector('ty-checkbox');
 
-// Set state
-checkbox.checked = true;
+box.checked = true;
+box.indeterminate = true;   // shows the dash; aria-checked=\"mixed\"
 
-// Listen for changes
-checkbox.addEventListener('change', (e) => {
-  console.log(e.detail.value);     // true | false
-  console.log(e.detail.checked);   // true | false
-  console.log(e.detail.formValue); // 'on' | null
-});" "javascript")]])
-))
+box.addEventListener('change', (e) => {
+  const { checked, formValue } = e.detail;  // formValue: value or null
+});"}
+      nil)))
+
+   (page-section
+    {:title "Theming" :sub "Three variables." :dark? true}
+    (example
+     {:title "Tick colors"
+      :side? true
+      :lang "css"
+      :description [:span "Flavors set the checked color and ring. Unchecked and hover are neutral by default; override them for a branded set."]
+      :code "ty-checkbox {
+  --checkbox-color: #2dd4bf;
+  --checkbox-color-off: #3f807a;
+  --checkbox-ring: #2dd4bf40;
+}"}
+     [:div.flex.flex-col.gap-3 {:style {"--checkbox-color" "#2dd4bf"
+                                        "--checkbox-color-off" "#3f807a"
+                                        "--checkbox-ring" "#2dd4bf40"}}
+      (row {:checked ""} "Dark mode")
+      (row {} "Reduce motion")
+      (row {:indeterminate ""} "Sync settings")]))
+
+   (api-section
+    {:properties validation-properties
+     :attributes ["State"
+                  ["checked" "boolean" "false" "On or off."]
+                  ["indeterminate" "boolean" "false" "Mixed: shows a dash. Cleared by the next click, which checks it."]
+                  ["disabled" "boolean" "false" "Not clickable, left out of the form."]
+                  "Form"
+                  ["name" "string" "Form field name."]
+                  ["value" "string" "\"on\"" "Submitted while checked."]
+                  ["required" "boolean" "false" "Blocks form submission while unchecked."]
+                  "Appearance"
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
+                  ["flavor" "string" "\"neutral\"" "Tick color: primary, success, danger, warning or custom, with + and - tones."]]
+     :events [["change" "{checked, value, formValue, originalEvent}" "Toggled by click, Space or Enter. input fires alongside with the same detail."]]
+     :keyboard [["Space / Enter" "Toggle."]
+                ["Tab" "Focus the box."]]
+     :css-vars [["--checkbox-color" "Tick when checked or mixed. Flavors set it to their strong tone."]
+                ["--checkbox-color-off" "Tick when unchecked. Default: 45% of body text."]
+                ["--checkbox-color-off-hover" "Unchecked tick on hover."]
+                ["--checkbox-hover-bg" "Pill behind the tick on hover."]
+                ["--checkbox-ring" "Focus ring."]]})))

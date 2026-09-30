@@ -96,11 +96,20 @@ ${inputStyles}
 
 /* A radio item is just the circle */
 .radio-container {
-  display: inline-block;
+  /* One line box of the surrounding text, circle centered in it — lines up
+     with the first line of a wrapping <label> (same as ty-checkbox). */
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.25em;
+  min-height: 1lh;
   cursor: pointer;
   user-select: none;
   outline: none;
   vertical-align: middle;
+}
+
+.radio-container:not(.disabled):not([aria-checked="true"]):hover .radio-circle {
+  border-color: var(--radio-ring-off-hover, color-mix(in oklab, var(--ty-text) 80%, transparent));
 }
 
 .radio-container.disabled {
@@ -119,7 +128,9 @@ ${inputStyles}
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 2px solid var(--ty-input-border);
+  /* Unchecked ring at ~3:1 in both modes, like ty-checkbox's unchecked
+     tick — --ty-input-border (the soft border) nearly vanished in dark. */
+  border: 2px solid var(--radio-ring-off, color-mix(in oklab, var(--ty-text) 45%, transparent));
   background: var(--ty-input-bg);
   box-sizing: border-box;
   transition: var(--ty-local-transition, border-color 0.15s ease-in-out);

@@ -2,8 +2,8 @@
  * ty-textarea — form-associated textarea that auto-resizes to its content,
  * within optional min-height/max-height constraints.
  *
- * @fires {CustomEvent<{value: string, originalEvent: Event}>} input - Emitted on input
- * @fires {CustomEvent<{value: string, originalEvent: Event}>} change - Emitted on change
+ * @fires {CustomEvent<{value: string, originalEvent: Event}>} input - Emitted on every edit
+ * @fires {CustomEvent<{value: string, originalEvent: Event}>} change - Emitted on blur, if the value changed (like a native textarea)
  */
 
 import { DEFAULT_SIZE } from '../types/common.js'
@@ -382,26 +382,18 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
     }
   }
 
-  private emitValueEvents(originalEvent: Event): void {
-    const value = this.value
-
-    this._internals.setFormValue(value || '')
-    this.updateValidity()
-
+  private emitValueEvent(type: 'input' | 'change', originalEvent: Event): void {
     const data = {
       bubbles: true,
       composed: true,
       detail: {
-        value,
+        value: this.value,
         originalEvent
       }
     }
 
-    // Use setTimeout to ensure these fire after standard events
-    setTimeout(() => {
-      this.dispatchEvent(new CustomEvent('input', data))
-      this.dispatchEvent(new CustomEvent('change', data))
-    }, 0)
+    // setTimeout: fire after the native (composed) input event has bubbled out
+    setTimeout(() => this.dispatchEvent(new CustomEvent(type, data)), 0)
   }
 
   private handleInputEvent = (e: Event): void => {
@@ -415,15 +407,28 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
       this.resizeTextarea(this._textareaEl, this._dummyEl)
     }
 
-    this.emitValueEvents(e)
+    this._internals.setFormValue(this.value || '')
+    this.updateValidity()
+    this.emitValueEvent('input', e)
   }
+
+
+  // Value when focus arrived; change fires on blur only if it differs.
+  // Tracked here rather than via the native change event, which skips
+  // programmatic edits (dictation, extensions, tests).
+  private _valueAtFocus: string | null = null
 
   private handleFocusEvent = (): void => {
     this._isFocused = true
+    this._valueAtFocus = this.value
   }
 
-  private handleBlurEvent = (): void => {
+  private handleBlurEvent = (e: Event): void => {
     this._isFocused = false
+    if (this._valueAtFocus !== null && this.value !== this._valueAtFocus) {
+      this.emitValueEvent('change', e)
+    }
+    this._valueAtFocus = null
   }
 
   private buildClassList(): string {
@@ -451,7 +456,6 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
 
   private setupTextareaEvents(textareaEl: HTMLTextAreaElement): void {
     textareaEl.addEventListener('input', this.handleInputEvent)
-    textareaEl.addEventListener('change', this.handleInputEvent)
     textareaEl.addEventListener('focus', this.handleFocusEvent)
     textareaEl.addEventListener('blur', this.handleBlurEvent)
   }
@@ -609,12 +613,12 @@ export class TyTextarea extends TyComponent<TextareaState> implements TyTextarea
    *  barred from constraint validation. */
   private updateValidity(): void {
     const ta = this.shadowRoot?.querySelector('textarea') as HTMLTextAreaElement | null
-    if (this.disabled) { this._internals.setValidity({}); return }
+    if (this.disabled) { this.applyValidity({}); return }
     const current = ta ? ta.value : String(this.value ?? '')
     if (this.required && current.trim() === '') {
-      this._internals.setValidity({ valueMissing: true }, 'Please fill out this field', ta ?? undefined)
+      this.applyValidity({ valueMissing: true }, 'Please fill out this field', ta ?? undefined)
     } else {
-      this._internals.setValidity({})
+      this.applyValidity({})
     }
   }
 }

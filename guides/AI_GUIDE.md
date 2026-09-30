@@ -27,7 +27,7 @@ Treasure map. Find your context, follow the link.
 | What components exist, what props they take | [TY_GUIDE.md](TY_GUIDE.md) |
 | Colors, surfaces, text classes, dark mode | [CSS_GUIDE.md](CSS_GUIDE.md) |
 | Bundlers, subpath imports, code splitting, SSR | [js/JAVASCRIPT_GUIDE.md](js/JAVASCRIPT_GUIDE.md) |
-| Icon registration and tree-shaking | [js/JAVASCRIPT_GUIDE.md § Icon tree-shaking](js/JAVASCRIPT_GUIDE.md#icon-tree-shaking) |
+| Icons: sets, registration, tree-shaking | [ICONS_GUIDE.md](ICONS_GUIDE.md) |
 | Routing in CLJS apps | [clj/ROUTING_GUIDE.md](clj/ROUTING_GUIDE.md) |
 | Internationalization in CLJS | [clj/I18N_GUIDE.md](clj/I18N_GUIDE.md) |
 | Responsive layout in CLJS | [clj/LAYOUT_GUIDE.md](clj/LAYOUT_GUIDE.md) |

@@ -272,19 +272,17 @@ This is heavier but simpler — fine for small apps. For larger apps, pattern A 
 ## Icons
 
 ```clojure
-(ns my-app.core
+(ns my-app.icons
   (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.material.filled :as mat]))
+            [tyrell.lucide :as lucide]))
 
-(defn register-icons! []
-  (icons/register!
-    {:check  lucide/check
-     :menu   mat/menu
-     :user   lucide/user}))
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
 
-Then `[:> ty/Icon {:name "check"}]`, or `[:ty-icon {:name "check"}]` for raw DOM (no React wrapping needed for a render-only icon).
+Then `[:> ty/Icon {:name "check"}]`, or `[:ty-icon {:name "check"}]` for a render-only icon.
+
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ## Calendar and wizard
 

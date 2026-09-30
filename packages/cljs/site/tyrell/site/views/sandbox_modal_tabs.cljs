@@ -21,6 +21,7 @@
 
    Delete once this class of fix has been out for a while and nobody's hit it."
   (:require
+   [clojure.string :as str]
    [tyrell.site.state :as state]))
 
 (def ^:private tab-defs
@@ -31,21 +32,24 @@
        {:mount-id 0 :open? false :tabs-mounted? false :delay-ms 0
         :active-tab "a" :log [] :opened-at nil :verdict nil}))
 
-(defn- log! [msg]
-  (let [t0 (:opened-at (sub))
-        now (.now js/performance)
-        elapsed (if t0 (js/Math.round (- now t0)) 0)]
-    (swap! state/state update-in [:sandbox-modal-tabs :log]
-           (fn [l] (vec (take-last 40 (conj (or l []) (str "+" elapsed "ms  " msg))))))))
+(defn- append-log [{:keys [opened-at] :as m} msg]
+  (let [elapsed (if opened-at (js/Math.round (- (.now js/performance) opened-at)) 0)]
+    (update m :log (fn [l] (vec (take-last 40 (conj (or l []) (str "+" elapsed "ms  " msg))))))))
+
+(defn- update-sandbox!
+  "Single swap: assoc `kvs` into the sandbox state, then append `msg` to the log."
+  [msg & kvs]
+  (swap! state/state update :sandbox-modal-tabs
+         #(append-log (if (seq kvs) (apply assoc % kvs) %) msg)))
 
 (defn- mark-bug! [property]
-  (log! (str "⚠️ transitionrun on \"" property "\" — the marker is ANIMATING"))
-  (swap! state/state assoc-in [:sandbox-modal-tabs :verdict] :bug))
+  (update-sandbox! (str "⚠️ transitionrun on \"" property "\" — the marker is ANIMATING")
+                   :verdict :bug))
 
 (defn- mark-ok-if-silent! []
   (when (nil? (:verdict (sub)))
-    (log! "no transitionrun observed on the marker → it snapped instantly")
-    (swap! state/state assoc-in [:sandbox-modal-tabs :verdict] :ok)))
+    (update-sandbox! "no transitionrun observed on the marker → it snapped instantly"
+                     :verdict :ok)))
 
 (defn- attach-transition-watch!
   "Wire the proof: listen for the marker's own CSS transition actually
@@ -67,24 +71,23 @@
   [delay-ms]
   (let [mount-id (inc (:mount-id (sub)))]
     (swap! state/state assoc :sandbox-modal-tabs
-           {:mount-id mount-id :open? true :tabs-mounted? false
-            :delay-ms delay-ms :active-tab "a" :log []
-            :opened-at (.now js/performance) :verdict nil})
-    (log! "modal opened (empty — tabs not mounted yet)")
+           (append-log {:mount-id mount-id :open? true :tabs-mounted? false
+                        :delay-ms delay-ms :active-tab "a" :log []
+                        :opened-at (.now js/performance) :verdict nil}
+                       "modal opened (empty — tabs not mounted yet)"))
     (js/requestAnimationFrame
      (fn []
-       (swap! state/state assoc-in [:sandbox-modal-tabs :tabs-mounted?] true)
-       (log! "ty-tabs mounted into the open modal, active=\"a\" (tab-0 default)")
+       (update-sandbox! "ty-tabs mounted into the open modal, active=\"a\" (tab-0 default)"
+                        :tabs-mounted? true)
        (js/setTimeout
         (fn []
-          (log! (str "app now knows the real tab — correcting active → \"d\""))
-          (swap! state/state assoc-in [:sandbox-modal-tabs :active-tab] "d")
+          (update-sandbox! "app now knows the real tab — correcting active → \"d\""
+                           :active-tab "d")
           (js/setTimeout mark-ok-if-silent! 400))
         delay-ms)))))
 
 (defn- close! []
-  (swap! state/state assoc-in [:sandbox-modal-tabs :open?] false)
-  (log! "modal closed"))
+  (update-sandbox! "modal closed" :open? false))
 
 (defn- verdict-banner [verdict]
   (case verdict
@@ -122,12 +125,10 @@
        [:h3.ty-text {:style {:font-size "1rem" :font-weight "600" :margin-bottom "0.75rem"}}
         "Account settings"]
        (if tabs-mounted?
-         ^{:key mount-id}
-         [:ty-tabs {:active active-tab :width "100%" :height "150px"
+         [:ty-tabs {:replicant/key mount-id :active active-tab :width "100%" :height "150px"
                     :replicant/on-mount (fn [{^js el :replicant/node}] (attach-transition-watch! el))}
           (for [[id label] tab-defs]
-            ^{:key id}
-            [:ty-tab {:id id :label label}
+            [:ty-tab {:replicant/key id :id id :label label}
              [:div.p-4.ty-text- {:style {:font-size "0.875rem"}} (str label " panel")]])]
          [:div.ty-text-.p-4 {:style {:font-size "0.8125rem"}} "(tabs not mounted yet…)"])
        [:div.flex.justify-end {:style {:margin-top "1rem"}}
@@ -139,6 +140,6 @@
        [:span.ty-text-- {:style {:font-size "0.7rem"}} (str "mount #" mount-id)]]
       [:pre.ty-text- {:style {:font-size "0.75rem" :line-height "1.6" :white-space "pre-wrap"
                               :min-height "3rem" :margin 0}}
-       (if (seq log) (clojure.string/join "\n" log) "(nothing yet — open the modal above)")]]
+       (if (seq log) (str/join "\n" log) "(nothing yet — open the modal above)")]]
 
      (verdict-banner verdict)]))

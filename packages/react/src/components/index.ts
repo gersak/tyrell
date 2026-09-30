@@ -88,7 +88,7 @@ export { TyCalendarMonth } from './TyCalendarMonth';
 export type { TyCalendarMonthProps, DayClickDetail } from './TyCalendarMonth';
 
 export { TyCalendarNavigation } from './TyCalendarNavigation';
-export type { TyCalendarNavigationProps, NavigationChangeDetail } from './TyCalendarNavigation';
+export type { TyCalendarNavigationProps, NavigationChangeDetail, CalendarView, ViewToggleDetail } from './TyCalendarNavigation';
 
 export { TyWizard } from './TyWizard';
 export type { TyWizardProps, WizardStepChangeDetail } from './TyWizard';

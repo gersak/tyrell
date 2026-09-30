@@ -264,10 +264,18 @@ export class TyButton
 
     switch (this.type) {
       case "submit":
+        // Contribute name=value only to THIS submission, like a native
+        // submitter. requestSubmit() builds the form data set synchronously,
+        // so clearing right after is safe — and required: a value left
+        // behind would ride along when a sibling button submits next.
         if (this.name && this.value) {
           this._internals.setFormValue(this.value);
         }
-        form.requestSubmit();
+        try {
+          form.requestSubmit();
+        } finally {
+          if (this.name && this.value) this._internals.setFormValue(null);
+        }
         break;
       case "reset":
         form.reset();

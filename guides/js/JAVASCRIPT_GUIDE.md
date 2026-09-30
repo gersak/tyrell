@@ -113,122 +113,20 @@ import 'tyrell-components/css/tyrell-theme.css'
 
 Neither file is split per-component. Both are small enough that splitting would cost more in HTTP overhead than it saves, and the design tokens (colors, surfaces, text classes) need to be globally available regardless of which components are loaded.
 
-## Icon tree-shaking
+## Icons
 
-Icons are the largest size variable in the project — get them right and bundle size stays bounded; get them wrong and you ship hundreds of KB of unused SVGs.
-
-### Why icons need explicit registration
-
-`<ty-icon name="check">` looks up `"check"` in a runtime registry. Bundlers cannot statically connect a string `"check"` to the `check` export — that link is dynamic. Tree-shaking icons therefore requires you to **explicitly register** the ones you use:
+`<ty-icon name="…">` is a runtime lookup, so the bundler can't see which icons you use. Import them by name and register them; everything you don't import is dropped.
 
 ```js
 import { registerIcons } from 'tyrell-components/icons/registry'
-import { check, heart, star } from 'tyrell-components/icons/lucide'
+import { check, chevronDown } from 'tyrell-components/icons/lucide'
 
-registerIcons({ check, heart, star })
+registerIcons({ check, 'action-down': chevronDown })  // the key is the name
 ```
 
-The bundler sees three named imports from a pure module and ships only those three SVG strings (~1.5 KB total). The other 1,633 lucide icons never enter your bundle.
+Avoid `import * as lucide` + `registerIcons(lucide)`: it ships the whole set. On the CDN build, use `window.tyIcons.register`.
 
-### Available icon families
-
-```
-tyrell-components/icons/lucide                   1,636 icons
-tyrell-components/icons/heroicons/outline         324 icons
-tyrell-components/icons/heroicons/solid           324 icons
-tyrell-components/icons/heroicons/mini            230 icons
-tyrell-components/icons/heroicons/micro           230 icons
-tyrell-components/icons/material/filled         2,400+ icons
-tyrell-components/icons/material/outlined       2,400+ icons
-tyrell-components/icons/material/round          2,400+ icons
-tyrell-components/icons/material/sharp          2,400+ icons
-tyrell-components/icons/material/two-tone       2,400+ icons
-tyrell-components/icons/fontawesome/solid       1,400+ icons
-tyrell-components/icons/fontawesome/regular       163 icons
-tyrell-components/icons/fontawesome/brands         500+ icons
-```
-
-Each file is a flat list of `export const name = '<svg>...</svg>'`. Mix freely across families:
-
-```js
-import { registerIcons } from 'tyrell-components/icons/registry'
-import { check, x, plus } from 'tyrell-components/icons/lucide'
-import { userCircle } from 'tyrell-components/icons/heroicons/outline'
-import { github, slack } from 'tyrell-components/icons/fontawesome/brands'
-
-registerIcons({
-  check, x, plus,
-  user: userCircle,    // alias to a friendlier name
-  github, slack,
-})
-```
-
-### The `import * as` trap
-
-```js
-// ❌ DO NOT DO THIS — ships all 1,636 icons
-import * as L from 'tyrell-components/icons/lucide'
-registerIcons(L)
-```
-
-Namespace imports defeat tree-shaking. Always use named imports for icons.
-
-### Custom SVGs
-
-The registry takes any string of SVG markup:
-
-```js
-import { registerIcons } from 'tyrell-components/icons/registry'
-
-registerIcons({
-  'company-logo': '<svg viewBox="0 0 24 24">...</svg>',
-  'special-badge': await fetch('/icons/badge.svg').then(r => r.text()),
-})
-```
-
-### CDN icon registration
-
-When loading from CDN, the registry is exposed on `window.tyIcons`:
-
-```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
-<script type="module">
-  await customElements.whenDefined('ty-icon')
-  window.tyIcons.register({
-    check: '<svg>...</svg>',
-    heart: '<svg>...</svg>',
-  })
-</script>
-```
-
-The CDN bundle does **not** preload any icon family — it would inflate the bundle. Either fetch icons on demand or copy the SVG strings you need.
-
-### Inline SVG — skip the registry entirely
-
-`<ty-icon>` exposes a `<slot>` whose fallback content is the registry-resolved SVG. **If you slot a raw `<svg>` as a child, the registry path is bypassed completely** — no `registerIcons` call, no `window.tyIcons` setup, no `name=` attribute:
-
-```html
-<ty-icon size="lg" class="ty-text-primary">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-</ty-icon>
-```
-
-The host element still gets every visual feature — `size`, `spin`, `pulse`, `tempo`, color via `ty-text-*` — because those style the `<ty-icon>` element, not its contents. Use `currentColor` on `fill`/`stroke` so color classes still tint the SVG.
-
-**When this is the right choice:**
-
-- Server-rendered apps (HTMX, Datastar, Phoenix LiveView, Rails Turbo, JSF, Symfony, ASP.NET) where the backend already has the SVG markup — no client-side icon catalog needed.
-- One-off custom icons (logos, illustrations) that don't belong in a registry.
-- Migration from existing inline-SVG codebases — drop `<ty-icon>` around your existing SVGs to inherit sizing/animation without rewriting the SVG layer.
-
-**When you still want the registry:**
-
-- Many icons referenced by string name across components (button slots, dropdowns, etc.) — registering once and referencing by name keeps templates clean.
-- Apps where the bundler should make icon usage statically analyzable.
-
-The two paths coexist freely on the same page.
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-javascript).
 
 ## Vanilla JS usage
 

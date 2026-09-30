@@ -391,55 +391,27 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 
 ## Icon Usage
 
-### Icon Registration
-
 ```clojure
 (ns my-app.icons
   (:require [tyrell.icons :as icons]
-            [tyrell.lucide :as lucide]
-            [tyrell.fav6.brands :as fav6-brands]))
+            [tyrell.lucide :as lucide]))
 
-(icons/register!
-  {:home           lucide/home
-   :user           lucide/user
-   :calendar       lucide/calendar
-   :save           lucide/save
-   :check          lucide/check
-   :alert-circle   lucide/alert-circle
-   :github         fav6-brands/github})
-
-;; Or use register-async! if icons.cljs loads before tyrell.js
-(icons/register-async!
-  {:check lucide/check
-   :home  lucide/home}
-  {:on-success #(println "Icons registered!")
-   :max-retries 10
-   :delay-ms 50})
+(icons/register! {:check lucide/check
+                  :user  lucide/user})   ; the key is the name
 ```
-
-### Icon Usage in Components
 
 ```clojure
-[:ty-icon {:name "user"}]
-[:ty-icon {:name "home" :size "sm"}]   ; xs, sm, md, lg, xl
-[:ty-icon.ty-text-primary {:name "star"}]
+[:ty-icon {:name "check" :size "sm"}]
 
-;; Icon in button — use slot, not gap/margin
+;; in a button: use the slot, not margins
 [:ty-button {:flavor "primary"}
- [:ty-icon {:slot "start" :name "save" :size "sm"}]
+ [:ty-icon {:slot "start" :name "check" :size "sm"}]
  "Save"]
-
-;; Icon-only button
-[:ty-button {:flavor "neutral" :size "sm"}
- [:ty-icon {:name "settings" :size "sm"}]]
 ```
 
-### Available Icon Sets
+If `tyrell.js` loads from a `<script>` after your code, use `icons/register-async!`.
 
-- **Lucide**: Modern, clean icons (primary choice)
-- **Heroicons**: Solid and outline variants
-- **Material**: Material Design icons
-- **Fav6 Brands**: Brand logos (GitHub, React, etc.)
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-clojure).
 
 ---
 

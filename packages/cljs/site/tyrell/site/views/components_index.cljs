@@ -6,7 +6,8 @@
   (:require
    [clojure.string :as str]
    [tyrell.router :as router]
-   [tyrell.site.docs :as docs]))
+   [tyrell.site.docs :as docs]
+   [tyrell.site.docs.common :as common]))
 
 ;; Grouped by interaction job, not by visual category.
 (def category-groups
@@ -63,16 +64,14 @@
      {:class (if deprecated "ty-text-danger" ["ty-text" "group-hover:ty-text-primary"])}
      name]
     (when deprecated
-      [:div.mt-1.flex.items-center.gap-1.5.flex-wrap
+      [:div.mt-1.flex.items-center.flex-wrap {:class ["gap-1.5"]}
        [:span.ty-text-danger.font-bold.text-xs.tracking-widest "DEPRECATED"]
        [:span.text-xs.ty-text- "— use"]
        [:code.ty-text-danger.font-semibold.text-xs deprecated]])
     (when description
-      [:p.mt-1.text-sm.ty-text-.leading-relaxed.transition-colors
-       {:class "group-hover:ty-text"}
+      [:p.mt-1.text-sm.ty-text-.leading-relaxed.transition-colors.group-hover:ty-text
        description])
-    [:div.mt-2.flex.items-center.gap-1.text-xs.ty-text--.transition-colors
-     {:class "group-hover:ty-text-primary"}
+    [:div.mt-2.flex.items-center.gap-1.text-xs.ty-text--.transition-colors.group-hover:ty-text-primary
      [:span "Docs"]
      [:ty-icon {:name "arrow-right"
                 :size "xs"}]]]
@@ -82,9 +81,8 @@
     {:style {:pointer-events "none"
              :min-height "100px"}}
     (or preview
-        [:ty-icon {:name (or icon "square")
-                   :size "xl"
-                   :class "ty-text-"}])]])
+        [:ty-icon.ty-text- {:name (or icon "square")
+                   :size "xl"}])]])
 
 (defn category-slug [title]
   (-> title str/lower-case (str/replace #"\s+" "-")))
@@ -101,8 +99,7 @@
     (for [id ids
           :let [item (get comp-map id)]
           :when item]
-      ^{:key id}
-      (component-row item))]])
+      (common/keyed id (component-row item)))]])
 
 (defn view []
   (let [comp-map (by-id-map)]
@@ -118,5 +115,4 @@
      ;; generous space-y between them for clear group separation
      [:div.flex.flex-col.gap-10.md:gap-12
       (for [group category-groups]
-        ^{:key (:title group)}
-        (category-section group comp-map))]]))
+        (common/keyed (:title group) (category-section group comp-map)))]]))

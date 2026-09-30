@@ -1,187 +1,197 @@
 (ns tyrell.site.docs.switch
   "Documentation for ty-switch component"
-  (:require [tyrell.site.docs.common :refer [code-block attribute-table event-table
-                                             doc-section docs-page component-header section-label demo-area]]))
+  (:require [tyrell.site.docs.common :refer [component-page page-section playground
+                                             bento example api-section
+                                             validation-properties]]
+            [tyrell.site.docs.snippets :as snippets]
+            [tyrell.site.state :as state]))
+
+(def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
+
+(def ^:private lineup
+  "Playground stage: a settings list, on and off."
+  [{:label "Wi-Fi" :checked? true}
+   {:label "Bluetooth"}
+   {:label "Airplane mode"}])
+
+(defn- prop-attrs
+  "Non-default live props, as they appear in the snippets."
+  [{:keys [size flavor required disabled]}]
+  (cond-> {}
+    (not= size "sm") (assoc :size size)
+    (not= flavor "primary") (assoc :flavor flavor)
+    required (assoc :required true)
+    disabled (assoc :disabled true)))
+
+(defn- snippets [props]
+  (let [attrs (prop-attrs props)]
+    (snippets/tabs
+     (for [{:keys [label checked?]} lineup]
+       [:label [:ty-switch (merge (when checked? {:checked true}) attrs {:jsx/onChange "{toggle}"})] label])
+     :datastar (str "<label>\n  <ty-switch" (snippets/attr-str attrs)
+                    "\n    data-on:change=\"$wifi = evt.detail.checked\">\n  </ty-switch>\n  Wi-Fi\n</label>"))))
+
+(defn- setting
+  "Settings row: text left, switch right. The <label> makes the whole row a target."
+  [attrs text & [hint]]
+  [:label.flex.items-start.justify-between.gap-6.cursor-pointer.text-sm {:replicant/key text}
+   [:span.flex.flex-col {:class ["gap-0.5"]}
+    [:span.ty-text+ text]
+    (when hint [:span.text-xs.ty-text- hint])]
+   [:ty-switch attrs]])
+
+(defn- inline
+  "Switch before its label, like a checkbox."
+  [attrs text]
+  [:label.flex.items-start.gap-3.cursor-pointer.text-sm {:replicant/key text}
+   [:ty-switch attrs]
+   [:span.ty-text+ text]])
+
+(defn- render-lineup [{:keys [size flavor required disabled]}]
+  (let [base (cond-> {:size size :flavor flavor}
+               required (assoc :required "")
+               disabled (assoc :disabled ""))]
+    [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "320px"}}
+     (for [{:keys [label checked?]} lineup]
+       (setting (cond-> base checked? (assoc :checked "")) label))]))
+
+(defn- doc-state [k] (get-in @state/state [:switch-doc k]))
+(defn- set-doc! [k v] (swap! state/state assoc-in [:switch-doc k] v))
 
 (defn view []
-  (docs-page
-   (component-header "ty-switch"
-                     "Just the toggle. Track + thumb visual with role=\"switch\" ARIA. Wrap in a <label> for click-on-text behavior. Use for immediate-effect settings, not for form submissions.")
+  (component-page
+   {:title "Switch"
+    :group "Toggles"
+    :tag "ty-switch"
+    :description "An on/off control for settings that apply right away. Track and thumb, five flavors, keyboard, and a real form value."
+    :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TySwitch (React)" "atom"]]
+    :source "packages/core/src/components/switch.ts"
+    :mark "◐"
+    :demo [:div.flex.flex-col.gap-4 {:style {:width "300px"}}
+           (setting {:checked "" :size "md"} "Notifications" "Push and email.")
+           (setting {:size "md"} "Location" "Only while using the app.")
+           (setting {:checked "" :size "md" :flavor "success"} "Auto-update" "Installs overnight.")]}
 
-   [:div.ty-elevated.rounded-lg.p-6
-    [:div.mb-5 {:style {:border-left "2px solid var(--ty-border-primary)" :padding-left "0.625rem"}}
-     [:h2.scroll-mt-6
-      {:style {:font-size "0.6875rem" :font-weight "600" :letter-spacing "0.1em" :text-transform "uppercase"}}
-      [:span.ty-text-- "API Reference"]]]
+   (playground
+    {:id :switch
+     :defaults {:size "md" :flavor "primary" :required false :disabled false}
+     :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
+                {:key :flavor :options flavors :swatch? true :tones? true}
+                {:key :required :switch? true}
+                {:key :disabled :switch? true}]
+     :render render-lineup
+     :snippets snippets})
 
-    [:div.mb-6
-     (section-label "Attributes")
-     (attribute-table
-      [{:name "checked"
-        :type "boolean"
-        :default "false"
-        :description "Current on/off state"}
-       {:name "value"
-        :type "string"
-        :default "\"on\""
-        :description "Value submitted with the form when checked"}
-       {:name "name"
-        :type "string"
-        :default "-"
-        :description "Form field name"}
-       {:name "disabled"
-        :type "boolean"
-        :default "false"
-        :description "Disable interaction"}
-       {:name "required"
-        :type "boolean"
-        :default "false"
-        :description "Sets aria-required and participates in form validation"}
-       {:name "size"
-        :type "string"
-        :default "\"sm\""
-        :description "Size variant: xs, sm, md, lg, xl"}
-       {:name "flavor"
-        :type "string"
-        :default "\"primary\""
-        :description "Semantic color when checked: primary, success, danger, warning, neutral"}])]
+   (page-section
+    {:title "Examples" :sub "Copy, paste, ship."}
+    (bento
+     (example
+      {:title "Settings that apply now"
+       :span 4
+       :description [:span "A switch means the change takes effect immediately. React to "
+                     [:code "change"] "; there's no Save button."]
+       :code "compact.addEventListener('change', (e) => {
+  document.documentElement
+    .classList.toggle('compact', e.detail.checked);
+});"}
+      (let [compact? (doc-state :compact)]
+        [:div.flex.flex-col.gap-4.w-full
+         (setting (cond-> {:on {:change #(set-doc! :compact (.. % -detail -checked))}}
+                    compact? (assoc :checked ""))
+                  "Compact rows" "Tighter spacing in lists.")
+         [:div.flex.flex-col.rounded-lg.ty-border-.border
+          {:class (if compact? ["gap-0"] ["gap-1"])}
+          (for [n ["Inbox" "Drafts" "Archive"]]
+            [:div.flex.items-center.gap-3.px-3.ty-text.text-sm
+             {:replicant/key n :class (if compact? ["py-1"] ["py-2.5"])}
+             [:ty-icon {:name "mail" :size "sm"}] n])]]))
 
-    [:div
-     (section-label "Events")
-     (event-table
-      [{:name "change"
-        :payload "{value: boolean, checked: boolean, formValue: string | null}"
-        :when-fired "Fires when toggle state changes"}
-       {:name "input"
-        :payload "{value: boolean, checked: boolean, formValue: string | null}"
-        :when-fired "Fires on every interaction (same as change for switches)"}])]]
+     (example
+      {:title "Placement"
+       :span 2
+       :description "Right-aligned in settings lists, before the label in forms. Either way, wrap it in a label."
+       :code "<label>
+  <ty-switch></ty-switch>
+  Dark mode
+</label>"}
+      [:div.flex.flex-col.gap-4.w-full
+       (setting {:checked ""} "Sync")
+       (inline {} "Dark mode")])
 
-   (doc-section "Examples"
-     [:div.space-y-6
+     (example
+      {:title "Flavors & sizes"
+       :span 3
+       :description [:span "Flavor colors the track when on; default is " [:code "primary"] ". Sizes follow the field ladder."]
+       :code "<ty-switch checked flavor=\"success\">
+<ty-switch checked size=\"lg\">"}
+      [:div.flex.flex-col.gap-3
+       [:div.flex.flex-wrap.items-center.gap-3
+        (for [f flavors] [:ty-switch {:replicant/key f :checked "" :flavor f :aria-label f}])]
+       [:div.flex.flex-wrap.items-center.gap-3
+        (for [s ["xs" "sm" "md" "lg" "xl"]] [:ty-switch {:replicant/key s :checked "" :size s :aria-label s}])]])
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Basic")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Wrap in a " [:code "<label>"] " for click-on-text toggle. The thumb slides, not snaps — users perceive it as a physical control."]
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium
-          [:ty-switch {:checked ""}] [:span.whitespace-nowrap "Email notifications"]]
-         [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium
-          [:ty-switch {:flavor "success"}] [:span.whitespace-nowrap "Auto-save drafts"]]
-         [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium
-          [:ty-switch {:flavor "danger" :checked ""}] [:span.whitespace-nowrap "Delete on archive"]]
-         [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium.opacity-60
-          [:ty-switch {:disabled ""}] [:span.whitespace-nowrap "Cannot change (admin only)"]]])
-       (code-block "<label>
-  <ty-switch checked></ty-switch>
-  Email notifications
-</label>
+     (example
+      {:title "Required in a form"
+       :span 3
+       :description [:span "Submits " [:code "name=value"] " while on. " [:code "required"]
+                     " blocks submission while off."]
+       :code "<label>
+  <ty-switch name=\"consent\" required>
+  </ty-switch>
+  Share usage data
+</label>"}
+      (let [status (doc-state :status)]
+        [:form.flex.flex-col.gap-3.w-full
+         {:on {:submit (fn [^js e]
+                         (.preventDefault e)
+                         (set-doc! :status (str "Sent: consent=" (.get (js/FormData. (.-target e)) "consent"))))}}
+         (inline {:name "consent" :required ""
+                  :on {:invalid #(set-doc! :status "Blocked: consent is off")}}
+                 "Share usage data")
+         [:div.flex.items-center.gap-3
+          [:ty-button {:size "md" :flavor "primary"} "Continue"]
+          [:code.ty-text-.text-xs (or status "Press Continue while off.")]]]))
 
-<label>
-  <ty-switch flavor=\"success\"></ty-switch>
-  Auto-save drafts
-</label>
+     (example
+      {:title "JavaScript API"
+       :lang "javascript"
+       :code "const sw = document.querySelector('ty-switch');
 
-<label>
-  <ty-switch disabled></ty-switch>
-  Cannot change (admin only)
-</label>")]
+sw.checked = true;
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Semantic Flavors")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Flavor applies when checked — use it to reinforce the meaning of the setting."]
-       (demo-area
-        [:div.flex.flex-wrap.gap-x-6.gap-y-3
-         (for [[flavor label] [["primary" "Primary"] ["success" "Success"]
-                               ["danger" "Danger"] ["warning" "Warning"] ["neutral" "Neutral"]]]
-           [:label.inline-flex.items-center.gap-3.cursor-pointer.text-sm.font-medium
-            [:ty-switch {:flavor flavor :checked ""}]
-            [:span.whitespace-nowrap label]])])
-       (code-block "<ty-switch flavor=\"primary\" checked></ty-switch>
-<ty-switch flavor=\"success\" checked></ty-switch>
-<ty-switch flavor=\"danger\" checked></ty-switch>
-<ty-switch flavor=\"warning\" checked></ty-switch>")]
+sw.addEventListener('change', (e) => {
+  const { checked, formValue } = e.detail;  // formValue: value or null
+});"}
+      nil)))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Sizes")
-       (demo-area
-        [:div.flex.flex-col.items-start.gap-3
-         (for [[size label] [["xs" "Extra small"] ["sm" "Small (default)"] ["md" "Medium"]
-                             ["lg" "Large"] ["xl" "Extra large"]]]
-           [:label.inline-flex.items-center.gap-3.cursor-pointer.font-medium
-            {:style {:font-size (case size "xs" "0.7rem" "sm" "0.8rem" "lg" "1.1rem" "xl" "1.25rem" "0.9rem")}}
-            [:ty-switch {:size size :checked ""}]
-            [:span.whitespace-nowrap label]])])
-       (code-block "<ty-switch size=\"xs\"></ty-switch>
-<ty-switch size=\"sm\"></ty-switch>
-<ty-switch size=\"md\"></ty-switch>
-<ty-switch size=\"lg\"></ty-switch>
-<ty-switch size=\"xl\"></ty-switch>")]
+   (page-section
+    {:title "Theming" :sub "One variable." :dark? true}
+    (example
+     {:title "Track color"
+      :side? true
+      :lang "css"
+      :description [:span "Flavors set " [:code "--switch-track"] " and nothing else. Set it yourself for a one-off color."]
+      :code "ty-switch.ai {
+  --switch-track: #f97316;
+}"}
+     [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "300px"}}
+      (setting {:checked "" :style {"--switch-track" "#f97316"}} "AI suggestions" "Beta.")
+      (setting {:style {"--switch-track" "#f97316"}} "Smart replies")]))
 
-      [:div.ty-content.rounded-lg.p-5
-       (section-label "Settings Panel")
-       [:p.ty-text-.mb-3 {:style {:font-size "0.8125rem" :line-height "1.6"}}
-        "Switches shine in settings UIs — changes apply immediately, no submit button needed."]
-       (demo-area
-        [:div.ty-elevated.rounded-lg {:style {:padding "0.25rem 0"}}
-         (for [[label desc flavor checked?]
-               [["Email notifications" "Receive updates about your account" "primary" true]
-                ["Push notifications" "Get alerts on your mobile device" "primary" false]
-                ["Marketing emails" "Offers and product news" "neutral" false]
-                ["Two-factor auth" "Require a code when signing in" "success" true]
-                ["Auto-delete inactive" "Remove data after 90 days of inactivity" "danger" false]]]
-           [:div.flex.items-center.justify-between
-            {:style {:padding "0.75rem 1rem" :border-bottom "1px solid var(--ty-border-soft)"}}
-            [:div
-             [:p.ty-text+ {:style {:font-size "0.875rem" :font-weight "500"}} label]
-             [:p.ty-text-- {:style {:font-size "0.75rem" :margin-top "0.125rem"}} desc]]
-            [:label.cursor-pointer
-             [:ty-switch (merge {:flavor flavor} (when checked? {:checked ""}))]]])
-
-        [:div.flex.items-center.justify-between
-         {:style {:padding "0.75rem 1rem"}}
-         [:div
-          [:p.ty-text+ {:style {:font-size "0.875rem" :font-weight "500"}} "Dark mode"]
-          [:p.ty-text-- {:style {:font-size "0.75rem" :margin-top "0.125rem"}} "Switch to dark theme"]]
-         [:label.cursor-pointer [:ty-switch {:flavor "primary" :checked ""}]]]])
-       (code-block "<div class=\"settings-row\">
-  <div>
-    <p>Email notifications</p>
-    <p class=\"ty-text--\">Receive updates about your account</p>
-  </div>
-  <label>
-    <ty-switch flavor=\"primary\" checked></ty-switch>
-  </label>
-</div>")]])
-
-   (doc-section "Switch vs Checkbox"
-     [:div.ty-content.rounded-lg.p-5
-      [:div.grid.gap-6
-       {:style {:grid-template-columns "repeat(auto-fill, minmax(240px, 1fr))"}}
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-primary {:name "toggle-right" :size "16"}]
-         [:span.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "Use ty-switch when"]]
-        [:div.space-y-2
-         (for [text ["The setting takes effect immediately (no submit)"
-                     "Toggling a system state: dark mode, notifications"
-                     "The two states are on/off, not agree/disagree"
-                     "Context is a settings panel or preferences screen"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-primary.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]
-       [:div
-        [:div.flex.items-center.gap-2.mb-3
-         [:ty-icon.ty-text-primary+ {:name "square-check" :size "16"}]
-         [:span.ty-text+ {:style {:font-size "0.8125rem" :font-weight "600"}} "Use ty-checkbox when"]]
-        [:div.space-y-2
-         (for [text ["Part of a form that gets submitted"
-                     "Asking for consent: \"I agree to the terms\""
-                     "Multiple independent options in a list"
-                     "An indeterminate state is needed (e.g. select-all)"]]
-           [:div.flex.items-start.gap-2
-            [:ty-icon.ty-text-primary+.mt-px {:name "check" :size "14"}]
-            [:p.ty-text- {:style {:font-size "0.8125rem"}} text]])]]]])
-))
+   (api-section
+    {:properties validation-properties
+     :attributes ["State"
+                  ["checked" "boolean" "false" "On or off."]
+                  ["disabled" "boolean" "false" "Not clickable, left out of the form."]
+                  "Form"
+                  ["name" "string" "Form field name."]
+                  ["value" "string" "\"on\"" "Submitted while on."]
+                  ["required" "boolean" "false" "Blocks form submission while off."]
+                  "Appearance"
+                  ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
+                  ["flavor" "string" "\"primary\"" "Track color when on: primary, success, danger, warning, neutral or custom, with + and - tones."]]
+     :events [["change" "{checked, value, formValue, originalEvent}" "Toggled by click, Space or Enter. input fires alongside with the same detail."]]
+     :keyboard [["Space / Enter" "Toggle."]
+                ["Tab" "Focus the switch."]]
+     :css-vars [["--switch-track" "Track color when on."]
+                ["--ty-input-shadow-focus" "Focus ring, shared with the fields."]]})))

@@ -484,75 +484,17 @@ When `patch-elements` targets `#transaction-list`, the scroll container maintain
 
 ## Icons
 
-You have two independent paths. Pick per icon; they coexist freely on the same page.
-
-### Option A — inline SVG (zero client JS)
-
-`<ty-icon>` exposes a `<slot>`. Drop a raw `<svg>` as a child and the registry is bypassed entirely — **no boot script, no `window.tyIcons.register`, no `name=` attribute**:
+Put the SVG inside the tag. The server already has it, so there's no registry and no boot script, and it survives SSE patches like any markup:
 
 ```html
-<ty-icon size="md" class="ty-text-primary">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
+<ty-icon size="md">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
 </ty-icon>
 ```
 
-`size`, `spin`, `pulse`, `tempo`, and `ty-text-*` color classes still apply because they style the host element, not its slotted contents. Use `currentColor` on `fill`/`stroke` so color classes tint the SVG. This is the recommended default for Datastar — the server already has the SVG strings (Lucide / Heroicons / Material / your custom set), so just emit them inline. Works under SSE patch-elements like any other markup.
+The reference examples (`examples/datastar-go/`, `examples/datastar-go-workspace/`) use this pattern. To use `name="…"` instead, register once per page (`tyIcons.register`).
 
-The two reference examples (`examples/datastar-go/` and `examples/datastar-go-workspace/`) use this exact pattern — see those for a Go-template setup.
-
-### Option B — registry (`name="…"`)
-
-Use this when you'd rather reference icons by short string name across many fragments and register them once at boot.
-
-#### Server-Side (Clojure)
-
-```clojure
-(ns myapp.icons
-  (:require [clojure.data.json :as json]
-            [tyrell.lucide :as lucide]))
-
-(def app-icons
-  {"wallet"    lucide/wallet
-   "plus"      lucide/plus
-   "settings"  lucide/settings
-   "check"     lucide/check
-   "calendar"  lucide/calendar})
-
-(defn registration-script []
-  [:script
-   (hiccup.util/raw-string
-     (str "(function() {
-       var icons = " (json/write-str app-icons) ";
-       function register() {
-         if (!window.tyIcons || !window.tyIcons.register) return false;
-         window.tyIcons.register(icons);
-         return true;
-       }
-       if (!register()) {
-         var i = setInterval(function() { if (register()) clearInterval(i); }, 100);
-         setTimeout(function() { clearInterval(i); }, 10000);
-       }
-     })()"))])
-```
-
-#### JavaScript (Build-Time Bundling)
-
-```javascript
-// icons.js — bundle with esbuild
-import { wallet, plus, settings, check, calendar } from 'tyrell-components/icons/lucide'
-window.tyIcons.register({ wallet, plus, settings, check, calendar })
-```
-
-```bash
-esbuild icons.js --bundle --minify --format=iife --outfile=static/icons.js
-```
-
-```html
-<script defer src="/static/icons.js"></script>
-```
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](ICONS_GUIDE.md#in-html).
 
 ## Complete Form Example
 

@@ -23,8 +23,24 @@ export interface TyCalendarNavigationProps extends Omit<React.HTMLAttributes<HTM
   /** Latest reachable month (ISO "YYYY-MM-DD") — navigation clamps here */
   max?: string;
 
+  /**
+   * Which grid the parent shows. 'days': the title opens the month/year view
+   * and the arrows step months. 'months': the title shows the year and
+   * closes the view, the arrows step years. Default 'days'.
+   */
+  view?: CalendarView;
+
   /** Navigation change event handler */
   onChange?: (event: CustomEvent<NavigationChangeDetail>) => void;
+
+  /** Title clicked — detail.view is the view the parent should switch to */
+  onViewToggle?: (event: CustomEvent<ViewToggleDetail>) => void;
+}
+
+export type CalendarView = 'days' | 'months';
+
+export interface ViewToggleDetail {
+  view: CalendarView;
 }
 
 export interface NavigationChangeDetail {
@@ -41,7 +57,9 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
     width,
     min,
     max,
+    view,
     onChange,
+    onViewToggle,
     ...props 
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
@@ -56,12 +74,20 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
         }
       };
 
+      const handleViewToggle = (event: Event) => {
+        if (onViewToggle) {
+          onViewToggle(event as CustomEvent<ViewToggleDetail>);
+        }
+      };
+
       element.addEventListener('change', handleChange);
+      element.addEventListener('view-toggle', handleViewToggle);
 
       return () => {
         element.removeEventListener('change', handleChange);
+        element.removeEventListener('view-toggle', handleViewToggle);
       };
-    }, [onChange]);
+    }, [onChange, onViewToggle]);
 
     useEffect(() => {
       if (ref && elementRef.current) {
@@ -85,6 +111,7 @@ export const TyCalendarNavigation = React.forwardRef<HTMLElement, TyCalendarNavi
     if (width) webComponentProps.width = width;
     if (min) webComponentProps.min = min;
     if (max) webComponentProps.max = max;
+    if (view) webComponentProps.view = view;
 
     return React.createElement(
       'ty-calendar-navigation',

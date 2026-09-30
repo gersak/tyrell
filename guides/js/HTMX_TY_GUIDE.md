@@ -89,7 +89,7 @@ Tyrell components emit a bubbling `change` event when the user commits a new val
 
 The `hx-vals='js:{...}'` form lets you pull the actual value off `event.detail.value` rather than relying on serialization. For a single select inside a `<form>`, you can skip `hx-vals` and let normal form serialization handle it.
 
-**Debouncing.** Use HTMX's built-in modifier — `hx-trigger="change delay:300ms"`. `ty-input` *also* has a built-in `delay` attribute that debounces its own `change` event before HTMX ever sees it; pick one, don't double up.
+**Debouncing.** Use HTMX's built-in modifier — `hx-trigger="change delay:300ms"`. `ty-input` *also* has a built-in `debounce` attribute (ms) that debounces its own `change` event before HTMX ever sees it; pick one, don't double up.
 
 ## Swapped content auto-upgrades
 
@@ -116,53 +116,17 @@ The wizard renders, navigates, and animates as if it had been on the page from t
 
 ## Icons
 
-You have two independent paths. Pick per icon; they coexist freely on the same page.
-
-### Option A — inline SVG (no registry, BFF-friendly)
-
-The simplest path for HTMX: render the SVG server-side and slot it as a child of `<ty-icon>`. No `name=`, no `window.tyIcons.register`, no boot `<script>` block:
+Put the SVG inside the tag. The server already has it, so there's no registry and no boot script, and it works in every swap (regular, OOB, `hx-boost`):
 
 ```html
-<!-- Whatever your template engine emits, just put the <svg> inside <ty-icon> -->
-<ty-icon size="md" class="ty-text-primary">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-       stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
+<ty-icon size="md">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
 </ty-icon>
 ```
 
-`size`, `spin`, `pulse`, `tempo`, and `ty-text-*` classes still apply to the host element. Use `currentColor` on `fill`/`stroke` so text-color classes tint the SVG. This works in every swap automatically — htmx swaps, OOB swaps, hx-boost transitions. A small template helper on the server side (Go template func, Jinja macro, Clojure helper emitting `[:ty-icon {...} svg-markup]`) keeps templates terse.
+A template helper (Jinja macro, Go template func, Clojure fn) keeps templates short. To use `name="…"` instead, register once per page with `tyIcons.register`; swapped-in content reads the same registry.
 
-### Option B — registry (`name="…"`)
-
-`<ty-icon name="check">` is a runtime registry lookup — the CDN bundle ships with **no icons preloaded**. Use this when you want short `name=` attributes across many fragments. Register before any HTML referencing an icon hits the page:
-
-```html
-<script type="module">
-  import { check, search, x } from 'https://cdn.jsdelivr.net/npm/tyrell-components/icons/lucide';
-  window.tyIcons.register({ check, search, x });
-</script>
-```
-
-Place this `<script type="module">` *before* the first request that returns HTML containing `<ty-icon name="…">`. Icons referenced in swapped content render from the same registry — no need to re-register on each swap.
-
-For server-rendered apps with many icons, pre-build a bundled icon manifest:
-
-```html
-<script type="module" src="/static/icons.js"></script>
-```
-
-```js
-// /static/icons.js
-import * as lucide from 'https://cdn.jsdelivr.net/npm/tyrell-components/icons/lucide';
-window.tyIcons.register({
-  check: lucide.check,
-  search: lucide.search,
-  user: lucide.user,
-  // …everything your views might reference
-});
-```
+Sets, tree-shaking, custom SVGs and troubleshooting: [ICONS_GUIDE.md](../ICONS_GUIDE.md#in-html).
 
 ## Modals and HTMX
 
