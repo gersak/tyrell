@@ -23,13 +23,21 @@
     required (assoc :required true)
     disabled (assoc :disabled true)))
 
+(defn- datastar-toggle
+  "data-bind binds a custom element's value, not checked, so a toggle is a
+   signal mirrored with data-attr:checked and written back on change."
+  [label on?]
+  (let [sig (snippets/signal label)]
+    {(snippets/ds (str "data-signals:" (snippets/slug label))) (str (boolean on?))
+     (snippets/ds "data-attr:checked") (str "$" sig)
+     (snippets/ds "data-on:change") (str "$" sig " = evt.detail.checked")}))
+
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label checked? indeterminate?]} lineup]
-       [:label [:ty-checkbox (merge {:checked checked? :indeterminate indeterminate?} attrs {:jsx/onChange "{toggle}"})] label])
-     :datastar (str "<label>\n  <ty-checkbox" (snippets/attr-str attrs)
-                    "\n    data-on:change=\"$releaseNotes = evt.detail.checked\">\n  </ty-checkbox>\n  Email me release notes\n</label>"))))
+       [:label [:ty-checkbox (merge {:checked checked? :indeterminate indeterminate?} attrs {:jsx/onChange "{toggle}"}
+                                    (datastar-toggle label checked?))] label]))))
 
 (defn- row
   "A labeled checkbox: the <label> delegates clicks to the box."
@@ -213,7 +221,7 @@ box.addEventListener('change', (e) => {
      :keyboard [["Space / Enter" "Toggle."]
                 ["Tab" "Focus the box."]]
      :css-vars [["--checkbox-color" "Tick when checked or mixed. Flavors set it to their strong tone."]
-                ["--checkbox-color-off" "Tick when unchecked. Default: 45% of body text."]
-                ["--checkbox-color-off-hover" "Unchecked tick on hover."]
+                ["--checkbox-color-off" "Tick when unchecked. Default: 30% of body text."]
+                ["--checkbox-color-off-hover" "Unchecked tick on hover. Default: 50% of body text."]
                 ["--checkbox-hover-bg" "Pill behind the tick on hover."]
                 ["--checkbox-ring" "Focus ring."]]})))

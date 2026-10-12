@@ -754,22 +754,37 @@ ${fieldSizeVars}
   margin-left: 0.25rem;
 }
 
-/* Selected strip: pinned, capped height, collapses when empty */
+/* The two sections are an accordion: exactly one is open, the other is its
+   header and nothing else. Both share a 36px basis (the header) and the open
+   one claims the free space with flex-grow — a number, so it interpolates.
+   max-height can't do this job: the open state has no finite height to
+   animate to, and a transition to the keyword none simply snaps. */
 
-.dropdown-mode-mobile .mobile-selected-section {
+.dropdown-mode-mobile .mobile-body .section-header {
+  height: 36px;
+  flex: 0 0 36px;
+}
+
+.dropdown-mode-mobile .mobile-selected-section,
+.dropdown-mode-mobile .mobile-available-section {
   display: flex;
   flex-direction: column;
   background: var(--ty-input-bg);
   overflow: hidden;
-  flex: 0 0 auto;
-  max-height: 40%;
-  transition: max-height 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 36px;
+  flex: 0 1 36px;
+  transition: flex-grow 220ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Empty: collapse to header only */
+.dropdown-mode-mobile .mobile-body[data-expanded="selected"] .mobile-selected-section,
+.dropdown-mode-mobile .mobile-body[data-expanded="available"] .mobile-available-section {
+  flex-grow: 1;
+}
+
+/* Nothing selected: the strip can never take the space, whatever the body
+   says — expanding into an empty panel is just a gap. */
 .dropdown-mode-mobile .mobile-selected-section[data-empty="true"] {
-  max-height: 36px;
-  flex: 0 0 36px;
+  flex-grow: 0;
 }
 
 .dropdown-mode-mobile .mobile-selected-section .section-content {
@@ -787,17 +802,6 @@ ${fieldSizeVars}
   mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
 }
 
-/* Available list takes the remaining space */
-
-.dropdown-mode-mobile .mobile-available-section {
-  display: flex;
-  flex-direction: column;
-  background: var(--ty-input-bg);
-  overflow: hidden;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .dropdown-mode-mobile .mobile-available-section .section-content {
   flex: 1;
   min-height: 0;
@@ -808,6 +812,90 @@ ${fieldSizeVars}
   flex-wrap: wrap;
   gap: 0.5rem;
   align-content: flex-start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-mode-mobile .mobile-selected-section,
+  .dropdown-mode-mobile .mobile-available-section {
+    transition: none;
+  }
+}
+
+/* Headers are the accordion control: full-width, tappable, chevron flips to
+   point at whichever section currently owns the space. */
+.dropdown-mode-mobile .mobile-body .section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dropdown-mode-mobile .mobile-body .section-header svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  opacity: 0.5;
+  transition: transform 180ms ease;
+}
+
+.dropdown-mode-mobile .mobile-body .section-header[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+/* Nothing selected: the strip is just its header, so it isn't a control */
+.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] .section-header {
+  cursor: default;
+}
+
+.dropdown-mode-mobile .mobile-selected-section[data-empty="true"] .section-header svg {
+  display: none;
+}
+
+/* Chips in the selected strip are shadow-local buttons, not slotted tags —
+   the strip mirrors the selection rather than re-homing the consumer's
+   ty-option elements, so tapping one can deselect without moving nodes
+   between two slots. */
+.dropdown-mode-mobile .mobile-selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.625rem;
+  border: 1px solid var(--ty-border);
+  border-radius: 9999px;
+  background: var(--ty-surface-content);
+  color: var(--ty-text);
+  font: inherit;
+  font-size: var(--ty-font-sm);
+  line-height: var(--ty-leading-sm);
+  cursor: pointer;
+  transition: transform 0.1s ease, border-color 0.15s ease;
+  animation: ty-select-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dropdown-mode-mobile .mobile-selected-chip svg {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .dropdown-mode-mobile .mobile-selected-chip:hover {
+    border-color: var(--ty-text-soft);
+  }
+  .dropdown-mode-mobile .mobile-selected-chip:hover svg {
+    opacity: 1;
+  }
+}
+
+.dropdown-mode-mobile .mobile-selected-chip:active {
+  transform: scale(0.96);
 }
 
 /* Selected strip collapses (no text needed).

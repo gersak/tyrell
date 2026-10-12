@@ -22,24 +22,29 @@
 
 (defn- snippets [{:keys [shadow custom height]}]
   (let [attrs (str " max-height=\"" height "\""
-                   (when-not shadow " shadow=\"false\"")
+                   (when-not shadow " no-shadow")
                    (when custom " custom-scrollbar"))]
     [["html" "HTML" "html" (str "<ty-scroll-container" attrs ">\n  …long content…\n</ty-scroll-container>")]
      ["react" "React" "javascript"
-      (str "import { TyScrollContainer } from 'tyrell-react'\n\n<TyScrollContainer" attrs ">\n  {rows}\n</TyScrollContainer>")]
+      (str "import { TyScrollContainer } from 'tyrell-react'\n\n<TyScrollContainer maxHeight=\"" height "\""
+           (when-not shadow " noShadow") (when custom " customScrollbar") ">\n  {rows}\n</TyScrollContainer>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n[:> ty/ScrollContainer {:max-height \"" height "\""
-           (when-not shadow " :shadow false") (when custom " :custom-scrollbar true") "}\n rows]")]
+           (when-not shadow " :no-shadow true") (when custom " :custom-scrollbar true") "}\n rows]")]
      ["replicant" "Replicant" "clojure"
       (str "[:ty-scroll-container {:max-height \"" height "\""
-           (when-not shadow " :shadow \"false\"") (when custom " :custom-scrollbar \"\"") "}\n rows]")]
+           (when-not shadow " :no-shadow \"\"") (when custom " :custom-scrollbar \"\"") "}\n rows]")]
+     ;; nearend fires once on entering the bottom zone; the server appends rows
+     ;; to #people and bumps $cursor
      ["datastar" "Datastar" "html"
-      (str "<ty-scroll-container" attrs "\n  data-on:nearend=\"@get('/people?after=' + $cursor)\">\n  …\n</ty-scroll-container>")]]))
+      (str "<ty-scroll-container" attrs "\n  data-signals:cursor=\"0\""
+           "\n  data-on:nearend=\"@get('/people?after=' + $cursor)\">\n"
+           "  <div id=\"people\">…long content…</div>\n</ty-scroll-container>")]]))
 
 (defn- render-playground [{:keys [shadow custom height]}]
   [:div.rounded-xl.border.ty-border-.overflow-hidden {:style {:width "100%" :max-width "360px"}}
    [:ty-scroll-container (cond-> {:max-height height}
-                           (not shadow) (assoc :shadow "false")
+                           (not shadow) (assoc :no-shadow "")
                            custom (assoc :custom-scrollbar ""))
     (map-indexed (fn [i p] (row i p "Computer scientist")) people)]])
 
@@ -178,7 +183,7 @@ box.addEventListener('nearstart', (e) => loadNewer(e.detail.distance));"}
                   ["max-height" "string" "Height at which it starts scrolling, e.g. 320px."]
                   ["overflow-x" "boolean" "false" "Scroll horizontally instead."]
                   "Look"
-                  ["shadow" "boolean" "true" "Edge shadows where there's more content. shadow=\"false\" to turn off."]
+                  ["no-shadow" "boolean" "false" "No edge shadows (they show where there's more content)."]
                   ["custom-scrollbar" "boolean" "false" "Themed overlay scrollbar instead of the native one."]
                   ["hide-scrollbar" "boolean" "false" "No visible scrollbar; still scrolls."]
                   "Behavior"

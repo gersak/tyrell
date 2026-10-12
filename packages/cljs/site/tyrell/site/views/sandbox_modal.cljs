@@ -1,8 +1,8 @@
 (ns tyrell.site.views.sandbox-modal
   "Hidden verification page — /internal/modal. NOT linked from nav or search.
 
-   Verifies the prevent-escape / prevent-outside-click presence-boolean API
-   (and that the older close-on-*=\"false\" form still works). Each card says
+   Verifies the prevent-escape / prevent-outside-click presence-boolean API.
+   Each card says
    what ESC and a backdrop click should do; the status line under the buttons
    prints every close event with its reason, so a modal that closes when it
    shouldn't is immediately visible.
@@ -57,8 +57,7 @@
    [:p.ty-text-.max-w-2xl {:style {:font-size "0.875rem" :line-height "1.7"}}
     "Presence booleans name the deviation from the default, like native "
     [:code "disabled"] ": bare " [:code "prevent-escape"] " / "
-    [:code "prevent-outside-click"] " turn a close path off. The old "
-    [:code "close-on-*=\"false\""] " form must keep working. Every close event "
+    [:code "prevent-outside-click"] " turn a close path off. Every close event "
     "prints below with its reason — if a guarded modal closes, you'll see it."]
    [:p.ty-text-.max-w-2xl {:style {:font-size "0.8125rem" :line-height "1.7"}}
     [:strong "Double-ESC check: "] "browsers only allow ONE close request to be "
@@ -90,13 +89,7 @@
                 :attrs {:prevent-escape true :prevent-outside-click true}
                 :markup "<ty-modal prevent-escape prevent-outside-click>"
                 :esc "do NOTHING"
-                :outside "do NOTHING"})
-
-    (demo-card {:title "Legacy form still works"
-                :attrs {:close-on-escape "false"}
-                :markup "<ty-modal close-on-escape=\"false\">"
-                :esc "do NOTHING"
-                :outside "close"})]
+                :outside "do NOTHING"})]
 
    [:div.ty-content.rounded-lg.p-5.space-y-2
     [:div.flex.items-center.justify-between

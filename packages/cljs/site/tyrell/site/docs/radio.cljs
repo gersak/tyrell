@@ -26,10 +26,8 @@
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
     (snippets/tabs
-     [(into [:ty-radio-group (merge {:label "Plan" :name "plan" :value "pro"} attrs)]
-            (for [[v label] plans] [:label {:snippet/inline true} [:ty-radio {:value v}] label]))]
-     :datastar (str "<ty-radio-group name=\"plan\"" (snippets/attr-str attrs)
-                    "\n  data-on:change=\"$plan = evt.detail.value\">\n  …\n</ty-radio-group>"))))
+     [(into [:ty-radio-group (merge {:label "Plan" :name "plan" :value "pro"} attrs {(snippets/ds "data-bind") "plan"})]
+            (for [[v label] plans] [:label {:snippet/inline true} [:ty-radio {:value v}] label]))])))
 
 (defn- option
   "A labeled radio with an optional hint line."

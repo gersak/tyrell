@@ -261,7 +261,6 @@ export default function DatePickerExample() {
             <TyDatePicker
               label="Event Date"
               value={selectedDate}
-              clearable
               onChange={handleDateChange}
             />
 
@@ -305,7 +304,6 @@ export default function DatePickerExample() {
               label="Appointment Time"
               with-time
               value={appointmentTime}
-              clearable
               onChange={handleAppointmentChange}
             />
 
@@ -394,7 +392,6 @@ export default function DatePickerExample() {
               label="Edge Case Testing"
               withTime
               value={edgeCaseDate}
-              clearable
               onChange={(e) => {
                 setEdgeCaseDate(e.detail.value || '')
                 logEvent('edge-case', e.detail.value || 'cleared')
@@ -455,7 +452,6 @@ export default function DatePickerExample() {
                 label="Parse Test Result"
                 withTime
                 value={parseTestValue}
-                clearable
                 onChange={(e) => {
                   logEvent('parse-test', `${parseTestValue} → ${e.detail.value}`)
                 }}
@@ -578,7 +574,6 @@ export default function DatePickerExample() {
                     label={`Flavor: ${flavor}`}
                     flavor={flavor as any}
                     value="2024-09-21T08:30:00.000Z"
-                    clearable
                   />
                 ))}
               </div>
@@ -601,7 +596,6 @@ export default function DatePickerExample() {
                   label="Morning Appointment (with time)"
                   withTime
                   value="2024-09-21T09:00:00.000Z"
-                  clearable
                   onChange={(e) => {
                     console.log('Time change:', e.detail)
                     logEvent('time-test', `${e.detail.source}: ${e.detail.value}`)
@@ -612,7 +606,6 @@ export default function DatePickerExample() {
                   label="Afternoon Meeting (with time)"
                   withTime
                   value="2024-09-21T14:30:00.000Z"
-                  clearable
                   onChange={(e) => {
                     logEvent('time-test', `${e.detail.source}: ${e.detail.value}`)
                   }}
@@ -670,7 +663,6 @@ export default function DatePickerExample() {
                   label="Set Custom Time"
                   withTime
                   value={appointmentTime}
-                  clearable
                   onChange={handleAppointmentChange}
                 />
 
@@ -890,7 +882,6 @@ export default function DatePickerExample() {
             <TyDatePicker
               label="With Clear Button"
               value="2024-09-21T08:30:00.000Z"
-              clearable
             />
 
             <TyDatePicker

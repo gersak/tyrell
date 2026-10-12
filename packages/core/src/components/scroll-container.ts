@@ -22,18 +22,18 @@ export class TyScrollContainer extends HTMLElement {
   private _nearEndFired = false
 
   static get observedAttributes(): string[] {
-    return ['shadow', 'max-height', 'hide-scrollbar', 'custom-scrollbar', 'overflow-x', 'scroll-anchoring']
+    return ['no-shadow', 'max-height', 'hide-scrollbar', 'custom-scrollbar', 'overflow-x', 'scroll-anchoring']
   }
 
   // ============ Property Accessors ============
 
-  get shadow(): boolean {
-    return this.getAttribute('shadow') !== 'false'
+  /** Edge shadows are on by default; no-shadow turns them off. */
+  get noShadow(): boolean {
+    return this.hasAttribute('no-shadow')
   }
 
-  set shadow(value: boolean) {
-    if (value) this.removeAttribute('shadow')
-    else this.setAttribute('shadow', 'false')
+  set noShadow(value: boolean) {
+    value ? this.setAttribute('no-shadow', '') : this.removeAttribute('no-shadow')
   }
 
   get maxHeight(): string | null {
@@ -193,19 +193,28 @@ export class TyScrollContainer extends HTMLElement {
     this._contentObserver = new MutationObserver((records) => {
       const wrap = this._scrollWrapper
       if (!wrap) return
-      const wrapTop = wrap.getBoundingClientRect().top
+
+      const added = new Set<Node>()
+      for (const r of records) r.addedNodes.forEach((n) => added.add(n))
+      if (added.size === 0) return
+
+      // Total height of the unbroken run of newly-added nodes at the TOP of
+      // the content — those were prepended above whatever the user was
+      // reading, so the viewport must move down by exactly that to stay put.
+      //
+      // Deciding this per-node by on-screen geometry (what this did before)
+      // undercounts the moment the prepended block is taller than the current
+      // scrollTop: scrollTop hasn't been compensated yet, so every node past
+      // the fold measures as "below the viewport" and gets skipped — even
+      // though it too was inserted above the anchor. A batch prepend ("load
+      // 12 older rows") is the normal case, so the fix has to be positional,
+      // not visual.
       let addedAbove = 0
-      for (const r of records) {
-        r.addedNodes.forEach((n) => {
-          if (n.nodeType !== Node.ELEMENT_NODE) return
-          // A node that STARTS above the viewport top was inserted before the
-          // content you were looking at, so it pushed that content down by its
-          // FULL height — even if its tail now reaches into view. (Counting only
-          // the above-the-fold part left a jump of the visible remainder.)
-          const rect = (n as HTMLElement).getBoundingClientRect()
-          if (rect.top < wrapTop) addedAbove += rect.height
-        })
+      for (const child of Array.from(this.children)) {
+        if (!added.has(child)) break
+        addedAbove += (child as HTMLElement).offsetHeight
       }
+
       if (addedAbove > 0) {
         wrap.scrollTop += addedAbove
         this._scrollbar?.update()

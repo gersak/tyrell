@@ -11,7 +11,7 @@
   "Playground stage: the values people actually copy."
   [{:label "API key" :value "sk_live_51HqT2xK9vB3mN8pQ4rL7w" :format "code"}
    {:label "Share link" :value "https://tyrell.dev/components/copy-field"}
-   {:label "Install" :value "npm install @gersak/ty" :format "code"}])
+   {:label "Install" :value "npm install tyrell-components" :format "code"}])
 
 (defn- prop-attrs
   "Non-default live props, as they appear in the snippets."
@@ -24,9 +24,8 @@
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label value format]} lineup]
-       [:ty-copy (merge {:label label :value value :format format} attrs)])
-     :datastar (str "<ty-copy label=\"Invite link\"" (snippets/attr-str attrs)
-                    "\n  data-attr:value=\"$inviteUrl\"\n  data-on:copy-success=\"$copied = true\">\n</ty-copy>"))))
+       [:ty-copy (merge {:label label :value value :format format} attrs
+                        {(snippets/ds "data-on:copy-success") (str "@post('/audit/copied/" (snippets/slug label) "')")})]))))
 
 (defn- render-lineup [{:keys [size flavor]}]
   [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "420px"}}

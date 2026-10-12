@@ -48,8 +48,8 @@ This example tests the following components:
 - **TyCheckbox** - Checked state, form integration
 
 ### Selection Components
-- **TyDropdown** - Options, selection events, keyboard navigation
-- **TyMultiselect** - Multiple selections, tag display
+- **TySelect** - Options, selection events, keyboard navigation
+- **TySelect `multiple`** - Multiple selections, tag options
 
 ### Overlay Components
 - **TyModal** - Imperative API (`show()`/`hide()`), ESC key, backdrop

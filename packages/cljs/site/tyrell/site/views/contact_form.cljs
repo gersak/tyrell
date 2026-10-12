@@ -69,8 +69,8 @@
                              "var(--ty-surface-canvas)")}}
    [:div.flex.flex-col.gap-3
     [:span.text-xs.font-semibold.uppercase.ty-text-primary {:style {:letter-spacing "0.14em"}} "Contact"]
-    [:h3.text-2xl.font-bold.ty-text++ {:style {:letter-spacing "-0.02em" :line-height "1.15"}} "Let's build something."]
-    [:p.text-sm.ty-text-.leading-relaxed "Tell us what you're working on. A human reads every message."]]
+    [:h3.text-2xl.font-bold.ty-text++ {:style {:letter-spacing "-0.02em" :line-height "1.15"}} "Start a conversation."]
+    [:p.text-sm.ty-text-.leading-relaxed "Describe what you're working on. A human reads every message."]]
    [:ul.flex.flex-col.gap-4
     (for [[icon title detail] [["mail" "hello@example.com" "Email"]
                                ["github" "gersak/tyrell" "GitHub discussions"]
@@ -141,7 +141,7 @@
           (if sending? "Sending…" "Send message")]]]]]
      (kit/result-modal
       {:open (some? sent) :on-close #(put! :sent nil) :icon "check" :flavor "success"
-       :title "Message Sent" :subtitle "We'll respond within 24 hours."
+       :title "Message Sent" :subtitle "Expect a reply within 24 hours."
        :actions [[:ty-button {:flavor "neutral" :size "sm" :on {:click #(put! :sent nil)}} "Close"]
                  [:ty-button {:flavor "primary" :size "sm" :on {:click clear!}} "Send Another"]]}
       (kit/summary [["Name" (:full-name sent)] ["Email" (:email sent)] ["Company" (:company sent)]

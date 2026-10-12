@@ -7,8 +7,7 @@ import {
   TyButton,
   TyModal,
   TyInput,
-  TyDropdown,
-  TyMultiselect,
+  TySelect,
   TyTextarea,
   TyOption,
   type TyModalRef,
@@ -129,7 +128,7 @@ export default function FixesTestPage() {
 
         <TyModal
           open={modalOpen}
-          closeOnOutsideClick={false}
+          preventOutsideClick
           onClose={(e: any) => {
             setModalOpen(false)
             log(setModalCloseLog, `onClose fired — reason: ${(e as CustomEvent).detail?.reason ?? 'unknown'}`)
@@ -215,8 +214,8 @@ export default function FixesTestPage() {
           </div>
 
           <div>
-            <p className="text-xs ty-text- mb-2 font-medium uppercase tracking-wide">TyDropdown</p>
-            <TyDropdown
+            <p className="text-xs ty-text- mb-2 font-medium uppercase tracking-wide">TySelect</p>
+            <TySelect
               label="Custom styled dropdown"
               placeholder="Select..."
               value={dropdownVal}
@@ -226,12 +225,12 @@ export default function FixesTestPage() {
               <TyOption value="a">Option A</TyOption>
               <TyOption value="b">Option B</TyOption>
               <TyOption value="c">Option C</TyOption>
-            </TyDropdown>
+            </TySelect>
           </div>
 
           <div>
-            <p className="text-xs ty-text- mb-2 font-medium uppercase tracking-wide">TyMultiselect</p>
-            <TyMultiselect
+            <p className="text-xs ty-text- mb-2 font-medium uppercase tracking-wide">TySelect multiple</p>
+            <TySelect multiple
               label="Custom styled multiselect"
               placeholder="Select..."
               value={multiselectVal}
@@ -241,7 +240,7 @@ export default function FixesTestPage() {
               <TyOption value="x">Item X</TyOption>
               <TyOption value="y">Item Y</TyOption>
               <TyOption value="z">Item Z</TyOption>
-            </TyMultiselect>
+            </TySelect>
           </div>
         </div>
       </section>

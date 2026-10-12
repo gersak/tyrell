@@ -23,13 +23,21 @@
     required (assoc :required true)
     disabled (assoc :disabled true)))
 
+(defn- datastar-toggle
+  "data-bind binds a custom element's value, not checked, so a toggle is a
+   signal mirrored with data-attr:checked and written back on change."
+  [label on?]
+  (let [sig (snippets/signal label)]
+    {(snippets/ds (str "data-signals:" (snippets/slug label))) (str (boolean on?))
+     (snippets/ds "data-attr:checked") (str "$" sig)
+     (snippets/ds "data-on:change") (str "$" sig " = evt.detail.checked")}))
+
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label checked?]} lineup]
-       [:label [:ty-switch (merge (when checked? {:checked true}) attrs {:jsx/onChange "{toggle}"})] label])
-     :datastar (str "<label>\n  <ty-switch" (snippets/attr-str attrs)
-                    "\n    data-on:change=\"$wifi = evt.detail.checked\">\n  </ty-switch>\n  Wi-Fi\n</label>"))))
+       [:label [:ty-switch (merge (when checked? {:checked true}) attrs {:jsx/onChange "{toggle}"}
+                                  (datastar-toggle label checked?))] label]))))
 
 (defn- setting
   "Settings row: text left, switch right. The <label> makes the whole row a target."

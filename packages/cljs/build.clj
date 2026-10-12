@@ -7,8 +7,8 @@
    [deps-deploy.deps-deploy :as deploy]
    [tyrell.template :as template]))
 
-(def ty-version "1.0.0-RC15-SNAPSHOT")
-(def ty-icons-version "1.0.0-RC15-SNAPSHOT")
+(def ty-version "1.0.0-RC16-SNAPSHOT")
+(def ty-icons-version "1.0.0-RC16-SNAPSHOT")
 (def class-dir "target/classes")
 
 ;; Library configurations
@@ -21,14 +21,31 @@
    :resource-dirs ["resources/tyrell"]
    :jar-file (format "target/tyrell-%s.jar" ty-version)})
 
-(def ty-icons-lib
-  {:group-id "dev.gersak"
-   :artifact-id "tyrell-icons"
-   :version ty-icons-version
-   :basis-alias :tyrell-icons-lib
-   :src-dirs ["icons"]
-   :resource-dirs ["resources/tyrell-icons"]
-   :jar-file (format "target/tyrell-icons-%s.jar" ty-icons-version)})
+;; Icons ship as one jar per set, so dev.gersak/tyrell can depend on Lucide
+;; alone (~0.7 MB) instead of every set (~10 MB). dev.gersak/tyrell-icons is
+;; the umbrella: all sets as dependencies, plus the tyrell.icons.build
+;; extract tool. :files are paths under icons/.
+(def icon-sets
+  [{:artifact-id "tyrell-icons-lucide"
+    :description "Lucide icons as Clojure defs, for Tyrell"
+    :files ["tyrell/lucide.cljc"]}
+   {:artifact-id "tyrell-icons-heroicons"
+    :description "Heroicons (outline, solid, mini, micro) as Clojure defs, for Tyrell"
+    :files ["tyrell/heroicons"]}
+   {:artifact-id "tyrell-icons-material"
+    :description "Material icons (filled, outlined, round, sharp, two-tone) as Clojure defs, for Tyrell"
+    :files ["tyrell/material"]}
+   {:artifact-id "tyrell-icons-fontawesome"
+    :description "Font Awesome 6 (solid, regular, brands) as Clojure defs, for Tyrell"
+    :files ["tyrell/fav6"]}])
+
+(def icons-umbrella
+  {:artifact-id "tyrell-icons"
+   :description "Every Tyrell icon set, plus tyrell.icons.build/extract to ship only the icons you use"
+   :files ["tyrell/icons/build.clj"]
+   :deps (map :artifact-id icon-sets)})
+
+(def icon-jars (conj icon-sets icons-umbrella))
 
 (defn clean [_]
   (b/delete {:path "target"}))
@@ -246,12 +263,67 @@
   (create-jar ty-lib)
   (println "Built:" (:jar-file ty-lib)))
 
+(defn- icon-jar-paths [{:keys [artifact-id]}]
+  (let [class-dir (str "target/icons/" artifact-id)]
+    {:class-dir class-dir
+     :pom-file (str class-dir "/META-INF/maven/dev.gersak/" artifact-id "/pom.xml")
+     :jar-file (format "target/%s-%s.jar" artifact-id ty-icons-version)}))
+
+(defn- icon-pom
+  "Hand-written pom: the set jars have no dependencies, and the umbrella's
+   are its siblings at the same version, which can't be resolved into a
+   basis before they're published."
+  [{:keys [artifact-id description deps]}]
+  (str "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+<project xmlns=\"http://maven.apache.org/POM/4.0.0\">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>dev.gersak</groupId>
+  <artifactId>" artifact-id "</artifactId>
+  <version>" ty-icons-version "</version>
+  <name>" artifact-id "</name>
+  <description>" description "</description>
+  <url>https://github.com/gersak/tyrell</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/gersak/tyrell</url>
+    <connection>scm:git:git://github.com/gersak/tyrell.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/gersak/tyrell.git</developerConnection>
+    <tag>v" ty-icons-version "</tag>
+  </scm>
+  <dependencies>"
+       (apply str (for [d deps]
+                    (str "
+    <dependency>
+      <groupId>dev.gersak</groupId>
+      <artifactId>" d "</artifactId>
+      <version>" ty-icons-version "</version>
+    </dependency>")))
+       "
+  </dependencies>
+</project>
+"))
+
+(defn- build-icon-jar [{:keys [artifact-id files] :as spec}]
+  (let [{:keys [class-dir pom-file jar-file]} (icon-jar-paths spec)]
+    (doseq [f files
+            :let [src (io/file "icons" f)]]
+      (if (.isDirectory src)
+        (b/copy-dir {:src-dirs [(.getPath src)] :target-dir (str class-dir "/" f)})
+        (b/copy-file {:src (.getPath src) :target (str class-dir "/" f)})))
+    (io/make-parents pom-file)
+    (spit pom-file (icon-pom spec))
+    (b/jar {:class-dir class-dir :jar-file jar-file})
+    (println (format "Built: %s (%.1f MB)" jar-file (/ (.length (io/file jar-file)) 1048576.0)))))
+
 (defn build-ty-icons [_]
-  (println "Building dev.gersak/tyrell-icons...")
+  (println "Building dev.gersak/tyrell-icons*...")
   (clean nil)
-  (create-pom ty-icons-lib)
-  (create-jar ty-icons-lib)
-  (println "Built:" (:jar-file ty-icons-lib)))
+  (run! build-icon-jar icon-jars))
 
 (defn build-all [_]
   (build-ty nil)
@@ -268,12 +340,15 @@
 
 (defn install-ty-icons [_]
   (build-ty-icons nil)
-  (b/install {:basis (b/create-basis {:aliases [:tyrell-icons-lib]})
-              :lib (symbol (str (:group-id ty-icons-lib) "/" (:artifact-id ty-icons-lib)))
-              :version (:version ty-icons-lib)
-              :jar-file (:jar-file ty-icons-lib)
-              :class-dir class-dir})
-  (println "Installed dev.gersak/tyrell-icons to local repo"))
+  (let [basis (b/create-basis {:aliases [:tyrell-icons-lib]})]
+    (doseq [{:keys [artifact-id] :as spec} icon-jars
+            :let [{:keys [class-dir jar-file]} (icon-jar-paths spec)]]
+      (b/install {:basis basis
+                  :lib (symbol "dev.gersak" artifact-id)
+                  :version ty-icons-version
+                  :jar-file jar-file
+                  :class-dir class-dir})
+      (println "Installed" (str "dev.gersak/" artifact-id) "to local repo"))))
 
 (defn install-all [_]
   (install-ty-icons nil)
@@ -287,13 +362,16 @@
                     :pom-file pom-path}))
   (println "Deployed dev.gersak/tyrell to Clojars"))
 
-(defn deploy-ty-icons [_]
+(defn deploy-ty-icons
+  "Sets first, umbrella last: its pom points at the set jars."
+  [_]
   (build-ty-icons nil)
-  (let [pom-path (get-pom-path (:group-id ty-icons-lib) (:artifact-id ty-icons-lib))]
+  (doseq [{:keys [artifact-id] :as spec} icon-jars
+          :let [{:keys [jar-file pom-file]} (icon-jar-paths spec)]]
     (deploy/deploy {:installer :remote
-                    :artifact (:jar-file ty-icons-lib)
-                    :pom-file pom-path}))
-  (println "Deployed dev.gersak/tyrell-icons to Clojars"))
+                    :artifact jar-file
+                    :pom-file pom-file})
+    (println "Deployed" (str "dev.gersak/" artifact-id) "to Clojars")))
 
 (defn deploy-all [_]
   (deploy-ty-icons nil)

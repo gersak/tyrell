@@ -112,7 +112,7 @@
   []
   (let [styles ["filled" "outlined" "round" "sharp" "two-tone"]]
     (doseq [style styles
-            :let [target (str "gen/ty/material/" style ".cljc")]]
+            :let [target (str "gen/ty/material/" (str/replace style "-" "_") ".cljc")]]
       (println "Generating" style "icons to" target)
       (io/make-parents target)
       (let [icons (list-images style)]

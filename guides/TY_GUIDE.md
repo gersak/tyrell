@@ -82,6 +82,7 @@ ty-input        slot="start" | (input field)  | slot="end"
 ty-tag          slot="start" | (tag text)     | slot="end"
 ty-select       slot="start" | slot="end" | slot="trigger" (custom chrome) | slot="loading"
 ty-tabs         slot="label-{id}" (rich tab label)  |  slot="marker" (active indicator)
+ty-tab          (default: panel) | slot="loading" | slot="error" (lazy tabs)
 ty-wizard       slot="indicator-{id}" (custom step indicator)
 ```
 
@@ -125,7 +126,7 @@ FormData: submits raw number, not formatted string.
 | `warning` | Caution | Unsaved changes, limits |
 | `neutral` | Default, no weight | Cancel, Close |
 
-Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `--ty-solid-X` design tokens and the component themes itself, `+`/`-` shades included. Every flavored component supports this (`ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group`, `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar`); missing tokens degrade to neutral. See [CSS_GUIDE.md → Custom Flavors](./CSS_GUIDE.md#custom-flavors-add-your-own).
+Any other string is a **custom flavor**. Easiest: one seed color (`--ty-X-seed: #784011`) plus a once-pasted engine block from the Theming page's flavor builder, and the flavor follows the dials and dark mode like a built-in. Or hand-pick the 16 `--ty-color-X` / `--ty-bg-X` / `--ty-solid-X` tokens. Either way the component themes itself, `+`/`-` shades included. Every flavored component supports this (`ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group`, `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar`); missing tokens degrade to neutral. See [CSS_GUIDE.md → Custom Flavors](./CSS_GUIDE.md#custom-flavors-add-your-own).
 
 ---
 
@@ -146,7 +147,7 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 |-----------|------|---------|-------------|
 | `flavor` | string | `'neutral'` | Built-in: `primary` \| `success` \| `danger` \| `warning` \| `neutral`. Append `+` for stronger or `-` for softer shade (e.g. `"primary+"`, `"danger-"`). Any other string is a custom flavor: define `--ty-solid-X`(`-fg/-hover/...`), `--ty-color-X-*`, `--ty-bg-X-soft` tokens and it themes like a built-in (missing tokens fall back to neutral); `--ty-button-*` variables still override per instance. `ty-tag` works the same way via `--ty-bg-X` / `--ty-color-X` / `--ty-border-X`. |
 | `appearance` | string | `'solid'` | `solid` (saturated brand fill) \| `outlined` (transparent bg, text === border) \| `ghost` (text only with hover bg) |
-| `size` | string | `'md'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — 24/28/32/36/40px |
 | `type` | string | `'submit'` | `button` \| `submit` \| `reset` |
 | `disabled` | boolean | `false` | |
 | `pill` | boolean | `false` | Rounded shape |
@@ -159,6 +160,41 @@ Any other string is a **custom flavor**: define `--ty-color-X` / `--ty-bg-X` / `
 **Sizing:** buttons run a 24-40px 4px ladder, sharing its top three steps with the fields' 32/36/40px ladder. Pairing with a field: **alongside** in a row, field `sm`/`md`/`lg` match button `md`/`lg`/`xl` exactly (32/36/40); **embedded** in a field's `end` slot, use the **same** size name — it nests with a consistent ~4px margin. See [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing).
 
 **Custom colors:** override per button with `--ty-button-bg`, `--ty-button-bg-hover`, `--ty-button-color`, `--ty-button-border`. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).
+
+**Custom sizing — style the control, not the host.** The host is a bare
+`inline-block` wrapper; the control is the `<button>` inside the shadow root.
+Height, padding and font all live on the control, so `ty-button { min-height }`
+or `ty-button { height }` grows the *wrapper* and leaves the control where it
+was — with a strip of dead, unclickable space over the difference. Use one of
+these two instead:
+
+```css
+/* 1. The size dials, per rung or per instance. */
+ty-button.tap {
+  --ty-button-height: 44px;      /* control height (24/28/32/36/40 by rung) */
+  --ty-button-min-width: 0;      /* default 4rem; ignored by [action] */
+  --ty-button-pad-x: 12px;
+  --ty-button-pad-y: 0;
+  --ty-button-font: 0.875rem;
+  --ty-button-leading: 20px;
+  --ty-button-tracking: 0;
+  --ty-button-gap: 8px;
+  --ty-button-action-size: 44px;  /* [action] square box */
+  --ty-button-action-icon: 20px;  /* icon inside it */
+}
+
+/* 2. ::part for anything the dials don't cover. */
+ty-button.tap::part(button) { min-height: 44px; }
+```
+
+For full width use the `wide` attribute — `width: 100%` on the host has the
+same problem (the control keeps its content width).
+
+> **Touch targets:** the ladder tops out at 40px, below iOS's 44pt and
+> Material's 48dp. Phone-facing UIs should raise `xs`/`sm` themselves —
+> `--ty-button-height` under a `(pointer: coarse)` media query is the
+> straightforward way — and give the fields beside them the same floor via
+> `--ty-field-height`, or rows stop sitting flush.
 
 ---
 
@@ -285,7 +321,9 @@ THE select control. Single select by default with a form-field look matching `ty
 | `name` | string | - | Single submits one FormData entry; multiple submits repeated `name=` entries |
 | `label` | string | - | |
 | `placeholder` | string | `'Select...'` | Shown while empty; selection shows the option itself (single) or joined labels (multiple) |
-| `searchable` | string | `'auto'` | Popup search row: `auto` = only for 8+ options; `searchable`/`"true"` always; `"false"` never. `external-search` and `allow-create` always show it |
+| `selected-label` | string | `'Selected'` | Mobile dialog only: heading of the pinned selection strip; the count is appended (`Selected (3)`) |
+| `available-label` | string | `'Available'` | Mobile dialog only: heading of the option list; counts what's still on offer (excludes already-selected and search-hidden options) |
+| `not-searchable` | boolean | `false` | Drop the popup search row. A select is searchable by default; this is the single opt-out — bare presence attribute, like `disabled`. Can't override `external-search`/`allow-create`, where the input is the only way to type a query |
 | `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response |
 | `allow-create` | boolean | `false` | Enter on unmatched search text mints a new `<ty-option>` and selects it. Exact match (value or label, case-insensitive) selects the existing option instead of duplicating. Single: replaces selection, closes. Multiple: appends, clears search, stays open (tags-input pattern). Fires the cancelable `create` event first — see below |
 | `create-transform` | string | `'none'` | `'slug'`: normalizes the **value** allow-create mints (lowercase, spaces → `_`, strips non-alphanumeric). The display label is always kept verbatim regardless |
@@ -295,14 +333,14 @@ THE select control. Single select by default with a form-field look matching `ty
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `placement` | string | - | Popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic. Takes precedence over `align` |
 | `align` | string | `'start'` | Horizontal popup anchor only: `'start'` (trigger's left edge), `'center'`, or `'end'` (trigger's right edge) — clamped into the viewport either way. Useful with `slot="trigger"` when the custom trigger sits near the right edge of its container. Prefer `placement` for new markup |
-| `clearable` | boolean | `true` | Built-in × clear button in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. `not-clearable` (or `clearable="false"`) opts out |
+| `no-clear` | boolean | `false` | No built-in × clear button. Normally it sits in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
 **Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-options` templates.
 
 **Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
 
-**Methods:** `clear()` — empties the entire selection and fires `change` (`action: 'clear'`); no-op if nothing is selected. Works regardless of `clearable`/skin, so `slot="trigger"` consumers can wire their own clear icon's click handler to it directly. `deselectValue(value)` — removes one value and fires `change` (`action: 'remove'`); used internally by `ty-selected-options` chip dismissal.
+**Methods:** `clear()` — empties the entire selection and fires `change` (`action: 'clear'`); no-op if nothing is selected. Works regardless of `no-clear`/skin, so `slot="trigger"` consumers can wire their own clear icon's click handler to it directly. `deselectValue(value)` — removes one value and fires `change` (`action: 'remove'`); used internally by `ty-selected-options` chip dismissal.
 
 **Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` is `'set' | 'add' | 'remove' | 'clear' | 'create'` — `'clear'` from the clear button or `clear()`, `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
 
@@ -330,7 +368,7 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 | `size` | string | `'md'` | |
 | `value` | string | - | |
 | `selected` | boolean | `false` | |
-| `pill` | boolean | `true` | |
+| `no-pill` | boolean | `false` | Square corners instead of fully rounded |
 | `clickable` | boolean | `false` | |
 | `dismissible` | boolean | `false` | |
 | `disabled` | boolean | `false` | |
@@ -347,13 +385,31 @@ By default tabs are **scrollable**: each button keeps its natural width (floored
 
 **Use `fixed` for 2–5 tabs.** Equal shares only read as tabs while each share fits its label — split a bar between 17 and every one becomes an ellipsis. Rough check: if *widest label × tab count* exceeds the narrowest width you support, stay on the scrollable default and let the `…` menu carry the rest. Keep it off for open-ended or user-generated tab sets.
 
-**ty-tab:** `id` (required), `label` (required)
+**ty-tab:** `id` (required), `label` (required), `lazy` (presence boolean)
 
-**Slots:** `label-{id}` (rich label), `marker` (active indicator)
+**Slots:** `label-{id}` (rich label), `marker` (active indicator); on a lazy `ty-tab`: `loading`, `error`
 
-**Events:** `ty-tab-change` -> `{ activeId, activeIndex, previousId, previousIndex }`
+**Events:** `ty-tab-change` -> `{ activeId, activeIndex, previousId, previousIndex }`; `ty-tab-load` -> `{ id, index }` (fired on the ty-tab, doesn't bubble)
 
-**ARIA:** full tab pattern — `role="tablist"` / `role="tab"` (+ `aria-selected`) on the buttons, `role="tabpanel"` (+ `aria-labelledby`, `tabindex="0"`) on each `<ty-tab>` itself (it *is* the panel — there's no separate wrapper). No `aria-controls`: the button lives in shadow DOM and the panel in light DOM, and ARIA id-references don't resolve across that boundary — `aria-labelledby` (light DOM → shadow DOM id) is the direction that actually works.
+**ARIA:** full tab pattern — `role="tablist"` / `role="tab"` (+ `aria-selected`) on the buttons; each `<ty-tab>`'s panel is a `tabpanel` named after its label. Role and name sit inside the ty-tab's shadow root, not on the element, so a server morph can't strip them; hidden panels are `inert`. No `aria-controls` / `aria-labelledby`: buttons live in shadow DOM, panels in light DOM, and ARIA id-references don't cross that boundary.
+
+**Server morphs (Datastar, htmx/idiomorph):** re-rendering `ty-tabs` keeps the shown tab, size and panel visibility — no `data-preserve-attr` needed. `active` is a request: a morph that sends a different `active` switches to it (and fires `ty-tab-change`); one that omits it keeps the current tab. Read the shown tab from the `activeTab` property.
+
+**Lazy tabs:** a `lazy` ty-tab with no content fires `ty-tab-load` when it's shown, after `ty-tab-change`. The event doesn't bubble, so a lazy tab nested in another one never triggers the outer tab's listener; listen on the tab, or on `ty-tabs` with `{ capture: true }`. The tab shown first never fires: render its content with the page. Until content arrives the tab shows a spinner (`setLoaderSvg()` changes it) or your `slot="loading"`, fading in after 150ms so fast loads don't flash it; the panel is `aria-busy`. Switching away and back while it loads doesn't fire again. If loading fails, call `tab.loadFailed()`: the tab shows `slot="error"` (default "Couldn't load.") and a Retry button (`::part(retry)`). Retry, or showing the tab again, fires `ty-tab-load` once more. ty-tab doesn't watch htmx or Datastar requests: report failures yourself. Content that goes away again (a morph with the server's empty tab) loads again: at once if the tab is shown, otherwise when it's next shown.
+
+```html
+<ty-tab id="reports" label="Reports" lazy>
+  <div slot="loading">Loading reports…</div>      <!-- optional -->
+  <span slot="error">Couldn't load reports.</span> <!-- optional -->
+</ty-tab>
+<script>
+  tabs.addEventListener('ty-tab-load', async (e) => {
+    const res = await fetch(`/tabs/${e.detail.id}`).catch(() => null);
+    if (res?.ok) e.target.innerHTML = await res.text();
+    else e.target.loadFailed();
+  }, { capture: true });
+</script>
+```
 
 ```html
 <ty-tabs height="400px" active="overview">
@@ -371,7 +427,7 @@ By default tabs are **scrollable**: each button keeps its natural width (floored
 ```css
 --ty-tab-min-width             /* 72px — scrollable tab button floor; ignored by `fixed` */
 --ty-tabs-separator            /* line between bar and panel; transparent removes it */
---ty-tabs-transition-duration  /* 300ms — marker glide, carousel slide, panel fade */
+--ty-tabs-transition-duration  /* marker glide + carousel slide 300ms, panel fade 400ms; setting it applies to all three */
 --ty-tabs-transition-easing    /* ease-in-out */
 ```
 
@@ -419,10 +475,10 @@ Attrs: `value` (ISO `YYYY-MM-DD` — sets selection *and* the displayed month; r
 | `locale` | string | `'en-US'` | |
 | `size` | string | `'md'` | |
 | `placement` | string | - | Calendar popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic |
-| `clearable` | boolean | `true` | Built-in × clear button in the stub, shown once a date is selected. Suppressed while `disabled`. Use `not-clearable` (or `clearable="false"`) to opt out. |
+| `no-clear` | boolean | `false` | No built-in × clear button. Normally it shows in the stub once a date is selected, except while `disabled`. |
 | `flavor` | string | `'default'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the stub border + focus ring (override via `--date-picker-accent` / `--date-picker-accent-bold` / `--date-picker-ring`) and the popup calendar's selected/today day (forwarded to the nested `ty-calendar`). |
 
-**Methods:** `clear()` — clears the value programmatically and fires `change` (`detail.source: 'clear'`); works regardless of `clearable`, for any external trigger that wants to clear the field without the built-in button.
+**Methods:** `clear()` — clears the value programmatically and fires `change` (`detail.source: 'clear'`); works regardless of `no-clear`, for any external trigger that wants to clear the field without the built-in button.
 
 **Events:** `change` -> `{ value, localValue, milliseconds, formatted, source }` (`source` is `'selection' | 'time-change' | 'clear' | 'external'`) | **Form value:** UTC ISO `2024-09-21T08:30:00.000Z`
 
@@ -441,13 +497,12 @@ Attrs: `open`, `backdrop` (default true), **`prevent-escape`**, **`prevent-outsi
 ```html
 <ty-modal prevent-outside-click>…</ty-modal>              <!-- backdrop click does nothing -->
 <ty-modal prevent-escape prevent-outside-click>…</ty-modal> <!-- fully guarded -->
+<ty-modal no-backdrop>…</ty-modal>                          <!-- page not dimmed -->
 ```
 
 Property mirrors `preventEscape` / `preventOutsideClick` take real booleans (true sets the attribute, false removes it). `prevent-escape` consumes the Escape *keydown*, so the browser's CloseWatcher anti-trap (which force-closes on a second consecutive ESC after one canceled close request) never engages; the Android back gesture deliberately remains force-closable as the last-resort escape hatch.
 
 **Accessibility contract:** a fully guarded modal has no built-in ✕ (the ✕ follows the outside-click setting), so **you must render your own keyboard-reachable close control inside it** — otherwise it's a WCAG 2.1.2 keyboard trap in your app. ESC-closing is also the ARIA APG convention; reserve `prevent-escape` for real guards (unsaved changes, payment in flight), and prefer the gentler `beforeclose` + `hide({ force: true })` confirm pattern where a response to ESC is acceptable.
-
-*Deprecated:* the older `close-on-escape="false"` / `close-on-outside-click="false"` attributes (and `closeOnEscape` / `closeOnOutsideClick` properties) still work — `prevent-*` wins when both are present — but they will be removed in a future release; string-valued booleans were the root of a whole bug class. Migrate to `prevent-*`.
 
 Events: `open`, `close`, **`beforeclose`** (cancellable). Listen to `beforeclose` and call `event.preventDefault()` to guard against unsaved-state dismissal. The detail contains `reason: 'programmatic' | 'backdrop' | 'escape' | 'close-button' | 'native'` — `close` reports the same reason. Once your custom confirm UI captures consent, call `.hide({ force: true })` to bypass the event.
 
@@ -551,7 +606,7 @@ Attrs: `name`, `size` (`xs` | `sm` | `md` | `lg` | `xl`), `spin`, `pulse`, `temp
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `shadow` | boolean | `true` | Show top/bottom shadow indicators |
+| `no-shadow` | boolean | `false` | No top/bottom shadow indicators |
 | `max-height` | string | - | Constrain height (e.g. `"400px"`, `"50vh"`) |
 | `hide-scrollbar` | boolean | `false` | Hide native scrollbar |
 | `custom-scrollbar` | boolean | `false` | Render custom styled scrollbar |
@@ -719,6 +774,7 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 | `ty-file-upload` | `change` | `{ value: File[], files: File[], names: string[] }` |
 | `ty-calendar` | `change` | `{ year, month, day, action, source, dayContext }` |
 | `ty-tabs` | `ty-tab-change` | `{ activeId, activeIndex, previousId, previousIndex }` |
+| `ty-tab` | `ty-tab-load` | `{ id, index }` (lazy tab shown with no content; doesn't bubble) |
 | `ty-wizard` | `ty-wizard-step-change` | `{ activeId, activeIndex, previousId, previousIndex, direction }` |
 | `ty-modal` | `close` | `{ reason, returnValue? }` |
 | `ty-tag` | `dismiss` | -- |

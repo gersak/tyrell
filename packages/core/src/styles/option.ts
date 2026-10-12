@@ -59,7 +59,6 @@ export const optionStyles = `
 .option-content[highlighted] {
   background: var(--ty-bg-neutral-soft);
   color: var(--ty-text-strong);
-  font-weight: var(--ty-font-semibold);
 }
 
 /* Selected: quiet — bolder text color only, no background slab, no weight change */
@@ -68,9 +67,11 @@ export const optionStyles = `
   color: var(--ty-text-bold);
 }
 
-/* Lucide check — right-aligned, visible only on selected options */
+/* Lucide check — right-aligned. Its box is always reserved so selecting
+   (or highlighting) never changes the row's width and rewraps the text. */
 .option-check {
-  display: none;
+  display: block;
+  visibility: hidden;
   flex-shrink: 0;
   width: 14px;
   height: 14px;
@@ -79,7 +80,7 @@ export const optionStyles = `
 }
 
 .option-content[selected] .option-check {
-  display: block;
+  visibility: visible;
 }
 
 /* Never show the check on the copy cloned into the select's trigger field */

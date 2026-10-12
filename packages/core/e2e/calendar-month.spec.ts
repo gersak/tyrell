@@ -14,7 +14,7 @@ test.describe('ty-calendar-month — edge cases', () => {
         cal.addEventListener('day-click', (e: any) => resolve(e.detail), { once: true })
         const day15 = Array.from(cal.shadowRoot!.querySelectorAll('.calendar-day-cell'))
           .find((el) => el.textContent?.trim() === '15' && !el.classList.contains('other-month')) as HTMLElement
-        day15.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+        day15.click()
       })
     })
     expect((detail as any).day).toBe(15)
@@ -34,7 +34,7 @@ test.describe('ty-calendar-month — edge cases', () => {
         ;(window as any).__dayClickFired = true
       })
     })
-    await day5.dispatchEvent('pointerdown')
+    await day5.click({ force: true }) // disabled day: bypass the enabled wait, assert it emits nothing
     fired = await page.evaluate(() => !!(window as any).__dayClickFired)
     expect(fired).toBe(false)
   })
@@ -113,7 +113,7 @@ test.describe('ty-calendar-month — edge cases', () => {
     const detailPromise = page.evaluate(() => new Promise((resolve) => {
       document.getElementById('cal')!.addEventListener('day-click', (e: any) => resolve(e.detail), { once: true })
     }))
-    await day15.dispatchEvent('pointerdown')
+    await day15.click()
     const detail: any = await detailPromise
     expect(detail.day).toBe(15)
   })

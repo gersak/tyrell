@@ -26,7 +26,7 @@ describe('ty-tabs', () => {
     const el = await fixture(markup);
     await nextFrame();
     const btnB = el.shadowRoot!.querySelector('[data-tab-id="b"]') as HTMLElement;
-    setTimeout(() => btnB.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    setTimeout(() => btnB.click());
     const ev = await oneEvent(el, 'ty-tab-change');
     expect(ev.detail.activeId).to.equal('b');
     expect(el.getAttribute('active')).to.equal('b');
@@ -49,13 +49,17 @@ describe('ty-tabs', () => {
       </div>
     `;
 
-    it('never writes a measured pixel width back into --tabs-width', async () => {
+    it('stays fluid without writing to its own style attribute', async () => {
       const host = await fixture(wide);
       const el = host.querySelector('ty-tabs') as HTMLElement;
       await nextFrame();
       await nextFrame();
-      // Percentage widths must stay fluid; a px value here is the shrink loop.
-      expect(el.style.getPropertyValue('--tabs-width')).to.not.match(/px/);
+      // Sizing lives in the shadow root, so a server morph can't wipe it.
+      expect(el.getAttribute('style'), 'host style attribute').to.equal(null);
+      (host as HTMLElement).style.width = '700px';
+      await nextFrame();
+      await nextFrame();
+      expect(el.getBoundingClientRect().width).to.be.closeTo(700, 1);
     });
 
     it('does not collapse tabs into overflow when there is room', async () => {
@@ -172,5 +176,43 @@ describe('ty-tabs', () => {
       const marker = sr.querySelector('.marker-wrapper') as HTMLElement;
       expect(parseFloat(marker.style.left)).to.be.closeTo(btnE.offsetLeft, 1);
     });
+  });
+});
+
+describe('ty-tabs active set right after mount (framework "mount, then apply state")', () => {
+  it('the post-render frame does not replay the stale active tab', async () => {
+    const el = (await fixture(html`
+      <ty-tabs>
+        <ty-tab id="a" label="General">General panel</ty-tab>
+        <ty-tab id="b" label="Security">Security panel</ty-tab>
+        <ty-tab id="c" label="Notifications">Notifications panel</ty-tab>
+        <ty-tab id="d" label="Billing">Billing panel</ty-tab>
+      </ty-tabs>
+    `)) as HTMLElement;
+
+    // Correct `active` in the same task as the mount — before render()'s own
+    // requestAnimationFrame has had a chance to run.
+    el.setAttribute('active', 'd');
+
+    await nextFrame();
+    await nextFrame();
+
+    const sr = el.shadowRoot!;
+    const btnD = sr.querySelector('[data-tab-id="d"]') as HTMLElement;
+    const marker = sr.querySelector('.marker-wrapper') as HTMLElement;
+    const wrapper = sr.querySelector('.panels-wrapper') as HTMLElement;
+    const panelD = el.querySelector('#d') as HTMLElement;
+
+    expect(parseFloat(marker.style.left), 'marker sits on the corrected tab')
+      .to.be.closeTo(btnD.offsetLeft, 1);
+    expect(parseFloat(marker.style.width), 'marker spans the corrected tab')
+      .to.be.closeTo(btnD.offsetWidth, 1);
+    expect(btnD.getAttribute('aria-selected'), 'corrected tab is selected').to.equal('true');
+    expect(wrapper.style.transform, 'carousel is on the corrected panel (index 3), not index 0')
+      .to.equal('translateX(-300%)');
+    expect(getComputedStyle(panelD).visibility, 'corrected panel is the visible one').to.equal('visible');
+    expect(getComputedStyle(panelD).opacity, 'corrected panel snapped in, no fade').to.equal('1');
+    expect(getComputedStyle(el.querySelector('#a')!).visibility, 'stale tab-0 panel is hidden')
+      .to.equal('hidden');
   });
 });

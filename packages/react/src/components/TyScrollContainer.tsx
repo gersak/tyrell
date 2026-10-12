@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useImperativeHandle } from 'react';
 import { hostProps } from '../utils/host-props';
-import { needsPropertyBridge } from '../utils/react-version';
-import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
+import { useBooleanProperty } from '../utils/use-boolean-prop';
 
 /** Detail payload for nearstart / nearend events. */
 export interface TyScrollNearEdgeDetail {
@@ -15,8 +14,8 @@ export interface TyScrollContainerProps extends React.HTMLAttributes<HTMLElement
   /** Maximum height of the scroll container */
   maxHeight?: string;
 
-  /** Enable/disable scroll shadows (default: true) */
-  shadow?: boolean;
+  /** No edge shadows (on by default) */
+  noShadow?: boolean;
 
   /** Hide native scrollbar (no custom scrollbar) */
   hideScrollbar?: boolean;
@@ -66,7 +65,7 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
   ({
     children,
     maxHeight,
-    shadow,
+    noShadow,
     hideScrollbar,
     customScrollbar,
     overflowX,
@@ -89,16 +88,7 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
       get element() { return elementRef.current; }
     }), []);
 
-    // shadow defaults to true; bridge it imperatively so flipping back to true
-    // propagates on React 18.
-    useEffect(() => {
-      if (!needsPropertyBridge) return;
-      if (shadow === undefined) return;
-      const el = elementRef.current as any;
-      if (!el) return;
-      const next = coerceBool(shadow);
-      if (Boolean(el.shadow) !== next) el.shadow = next;
-    }, [shadow]);
+    const isNoShadow = useBooleanProperty(elementRef, 'noShadow', noShadow);
 
     const isHideScrollbar = useBooleanProperty(elementRef, 'hideScrollbar', hideScrollbar);
     const isCustomScrollbar = useBooleanProperty(elementRef, 'customScrollbar', customScrollbar);
@@ -128,7 +118,7 @@ export const TyScrollContainer = React.forwardRef<TyScrollContainerRef, TyScroll
     if (maxHeight) webComponentProps['max-height'] = maxHeight;
     if (nearEdgeThreshold != null) webComponentProps['near-edge-threshold'] = String(nearEdgeThreshold);
 
-    if (shadow !== undefined && !coerceBool(shadow)) webComponentProps.shadow = 'false';
+    if (isNoShadow) webComponentProps['no-shadow'] = '';
     if (isHideScrollbar) webComponentProps['hide-scrollbar'] = '';
     if (isCustomScrollbar) webComponentProps['custom-scrollbar'] = '';
     if (isOverflowX) webComponentProps['overflow-x'] = '';

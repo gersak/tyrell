@@ -325,9 +325,17 @@ export class TyRadioGroup
   /**
    * Find ty-radio descendants in this group's light DOM. Searches deeply
    * because consumers may wrap each radio in a `<label>` for click delegation.
+   *
+   * Only upgraded radios: when a group is cloned from a template or set via
+   * innerHTML, elements upgrade in tree order, so the group's initial `value`
+   * sync runs while its radios are still plain HTMLElements. Writing
+   * checked/size/flavor onto those would create own properties that shadow
+   * the accessors after upgrade. Each radio fires ty-radio-connected once
+   * upgraded, which re-syncs the group.
    */
   private getRadios(): TyRadio[] {
-    return Array.from(this.querySelectorAll("ty-radio")) as TyRadio[];
+    return (Array.from(this.querySelectorAll("ty-radio")) as TyRadio[])
+      .filter((r) => typeof r.setTabStop === "function");
   }
 
   private syncChildren(): void {

@@ -338,7 +338,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
           {icon:mail:start}
         </ty-input>
 
-        <ty-dropdown
+        <ty-select
           label="Department"
           name="department"
           data-bind="department">
@@ -346,7 +346,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
           <ty-option value="billing">Billing</ty-option>
           <ty-option value="account">Account &amp; Access</ty-option>
           <ty-option value="other">Other</ty-option>
-        </ty-dropdown>
+        </ty-select>
 
         <div>
           <p class="ty-text- text-sm mb-2">Priority</p>

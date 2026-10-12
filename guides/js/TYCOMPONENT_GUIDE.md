@@ -15,7 +15,7 @@
 ✅ **Framework Agnostic** - Works with React, Vue, Reagent, vanilla JS
 ✅ **Form Integration** - Built-in ElementInternals support
 ✅ **Property Validation** - Automatic type coercion and validation
-✅ **Attribute Aliases** - Support for negative attributes (e.g., `not-clearable`)
+✅ **Attribute Aliases** - Extra attribute names that set a property to a fixed value
 ✅ **Dual Event System** - Separate 'prop:change' and 'change' events for clarity
 
 ---
@@ -213,7 +213,7 @@ export class TySelect extends TyComponent<SelectState> {
 | `default` | `any` | Default value when property is undefined |
 | `validate` | `(value: any) => boolean` | Custom validation function |
 | `coerce` | `(value: any) => any` | Custom coercion/transformation function |
-| `aliases` | `Record<string, any>` | Attribute aliases (e.g., `{'not-clearable': false}`) |
+| `aliases` | `Record<string, any>` | Extra attribute names mapped to a fixed value (e.g., `{'compact': true}`) |
 
 ### Step 3: Create Property Accessors (Simple!)
 
@@ -458,28 +458,24 @@ private renderDesktop(): void {
 
 ## 🎨 Common Patterns
 
-### Pattern 1: Boolean Properties with Aliases
+### Pattern 1: Default-On Features
+
+A feature that's on by default gets a boolean that names the deviation and defaults to `false`, like native `disabled`. Never a `default: true` boolean: frameworks render `false` by dropping the attribute, which would turn it back on.
 
 ```typescript
 protected static properties = {
-  clearable: {
+  noClear: {
     type: 'boolean' as const,
     visual: true,
-    default: true,
-    aliases: { 'not-clearable': false }
+    default: false
   }
 }
 ```
 
 **Usage** (this is how `ty-date-picker` defines its clear button):
 ```html
-<!-- Both are equivalent -->
-<ty-date-picker clearable></ty-date-picker>
-<ty-date-picker></ty-date-picker> <!-- default is true -->
-
-<!-- Both hide the clear button -->
-<ty-date-picker clearable="false"></ty-date-picker>
-<ty-date-picker not-clearable></ty-date-picker>
+<ty-date-picker></ty-date-picker>          <!-- clear button -->
+<ty-date-picker no-clear></ty-date-picker> <!-- none -->
 ```
 
 ### Pattern 2: Validated String Properties
@@ -943,7 +939,7 @@ protected render(): void {
 4. ✅ Predictable lifecycle (State → Render → Events)
 5. ✅ Form association support
 6. ✅ Framework compatibility (React, Vue, Reagent)
-7. ✅ Property aliases (e.g., not-clearable → clearable: false)
+7. ✅ Default-on features as `no-*` booleans (e.g., `no-clear`)
 
 **You implement**:
 1. Property configuration object

@@ -157,7 +157,7 @@ export const scrollContainerStyles = `
   opacity: 1;
 }
 
-:host([shadow="false"]) .shadow-overlay {
+:host([no-shadow]) .shadow-overlay {
   display: none;
 }
 

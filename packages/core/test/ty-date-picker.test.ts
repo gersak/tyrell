@@ -1,5 +1,9 @@
-import { fixture, html, expect, nextFrame, oneEvent } from '@open-wc/testing';
+import { fixture, html, expect, nextFrame, oneEvent, aTimeout } from '@open-wc/testing';
 import '../lib/components/date-picker.js';
+// date-picker.ts creates <ty-calendar> elements via document.createElement()
+// without importing calendar.js itself, so the popup calendar (and its
+// nested ty-calendar-month) never upgrade unless a test file registers them.
+import '../lib/components/calendar.js';
 
 // date-picker normalizes to a UTC ISO timestamp; the exact day is timezone-
 // dependent (date-only input is anchored at local midnight → UTC), so assert
@@ -67,7 +71,7 @@ describe('ty-date-picker stub icon', () => {
   });
 
   it('clear button hover rule uses real tokens (was --ty-color-negative/--ty-bg-negative-faint, neither exists)', async () => {
-    const el = (await fixture(html`<ty-date-picker value="${ISO}" clearable></ty-date-picker>`)) as any;
+    const el = (await fixture(html`<ty-date-picker value="${ISO}"></ty-date-picker>`)) as any;
     await nextFrame();
     // :hover can't be forced from a synthetic event in this harness, so
     // assert on the authored rule itself — the bug was a typo'd token name
@@ -95,11 +99,11 @@ describe('ty-date-picker clear()', () => {
   });
 
   it('clicking .stub-clear clears the value and fires change (same effect as clear())', async () => {
-    const el = (await fixture(html`<ty-date-picker value="${ISO}" clearable></ty-date-picker>`)) as any;
+    const el = (await fixture(html`<ty-date-picker value="${ISO}"></ty-date-picker>`)) as any;
     await nextFrame();
 
     const clearBtn = el.shadowRoot.querySelector('.stub-clear') as HTMLButtonElement;
-    expect(clearBtn, 'clear button rendered when clearable + has value').to.exist;
+    expect(clearBtn, 'clear button rendered by default when it has a value').to.exist;
 
     setTimeout(() => clearBtn.click());
     const ev = (await oneEvent(el, 'change')) as CustomEvent;
@@ -207,5 +211,481 @@ describe('ty-date-picker accessibility — keyboard focus + ARIA', () => {
     await nextFrame();
     stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
     expect(stub.getAttribute('aria-expanded'), 'false again after close').to.equal('false');
+  });
+});
+
+describe('ty-date-picker value edge cases', () => {
+  it('an invalid attribute value in the initial markup self-heals to null via initializeState()', async () => {
+    // onConnect() -> initializeState() unconditionally calls syncFormValue(),
+    // which resets the 'value' property when it doesn't match the (empty)
+    // parsed state — so THIS path is fine.
+    const el = (await fixture(html`<ty-date-picker value="not-a-date"></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    expect(el.value).to.be.null;
+    const stub = el.shadowRoot.querySelector('.stub-text') as HTMLElement;
+    expect(stub.classList.contains('placeholder')).to.be.true;
+  });
+
+  it('setting .value to a malformed string AFTER connect heals back to null, matching the display and form value', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    el.value = 'not-a-date';
+    await nextFrame();
+
+    // Expected: a rejected/unparseable value getter should not silently
+    // diverge from what the component displays and submits.
+    // Actual: el.value === 'not-a-date' while display shows the placeholder
+    // and the form value is null.
+    expect(el.value, 'value getter should not strand raw garbage').to.be.null;
+  });
+
+  it('setting .value = "" clears the date (same effect as clear())', async () => {
+    const el = (await fixture(html`<ty-date-picker value="${ISO}"></ty-date-picker>`)) as any;
+    await nextFrame();
+    expect(el.value).to.not.be.null;
+
+    el.value = '';
+    await nextFrame();
+
+    expect(el.value).to.be.null;
+    const stub = el.shadowRoot.querySelector('.stub-text') as HTMLElement;
+    expect(stub.classList.contains('placeholder')).to.be.true;
+  });
+
+  it('accepts a Date object and round-trips it through the ISO getter', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const d = new Date(2026, 2, 3); // local March 3, 2026
+    el.value = d;
+    await nextFrame();
+
+    expect(el.value).to.equal(d.toISOString());
+  });
+
+  it('a second clear() on an already-empty picker still fires a change event (no dirty-check guard)', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    expect(el.value).to.be.null;
+
+    setTimeout(() => el.clear());
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+    expect(ev.detail.source).to.equal('clear');
+    expect(ev.detail.value).to.be.null;
+  });
+});
+
+describe('ty-date-picker with-time', () => {
+  const openDialog = async (el: any) => {
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+  };
+
+  const fields = (el: any) => ({
+    hour: el.shadowRoot.querySelector('.time-hour') as HTMLInputElement,
+    minute: el.shadowRoot.querySelector('.time-minute') as HTMLInputElement,
+  });
+
+  // Keys go to whichever field has focus — a completed hour hands off to minutes
+  const press = (el: any, key: string) =>
+    (el.shadowRoot.activeElement as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+
+  it('typing 4 digits fills hours then minutes and fires "time-change"', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-03-10" with-time></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const { hour, minute } = fields(el);
+    expect(hour, 'hour field rendered when with-time').to.exist;
+    expect(minute, 'minute field rendered when with-time').to.exist;
+
+    hour.focus();
+    const changes: CustomEvent[] = [];
+    el.addEventListener('change', (e: Event) => changes.push(e as CustomEvent));
+
+    ['1', '4', '3', '0'].forEach((d) => press(el, d));
+
+    expect([hour.value, minute.value]).to.deep.equal(['14', '30']);
+    expect(changes.length, 'one time-change event per digit').to.equal(4);
+    const last = changes[changes.length - 1];
+    expect(last.detail.source).to.equal('time-change');
+    expect(last.detail.localValue).to.equal('2026-03-10T14:30');
+  });
+
+  it('an hour first-digit greater than 2 completes the hour and moves to minutes', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-03-10" with-time></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const { hour, minute } = fields(el);
+    hour.focus();
+    press(el, '9');
+
+    expect(hour.value).to.equal('09');
+    expect(el.shadowRoot.activeElement, 'focus handed to minutes').to.equal(minute);
+  });
+
+  it('Backspace zeroes the minutes, then a second Backspace returns to hours', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-03-10" with-time></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const { hour, minute } = fields(el);
+    hour.focus();
+    ['1', '4', '3', '5'].forEach((d) => press(el, d));
+    expect([hour.value, minute.value]).to.deep.equal(['14', '35']);
+
+    press(el, 'Backspace');
+    expect(minute.value, 'zeroes the minutes').to.equal('00');
+    expect(el.shadowRoot.activeElement).to.equal(minute);
+
+    press(el, 'Backspace');
+    expect(el.shadowRoot.activeElement, 'empty minutes + Backspace goes back to hours').to.equal(hour);
+    expect(hour.value, 'hours untouched').to.equal('14');
+  });
+
+  it('Arrow Up/Down wrap the value; Left/Right cross between fields; letters are ignored', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-03-10" with-time></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const { hour, minute } = fields(el);
+    hour.focus();
+
+    press(el, 'ArrowDown');
+    expect(hour.value, '00 wraps down to 23').to.equal('23');
+    press(el, 'ArrowUp');
+    expect(hour.value, '23 wraps up to 00').to.equal('00');
+
+    press(el, 'x');
+    expect(hour.value, 'non-digit dropped').to.equal('00');
+
+    press(el, 'ArrowRight');
+    expect(el.shadowRoot.activeElement).to.equal(minute);
+    press(el, 'ArrowLeft');
+    expect(el.shadowRoot.activeElement).to.equal(hour);
+  });
+
+  it('selecting a day while with-time keeps the popup open and focuses the time input', async () => {
+    const el = (await fixture(html`<ty-date-picker with-time></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const calendar = el.shadowRoot.querySelector('ty-calendar') as any;
+    calendar.dispatchEvent(new CustomEvent('change', {
+      detail: { year: 2026, month: 5, day: 12, dayContext: { year: 2026, month: 5, dayInMonth: 12 } },
+    }));
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'stays open in with-time mode').to.be.true;
+
+    await aTimeout(50); // requestAnimationFrame focus hop
+    const timeInput = el.shadowRoot.querySelector('.time-input') as HTMLInputElement;
+    expect(el.shadowRoot.activeElement).to.equal(timeInput);
+  });
+});
+
+describe('ty-date-picker calendar selection', () => {
+  it('selecting a day (no time) fires change with source "selection" and closes the popup', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+
+    const calendar = el.shadowRoot.querySelector('ty-calendar') as any;
+    setTimeout(() => {
+      calendar.dispatchEvent(new CustomEvent('change', {
+        detail: { year: 2026, month: 6, day: 9, dayContext: { year: 2026, month: 6, dayInMonth: 9 } },
+      }));
+    });
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.source).to.equal('selection');
+    expect(ev.detail.value).to.match(/^2026-06-0[89]T/); // local midnight → UTC, day-shift possible
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open, 'closes after a plain date selection').to.be.false;
+  });
+});
+
+describe('ty-date-picker min/max bounds', () => {
+  const openDialog = async (el: any) => {
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+  };
+
+  it('forwards min/max to the embedded ty-calendar on open', async () => {
+    const el = (await fixture(html`<ty-date-picker min="2026-06-10" max="2026-06-20"></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const calendar = el.shadowRoot.querySelector('ty-calendar') as HTMLElement;
+    expect(calendar.getAttribute('min')).to.equal('2026-06-10');
+    expect(calendar.getAttribute('max')).to.equal('2026-06-20');
+  });
+
+  it('disables out-of-bounds days in the real rendered grid and ignores clicks on them', async () => {
+    const el = (await fixture(html`
+      <ty-date-picker value="2026-06-15" min="2026-06-10" max="2026-06-20"></ty-date-picker>
+    `)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    const calendar = el.shadowRoot.querySelector('ty-calendar') as any;
+    await nextFrame();
+    const month = calendar.shadowRoot.querySelector('ty-calendar-month') as any;
+    await nextFrame();
+    const dayCells = [...month.shadowRoot.querySelectorAll('.calendar-day')] as HTMLElement[];
+
+    const day5 = dayCells.find(
+      (c) => c.textContent?.trim() === '5' && !c.classList.contains('other-month'),
+    );
+    expect(day5, 'day 5 (before min) is rendered').to.exist;
+    expect(day5!.classList.contains('disabled'), 'day before min is disabled').to.be.true;
+
+    let changeFired = false;
+    el.addEventListener('change', () => { changeFired = true; });
+    day5!.click();
+    await nextFrame();
+
+    expect(changeFired, 'disabled day does not emit a selection').to.be.false;
+    expect(el.value).to.not.include('2026-06-05');
+  });
+
+  it('live min/max attribute changes are propagated to an already-open popup calendar', async () => {
+    const el = (await fixture(html`<ty-date-picker min="2026-06-01" max="2026-06-30"></ty-date-picker>`)) as any;
+    await nextFrame();
+    await openDialog(el);
+
+    el.min = '2026-06-15';
+    await nextFrame();
+
+    const calendar = el.shadowRoot.querySelector('ty-calendar') as HTMLElement;
+    // Expected: forwarded live, like flavor already is.
+    // Actual: calendar keeps the stale min from when the dialog opened.
+    expect(calendar.getAttribute('min')).to.equal('2026-06-15');
+  });
+
+  it('changing min/max after a value is set does not retroactively clear or clamp it', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-06-15"></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    el.min = '2026-07-01'; // now excludes the existing value
+    el.max = '2026-07-31';
+    await nextFrame();
+
+    expect(el.value, 'no automatic clamping/clearing of an already-set value').to.include('2026-06');
+  });
+});
+
+describe('ty-date-picker start-slot icon', () => {
+  it('clicking slotted start content opens the popup (click bubbles to the stub)', async () => {
+    const el = (await fixture(html`
+      <ty-date-picker><span slot="start" class="my-icon">📅</span></ty-date-picker>
+    `)) as any;
+    await nextFrame();
+
+    const icon = el.querySelector('.my-icon') as HTMLElement;
+    icon.click();
+    await nextFrame();
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.true;
+  });
+});
+
+describe('ty-date-picker disabled state', () => {
+  it('clicking a disabled stub does not open the popup', async () => {
+    const el = (await fixture(html`<ty-date-picker disabled></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.click();
+    await nextFrame();
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.false;
+  });
+
+  it('Enter on a disabled stub does not open the popup', async () => {
+    const el = (await fixture(html`<ty-date-picker disabled></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const stub = el.shadowRoot.querySelector('.date-picker-stub') as HTMLElement;
+    stub.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await nextFrame();
+    await nextFrame();
+
+    const dialog = el.shadowRoot.querySelector('.calendar-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.false;
+  });
+
+  it('disabled: no clear button even with a value', async () => {
+    const el = (await fixture(html`<ty-date-picker value="${ISO}" disabled></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const clearBtn = el.shadowRoot.querySelector('.stub-clear');
+    expect(clearBtn, 'no clear affordance while disabled').to.not.exist;
+  });
+});
+
+describe('ty-date-picker form participation', () => {
+  it('form.reset() repopulates a value after clear(), consistent with FormData', async () => {
+    const form = (await fixture<HTMLFormElement>(html`
+      <form><ty-date-picker name="d" value="2026-04-01"></ty-date-picker></form>
+    `));
+    const el = form.querySelector('ty-date-picker') as any;
+    await nextFrame();
+
+    el.clear();
+    await nextFrame();
+    expect(el.value).to.be.null;
+
+    form.reset();
+    await nextFrame();
+
+    expect(el.value, 'reset repopulates a value').to.not.be.null;
+  });
+
+  it('after form.reset(), .value matches what the form actually submits', async () => {
+    const form = (await fixture<HTMLFormElement>(html`
+      <form><ty-date-picker name="d" value="2026-04-01"></ty-date-picker></form>
+    `));
+    const el = form.querySelector('ty-date-picker') as any;
+    await nextFrame();
+
+    el.clear();
+    await nextFrame();
+    form.reset();
+    await nextFrame();
+
+    expect(el.value, '.value should match what the form actually submits').to.equal(new FormData(form).get('d'));
+  });
+
+  it('required + empty reports as invalid', async () => {
+    const form = (await fixture<HTMLFormElement>(html`
+      <form><ty-date-picker name="d" required></ty-date-picker></form>
+    `));
+    await nextFrame();
+
+    expect(form.checkValidity(), 'required + empty should be invalid').to.be.false;
+  });
+
+  it('an empty value is omitted from FormData consistent with .value being null', async () => {
+    const form = (await fixture<HTMLFormElement>(html`
+      <form><ty-date-picker name="d"></ty-date-picker></form>
+    `));
+    const el = form.querySelector('ty-date-picker') as any;
+    await nextFrame();
+
+    expect(el.value).to.be.null;
+    expect(new FormData(form).get('d')).to.be.null;
+  });
+});
+
+describe('ty-date-picker locale-dependent formatting', () => {
+  it('formats the displayed date differently per locale attribute', async () => {
+    const elUS = (await fixture(html`<ty-date-picker value="2026-01-15" locale="en-US"></ty-date-picker>`)) as any;
+    const elDE = (await fixture(html`<ty-date-picker value="2026-01-15" locale="de-DE"></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const textUS = (elUS.shadowRoot.querySelector('.stub-text') as HTMLElement).textContent;
+    const textDE = (elDE.shadowRoot.querySelector('.stub-text') as HTMLElement).textContent;
+
+    expect(textUS).to.not.equal(textDE);
+    expect(textDE, 'German long-date style spells the month differently than English').to.exist;
+  });
+});
+
+describe('ty-date-picker native mobile input', () => {
+  let originalMatchMedia: typeof window.matchMedia;
+
+  beforeEach(() => {
+    originalMatchMedia = window.matchMedia;
+    // Force isMobileTouch() -> true (utils/mobile.ts checks pointer:coarse
+    // + max-width via matchMedia) without needing real touch/viewport.
+    window.matchMedia = ((query: string) => ({
+      matches: true,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+  });
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
+  it('renders a native <input type="date"> instead of the dialog on a touch/narrow viewport', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-06-15"></ty-date-picker>`)) as any;
+    await nextFrame();
+
+    const nativeInput = el.shadowRoot.querySelector('.native-date-input') as HTMLInputElement;
+    expect(nativeInput, 'native input rendered').to.exist;
+    expect(nativeInput.type).to.equal('date');
+    expect(el.shadowRoot.querySelector('.calendar-dialog'), 'no popup dialog on mobile').to.not.exist;
+  });
+
+  it('mirrors min/max onto the native input, and onto a datetime-local input when with-time', async () => {
+    const el = (await fixture(html`
+      <ty-date-picker min="2026-06-01" max="2026-06-30"></ty-date-picker>
+    `)) as any;
+    await nextFrame();
+    const nativeInput = el.shadowRoot.querySelector('.native-date-input') as HTMLInputElement;
+    expect(nativeInput.min).to.equal('2026-06-01');
+    expect(nativeInput.max).to.equal('2026-06-30');
+
+    const elTime = (await fixture(html`
+      <ty-date-picker min="2026-06-01" max="2026-06-30" with-time></ty-date-picker>
+    `)) as any;
+    await nextFrame();
+    const nativeTimeInput = elTime.shadowRoot.querySelector('.native-date-input') as HTMLInputElement;
+    expect(nativeTimeInput.type).to.equal('datetime-local');
+    expect(nativeTimeInput.min).to.equal('2026-06-01T00:00');
+    expect(nativeTimeInput.max).to.equal('2026-06-30T23:59');
+  });
+
+  it('parses a native input change into a selection and emits "change"', async () => {
+    const el = (await fixture(html`<ty-date-picker></ty-date-picker>`)) as any;
+    await nextFrame();
+    const nativeInput = el.shadowRoot.querySelector('.native-date-input') as HTMLInputElement;
+
+    nativeInput.value = '2026-08-20';
+    setTimeout(() => nativeInput.dispatchEvent(new Event('change', { bubbles: true })));
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.source).to.equal('selection');
+    expect(el.value).to.match(/^2026-08-(19|20)T/);
+  });
+
+  it('emptying the native input clears the value', async () => {
+    const el = (await fixture(html`<ty-date-picker value="2026-06-15"></ty-date-picker>`)) as any;
+    await nextFrame();
+    const nativeInput = el.shadowRoot.querySelector('.native-date-input') as HTMLInputElement;
+    expect(nativeInput.value).to.not.equal('');
+
+    nativeInput.value = '';
+    setTimeout(() => nativeInput.dispatchEvent(new Event('change', { bubbles: true })));
+    const ev = (await oneEvent(el, 'change')) as CustomEvent;
+
+    expect(ev.detail.source).to.equal('clear');
+    expect(el.value).to.be.null;
   });
 });

@@ -48,6 +48,15 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Label text above the field */
   label?: string;
 
+  /** Mobile dialog: heading of the pinned selection strip. Default "Selected"; the count is appended. */
+  selectedLabel?: string;
+
+  /** Mobile dialog: heading of the option list. Default "Available"; the count is appended. */
+  availableLabel?: string;
+
+  /** Shown when no option matches. Default "No options available". */
+  noOptionsMessage?: string;
+
   /** Form field name — single submits one entry, multiple submits repeated entries */
   name?: string;
 
@@ -60,11 +69,10 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Mark the field as required */
   required?: boolean;
 
-  /**
-   * Search row visibility: 'auto' (default) shows it only for 8+ options,
-   * 'always' / 'never' force it. external-search always shows it.
-   */
-  searchable?: 'auto' | 'always' | 'never' | boolean;
+  /** Drop the popup search row. A select is searchable by default; this is
+   *  the single opt-out. Cannot override externalSearch/allowCreate, where
+   *  the input is the only way to get a query out. */
+  notSearchable?: boolean;
 
   /**
    * External (remote) search mode — the component stops filtering and emits
@@ -103,8 +111,8 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Full placement, same vocabulary as ty-popup/ty-tooltip: a side plus an optional cross-axis alignment (e.g. "bottom-end"). Takes precedence over `align` when set. */
   placement?: Placement;
 
-  /** Built-in x clear button in the default/compact trigger, shown once something is selected. Default true. Not shown with slot="trigger" — use the ref's clear() method there instead. */
-  clearable?: boolean;
+  /** No built-in x clear button (it shows once something is selected; never with slot="trigger" — use the ref's clear() there). */
+  noClear?: boolean;
 
   /** Visual flavor for the field border — built-in semantic, +/- shade, or a custom flavor backed by --ty-*-X tokens */
   flavor?: ShadedFlavor | (string & {});
@@ -140,11 +148,14 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     compact,
     placeholder,
     label,
+    selectedLabel,
+    availableLabel,
+    noOptionsMessage,
     name,
     disabled,
     readonly,
     required,
-    searchable,
+    notSearchable,
     externalSearch,
     debounce,
     allowCreate,
@@ -153,7 +164,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     size,
     align,
     placement,
-    clearable,
+    noClear,
     flavor,
     onChange,
     onSearch,
@@ -229,7 +240,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     const isLoading = useBooleanProperty(elementRef, 'loading', loading);
     const isExternalSearch = useBooleanProperty(elementRef, 'externalSearch', externalSearch);
     const isAllowCreate = useBooleanProperty(elementRef, 'allowCreate', allowCreate);
-    const isClearable = useBooleanProperty(elementRef, 'clearable', clearable);
+    const isNoClear = useBooleanProperty(elementRef, 'noClear', noClear);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -251,17 +262,18 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
 
     if (placeholder) webComponentProps.placeholder = placeholder;
     if (label) webComponentProps.label = label;
+    if (selectedLabel) webComponentProps['selected-label'] = selectedLabel;
+    if (availableLabel) webComponentProps['available-label'] = availableLabel;
+    if (noOptionsMessage) webComponentProps['no-options-message'] = noOptionsMessage;
     if (name) webComponentProps.name = name;
     if (size) webComponentProps.size = size;
     if (align) webComponentProps.align = align;
     if (placement) webComponentProps.placement = placement;
-    if (isClearable) webComponentProps.clearable = '';
+    if (isNoClear) webComponentProps['no-clear'] = '';
     if (flavor) webComponentProps.flavor = flavor;
     if (debounce !== undefined) webComponentProps.debounce = debounce.toString();
     if (createTransform) webComponentProps['create-transform'] = createTransform;
-    if (searchable === 'always' || searchable === true) webComponentProps.searchable = 'true';
-    else if (searchable === 'never' || searchable === false) webComponentProps.searchable = 'false';
-    // 'auto' / undefined → omit (component default)
+    if (notSearchable) webComponentProps['not-searchable'] = '';
 
     return React.createElement('ty-select', webComponentProps, children);
   }

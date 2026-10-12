@@ -39,7 +39,7 @@
   (into [:div.flex.justify-end.gap-2.pt-2] buttons))
 
 (defn- snippets [{:keys [backdrop outside escape zoom]}]
-  (let [attrs (str (when-not backdrop " backdrop=\"false\"")
+  (let [attrs (str (when-not backdrop " no-backdrop")
                    (when-not outside " prevent-outside-click")
                    (when-not escape " prevent-escape")
                    (when zoom " backdrop-zoom"))]
@@ -50,22 +50,27 @@
            "    <ty-button onclick=\"invite.hide()\">Cancel</ty-button>\n  </div>\n</ty-modal>")]
      ["react" "React" "javascript"
       (str "import { TyModal } from 'tyrell-react'\n\n"
-           "<TyModal open={open} label=\"Invite people\"" attrs
+           "<TyModal open={open} label=\"Invite people\""
+           (when-not backdrop " noBackdrop") (when-not outside " preventOutsideClick")
+           (when-not escape " preventEscape") (when zoom " backdrop-zoom")
            "\n  onClose={() => setOpen(false)}>\n  <div className=\"panel\">…</div>\n</TyModal>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n"
            "[:> ty/Modal {:open @open? :label \"Invite people\""
-           (when-not backdrop " :backdrop false") (when-not outside " :prevent-outside-click true")
+           (when-not backdrop " :no-backdrop true") (when-not outside " :prevent-outside-click true")
            (when-not escape " :prevent-escape true") (when zoom " :backdrop-zoom true")
            "\n              :on-close #(reset! open? false)}\n [:div.panel …]]")]
      ["replicant" "Replicant" "clojure"
       (str "[:ty-modal {:open (when open? \"\") :label \"Invite people\""
-           (when-not backdrop " :backdrop \"false\"") (when-not outside " :prevent-outside-click \"\"")
+           (when-not backdrop " :no-backdrop \"\"") (when-not outside " :prevent-outside-click \"\"")
            (when-not escape " :prevent-escape \"\"") (when zoom " :backdrop-zoom \"\"")
            "\n            :on {:close #(set-open! false)}}\n [:div.panel …]]")]
      ["datastar" "Datastar" "html"
-      (str "<ty-modal data-attr:open=\"$inviteOpen\"" attrs
-           "\n  data-on:close=\"$inviteOpen = false\">\n  …\n</ty-modal>")]]))
+      (str "<ty-button data-signals:invite-open=\"false\"\n  data-on:click=\"$inviteOpen = true\">Invite</ty-button>\n\n"
+           "<ty-modal label=\"Invite people\"" attrs
+           "\n  data-attr:open=\"$inviteOpen\"\n  data-on:close=\"$inviteOpen = false\">\n"
+           "  <div class=\"panel\">\n    …\n"
+           "    <ty-button data-on:click=\"$inviteOpen = false\">Cancel</ty-button>\n  </div>\n</ty-modal>")]]))
 
 (defn- render-playground [{:keys [backdrop outside escape zoom]}]
   [:div.flex.flex-col.items-center.gap-3
@@ -73,7 +78,7 @@
     [:ty-icon {:slot "start" :name "user-plus"}] "Invite people"]
    [:code.ty-text-.text-xs (str "last close reason: " (or (doc-state :reason) "—"))]
    (modal :play (cond-> {:label "Invite people"}
-                  (not backdrop) (assoc :backdrop "false")
+                  (not backdrop) (assoc :no-backdrop "")
                   (not outside) (assoc :prevent-outside-click "")
                   (not escape) (assoc :prevent-escape "")
                   zoom (assoc :backdrop-zoom ""))
@@ -160,7 +165,7 @@
       {:title "Nested"
        :span 3
        :description [:span "A modal can open another. " [:code "open"] " and " [:code "close"]
-                     " don't bubble, like the native dialog events, so closing the inner one leaves the outer open."]
+                     " don't bubble, like the native dialog events, so closing the inner one leaves the outer open. Cancel returns to settings; Delete closes both."]
        :code "<ty-modal id=\"outer\">
   …
   <ty-modal id=\"inner\">…</ty-modal>
@@ -173,9 +178,9 @@
                      (actions [:ty-button {:flavor "danger" :appearance "outlined" :size "md" :on {:click #(open! :inner)}} "Delete workspace…"]
                               [:ty-button {:size "md" :on {:click #(hide! :outer)}} "Done"])
                      (modal :inner {:label "Confirm delete"}
-                            (panel (title "Really delete?" "The settings modal stays open behind this one.")
+                            (panel (title "Really delete?" "Cancel returns to settings.")
                                    (actions [:ty-button {:appearance "ghost" :size "md" :on {:click #(hide! :inner)}} "Cancel"]
-                                            [:ty-button {:flavor "danger" :size "md" :on {:click #(hide! :inner)}} "Delete"])))))])
+                                            [:ty-button {:flavor "danger" :size "md" :on {:click #(do (hide! :inner) (hide! :outer))}} "Delete"])))))])
 
      (example
       {:title "Locked"
@@ -234,7 +239,7 @@ modal.addEventListener('close', (e) => console.log(e.detail.reason));"}
                   ["prevent-outside-click" "boolean" "false" "Backdrop clicks don't close."]
                   ["prevent-escape" "boolean" "false" "Escape doesn't close."]
                   "Backdrop"
-                  ["backdrop" "boolean" "true" "Dim the page. backdrop=\"false\" for none."]
+                  ["no-backdrop" "boolean" "false" "No dimmed page behind the modal."]
                   ["backdrop-zoom" "boolean" "false" "Scale the page behind slightly while open."]]
      :properties [["show()" "() => void" "Open."]
                   ["hide(opts?)" "({force?}) => void" "Close. Fires beforeclose unless force is true."]]

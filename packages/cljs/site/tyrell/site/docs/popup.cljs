@@ -5,7 +5,8 @@
                                              bento example api-section]]
             [tyrell.site.state :as state]))
 
-(def ^:private placements ["top" "bottom" "left" "right"])
+(def ^:private placements
+  (for [side ["top" "bottom" "left" "right"] align ["-start" "" "-end"]] (str side align)))
 
 (defn- doc-state [k] (get-in @state/state [:popup-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:popup-doc k] v))
@@ -45,8 +46,10 @@
                            (when (not= offset "8") (str ":offset \"" offset "\" "))
                            (when manual ":manual \"\"")))
            "}\n  [:div.card …]]]")]
+     ;; opening fetches; the server's SSE patches #share-card
      ["datastar" "Datastar" "html"
-      (str "<ty-button>\n  Share\n  <ty-popup" attrs " data-on:open=\"@get('/share-links')\">\n    <div id=\"share-card\">…</div>\n  </ty-popup>\n</ty-button>")]]))
+      (str "<ty-button>\n  Share\n  <ty-popup" attrs "\n    data-on:open=\"@get('/share-links')\">\n"
+           "    <div id=\"share-card\" class=\"card\">…</div>\n  </ty-popup>\n</ty-button>")]]))
 
 (defn- render-playground [{:keys [placement offset manual]}]
   [:div.flex.flex-col.items-center.gap-3
@@ -82,7 +85,7 @@
    (playground
     {:id :popup
      :defaults {:placement "bottom" :offset "8" :manual false}
-     :controls [{:key :placement :options placements}
+     :controls [{:key :placement :options placements :select? true}
                 {:key :offset :options ["4" "8" "16"]}
                 {:key :manual :switch? true}]
      :sub "Click Share. With manual on, only the API opens it."

@@ -49,7 +49,13 @@
    rules (index.html), which are tied to the theme's primary/success tokens."
   ".ty-code pre, .ty-code pre code { white-space: pre; word-break: normal; overflow: visible; }
 .ty-code pre code { background: none; border: 0; padding: 0; border-radius: 0; font-size: inherit; color: inherit; }
-.ty-code .lang-css .hljs-number, .ty-code .lang-css .hljs-built_in { color: inherit !important; }")
+.ty-code .lang-css .hljs-number, .ty-code .lang-css .hljs-built_in { color: inherit !important; }
+/* A line wider than the box scrolls. macOS hides overlay scrollbars, which
+   made that look like cut-off code; a styled scrollbar always shows. */
+.ty-code::-webkit-scrollbar { height: 8px; }
+.ty-code::-webkit-scrollbar-track { background: transparent; }
+.ty-code::-webkit-scrollbar-thumb { background: var(--ty-border-strong, rgb(0 0 0 / 0.25)); border-radius: 4px; }
+@supports not selector(::-webkit-scrollbar) { .ty-code { scrollbar-width: thin; } }")
 
 (def ^:private template-css
   "Section numbering (01, 02, ...) via a CSS counter, so page-section needs no
@@ -380,7 +386,8 @@
   "Inspector-style playground: props panel, live stage, code tabs.
    controls: [{:key :size :options [..]}              ; segmented
               {:key :flavor :options [..] :swatch? true :tones? true}
-              {:key :clearable :switch? true}]
+              {:key :placement :options [..] :select? true}   ; dropdown, for long lists
+              {:key :clear :switch? true}]
    tones? adds a - / base / + picker; the tone is appended to the value
    (\"primary+\") before render and snippets see it, so they need no changes.
    defaults: initial props. render / snippets: (fn [props]) -> hiccup / snippets."
@@ -402,7 +409,7 @@
      [:div.flex.flex-col.md:flex-row.rounded-2xl.border.ty-border-.overflow-hidden {:style (surface "content")}
       [:aside.flex.flex-col.gap-5.p-5.shrink-0.border-b.md:border-b-0.md:border-r.ty-border-.md:w-60
        [:span.text-xs.font-semibold.uppercase.tracking-widest.ty-text-- "Props"]
-       (for [{k :key :keys [options switch? swatch? tones?]} controls]
+       (for [{k :key :keys [options switch? swatch? tones? select?]} controls]
          (if switch?
            [:label.flex.items-center.justify-between {:replicant/key (name k)}
             (label k)
@@ -419,7 +426,11 @@
                  [:div.mt-4
                   (segmented (get raw (tone-key k) "base") ["-" "base" "+"]
                              #(set-prop! (tone-key k) %))])]
-              (segmented (get raw k) options #(set-prop! k %)))]))]
+              (if select?
+                [:ty-select {:size "sm" :value (get raw k) :no-clear ""
+                             :on {:change #(set-prop! k (.. ^js % -detail -value))}}
+                 (for [o options] [:ty-option {:replicant/key o :value o} o])]
+                (segmented (get raw k) options #(set-prop! k %))))]))]
       [:div.flex-1.min-w-0.flex.flex-col
        [:div.flex.justify-center.items-center.px-6.py-12 {:style {:min-height "300px"}}
         (render props)]

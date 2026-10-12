@@ -56,7 +56,7 @@ export type { TooltipFlavor, TooltipAttributes } from './components/tooltip.js'
 export type { PopupAttributes } from './components/popup.js'
 export type { ModalAttributes, ModalCloseDetail } from './components/modal.js'
 export type { TabsAttributes, TabChangeDetail } from './components/tabs.js'
-export type { TabAttributes } from './components/tab.js'
+export type { TabAttributes, TabLoadDetail } from './components/tab.js'
 export type { WizardAttributes, WizardStepChangeDetail } from './components/wizard.js'
 export type { StepAttributes, StepStatus } from './components/step.js'
 export type { DayContentFn, DayClickDetail, CalendarSize } from './components/calendar-month.js'
@@ -101,7 +101,7 @@ export type {
 } from './utils/positioning.js'
 
 // Icons
-// Note: Icon libraries moved to separate tyrell-icons package
+// Icon sets ship as subpath modules (tyrell-components/icons/*), not in this entry.
 // Icon registry utility remains in core for registering custom icons
 
 // Version (auto-generated from package.json)

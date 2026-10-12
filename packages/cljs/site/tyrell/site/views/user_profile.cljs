@@ -135,13 +135,22 @@
                                      (#{:first-name :last-name :email :phone} k) (assoc :required true))
                        (when icon (kit/icon icon))))]
     [:div {:class ["@container"]}
-     [:div.h-24.rounded-xl
-      {:style {:background (str "linear-gradient(100deg, "
-                                ;; theme colors mixed into the surface: pastel in light, deep in dark (oklab: no hue drift).
-                                ;; Emerald = the success token turned to hue 162 with more chroma.
-                                "color-mix(in oklab, oklch(from var(--ty-color-success) l calc(c * 1.8) 162) 45%, var(--ty-surface-elevated)), "
-                                "color-mix(in oklab, var(--ty-color-danger) 30%, var(--ty-surface-elevated)) 55%, "
-                                "color-mix(in oklab, var(--ty-color-primary) 40%, var(--ty-surface-elevated)))")}}]
+     ;; Cover. Light: Ink, a deep band in primary's own hue with a glow and
+     ;; a faint dot grid; it reads as depth against the white card. Dark: a
+     ;; band darker than a dark card reads as a hole, and dark UIs show depth
+     ;; by getting lighter, so it becomes a lifted graphite plate with a
+     ;; hairline, the same dot texture and a subtle primary glow. One hue in
+     ;; both, all from theme tokens.
+     [:style (str ".profile-cover { background:"
+                  " radial-gradient(ellipse 55% 140% at 88% 0%, color-mix(in oklch, var(--ty-color-primary) 60%, transparent), transparent 70%),"
+                  " radial-gradient(circle, rgb(255 255 255 / 0.08) 1px, transparent 1.5px) 0 0 / 16px 16px,"
+                  " oklch(from var(--ty-color-primary) 0.24 calc(c * 0.6) h); }"
+                  " .dark .profile-cover { background:"
+                  " radial-gradient(ellipse 55% 140% at 88% 0%, color-mix(in oklch, var(--ty-color-primary) 24%, transparent), transparent 70%),"
+                  " radial-gradient(circle, color-mix(in oklab, var(--ty-text-strong) 8%, transparent) 1px, transparent 1.5px) 0 0 / 16px 16px,"
+                  " color-mix(in oklab, var(--ty-text-strong) 5%, var(--ty-surface-elevated));"
+                  " box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ty-text-strong) 10%, transparent); }")]
+     [:div.h-24.rounded-xl.profile-cover]
      [:div.flex.items-start.gap-4.px-4.pb-2 {:style {:margin-top "-2.5rem"}}
       [:button.relative.shrink-0.cursor-pointer {:type "button" :title "Change photo" :on {:click #(put! :modal :avatar)}}
        [:span.w-20.h-20.rounded-full.flex.items-center.justify-center.text-2xl.font-semibold
@@ -182,7 +191,7 @@
                 [:div.flex.flex-wrap.gap-2
                  [:ty-selected-options {:for "profile-skills"}
                   [:template
-                   [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
+                   [:ty-tag {:flavor "{flavor}" :dismissible true}
                     [:span.font-bold.text-xs {:slot "start"} "{data-glyph}"] "{label}"]]]]]
                [:div
                 (field :ty-textarea :bio {:label "Bio" :max-height "110px"})

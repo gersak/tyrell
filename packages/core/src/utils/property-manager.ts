@@ -30,7 +30,7 @@ export interface PropertyConfig {
   // Custom coercion function
   coerce?: (value: any) => any
   
-  // Property aliases (e.g., 'not-clearable' → 'clearable': false)
+  // Property aliases: extra attribute names mapped to a fixed value
   aliases?: Record<string, any>
 }
 
@@ -238,11 +238,16 @@ export class PropertyManager<T = any> {
   }
   
   /**
-   * Handle property aliases (e.g., not-clearable → clearable: false)
+   * Handle property aliases (extra attribute names mapped to a fixed value)
    */
   handleAlias(aliasName: string, value: any): PropertyChange | null {
     for (const [propName, config] of Object.entries(this._config)) {
       if (config.aliases && aliasName in config.aliases) {
+        // Removing the alias attribute restores the default — otherwise
+        // dropping the alias would leave its value applied and the
+        // property could never turn back on from markup (React 19, HTMX
+        // swaps, plain removeAttribute).
+        if (value === null) return this.updateProperty(propName, config.default, 'attribute')
         const aliasedValue = config.aliases[aliasName]
         return this.updateProperty(propName, aliasedValue, 'attribute')
       }

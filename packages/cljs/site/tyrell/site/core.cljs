@@ -15,10 +15,12 @@
    [tyrell.site.views.landing :as landing]
    [tyrell.site.views.sandbox-sizing :as sandbox-sizing]
    [tyrell.site.views.sandbox-tabs :as sandbox-tabs]
+   [tyrell.site.views.sandbox-tabs-morph :as sandbox-tabs-morph]
    [tyrell.site.views.sandbox-polish :as sandbox-polish]
    [tyrell.site.views.sandbox-toggles :as sandbox-toggles]
    [tyrell.site.views.sandbox-modal :as sandbox-modal]
-   [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]))
+   [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]
+   [tyrell.site.views.sandbox-select-mobile :as sandbox-select-mobile]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -39,6 +41,11 @@
     :name "Tabs Resize/Overflow Verify (hidden)"
     :view sandbox-tabs/view}
 
+   {:id ::sandbox-tabs-morph
+    :segment "internal/tabs-morph"
+    :name "Tabs Server-Morph Verify (hidden)"
+    :view sandbox-tabs-morph/view}
+
    {:id ::sandbox-toggles
     :segment "internal/toggles"
     :name "Switch/Checkbox Double-fire Verify (hidden)"
@@ -57,7 +64,12 @@
    {:id ::sandbox-modal-tabs
     :segment "internal/modal-tabs"
     :name "Tabs Marker-in-Modal Snap Verify (hidden)"
-    :view sandbox-modal-tabs/view}])
+    :view sandbox-modal-tabs/view}
+
+   {:id ::sandbox-select-mobile
+    :segment "internal/select-mobile"
+    :name "Select Mobile Strip/Accordion Verify (hidden)"
+    :view sandbox-select-mobile/view}])
 
 (def site-routes
   (cond-> [;; Main landing page
@@ -136,25 +148,6 @@
           ms (if (js/isNaN raw) 450 (* 1000 raw))]
       (js/setTimeout #(.remove (.-classList root) "ty-theme-switching") ms))))
 
-(defn set-open-section-in-storage!
-  "Write the open navigation section to localStorage"
-  [section]
-  (if section
-    (.setItem js/localStorage "ty-nav-open-section" (name section))
-    (.removeItem js/localStorage "ty-nav-open-section")))
-
-(defn get-last-visited-route
-  "Get the last visited route for a section from localStorage"
-  [section-key]
-  (when-let [stored (.getItem js/localStorage (str "ty-nav-last-" (name section-key)))]
-    (keyword stored)))
-
-(defn set-last-visited-route!
-  "Save the last visited route for a section to localStorage"
-  [section-key route-id]
-  (when (and section-key route-id)
-    (.setItem js/localStorage (str "ty-nav-last-" (name section-key)) (name route-id))))
-
 (defn scroll-main-to-top!
   "Smoothly scrolls the main content area to the top"
   []
@@ -193,22 +186,6 @@
     (for [item items]
       (docs-common/keyed (or (:anchor item) (:label item)) (toc-item item)))]])
 
-(defn toggle-nav-section!
-  "Toggle a navigation section open/closed and navigate to first/last item"
-  [section-key items]
-  (let [current (get @state :navigation.section/open)
-        is-opening? (not= current section-key)]
-    (swap! state assoc :navigation.section/open (if is-opening? section-key nil))
-    (set-open-section-in-storage! (if is-opening? section-key nil))
-
-    (when (and is-opening? (seq items))
-      (let [last-visited (get-last-visited-route section-key)
-            target-route (if last-visited
-                           (some #(when (= (:route-id %) last-visited) (:route-id %)) items)
-                           (:route-id (first items)))]
-        (when target-route
-          (router/navigate! target-route))))))
-
 (defn route-in-list?
   "Check if a route-id exists in a flat list of routes"
   [route-id routes]
@@ -222,17 +199,6 @@
               (when-let [children (:children route)]
                 (route-in-list? route-id children))))
         routes))
-
-(defn route->section
-  "Determine which section owns a route"
-  [route-id]
-  (cond
-    (route-in-list? route-id guide-routes) :quickstart
-
-    (route-in-tree? route-id component-routes) :components
-
-    ;; Otherwise nil (Welcome, Landing, Live Examples = collapse all)
-    :else nil))
 
 (defn flatten-routes
   "Recursively flatten routes including children"
@@ -276,15 +242,6 @@
 
     :else nil))
 
-(defn auto-expand-section!
-  "Automatically expand section based on current route"
-  []
-  (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
-        current-route (some #(when (router/rendered? (:id %) true) %) all-routes)
-        section (when current-route (route->section (:id current-route)))]
-    (when section (swap! state assoc :navigation.section/open section))
-    (set-open-section-in-storage! section)))
-
 (defn toggle-mobile-menu!
   ([] (swap! state update :mobile-menu-open not)))
 
@@ -298,123 +255,6 @@
   (let [all-routes (concat site-routes component-routes guide-routes)
         route (some #(when (= (:id %) target-route-id) %) all-routes)]
     (nil? (:hash route))))
-
-(defn nav-item
-  [{:keys [route-id label icon indented? section-key featured? also-active-for active? on-click]}]
-  (let [active? (if (some? active?)
-                  active?
-                  (or (router/rendered? route-id true)
-                      (some #(router/rendered? % true) also-active-for)))
-        display-label (str/lower-case (str label))]
-    [:button.w-full.text-left.rounded-md.transition-colors.duration-150.cursor-pointer.flex.items-center.gap-3.px-3.py-2
-     {:class (concat
-              (cond
-                (and featured? active?) ["ty-text-primary+" "font-semibold"]
-                featured?               ["ty-text" "hover:ty-text-primary"]
-                active?                 ["ty-text+" "font-medium"]
-                :else                   ["ty-text-" "font-light" "hover:ty-text+"])
-              (when indented? ["pl-7" "text-sm"]))
-      :style (cond-> {:letter-spacing (if featured? "normal" "0.02em")}
-               active? (assoc :background "linear-gradient(to right, var(--ty-bg-primary) 2px, transparent 40px)"
-                              :box-shadow "inset 2px 0 0 var(--ty-color-primary)"))
-      :on {:click (fn []
-                    (when section-key
-                      (set-last-visited-route! section-key route-id))
-                    (if on-click (on-click) (router/navigate! route-id))
-                    (swap! state assoc :mobile-menu-open false))}}
-     [:ty-icon {:name icon
-                :size "sm"
-                :class (when active? "ty-text-primary")}]
-     [:span {:class (cond
-                      (and featured? active?) ["text-xs" "font-semibold"]
-                      featured?               ["text-xs" "font-medium"]
-                      :else                   ["text-xs" "font-light"])}
-      display-label]]))
-
-(defn calculate-collapsible-height
-  "Calculate available height for collapsible nav sections.
-   Uses window height and state values from resize observers for reactivity.
-   When a section expands, it takes ALL available sidebar space."
-  []
-  (let [;; Window height
-        window-h (:height @layout/window-size)
-
-        ;; Get heights from state (stored by resize observer events)
-        sizes (:sidebar-sizes @state)
-        header-h (or (:header sizes) 60)
-        fixed-nav-h (or (:fixed-content-height sizes) 180)
-        quickstart-h (or (:quickstart sizes) 40)
-        components-h (or (:components sizes) 40)
-
-        open-section (get @state :navigation.section/open)
-
-        ;; The OTHER section's height (which is collapsed, so just header)
-        other-section-h (case open-section
-                          :quickstart components-h
-                          :components quickstart-h
-                          ;; Both closed - show both headers
-                          (+ quickstart-h components-h))
-
-        available (- window-h
-                     header-h
-                     fixed-nav-h
-                     other-section-h
-                     100)]
-    (max available 150)))
-
-(defn nav-section
-  "Render a navigation section with optional children and collapsible behavior"
-  [{:keys [title items collapsible? section-key]}]
-  (let [is-open? (= (get @state :navigation.section/open) section-key)
-        icon (if is-open? "chevron-down" "chevron-right")
-        observer-id (when section-key (str "tyrell.sidebar." (name section-key)))]
-    [:div.mb-2
-     (when title
-       (if collapsible?
-         [:button.w-full.px-3.py-2.cursor-pointer.rounded-md.transition-all.duration-150.hover:ty-bg-primary-
-          {:on {:click #(toggle-nav-section! section-key items)}}
-          [:div.flex.items-center.gap-2
-           [:ty-icon {:name icon
-                      :size "xs"
-                      :class ["transition-transform" "duration-150"
-                              (if is-open? "ty-text-primary" "ty-text-")]}]
-           [:h3.text-xs.font-medium.tracking-wide
-            {:class (if is-open? "ty-text" "ty-text-")}
-            (str/lower-case title)]]]
-         [:div.px-3.py-2
-          [:h3.text-xs.font-medium.ty-text-.tracking-wide (str/lower-case title)]]))
-
-     (if collapsible?
-       ;; Collapsible children with CSS Grid for smooth height animation
-       (let [available-height (calculate-collapsible-height)]
-         ;; Grid wrapper - animates grid-template-rows from 0fr to 1fr
-         [:div.transition-all.duration-300
-          {:style {:display "grid"
-                   :grid-template-rows (if is-open? "1fr" "0fr")}}
-          ;; Inner wrapper with min-height:0 allows collapse, overflow:hidden clips content
-          [:div.overflow-hidden.transition-opacity.duration-300
-           {:class (if is-open? "opacity-100" "opacity-0")
-            :style {:min-height 0}}
-           [:ty-scroll-container.mt-2 {:max-height (str (- available-height 8) "px")
-                                       :hide-scrollbar true}
-            [:div {:class ["space-y-1.5"]}
-             (for [item items]
-               (let [has-children? (seq (:children item))]
-                 [:div {:replicant/key (:label item)}
-                  (nav-item (assoc item :indented? false :section-key section-key))
-                  (when has-children?
-                    [:div {:class ["space-y-1.5"]}
-                     (for [child (:children item)]
-                       (docs-common/keyed (:label child) (nav-item (assoc child :indented? true :section-key section-key))))])]))]]]])
-       [:div {:class ["space-y-1.5"]}
-        (for [item items]
-          (let [has-children? (seq (:children item))]
-            [:div {:replicant/key (:label item)}
-             (nav-item (assoc item :indented? false))
-             (when has-children?
-               [:div {:class ["space-y-1.5"]}
-                (for [child (:children item)]
-                  (docs-common/keyed (:label child) (nav-item (assoc child :indented? true))))])]))])]))
 
 (defn resize-observer-hooks
   "Create on-mount/on-unmount hooks for a resize observer that updates state"
@@ -434,26 +274,6 @@
        (unsubscribe)
        (set! (.-_resizeUnsub el) nil)))})
 
-(defn- component-nav
-  "Grouped component list, shown in the left sidebar on component pages."
-  []
-  (let [comp-map (components-index/by-id-map)]
-    [:div.flex.flex-col.gap-4
-     (for [{:keys [title ids]} components-index/category-groups]
-       [:div {:replicant/key title}
-        [:h3.px-3.pb-1.text-xs.font-medium.ty-text--.tracking-wide (str/lower-case title)]
-        (for [id ids
-              :let [{:keys [name]} (get comp-map id)
-                    active? (router/rendered? id true)]
-              :when name]
-          [:button.block.w-full.text-left.rounded-md.px-3.py-1.text-xs.cursor-pointer.transition-colors
-           {:replicant/key (str id)
-            :class (if active?
-                     ["ty-bg-primary-" "ty-text-primary+" "font-semibold"]
-                     ["ty-text-" "hover:ty-text++"])
-            :on {:click #(router/navigate! id)}}
-           name])])]))
-
 (defn- component-pager
   "Prev/next cards on component pages, in the sidebar's component order."
   []
@@ -471,52 +291,134 @@
        (docs-common/pager {:prev (card (dec i) "Previous")
                            :next (card (inc i) "Next")})])))
 
+;; --- Sidebar -------------------------------------------------------------------
+;; One tree that keeps its shape on every page: start links, then the component
+;; categories with the current one open. The current page is marked by a brand
+;; dot — in the icon column up top, on the guide line inside a category.
+
+(defn- nav-dot
+  "Rendered on every row so the state change transitions: the old dot shrinks
+   out while the new one grows in (site-nav-dot in styles.cljs)."
+  [active? style]
+  [:span.absolute.rounded-full.site-nav-dot
+   {:class (when active? "is-on")
+    :style (assoc style :background "var(--ty-color-primary)")}])
+
+(defn- scroll-parent [^js el]
+  (loop [^js p (.-parentElement el)]
+    (when p
+      (if (#{"auto" "scroll"} (.-overflowY (js/getComputedStyle p)))
+        p
+        (recur (.-parentElement p))))))
+
+(defn- reveal-current!
+  "Scrolls the current page's row into the sidebar's view, once per page and
+   only when it's off-screen, after its category has opened (300ms). A sidebar
+   the reader scrolled stays put."
+  [{^js row :replicant/node}]
+  (when-let [^js box (scroll-parent row)]
+    (when (not= js/location.pathname (.-_revealedPath box))
+      (js/clearTimeout (.-_revealTimer box))
+      (set! (.-_revealTimer box)
+            (js/setTimeout
+             (fn []
+               (let [r (.getBoundingClientRect row)
+                     b (.getBoundingClientRect box)]
+                 ;; A closed mobile menu has no height; try again once it opens.
+                 (when (and (.-isConnected row) (pos? (.-height b)))
+                   (set! (.-_revealedPath box) js/location.pathname)
+                   (when (or (< (.-top r) (.-top b)) (> (.-bottom r) (.-bottom b)))
+                     (.scrollBy box #js {:top (- (+ (.-top r) (/ (.-height r) 2))
+                                                 (+ (.-top b) (/ (.-height b) 2)))
+                                         :behavior (if (.-matches (js/matchMedia "(prefers-reduced-motion: reduce)"))
+                                                     "auto" "smooth")})))))
+             320)))))
+
+(defn- nav-row
+  "A sidebar entry. Nested rows sit on a category's guide line and carry no icon."
+  [{:keys [label icon active? nested? trail on-click]}]
+  [:button.site-focus.relative.w-full.flex.items-center.gap-3.rounded-md.text-left.text-sm.cursor-pointer.transition-colors
+   {:replicant/key label
+    :replicant/on-render (when active? reveal-current!)
+    :aria-current (when active? "page")
+    :class (into (if nested? ["pl-[18px]" "pr-3" "py-[9px]"] ["px-3" "py-2.5"])
+                 (if active? ["ty-text++" "font-semibold"] ["ty-text" "hover:ty-text++"]))
+    :on {:click (fn [] (on-click) (close-mobile-menu!))}}
+   (if nested?
+     (nav-dot active? {:left "-4px" :top "50%" :translate "0 -50%" :width "7px" :height "7px"})
+     [:span.relative.flex.shrink-0.items-center.justify-center.w-4.h-4
+      [:ty-icon.site-nav-icon.ty-text- {:name icon :size "sm" :class (when active? "is-off")}]
+      (nav-dot active? {:inset 0 :margin "auto" :width "6px" :height "6px"})])
+   [:span.flex-1.truncate label]
+   trail])
+
+(def ^:private start-links
+  [{:id ::landing :label "Welcome" :icon "home"}
+   {:id :tyrell.site.docs/getting-started :label "Getting started" :icon "rocket" :stack? true}
+   {:id theming-route-id :label "Theming" :icon "droplet"}
+   {:id :tyrell.site.docs/icons :label "Icons" :icon "feather"}])
+
+(defn- start-section []
+  [:div.flex.flex-col.gap-1
+   (for [{:keys [id label icon stack?]} start-links]
+     (nav-row {:label label :icon icon
+               ;; The chosen stack, quietly; switching happens on the page.
+               :trail (when stack?
+                        [:span.font-mono.font-normal.ty-text- {:class ["text-[10px]"]}
+                         (str/lower-case (:label (quickstart/current)))])
+               :active? (router/rendered? id true)
+               :on-click #(router/navigate! id)}))])
+
+(defn- components-section
+  "Components by category. Only the category holding the current page is open;
+   clicking it toggles it until the next navigation. Clicking any other
+   category opens it on its first component."
+  []
+  (let [comp-map (components-index/by-id-map)
+        groups (for [{:keys [title ids]} components-index/category-groups]
+                 {:title title
+                  :items (keep #(when-let [{:keys [name]} (comp-map %)] {:id % :name name}) ids)})
+        on-index? (router/rendered? ::components true)]
+    [:div.flex.flex-col.gap-1
+     [:button.site-focus.flex.items-center.justify-between.rounded-md.px-3.pb-1.cursor-pointer.uppercase.font-semibold.transition-colors
+      {:class (into ["text-[11px]" "tracking-[0.06em]"] (if on-index? ["ty-text++"] ["ty-text--" "hover:ty-text"]))
+       :on {:click (fn [] (router/navigate! ::components) (close-mobile-menu!))}}
+      "Components"
+      [:span.font-mono.font-normal (reduce + (map (comp count :items) groups))]]
+     (for [{:keys [title items]} groups
+           :let [current? (boolean (some #(router/rendered? (:id %) true) items))
+                 open? (and current? (not (:nav/collapsed @state)))]]
+       [:div {:replicant/key title}
+        [:button.site-focus.w-full.flex.items-center.gap-3.rounded-md.px-3.py-2.5.text-left.text-sm.cursor-pointer.transition-colors
+         {:class (if open? ["ty-text++" "font-medium"] ["ty-text" "hover:ty-text++"])
+          :aria-expanded (str open?)
+          :on {:click #(if current?
+                         (swap! state assoc :nav/collapsed open?)
+                         (router/navigate! (:id (first items))))}}
+         [:span.flex.shrink-0.items-center.justify-center.w-4.h-4
+          [:ty-icon.transition-transform.duration-200 {:name "chevron-right" :size "xs"
+                                                       :class (if open? ["rotate-90" "ty-text"] ["ty-text--"])}]]
+         [:span.flex-1 title]
+         [:span.font-mono.ty-text-- {:class ["text-[10px]"]} (count items)]]
+        ;; Always rendered: the grid row eases 0fr <-> 1fr, which animates the
+        ;; real height. inert keeps closed rows out of the tab order.
+        [:div.grid.duration-300.ease-out.motion-reduce:transition-none
+         {:class ["transition-[grid-template-rows]"]
+          :style {:grid-template-rows (if open? "1fr" "0fr")}}
+         [:div.overflow-hidden.transition-opacity.duration-300.motion-reduce:transition-none
+          {:class (if open? "opacity-100" "opacity-0")
+           :style {:min-height 0}
+           :inert (when-not open? "")}
+          [:div.flex.flex-col.gap-1.border-l.ty-border-.ml-5.mt-0.5.mb-2
+           (for [{:keys [id name]} items]
+             (nav-row {:label name :nested? true
+                       :active? (router/rendered? id true)
+                       :on-click #(router/navigate! id)}))]]]])]))
+
 (defn nav-items []
-  [:div.space-y-6
-   ;; Fixed content (always visible) - track height
-   [:ty-resize-observer
-    (merge {:id "tyrell.sidebar.nav-items"
-            :debounce 150}
-           (resize-observer-hooks "tyrell.sidebar.nav-items" [:sidebar-sizes :fixed-content-height]))
-    [:div.space-y-6
-     ;; Main Navigation — Welcome (quiet) + the two featured destinations.
-     (nav-section
-      {:items [{:route-id ::landing
-                :label "Welcome"
-                :icon "home"
-                :also-active-for [::landing-user-profile
-                                  ::landing-event-booking
-                                  ::landing-contact-form]}
-               {:route-id ::components
-                :label "Components"
-                :icon "grid"
-                :featured? true
-                ;; Keep "Components" highlighted whenever the user is on any
-                ;; specific component's documentation page, not just the index.
-                :also-active-for (mapv :id (flatten-routes component-routes))}
-               {:route-id theming-route-id
-                :label "Theming"
-                :icon "droplet"
-                :featured? true}]})]]
-
-   ;; Quickstart - one item per Getting started stack. The active one
-   ;; follows the stack chosen on the page.
-   (nav-section
-    {:title "Quickstart"
-     :items (let [on-page? (router/rendered? :tyrell.site.docs/getting-started true)
-                  chosen (:id (quickstart/current))]
-              (for [{:keys [id label icon]} quickstart/stacks]
-                {:route-id :tyrell.site.docs/getting-started
-                 :label label
-                 :icon icon
-                 :active? (and on-page? (= id chosen))
-                 :on-click #(quickstart/open! id)}))})
-
-   (when (or (router/rendered? ::components true)
-             (= :components (route->section
-                             (some #(when (router/rendered? (:id %) true) (:id %))
-                                   (flatten-routes component-routes)))))
-     (component-nav))])
+  [:div.flex.flex-col.gap-7
+   (start-section)
+   (components-section)])
 
 (defn render
   "Render the appropriate view based on current route (like docs/render)"
@@ -691,7 +593,7 @@
   "Navigate to selected search result"
   [result]
   (if-let [stack (:stack result)]
-    (quickstart/open! stack)
+    (do (quickstart/open! stack) (scroll-main-to-top!))
     (router/navigate! (:id result)))
   (close-search!))
 
@@ -978,8 +880,8 @@
          {:style {:max-width "1600px"
                   :display "grid"
                   :grid-template-columns (if has-toc?
-                                           "220px minmax(0, 1fr) 180px"
-                                           "220px minmax(0, 1fr)")
+                                           "272px minmax(0, 1fr) 180px"
+                                           "272px minmax(0, 1fr)")
                   :gap "32px"
                   :align-items "center"}}
          ;; Logo area (aligns with sidebar)
@@ -1061,8 +963,8 @@
         [:div.mx-auto
          {:style {:display "grid"
                   :grid-template-columns (cond
-                                           (and show-sidebar? has-toc?) "220px minmax(0, 1fr) 180px"
-                                           show-sidebar? "220px minmax(0, 1fr)"
+                                           (and show-sidebar? has-toc?) "272px minmax(0, 1fr) 180px"
+                                           show-sidebar? "272px minmax(0, 1fr)"
                                            :else "1fr")
                   ;; The landing page is full-bleed: its bands run edge to
                   ;; edge and hold their own content column.
@@ -1085,8 +987,8 @@
           {:style {:padding (if landing? "0" "32px 0")}}
           (layout/with-container
             {:width (cond
-                      (and show-sidebar? has-toc?) (- (layout/container-width) 220 180 content-padding)
-                      show-sidebar? (- (layout/container-width) 220 content-padding)
+                      (and show-sidebar? has-toc?) (- (layout/container-width) 272 180 content-padding)
+                      show-sidebar? (- (layout/container-width) 272 content-padding)
                       :else (- (layout/container-width) content-padding))
              :height (- (layout/container-height) header-height content-padding)}
             [:div (render) (component-pager)])]
@@ -1122,20 +1024,19 @@
   (router/init! (when-not (str/blank? ROUTER_BASE) ROUTER_BASE))
   (redirect-legacy-guide!)
 
-  (auto-expand-section!)
-
   (setup-keyboard-shortcuts!)
 
-  ;; Watch router changes for auto-expand, scroll-to-top, and re-render
+  ;; Watch router changes for scroll-to-top and re-render
   (add-watch router/*router* ::render
              (fn [_ _ old-state new-state]
                (when (not= (:current old-state) (:current new-state))
+                 ;; A new page opens its category again.
+                 (when (:nav/collapsed @state) (swap! state dissoc :nav/collapsed))
                  (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
                        current-route (some #(when (router/rendered? (:id %) true) %) all-routes)]
                    (when (should-scroll-for-route? (:id current-route))
                      (js/setTimeout scroll-main-to-top! 100))))
                (redirect-legacy-guide!)
-               (auto-expand-section!)
                (render-app!)))
 
   (add-watch state ::render

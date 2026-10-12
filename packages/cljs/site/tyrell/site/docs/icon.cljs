@@ -2,7 +2,8 @@
   "Documentation for ty-icon component"
   (:require [clojure.string :as str]
             [tyrell.site.docs.common :refer [component-page page-section playground
-                                             bento example api-section]]))
+                                             bento example api-section]]
+            [tyrell.router :as router]))
 
 (def ^:private gallery
   ["home" "search" "mail" "calendar" "user" "settings" "heart" "star" "bell" "lock"
@@ -38,7 +39,10 @@
            (when (not= motion "none") (str " :" motion " \"\""))
            (when (and (not= motion "none") (not= tempo "normal")) (str " :tempo \"" tempo "\"")) "}]")]
      ["datastar" "Datastar" "html"
-      (str "<ty-icon data-attr:name=\"$liked ? 'heart' : 'heart-off'\"" attrs cls "></ty-icon>")]]))
+      (str "<ty-button action aria-label=\"Like\"\n  data-signals:liked=\"false\"\n  data-attr:aria-pressed=\"$liked ? 'true' : 'false'\"\n  data-on:click=\"$liked = !$liked\">\n"
+           "  <ty-icon name=\"heart\"" attrs cls "\n    data-class:ty-text-danger=\"$liked\"></ty-icon>\n</ty-button>\n\n"
+           "<script>\n  // register once; tree-shake the rest\n"
+           "  tyIcons.register({ heart: '<svg …>' });\n</script>")]]))
 
 (defn- render-playground [{:keys [size motion tempo color]}]
   [:div.flex.flex-wrap.items-center.justify-center.gap-5 {:style {:max-width "520px"}}
@@ -52,7 +56,7 @@
    {:title "Icon"
     :group "Visual"
     :tag "ty-icon"
-    :description "SVG icons from a registry you fill. Lucide, Heroicons, Material and Font Awesome ship as tree-shakeable modules; or slot your own SVG. Sizes, color from the text, spin and pulse."
+    :description "Renders a registered SVG by name, or one you slot in. Takes its color from the text."
     :chips [["Tree-shakeable" "zap"] ["currentColor" "layers"] ["TyIcon (React)" "atom"]]
     :source "packages/core/src/components/icon.ts"
     :mark "✦"
@@ -73,34 +77,22 @@
      :render render-playground
      :snippets snippets})
 
+   [:button.site-focus.flex.items-center.gap-4.w-full.rounded-2xl.border.ty-border-.px-6.py-4.text-left.cursor-pointer.hover:ty-border
+    {:style {:background "var(--ty-surface-content)"}
+     :on {:click #(router/navigate! :tyrell.site.docs/icons)}}
+    [:ty-icon.ty-text-primary {:name "book-open" :size "lg"}]
+    [:span.flex-1.flex.flex-col.gap-1
+     [:span.text-sm.font-semibold.ty-text++ "Setting up icons"]
+     [:span.text-sm.ty-text- "Icon sets, registration per stack, bundle size."]]
+    [:ty-icon.ty-text-- {:name "arrow-right" :size "sm"}]]
+
    (page-section
-    {:title "Examples" :sub "Copy, paste, ship."}
+    {:title "Examples"}
     (bento
-     (example
-      {:title "Register what you use"
-       :span 4
-       :lang "clojure"
-       :description [:span "The registry starts empty. Register the icons you need; unused ones never reach your bundle. From JS: "
-                     [:code "tyIcons.register({name: svg})"] "."]
-       :code "(require '[tyrell.icons :as icons]
-         '[tyrell.lucide :as lucide]
-         '[tyrell.heroicons.outline :as hero]
-         '[tyrell.fav6.brands :as brands])
-
-(icons/register!
-  {:check lucide/check
-   :bell  hero/bell
-   :github brands/github})"}
-      [:div.flex.flex-wrap.items-center.gap-6
-       (for [[n label] [["check" "lucide"] ["bell" "lucide"] ["github" "fav6 brands"]]]
-         [:div.flex.flex-col.items-center.gap-2 {:replicant/key n}
-          [:ty-icon.ty-text+ {:name n :size "xl"}]
-          [:span.text-xs.ty-text- label]])])
-
      (example
       {:title "Inline SVG"
        :span 2
-       :description "Slot an <svg> and the registry is skipped. Handy for server-rendered UIs. Size, color and motion still apply."
+       :description "A slotted <svg> skips the registry. Size, color and motion still apply."
        :code "<ty-icon size=\"lg\" spin>
   <svg viewBox=\"0 0 24 24\">…</svg>
 </ty-icon>"}
@@ -116,7 +108,7 @@
 
      (example
       {:title "Sizes"
-       :span 3
+       :span 4
        :description [:span "Named sizes follow the text (" [:code "em"] "-based); numbers are exact pixels."]
        :code "size=\"xs | sm | md | lg | xl | 2xl\"
 size=\"12 | 16 | 20 | 24 | 32 | 48 | 64\""}
@@ -128,28 +120,14 @@ size=\"12 | 16 | 20 | 24 | 32 | 48 | 64\""}
 
      (example
       {:title "Motion"
-       :span 3
+       :span 6
        :description [:span [:code "spin"] " for work in progress, " [:code "pulse"] " for live status; " [:code "tempo"] " sets the speed."]
        :code "<ty-icon name=\"loader\" spin></ty-icon>
 <ty-icon name=\"circle\" pulse tempo=\"slow\"></ty-icon>"}
       [:div.flex.flex-wrap.items-center.gap-6
        [:span.flex.items-center.gap-2.text-sm.ty-text [:ty-icon.ty-text-primary {:name "loader" :spin ""}] "Syncing"]
        [:span.flex.items-center.gap-2.text-sm.ty-text [:ty-icon.ty-text-success {:name "circle" :pulse "" :size "sm"}] "Live"]
-       [:span.flex.items-center.gap-2.text-sm.ty-text [:ty-icon.ty-text-danger {:name "circle" :pulse "" :tempo "fast" :size "sm"}] "Recording"]])
-
-     (example
-      {:title "JavaScript API"
-       :lang "javascript"
-       :code "import { registerIcons, hasIcon, getIconNames } from '@gersak/ty';
-
-registerIcons({ rocket: '<svg viewBox=\"0 0 24 24\">…</svg>' });
-
-hasIcon('rocket');        // true
-getIconNames();           // ['rocket', …]
-
-// CDN bundle: window.tyIcons.register / has / list
-document.querySelector('ty-icon').name = 'rocket';"}
-      nil)))
+       [:span.flex.items-center.gap-2.text-sm.ty-text [:ty-icon.ty-text-danger {:name "circle" :pulse "" :tempo "fast" :size "sm"}] "Recording"]])))
 
    (api-section
     {:attributes [["name" "string" "Registered icon name. Ignored when an <svg> is slotted."]
@@ -157,8 +135,8 @@ document.querySelector('ty-icon').name = 'rocket';"}
                   ["spin" "boolean" "false" "Rotate continuously."]
                   ["pulse" "boolean" "false" "Fade in and out."]
                   ["tempo" "string" "slow or fast for spin and pulse."]]
-     :properties [["registerIcons(map)" "Record<string, string> => void" "Add SVG strings to the registry (also window.tyIcons.register)."]
-                  ["hasIcon(name) / getIconNames()" "" "Look up the registry."]
+     :properties [["registerIcons(map)" "Record<string, string> => void" "Add SVG strings to the registry. CDN: window.tyIcons.register."]
+                  ["hasIcon(name) / getIconNames()" "" "Look up the registry. CDN: window.tyIcons.has / list."]
                   ["icons/register! (ClojureScript)" "{keyword svg}" "Same registry from tyrell.icons."]]
      :slots [["(default)" "An inline <svg>, used instead of the registry."]]
      :css-vars [["--ty-icon-size" "Default size when no size is set (1em)."]

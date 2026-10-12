@@ -7,22 +7,26 @@
 
 (defn- attrs->html
   "Render playground props as an attribute string, skipping defaults."
-  [{:keys [size flavor with-time clearable]}]
+  [{:keys [size flavor with-time clear]}]
   (str/join "" [(when (not= size "sm") (str " size=\"" size "\""))
                 (when (not= flavor "default") (str " flavor=\"" flavor "\""))
                 (when with-time " with-time")
-                (when-not clearable " clearable=\"false\"")]))
+                (when-not clear " no-clear")]))
 
-(defn- snippets [{:keys [size flavor with-time clearable] :as props}]
-  [["html" "HTML" "html"
-    (str "<ty-date-picker label=\"Check-in\"" (attrs->html props) ">\n</ty-date-picker>")]
+(defn- html-code
+  "The HTML tab, plus `extra` attributes for the Datastar tab."
+  [props extra]
+  (str "<ty-date-picker label=\"Check-in\"" (attrs->html props) extra ">\n</ty-date-picker>"))
+
+(defn- snippets [{:keys [size flavor with-time clear] :as props}]
+  [["html" "HTML" "html" (html-code props "")]
    ["react" "React" "javascript"
     (str "import { TyDatePicker } from 'tyrell-react'\n\n"
          "<TyDatePicker\n  label=\"Check-in\""
          (when (not= size "sm") (str "\n  size=\"" size "\""))
          (when (not= flavor "default") (str "\n  flavor=\"" flavor "\""))
          (when with-time "\n  withTime")
-         (when-not clearable "\n  clearable={false}")
+         (when-not clear "\n  noClear")
          "\n  onChange={(e) => setDate(e.detail.value)}\n/>")]
    ["reagent" "Reagent" "clojure"
     (str "(:require [tyrell.react :as ty])\n\n"
@@ -30,18 +34,18 @@
          (when (not= size "sm") (str "\n  :size \"" size "\""))
          (when (not= flavor "default") (str "\n  :flavor \"" flavor "\""))
          (when with-time "\n  :with-time true")
-         (when-not clearable "\n  :clearable false")
+         (when-not clear "\n  :no-clear true")
          "\n  :on-change #(reset! date (.. % -detail -value))}]")]
    ["replicant" "Replicant" "clojure"
     (str "[:ty-date-picker\n {:label \"Check-in\""
          (when (not= size "sm") (str "\n  :size \"" size "\""))
          (when (not= flavor "default") (str "\n  :flavor \"" flavor "\""))
          (when with-time "\n  :with-time true")
-         (when-not clearable "\n  :clearable \"false\"")
+         (when-not clear "\n  :no-clear \"\"")
          "\n  :on {:change #(set-date! (.. % -detail -value))}}]")]
+   ;; detail.value is a UTC timestamp; localValue is the date (and time) as picked
    ["datastar" "Datastar" "html"
-    (str "<ty-date-picker label=\"Check-in\"" (attrs->html props)
-         "\n  data-on:change=\"$checkIn = evt.detail.value\">\n</ty-date-picker>")]])
+    (html-code props "\n  data-signals:check-in=\"''\"\n  data-on:change=\"$checkIn = evt.detail.localValue\"")]])
 
 (defn- near-today
   "A day in the current month other than today, so both markers show."
@@ -66,17 +70,17 @@
 
    (playground
     {:id :date-picker
-     :defaults {:size "md" :flavor "primary" :with-time false :clearable true}
+     :defaults {:size "md" :flavor "primary" :with-time false :clear true}
      :controls [{:key :size :options ["sm" "md" "lg"]}
                 {:key :flavor :options ["default" "primary" "success" "danger"] :swatch? true :tones? true}
                 {:key :with-time :switch? true}
-                {:key :clearable :switch? true}]
-     :render (fn [{:keys [size flavor with-time clearable]}]
+                {:key :clear :switch? true}]
+     :render (fn [{:keys [size flavor with-time clear]}]
                [:div {:style {:width "300px"}}
                 [:ty-date-picker (cond-> {:label "Check-in"
                                           :value "2026-09-24"
-                                          :size size
-                                          :clearable (if clearable "true" "false")}
+                                          :size size}
+                                   (not clear) (assoc :no-clear "")
                                    (not= flavor "default") (assoc :flavor flavor)
                                    with-time (assoc :with-time ""))]])
      :snippets snippets})
@@ -115,7 +119,7 @@
       {:title "States"
        :span 3
        :description "Required, disabled, and without the clear button."
-       :code "required · disabled · clearable=\"false\""}
+       :code "required · disabled · no-clear"}
       [:div.flex.flex-col.gap-3.w-full
        [:ty-date-picker {:label "Required" :required ""}]
        [:ty-date-picker {:label "Disabled" :disabled "" :value "2025-06-15"}]])
@@ -223,8 +227,10 @@ picker.addEventListener('change', (e) => {
                   ["locale" "string" "\"en-US\"" "Language of the displayed date, e.g. de-DE or fr-FR."]
                   ["format" "string" "\"long\"" "short, medium, long or full."]
                   "Behavior"
-                  ["clearable" "boolean" "true" "Show a clear button when a date is selected."]
+                  ["no-clear" "boolean" "false" "No clear button (it shows once a date is set)."]
                   ["with-time" "boolean" "false" "Add hour and minute selection."]
+                  ["min" "string" "Earliest selectable date (ISO). Earlier days are disabled in the popup, even while it's open."]
+                  ["max" "string" "Latest selectable date (ISO). Later days are disabled in the popup, even while it's open."]
                   ["required" "boolean" "false" "Take part in form validation."]
                   ["disabled" "boolean" "false" "Disable the picker."]]
      :events [["change" "{value, milliseconds, source, formatted}" "Fires when the date changes. source is selection, time-change, clear or external."]

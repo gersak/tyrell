@@ -61,6 +61,9 @@ export interface TyButtonProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Full-width button */
   wide?: boolean;
 
+  /** Neutral at rest; reveals the flavor on hover, focus and press */
+  muted?: boolean;
+
   /** Button content */
   children?: React.ReactNode;
 }
@@ -75,6 +78,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     pill,
     action,
     wide,
+    muted,
     label,
     name,
     value,
@@ -129,6 +133,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     const isPill = useBooleanProperty(elementRef, 'pill', pill);
     const isAction = useBooleanProperty(elementRef, 'action', action);
     const isWide = useBooleanProperty(elementRef, 'wide', wide);
+    const isMuted = useBooleanProperty(elementRef, 'muted', muted);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -140,6 +145,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     if (isPill) webComponentProps.pill = '';
     if (isAction) webComponentProps.action = '';
     if (isWide) webComponentProps.wide = '';
+    if (isMuted) webComponentProps.muted = '';
 
     if (appearance) webComponentProps.appearance = appearance;
     if (type) webComponentProps.type = type;

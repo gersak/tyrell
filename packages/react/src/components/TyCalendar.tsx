@@ -42,8 +42,9 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   /** Selected day (1-31) */
   day?: number | string;
   
-  /** Show navigation controls */
-  showNavigation?: boolean;
+  /** Hide the month/year navigation bar. Shown by default — this is the
+   *  opt-out, for when you drive the displayed month yourself. */
+  hideNavigation?: boolean;
   
   /** Stateless mode - no internal state management */
   stateless?: boolean;
@@ -102,7 +103,7 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     year,
     month,
     day,
-    showNavigation,
+    hideNavigation,
     stateless,
     size,
     flavor,
@@ -226,10 +227,10 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       webComponentProps.day = day.toString();
     }
 
-    const isShowNavigation = useBooleanProperty(elementRef, 'showNavigation', showNavigation);
+    const isHideNavigation = useBooleanProperty(elementRef, 'hideNavigation', hideNavigation);
     const isStateless = useBooleanProperty(elementRef, 'stateless', stateless);
 
-    if (isShowNavigation) webComponentProps['show-navigation'] = '';
+    if (isHideNavigation) webComponentProps['hide-navigation'] = '';
     if (isStateless) webComponentProps.stateless = '';
 
     if (size) {

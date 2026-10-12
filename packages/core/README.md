@@ -7,8 +7,16 @@ TypeScript web components for universal UI development.
 ## Installation
 
 ```bash
-npm install tyrell-components
+npm install tyrell-components        # latest -> the RC line
+npm install tyrell-components@tc     # tc     -> the TC line (current work)
 ```
+
+**Two dist-tags, and `latest` is not the newest version.** `latest`/`rc` point
+at the RC line — the promoted, stable releases. `tc` points at the TC line,
+where features land first and which can run several versions and weeks ahead of
+`latest`. A plain `npm install` therefore gets you the RC, deliberately. Reach
+for `@tc` when you want the newest components; check
+[CHANGELOG.md](../../CHANGELOG.md) for what is only on the TC line so far.
 
 ## Usage
 
@@ -62,23 +70,44 @@ import 'tyrell-components/input'
 
 ## Available Components
 
-- **ty-button** - Button with multiple flavors (primary, success, danger, warning, neutral)
-- **ty-modal** - Modal dialog with backdrop, ESC key, focus trap
-- **ty-input** - Input field with validation, number formatting
-- **ty-dropdown** - Dropdown with positioning, keyboard navigation
-- **ty-checkbox** - Checkbox with form integration
-- **ty-textarea** - Textarea with auto-resize
-- **ty-popup** - Popup positioning system
-- **ty-tooltip** - Tooltip with hover/focus triggers
-- **ty-tag** - Tag with removable state
-- **ty-option** - Option for dropdown/multiselect
-- **ty-icon** - Icon with registry system
-- **ty-copy** - Copy-to-clipboard field for API keys, tokens, URLs
-- **ty-calendar** - Full calendar with navigation and date selection
-- **ty-calendar-month** - Month view component
-- **ty-calendar-navigation** - Calendar navigation controls
-- **ty-date-picker** - Date picker with calendar popup
-- **ty-multiselect** - Multi-select dropdown with tags
+**Actions**
+- **ty-button** - Button in five flavors with `+`/`-` tones, sizes, icon slots
+- **ty-tag** - Label, status or filter chip; optionally dismissible
+
+**Text input**
+- **ty-input** - Text, number, currency and percent input with locale-aware formatting
+- **ty-textarea** - Auto-resizing textarea
+- **ty-file-upload** - Drop zone and file list, form-associated
+- **ty-copy** - Read-only field with copy-to-clipboard (alias `ty-copy-field`)
+
+**Toggles**
+- **ty-checkbox** - Checkbox, form-associated
+- **ty-switch** - On/off switch
+- **ty-radio-group** / **ty-radio** - Radio group with arrow-key navigation
+
+**Selection**
+- **ty-select** - Single and multiple select with search, async options and create-on-the-fly
+- **ty-option** - Option for `ty-select`
+- **ty-selected-options** - Selected values as dismissible tags, placed anywhere (alias `ty-selected-tags`)
+
+**Date & time**
+- **ty-date-picker** - Date (and time) picker with calendar popup
+- **ty-calendar** - Inline calendar with month/year view and keyboard navigation
+- **ty-calendar-month** / **ty-calendar-navigation** - The calendar's building blocks
+
+**Overlays**
+- **ty-modal** - Modal dialog with backdrop, Escape and focus trap (alias `ty-dialog`)
+- **ty-popup** - Anchored popup with placement and flipping
+- **ty-tooltip** - Tooltip on hover and focus
+
+**Layout**
+- **ty-tabs** / **ty-tab** - Tabs with a scrollable strip and overflow menu
+- **ty-wizard** / **ty-step** - Multi-step flow
+- **ty-scroll-container** - Scroll area with edge shadows and scroll anchoring
+- **ty-resize-observer** - Publishes an element's size for layout code
+
+**Visual**
+- **ty-icon** - Icon from the registry (Lucide, Heroicons, Material, Font Awesome)
 
 ## Development
 

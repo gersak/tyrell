@@ -11,16 +11,63 @@
       path
       (str ns-path "/" path))))
 
+(defn- css-segments
+  "Split CSS into [:code s] and [:string s] segments, dropping /* comments */.
+   Quoted strings are kept verbatim so minification never touches them."
+  [css]
+  (let [n (count css)]
+    (loop [i 0 code (StringBuilder.) segs []]
+      (if (>= i n)
+        (conj segs [:code (str code)])
+        (let [c (.charAt ^String css i)]
+          (cond
+            (and (= c \/) (< (inc i) n) (= \* (.charAt ^String css (inc i))))
+            (let [end (str/index-of css "*/" (+ i 2))]
+              ;; Comment acts as a token separator
+              (recur (if end (+ end 2) n) (.append code \space) segs))
+
+            (or (= c \") (= c \'))
+            (let [end (loop [j (inc i)]
+                        (cond
+                          (>= j n) n
+                          (= \\ (.charAt ^String css j)) (recur (+ j 2))
+                          (= c (.charAt ^String css j)) (inc j)
+                          :else (recur (inc j))))]
+              (recur end
+                     (StringBuilder.)
+                     (conj segs [:code (str code)] [:string (subs css i (min end n))])))
+
+            :else
+            (recur (inc i) (.append code c) segs)))))))
+
+(defn- minify-code
+  "Collapse whitespace and drop it around structural tokens.
+   Leaves spaces around : + - > ~ alone (descendant selectors, calc())."
+  [s]
+  (-> s
+      (str/replace #"\s+" " ")
+      (str/replace #"\s*([{};,])\s*" "$1")
+      (str/replace #";}" "}")))
+
+(defn- minify-css
+  "Strip comments and redundant whitespace from CSS, preserving strings."
+  [css]
+  (->> (css-segments css)
+       (map (fn [[t s]] (if (= t :string) s (minify-code s))))
+       (apply str)
+       (str/trim)))
+
 (defn- load-css-file
-  "Load CSS file content at compile time from resources."
+  "Load CSS file content at compile time from resources (minified)."
   [current-ns path]
   (let [full-path (resolve-css-path current-ns path)]
-    (try
-      (slurp (clojure.java.io/resource full-path))
-      (catch Exception _
-        (throw (ex-info (str "Cannot find CSS file: " full-path)
-                        {:path full-path
-                         :namespace current-ns}))))))
+    (minify-css
+     (try
+       (slurp (clojure.java.io/resource full-path))
+       (catch Exception _
+         (throw (ex-info (str "Cannot find CSS file: " full-path)
+                         {:path full-path
+                          :namespace current-ns})))))))
 
 (defn- infer-css-filename
   "Infer CSS filename from namespace: my.app.button -> my/app/button.css"
@@ -115,7 +162,7 @@
    `(defstyles ~name ~(infer-css-filename (str *ns*))))
   ([name path]
    (let [css-content (load-css-file (str *ns*) path)]
-     `(defonce ~name
-        (let [sheet# (js/CSSStyleSheet.)]
-          (.replaceSync sheet# ~css-content)
-          sheet#)))))
+     ;; Stable sheet, content refilled on every load: hot reload updates
+     ;; every shadow root that already adopted it.
+     `(do (defonce ~name (js/CSSStyleSheet.))
+          (.replaceSync ~name ~css-content)))))

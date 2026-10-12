@@ -24,11 +24,11 @@ This is not a component wrapper. The components (`<ty-button>`, `<ty-select>`, `
 
 That's the whole dependency story. The JAR ships a `deps.cljs` declaring the pinned npm `tyrell-components` — **shadow-cljs auto-installs it into your `package.json` on first build**. You never write `npm install tyrell-components`, and the CLJS and JS sides can't drift apart.
 
-Icons come transitively via `dev.gersak/tyrell-icons`; exclude if unwanted:
+Lucide icons come transitively via `dev.gersak/tyrell-icons-lucide`; exclude if unwanted. For every set (Heroicons, Material, Font Awesome) add `dev.gersak/tyrell-icons`.
 
 ```clojure
 {:deps {dev.gersak/tyrell {:mvn/version "..."
-                           :exclusions [dev.gersak/tyrell-icons]}}}
+                           :exclusions [dev.gersak/tyrell-icons-lucide]}}}
 ```
 
 ### CSS

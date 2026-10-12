@@ -11,9 +11,20 @@ export interface TyTabProps extends React.HTMLAttributes<HTMLElement> {
   
   /** Whether the tab is disabled */
   disabled?: boolean;
+
+  /** Content is loaded on demand: fires onTabLoad when shown with no content */
+  lazy?: boolean;
+
+  /** A lazy tab with no content was shown. Call ref.current.loadFailed() if loading fails. */
+  onTabLoad?: (event: CustomEvent<TabLoadDetail>) => void;
   
   /** Tab content */
   children?: React.ReactNode;
+}
+
+export interface TabLoadDetail {
+  id: string;
+  index: number;
 }
 
 export const TyTab = React.forwardRef<HTMLElement, TyTabProps>(
@@ -22,9 +33,20 @@ export const TyTab = React.forwardRef<HTMLElement, TyTabProps>(
     id,
     label,
     disabled,
+    lazy,
+    onTabLoad,
     ...props 
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+      const element = elementRef.current;
+      if (!element || !onTabLoad) return;
+
+      const handleLoad = (event: Event) => onTabLoad(event as CustomEvent<TabLoadDetail>);
+      element.addEventListener('ty-tab-load', handleLoad);
+      return () => element.removeEventListener('ty-tab-load', handleLoad);
+    }, [onTabLoad]);
 
     useEffect(() => {
       if (ref && elementRef.current) {
@@ -47,6 +69,7 @@ export const TyTab = React.forwardRef<HTMLElement, TyTabProps>(
     if (isDisabled) webComponentProps.disabled = '';
     
     if (label) webComponentProps.label = label;
+    if (lazy) webComponentProps.lazy = '';
 
     return React.createElement(
       'ty-tab',

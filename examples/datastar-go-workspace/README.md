@@ -16,7 +16,7 @@ build end-to-end.
 | `ty-copy` | API key + webhook URL (both `code` and `text` formats) |
 | `ty-popup` | Workspace-settings button (header) + per-member action menu |
 | `ty-resize-observer` | Live width readout on the Overview "Responsive panel" |
-| `ty-multiselect` + `ty-tag` (as option) | Skill filter on the Members tab, with server-side filtering via `data-on:change → @get('/api/members')` |
+| `ty-select multiple` + `ty-tag` (as option) | Skill filter on the Members tab, with server-side filtering via `data-on:change → @get('/api/members')` |
 | `ty-calendar` | Date picker on the Calendar tab; selecting a day triggers `@get('/api/events')` and the day's schedule renders in the side panel |
 | `ty-file-upload` | Drop zone on the Files tab; clicking Upload streams progress via SSE `patch-elements` |
 | `ty-wizard` + `ty-step` | Onboarding flow with server-driven step transitions and validation |
@@ -43,7 +43,7 @@ If `../datastar-go/` is already running on `:8080`, both can coexist.
   `/api/wizard/{next,back}`. The server reads signals, validates, and patches
   `wizardActive` + `wizardCompleted` back to the client; the component just
   reflects those signals via `data-attr:active` / `data-attr:completed`.
-- **External multiselect filter.** `ty-multiselect` keeps its options as
+- **External multiselect filter.** `ty-select multiple` keeps its options as
   static `ty-tag` children, but `data-bind="skillFilter"` exposes the
   selection as a comma-separated string that the server uses to filter the
   member list.

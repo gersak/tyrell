@@ -51,7 +51,7 @@ test.describe('ty-date-picker — desktop popup calendar', () => {
   })
 
   test('clear button empties the value', async ({ page }) => {
-    await mount(page, `<ty-date-picker id="dp" value="2026-07-15" clearable></ty-date-picker>`)
+    await mount(page, `<ty-date-picker id="dp" value="2026-07-15"></ty-date-picker>`)
     const clearBtn = page.locator('#dp .stub-clear')
     await expect(clearBtn).toBeVisible()
     await clearBtn.click()

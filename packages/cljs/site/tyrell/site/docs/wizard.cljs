@@ -63,7 +63,7 @@
   (let [o (when (= orientation "vertical") " orientation=\"vertical\"")]
     [["html" "HTML" "html"
       (str "<ty-wizard active=\"plan\" completed=\"account\"" o ">\n"
-           (str/join "\n" (for [[id l d] steps] (str "  <ty-step id=\"" id "\" label=\"" l "\" description=\"" d "\">…</ty-step>")))
+           (str/join "\n" (for [[id l d] steps] (str "  <ty-step id=\"" id "\" label=\"" l "\"\n    description=\"" d "\">…</ty-step>")))
            "\n</ty-wizard>")]
      ["react" "React" "javascript"
       (str "import { TyWizard, TyStep } from 'tyrell-react'\n\n"
@@ -79,8 +79,13 @@
       (str "[:ty-wizard {:active step :completed (str/join \",\" done)"
            (when o " :orientation \"vertical\"") "}"
            (str/join (for [[id l] steps] (str "\n [:ty-step {:id \"" id "\" :label \"" l "\"} …]"))) "]")]
+     ;; controlled: the wizard reports clicks, the signals decide
      ["datastar" "Datastar" "html"
-      (str "<ty-wizard data-attr:active=\"$step\" data-attr:completed=\"$done\"" o ">\n  …\n</ty-wizard>")]]))
+      (str "<ty-wizard" o "\n  data-signals=\"{step: 'plan', done: 'account'}\""
+           "\n  data-attr:active=\"$step\"\n  data-attr:completed=\"$done\""
+           "\n  data-on:ty-wizard-step-change=\"$step = evt.detail.activeId\">\n"
+           (str/join "\n" (for [[id l d] steps] (str "  <ty-step id=\"" id "\" label=\"" l "\"\n    description=\"" d "\">…</ty-step>")))
+           "\n</ty-wizard>")]]))
 
 (defn view []
   (component-page

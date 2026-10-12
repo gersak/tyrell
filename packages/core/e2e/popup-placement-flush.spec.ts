@@ -9,7 +9,22 @@ import { mount } from './helpers'
  */
 
 async function visibleVsTrigger(page: any) {
-  return page.evaluate(() => {
+  // Measure the settled position, not a frame of the entrance transition
+  // (scale + slide) — getAnimations() includes the popup's shadow tree.
+  // .open lands a frame after the prep pose, so there may be nothing to await
+  // yet: wait for any running animations, then until the surface stops moving.
+  return page.evaluate(async () => {
+    const frame = () => new Promise((r) => requestAnimationFrame(r))
+    const box = () => JSON.stringify(document.getElementById('surface')!.getBoundingClientRect())
+    let prev = ''
+    for (let i = 0; i < 60; i++) {
+      await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => {})))
+      await frame()
+      await frame()
+      const cur = box()
+      if (cur === prev && document.getAnimations().length === 0) break
+      prev = cur
+    }
     const trigger = document.getElementById('t')!.getBoundingClientRect()
     const surface = document.getElementById('surface')!.getBoundingClientRect()
     return { trigger, surface }

@@ -48,8 +48,8 @@ export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement
   /** Form field name for form submission */
   name?: string;
   
-  /** Whether to show a clear button */
-  clearable?: boolean;
+  /** No clear button (it shows once a date is set). */
+  noClear?: boolean;
   
   /** Date format: "short" | "medium" | "long" | "full" | custom format string */
   format?: 'short' | 'medium' | 'long' | 'full' | string;
@@ -94,7 +94,7 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     required,
     disabled,
     name,
-    clearable,
+    noClear,
     format,
     locale,
     withTime,
@@ -203,11 +203,11 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
 
     const isRequired = useBooleanProperty(elementRef, 'required', required);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
-    const isClearable = useBooleanProperty(elementRef, 'clearable', clearable);
+    const isNoClear = useBooleanProperty(elementRef, 'noClear', noClear);
 
     if (isRequired) webComponentProps.required = '';
     if (isDisabled) webComponentProps.disabled = '';
-    if (isClearable) webComponentProps.clearable = '';
+    if (isNoClear) webComponentProps['no-clear'] = '';
 
     if (name) {
       webComponentProps.name = name;

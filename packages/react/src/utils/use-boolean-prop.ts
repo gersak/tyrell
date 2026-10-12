@@ -32,7 +32,7 @@ export function coerceBool(value: unknown): boolean {
  * the prop flips back to `false`. Without this bridge, `<TyModal open>` →
  * `<TyModal open={false}>` leaves the `open` attribute on the element and
  * the modal stays open. Same class of bug affects `disabled`, `required`,
- * `clearable`, `loading`, `readonly`, `protected`, etc.
+ * `noClear`, `loading`, `readonly`, `protected`, etc.
  *
  * React 19+ bridges this natively — the effect short-circuits via
  * `needsPropertyBridge`, so this is dead code on modern React.

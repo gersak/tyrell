@@ -31,7 +31,7 @@ Every set is generated from its upstream source into flat files of SVG strings: 
 
 ## In Clojure
 
-Icons ship in the `dev.gersak/tyrell-icons` jar, which `dev.gersak/tyrell` depends on. There's no npm package for them. The files are `.cljc`, so the same defs work in ClojureScript and on the JVM.
+Icons ship as one Clojars jar per set: `dev.gersak/tyrell-icons-lucide`, `-heroicons`, `-material` and `-fontawesome`. `dev.gersak/tyrell` brings Lucide. For the others add `dev.gersak/tyrell-icons` (every set) or just the set jar you need. There's no npm package for them. The files are `.cljc`, so the same defs work in ClojureScript and on the JVM.
 
 ```clojure
 (ns app.icons
@@ -60,15 +60,57 @@ Prefer the npm files? `(:require ["tyrell-components/icons/lucide" :refer [mail]
 
 If the icons are dynamic, register every candidate up front.
 
-**On the server.** Inline the def into the tag and skip the registry:
+**On the server.** Keep the name → SVG map in one namespace and let the extract tool (below) write it out as a static `icons.js`. Pages load that file once, cached, and templates use names like everywhere else:
 
 ```clojure
-(ns app.pages
-  (:require [hiccup2.core :as h]
-            [tyrell.lucide :as lucide]))
+(ns app.icons
+  (:require [tyrell.lucide :as lucide]
+            [tyrell.heroicons.outline :as hero]))
 
+(def registry
+  {:mail        lucide/mail
+   :action-down lucide/chevron-down
+   :user        hero/user-circle})
+```
+
+```clojure
+[:script {:src "https://cdn…/tyrell.js"}]
+[:script {:src "/icons.js" :defer true}]   ; right after tyrell.js
+…
+[:ty-icon {:name "action-down"}]
+```
+
+Or inline the def into the tag and skip the registry. Nothing to load first, but every page repeats the SVG:
+
+```clojure
 [:ty-icon {:size "lg"} (h/raw lucide/mail)]
 ```
+
+**Ship only what you use on the JVM.** The JVM has no `:advanced` pass, so an uberjar carries every def of every set you depend on (Material alone is 6.6 MB). `tyrell.icons.build/extract` does the trimming ahead of time: clj-kondo's analysis finds the icon vars your code uses (`lucide/mail`, referred names, `require` calls, the `:clj` side of `.cljc`; not strings or comments), and the tool writes trimmed copies of the same namespaces. Your code doesn't change; only the classpath does.
+
+```clojure
+;; deps.edn
+{:paths ["src" "resources"]
+ :aliases
+ {:dev   {:extra-deps {dev.gersak/tyrell-icons {:mvn/version "…"}}}  ; every icon while you work
+  :prod  {:extra-paths ["gen-icons"]}                                 ; only the used ones
+  :icons {:extra-deps {dev.gersak/tyrell-icons {:mvn/version "…"}
+                       clj-kondo/clj-kondo    {:mvn/version "2026.08.04"}}
+          :exec-fn tyrell.icons.build/extract
+          :exec-args {:paths    ["src"]
+                      :out      "gen-icons"
+                      :registry app.icons/registry               ; optional:
+                      :js-out   "resources/public/icons.js"}}}}  ; write icons.js
+```
+
+```bash
+clj -X:icons
+# tyrell.heroicons.outline     1 icon      0.6 KB  → gen-icons/tyrell/heroicons/outline.cljc
+# tyrell.lucide                2 icons     0.9 KB  → gen-icons/tyrell/lucide.cljc
+# registration script          3 icons     1.2 KB  → resources/public/icons.js
+```
+
+Run it before building the uberjar (or commit `gen-icons/`). Keep `gen-icons` off the `:dev` classpath: the copies use the same namespace names, so whichever comes first wins. Names the scan can't see, such as ones built at runtime, go in `:include [tyrell.lucide/heart]`. `:svg-dir "resources/icons"` also writes each icon as `resources/icons/lucide/mail.svg` for template engines that include files. Unknown names are listed at the end, so a typo shows up there.
 
 ## In JavaScript
 
@@ -102,36 +144,42 @@ The key is the name you use in `name="…"`. Shorthand `{ chevronDown }` registe
 
 ## In HTML
 
-With the CDN script there's nothing to import. Either slot the SVG:
+Server-rendered pages (Flask, Django, Go, Rails, HTMX, Datastar) with the components from the CDN script: build your icons into one small `icons.js` and serve it next to your other static files. The browser fetches it once and caches it, every page and every swapped-in fragment uses the names, and the bundler keeps only what you import.
 
-```html
-<ty-icon size="lg">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
-</ty-icon>
+```js
+// icons.js
+import { mail, chevronDown } from 'tyrell-components/icons/lucide'
+import { userCircle } from 'tyrell-components/icons/heroicons/outline'
+
+await customElements.whenDefined('ty-icon')
+window.tyIcons.register({
+  mail,
+  'action-down': chevronDown,
+  user: userCircle,
+})
 ```
 
-or register by name through `window.tyIcons`:
+```bash
+npm i -D tyrell-components esbuild
+npx esbuild icons.js --bundle --minify --format=esm --outfile=static/icons.js
+```
 
 ```html
-<script type="module">
-  await customElements.whenDefined('ty-icon')
-  tyIcons.register({ mail: '<svg viewBox="0 0 24 24">…</svg>' })
-</script>
+<script src="https://cdn…/tyrell.js"></script>
+<script type="module" src="/static/icons.js"></script>   <!-- right after tyrell.js -->
 
-<ty-icon name="mail"></ty-icon>
+<ty-icon name="action-down"></ty-icon>
+```
+
+Register through `window.tyIcons`, not `registerIcons`: the components come from the CDN script, and an imported registry would be a second copy `<ty-icon>` never reads. Until `icons.js` runs, names render as a faint placeholder; loading it in `<head>` right after `tyrell.js` keeps that to the first frames. Clojure backends get the same file without Node: see `:js-out` [above](#in-clojure).
+
+**No build at all?** Slot the SVG straight from your template. `<ty-icon>` only sizes and colors it, so nothing has to load first, at the cost of repeating the SVG on every page:
+
+```html
+<ty-icon size="lg">{% include "icons/mail.svg" %}</ty-icon>
 ```
 
 Use `currentColor` for `fill` and `stroke` so `ty-text-*` classes tint the icon.
-
-**From the server.** To register by name without a build, have the backend print the map as JSON in the page:
-
-```clojure
-[:script {:type "module"}
- (h/raw (str "await customElements.whenDefined('ty-icon');"
-             "tyIcons.register(" (json/write-str {"mail" lucide/mail}) ")"))]
-```
-
-Registered names work in content swapped in later (HTMX, Datastar), so register once per page.
 
 ## Custom SVGs
 

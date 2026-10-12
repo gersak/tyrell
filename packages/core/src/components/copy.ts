@@ -186,11 +186,13 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
   private async copyToClipboard(): Promise<void> {
     if (this.disabled || !this.value) return
 
+    const value = this.value
+
     try {
-      await navigator.clipboard.writeText(this.value)
+      await navigator.clipboard.writeText(value)
 
       this.dispatchEvent(new CustomEvent('copy-success', {
-        detail: { value: this.value },
+        detail: { value },
         bubbles: true,
         composed: true
       }))
@@ -198,7 +200,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       // Fallback for non-secure contexts (non-HTTPS)
       try {
         const textarea = document.createElement('textarea')
-        textarea.value = this.value
+        textarea.value = value
         textarea.style.position = 'fixed'
         textarea.style.opacity = '0'
         document.body.appendChild(textarea)
@@ -207,7 +209,7 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
         document.body.removeChild(textarea)
 
         this.dispatchEvent(new CustomEvent('copy-success', {
-          detail: { value: this.value },
+          detail: { value },
           bubbles: true,
           composed: true
         }))

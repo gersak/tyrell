@@ -15,6 +15,19 @@ const TONES = ['-', '', '+']
 // while still covering the hue that broke worst pre-fix (warning-adjacent).
 const HUES = [45, 90, 145, 260]
 
+// Same exemptions as test/solid-contrast.test.ts: --ty-solid-fg-threshold is
+// pinned to 0.75 (light) / 0.5 (dark) by explicit choice (2026-08-12), which
+// trades these fills below AA. Anything else dropping below AA still fails.
+const DEPRECATED = new Set([
+  'light:primary-',
+  'light:success-',
+  'light:danger-',
+  'light:warning',
+  'light:warning+',
+  'dark:success+',
+  'dark:danger+',
+])
+
 /** WCAG 2.1 relative luminance -> contrast ratio, computed in-page via a
  * canvas fillStyle round-trip so any CSS color function (oklch, etc.)
  * resolves to concrete sRGB before we do the math. */
@@ -60,6 +73,7 @@ test.describe('solid button auto-contrast — WCAG AA across flavors/tones/hues/
         for (const f of FLAVORS) {
           for (const t of TONES) {
             const flavor = `${f}${t}`
+            if (DEPRECATED.has(`${mode}:${flavor}`)) continue
             const selector = `ty-button[flavor="${flavor}"] button`
             const ratio = await contrastRatio(page, selector)
             if (ratio < 4.5) failures.push(`hue ${hue} ${flavor}: ${ratio.toFixed(2)}:1`)

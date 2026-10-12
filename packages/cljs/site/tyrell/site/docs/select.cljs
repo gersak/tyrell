@@ -14,10 +14,10 @@
 
 (defn- prop-attrs
   "Non-default live props, as they appear in the snippets."
-  [{:keys [size clearable required disabled]}]
+  [{:keys [size clear required disabled]}]
   (cond-> {}
     (not= size "sm") (assoc :size size)
-    (not clearable) (assoc :not-clearable true)
+    (not clear) (assoc :no-clear true)
     required (assoc :required true)
     disabled (assoc :disabled true)))
 
@@ -30,14 +30,13 @@
                                        (apply concat attrs)
                                        [:jsx/onChange "{(e) => setCountry(e.detail.value)}"
                                         :reagent/on-change "#(reset! country (.. % -detail -value))"
-                                        :replicant/on "{:change #(set-country! (.. % -detail -value))}"]))]
-            (for [[v l] (take 3 countries)] [:ty-option {:value v} l]))]
-     :datastar (str "<ty-select label=\"Country\"" (snippets/attr-str attrs)
-                    "\n  data-on:change=\"$country = evt.detail.value\">\n  …\n</ty-select>"))))
+                                        :replicant/on "{:change #(set-country! (.. % -detail -value))}"
+                                        (snippets/ds "data-bind") "country"]))]
+            (for [[v l] (take 3 countries)] [:ty-option {:value v} l]))])))
 
-(defn- render-lineup [{:keys [size clearable required disabled]}]
+(defn- render-lineup [{:keys [size clear required disabled]}]
   (let [base (cond-> {:size size}
-               (not clearable) (assoc :not-clearable "")
+               (not clear) (assoc :no-clear "")
                required (assoc :required "")
                disabled (assoc :disabled ""))]
     [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "340px"}}
@@ -86,9 +85,9 @@
 
    (playground
     {:id :select
-     :defaults {:size "md" :clearable true :required false :disabled false}
+     :defaults {:size "md" :clear true :required false :disabled false}
      :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
-                {:key :clearable :switch? true}
+                {:key :clear :switch? true}
                 {:key :required :switch? true}
                 {:key :disabled :switch? true}]
      :sub "Open them. Country has 8 options, so it gets a search row."
@@ -121,18 +120,23 @@
      (example
       {:title "Custom trigger"
        :span 2
-       :description [:span "Slot anything as " [:code "slot=\"trigger\""] "; the field chrome goes away."]
+       :description [:span "Slot anything as " [:code "slot=\"trigger\""] "; the field chrome goes away. Show the picks yourself, here as a count."]
        :code "<ty-select multiple>
   <ty-button slot=\"trigger\">
     Filter
+    <ty-tag slot=\"end\">2</ty-tag>
   </ty-button>
   …
 </ty-select>"}
-      [:ty-select {:multiple "" :placement "bottom-start"}
-       [:ty-button {:slot "trigger" :appearance "outlined" :size "md"}
-        [:ty-icon {:slot "start" :name "filter"}] "Filter"]
-       (for [[v l] [["open" "Open"] ["review" "In review"] ["done" "Done"]]]
-         [:ty-option {:replicant/key v :value v} l])])
+      (let [picked (or (doc-state :filter) ["open" "review"])]
+        [:ty-select {:multiple "" :placement "bottom-start" :value (str/join "," picked)
+                     :on {:change #(set-doc! :filter (vec (.. % -detail -values)))}}
+         [:ty-button {:slot "trigger" :appearance "outlined" :size "md"}
+          [:ty-icon {:slot "start" :name "filter"}] "Filter"
+          (when (seq picked)
+            [:ty-tag {:slot "end" :size "xs" :flavor "primary"} (count picked)])]
+         (for [[v l] [["open" "Open"] ["review" "In review"] ["done" "Done"]]]
+           [:ty-option {:replicant/key v :value v} l])]))
 
      (example
       {:title "Options from your API"
@@ -163,6 +167,66 @@
       [:ty-select {:label "Tags" :multiple "" :allow-create "" :create-transform "slug" :value "design"}
        (for [[v l] [["design" "Design"] ["eng" "Engineering"] ["ops" "Ops"]]]
          [:ty-option {:replicant/key v :value v} l])])
+
+     (example
+      {:title "Search row"
+       :span 3
+       :description [:span "Lists of 8+ options get a search row on their own. "
+                     [:code "not-searchable"] " turns it off: a bare attribute, like " [:code "disabled"]
+                     ". It can't override " [:code "external-search"] " or " [:code "allow-create"] "."]
+       :code "<!-- 12 options: search row appears -->
+<ty-select label=\"Month\">…</ty-select>
+
+<!-- opt out -->
+<ty-select label=\"Month\" not-searchable>…</ty-select>"}
+      (let [months ["January" "February" "March" "April" "May" "June" "July"
+                    "August" "September" "October" "November" "December"]
+            opts (for [m months] [:ty-option {:replicant/key m :value m} m])]
+        [:div.flex.flex-wrap.gap-3.w-full
+         [:ty-select {:label "Month" :style {:flex "1" :min-width "150px"}} opts]
+         [:ty-select {:label "Month, no search" :not-searchable "" :style {:flex "1" :min-width "150px"}} opts]]))
+
+     (example
+      {:title "On a phone"
+       :span 3
+       :description [:span "On touch screens up to 768px the popup opens as a full dialog. With "
+                     [:code "multiple"] ", picks are pinned in a strip above the list and one section is open at a time. "
+                     [:code "selected-label"] " and " [:code "available-label"] " rename the two headings; the count is added for you."]
+       :code "<ty-select multiple
+  selected-label=\"In basket\"
+  available-label=\"Fruit\">
+  …
+</ty-select>"}
+      [:ty-select {:label "Basket" :multiple "" :value "apple,fig"
+                   :selected-label "In basket" :available-label "Fruit"}
+       (for [f ["Apple" "Banana" "Cherry" "Fig" "Grape" "Kiwi" "Lemon" "Mango" "Pear" "Plum"]]
+         [:ty-option {:replicant/key f :value (str/lower-case f)} f])])
+
+     (example
+      {:title "Rich options"
+       :span 6
+       :description [:span "Options take any markup: icon, title, a line of detail. Long text wraps inside the popup."]
+       :code "<ty-option value=\"pro\">
+  <div class=\"flex items-center gap-3\">
+    <ty-icon name=\"zap\"></ty-icon>
+    <div class=\"flex flex-col\">
+      <span class=\"font-semibold\">Pro</span>
+      <span class=\"text-xs ty-text-\">Unlimited projects, …</span>
+    </div>
+  </div>
+</ty-option>"}
+      [:ty-select {:label "Plan" :multiple "" :value "team" :style {:width "340px" :max-width "100%"}}
+       (for [[v icon title detail]
+             [["free" "feather" "Free" "One project, community support, and a monthly limit on builds and storage."]
+              ["pro" "zap" "Pro" "Unlimited projects, priority builds, and email support during business hours."]
+              ["team" "users" "Team" "Everything in Pro, plus shared workspaces, roles, and an audit log for every change."]
+              ["enterprise" "building" "Enterprise" "Single sign-on, custom contracts, a dedicated contact, and an uptime guarantee."]]]
+         [:ty-option {:replicant/key v :value v}
+          [:div.flex.items-center.gap-3
+           [:ty-icon.ty-text-primary.shrink-0 {:name icon}]
+           [:div.flex.flex-col
+            [:span.font-semibold.ty-text++ title]
+            [:span.text-xs.ty-text- detail]]]])])
 
      (example
       {:title "In a form"
@@ -239,11 +303,12 @@ sel.addEventListener('open', () => track('select-open'));"}
                   ["required" "boolean" "false" "Blocks form submission while empty."]
                   ["disabled" "boolean" "false" "Not interactive, left out of the form."]
                   ["readonly" "boolean" "false" "Shows the value; doesn't open."]
-                  ["clearable" "boolean" "true" "× button when something is selected. Use not-clearable to hide it."]
+                  ["no-clear" "boolean" "false" "No × button (it shows once something is selected)."]
                   ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
+                  ["flavor" "string" "Colors the field border and focus ring: a built-in, its +/- tone, or a custom flavor."]
                   ["compact" "boolean" "false" "Content-width trigger for toolbars; multiple shows a count badge."]
                   "Search"
-                  ["searchable" "string" "\"auto\"" "auto (search row for 8+ options), true or false."]
+                  ["not-searchable" "boolean" "false" "Drop the search row. It shows by default once there are 8+ options; external-search and allow-create keep it on."]
                   ["external-search" "boolean" "false" "Don't filter locally; fire search and let you replace the options."]
                   ["debounce" "number" "Delay for the search event, in ms."]
                   ["loading" "boolean" "false" "Spinner in the option list while you fetch."]
@@ -252,6 +317,9 @@ sel.addEventListener('open', () => track('select-open'));"}
                   "Popup"
                   ["placement" "string" "bottom, bottom-start, bottom-end, top, top-start, top-end. Flips when there's no room."]
                   ["align" "string" "\"start\"" "start, center or end. placement wins when both are set."]
+                  ["selected-label" "string" "\"Selected\"" "Mobile dialog: heading of the pinned selection strip. Count is appended."]
+                  ["available-label" "string" "\"Available\"" "Mobile dialog: heading of the option list. Count is appended."]
+                  ["no-options-message" "string" "\"No options available\"" "Shown when nothing matches the search."]
                   "ty-option"
                   ["value" "string" "What the select takes when this option is picked."]
                   ["disabled" "boolean" "false" "Shown, not selectable."]

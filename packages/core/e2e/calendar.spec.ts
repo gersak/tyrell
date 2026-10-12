@@ -34,7 +34,7 @@ test.describe('ty-calendar — nav + month composed, edge cases', () => {
       document.getElementById('cal')!.addEventListener('change', (e: any) => resolve(e.detail), { once: true })
     }))
     const day20 = page.locator('#cal ty-calendar-month .calendar-day-cell:not(.other-month)', { hasText: /^20$/ }).first()
-    await day20.dispatchEvent('pointerdown')
+    await day20.click()
     const detail: any = await detailPromise
     expect(detail).toBeTruthy()
     const value = await page.locator('#cal').evaluate((el: any) => el.value)
@@ -68,5 +68,27 @@ test.describe('ty-calendar — nav + month composed, edge cases', () => {
     await day10.tap()
     const value = await page.locator('#cal').evaluate((el: any) => el.value)
     expect(value).toBeTruthy()
+  })
+
+  test('scrolling the page with a finger that starts on a day neither picks it nor gets stuck', async ({ page, browserName }, testInfo) => {
+    test.skip(!testInfo.project.use.hasTouch || browserName !== 'chromium', 'needs CDP touch input')
+    await mount(page, `<ty-calendar id="cal" value="2026-03-10"></ty-calendar><div style="height:3000px"></div>`)
+    const day = page.locator('#cal ty-calendar-month .calendar-day-cell:not(.other-month)', { hasText: /^18$/ }).first()
+    const box = (await day.boundingBox())!
+    const x = box.x + box.width / 2
+    const y = box.y + box.height / 2
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] })
+    for (let i = 1; i <= 10; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - i * 15 }] })
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await page.waitForTimeout(300)
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(50)
+    expect(await page.locator('#cal').evaluate((el: any) => el.value)).toBe('2026-03-10')
+    // a plain tap still picks
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await day.tap()
+    expect(await page.locator('#cal').evaluate((el: any) => el.value)).toBe('2026-03-18')
   })
 })

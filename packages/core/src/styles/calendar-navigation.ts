@@ -37,7 +37,14 @@ export const calendarNavigationStyles = `
   padding: var(--nav-padding);
   font-family: inherit;
   user-select: none;
-  width: var(--nav-width, var(--nav-default-width));
+  /* --ty-calendar-width is the public knob: set it on ty-calendar (or any
+     ancestor) and BOTH the nav and the day grid follow it, because custom
+     properties inherit through shadow boundaries. --nav-default-width can't
+     serve that role — it's declared on :host([data-size]) inside this shadow
+     root, and a declaration on the element always beats a value inherited
+     into it, so an outside override of it is silently dead. --nav-width
+     (set inline by the width attribute) still wins over both. */
+  width: var(--nav-width, var(--ty-calendar-width, var(--nav-default-width)));
   box-sizing: border-box;
 }
 

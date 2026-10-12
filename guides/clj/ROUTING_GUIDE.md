@@ -39,7 +39,7 @@ Routes are linked to parent nodes in a tree. The root is `::router/root`.
 | `:id` | Unique keyword identifying the route |
 | `:segment` | URL path segment |
 | `:landing` | Priority number — highest wins as default redirect |
-| `:hash` | Hash fragment appended to URL |
+| `:hash` | Hash fragment appended to URL. Routes can share a segment and differ only by hash (`/welcome#top`, `/welcome#examples`) |
 | `:roles` | Set of roles required to access (optional) |
 | `:permissions` | Set of permissions required to access (optional) |
 
@@ -78,6 +78,8 @@ Routes are linked to parent nodes in a tree. The root is `::router/root`.
 ;; Exact match only
 (router/rendered? ::settings true)   ; true only if exactly /settings
 ```
+
+Hashes in exact matching: a route with a `:hash` matches only that hash. A route without one also matches when the URL's hash isn't a route of its own, because that hash is an in-page anchor: `/settings#billing` still renders `::settings`.
 
 ## The Key Pattern: Self-Contained Views
 
@@ -219,6 +221,9 @@ The logic:
 When the router initializes or the URL changes, `handle-landing!` runs automatically. It checks:
 1. If the current URL matches **no known routes** (404) — redirect to the best landing route
 2. If **any route** in the current path is unauthorized — redirect to the best landing route
+3. If the path only has routes **with a hash** and the URL has none (`/welcome` when only `#top` and `#examples` exist) — redirect to the best of those (highest `:landing`, then tree order)
+
+A path *below* a route stays put (`/users/123` under `::users`), so views can read dynamic segments with non-exact `rendered?`. Redirects replace the history entry, so Back doesn't land on the URL that redirected.
 
 The "best landing route" is the route with the highest `:landing` value that the user is authorized to access. This means different users can land on different default pages based on their roles.
 

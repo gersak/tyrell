@@ -520,7 +520,7 @@
 </ty-modal>
 
 <!-- Close Behavior Examples -->
-<ty-modal id="modal-backdrop-close" size="md" close-on-outside-click="true">
+<ty-modal id="modal-backdrop-close" size="md">
     <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="mouse-pointer" class="w-12 h-12 mx-auto mb-4 ty-text-info"></ty-icon>
@@ -535,7 +535,7 @@
     </div>
 </ty-modal>
 
-<ty-modal id="modal-no-backdrop" size="md" close-on-outside-click="false">
+<ty-modal id="modal-no-backdrop" size="md" prevent-outside-click>
     <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="lock" class="w-12 h-12 mx-auto mb-4 ty-text-warning"></ty-icon>
@@ -550,7 +550,7 @@
     </div>
 </ty-modal>
 
-<ty-modal id="modal-no-escape" size="md" close-on-escape="false">
+<ty-modal id="modal-no-escape" size="md" prevent-escape>
     <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="key" class="w-12 h-12 mx-auto mb-4 ty-text-danger"></ty-icon>
@@ -578,7 +578,7 @@
 </ty-modal>
 
 <!-- Form Modal -->
-<ty-modal id="form-modal" size="md" close-on-outside-click="false">
+<ty-modal id="form-modal" size="md" prevent-outside-click>
     <div class="ty-elevated rounded-xl shadow-xl max-w-lg mx-auto">
         <div class="p-8">
             <h3 class="text-xl font-semibold ty-text-neutral-strong mb-6">Contact Us</h3>
@@ -623,7 +623,7 @@
 </ty-modal>
 
 <!-- Wizard Modal -->
-<ty-modal id="wizard-modal" size="lg" close-on-outside-click="false">
+<ty-modal id="wizard-modal" size="lg" prevent-outside-click>
     <div class="ty-elevated rounded-xl shadow-xl max-w-3xl mx-auto">
         <div id="wizard-modal-content" class="p-8">
             <div class="text-center py-8">

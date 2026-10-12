@@ -22,20 +22,8 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** Controls modal visibility */
   open?: boolean;
 
-  /** Show backdrop behind modal (default: true) */
-  backdrop?: boolean;
-
-  /**
-   * @deprecated Use `preventOutsideClick` — string-boolean attrs are being
-   * phased out. Still works; prevent-* wins when both are set.
-   */
-  closeOnOutsideClick?: boolean;
-
-  /**
-   * @deprecated Use `preventEscape` — string-boolean attrs are being phased
-   * out. Still works; prevent-* wins when both are set.
-   */
-  closeOnEscape?: boolean;
+  /** No backdrop behind the modal (renders `no-backdrop`) */
+  noBackdrop?: boolean;
 
   /** Backdrop clicks no longer close the modal (also hides the built-in ✕) */
   preventOutsideClick?: boolean;
@@ -80,9 +68,7 @@ export interface TyModalRef {
 export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
   ({
     open,
-    backdrop,
-    closeOnOutsideClick,
-    closeOnEscape,
+    noBackdrop,
     preventOutsideClick,
     preventEscape,
     label,
@@ -163,8 +149,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     // the `open` attribute on the element and the modal stays open.
     const isOpen = useBooleanProperty(elementRef, 'open', open);
 
-    // For default-true booleans (backdrop, closeOn*), only the explicit-false
-    // case is interesting — bridge it imperatively too so it propagates.
+    // Presence booleans: bridge them imperatively too so they propagate.
     useEffect(() => {
       if (!needsPropertyBridge) return;
       const el = elementRef.current as any;
@@ -174,12 +159,10 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
         const next = coerceBool(raw);
         if (Boolean(el[prop]) !== next) el[prop] = next;
       };
-      setIf('backdrop', backdrop);
-      setIf('closeOnOutsideClick', closeOnOutsideClick);
-      setIf('closeOnEscape', closeOnEscape);
+      setIf('noBackdrop', noBackdrop);
       setIf('preventOutsideClick', preventOutsideClick);
       setIf('preventEscape', preventEscape);
-    }, [backdrop, closeOnOutsideClick, closeOnEscape, preventOutsideClick, preventEscape]);
+    }, [noBackdrop, preventOutsideClick, preventEscape]);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -188,16 +171,8 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
 
     if (isOpen) webComponentProps.open = '';
 
-    // Default-true booleans use "false" string on the attribute side; the
-    // core's parseBoolAttr handles it correctly.
-    if (backdrop !== undefined && !coerceBool(backdrop)) {
-      webComponentProps.backdrop = 'false';
-    }
-    if (closeOnOutsideClick !== undefined && !coerceBool(closeOnOutsideClick)) {
-      webComponentProps['close-on-outside-click'] = 'false';
-    }
-    if (closeOnEscape !== undefined && !coerceBool(closeOnEscape)) {
-      webComponentProps['close-on-escape'] = 'false';
+    if (noBackdrop !== undefined && coerceBool(noBackdrop)) {
+      webComponentProps['no-backdrop'] = '';
     }
     // Presence booleans: render the bare attribute only when true
     if (preventOutsideClick !== undefined && coerceBool(preventOutsideClick)) {

@@ -581,94 +581,103 @@ The theme engine (Option 1) is strictly more powerful — anything you can do wi
 
 ## Custom Flavors (add your own)
 
-The built-in flavors (`primary` / `success` / `danger` / `warning` / `neutral` — semantic-only; `secondary` was removed in TC37) are not a closed set. Pass any identifier as `flavor` and define its design tokens — the component generates the same wiring a built-in gets (shade ramp, hover, focus ring, `+`/`-` tones). Supported by **every flavored component**: `ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group` (and its `ty-radio` children), `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar` (and its `ty-calendar-month`).
-
-### The flavor pack: full engine parity
-
-The built-ins are nothing more than pre-installed instances of this template. Substitute your name for `love`, pick ONE seed color, and the flavor gets everything a built-in gets — the shared L-curve (equal perceived weight with every other flavor at each shade), the saturation curve, dark mode via the same dial flips, solid interaction states, and **auto-contrast foregrounds** (text derives from each fill's own lightness — no white-on-pale accidents):
-
-The full template (ink ramp, background tints, border, solid fills + interaction states, auto-contrast foregrounds) is generated live by the **Flavor pack builder** on the Theming page — give it a name and one seed color and copy the CSS it produces. Kept there instead of pasted here so the template can't drift out of sync with the engine as `tyrell-theme.css` evolves.
+The built-in flavors (`primary` / `success` / `danger` / `warning` / `neutral`) are not a closed set. Pass any name as `flavor` and the component themes itself from that name's design tokens, `+`/`-` tones included. Supported by **every flavored component**: `ty-button`, `ty-tag`, `ty-switch`, `ty-radio-group` (and its `ty-radio` children), `ty-checkbox`, `ty-input`, `ty-select`, `ty-date-picker`, `ty-copy`, `ty-tooltip`, `ty-calendar` (and its `ty-calendar-month`).
 
 ```html
-<ty-button flavor="love">Love</ty-button>
-<ty-button flavor="love-" appearance="outlined">Softer</ty-button>
-<ty-tag flavor="love+">stronger chip</ty-tag>
+<ty-button flavor="mr-hanky">Save</ty-button>
+<ty-button flavor="mr-hanky-" appearance="outlined">Softer</ty-button>
+<ty-tag flavor="mr-hanky+">stronger chip</ty-tag>
 ```
 
-Because every value routes through the shared dials, the pack inherits everything automatically: dark mode (the `html.dark` dial flips reach it), theme scopes (`[data-ty-theme]` recomputes it), L-curve reshaping, `--ty-solid-fg-threshold`. **No `html.dark` block of your own is needed.** That is the difference between this and the `color-mix()` quick path below — the quick path approximates the shape; the pack *is* the engine.
+### The flavor pack: one color, everything a built-in gets
 
-Most components need only the `--ty-color-X` ramp (`ty-tag` and `ty-tooltip` also read `--ty-bg-X` / `--ty-border-X`; solid buttons read `--ty-solid-X`):
+A pack has two parts. Generate it with the **Custom flavors** builder on the docs site's Theming page (name + one color → copy); the block below is its output for `mr-hanky`, and if the two ever differ, the builder wins.
+
+**1 · Yours** (the only lines you edit):
 
 ```css
-/* One rule = a new flavor, usable anywhere in scope */
 :root {
-  /* text / border ramp — used by ty-tag, outlined + ghost buttons */
+  --ty-mr-hanky-seed: #784011;     /* any CSS color: hex, name, rgb(), oklch() */
+  --ty-mr-hanky-l-factor: 0.86;    /* optional: all five shades lighter (>1) or darker (<1) */
+}
+```
+
+**2 · Engine** (paste once per flavor name, never edit):
+
+```css
+html:root,
+[data-ty-theme] {
+  --ty-color-mr-hanky-strong: oklch(from var(--ty-mr-hanky-seed) calc(var(--ty-l-strong) * var(--ty-mr-hanky-l-factor, 1)) calc(c * var(--ty-c-strong-mult)) h);
+  --ty-color-mr-hanky-bold: oklch(from var(--ty-mr-hanky-seed) calc(var(--ty-l-bold) * var(--ty-mr-hanky-l-factor, 1)) calc(c * var(--ty-c-bold-mult)) h);
+  --ty-color-mr-hanky: oklch(from var(--ty-mr-hanky-seed) calc(var(--ty-l-base) * var(--ty-mr-hanky-l-factor, 1)) calc(c * var(--ty-c-base-mult)) h);
+  --ty-color-mr-hanky-soft: oklch(from var(--ty-mr-hanky-seed) calc(var(--ty-l-soft) * var(--ty-mr-hanky-l-factor, 1)) calc(c * var(--ty-c-soft-mult)) h);
+  --ty-color-mr-hanky-faint: oklch(from var(--ty-mr-hanky-seed) calc(var(--ty-l-faint) * var(--ty-mr-hanky-l-factor, 1)) calc(c * var(--ty-c-faint-mult)) h);
+  --ty-bg-mr-hanky: oklch(from var(--ty-color-mr-hanky) l c h / var(--ty-a-bg-base));
+  --ty-bg-mr-hanky-bold: oklch(from var(--ty-color-mr-hanky) l c h / var(--ty-a-bg-bold));
+  --ty-bg-mr-hanky-soft: oklch(from var(--ty-color-mr-hanky) l c h / var(--ty-a-bg-soft));
+  --ty-border-mr-hanky: var(--ty-color-mr-hanky-soft);
+  --ty-solid-mr-hanky: oklch(from var(--ty-color-mr-hanky) calc(l + var(--ty-solid-l)) calc(c * var(--ty-solid-c)) calc(h + var(--ty-solid-h)));
+  --ty-solid-mr-hanky-hover: oklch(from var(--ty-solid-mr-hanky) calc(l + var(--ty-solid-hover-l)) c h);
+  --ty-solid-mr-hanky-active: oklch(from var(--ty-solid-mr-hanky) calc(l + var(--ty-solid-active-l)) c h);
+  --ty-solid-mr-hanky-strong: oklch(from var(--ty-solid-mr-hanky) calc(l + var(--ty-solid-strong-l)) c h);
+  --ty-solid-mr-hanky-soft: oklch(from var(--ty-solid-mr-hanky) calc(l + var(--ty-solid-soft-l)) c h);
+  --ty-solid-mr-hanky-fg: oklch(from var(--ty-solid-mr-hanky) clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+  --ty-solid-mr-hanky-soft-fg: oklch(from var(--ty-solid-mr-hanky-soft) clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+  --ty-solid-mr-hanky-strong-fg: oklch(from var(--ty-solid-mr-hanky-strong) clamp(0, (var(--ty-solid-fg-threshold) - l) * 1000, 1) 0 0);
+}
+```
+
+**Do I copy the whole theme CSS?** No. Keep loading `tyrell.css` and `tyrell-theme.css` as they are. Each custom flavor adds just the block above.
+
+**Do the lightness and chroma dials affect it?** Yes, live. The engine points at the shared dials (`--ty-l-*` curve, `--ty-c-*-mult` chroma scales, `--ty-a-bg-*` tint amounts, `--ty-solid-*` offsets, `--ty-solid-fg-threshold`) instead of copying their values. Retune any of them, or switch to dark mode, and your flavor recolors exactly like the built-ins; nothing to re-copy and **no `html.dark` block of your own**. Only the seed's hue and chroma are used: its lightness is ignored because the curve decides it, which is what `l-factor` is for.
+
+**What it needs:**
+
+- `tyrell-theme.css` loaded. The static palette (`tyrell-colors-static.css`) has no dials, so the engine resolves to nothing without it.
+- A name that starts with a letter (letters, digits, `-`, `_`) and isn't one of the five built-ins. A trailing `+`/`-` is read as a tone, so `mr-hanky-` is the soft tone of `mr-hanky`.
+- The selector exactly as given: `html:root, [data-ty-theme]`. The second half makes themed subtrees (`[data-ty-theme]` with their own dials) recompute your flavor; without it they inherit the page's values.
+- A browser with relative color syntax (`oklch(from …)`), the same requirement as the theme engine itself.
+
+**What comes free:** `+`/`-` tones on every component, hover and pressed states, tinted backgrounds, borders, focus rings, and black-or-white text on solid fills picked from each fill's own lightness.
+
+### Hand-picked tokens instead
+
+For exact brand values, skip the engine and define the tokens components read yourself. This is the complete list, shown for `flavor="brand"`:
+
+```css
+:root {
+  /* text & icons */
   --ty-color-brand-strong: #115e59;
   --ty-color-brand: #0d9488;
   --ty-color-brand-soft: #2dd4bf;
   --ty-color-brand-faint: #99f6e4;   /* focus ring */
-  --ty-border-brand: #0d9488;
-
-  /* backgrounds — ty-tag fills, button hover tints */
+  /* tinted backgrounds */
   --ty-bg-brand-bold: #99f6e4;
   --ty-bg-brand: #ccfbf1;
   --ty-bg-brand-soft: #f0fdfa;
-
-  /* solid button fills */
+  /* border */
+  --ty-border-brand: #0d9488;
+  /* solid fills: base, tone+, tone-, states */
   --ty-solid-brand: #0d9488;
-  --ty-solid-brand-strong: #0f766e;  /* tone+ */
-  --ty-solid-brand-soft: #5eead4;    /* tone- */
+  --ty-solid-brand-strong: #0f766e;
+  --ty-solid-brand-soft: #5eead4;
   --ty-solid-brand-hover: #0f766e;
   --ty-solid-brand-active: #134e4a;
+  /* text on each solid fill */
   --ty-solid-brand-fg: white;
+  --ty-solid-brand-strong-fg: white;
+  --ty-solid-brand-soft-fg: #134e4a;
 }
 ```
 
-```html
-<ty-button flavor="brand">Brand</ty-button>
-<ty-button flavor="brand+" appearance="outlined">Stronger</ty-button>
-<ty-tag flavor="brand-">softer chip</ty-tag>
-```
+The trade-off: these are fixed values, so they don't follow the dials or dark mode. Repeat the block under `html.dark` with dark-mode values.
 
 Notes:
 
-- **Missing tokens degrade gracefully.** A button token you didn't define falls back to the `neutral` equivalent; an undefined flavor renders as neutral. You can start with just `--ty-solid-X` + `--ty-solid-X-fg` and add the ramp later.
-- **Field emphasis ladders need the shade tokens.** Flavored fields (`ty-input`, `ty-select`, `ty-date-picker`) rest on `--ty-color-X-soft` and escalate to `--ty-color-X` on hover/focus. Define only the base token and the ladder flattens — rest and focus both show the full color (visible, but no state distinction). Both the hand-picked ramp above and the quick path below provide the shades.
-- **Scoping works like any CSS variable** — define on `:root` for app-wide, or on a container to scope the flavor to a section. Add a `html.dark` block for dark-mode values.
-- **Per-instance overrides still win.** `--ty-button-*` variables and each component's local flavor vars (next section) take precedence over the generated token wiring — e.g. `ty-tag[flavor="X"] { --tag-bg: … }` or `ty-switch[flavor="X"] { --switch-track: … }`.
-- Flavor names must be plain identifiers (letters, digits, `-`, `_`).
-
-### The quick path: one color in, a full ramp out
-
-Hand-picking 14 values gives you full control over every shade, but it's not the only option. Every one of those tokens can instead be *derived* from a single base color with [`color-mix()`](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/color-mix) — the same "one seed → full ramp" idea the OKLCH theme engine uses for the built-in flavors, just with a simpler formula:
-
-```css
-:root {
-  --brand-base: #7c3aed; /* the only color you actually pick */
-
-  --ty-color-brand: var(--brand-base);
-  --ty-color-brand-strong: color-mix(in oklab, var(--brand-base) 80%, black);
-  --ty-color-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
-  --ty-color-brand-faint: color-mix(in oklab, var(--brand-base) 30%, white);
-
-  --ty-bg-brand: color-mix(in oklab, var(--brand-base) 12%, white);
-  --ty-bg-brand-bold: color-mix(in oklab, var(--brand-base) 24%, white);
-  --ty-bg-brand-soft: color-mix(in oklab, var(--brand-base) 6%, white);
-
-  --ty-solid-brand: var(--brand-base);
-  --ty-solid-brand-hover: color-mix(in oklab, var(--brand-base) 85%, black);
-  --ty-solid-brand-active: color-mix(in oklab, var(--brand-base) 70%, black);
-  --ty-solid-brand-strong: color-mix(in oklab, var(--brand-base) 80%, black);
-  --ty-solid-brand-soft: color-mix(in oklab, var(--brand-base) 55%, white);
-  /* auto-contrast, not hardcoded white — a pale seed gets black text */
-  --ty-solid-brand-fg: oklch(from var(--brand-base)
-    clamp(0, (var(--ty-solid-fg-threshold, 0.57) - l) * 1000, 1) 0 0);
-}
-```
-
-Change `--brand-base` and every shade updates with it — including live, from a `<input type="color">`, since it's an ordinary CSS variable. The docs site's "CSS System" page demonstrates this working live: the "Try the Flavor Axis" section's `custom` chip is driven by exactly this formula.
-
-Trade-off: this mixes toward flat `black`/`white`, so it won't invert correctly for dark mode the way the hand-picked values (or the real OKLCH theme engine) do — pick per-theme base colors, or a `light-dark()`/`html.dark` override for `--brand-base`, if you need that. For a flavor that's fully theme-aware out of the box, use the theme engine's own hue/chroma seeds instead (see the docs site's "Theming" page) rather than a hand-rolled custom flavor.
+- **Missing tokens degrade to neutral.** Any token you don't define falls back to the `neutral` equivalent, so you can start with `--ty-solid-X` + `--ty-solid-X-fg` and fill in the rest later.
+- **Field emphasis ladders need the shade tokens.** Flavored fields (`ty-input`, `ty-select`, `ty-date-picker`) rest on `--ty-color-X-soft` and escalate to `--ty-color-X` on hover/focus. Define only the base token and rest and focus look the same.
+- **Scoping works like any CSS variable:** define on `:root` for the whole app, or on a container for one section.
+- **Per-instance overrides still win.** Each component's local flavor vars (table below) take precedence over the token wiring, e.g. `ty-tag[flavor="X"] { --tag-bg: … }`.
 
 Each flavored component funnels its colors through a few local vars, which double as the per-instance override API (set them on the host from any page-level rule):
 

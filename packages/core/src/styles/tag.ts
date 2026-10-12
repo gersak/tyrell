@@ -70,8 +70,7 @@ export const tagStyles = `
   border-color: var(--tag-border-color, var(--ty-border));
 }
 
-:host([pill="false"]) .tag-container,
-:host([not-pill]) .tag-container {
+:host([no-pill]) .tag-container {
   border-radius: var(--ty-radius-md);
   /* 6px instead of full pill */
 }

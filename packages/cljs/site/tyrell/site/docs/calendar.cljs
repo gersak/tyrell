@@ -12,19 +12,23 @@
   (str/join "" [(when (not= size "md") (str " size=\"" size "\""))
                 (when (not= flavor "primary") (str " flavor=\"" flavor "\""))
                 (when (not= locale "en-US") (str " locale=\"" locale "\""))
-                (when-not navigation " show-navigation=\"false\"")]))
+                (when-not navigation " hide-navigation")]))
+
+(defn- html-code
+  "The HTML tab, plus `extra` attributes for the Datastar tab."
+  [props extra]
+  (str "<ty-calendar" (attrs->html props) extra ">\n</ty-calendar>"))
 
 (defn- snippets [{:keys [size flavor locale navigation] :as props}]
   (let [kv (fn [k v] (str "\n  " k " \"" v "\""))]
-    [["html" "HTML" "html"
-      (str "<ty-calendar" (attrs->html props) ">\n</ty-calendar>")]
+    [["html" "HTML" "html" (html-code props "")]
      ["react" "React" "javascript"
       (str "import { TyCalendar } from 'tyrell-react'\n\n"
            "<TyCalendar"
            (when (not= size "md") (str "\n  size=\"" size "\""))
            (when (not= flavor "primary") (str "\n  flavor=\"" flavor "\""))
            (when (not= locale "en-US") (str "\n  locale=\"" locale "\""))
-           (when-not navigation "\n  showNavigation={false}")
+           (when-not navigation "\n  hideNavigation")
            "\n  onChange={(e) => setDate(e.detail)}\n/>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n"
@@ -33,7 +37,7 @@
             (str (when (not= size "md") (kv ":size" size))
                  (when (not= flavor "primary") (kv ":flavor" flavor))
                  (when (not= locale "en-US") (kv ":locale" locale))
-                 (when-not navigation "\n  :show-navigation false")
+                 (when-not navigation "\n  :hide-navigation true")
                  "\n  :on-change #(reset! date (.-detail %))"))
            "}]")]
      ["replicant" "Replicant" "clojure"
@@ -42,12 +46,11 @@
             (str (when (not= size "md") (kv ":size" size))
                  (when (not= flavor "primary") (kv ":flavor" flavor))
                  (when (not= locale "en-US") (kv ":locale" locale))
-                 (when-not navigation (kv ":show-navigation" "false"))
+                 (when-not navigation "\n  :hide-navigation true")
                  "\n  :on {:change #(set-date! (.-detail %))}"))
            "}]")]
-     ["datastar" "Datastar" "html"
-      (str "<ty-calendar" (attrs->html props)
-           "\n  data-on:change=\"$day = evt.detail.day\">\n</ty-calendar>")]]))
+     ;; value is the selected ISO date, so data-bind keeps $day in sync both ways
+     ["datastar" "Datastar" "html" (html-code props "\n  data-bind=\"day\"")]]))
 
 (defn- iso
   "Local YYYY-MM-DD (toISOString is UTC and can land on the wrong day)."
@@ -109,7 +112,7 @@
                               :size size
                               :flavor flavor
                               :locale locale
-                              :show-navigation (if navigation "true" "false")}])
+                              :hide-navigation (when-not navigation true)}])
      :snippets snippets})
 
    (page-section
@@ -269,7 +272,7 @@ cal.addEventListener('navigate', (e) => {
                   ["width" "string" "Explicit width, e.g. 320px. Clears size."]
                   ["flavor" "string" "\"primary\"" "Selected-day fill: any flavor, with + and - tones (success+, danger-)."]
                   ["locale" "string" "\"en-US\"" "Day and month names, e.g. de-DE. Falls back to the nearest lang attribute."]
-                  ["show-navigation" "boolean" "true" "Show the title and arrow bar."]
+                  ["hide-navigation" "boolean" "false" "Drop the title and arrow bar. Bare attribute, like disabled."]
                   "Behavior"
                   ["stateless" "boolean" "false" "Never updates itself. Clicks fire day-click; the parent sets value."]]
      :events [["change" "{year, month, day, action, source, dayContext}" "A day was selected (not fired in stateless mode)."]

@@ -14,10 +14,7 @@ test.describe('ty-tabs — keyboard edge cases', () => {
   })
 
   test('Enter on a focused tab button activates it (regression: was pointerdown-only, keyboard users had no way to activate a tab — WCAG 2.1.1)', async ({ page }) => {
-    // Fixed by adding a 'click' listener gated on event.detail === 0 (native
-    // keyboard-triggered clicks report detail 0; real pointer clicks report
-    // >=1), alongside the existing 'pointerdown' — avoids double-firing
-    // setActiveTab() on an actual mouse/touch click while covering Enter/Space.
+    // Tabs activate on 'click', which native <button>s also fire for Enter/Space.
     await mount(page, `
       <ty-tabs id="t">
         <ty-tab id="a" label="A">Content A</ty-tab>
@@ -29,7 +26,7 @@ test.describe('ty-tabs — keyboard edge cases', () => {
     await expect(page.locator('#t .tab-button').nth(1)).toHaveAttribute('aria-selected', 'true')
   })
 
-  test('a real pointer click fires ty-tab-change exactly once (no double-fire from pointerdown + the new click listener)', async ({ page }) => {
+  test('a real pointer click fires ty-tab-change exactly once and leaves focus on the tab', async ({ page }) => {
     await mount(page, `
       <ty-tabs id="t">
         <ty-tab id="a" label="A">Content A</ty-tab>
@@ -44,31 +41,56 @@ test.describe('ty-tabs — keyboard edge cases', () => {
     await page.waitForTimeout(100)
     const count = await page.evaluate(() => (window as any).__count)
     expect(count).toBe(1)
+    await expect(page.locator('#t .tab-button').nth(1)).toBeFocused()
   })
 
-  test('BUG: role="tablist"/role="tab" + roving tabindex present, but ArrowRight does not move focus/selection to the next tab', async ({ page }) => {
-    // WAI-ARIA APG requires arrow-key navigation for the tablist pattern once
-    // role="tab"/"tablist" is used — screen readers tell users to expect it.
-    // tabindex alternates 0/-1 per tab (roving-tabindex markup is present),
-    // which only makes sense if something moves it on keydown — but tabs.ts
-    // has zero keydown handling (grepped, confirmed). This proves the gap.
+  test('a finger swipe that starts on a tab scrolls the strip without activating it', async ({ page, browserName }, testInfo) => {
+    test.skip(!testInfo.project.use.hasTouch || browserName !== 'chromium', 'needs CDP touch input')
+    const tabs = Array.from({ length: 10 }, (_, i) => `<ty-tab id="t${i}" label="Section number ${i}">Panel ${i}</ty-tab>`).join('')
+    await mount(page, `<ty-tabs id="t" active="t0">${tabs}</ty-tabs>`)
+    const box = (await page.locator('#t .tab-button').nth(1).boundingBox())!
+    const y = box.y + box.height / 2
+    const x0 = box.x + box.width / 2
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y }] })
+    for (let i = 1; i <= 10; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x0 - i * 20, y }] })
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    await page.waitForTimeout(300)
+    const scrolled = await page.evaluate(() => document.getElementById('t')!.shadowRoot!.querySelector('.tab-strip')!.scrollLeft)
+    expect(scrolled).toBeGreaterThan(100)
+    await expect(page.locator('#t')).toHaveAttribute('active', 't0')
+  })
+
+  test('arrow keys move selection, focus and the roving tabindex (WAI-ARIA tabs pattern)', async ({ page }) => {
     await mount(page, `
       <ty-tabs id="t">
         <ty-tab id="a" label="A">Content A</ty-tab>
-        <ty-tab id="b" label="B">Content B</ty-tab>
+        <ty-tab id="b" label="B" disabled>Content B</ty-tab>
+        <ty-tab id="c" label="C">Content C</ty-tab>
       </ty-tabs>
     `)
-    const first = page.locator('#t .tab-button').nth(0)
-    const second = page.locator('#t .tab-button').nth(1)
-    await first.focus()
-    await page.keyboard.press('ArrowRight')
-    const secondSelectedAfterArrow = await second.getAttribute('aria-selected')
-    const secondTabindexAfterArrow = await second.getAttribute('tabindex')
-    // Documents current (buggy) behavior: neither selection nor roving
-    // tabindex moves. If this ever starts failing because someone implements
-    // arrow-key nav, that's the fix landing — update/remove this test then.
-    expect(secondSelectedAfterArrow).toBe('false')
-    expect(secondTabindexAfterArrow).toBe('-1')
+    const btn = (i: number) => page.locator('#t .tab-button').nth(i)
+    const expectActive = async (i: number) => {
+      await expect(btn(i)).toHaveAttribute('aria-selected', 'true')
+      await expect(btn(i)).toHaveAttribute('tabindex', '0')
+      await expect(btn(i)).toBeFocused()
+    }
+
+    await btn(0).focus()
+    await page.keyboard.press('ArrowRight')   // skips the disabled tab
+    await expectActive(2)
+    await expect(btn(0)).toHaveAttribute('tabindex', '-1')
+
+    await page.keyboard.press('ArrowRight')   // wraps
+    await expectActive(0)
+    await page.keyboard.press('ArrowLeft')    // wraps back
+    await expectActive(2)
+    await page.keyboard.press('Home')
+    await expectActive(0)
+    await page.keyboard.press('End')
+    await expectActive(2)
   })
 
   test('disabled tab is unreachable via click and is not aria-selected', async ({ page }) => {

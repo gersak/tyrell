@@ -506,7 +506,7 @@ For programmatic control, add `manual` and call `popupEl.show()` / `popupEl.hide
 </ty-scroll-container>
 ```
 
-Attrs: `max-height`, `shadow` (default `true`), `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
+Attrs: `max-height`, `no-shadow`, `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
 
 ---
 

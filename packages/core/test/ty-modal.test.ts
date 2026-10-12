@@ -16,6 +16,27 @@ describe('ty-modal', () => {
     expect(dialog.open).to.equal(true);
   });
 
+  it('no-backdrop turns the backdrop off; noBackdrop mirrors it', async () => {
+    const el = (await fixture(html`<ty-modal no-backdrop open><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+    const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    expect(dialog.hasAttribute('data-backdrop'), 'no-backdrop').to.equal(false);
+    expect(el.noBackdrop).to.equal(true);
+
+    el.removeAttribute('no-backdrop'); // what Replicant/Datastar do with `false`
+    await nextFrame();
+    expect(dialog.getAttribute('data-backdrop'), 'attribute gone: backdrop on').to.equal('true');
+
+    el.noBackdrop = true;
+    await nextFrame();
+    expect(el.hasAttribute('no-backdrop')).to.equal(true);
+    expect(dialog.hasAttribute('data-backdrop')).to.equal(false);
+    el.noBackdrop = false;
+    await nextFrame();
+    expect(el.hasAttribute('no-backdrop')).to.equal(false);
+    expect(dialog.getAttribute('data-backdrop')).to.equal('true');
+  });
+
   it('tolerates the open attribute being set before insertion into the document', async () => {
     // React sets initial attributes BEFORE appending the element (conditional
     // mount of an already-open modal). showModal() on a disconnected <dialog>
@@ -91,8 +112,8 @@ describe('ty-modal + nested popups (issue: select closes the modal)', () => {
     el.remove();
   });
 
-  it('honours close-on-escape="false" against the native dialog cancel', async () => {
-    const el = (await fixture(html`<ty-modal open close-on-escape="false"><p>Hi</p></ty-modal>`)) as any;
+  it('honours prevent-escape against the native dialog cancel', async () => {
+    const el = (await fixture(html`<ty-modal open prevent-escape><p>Hi</p></ty-modal>`)) as any;
     await nextFrame();
 
     const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
@@ -152,13 +173,12 @@ describe('ty-modal boolean property binding', () => {
     const el = (await fixture(html`<ty-modal open><p>Hi</p></ty-modal>`)) as any;
     await nextFrame();
 
-    el.closeOnEscape = false;      // boolean, not string
-    el.closeOnOutsideClick = false;
+    el.preventEscape = true;      // boolean, not string
+    el.preventOutsideClick = true;
     await nextFrame();
 
-    expect(el.getAttribute('close-on-escape')).to.equal('false');
-    expect(el.closeOnEscape).to.equal(false);
-    expect(el.closeOnOutsideClick).to.equal(false);
+    expect(el.getAttribute('prevent-escape')).to.equal('');
+    expect(el.getAttribute('prevent-outside-click')).to.equal('');
 
     // ESC (native cancel) must not close it now
     const dialog = el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
@@ -169,14 +189,13 @@ describe('ty-modal boolean property binding', () => {
     el.remove();
   });
 
-  it('prevent-escape / prevent-outside-click presence booleans, winning over close-on-*', async () => {
+  it('prevent-escape / prevent-outside-click presence booleans; close-on-* is gone', async () => {
     const el = (await fixture(html`
-      <ty-modal prevent-escape close-on-escape="true"><div>x</div></ty-modal>
+      <ty-modal prevent-escape close-on-outside-click="false"><div>x</div></ty-modal>
     `)) as any;
     await nextFrame();
-    // prevent-* wins over the legacy attribute
-    expect(el.closeOnEscape).to.equal(false);
-    expect(el.closeOnOutsideClick).to.equal(true);
+    expect(el.preventEscape).to.equal(true);
+    expect(el.preventOutsideClick, 'close-on-outside-click="false" no longer does anything').to.equal(false);
 
     // ESC (cancel) must be swallowed
     el.setAttribute('open', 'true');
@@ -189,9 +208,7 @@ describe('ty-modal boolean property binding', () => {
     // property mirrors behave like native disabled: true sets, false removes
     el.preventEscape = false;
     expect(el.hasAttribute('prevent-escape')).to.equal(false);
-    expect(el.closeOnEscape).to.equal(true);
     el.preventOutsideClick = true;
     expect(el.getAttribute('prevent-outside-click')).to.equal('');
-    expect(el.closeOnOutsideClick).to.equal(false);
   });
 });

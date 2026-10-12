@@ -257,7 +257,7 @@
 (def ^:private flavor-pack-defaults
   ;; :mode "oklch" is an OKLCH-native seed — an alternative to the hex picker
   ;; for people who think in hue/chroma. The active mode is what gets exported.
-  {:name "love" :color "#e0473e" :mode "hex" :hue 27 :chroma 0.19 :l-factor 1})
+  {:name "mr-hanky" :color "#784011" :mode "hex" :hue 55 :chroma 0.097 :l-factor 0.86})
 
 (defn- flavor-pack []
   (merge flavor-pack-defaults (:flavor-pack @state/state)))
@@ -537,7 +537,7 @@
 
 ;; ---------------------------------------------------------------------------
 ;; v2 page — hero, quick start, playground studio, live formula, flavor
-;; packs, recipes, type & shape. Section shell/rail come from docs.common.
+;; tweaks, custom flavors, type & shape. Section shell/rail come from docs.common.
 ;; ---------------------------------------------------------------------------
 
 (def ^:private flavors ["primary" "success" "danger" "warning" "neutral"])
@@ -810,7 +810,7 @@
                 [:div.flex.flex-wrap.gap-2
                  (for [f flavors] [:ty-button {:replicant/key f :flavor f :size "sm" :appearance "outlined"} (str/capitalize f)])]
                 [:div.flex.flex-wrap.gap-2
-                 (for [f flavors] [:ty-tag {:replicant/key f :flavor f :pill ""} f])])
+                 (for [f flavors] [:ty-tag {:replicant/key f :flavor f} f])])
      (spec-card "Shades — five flavors × five steps"
                 [:div.flex.flex-col {:class ["gap-1.5"]}
                  [:div.flex {:class ["gap-1.5"]}
@@ -985,18 +985,108 @@
        "--ty-color-warning-bold = oklch(" (.toFixed l 2) " " (.toFixed c 3) " " (int warning-hue) ")"]
       [:span.text-xs.ty-text--.md:ml-auto "html.dark flips the L-curve — seeds carry through"]])))
 
-;; --- 04 Custom flavors -----------------------------------------------------------
+;; --- 04 Tweak the built-ins -------------------------------------------------------
+
+(def ^:private tweaks
+  ;; [title when-to-use swatches css]
+  [["Start from a brand color" "You have a hex, not a hue. Hue and chroma are read from it; lightness still comes from the curve, so dark mode keeps working." ["#e0473e" "crimson"]
+    ":root {\n  --ty-primary-seed: #e0473e;\n}"]
+   ["Louder or quieter" "Every built-in flavor has its own hue and chroma dial." ["oklch(0.55 0.2 31)" "oklch(0.55 0.08 31)"]
+    ":root {\n  --ty-danger-chroma: 0.2;\n}"]
+   ["Follow the brand" "Point a semantic flavor at primary's hue so the palette reads as one family." ["oklch(0.58 0.13 200)" "oklch(0.58 0.1 175)"]
+    ":root {\n  --ty-success-hue:\n    var(--ty-primary-hue);\n}"]
+   ["Theme one section" "Any element with data-ty-theme recomputes the palette from its own dials." ["oklch(0.62 0.15 42)" "oklch(0.58 0.13 200)"]
+    "[data-ty-theme].promo {\n  --ty-primary-hue: 42;\n}"]
+   ["Pin a single token" "The formula is close, but one shade must match a spec exactly. The cascade still wins." ["#003344"]
+    ":root {\n  --ty-color-primary-strong:\n    #003344;\n}"]])
+
+(defn- tweak-cards []
+  (common/page-section
+   {:title "Tweak the built-ins" :sub "primary, success, warning, danger, neutral: one line each."}
+   (apply common/bento
+          (for [[i [title desc chips code]] (map-indexed vector tweaks)]
+            (common/example
+             {:title title :span (if (< i 2) 3 2) :lang "css" :code code
+              :description desc}
+             [:div.flex {:class ["gap-1.5"]}
+              (for [c chips]
+                [:span.w-5.h-5.rounded-md {:replicant/key c :style {:background c}}])])))))
+
+;; --- 05 Custom flavors -----------------------------------------------------------
+
+(def ^:private flavor-contract
+  ;; The tokens components read for flavor="X" (measured from the runtime
+  ;; custom-flavor sheets). Hand-rolling a flavor means defining these.
+  [["Text & icons" ["--ty-color-X-strong" "--ty-color-X" "--ty-color-X-soft" "--ty-color-X-faint"]]
+   ["Tinted backgrounds" ["--ty-bg-X-bold" "--ty-bg-X" "--ty-bg-X-soft"]]
+   ["Borders" ["--ty-border-X"]]
+   ["Solid fills" ["--ty-solid-X" "--ty-solid-X-hover" "--ty-solid-X-active" "--ty-solid-X-strong" "--ty-solid-X-soft"]]
+   ["Text on solid" ["--ty-solid-X-fg" "--ty-solid-X-strong-fg" "--ty-solid-X-soft-fg"]]])
+
+(defn- pack-code
+  "The pack split in two: the lines that are yours, and the engine."
+  [nm seed l-factor hex? css]
+  (let [yours (str ":root {\n  --ty-" nm "-seed: " seed ";"
+                   (when (not= l-factor 1) (str "\n  --ty-" nm "-l-factor: " l-factor ";"))
+                   "\n}")
+        engine (str "html:root,\n[data-ty-theme] {\n"
+                    (str/join "\n" (flavor-pack-ramp-lines nm))
+                    "\n}")]
+    [:div.flex.flex-col.gap-3
+     [:div.flex.items-center.justify-between.gap-2
+      [:div.flex.items-baseline.gap-2
+       [:span.inline-flex.items-center.justify-center.w-5.h-5.rounded-full.font-mono.text-xs.font-semibold.ty-bg-primary.ty-text-primary+ "1"]
+       [:span.text-sm.font-semibold.ty-text++ "Yours"]
+       [:span.text-xs.ty-text- (if hex? "the color you pick — the only line you edit" "the only line you edit")]]
+      (common/copy-button css)]
+     (mini-code yours)
+     [:details.group
+      [:summary.flex.items-baseline.gap-2.cursor-pointer.list-none
+       [:span.inline-flex.items-center.justify-center.w-5.h-5.rounded-full.font-mono.text-xs.font-semibold.ty-bg-neutral.ty-text "2"]
+       [:span.text-sm.font-semibold.ty-text++ "Engine"]
+       [:span.text-xs.ty-text- (str "paste once, never edit · " (count (str/split-lines engine)) " lines")]
+       [:ty-icon.ml-auto.ty-text-- {:name "chevron-down" :size "xs"}]]
+      [:div.mt-2 (mini-code engine)]]
+     [:p.text-xs.ty-text-- "The copy button takes both parts."]]))
+
+(defn- same-pack-demo
+  "One pasted pack, three contexts: the ramp reads the dials by reference.
+   Every context here is a dial, so it holds on a light or a dark page; the
+   site's own theme toggle is the light/dark proof."
+  [nm]
+  (let [dark? (not= "light" (:theme @state/state))
+        all (fn [prefix v] (into {} (for [s ["strong" "bold" "base" "soft" "faint"]] [(str prefix s "-mult") v])))]
+    [:div.grid.gap-3 {:style {:grid-template-columns "repeat(auto-fit, minmax(11rem, 1fr))"}}
+     (for [[label style code] [["This page" nil (if dark? "html.dark" "html")]
+                               ["Quieter chroma" (all "--ty-c-" "0.35") "--ty-c-*-mult: 0.35"]
+                               ["Heavier tints" {"--ty-a-bg-base" "30%" "--ty-a-bg-soft" "15%" "--ty-a-bg-bold" "45%"}
+                                "--ty-a-bg-base: 30%"]]]
+       [:div.flex.flex-col.gap-3.rounded-xl.border.ty-border-.p-4
+        {:replicant/key label :data-ty-theme ""
+         :style (merge {:background "var(--ty-surface-content)"} style)}
+        [:div.flex.items-baseline.justify-between.gap-2
+         [:span.text-sm.font-semibold.ty-text++ label]
+         [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}} code]]
+        [:div.flex.flex-wrap.items-center.gap-2
+         [:ty-button {:flavor nm :size "sm"} "Save"]
+         [:ty-button {:flavor nm :size "sm" :appearance "outlined"} "Edit"]
+         [:ty-tag {:flavor nm} nm]]])]))
+
+(defn- faq [icon q & a]
+  [:div.flex.flex-col.gap-2.min-w-0
+   [:div.flex.items-center.gap-2
+    [:ty-icon.ty-text-primary {:name icon :size "sm"}]
+    [:h3.text-base.font-semibold.ty-text++.scroll-mt-6 q]]
+   (into [:div.flex.flex-col.gap-2.text-sm.ty-text-.leading-relaxed] a)])
 
 (defn- flavor-packs []
   (let [{nm :name :keys [mode color hue chroma l-factor] :as fp} (flavor-pack)
+        nm (if (seq nm) nm "mr-hanky")
         seed (fpb-seed fp)
-        css (flavor-pack-css nm seed l-factor (= mode "hex"))
-        seed-css (str ":root {\n  --ty-" nm "-seed: " seed ";"
-                      (when (not= l-factor 1) (str "\n  --ty-" nm "-l-factor: " l-factor ";"))
-                      "\n}")]
+        css (flavor-pack-css nm seed l-factor (= mode "hex"))]
     (common/page-section
-     {:title "Custom flavors" :sub "A name and one color → a full flavor."}
-     ;; LIVE: the generated pack applies to the page, so the preview is the engine at work.
+     {:title "Custom flavors" :sub (str "flavor=\"" nm "\" works on every component. One color is all you choose.")}
+     ;; LIVE: the generated pack applies to the page, so every preview below is the engine at work.
      [:style css]
      [:div.flex.flex-col.md:flex-row.rounded-2xl.border.ty-border-.overflow-hidden
       {:style {:background "var(--ty-surface-content)"}}
@@ -1026,66 +1116,60 @@
        [:div.flex.flex-col.gap-2
         [:div.flex.justify-between.font-mono.text-xs [:span.ty-text "l-factor"] [:span.ty-text++ (.toFixed l-factor 2)]]
         [:input.th-range {:type "range" :min 0.5 :max 1.5 :step 0.01 :value l-factor
-                          :on {:input (fpb-set-num! :l-factor)}}]]]
-      (when (seq nm)
-        [:div.flex-1.min-w-0.flex.flex-col.gap-4.p-5
-         [:div.flex.rounded-xl.overflow-hidden
-          (for [[label suffix] shades
-                :let [token (str "--ty-color-" nm suffix)]]
-            [:div.flex-1.flex.items-end.p-3.font-mono.text-xs.font-semibold
-             {:replicant/key label :style {:height "4.5rem" :background (str "var(" token ")") :color (on-color token)}}
-             label])]
-         [:div.flex.flex-wrap.items-center.gap-2
-          [:ty-button {:flavor nm :size "sm"} (str "flavor=\"" nm "\"")]
-          [:ty-button {:flavor nm :size "sm" :appearance "outlined"} "outlined"]
-          [:ty-button {:flavor nm :size "sm" :appearance "ghost"} "ghost"]
-          [:ty-tag {:flavor nm :pill ""} nm]]
-         [:div.flex.flex-col.gap-2
-          (mini-code seed-css)
-          [:details.text-xs
-           [:summary.cursor-pointer.ty-text-.font-medium
-            (str "Full pack · " (count (str/split-lines css)) " lines — the ramp is engine boilerplate")]
-           [:div.mt-2.flex.flex-col.gap-2
-            [:div.flex.justify-end (common/copy-button css)]
-            (mini-code css)]]]])]
-     [:div.flex.flex-col.rounded-xl.border.ty-border-.overflow-hidden
-      (for [[name desc us?] [["Material UI" "createTheme() + ThemeProvider — JavaScript, React only" false]
-                             ["Shoelace / Web Awesome" "variants are a fixed list; a new one means per-component overrides" false]
-                             ["Tailwind" "edit the config, re-run the build" false]
-                             ["Tyrell" "a few CSS custom properties, scoped anywhere the cascade reaches" true]]]
-        [:div.flex.flex-col.sm:flex-row.gap-1.sm:gap-4.px-4.py-3.border-b.ty-border-.last:border-b-0.site-chrome
-         {:replicant/key name :data-ty-theme ""
-          :class (when us? "ty-bg-primary-")}
-         [:span.text-sm.font-semibold.shrink-0 {:class (if us? "ty-text-primary" "ty-text++") :style {:width "12rem"}} name]
-         [:span.text-sm {:class (if us? "ty-text++" "ty-text-")} desc]])])))
+                          :on {:input (fpb-set-num! :l-factor)}}]
+        [:span.text-xs.ty-text-- "Optional. Nudges all five shades lighter or darker."]]]
+      [:div.flex-1.min-w-0.flex.flex-col.gap-5.p-5
+       [:div.flex.rounded-xl.overflow-hidden
+        (for [[label suffix] shades
+              :let [token (str "--ty-color-" nm suffix)]]
+          [:div.flex-1.flex.items-end.p-3.font-mono.text-xs.font-semibold
+           {:replicant/key label :style {:height "4rem" :background (str "var(" token ")") :color (on-color token)}}
+           label])]
+       [:div.flex.flex-wrap.items-center.gap-2
+        (for [f [nm (str nm "+") (str nm "-")]]
+          [:ty-button {:replicant/key f :flavor f :size "sm"} (str "flavor=\"" f "\"")])
+        [:ty-tag {:flavor nm} nm]
+        [:ty-checkbox {:flavor nm :checked ""}]
+        [:ty-switch {:flavor nm :checked ""}]]
+       (pack-code nm seed l-factor (= mode "hex") css)]]
 
-;; --- 05 Recipes ------------------------------------------------------------------
+     [:div.flex.flex-col.gap-3
+      [:div.flex.items-baseline.justify-between.gap-3.flex-wrap
+       [:h3.text-base.font-semibold.ty-text++.scroll-mt-6 "One pack, every context"]
+       [:span.text-xs.ty-text- (str "Same pasted pack in all three. Flip the site to " (if (= "light" (:theme @state/state)) "dark" "light") " mode (top right) and they follow too.")]]
+      (same-pack-demo nm)]
 
-(def ^:private recipes
-  [["Rotate primary" "Usually all you need." ["oklch(0.58 0.13 200)" "oklch(0.45 0.1 200)"]
-    ":root {\n  --ty-primary-hue: 200;\n  --ty-primary-chroma: 0.13;\n}"]
-   ["Seed from any color" "Hex, name, rgb — hue and chroma are read from it." ["#e0473e" "crimson"]
-    ":root {\n  --ty-primary-seed: #e0473e;\n  --ty-danger-seed: crimson;\n}"]
-   ["Independent flavors" "Each flavor is its own seed." ["oklch(0.55 0.2 31)"]
-    ":root {\n  --ty-danger-chroma: 0.2;\n}"]
-   ["Pull toward primary" "Semantic flavors can follow the brand." ["oklch(0.58 0.13 200)" "oklch(0.58 0.1 175)"]
-    ":root {\n  --ty-success-hue:\n    var(--ty-primary-hue);\n}"]
-   ["Pin one token" "The cascade still wins." ["#003344"]
-    ":root {\n  --ty-color-primary-strong:\n    #003344;\n}"]
-   ["Scope a subtree" "Theme one section, not the page." ["oklch(0.62 0.15 42)" "oklch(0.58 0.13 200)"]
-    "[data-ty-theme].promo {\n  --ty-primary-hue: 42;\n}"]])
+     [:div.grid.gap-x-10.gap-y-8.md:grid-cols-2
+      (faq "copy" "Do I copy the whole theme CSS?"
+           [:p "No. Keep loading " [:code "tyrell.css"] " and " [:code "tyrell-theme.css"]
+            " as they are. Each custom flavor adds one small block: the seed line is yours, the rest is the same ramp the built-ins use, pasted once."])
+      (faq "sliders-horizontal" "Do the lightness and chroma dials affect it?"
+           [:p "Yes, live. The ramp points at the dials instead of copying their values, so tuning the lightness curve or the chroma scales, or switching to dark mode, recolors your flavor exactly like the built-ins. Nothing to re-copy."]
+           [:p "Only your seed's hue and chroma are used. Its lightness is ignored because the curve decides it; reach for " [:code "l-factor"] " to sit lighter or darker."])
+      (faq "check-square" "What does it need?"
+           [:ul.flex.flex-col.gap-1.list-disc.pl-5
+            [:li [:code "tyrell-theme.css"] " loaded. The static palette has no dials, so the ramp resolves to nothing without it."]
+            [:li "A name that starts with a letter: letters, digits, " [:code "-"] " and " [:code "_"] ". Not one of the five built-ins."]
+            [:li "The selector as given: " [:code "html:root, [data-ty-theme]"] ". The second half lets themed subtrees recompute your flavor."]])
+      (faq "sparkles" "What comes free?"
+           [:ul.flex.flex-col.gap-1.list-disc.pl-5
+            [:li [:code (str nm "+")] " and " [:code (str nm "-")] " tones, on every component that takes a flavor."]
+            [:li "Hover and pressed states, tinted backgrounds, borders."]
+            [:li "Black or white text on solid fills, picked from the fill's lightness."]])]
 
-(defn- recipe-cards []
-  (common/page-section
-   {:title "Recipes" :sub "Copy what you need."}
-   (apply common/bento
-          (for [[title desc chips code] recipes]
-            (common/example
-             {:title title :span 2 :lang "css" :code code
-              :description desc}
-             [:div.flex {:class ["gap-1.5"]}
-              (for [c chips]
-                [:span.w-5.h-5.rounded-md {:replicant/key c :style {:background c}}])])))))
+     [:details.rounded-xl.border.ty-border-.px-5.py-4 {:style {:background "var(--ty-surface-content)"}}
+      [:summary.cursor-pointer.text-sm.font-semibold.ty-text++
+       "Prefer exact colors? Skip the ramp and set the tokens yourself."]
+      [:div.flex.flex-col.gap-4.pt-4
+       [:p.text-sm.ty-text-.leading-relaxed
+        "Components read these 16 tokens for " [:code "flavor=\"X\""] ". Define them for your name and the ramp isn't needed. "
+        "You then own dark mode too: set them again under " [:code "html.dark"] "."]
+       [:div.grid.gap-4 {:style {:grid-template-columns "repeat(auto-fit, minmax(13rem, 1fr))"}}
+        (for [[group tokens] flavor-contract]
+          [:div.flex.flex-col {:replicant/key group :class ["gap-1.5"]}
+           (kicker group)
+           (for [t tokens]
+             [:code.text-xs.ty-text {:replicant/key t} (str/replace t "X" nm)])])]]])))
 
 ;; --- 06 Type & shape -----------------------------------------------------------------
 
@@ -1136,7 +1220,7 @@
      (quick-start)
      (playground seeds)
      (formula seeds)
+     (tweak-cards)
      (flavor-packs)
-     (recipe-cards)
      (type-and-shape)
      (tokens/section))))

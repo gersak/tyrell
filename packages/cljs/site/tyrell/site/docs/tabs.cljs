@@ -20,6 +20,24 @@
    ["activity" "Activity" "42 commits this week. The calendar redesign landed on Tuesday."]
    ["settings" "Settings" "Rename the project, move it, or archive it."]])
 
+(def ^:private lazy-tabs
+  [["summary" "Summary" nil]
+   ["reports" "Reports" "Q3 revenue is up 12%. Three reports are due Friday."]
+   ["invoices" "Invoices" "Next invoice: October 31."]])
+
+(defn- load-lazy-tab!
+  "Stands in for a fetch: content arrives after 1.5s. Invoices' first request
+   fails, so the error and Retry show."
+  [^js e]
+  (let [^js tab (.-target e)
+        id (.. e -detail -id)
+        tries (get-in (swap! state/state update-in [:tabs-doc :lazy-tries id] (fnil inc 0))
+                      [:tabs-doc :lazy-tries id])]
+    (js/setTimeout #(if (and (= id "invoices") (= tries 1))
+                      (.loadFailed tab)
+                      (set-doc! :lazy (assoc (doc-state :lazy) id true)))
+                   1500)))
+
 (defn- snippets [{:keys [placement fixed]}]
   (let [attrs (str (when (not= placement "top") (str " placement=\"" placement "\""))
                    (when fixed " fixed"))]
@@ -44,7 +62,10 @@
            "\n           :on {:ty-tab-change #(set-tab! (.. % -detail -activeId))}}"
            (str/join (for [[id l] project-tabs] (str "\n [:ty-tab {:id \"" id "\" :label \"" l "\"} …]"))) "]")]
      ["datastar" "Datastar" "html"
-      (str "<ty-tabs data-attr:active=\"$tab\"" attrs "\n  data-on:ty-tab-change=\"$tab = evt.detail.activeId\">\n  …\n</ty-tabs>")]]))
+      (str "<ty-tabs height=\"180px\"" attrs
+           "\n  data-signals:tab=\"'overview'\"\n  data-attr:active=\"$tab\"\n  data-on:ty-tab-change=\"$tab = evt.detail.activeId\">\n"
+           (str/join "\n" (for [[id l] project-tabs] (str "  <ty-tab id=\"" id "\" label=\"" l "\">…</ty-tab>")))
+           "\n</ty-tabs>")]]))
 
 (defn- render-playground [{:keys [placement fixed]}]
   [:div {:style {:width "100%" :max-width "520px"}}
@@ -140,6 +161,34 @@ tabs.setAttribute('active', 'b');"}
        [:ty-tab {:id "team" :label "Team"} (pane "Team" "")]])
 
      (example
+      {:title "Lazy"
+       :description [:span "A " [:code "lazy"] " tab with no content fires " [:code "ty-tab-load"]
+                     " when shown and spins (or shows your " [:code "slot=\"loading\""] ") until content arrives. "
+                     "If loading fails, call " [:code "loadFailed()"] ": the tab shows " [:code "slot=\"error\""]
+                     " and Retry. Invoices fails once."]
+       :code "<ty-tab id=\"reports\" label=\"Reports\" lazy></ty-tab>
+
+reports.addEventListener('ty-tab-load', async (e) => {
+  const res = await fetch(`/tabs/${e.detail.id}`).catch(() => null);
+  if (res?.ok) e.target.innerHTML = await res.text();
+  else e.target.loadFailed();
+});"}
+      [:div.flex.flex-col.gap-3.w-full
+       [:ty-tabs {:active "summary" :height "120px"}
+        (for [[id label text] lazy-tabs]
+          [:ty-tab {:replicant/key id :id id :label label :lazy (when text "")
+                    :on (when text {:ty-tab-load load-lazy-tab!})}
+           (when (= id "invoices") [:span {:slot "error"} "Invoices are down."])
+           (cond
+             (nil? text) (pane label "Rendered with the page. Open Reports or Invoices.")
+             (get (doc-state :lazy) id) (pane label text))])]
+       [:div.flex.items-center.gap-2
+        [:ty-button {:size "sm" :appearance "outlined"
+                     :on {:click #(swap! state/state update :tabs-doc dissoc :lazy :lazy-tries)}}
+         "Reset"]
+        [:span.ty-text-.text-xs "Empties the loaded tabs; the one showing loads again."]]])
+
+     (example
       {:title "JavaScript API"
        :lang "javascript"
        :code "const tabs = document.querySelector('ty-tabs');
@@ -183,10 +232,15 @@ tabs.addEventListener('ty-tab-change', (e) => {
                   "ty-tab"
                   ["id" "string" "Required. What active points at."]
                   ["label" "string" "Button text. Also used by the overflow menu."]
-                  ["disabled" "boolean" "false" "Shown, not selectable."]]
-     :events [["ty-tab-change" "{activeId, activeIndex, previousId, previousIndex}" "Active tab changed. Bubbles."]]
+                  ["disabled" "boolean" "false" "Shown, not selectable."]
+                  ["lazy" "boolean" "false" "Content loads on demand: fires ty-tab-load when shown with no content."]]
+     :properties [["loadFailed()" "() => void" "On a lazy ty-tab: loading failed. Shows slot=\"error\" and Retry."]]
+     :events [["ty-tab-change" "{activeId, activeIndex, previousId, previousIndex}" "Active tab changed. Bubbles."]
+              ["ty-tab-load" "{id, index}" "A lazy tab with no content was shown (not the tab shown first). Fired on the ty-tab; doesn't bubble."]]
      :slots [["label-{id}" "On ty-tabs: rich button content for the tab with that id."]
-             ["(default)" "ty-tab children; each tab's children are its panel."]]
+             ["(default)" "ty-tab children; each tab's children are its panel."]
+             ["loading" "On a lazy ty-tab: shown while it loads. Default: a spinner (setLoaderSvg)."]
+             ["error" "On a lazy ty-tab: shown after loadFailed(), above Retry. Default: \"Couldn't load.\""]]
      :keyboard [["Tab" "One stop: the active tab button."]
                 ["← →" "Previous / next tab, wrapping. Activates it."]
                 ["Home / End" "First / last tab."]]

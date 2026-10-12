@@ -411,13 +411,11 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       visual: true,
       default: false
     },
-    clearable: {
+    // Built-in × clear button; no-clear turns it off.
+    noClear: {
       type: 'boolean' as const,
       visual: true,
-      default: true,
-      aliases: {
-        'not-clearable': false
-      }
+      default: false
     },
 
     format: {
@@ -540,7 +538,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
           this.updateValidity();
           break;
 
-        case 'clearable':
+        case 'noClear':
         case 'format':
         case 'locale':
           // These properties just affect rendering, no internal state to update
@@ -564,6 +562,13 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
                 // year, month, day, hour, minute are now undefined
               };
             }
+            // A malformed/garbage newValue is stored as-is by the property
+            // manager before this hook ever runs — without this, `.value`
+            // getter stays stranded on that raw garbage forever (state is
+            // empty and display/form are correctly blank, but the property
+            // itself never heals back to null the way the initial-attribute
+            // parse in initializeState() already does).
+            this.syncFormValue();
             break;
           }
 
@@ -587,6 +592,12 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
               ...this._state,
               ...newComponents,
             };
+            // Heals the property back to the normalized UTC form syncFormValue
+            // already pushes into ElementInternals — otherwise a raw
+            // attribute-declared value (e.g. from formResetCallback's
+            // setProperty(name, def)) sticks as `.value`, diverging from
+            // what actually gets submitted in FormData.
+            this.syncFormValue();
           }
           break;
         }
@@ -731,7 +742,6 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     // Form value sync handled automatically by TyComponent (formValue: true)
   }
 
-
   /**
    * Handle time changes from the footer's hour/minute fields
    */
@@ -816,8 +826,8 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
   get disabled(): boolean { return this.getProperty('disabled'); }
   set disabled(v: boolean) { this.setProperty('disabled', v); }
 
-  get clearable(): boolean { return this.getProperty('clearable'); }
-  set clearable(v: boolean) { this.setProperty('clearable', v); }
+  get noClear(): boolean { return this.getProperty('noClear'); }
+  set noClear(v: boolean) { this.setProperty('noClear', v); }
 
   get min(): string { return this.getProperty('min'); }
   set min(v: string) { this.setProperty('min', v ?? ''); }
@@ -853,7 +863,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
 
   /**
    * Clear the date value programmatically WITH a change event (source:
-   * 'clear'). Works regardless of the `clearable` attribute — lets any
+   * 'clear'). Works regardless of `no-clear` — lets any
    * external trigger (e.g. a button elsewhere in the page) clear the value
    * without needing the built-in clear button. Mirrors ty-select's clear().
    */
@@ -923,7 +933,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const iconContainer = document.createElement('div');
     iconContainer.className = 'stub-icons';
 
-    const clearable = this.getProperty('clearable');
+    const clearable = !this.getProperty('noClear');
     if (clearable && formattedValue && !isDisabled) {
       const clearButton = document.createElement('button');
       clearButton.className = 'stub-clear';
@@ -1128,7 +1138,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const iconContainer = document.createElement('div');
     iconContainer.className = 'stub-icons';
 
-    const clearable = this.getProperty('clearable');
+    const clearable = !this.getProperty('noClear');
     if (clearable && localValue && !isDisabled) {
       const clearButton = document.createElement('button');
       clearButton.className = 'stub-clear';
@@ -1278,7 +1288,7 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
     const formattedValue = this.getFormattedValue();
     const placeholder = this.getProperty('placeholder') || 'Select date...';
     const hasValue = this.hasDate();
-    const clearable = this.getProperty('clearable');
+    const clearable = !this.getProperty('noClear');
     const isDisabled = this.getProperty('disabled');
 
     // Update stub text (shared between mobile and desktop)
@@ -1311,14 +1321,22 @@ export class TyDatePicker extends TyComponent<DatePickerState> {
       calendar.setAttribute('day', this._state.day!.toString());
     }
 
-    // Keep an already-open popup's flavor in sync. render() only rebuilds
-    // (and re-forwards flavor) while the dialog is CLOSED — while open it
-    // takes this partial-update path instead, so without this the calendar
-    // would stay stuck on whatever flavor was active when it was opened.
+    // Keep an already-open popup's flavor/bounds in sync. render() only
+    // rebuilds (and re-forwards these) while the dialog is CLOSED — while
+    // open it takes this partial-update path instead, so without this the
+    // calendar would stay stuck on whatever flavor/min/max was active when
+    // it was opened.
     if (calendar) {
       const flavor = this.getProperty('flavor');
       if (flavor && flavor !== 'default') calendar.setAttribute('flavor', flavor);
       else calendar.removeAttribute('flavor');
+
+      const min = this.getProperty('min');
+      const max = this.getProperty('max');
+      if (min) calendar.setAttribute('min', min);
+      else calendar.removeAttribute('min');
+      if (max) calendar.setAttribute('max', max);
+      else calendar.removeAttribute('max');
     }
 
     if (this._timeInput && this._state.hour !== undefined && this._state.minute !== undefined) {

@@ -30,11 +30,10 @@
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label type value placeholder start end]} lineup]
-       [:ty-input (merge {:label label :type type :value value :placeholder placeholder} attrs)
+       [:ty-input (merge {:label label :type type :value value :placeholder placeholder} attrs
+                         {(snippets/ds "data-bind") (snippets/signal label)})
         (when start [:ty-icon {:slot "start" :name start}])
-        (when end [:span {:slot "end"} end])])
-     :datastar (str "<ty-input label=\"Full name\"" (snippets/attr-str attrs)
-                    "\n  data-bind=\"name\"\n  data-on:change=\"$name = evt.detail.value\">\n</ty-input>"))))
+        (when end [:span {:slot "end"} end])]))))
 
 (defn- render-lineup [{:keys [size flavor required disabled error]}]
   (let [base (cond-> {:size size :flavor flavor}

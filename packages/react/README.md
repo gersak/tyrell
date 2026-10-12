@@ -67,17 +67,20 @@ function App() {
 
 ## 📚 Available Components
 
-All 18 components wrapped:
+Every component is wrapped:
 
 | Component | Description |
 |-----------|-------------|
 | `TyButton` | Semantic button with multiple flavors |
 | `TyInput` | Form input with validation |
 | `TyTextarea` | Multi-line text input |
-| `TyCheckbox` | Checkbox with custom styling |
-| `TyDropdown` | Dropdown selection |
-| `TyOption` | Dropdown option |
-| `TyMultiselect` | Multi-value selection |
+| `TyFileUpload` | File drop zone and list |
+| `TyCheckbox` | Checkbox, form-associated |
+| `TySwitch` | On/off switch |
+| `TyRadioGroup` / `TyRadio` | Radio group with arrow-key navigation |
+| `TySelect` | Single and multiple select (`multiple`), search, async options |
+| `TyOption` | Select option |
+| `TySelectedOptions` | Selected values as dismissible tags |
 | `TyTag` | Tag/badge component |
 | `TyModal` | Modal dialogs |
 | `TyPopup` | Smart popup positioning |
@@ -125,23 +128,25 @@ function SearchBox() {
 - `onChangeCommit` → Fires on **blur** if value changed (optional)
 - This differs from native DOM where `onchange` fires on blur
 
-### Selection Components (Dropdown, Calendar, etc.)
+### Selection Components (Select, Calendar, etc.)
 
 ```tsx
-import { TyDropdown, TyOption } from 'tyrell-react';
+import { TySelect, TyOption } from 'tyrell-react';
 
 function CountrySelector() {
   return (
-    <TyDropdown 
+    <TySelect
       // onChange fires when selection changes
       onChange={(e) => console.log('Selected:', e.detail.value)}
     >
       <TyOption value="us">United States</TyOption>
       <TyOption value="ca">Canada</TyOption>
-    </TyDropdown>
+    </TySelect>
   );
 }
 ```
+
+Add `multiple` for multi-select; `e.detail.values` is then always the selected array.
 
 For selection components, `onChange` fires when the selection changes (as expected).
 
@@ -150,7 +155,7 @@ For selection components, `onChange` fires when the selection changes (as expect
 ### Form with Validation
 
 ```tsx
-import { TyInput, TyDropdown, TyOption, TyButton } from 'tyrell-react';
+import { TyInput, TySelect, TyOption, TyButton } from 'tyrell-react';
 
 function ContactForm() {
   const handleSubmit = (e: React.FormEvent) => {
@@ -168,10 +173,10 @@ function ContactForm() {
         placeholder="your@email.com"
       />
       
-      <TyDropdown name="role" required>
+      <TySelect name="role" required>
         <TyOption value="admin">Administrator</TyOption>
         <TyOption value="user">User</TyOption>
-      </TyDropdown>
+      </TySelect>
       
       <TyButton type="submit" flavor="primary">
         Submit
@@ -210,21 +215,26 @@ function ModalExample() {
 }
 ```
 
-### Calendar with Custom Rendering
+### Controlled Calendar
 
 ```tsx
 import { useState } from 'react';
 import { TyCalendar } from 'tyrell-react';
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
 function CalendarExample() {
-  const [selected, setSelected] = useState<Date | null>(null);
+  const [selected, setSelected] = useState('2026-03-10'); // ISO YYYY-MM-DD
 
   return (
     <TyCalendar
-      value={selected?.getTime()}
-      onChange={(e) => setSelected(new Date(e.detail.date))}
-      min="2024-01-01"
-      max="2024-12-31"
+      value={selected}
+      onChange={(e) => {
+        const { year, month, day } = e.detail;
+        setSelected(`${year}-${pad(month)}-${pad(day)}`);
+      }}
+      min="2026-01-01"
+      max="2026-12-31"
     />
   );
 }
@@ -286,7 +296,7 @@ import type {
   TyButtonProps,
   TyInputEventDetail,
   TyModalRef,
-  TyDropdownEventDetail 
+  TySelectEventDetail
 } from 'tyrell-react';
 
 // Type-safe props

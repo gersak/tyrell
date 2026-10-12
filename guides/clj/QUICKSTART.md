@@ -25,13 +25,13 @@ The infrastructure — routing, i18n, layout, icons — comes from `dev.gersak/t
 
 That single dep brings the CLJS side:
 - `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.components`, `tyrell.react` — infrastructure + shims
-- `tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fav6.*` — 12,000+ tree-shakeable icon defs (transitive via `dev.gersak/tyrell-icons`)
+- `tyrell.lucide` — tree-shakeable Lucide icon defs (transitive via `dev.gersak/tyrell-icons-lucide`). For `tyrell.heroicons.*`, `tyrell.material.*` and `tyrell.fav6.*` add `dev.gersak/tyrell-icons`
 - npm `tyrell-components` — declared in `deps.cljs`, shadow-cljs auto-installs it into your `package.json` on first build. No manual `npm install` for components.
 
 Don't want the icons artifact? Exclude it:
 ```clojure
 {:deps {dev.gersak/tyrell {:mvn/version "..."
-                           :exclusions [dev.gersak/tyrell-icons]}}}
+                           :exclusions [dev.gersak/tyrell-icons-lucide]}}}
 ```
 
 **Track A only** — React-based CLJS (Reagent, re-frame, UIx, Helix) needs `tyrell-react` installed explicitly, same way you install React itself:

@@ -7,7 +7,7 @@ import {
   TyInput,
   TyIcon,
   TyModal,
-  TyDropdown,
+  TySelect,
   TyOption,
   type TyModalRef
 } from 'tyrell-react'
@@ -331,11 +331,10 @@ export default function ContactFormExample() {
                     <label className="block text-sm font-medium ty-text+ mb-2">
                       Priority Level
                     </label>
-                    <TyDropdown
+                    <TySelect
                       value={formData.priority}
                       onChange={(e) => {
-                        const selectedOption = e.detail.option
-                        const value = selectedOption?.getAttribute('value') || 'medium'
+                        const value = (e.detail.value as string) || 'medium'
                         handleInputChange('priority', value)
                       }}
                       className="w-full"
@@ -345,18 +344,17 @@ export default function ContactFormExample() {
                       <TyOption value="medium">Medium - Business question</TyOption>
                       <TyOption value="high">High - Urgent matter</TyOption>
                       <TyOption value="critical">Critical - Immediate attention needed</TyOption>
-                    </TyDropdown>
+                    </TySelect>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium ty-text+ mb-2">
                       Preferred Contact Method
                     </label>
-                    <TyDropdown
+                    <TySelect
                       value={formData.contactMethod}
                       onChange={(e) => {
-                        const selectedOption = e.detail.option
-                        const value = selectedOption?.getAttribute('value') || 'email'
+                        const value = (e.detail.value as string) || 'email'
                         handleInputChange('contactMethod', value)
                       }}
                       className="w-full"
@@ -366,7 +364,7 @@ export default function ContactFormExample() {
                       <TyOption value="phone">Phone Call</TyOption>
                       <TyOption value="text">Text Message</TyOption>
                       <TyOption value="any">Any Method</TyOption>
-                    </TyDropdown>
+                    </TySelect>
                   </div>
                 </div>
 

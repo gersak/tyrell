@@ -3,19 +3,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
 import {
-  TyMultiselect,
   TyTag,
   TyButton,
   TyIcon,
-  type TyMultiselectEventDetail,
+  TySelect,
+  type TySelectEventDetail,
 } from 'tyrell-react'
 
 interface ChangeEntry {
   ts: number
   mode: 'internal' | 'external'
   values: string[]
-  action: 'add' | 'remove'
-  item: string
+  action: TySelectEventDetail['action']
+  item: string | null
 }
 
 interface SearchEntry {
@@ -77,7 +77,7 @@ export default function MultiselectExample() {
     )
   }
 
-  const handleInternalChange = (event: CustomEvent<TyMultiselectEventDetail>) => {
+  const handleInternalChange = (event: CustomEvent<TySelectEventDetail>) => {
     const { values, action, item } = event.detail
     setInternalSelected(values)
     setChangeLog(prev => [
@@ -86,7 +86,7 @@ export default function MultiselectExample() {
     ].slice(0, 30))
   }
 
-  const handleExternalChange = (event: CustomEvent<TyMultiselectEventDetail>) => {
+  const handleExternalChange = (event: CustomEvent<TySelectEventDetail>) => {
     const { values, action, item } = event.detail
     setExternalSelected(values)
     setChangeLog(prev => [
@@ -99,7 +99,7 @@ export default function MultiselectExample() {
     const { query } = event.detail
     setSearchQuery(query)
     setSearchLog(prev => [{ ts: Date.now(), query }, ...prev].slice(0, 30))
-    console.log('TyMultiselect onSearch:', event.detail)
+    console.log('TySelect onSearch:', event.detail)
   }
 
   return (
@@ -137,7 +137,7 @@ export default function MultiselectExample() {
             </span>
           </div>
 
-          <TyMultiselect
+          <TySelect multiple
             value={internalSelected}
             placeholder="Pick frameworks (filter built-in)…"
             label="Frameworks (internal search)"
@@ -151,7 +151,7 @@ export default function MultiselectExample() {
                 {opt.label}
               </TyTag>
             ))}
-          </TyMultiselect>
+          </TySelect>
         </section>
 
         {/* Mode 2: External (server-side / parent-controlled) */}
@@ -176,7 +176,7 @@ export default function MultiselectExample() {
             </span>
           </div>
 
-          <TyMultiselect
+          <TySelect multiple
             value={externalSelected}
             placeholder="Pick frameworks (parent filters)…"
             label="Frameworks (external search)"
@@ -191,7 +191,7 @@ export default function MultiselectExample() {
                 {opt.label}
               </TyTag>
             ))}
-          </TyMultiselect>
+          </TySelect>
 
           <div className="ty-content rounded p-3 text-sm flex items-center gap-2 border ty-border-">
             <span className="ty-text-">React-side state:</span>

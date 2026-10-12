@@ -7,9 +7,8 @@ import {
   TyIcon,
   TyInput,
   TyTextarea,
-  TyDropdown,
+  TySelect,
   TyOption,
-  TyMultiselect,
   TyTag,
   TyModal,
   TyDatePicker,
@@ -43,7 +42,7 @@ export default function ModalPopupsTest() {
 
   // Form state inside the modal — bound to verify React props still propagate
   // (this also indirectly exercises the boolean-prop fix from the React
-  // wrappers, since `clearable` and `loading` etc. flip during testing).
+  // wrappers, since `noClear` and `loading` etc. flip during testing).
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('medium')
   const [assignees, setAssignees] = useState<string[]>(['ada', 'linus'])
@@ -188,12 +187,12 @@ export default function ModalPopupsTest() {
                 value={title}
                 onChange={(e: any) => setTitle(e.detail.value || '')}
               />
-              <TyDropdown
+              <TySelect
                 name="priority"
                 label="Priority"
                 value={priority}
                 onChange={(e: any) => {
-                  const v = e.detail.option?.getAttribute('value') ?? ''
+                  const v = (e.detail.value as string) ?? ''
                   push(`dropdown.change: priority="${v}"`)
                   setPriority(v)
                 }}
@@ -202,11 +201,11 @@ export default function ModalPopupsTest() {
                 <TyOption value="medium">Medium</TyOption>
                 <TyOption value="high">High</TyOption>
                 <TyOption value="urgent">Urgent</TyOption>
-              </TyDropdown>
+              </TySelect>
             </div>
 
             <div className="mt-4">
-              <TyMultiselect
+              <TySelect multiple
                 name="assignees"
                 label="Assignees"
                 placeholder="Add team members…"
@@ -222,11 +221,11 @@ export default function ModalPopupsTest() {
                 <TyTag value="rich"    size="sm" flavor="primary">Rich Hickey</TyTag>
                 <TyTag value="alan"    size="sm" flavor="primary">Alan Kay</TyTag>
                 <TyTag value="barbara" size="sm" flavor="primary">Barbara Liskov</TyTag>
-              </TyMultiselect>
+              </TySelect>
             </div>
 
             <div className="mt-4">
-              <TyMultiselect
+              <TySelect multiple
                 name="tags"
                 label="Tags"
                 placeholder="Pick one or more…"
@@ -241,7 +240,7 @@ export default function ModalPopupsTest() {
                 <TyTag value="design"   size="sm" flavor="neutral">design</TyTag>
                 <TyTag value="infra"    size="sm" flavor="neutral" >infra</TyTag>
                 <TyTag value="research" size="sm" flavor="primary" >research</TyTag>
-              </TyMultiselect>
+              </TySelect>
             </div>
 
             <div className="mt-4">
@@ -250,7 +249,6 @@ export default function ModalPopupsTest() {
                 label="Deadline"
                 placeholder="Pick a date"
                 value={deadline}
-                clearable
                 onChange={(e: any) => {
                   push(`datepicker.change: deadline="${e.detail.value ?? ''}"`)
                   setDeadline(e.detail.value ?? '')

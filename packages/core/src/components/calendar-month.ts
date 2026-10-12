@@ -470,9 +470,11 @@ export class TyCalendarMonth extends HTMLElement {
       dayElement.setAttribute('tabindex', '-1');
     } else {
       dayElement.setAttribute('tabindex', isRoving ? '0' : '-1');
-      // Add click handler (disabled days don't emit)
-      dayElement.addEventListener('pointerdown', (event: Event) => {
-        event.preventDefault();
+      // 'click', not pointerdown: click fires for a tap but not for a finger
+      // drag, so scrolling the page over an inline calendar neither picks the
+      // day under the finger nor gets cancelled by the re-render a pick
+      // triggers. Disabled days don't emit.
+      dayElement.addEventListener('click', (event: Event) => {
         this.dispatchDayClick(dayContext, event);
       });
       dayElement.addEventListener('keydown', (event: Event) => {
@@ -552,17 +554,37 @@ export class TyCalendarMonth extends HTMLElement {
       const v = days[i].value;
       return (minTs !== null && v < minTs) || (maxTs !== null && v > maxTs);
     };
-    let defaultIndex = days.findIndex(d => d.isSelected);
-    if (defaultIndex === -1) defaultIndex = days.findIndex(d => d.today);
-    if (defaultIndex === -1) defaultIndex = 0;
+    const firstEnabled = (pred: (i: number) => boolean): number => {
+      for (let i = 0; i < 42; i++) {
+        if (pred(i) && !disabledAt(i)) return i;
+      }
+      return -1;
+    };
+    let defaultIndex = firstEnabled(i => !!days[i].isSelected);
+    // Only "selected" and "today" are meaningful enough to persist into
+    // _focusedIndex — the arbitrary catch-all below exists purely so this
+    // render always has SOMETHING to draw as tabindex="0". Parent/child prop
+    // sync (see calendar.ts syncChildComponents) pushes min/max and value in
+    // separate steps, so a transient render can land here with no selection
+    // yet; committing that arbitrary pick to _focusedIndex would make it
+    // "valid and enabled" and permanently block the real selection, once it
+    // arrives, from ever reclaiming the roving-focus slot.
+    let provisional = false;
+    if (defaultIndex === -1) defaultIndex = firstEnabled(i => !!days[i].today);
+    if (defaultIndex === -1) {
+      defaultIndex = firstEnabled(() => true);
+      provisional = true;
+    }
+    if (defaultIndex === -1) defaultIndex = 0; // every day disabled — nothing focusable either way
     if (
       this._focusedIndex === null ||
       this._focusedIndex < 0 ||
       this._focusedIndex > 41 ||
       disabledAt(this._focusedIndex)
     ) {
-      this._focusedIndex = defaultIndex;
+      this._focusedIndex = provisional ? null : defaultIndex;
     }
+    const effectiveFocusedIndex = this._focusedIndex ?? defaultIndex;
 
     this._cellElements = [];
     let flatIndex = 0;
@@ -575,7 +597,7 @@ export class TyCalendarMonth extends HTMLElement {
         const disabled =
           (minTs !== null && dayContext.value < minTs) ||
           (maxTs !== null && dayContext.value > maxTs);
-        const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === this._focusedIndex);
+        const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === effectiveFocusedIndex);
         dayCell.className = `${dayCell.className} calendar-cell calendar-day-cell`;
         dayRow.appendChild(dayCell);
         this._cellElements[flatIndex] = dayCell;

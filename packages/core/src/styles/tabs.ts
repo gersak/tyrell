@@ -6,8 +6,10 @@
 export const tabsStyles = `
 :host {
   display: block;
-  width: var(--tabs-width, 100%);
-  height: var(--tabs-height, 400px);
+  /* Defaults. The width/height attributes override these (and page CSS)
+     through the per-instance sheet. */
+  width: 100%;
+  height: 400px;
   box-sizing: border-box;
 }
 
@@ -296,13 +298,15 @@ export const tabsStyles = `
 }
 
 ::slotted(ty-tab) {
-  /* Carousel page width. --tabs-page-width is the measured pixel width, set by
-     the ResizeObserver for percentage-width tabs so every panel is exactly one
-     page wide. It is deliberately NOT --tabs-width: that one sizes :host, and
-     feeding a measured pixel value back into the host's own width is a
-     self-referential loop (see setupResizeObserver). */
-  width: var(--tabs-page-width, var(--tabs-width, 100%));
+  /* One carousel page: the viewport's width. */
+  width: 100%;
   height: 100%;
   flex-shrink: 0;
+}
+
+/* Snap: an early \`active\` correction lands without sliding or fading. */
+.tabs-container[data-snap] .panels-wrapper,
+.tabs-container[data-snap] ::slotted(ty-tab) {
+  transition: none;
 }
 `;

@@ -3,6 +3,7 @@
    [clojure.string :as str]
    [tyrell.router :as router]
    [tyrell.site.docs.common :as common]
+   [tyrell.site.docs.quickstart :as quickstart]
    [tyrell.site.versions :as versions]
    [tyrell.site.views.contact-form :as contact-form]
    [tyrell.site.views.event-booking :as event-booking]
@@ -32,6 +33,13 @@
   [:div attrs
    (into [:div.mx-auto.px-4.sm:px-6.lg:px-8 {:style {:max-width "1280px"}}]
          children)])
+
+;; The CTA's three ways in. The CDN line copies all three tags: the script
+;; alone renders unstyled components.
+(def ^:private install-routes
+  [["globe" "Any page · CDN" quickstart/cdn-tags]
+   ["package" "React, Vue, Svelte · npm" "npm i tyrell-components"]
+   ["braces" "ClojureScript · Clojars" (str "dev.gersak/tyrell {:mvn/version \"" versions/TYRELL_VERSION "\"}")]])
 
 (defn- install-command []
   [:ty-copy {:value "npm i tyrell-components" :format "code"}])
@@ -87,7 +95,7 @@
       [:div.flex.flex-wrap.gap-2
        [:ty-selected-options {:for "hero-stack"}
         [:template
-         [:ty-tag {:flavor "{flavor}" :size "sm" :dismissible true :pill true} "{label}"]]]]]
+         [:ty-tag {:flavor "{flavor}" :size "sm" :dismissible true} "{label}"]]]]]
      [:div.flex-1]
      [:div.flex.flex-col.gap-3.pt-4.border-t.ty-border
       [:label.flex.items-center.justify-between.gap-3.cursor-pointer.text-sm.ty-text
@@ -123,7 +131,7 @@
                 :letter-spacing "-0.035em"}}
        "Interaction primitives for every stack."]
       [:p.text-lg.ty-text-.leading-relaxed.max-w-xl
-       "Calendars, dropdowns, modals and multiselect as Web Components. They inherit your design system and run in React, Vue, HTMX, ClojureScript or plain HTML."]]
+       "Calendars, selects, date pickers and modals as Web Components. They inherit your design system and run in React, Vue, HTMX, ClojureScript or plain HTML."]]
      [:div.flex.flex-wrap.items-center.gap-3
       [:ty-button {:size "lg"
                    :style ink-button
@@ -152,34 +160,31 @@
 
 <TyDatePicker
   label=\"Check-in\"
-  clearable
   onChange={(e) => setDate(e.detail.value)}
 />"]
    ["vue" "Vue" "html"
     "<ty-date-picker
   label=\"Check-in\"
-  clearable
   @change=\"date = $event.detail.value\"
 />"]
    ["htmx" "HTMX" "html"
     "<form hx-post=\"/bookings\" hx-trigger=\"change\">
-  <ty-date-picker name=\"check-in\" label=\"Check-in\" clearable>
+  <ty-date-picker name=\"check-in\" label=\"Check-in\">
   </ty-date-picker>
 </form>"]
    ["datastar" "Datastar" "html"
     "<div data-signals=\"{checkIn: ''}\">
-  <ty-date-picker label=\"Check-in\" clearable
-    data-on:change=\"$checkIn = evt.detail.value\">
+  <ty-date-picker label=\"Check-in\"
+    data-on:change=\"$checkIn = evt.detail.localValue\">
   </ty-date-picker>
   <p data-text=\"$checkIn\"></p>
 </div>"]
    ["replicant" "Replicant" "clojure"
     "[:ty-date-picker
  {:label \"Check-in\"
-  :clearable true
   :on {:change #(set-date! (.. % -detail -value))}}]"]
    ["html" "HTML" "html"
-    "<ty-date-picker label=\"Check-in\" clearable></ty-date-picker>
+    "<ty-date-picker label=\"Check-in\"></ty-date-picker>
 
 <script>
   document.querySelector('ty-date-picker')
@@ -321,7 +326,7 @@
    [:div.flex.items-center.justify-between
     [:span.text-sm.font-semibold.ty-text++ name]
     [:span.inline-block.w-3.h-3.rounded-full {:style {:background "var(--ty-color-primary)"}}]]
-   [:ty-date-picker {:label "Check-in" :value "2026-09-22" :clearable true :flavor "primary"}]
+   [:ty-date-picker {:label "Check-in" :value "2026-09-22" :flavor "primary"}]
    [:div.flex.items-center.gap-3
     [:ty-tag {:flavor "primary"} "5 nights"]
     [:ty-switch {:flavor "primary" :checked ""}]
@@ -336,9 +341,13 @@
   [:section.py-24 {:class ["@container"]}
    [:div.flex.flex-col.gap-4.max-w-2xl.mb-10
     (kicker "BRING YOUR OWN DESIGN SYSTEM")
-    (section-heading "Your look. Our interaction logic.")
+    (section-heading "Your look. Tyrell's interaction logic.")
     [:p.ty-text-.leading-relaxed
-     "Tyrell handles focus, keyboard navigation, positioning and ARIA. Color, type and spacing come from CSS variables you already own. These three cards run the same components with different variables."]]
+     "Tyrell handles focus, keyboard navigation, positioning and ARIA. Color, type and spacing come from CSS variables you already own. These three cards run the same components with different variables."]
+    [:ty-button.self-start.mt-2 {:size "lg" :appearance "outlined"
+                                 :on {:click #(go! :tyrell.site.docs/theming)}}
+     "Make it yours"
+     [:ty-icon {:slot "end" :name "arrow-right"}]]]
    [:div
     [:div {:class ["gap-5" "@3xl:grid-cols-3"] :style {:display "grid"}}
      (map brand-card brands)]
@@ -462,10 +471,21 @@
        "Every example below is running, not a screenshot. Flip on Inspect to see which primitive is which, or open the source."]]
      [:div.rounded-3xl.border.ty-border.p-3.md:p-6.flex.flex-col.gap-4
       {:data-stage ""
-       :style {:background (str "radial-gradient(ellipse 80% 60% at 0% 0%, color-mix(in oklch, var(--ty-color-primary) 16%, transparent), transparent 70%), "
-                                "radial-gradient(ellipse 70% 60% at 100% 100%, color-mix(in oklch, var(--ty-color-success) 10%, transparent), transparent 70%), "
-                                "var(--ty-surface-content)")}}
+       ;; Satin: grey bands sweeping across the wrapper, fading out toward the
+       ;; bottom, no hue. --ty-text-strong
+       ;; mixed into transparency is a soft shadow in light mode and a soft
+       ;; sheen in dark, from the same CSS.
+       :style {:background (let [ink #(str "color-mix(in oklab, var(--ty-text-strong) calc(" % "% * var(--satin, 1)), transparent)")]
+                             ;; first layer paints on top: the fade covers the
+                             ;; bands' lower edge so they dissolve, not stop
+                             ;; percentages, so the sweep reaches down the side
+                             ;; gutters on every example, however tall
+                             (str "linear-gradient(to bottom, transparent 12%, var(--ty-surface-content) 82%), "
+                                  "linear-gradient(100deg, " (ink 10) " 0%, transparent 24%, " (ink 6) " 50%, transparent 74%, " (ink 9) " 100%), "
+                                  "var(--ty-surface-content)"))}}
       [:style inspect-css]
+      ;; dark mode: the satin bands mix in near-white text, so tone them down
+      [:style ".dark [data-stage] { --satin: 0.55; }"]
       [:div.flex.flex-wrap.items-center.justify-between.gap-3
        (example-switcher active)
        [:div.flex.items-center.gap-4
@@ -507,13 +527,11 @@
     {:data-ty-theme ""
      :style common/brand-inherit
      :class ["@3xl:px-12" "flex" "flex-col" "gap-8" "@3xl:flex-row" "@3xl:items-center" "@3xl:justify-between"]}
-    [:div.flex.flex-col.gap-3
-     (section-heading "Add the hard parts in one line.")
+    [:div.flex.flex-col.gap-3.max-w-xl
+     (section-heading "One package. Every stack.")
      [:p.ty-text-.leading-relaxed
-      "Load it from the CDN or install from npm or Clojars. MIT licensed."]]
-    [:div.flex.flex-col.gap-4 {:class ["@3xl:items-end"]}
-     [:div.w-full.max-w-sm (install-command)]
-     [:div.flex.flex-wrap.gap-3
+      "Script tags for any server-rendered page, npm for JavaScript frameworks, Clojars for ClojureScript. MIT licensed."]
+     [:div.flex.flex-wrap.gap-3.pt-3
       [:ty-button {:style ink-button :on {:click #(go! :tyrell.site.docs/getting-started)}}
        "Get started" [:ty-icon {:slot "end" :name "arrow-right"}]]
       [:a {:href "https://github.com/gersak/tyrell"}
@@ -521,7 +539,13 @@
                     :style {:--ty-button-color "var(--ty-text-strong)"
                             :--ty-button-border "var(--ty-border-strong)"}}
         [:ty-icon {:slot "start" :name "github"}]
-        "Star on GitHub"]]]]]
+        "Star on GitHub"]]]]
+    [:div.flex.flex-col.gap-3.w-full {:style {:max-width "30rem"}}
+     (for [[icon label value] install-routes]
+       [:div.flex.flex-col {:replicant/key label :class ["gap-1.5"]}
+        [:span.flex.items-center.gap-2.text-xs.font-medium.ty-text--
+         [:ty-icon {:name icon :size "xs"}] label]
+        [:ty-copy {:value value :format "code"}]])]]
    [:div {:class ["grid" "gap-8" "mt-12" "@3xl:grid-cols-3"]}
     (for [[icon title text href] [["bug" "Report issues"
                                    "Found a bug? Every report helps improve the components."

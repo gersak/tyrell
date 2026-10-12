@@ -127,7 +127,7 @@ See [BUILDING_WITH_TYCOMPONENT.md](../../../BUILDING_WITH_TYCOMPONENT.md) for de
 The `PropertyManager` class handles:
 - Type coercion (string/boolean/number/object/array)
 - Validation and constraints
-- Property aliases (e.g., `not-clearable` → `clearable: false`)
+- Property aliases (extra attribute names mapped to a fixed value)
 - Change tracking and events
 
 ```typescript
@@ -151,29 +151,33 @@ protected static properties = {
 
 ## 🎨 Components
 
-### Complete List (18 Components)
+### Complete List
 
 | Component | Description | Key Features |
 |-----------|-------------|--------------|
-| `ty-button` | Semantic button | 6 flavors, 5 sizes, 4 appearances |
-| `ty-input` | Form input | Validation, formatting, icons |
-| `ty-textarea` | Multi-line input | Auto-resize, character count |
-| `ty-checkbox` | Checkbox | Form integration, custom styling |
-| `ty-dropdown` | Dropdown select | HTML content, keyboard nav |
-| `ty-option` | Dropdown option | Rich content support |
-| `ty-multiselect` | Multi-select | Tag display, search |
-| `ty-tag` | Tag/chip | Removable, semantic colors |
-| `ty-modal` | Modal dialog | Focus trap, ESC key, backdrop |
-| `ty-popup` | Positioned popup | Smart positioning, arrow |
-| `ty-tooltip` | Tooltip | Hover/focus, positioning |
-| `ty-icon` | Icon display | 3000+ icons, size variants |
-| `ty-copy` | Copy-to-clipboard | One-click copy, success feedback |
-| `ty-calendar` | Full calendar | Navigation, custom rendering |
-| `ty-calendar-month` | Month view | Standalone month display |
-| `ty-calendar-navigation` | Calendar nav | Year/month controls |
-| `ty-date-picker` | Date picker | Calendar popup integration |
-| `ty-tabs` | Tab container | Keyboard navigation |
-| `ty-tab` | Individual tab | Active state management |
+| `ty-button` | Button | 5 flavors with +/- tones, 5 sizes, appearances, icon slots |
+| `ty-tag` | Tag / chip | Flavors, dismissible, pill |
+| `ty-input` | Form input | Number/currency/percent formatting, debounce, icons |
+| `ty-textarea` | Multi-line input | Auto-resize, change on blur |
+| `ty-file-upload` | File input | Drop zone, file list, required validity |
+| `ty-copy` | Copy-to-clipboard | Alias `ty-copy-field` |
+| `ty-checkbox` | Checkbox | Form-associated |
+| `ty-switch` | Switch | Form-associated, `role="switch"` |
+| `ty-radio-group` / `ty-radio` | Radio group | Arrow keys, roving tab stop |
+| `ty-select` | Select | Single/multiple, auto search row, `not-searchable`, external search, create |
+| `ty-option` | Select option | Rich content |
+| `ty-selected-options` | Selected values as tags | Alias `ty-selected-tags` |
+| `ty-date-picker` | Date picker | Calendar popup, time fields, native input on mobile |
+| `ty-calendar` | Calendar | Month/year view, keyboard, `hide-navigation`, form-associated |
+| `ty-calendar-month` / `ty-calendar-navigation` | Calendar parts | Usable standalone |
+| `ty-modal` | Modal | Focus trap, Escape, backdrop (alias `ty-dialog`) |
+| `ty-popup` | Anchored popup | Placement + flipping |
+| `ty-tooltip` | Tooltip | Hover and focus |
+| `ty-tabs` / `ty-tab` | Tabs | Scrollable strip, overflow menu, arrow keys |
+| `ty-wizard` / `ty-step` | Wizard | Step rail, controlled |
+| `ty-scroll-container` | Scroll area | Edge shadows, scroll anchoring |
+| `ty-resize-observer` | Size publisher | Element size for layout code |
+| `ty-icon` | Icon | Registry: Lucide, Heroicons, Material, Font Awesome |
 
 ### Example: TyButton
 

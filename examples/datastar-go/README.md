@@ -9,7 +9,7 @@ A self-contained Go server demonstrating how Tyrell web components compose natur
 | Pattern | Where |
 |---|---|
 | **Server-rendered icons** — Go puts `<svg>` inside `<ty-icon>` slot, zero icon JS | All icon usages |
-| `data-bind` → ty-input, ty-textarea, ty-dropdown, ty-date-picker | Form fields |
+| `data-bind` → ty-input, ty-textarea, ty-select, ty-date-picker | Form fields |
 | Server-side validation via `@get('/api/validate')` + `patch-signals` | Name, email, message |
 | `data-attr:error` binding to ty-input error attribute | Live error display |
 | ty-radio-group with `data-bind` | Priority selection |

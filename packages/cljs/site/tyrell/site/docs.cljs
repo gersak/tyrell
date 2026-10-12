@@ -24,7 +24,8 @@
    [tyrell.site.docs.theming :as theming-docs]
    [tyrell.site.docs.tooltip :as tooltip-docs]
    [tyrell.site.docs.wizard :as wizard-docs]
-   [tyrell.site.docs.quickstart :as quickstart]))
+   [tyrell.site.docs.quickstart :as quickstart]
+   [tyrell.site.docs.icons-guide :as icons-guide]))
 
 ;; Component picker previews
 ;; Each preview is a plain hiccup vector rendered inside a bento cell in the
@@ -93,14 +94,10 @@
 (def ^:private tag-preview
   [:div.flex.flex-wrap.items-center.gap-2
    {:style {:width "260px"}}
-   [:ty-tag {:flavor "primary"
-             :pill ""} "react"]
-   [:ty-tag {:flavor "success"
-             :pill ""} "stable"]
-   [:ty-tag {:flavor "warning"
-             :pill ""} "beta"]
+   [:ty-tag {:flavor "primary"} "react"]
+   [:ty-tag {:flavor "success"} "stable"]
+   [:ty-tag {:flavor "warning"} "beta"]
    [:ty-tag {:flavor "neutral"
-             :pill ""
              :dismissible ""} "v1.0"]])
 
 ;; --- Text input ---
@@ -619,7 +616,14 @@
     :icon "droplet"
     :description "Interactive brand-layer playground — pick two seeds, retint everything in light + dark."
     :tags ["theme" "oklch" "brand" "colors" "playground" "dark mode"]
-    :view #(theming-docs/view)}])
+    :view #(theming-docs/view)}
+   {:id :tyrell.site.docs/icons
+    :segment "icons"
+    :name "Icons"
+    :icon "feather"
+    :description "Where each icon set ships, how to register icons for your stack, and how to keep unused ones out of the release."
+    :tags ["icons" "svg" "lucide" "heroicons" "material" "font awesome" "register" "tree-shaking" "icons.js"]
+    :view #(icons-guide/view)}])
 
 ;; The old per-stack guide pages. Their URLs still resolve and redirect to
 ;; Getting started with the matching stack (core.cljs).

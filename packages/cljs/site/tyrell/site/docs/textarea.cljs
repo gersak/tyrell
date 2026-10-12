@@ -19,16 +19,15 @@
     (not= resize "none") (assoc :resize resize)
     required (assoc :required true)
     disabled (assoc :disabled true)
-    error (assoc :error "Tell us a bit more")))
+    error (assoc :error "Add a bit more detail")))
 
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label value placeholder footer?]} lineup]
-       [:ty-textarea (merge {:label label :value value :placeholder placeholder} attrs)
-        (when footer? [:div {:slot "footer"} [:ty-button {:size "sm" :flavor "primary"} "Send"]])])
-     :datastar (str "<ty-textarea label=\"Message\"" (snippets/attr-str attrs)
-                    "\n  data-on:input=\"$message = evt.detail.value\">\n</ty-textarea>"))))
+       [:ty-textarea (merge {:label label :value value :placeholder placeholder} attrs
+                            {(snippets/ds "data-bind") (snippets/signal label)})
+        (when footer? [:div {:slot "footer"} [:ty-button {:size "sm" :flavor "primary"} "Send"]])]))))
 
 (defn- footer-bar [& {:keys [left button]}]
   [:div.flex.items-center.justify-between.gap-2 {:slot "footer" :style {:width "100%"}}
@@ -39,7 +38,7 @@
   (let [base (cond-> {:size size :resize resize}
                required (assoc :required "")
                disabled (assoc :disabled "")
-               error (assoc :error "Tell us a bit more"))]
+               error (assoc :error "Add a bit more detail"))]
     [:div.flex.flex-col.gap-5 {:style {:width "100%" :max-width "420px"}}
      (for [{:keys [label value placeholder footer?]} lineup]
        [:ty-textarea (cond-> (assoc base :replicant/key label :label label)

@@ -651,6 +651,19 @@ const [activeTab, setActiveTab] = useState('overview')
 </TyTabs>
 ```
 
+A `lazy` tab with no content calls `onTabLoad` when it's shown (never the tab
+shown first, the `active` one: render its content up front). It spins until children arrive;
+if loading fails, call `loadFailed()` on the element for an error and Retry:
+
+```tsx
+const ref = useRef<HTMLElement & { loadFailed(): void }>(null);
+
+<TyTab ref={ref} id="reports" label="Reports" lazy
+  onTabLoad={() => fetchReports().then(setReports, () => ref.current?.loadFailed())}>
+  {reports && <ReportList reports={reports} />}
+</TyTab>
+```
+
 Tabs scroll by default — each button has a `min-width: 72px` floor
 (`--ty-tab-min-width`) and the bar grows a `…` jump menu once they no longer fit. Pass `fixed` to divide the bar
 equally between them instead: no floor, no overflow, no jump menu, labels

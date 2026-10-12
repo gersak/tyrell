@@ -181,14 +181,14 @@ func renderMembers(filter []string) string {
 		}
 		var skillTags strings.Builder
 		for _, s := range m.Skills {
-			fmt.Fprintf(&skillTags, `<ty-tag size="xs" flavor="primary" pill>%s</ty-tag>`, s)
+			fmt.Fprintf(&skillTags, `<ty-tag size="xs" flavor="primary">%s</ty-tag>`, s)
 		}
 		fmt.Fprintf(&sb, `
 <div class="ty-elevated p-3 rounded-lg flex items-center gap-3">
   <div class="flex-1 min-w-0">
     <div class="flex items-center gap-2 flex-wrap">
       <span class="ty-text+ font-semibold">%s</span>
-      <ty-tag size="xs" flavor="%s" pill>%s</ty-tag>
+      <ty-tag size="xs" flavor="%s">%s</ty-tag>
     </div>
     <div class="ty-text-- text-xs mt-0.5">%s</div>
     <div class="flex gap-1.5 mt-2 flex-wrap">%s</div>
@@ -512,8 +512,8 @@ const indexHTMLTemplate = `<!DOCTYPE html>
               </div>
               <div class="ty-text++ text-2xl font-bold">5</div>
               <div class="flex gap-1.5">
-                <ty-tag size="xs" flavor="success" pill>up 2</ty-tag>
-                <ty-tag size="xs" flavor="neutral" pill>this week</ty-tag>
+                <ty-tag size="xs" flavor="success">up 2</ty-tag>
+                <ty-tag size="xs" flavor="neutral">this week</ty-tag>
               </div>
             </div>
 
@@ -526,7 +526,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
                 </span>
               </div>
               <div class="ty-text++ text-2xl font-bold">12</div>
-              <ty-tag size="xs" flavor="warning" pill>3 high priority</ty-tag>
+              <ty-tag size="xs" flavor="warning">3 high priority</ty-tag>
             </div>
 
             <div class="ty-elevated p-4 rounded-xl flex flex-col gap-1">
@@ -538,7 +538,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
                 </span>
               </div>
               <div class="ty-text++ text-2xl font-bold">4.2h</div>
-              <ty-tag size="xs" flavor="success" pill>↓ 18%</ty-tag>
+              <ty-tag size="xs" flavor="success">↓ 18%</ty-tag>
             </div>
 
           </div>
@@ -583,7 +583,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
             Team
           </div>
 
-          <ty-multiselect
+          <ty-select multiple
             label="Filter by skill"
             placeholder="Pick one or more skills..."
             data-bind="skillFilter"
@@ -595,7 +595,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
             <ty-tag value="mobile" flavor="primary">Mobile</ty-tag>
             <ty-tag value="qa" flavor="primary">QA</ty-tag>
             <ty-tag value="pm" flavor="primary">PM</ty-tag>
-          </ty-multiselect>
+          </ty-select>
 
           <div data-on-load="@get('/api/members')">
             <div id="members-list" class="ty-text-- text-sm text-center py-8">Loading members...</div>
@@ -657,17 +657,17 @@ const indexHTMLTemplate = `<!DOCTYPE html>
             <div class="ty-text- text-sm font-semibold">Existing files</div>
             <div class="flex items-center gap-3 py-1.5 border-t ty-border-neutral-">
               <span class="ty-text-">spec.pdf</span>
-              <ty-tag size="xs" flavor="neutral" pill>pdf</ty-tag>
+              <ty-tag size="xs" flavor="neutral">pdf</ty-tag>
               <span class="ml-auto ty-text-- text-xs font-mono">128 KB</span>
             </div>
             <div class="flex items-center gap-3 py-1.5 border-t ty-border-neutral-">
               <span class="ty-text-">hero-banner.png</span>
-              <ty-tag size="xs" flavor="info" pill>image</ty-tag>
+              <ty-tag size="xs" flavor="info">image</ty-tag>
               <span class="ml-auto ty-text-- text-xs font-mono">412 KB</span>
             </div>
             <div class="flex items-center gap-3 py-1.5 border-t ty-border-neutral-">
               <span class="ty-text-">README.md</span>
-              <ty-tag size="xs" flavor="success" pill>doc</ty-tag>
+              <ty-tag size="xs" flavor="success">doc</ty-tag>
               <span class="ml-auto ty-text-- text-xs font-mono">3 KB</span>
             </div>
           </div>
@@ -758,13 +758,13 @@ const indexHTMLTemplate = `<!DOCTYPE html>
                   {icon:mail:start}
                 </ty-input>
 
-                <ty-dropdown label="Role" data-bind="wizRole">
+                <ty-select label="Role" data-bind="wizRole">
                   <ty-option value="Engineering">Engineering</ty-option>
                   <ty-option value="Design">Design</ty-option>
                   <ty-option value="Product">Product</ty-option>
                   <ty-option value="Support">Support</ty-option>
                   <ty-option value="Other">Other</ty-option>
-                </ty-dropdown>
+                </ty-select>
 
                 <div class="flex justify-between gap-3 mt-2">
                   <ty-button flavor="neutral" outlined data-on:click="@post('/api/wizard/back')">Back</ty-button>
@@ -853,21 +853,21 @@ const indexHTMLTemplate = `<!DOCTYPE html>
                   </div>
                   <div class="flex items-center justify-between text-sm">
                     <span class="ty-text-">Role</span>
-                    <ty-tag size="xs" flavor="primary" pill><span data-text="$wizRole"></span></ty-tag>
+                    <ty-tag size="xs" flavor="primary"><span data-text="$wizRole"></span></ty-tag>
                   </div>
                   <div class="flex items-center justify-between text-sm pt-2 border-t ty-border-neutral-">
                     <span class="ty-text-">Theme</span>
-                    <ty-tag size="xs" flavor="neutral" pill><span data-text="$wizTheme"></span></ty-tag>
+                    <ty-tag size="xs" flavor="neutral"><span data-text="$wizTheme"></span></ty-tag>
                   </div>
                   <div class="flex items-center justify-between text-sm">
                     <span class="ty-text-">Weekly digest</span>
-                    <ty-tag size="xs" data-attr:flavor="$wizNotify ? 'success' : 'neutral'" pill>
+                    <ty-tag size="xs" data-attr:flavor="$wizNotify ? 'success' : 'neutral'">
                       <span data-text="$wizNotify ? 'enabled' : 'off'"></span>
                     </ty-tag>
                   </div>
                   <div class="flex items-center justify-between text-sm">
                     <span class="ty-text-">Product updates</span>
-                    <ty-tag size="xs" data-attr:flavor="$wizProductUpdates ? 'success' : 'neutral'" pill>
+                    <ty-tag size="xs" data-attr:flavor="$wizProductUpdates ? 'success' : 'neutral'">
                       <span data-text="$wizProductUpdates ? 'enabled' : 'off'"></span>
                     </ty-tag>
                   </div>

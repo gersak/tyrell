@@ -13,6 +13,14 @@
 
 (def ^:private cdn (str "https://cdn.jsdelivr.net/npm/tyrell-components@" v/TYRELL_COMPONENTS_VERSION))
 
+(def cdn-tags
+  "Everything a plain page needs: tokens, theme, components. Also the landing CTA's CDN line."
+  ;; Script first so a one-line preview reads as "load Tyrell"; module scripts
+  ;; are deferred, so the stylesheets still apply before any component renders.
+  (str "<script type=\"module\" src=\"" cdn "/dist/tyrell.js\"></script>\n"
+       "<link rel=\"stylesheet\" href=\"" cdn "/css/tyrell.css\">\n"
+       "<link rel=\"stylesheet\" href=\"" cdn "/css/tyrell-theme.css\">"))
+
 ;; --- Stacks ------------------------------------------------------------------
 
 (def ^:private register-icons-js
@@ -26,7 +34,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
   {:title "Icons" :sub "Import it, then register it."
    :desc "Named imports, so the bundler keeps only the icons you use. Register them once at startup, then use them by name."
    :files [{:file "src/main.js" :lang "javascript" :code register-icons-js}]
-   :guide ["How the icon sets are built" "ICONS_GUIDE.md#in-javascript"]
+   :guide ["Icons guide" :tyrell.site.docs/icons]
    :note "Skip either step and you get a faint placeholder circle, with no error." :warn? true})
 
 (def ^:private js-deeper
@@ -58,25 +66,25 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
       :desc "Replicant renders the tags as they are. Reagent and UIx go through the tyrell.react wrappers."
       :preview? true
       :tabs [["replicant" "Replicant" "clojure"
-              "(defn signup [{:keys [email]}]\n  [:form\n   [:ty-input {:label \"Email\" :value email\n               :on {:change on-email}}]\n   [:ty-button {:flavor \"primary\"} \"Sign up\"]])"]
+              "(defn signup [{:keys [email]}]\n  [:form\n   [:ty-input {:label \"Email\" :value email\n               :on {:change on-email}}]\n   [:ty-button {:flavor \"primary\" :size \"md\"} \"Sign up\"]])"]
              ["reagent" "Reagent" "clojure"
-              "(defn signup []\n  [:form\n   [:> ty/Input {:label \"Email\" :value @email\n                 :on-change on-email}]\n   [:> ty/Button {:flavor \"primary\"} \"Sign up\"]])"]
+              "(defn signup []\n  [:form\n   [:> ty/Input {:label \"Email\" :value @email\n                 :on-change on-email}]\n   [:> ty/Button {:flavor \"primary\" :size \"md\"} \"Sign up\"]])"]
              ["uix" "UIx" "clojure"
-              "(defui signup [{:keys [email on-email]}]\n  ($ :form\n     ($ ty/Input {:label \"Email\" :value email\n                  :on-change on-email})\n     ($ ty/Button {:flavor \"primary\"} \"Sign up\")))"]]}
+              "(defui signup [{:keys [email on-email]}]\n  ($ :form\n     ($ ty/Input {:label \"Email\" :value email\n                  :on-change on-email})\n     ($ ty/Button {:flavor \"primary\" :size \"md\"} \"Sign up\")))"]]}
      {:title "Events" :sub "The value is on event.detail."
       :desc "Custom events carry their payload on detail, not on the event. Same shape in every Clojure UI library."
       :files [{:file "src/app/core.cljs" :lang "clojure"
                :code "(defn on-email [^js e]\n  (swap! state assoc :email (.. e -detail -value)))"}]}
      {:title "Icons" :sub "Require it, then register it."
-      :guide ["How the icon sets are built" "ICONS_GUIDE.md#in-clojure"]
-      :desc "Icons ship in the jar as plain defs, so there's no npm package for them. Closure keeps only the ones you require: a release build carries just those."
+      :guide ["Icons guide" :tyrell.site.docs/icons]
+      :desc "Lucide comes with dev.gersak/tyrell as plain defs; add dev.gersak/tyrell-icons for Heroicons, Material and Font Awesome. Closure keeps only the ones you require: a release build carries just those."
       :files [{:file "src/app/icons.cljs" :lang "clojure"
                :code "(ns app.icons\n  (:require [tyrell.icons :as icons]\n            [tyrell.lucide :as lucide]))\n\n;; the key is the name <ty-icon> uses: pick any\n(icons/register! {:mail        lucide/mail\n                  :action-down lucide/chevron-down})\n\n[:ty-icon {:name \"action-down\"}]"}]
       :note "Skip either step and you get a faint placeholder circle, with no error." :warn? true}
      {:title "On the server" :sub "Same tags from the JVM."
       :desc "Render the tags with hiccup. Fields submit with the form like native inputs, so the handler reads params as usual. Icon defs are .cljc, so the server can inline them too."
       :files [{:file "src/app/pages.clj" :lang "clojure"
-               :code "(ns app.pages\n  (:require [hiccup2.core :as h]\n            [tyrell.lucide :as lucide]))\n\n(defn signup-form []\n  [:form {:method \"post\" :action \"/signup\"}\n   [:ty-input {:name \"email\" :label \"Email\" :required true}\n    [:ty-icon {:slot \"start\"} (h/raw lucide/mail)]]\n   [:ty-button {:type \"submit\" :flavor \"primary\"} \"Sign up\"]])"}]
+               :code "(ns app.pages\n  (:require [hiccup2.core :as h]\n            [tyrell.lucide :as lucide]))\n\n(defn signup-form []\n  [:form {:method \"post\" :action \"/signup\"}\n   [:ty-input {:name \"email\" :label \"Email\" :required true}\n    [:ty-icon {:slot \"start\"} (h/raw lucide/mail)]]\n   [:ty-button {:type \"submit\" :flavor \"primary\" :size \"md\"} \"Sign up\"]])"}]
       :note "The page still loads the two stylesheets and tyrell.js, from the CDN or your static files."}]
     :deeper [["ClojureScript reference" "Distribution, shadow-cljs, interop, icon tree-shaking." "clj/CLOJURESCRIPT_GUIDE.md"]
              ["Replicant" "Raw <ty-*> hiccup, events, forms." "clj/REPLICANT_TY_GUIDE.md"]
@@ -99,28 +107,28 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
     [{:title "Load" :sub "Three tags, no build."
       :desc "Paste them into <head>. The script registers every <ty-*> element; the stylesheets bring the tokens and the theme."
       :files [{:file "index.html" :lang "html"
-               :code (str "<link rel=\"stylesheet\" href=\"" cdn "/css/tyrell.css\">\n"
-                          "<link rel=\"stylesheet\" href=\"" cdn "/css/tyrell-theme.css\">\n"
-                          "<script type=\"module\" src=\"" cdn "/dist/tyrell.js\"></script>")}]
+               :code cdn-tags}]
       :note "Or self-host the three files. Any backend works: it only has to send HTML."}
      {:title "First component" :sub "Tags in, components out."
       :desc "Write the tags in any template: Jinja, ERB, Blade, Hiccup, plain HTML."
       :preview? true
       :files [{:file "signup.html" :lang "html"
-               :code "<ty-input name=\"email\" label=\"Email\" required></ty-input>\n<ty-button type=\"submit\" flavor=\"primary\">Sign up</ty-button>"}]}
+               :code "<ty-input name=\"email\" label=\"Email\" required></ty-input>\n<ty-button type=\"submit\" flavor=\"primary\" size=\"md\">Sign up</ty-button>"}]}
      {:title "Forms" :sub "Posts like a native input."
       :desc "Give a field a name and it joins the form data. required and the validity API work as on <input>, so the browser blocks an empty submit."
       :files [{:file "signup.html" :lang "html"
-               :code "<form method=\"post\" action=\"/signup\">\n  <ty-input name=\"email\" label=\"Email\" required></ty-input>\n  <ty-button type=\"submit\">Sign up</ty-button>\n</form>\n\n<!-- the server reads it as usual: form[\"email\"] -->"}]}
+               :code "<form method=\"post\" action=\"/signup\">\n  <ty-input name=\"email\" label=\"Email\" required></ty-input>\n  <ty-button type=\"submit\" size=\"md\">Sign up</ty-button>\n</form>\n\n<!-- the server reads it as usual: form[\"email\"] -->"}]}
      {:title "Events" :sub "Only if you need JavaScript."
       :desc "Custom events carry the value on detail, not on the event."
       :files [{:file "signup.html" :lang "html"
                :code "<script>\n  document.querySelector('ty-input')\n    .addEventListener('change', (e) => console.log(e.detail.value))\n</script>"}]}
-     {:title "Icons" :sub "Put the SVG in the tag."
-      :guide ["How the icon sets are built" "ICONS_GUIDE.md#in-html"]
-      :desc "Slot mode: the server inlines the SVG, nothing to register or fetch. Register by name when the same icon repeats across templates."
-      :files [{:file "signup.html" :lang "html"
-               :code "<ty-icon size=\"lg\">\n  {% include \"icons/mail.svg\" %}\n</ty-icon>\n\n<script>\n  tyIcons.register({ mail: '<svg viewBox=\"0 0 24 24\">…</svg>' })\n</script>\n<ty-icon name=\"mail\"></ty-icon>"}]}
+     {:title "Icons" :sub "One cached icons.js."
+      :guide ["Icons guide" :tyrell.site.docs/icons]
+      :desc "Build the icons you use into a small icons.js, load it right after tyrell.js, and write names in your templates. The browser caches it for every page and fragment. No build step at all? Put the SVG inside the tag instead."
+      :files [{:file "icons.js" :lang "javascript"
+               :code "// build: npx esbuild icons.js --bundle --minify \\\n//          --format=esm --outfile=static/icons.js\nimport { mail } from 'tyrell-components/icons/lucide'\n\nawait customElements.whenDefined('ty-icon')\nwindow.tyIcons.register({ mail })"}
+              {:file "layout.html" :lang "html"
+               :code "<script type=\"module\" src=\"/static/icons.js\"></script>\n\n<ty-icon name=\"mail\"></ty-icon>"}]}
      {:title "HTMX & Datastar" :sub "Attributes go on the tag."
       :desc "The components survive swaps and morphs. Put hx-* or data-* straight on them."
       :files [{:file "htmx" :lang "html"
@@ -151,7 +159,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
       :desc "The wrappers render the <ty-*> element underneath and pass your handlers the native event."
       :preview? true
       :files [{:file "src/Signup.tsx" :lang "javascript"
-               :code "import { useState } from 'react'\nimport { TyButton, TyInput } from 'tyrell-react'\n\nexport function Signup() {\n  const [email, setEmail] = useState('')\n  return (\n    <form>\n      <TyInput label=\"Email\" value={email}\n        onChange={(e) => setEmail(e.detail.value)} />\n      <TyButton flavor=\"primary\">Sign up</TyButton>\n    </form>\n  )\n}"}]}
+               :code "import { useState } from 'react'\nimport { TyButton, TyInput } from 'tyrell-react'\n\nexport function Signup() {\n  const [email, setEmail] = useState('')\n  return (\n    <form>\n      <TyInput label=\"Email\" value={email}\n        onChange={(e) => setEmail(e.detail.value)} />\n      <TyButton flavor=\"primary\" size=\"md\">Sign up</TyButton>\n    </form>\n  )\n}"}]}
      {:title "Events" :sub "The value is on e.detail."
       :desc "onChange fires as you type and hands you the component's CustomEvent. onChangeCommit fires once, on blur. Skip onInput: React strips detail."
       :files [{:file "src/Signup.tsx" :lang "javascript"
@@ -180,7 +188,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
       :desc "Bind with :value, listen with @change. The value is on $event.detail."
       :preview? true
       :files [{:file "src/Signup.vue" :lang "html"
-               :code "<script setup>\nimport { ref } from 'vue'\nconst email = ref('')\n</script>\n\n<template>\n  <form>\n    <ty-input label=\"Email\" :value=\"email\"\n      @change=\"email = $event.detail.value\" />\n    <ty-button flavor=\"primary\">Sign up</ty-button>\n  </form>\n</template>"}]}
+               :code "<script setup>\nimport { ref } from 'vue'\nconst email = ref('')\n</script>\n\n<template>\n  <form>\n    <ty-input label=\"Email\" :value=\"email\"\n      @change=\"email = $event.detail.value\" />\n    <ty-button flavor=\"primary\" size=\"md\">Sign up</ty-button>\n  </form>\n</template>"}]}
      js-icons-step]
     :deeper (into [["Vue guide" "v-model, refs, Nuxt." "js/VUE_TY_GUIDE.md"]] js-deeper)}
 
@@ -202,7 +210,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
       :desc "Svelte 5 event attributes work on custom events. The value is on e.detail."
       :preview? true
       :files [{:file "src/Signup.svelte" :lang "html"
-               :code "<script>\n  let email = $state('')\n</script>\n\n<form>\n  <ty-input label=\"Email\" value={email}\n    onchange={(e) => email = e.detail.value} />\n  <ty-button flavor=\"primary\">Sign up</ty-button>\n</form>"}]
+               :code "<script>\n  let email = $state('')\n</script>\n\n<form>\n  <ty-input label=\"Email\" value={email}\n    onchange={(e) => email = e.detail.value} />\n  <ty-button flavor=\"primary\" size=\"md\">Sign up</ty-button>\n</form>"}]
       :note "Svelte 4: on:change={…} instead of onchange."}
      js-icons-step]
     :deeper (into [["Svelte guide" "Binding, refs, SvelteKit SSR." "js/SVELTE_TY_GUIDE.md"]] js-deeper)}
@@ -224,7 +232,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
       :desc "Write the tags in HTML, or create them like any element."
       :preview? true
       :files [{:file "index.html" :lang "html"
-               :code "<ty-input id=\"email\" label=\"Email\"></ty-input>\n<ty-button flavor=\"primary\">Sign up</ty-button>"}]}
+               :code "<ty-input id=\"email\" label=\"Email\"></ty-input>\n<ty-button flavor=\"primary\" size=\"md\">Sign up</ty-button>"}]}
      {:title "Events" :sub "The value is on e.detail."
       :desc "Custom events carry their payload on detail, not on the event."
       :files [{:file "src/main.js" :lang "javascript"
@@ -333,7 +341,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
      [:div.flex.flex-wrap.items-end.gap-3
       [:ty-input.flex-1 {:label "Email" :placeholder "ada@example.com" :style {:min-width "12rem"}
                          :on {:input #(swap! state assoc :quickstart/preview (.. ^js % -detail -value))}}]
-      [:ty-button {:flavor "primary"} "Sign up"]]
+      [:ty-button {:flavor "primary" :size "md"} "Sign up"]]
      [:span.font-mono.ty-text-- {:style {:font-size "0.6875rem"}}
       "e.detail.value → " [:span.ty-text (pr-str (or value ""))]]]))
 
@@ -341,13 +349,20 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
   [:div.rounded-xl.border.ty-border-.overflow-hidden
    (common/code-tabs tabs {:compact? true})])
 
-(defn- guide-link [[label path]]
-  [:a.site-focus.inline-flex.items-center.self-start.text-sm.font-medium.ty-text-primary.no-underline.hover:underline {:class ["gap-1.5"]}
-   (merge common/brand-scope
-          {:href (str guides-url path) :target "_blank" :rel "noopener noreferrer"})
-   [:ty-icon {:name "book-open" :size "sm"}]
-   label
-   [:ty-icon {:name "arrow-up-right" :size "xs"}]])
+(defn- guide-link
+  "path: a Markdown guide on GitHub, or a site route keyword."
+  [[label path]]
+  (let [route? (keyword? path)]
+    [:a.site-focus.inline-flex.items-center.self-start.text-sm.font-medium.ty-text-primary.no-underline.hover:underline
+     (merge common/brand-scope
+            {:class ["gap-1.5" (:class common/brand-scope)]}
+            (if route?
+              {:href "#"
+               :on {:click (fn [^js e] (.preventDefault e) (router/navigate! path))}}
+              {:href (str guides-url path) :target "_blank" :rel "noopener noreferrer"}))
+     [:ty-icon {:name "book-open" :size "sm"}]
+     label
+     [:ty-icon {:name (if route? "arrow-right" "arrow-up-right") :size "xs"}]]))
 
 (defn- step [{:keys [title sub desc note warn? files tabs preview? guide]}]
   (common/page-section

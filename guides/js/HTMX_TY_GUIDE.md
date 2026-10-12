@@ -191,7 +191,16 @@ The OOB swap replaces the input with one carrying the error message. Tyrell rend
 
 ## Common pitfalls
 
-- **Don't put HTMX attributes on the `<ty-option>` / `<ty-tab>` / `<ty-step>` children** — they're internal slots, not interactive. Put them on `<ty-select>` / `<ty-tabs>` / `<ty-wizard>` and use `hx-trigger="change"`.
+- **Don't put HTMX attributes on the `<ty-option>` / `<ty-tab>` / `<ty-step>` children** — they're internal slots, not interactive. Put them on `<ty-select>` / `<ty-tabs>` / `<ty-wizard>` and use `hx-trigger="change"` (`hx-trigger="ty-tab-change"` for tabs). The exception is a lazy `<ty-tab>`, which loads itself:
+
+  ```html
+  <ty-tab id="reports" label="Reports" lazy
+          hx-get="/tabs/reports" hx-trigger="ty-tab-load"
+          hx-on::response-error="this.loadFailed()"
+          hx-on::send-error="this.loadFailed()"></ty-tab>
+  ```
+
+  The response is the panel's content (`innerHTML` of the tab). A failed request shows the tab's error and Retry only through `loadFailed()`; ty-tab doesn't watch htmx events itself.
 - **Boolean values from `ty-checkbox`** post as `"on"` (or absent) — same as native `<input type="checkbox">`. `ty-switch` follows the same rule. If you need explicit `true`/`false`, wire it via `hx-vals='js:{enabled: this.checked}'`.
 - **`ty-select multiple` posts repeated `name=` entries** (one per selected value). Confirm your backend reads multi-value fields (Express `body-parser` does, Ring's wrap-params does, Rails' `permit(:tags => [])` does).
 - **Date format**: `ty-date-picker` posts ISO `YYYY-MM-DD` strings. Parse on the server accordingly.

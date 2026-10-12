@@ -26,8 +26,14 @@
      (for [{:keys [label accept placeholder multiple?]} lineup]
        [:ty-file-upload (merge {:label label :multiple multiple? :accept accept :placeholder placeholder} attrs
                                {:jsx/onChange "{(e) => setFiles(e.detail.files)}"})])
-     :datastar (str "<form data-on:submit=\"@post('/upload', {contentType: 'form'})\">\n"
-                    "  <ty-file-upload name=\"files\" multiple" (snippets/attr-str attrs) ">\n  </ty-file-upload>\n</form>"))))
+     ;; @post with contentType 'form' sends the enclosing form as multipart,
+     ;; files included, so the Datastar tab needs the <form> around them.
+     :datastar [(into [:form {:data-on:submit "@post('/upload', {contentType: 'form'})"}]
+                      (concat
+                       (for [{:keys [label accept placeholder multiple?]} lineup]
+                         [:ty-file-upload (merge {:name (snippets/slug label) :label label :multiple multiple?
+                                                  :accept accept :placeholder placeholder} attrs)])
+                       [[:ty-button {:type "submit" :flavor "primary"} "Upload"]]))])))
 
 (defn- render-lineup [{:keys [required disabled error]}]
   (let [base (cond-> {}

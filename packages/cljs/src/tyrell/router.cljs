@@ -141,16 +141,26 @@
        :replace (.replaceState js/history nil "" updated))
      (swap! *router* assoc :query params))))
 
+(defn- under-path?
+  "True when PATH is BASE itself or continues past it at a segment
+  boundary, so /components/select is under /components but
+  /componentsfoo is not."
+  [path base]
+  (or (= base "/")
+      (= path base)
+      (and (str/starts-with? path base)
+           (contains? #{"/" "#" "?"} (subs path (count base) (inc (count base)))))))
+
 (defn on-path?
   "For given path and component id function will get
   component path and check if given path starts with
-  component path.
-  
+  component path, at a segment boundary.
+
   If it does, than component is on path (true)"
   [tree path id]
   (when (some? path)
     (when-some [cp (component-path tree id)]
-      (str/starts-with? path (first (str/split cp #"\#"))))))
+      (under-path? path (first (str/split cp #"\#"))))))
 
 (defn parse-url
   "Parse URL into path and hash components"
@@ -163,15 +173,32 @@
         {:path (.substring url 0 hash-idx)
          :hash (.substring url (inc hash-idx))}))))
 
+(defn- hash-route?
+  "True when URL (path#hash) is the address of a route that has a :hash."
+  [tree url]
+  (let [{:keys [hash]} (parse-url url)]
+    (loop [loc (component-tree-zipper tree)]
+      (cond
+        (zip/end? loc) false
+        (let [node (zip/node loc)]
+          (and (= hash (:hash node)) (= url (component-path tree (:id node))))) true
+        :else (recur (zip/next loc))))))
+
 (defn exact-match?
-  "Compare current URL with component path, including hash fragments"
+  "Compare current URL with component path, including hash fragments.
+  A route with a :hash needs that exact hash. A route without one also
+  matches when the URL's hash isn't a route of its own: that hash is an
+  in-page anchor (/components/select#api), not a different page."
   [tree current-url component-id]
   (when (some? current-url)
     (when-some [component-url (component-path tree component-id)]
-      (let [current-parts (parse-url current-url)
-            component-parts (parse-url component-url)]
-        (and (= (:path current-parts) (:path component-parts))
-             (= (:hash current-parts) (:hash component-parts)))))))
+      (let [{current-path :path current-hash :hash} (parse-url current-url)
+            {route-path :path route-hash :hash} (parse-url component-url)]
+        (and (= current-path route-path)
+             (cond
+               (not-empty route-hash) (= current-hash route-hash)
+               (empty? current-hash) true
+               :else (not (hash-route? tree current-url))))))))
 
 (defn url->components
   "Returns all components that are rendered for given URL"
@@ -270,59 +297,108 @@
             (not-empty (set/intersection permissions *permissions*))))
       true))) ; If component not found, allow access
 
+(defn- go!
+  "Move to route-id. history is .pushState (a visit) or .replaceState (a
+  redirect, so Back doesn't land on the URL that redirected)."
+  [route-id params history]
+  (let [{:keys [tree base]} @*router*
+        component-url (component-path tree route-id)
+        url (maybe-add-base base component-url)
+        query (when params (str "?" (clj->query params)))
+        full-url (str url query)]
+    (when component-url
+      (history full-url)
+      (swap! *router* assoc :current component-url)
+
+      (when-let [url-parts (parse-url component-url)]
+        (when-let [hash (:hash url-parts)]
+          (when (not-empty hash)
+            ;; Use setTimeout to ensure DOM is ready after route change
+            (js/setTimeout
+             (fn []
+               (when-let [element (.getElementById js/document hash)]
+                 (.scrollIntoView element #js {:behavior "smooth"})))
+             100)))))))
+
 (defn navigate!
   "Navigate to a route by id with optional query params"
   ([route-id] (navigate! route-id nil))
   ([route-id params]
-   (let [{:keys [tree base]} @*router*
-         component-url (component-path tree route-id)
-         url (maybe-add-base base component-url)
-         query (when params (str "?" (clj->query params)))
-         full-url (str url query)]
-     (when component-url
-       (.pushState js/history nil "" full-url)
-       (swap! *router* assoc :current component-url)
+   (go! route-id params #(.pushState js/history nil "" %))))
 
-       (when-let [url-parts (parse-url component-url)]
-         (when-let [hash (:hash url-parts)]
-           (when (not-empty hash)
-             ;; Use setTimeout to ensure DOM is ready after route change
-             (js/setTimeout
-              (fn []
-                (when-let [element (.getElementById js/document hash)]
-                  (.scrollIntoView element #js {:behavior "smooth"})))
-              100))))))))
+(defn- redirect!
+  "Like navigate!, but replaces the current history entry."
+  [route-id]
+  (go! route-id nil #(.replaceState js/history nil "" %)))
 
 (defn- find-landing-candidates
   "Find all components with :landing property that user can access,
   sorted by priority (highest first)"
-  []
-  (let [{:keys [tree]} @*router*
-        candidates (volatile! [])]
-    (loop [position (component-tree-zipper tree)]
-      (if (zip/end? position)
-        (->> @candidates
-             (filter #(authorized? (:id %)))
-             (sort-by :landing >)
-             vec)
-        (let [{:keys [landing]
-               :as node} (zip/node position)]
-          (when landing
-            (vswap! candidates conj (dissoc node :children)))
-          (recur (zip/next position)))))))
+  ([] (find-landing-candidates (:tree @*router*)))
+  ([tree]
+   (let [candidates (volatile! [])]
+     (loop [position (component-tree-zipper tree)]
+       (if (zip/end? position)
+         (->> @candidates
+              (filter #(authorized? (:id %)))
+              (sort-by :landing >)
+              vec)
+         (let [{:keys [landing]
+                :as node} (zip/node position)]
+           (when landing
+             (vswap! candidates conj (dissoc node :children)))
+           (recur (zip/next position))))))))
+
+(defn- route-nodes
+  "Every route in tree order, without children. Skips the root and the nil
+  nodes the zipper yields for childless routes (see url->components)."
+  [tree]
+  (loop [loc (component-tree-zipper tree)
+         acc []]
+    (if (zip/end? loc)
+      acc
+      (let [{:keys [id] :as node} (zip/node loc)]
+        (recur (zip/next loc)
+               (if (or (nil? id) (= ::root id)) acc (conj acc (dissoc node :children))))))))
+
+(defn redirect-target
+  "Route id the URL should be redirected to, or nil when it can stay.
+
+  - A route matches exactly: stay.
+  - The path has routes, but all of them carry a hash (/welcome with only
+    #top and #event-booking): go to the best of those — highest :landing,
+    then tree order — instead of rendering nothing.
+  - No route is on the path at all: go to the best landing route.
+  - Otherwise stay: a path below a route (/users/123) is how apps read
+    dynamic segments with non-exact rendered?."
+  [tree url]
+  (let [nodes (route-nodes tree)]
+    (when-not (some #(exact-match? tree url (:id %)) nodes)
+      (let [path (:path (parse-url url))
+            same-path (->> nodes
+                           (filter #(and (not-empty (:hash %))
+                                         (= path (:path (parse-url (component-path tree (:id %)))))
+                                         (authorized? (:id %))))
+                           (sort-by #(- (or (:landing %) 0))))]
+        (cond
+          (seq same-path) (:id (first same-path))
+          (empty? (remove (comp #{::root} :id) (url->components tree url)))
+          (:id (first (find-landing-candidates tree)))
+          :else nil)))))
 
 (defn handle-landing!
   "Check if current location should trigger landing redirect.
-  Always runs - redirects to best available route for 404s or auth failures."
+  Always runs - redirects to best available route for 404s, auth failures
+  and paths that only exist with a hash. Redirects replace the history
+  entry, so Back doesn't bounce off the redirecting URL."
   []
-  (let [{:keys [tree current base]} @*router*
-        [best :as candidates] (find-landing-candidates)
+  (let [{:keys [tree current]} @*router*
+        [best] (find-landing-candidates tree)
         current-components (remove (comp (partial = ::root) :id) (url->components tree current))
-        every-authorized? (every? (comp authorized? :id) current-components)]
-    (cond
-      (empty? current-components) (navigate! (:id best))
-      (not every-authorized?) (navigate! (:id best))
-      :else nil)))
+        target (if (every? (comp authorized? :id) current-components)
+                 (redirect-target tree current)
+                 (:id best))]
+    (when target (redirect! target))))
 
 (defn get-current-url
   "Get current full URL including hash"

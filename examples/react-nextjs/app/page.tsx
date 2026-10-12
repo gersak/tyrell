@@ -9,7 +9,7 @@ import {
   TyInput,
   TyModal,
   TyIcon,
-  TyDropdown,
+  TySelect,
   TyOption,
   type TyModalRef
 } from 'tyrell-react'
@@ -32,7 +32,7 @@ export default function Home() {
 
   const handleDropdownChange = (event: any) => {
     console.log('Dropdown changed:', event.detail)
-    setDropdownValue(event.detail.option?.textContent || '')
+    setDropdownValue(event.detail.items?.[0]?.label || '')
   }
 
   const handleButtonClick = () => {
@@ -182,16 +182,16 @@ export default function Home() {
           {/* Dropdown Test */}
           <div className="p-5 rounded-lg my-4 surface-elevated border ty-border-">
             <h3 className="mb-3 text-neutral-ty-strong font-medium">
-              TyDropdown - Selection Events
+              TySelect - Selection Events
             </h3>
             <div className="max-w-xs">
-              <TyDropdown onChange={handleDropdownChange} placeholder="Choose an option...">
+              <TySelect onChange={handleDropdownChange} placeholder="Choose an option...">
                 <TyOption value="react">React Integration</TyOption>
                 <TyOption value="nextjs">Next.js Compatibility</TyOption>
                 <TyOption value="typescript">TypeScript Support</TyOption>
                 <TyOption value="tailwind">Tailwind CSS Integration</TyOption>
                 <TyOption value="theming">Theme System</TyOption>
-              </TyDropdown>
+              </TySelect>
               <p className="mt-2 text-sm text-neutral-ty-base">
                 Selected: <span className="font-medium text-primary-ty-base">{dropdownValue || '(none)'}</span>
               </p>
@@ -356,7 +356,7 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyInput</span>
-                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyDropdown</span>
+                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TySelect</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyButton</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyModal</span>
               </div>
@@ -386,8 +386,8 @@ export default function Home() {
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyCalendar</span>
-                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyDropdown</span>
-                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyMultiselect</span>
+                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TySelect</span>
+                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TySelect multiple</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyButton</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyModal</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyTag</span>
@@ -447,7 +447,7 @@ export default function Home() {
                 privacy options, and advanced configuration with instant feedback.
               </p>
               <div className="flex flex-wrap gap-2 mb-4">
-                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyDropdown</span>
+                <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TySelect</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyInput</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyTooltip</span>
                 <span className="text-xs ty-bg-neutral- ty-text-neutral+ px-2 py-1 rounded">TyPopup</span>

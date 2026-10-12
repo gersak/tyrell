@@ -15,7 +15,8 @@ export interface TyTagCSSProperties extends React.CSSProperties {
 export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'style' | 'onClick'> {
   flavor?: ShadedFlavor | (string & {});
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-  notPill?: boolean;
+  /** Square corners instead of fully rounded */
+  noPill?: boolean;
   clickable?: boolean;
   dismissible?: boolean;
   disabled?: boolean;
@@ -29,7 +30,7 @@ export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'sty
 }
 
 export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
-  ({ children, onClick, onTagDismiss, notPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
+  ({ children, onClick, onTagDismiss, noPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     const handleDismiss = useCallback((event: CustomEvent) => {
@@ -59,7 +60,7 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
       }
     }, [ref]);
 
-    const isNotPill = useBooleanProperty(elementRef, 'notPill', notPill);
+    const isNoPill = useBooleanProperty(elementRef, 'noPill', noPill);
     const isClickable = useBooleanProperty(elementRef, 'clickable', clickable);
     const isDismissible = useBooleanProperty(elementRef, 'dismissible', dismissible);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
@@ -72,7 +73,7 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
         // click is dispatched as composed CustomEvent by the web component — React's
         // synthetic onClick already catches it, so we just pass it through as onClick
         ...(onClick && { onClick }),
-        ...(isNotPill && { 'not-pill': "" }),
+        ...(isNoPill && { 'no-pill': "" }),
         ...(isClickable && { clickable: "" }),
         ...(isDismissible && { dismissible: "" }),
         ...(isDisabled && { disabled: "" }),

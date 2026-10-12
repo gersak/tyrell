@@ -8,6 +8,10 @@ import '../lib/components/wizard.js';
 import '../lib/components/step.js';
 import '../lib/components/tabs.js';
 import '../lib/components/tab.js';
+import '../lib/components/select.js';
+import '../lib/components/date-picker.js';
+import '../lib/components/tag.js';
+import '../lib/components/scroll-container.js';
 import '../lib/components/option.js';
 import '../lib/components/resize-observer.js';
 import { getSize } from '../lib/utils/resize-observer.js';
@@ -96,7 +100,7 @@ describe('ty-tabs edge cases', () => {
     el.addEventListener('ty-tab-change', (e) => { detail = (e as CustomEvent).detail; });
 
     const btn = el.shadowRoot!.querySelector('[data-tab-id="b"]') as HTMLElement;
-    btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+    btn.click();
     await tick();
 
     expect(el.getAttribute('active'), 'tabs DO navigate (unlike wizard)').to.equal('b');
@@ -118,7 +122,7 @@ describe('ty-tabs edge cases', () => {
     // Component survives; buttons still present and clickable
     expect(el.shadowRoot!.querySelectorAll('[data-tab-id]').length).to.equal(2);
     const btn = el.shadowRoot!.querySelector('[data-tab-id="a"]') as HTMLElement;
-    btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+    btn.click();
     await tick();
     expect(el.getAttribute('active')).to.equal('a');
   });
@@ -199,5 +203,28 @@ describe('ty-resize-observer registry', () => {
     expect(getSize('new-name'), 'new key registered').to.not.equal(undefined);
 
     el.remove();
+  });
+});
+
+describe('no-* presence attributes (no-clear, no-pill, no-shadow)', () => {
+  it('present turns the default off; removed (a framework rendering false) turns it back on', async () => {
+    const wrap = (await fixture(html`<div>
+      <ty-select no-clear><ty-option value="a">A</ty-option></ty-select>
+      <ty-date-picker no-clear></ty-date-picker>
+      <ty-tag no-pill>t</ty-tag>
+      <ty-scroll-container no-shadow>x</ty-scroll-container>
+    </div>`)) as HTMLElement;
+    await nextFrame();
+    const sel = wrap.querySelector('ty-select') as any;
+    const dp = wrap.querySelector('ty-date-picker') as any;
+    const tag = wrap.querySelector('ty-tag') as any;
+    const sc = wrap.querySelector('ty-scroll-container') as any;
+    expect([sel.noClear, dp.noClear, tag.noPill, sc.noShadow]).to.deep.equal([true, true, true, true]);
+
+    sel.removeAttribute('no-clear');
+    dp.removeAttribute('no-clear');
+    tag.removeAttribute('no-pill');
+    sc.removeAttribute('no-shadow');
+    expect([sel.noClear, dp.noClear, tag.noPill, sc.noShadow]).to.deep.equal([false, false, false, false]);
   });
 });

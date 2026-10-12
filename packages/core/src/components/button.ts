@@ -292,6 +292,12 @@ export class TyButton
     const button = document.createElement("button");
     button.disabled = this.disabled;
     button.className = classes;
+    // The only thing the outside can reach. Host styling never lands on the
+    // control (the host is a plain inline-block wrapper around it), so without
+    // this a consumer's `min-height` grows the host box and manufactures a
+    // dead strip that looks clickable and isn't. Same convention as
+    // ty-tag::part(container) / ty-tabs::part(strip).
+    button.setAttribute("part", "button");
 
     const loader = document.createElement("span");
     loader.className = "loader-icon";

@@ -582,7 +582,7 @@ For programmatic control, add `manual` and call `ref.value.show()` / `ref.value.
 </template>
 ```
 
-Attrs: `max-height`, `shadow` (default `true`), `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
+Attrs: `max-height`, `no-shadow`, `hide-scrollbar`, `custom-scrollbar`, `overflow-x`.
 
 ---
 

@@ -10,7 +10,10 @@
 
 (def ^:private lineup
   "Playground stage: every shape the button takes, sharing the live props."
-  [{:label "Save changes"}
+  [{:label "Save changes"
+    :datastar {(snippets/ds "data-on:click") "@post('/save')"
+               (snippets/ds "data-indicator:saving") true
+               (snippets/ds "data-attr:loading") "$saving"}}
    {:label "Save" :start "save"}
    {:label "Continue" :end "arrow-right"}
    {:label "Export" :start "download" :end "chevron-down"}
@@ -31,9 +34,9 @@
     loading (assoc :loading true)
     disabled (assoc :disabled true)))
 
-(defn- button-node [attrs {:keys [label start end icon aria spin?]}]
+(defn- button-node [attrs {:keys [label start end icon aria spin? datastar]}]
   (let [ico (fn [slot n] [:ty-icon {:slot slot :name n :spin spin?}])]
-    [:ty-button (merge (when icon {:action true :aria-label aria}) attrs)
+    [:ty-button (merge (when icon {:action true :aria-label aria}) attrs datastar)
      (when icon (ico nil icon))
      (when start (ico "start" start))
      label
@@ -42,11 +45,7 @@
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
     (snippets/tabs
-     (map (partial button-node attrs) lineup)
-     :datastar (str "<!-- same markup as HTML; wire actions with data-on -->\n"
-                    "<ty-button" (snippets/attr-str attrs) ">Save changes</ty-button>"
-                    "\n\n<ty-button" (snippets/attr-str attrs)
-                    "\n  data-on:click=\"@post('/save')\">Save changes</ty-button>"))))
+     (map (partial button-node attrs) lineup))))
 
 (defn- render-lineup
   "Live stage: text buttons on one row, icon-only buttons on the next."

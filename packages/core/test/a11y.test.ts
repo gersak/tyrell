@@ -24,6 +24,10 @@ import '../lib/components/modal.js';
 const IGNORE = new Set([
   'region', 'landmark-one-main', 'page-has-heading-one',
   'html-has-lang', 'document-title', 'bypass',
+  // This suite audits components WITHOUT tyrell.css, so every --ty-* colour
+  // falls back to a UA default — axe would be grading Chrome's palette, not
+  // ours. Structure (roles, names, states) is what's worth gating on here.
+  'color-contrast',
 ]);
 
 // Calendar days outside the shown month are deliberately faint (secondary
@@ -45,7 +49,11 @@ function expectClean(v: string[]) {
   expect(v, `axe violations: ${v.join(' | ') || 'none'}`).to.have.lengthOf(0);
 }
 
-describe('a11y (axe) — no serious/critical violations', () => {
+describe('a11y (axe) — no serious/critical violations', function () {
+  // axe.run takes 2–9s per fixture in headless Chrome, even on a bare <button>
+  // with no Ty code, so the global 5s timeout failed whichever tests ran slowest.
+  this.timeout(30000);
+
   it('ty-button', async () => {
     const el = await fixture(html`<ty-button>Save</ty-button>`);
     await nextFrame();

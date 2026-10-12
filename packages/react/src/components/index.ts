@@ -82,7 +82,7 @@ export { TyTabs } from './TyTabs';
 export type { TyTabsProps, TabChangeDetail } from './TyTabs';
 
 export { TyTab } from './TyTab';
-export type { TyTabProps } from './TyTab';
+export type { TyTabProps, TabLoadDetail } from './TyTab';
 
 export { TyCalendarMonth } from './TyCalendarMonth';
 export type { TyCalendarMonthProps, DayClickDetail } from './TyCalendarMonth';

@@ -20,7 +20,7 @@ interface TagState {
   size: Size;
   value: string;
   selected: boolean;
-  pill: boolean;
+  noPill: boolean;
   clickable: boolean;
   dismissible: boolean;
   disabled: boolean;
@@ -75,11 +75,11 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
       visual: true,
       default: false,
     },
-    pill: {
+    // Fully rounded is the default; no-pill squares the corners.
+    noPill: {
       type: "boolean" as const,
       visual: true,
-      default: true,
-      aliases: { "not-pill": false },
+      default: false,
     },
     clickable: {
       type: "boolean" as const,
@@ -325,12 +325,12 @@ export class TyTag extends TyComponent<TagState> implements TyTagElement {
     this.setProperty("selected", value);
   }
 
-  get pill(): boolean {
-    return this.getProperty("pill");
+  get noPill(): boolean {
+    return this.getProperty("noPill");
   }
 
-  set pill(value: boolean) {
-    this.setProperty("pill", value);
+  set noPill(value: boolean) {
+    this.setProperty("noPill", value);
   }
 
   get clickable(): boolean {

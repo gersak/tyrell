@@ -28,7 +28,7 @@
       (str "[:ty-button {:action \"\" :aria-label \"Save\"}\n [:ty-icon {:name \"save\"}]\n"
            " [:ty-tooltip " (if (seq kv) (str "{" kv "} ") "") "\"Save  ⌘S\"]]")]
      ["datastar" "Datastar" "html"
-      (str "<ty-button action aria-label=\"Save\">\n  <ty-icon name=\"save\"></ty-icon>\n"
+      (str "<ty-button action aria-label=\"Save\"\n  data-signals:save-hint=\"'Save  ⌘S'\">\n  <ty-icon name=\"save\"></ty-icon>\n"
            "  <ty-tooltip" attrs " data-text=\"$saveHint\"></ty-tooltip>\n</ty-button>")]]))
 
 (defn- tool [icon tip attrs]
@@ -62,7 +62,7 @@
    (playground
     {:id :tooltip
      :defaults {:placement "top" :flavor "neutral" :delay "600"}
-     :controls [{:key :placement :options ["top" "bottom" "left" "right"]}
+     :controls [{:key :placement :options (for [side ["top" "bottom" "left" "right"] align ["-start" "" "-end"]] (str side align)) :select? true}
                 {:key :flavor :options flavors :swatch? true :tones? true}
                 {:key :delay :options ["0" "300" "600" "1000"]}]
      :render render-playground

@@ -202,6 +202,37 @@ code:not(.hljs) {
 .group:hover .group-hover\\:ty-text-primary { color: var(--ty-color-primary) !important; }
 ")
 
+;; The sidebar's current-page marker. Transitions, not a keyframe: every row
+;; carries a dot, so leaving a page shrinks its dot out while the next one grows
+;; in a beat later with a soft overshoot. Animates the individual scale property
+;; so the dot's own translate stays untouched. Top-level rows cross-fade their
+;; icon with the dot.
+(def ^:private nav-dot-css
+  "
+.site-nav-dot {
+  scale: 0;
+  opacity: 0;
+  will-change: scale, opacity;
+  transition: scale 280ms cubic-bezier(0.4, 0, 1, 1), opacity 220ms ease-in;
+}
+.site-nav-dot.is-on {
+  scale: 1;
+  opacity: 1;
+  transition: scale 650ms cubic-bezier(0.34, 1.45, 0.64, 1) 90ms, opacity 360ms ease-out 90ms;
+}
+.site-nav-icon {
+  transition: scale 420ms cubic-bezier(0.34, 1.3, 0.64, 1), opacity 320ms ease-out;
+}
+.site-nav-icon.is-off {
+  scale: 0.4;
+  opacity: 0;
+  transition: scale 280ms cubic-bezier(0.4, 0, 1, 1), opacity 200ms ease-in;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-dot, .site-nav-dot.is-on, .site-nav-icon, .site-nav-icon.is-off { transition: none; }
+}
+")
+
 (defn install!
   "Inject all site-chrome styles into document.head. Idempotent and hot-reloadable
    — calling repeatedly updates the <style> element's content rather than appending
@@ -212,4 +243,5 @@ code:not(.hljs) {
   (css/ensure-document-styles! demo-pin-css "tyrell-site-demo-pin")
   (css/ensure-document-styles! focus-css "tyrell-site-focus")
   (css/ensure-document-styles! brand-css "tyrell-site-brand")
-  (css/ensure-document-styles! group-hover-css "tyrell-site-group-hover"))
+  (css/ensure-document-styles! group-hover-css "tyrell-site-group-hover")
+  (css/ensure-document-styles! nav-dot-css "tyrell-site-nav-dot"))

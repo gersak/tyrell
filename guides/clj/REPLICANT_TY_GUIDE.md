@@ -294,6 +294,7 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 | `ty-calendar` | `navigate` | `month`, `year`, `action`, `source` |
 | `ty-date-picker` | `change` | `value` (ISO string) |
 | `ty-tabs` | `ty-tab-change` | `activeId`, `activeIndex`, `previousId`, `previousIndex` |
+| `ty-tab` (`lazy`) | `ty-tab-load` | `id`, `index` (on the tab, doesn't bubble; call `(.loadFailed (.-target e))` if loading fails) |
 | `ty-wizard` | `ty-wizard-step-change` | `activeId`, `activeIndex`, `previousId`, `previousIndex`, `direction` |
 | `ty-modal` | `close` | `reason`, `returnValue` |
 | `ty-tag` | `click` | `value` |
@@ -587,5 +588,5 @@ dismissible chips render out-of-band wherever you put them:
 - `disabled` - Disable tab interaction (boolean)
 
 **Events:**
-- `change` - Fires when active tab changes
+- `ty-tab-change` - Fires when the shown tab changes (not for the initial tab)
   - Detail: `{activeId, activeIndex, previousId, previousIndex}`

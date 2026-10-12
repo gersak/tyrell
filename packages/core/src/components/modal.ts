@@ -89,28 +89,17 @@ function parseBoolAttr(el: Element, name: string): boolean {
 function getModalAttributes(el: TyModal): ModalAttributes {
   return {
     open: parseBoolAttr(el, 'open'),
-    backdrop: el.hasAttribute('backdrop') ? parseBoolAttr(el, 'backdrop') : true,
+    // The backdrop is the default; no-backdrop names the deviation (see prevent-* below).
+    backdrop: !parseBoolAttr(el, 'no-backdrop'),
     // Closing is the default, so the HTML-idiomatic switch is a presence
     // boolean naming the DEVIATION: <ty-modal prevent-outside-click>.
-    // prevent-* wins over the older close-on-*="false" form, which stays
-    // supported (shipped in TC48, promised in the issue reply).
     //
     // parseBoolAttr (not hasAttribute) on purpose, but NOT a documented API:
-    // hand-writing prevent-escape="false" is meaningless (that's the default).
-    // It's a safety net for generated markup — a server template rendering
+    // a safety net for generated markup — a server template rendering
     // prevent-escape="{{ falsy }}", or a framework that stringifies `false`
-    // instead of omitting the attribute. Strict presence would guard the
-    // modal from a falsy value, which is the close-on-*="false" trap inverted.
-    closeOnOutsideClick: parseBoolAttr(el, 'prevent-outside-click')
-      ? false
-      : el.hasAttribute('close-on-outside-click')
-        ? parseBoolAttr(el, 'close-on-outside-click')
-        : true,
-    closeOnEscape: parseBoolAttr(el, 'prevent-escape')
-      ? false
-      : el.hasAttribute('close-on-escape')
-        ? parseBoolAttr(el, 'close-on-escape')
-        : true,
+    // instead of omitting the attribute.
+    closeOnOutsideClick: !parseBoolAttr(el, 'prevent-outside-click'),
+    closeOnEscape: !parseBoolAttr(el, 'prevent-escape'),
   };
 }
 
@@ -315,7 +304,7 @@ function setupCloseButton(el: TyModal, dialog: HTMLDialogElement, showButton: bo
   const closeButton = dialog.querySelector<HTMLButtonElement>('.close-button');
   if (!closeButton) return;
   
-  // Show or hide close button based on close-on-outside-click setting
+  // Show or hide close button: hidden under prevent-outside-click
   if (showButton) {
     closeButton.style.display = '';
   } else {
@@ -404,7 +393,7 @@ function render(el: TyModal): void {
 
   // showModal() gives ESC-to-close for free — the browser fires `cancel` and
   // closes the dialog itself, bypassing our keydown handler entirely. That
-  // made close-on-escape="false" a no-op. Always intercept `cancel` and route
+  // made prevent-escape a no-op. Always intercept `cancel` and route
   // it through closeModal() so the attribute (and `beforeclose`) is honoured.
   dialog.oncancel = (event: Event) => {
     event.preventDefault();
@@ -553,26 +542,20 @@ export class TyModal extends HTMLElement {
   hide?: (opts?: { force?: boolean }) => void;
   
   static get observedAttributes() {
-    return ['open', 'backdrop', 'close-on-outside-click', 'close-on-escape', 'prevent-outside-click', 'prevent-escape', 'label'];
+    return ['open', 'no-backdrop', 'prevent-outside-click', 'prevent-escape', 'label'];
   }
 
   // Property mirrors for the boolean attributes. Frameworks that
   // property-bind (React, Vue, CLJS wrappers) hand us real booleans —
-  // `closeOnOutsideClick = false` — which never reach attributeChangedCallback.
+  // `preventEscape = true` — which never reach attributeChangedCallback.
   // Reflect them to the attribute so one code path (getModalAttributes) rules.
   get open(): boolean { return parseBoolAttr(this, 'open'); }
   set open(v: boolean) { v ? this.setAttribute('open', 'true') : this.removeAttribute('open'); }
 
-  get backdrop(): boolean { return getModalAttributes(this).backdrop; }
-  set backdrop(v: boolean) { this.setAttribute('backdrop', String(!!v)); }
-
-  /** @deprecated Use preventOutsideClick — prevent-* wins when both are set. */
-  get closeOnOutsideClick(): boolean { return getModalAttributes(this).closeOnOutsideClick; }
-  set closeOnOutsideClick(v: boolean) { this.setAttribute('close-on-outside-click', String(!!v)); }
-
-  /** @deprecated Use preventEscape — prevent-* wins when both are set. */
-  get closeOnEscape(): boolean { return getModalAttributes(this).closeOnEscape; }
-  set closeOnEscape(v: boolean) { this.setAttribute('close-on-escape', String(!!v)); }
+  get noBackdrop(): boolean { return parseBoolAttr(this, 'no-backdrop'); }
+  set noBackdrop(v: boolean) {
+    v ? this.setAttribute('no-backdrop', '') : this.removeAttribute('no-backdrop');
+  }
 
   // Presence-boolean mirrors: true sets the attribute, false removes it —
   // like native `disabled`.

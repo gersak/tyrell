@@ -42,8 +42,8 @@ test('real ESC closes by default, reason "escape", exactly one close event', asy
   expect(await log(page)).toBe('close:escape;')
 })
 
-test('close-on-escape="false": real ESC does NOT close, no close event', async ({ page }) => {
-  await mount(page, MODAL('close-on-escape="false"'))
+test('prevent-escape: real ESC does NOT close, no close event', async ({ page }) => {
+  await mount(page, MODAL('prevent-escape'))
   await openAndTrack(page)
   await page.keyboard.press('Escape')
   await page.waitForTimeout(200)
@@ -63,8 +63,8 @@ test('real click on the backdrop closes by default, reason "backdrop"', async ({
   expect(await log(page)).toBe('close:backdrop;')
 })
 
-test('close-on-outside-click="false": real backdrop click does NOT close', async ({ page }) => {
-  await mount(page, MODAL('close-on-outside-click="false"'))
+test('prevent-outside-click: real backdrop click does NOT close', async ({ page }) => {
+  await mount(page, MODAL('prevent-outside-click'))
   await openAndTrack(page)
   await page.mouse.click(8, 8)
   await page.waitForTimeout(200)
@@ -76,8 +76,8 @@ test('boolean PROPERTY binding disables both (framework path, the original compl
   await mount(page, MODAL(''))
   await page.evaluate(() => {
     const m = document.getElementById('m') as any
-    m.closeOnEscape = false        // real booleans, not strings
-    m.closeOnOutsideClick = false
+    m.preventEscape = true         // real booleans, not strings
+    m.preventOutsideClick = true
   })
   await openAndTrack(page)
   await page.keyboard.press('Escape')
@@ -85,7 +85,7 @@ test('boolean PROPERTY binding disables both (framework path, the original compl
   await page.waitForTimeout(200)
   expect(await isOpen(page)).toBe(true)
   // re-enable via property → ESC works again
-  await page.evaluate(() => { (document.getElementById('m') as any).closeOnEscape = true })
+  await page.evaluate(() => { (document.getElementById('m') as any).preventEscape = false })
   await page.keyboard.press('Escape')
   await expect(page.locator('#m')).not.toHaveAttribute('open', 'true')
 })

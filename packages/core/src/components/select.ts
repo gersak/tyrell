@@ -42,15 +42,18 @@ function getElementHash(element: object): number {
 
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
 
+/**
+ * Option count above which the popup grows a search row. Tied to the list's
+ * own geometry rather than a taste call: .dropdown-options-wrapper caps at
+ * 16rem, which is about seven rows — so this is exactly the point where the
+ * list stops being scannable at a glance and starts scrolling. Below it you
+ * can see every option already; above it you can't.
+ */
+const SEARCH_AUTO_THRESHOLD = 7;
+
 const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
 </svg>`;
-
-/**
- * 'auto' searchable mode: option count above which the search row appears.
- * Short lists scan faster than they search — native <select> has no search.
- */
-const SEARCH_AUTO_THRESHOLD = 7;
 
 /**
  * create-transform="slug": lowercase, spaces → '_', strip anything else
@@ -199,12 +202,11 @@ export class TySelect extends TyComponent<SelectState> {
     // Built-in × clear button in the default/compact trigger, shown once
     // something is selected. Automatically absent under slot="trigger" —
     // it lives in the slot's fallback content, same mechanism that already
-    // hides the chevron there. Default true matches ty-date-picker.
-    clearable: {
+    // hides the chevron there. no-clear turns it off, like ty-date-picker.
+    noClear: {
       type: "boolean" as const,
       visual: true,
-      default: true,
-      aliases: { "not-clearable": false },
+      default: false,
     },
     externalSearch: {
       type: "boolean" as const,
@@ -230,18 +232,19 @@ export class TySelect extends TyComponent<SelectState> {
       aliases: { "create-transform": true },
       coerce: (v: any) => (v === "slug" ? "slug" : "none"),
     },
-    // Search row visibility: 'auto' (default) shows it only for long option
-    // lists; searchable / searchable="true" forces it on, searchable="false"
-    // off. external-search always shows it (the input IS the mechanism).
-    searchable: {
-      type: "string" as const,
+    // The search row is automatic — it appears once the list is long enough
+    // to scroll (SEARCH_AUTO_THRESHOLD). `not-searchable` is the single
+    // opt-out, named as the deviation from the default like native
+    // `disabled`; bare presence means true per the standard boolean-attribute
+    // coercion. There is deliberately no positive `searchable` attribute:
+    // forcing the row on where the auto rule says it isn't needed was an
+    // option nobody could reason about from the markup.
+    // external-search/allow-create still pin it on — the input IS their
+    // mechanism, so not-searchable cannot turn it off.
+    notSearchable: {
+      type: "boolean" as const,
       visual: true,
-      default: "auto",
-      coerce: (v: any) => {
-        if (v === true || v === "" || v === "true") return "always";
-        if (v === false || v === "false") return "never";
-        return "auto";
-      },
+      default: false,
     },
     // Horizontal anchor for the popup: "start" (default) matches the
     // trigger's left edge, "end" matches its right edge — either way
@@ -294,6 +297,11 @@ export class TySelect extends TyComponent<SelectState> {
       visual: true,
       default: "Available",
     },
+    "selected-label": {
+      type: "string" as const,
+      visual: true,
+      default: "Selected",
+    },
     "no-options-message": {
       type: "string" as const,
       visual: true,
@@ -327,11 +335,12 @@ export class TySelect extends TyComponent<SelectState> {
   private _externalSearch = false;
   private _allowCreate = false;
   private _createTransform: "none" | "slug" = "none";
-  private _searchable: "auto" | "always" | "never" = "auto";
+  private _notSearchable = false;
   private _loading = false;
   private _scrollLockId: string | null = null;
   private _size: Size = DEFAULT_SIZE;
   private _availableLabel: string = "Available";
+  private _selectedLabel: string = "Selected";
   private _noOptionsMessage: string = "No options available";
 
   private _state: SelectState = {
@@ -412,7 +421,7 @@ export class TySelect extends TyComponent<SelectState> {
       if (this._state.selectedValues.length > 0) {
         this.syncSelectedTags(this._state.selectedValues);
       }
-      // Option count may have crossed the 'auto' searchable threshold
+      // Option count may have crossed the auto threshold
       this.updateSearchVisibility();
       // External-search consumers replace ALL ty-option children — often
       // including our display clone. Rebuild the selection display (idempotent:
@@ -529,15 +538,15 @@ export class TySelect extends TyComponent<SelectState> {
         case "required":
           this._required = newValue;
           break;
-        case "clearable":
-          this._clearable = newValue;
+        case "noClear":
+          this._clearable = !newValue;
           if (this.isConnected && this.shadowRoot) this.updateSelectionDisplay();
           break;
         case "externalSearch":
           this._externalSearch = newValue;
           break;
-        case "searchable":
-          this._searchable = newValue;
+        case "notSearchable":
+          this._notSearchable = newValue;
           if (this.isConnected && this.shadowRoot)
             this.updateSearchVisibility();
           break;
@@ -557,6 +566,9 @@ export class TySelect extends TyComponent<SelectState> {
           break;
         case "available-label":
           this._availableLabel = newValue || "Available";
+          break;
+        case "selected-label":
+          this._selectedLabel = newValue || "Selected";
           break;
         case "no-options-message":
           this._noOptionsMessage = newValue || "No options available";
@@ -1397,6 +1409,9 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private handleSearchInput(e: Event): void {
+    // Typing is a request to see results, so the list takes the space back
+    // even if the selected strip was the one open.
+    if (this._state.mode === "mobile") this.expandMobileSection("available");
     const target = e.target as HTMLInputElement;
     const query = target.value;
 
@@ -1453,7 +1468,11 @@ export class TySelect extends TyComponent<SelectState> {
       case "Escape":
         e.preventDefault();
         e.stopPropagation();
-        this.closeDropdown();
+        if (this._state.mode === "mobile") {
+          this.closeMobileModal();
+        } else {
+          this.closeDropdown();
+        }
         break;
 
       case "Enter":
@@ -1474,21 +1493,12 @@ export class TySelect extends TyComponent<SelectState> {
       case "ArrowUp":
         e.preventDefault();
         e.stopPropagation();
-        let newIndexUp: number;
 
-        if (tagsCount === 0) {
-          newIndexUp = -1;
-        } else if (currentHighlightedIndex === -1) {
-          // Nothing highlighted, go to last tag
-          newIndexUp = tagsCount - 1;
-        } else if (currentHighlightedIndex === 0) {
-          // At first tag, wrap to last
-          newIndexUp = tagsCount - 1;
-        } else {
-          // Move up one
-          newIndexUp = currentHighlightedIndex - 1;
-        }
-
+        const newIndexUp = this.nextEnabledTagIndex(
+          filteredTags,
+          currentHighlightedIndex,
+          -1,
+        );
         this._state.highlightedIndex = newIndexUp;
         this.highlightTag(filteredTags, newIndexUp);
         break;
@@ -1496,25 +1506,42 @@ export class TySelect extends TyComponent<SelectState> {
       case "ArrowDown":
         e.preventDefault();
         e.stopPropagation();
-        let newIndexDown: number;
 
-        if (tagsCount === 0) {
-          newIndexDown = -1;
-        } else if (currentHighlightedIndex === -1) {
-          // Nothing highlighted, go to first tag
-          newIndexDown = 0;
-        } else if (currentHighlightedIndex === tagsCount - 1) {
-          // At last tag, wrap to first
-          newIndexDown = 0;
-        } else {
-          // Move down one
-          newIndexDown = currentHighlightedIndex + 1;
-        }
-
+        const newIndexDown = this.nextEnabledTagIndex(
+          filteredTags,
+          currentHighlightedIndex,
+          1,
+        );
         this._state.highlightedIndex = newIndexDown;
         this.highlightTag(filteredTags, newIndexDown);
         break;
     }
+  }
+
+  /**
+   * Next tag index in `direction` (-1/1) that isn't disabled, wrapping
+   * around — mirrors handleTagClick's disabled check so keyboard nav can
+   * never land on/select what a click already refuses to. Returns -1 if
+   * every tag is disabled (or there are none).
+   */
+  private nextEnabledTagIndex(
+    tags: TagData[],
+    fromIndex: number,
+    direction: 1 | -1,
+  ): number {
+    const count = tags.length;
+    if (count === 0) return -1;
+
+    let index = fromIndex === -1
+      ? (direction === 1 ? 0 : count - 1)
+      : (fromIndex + direction + count) % count;
+
+    for (let i = 0; i < count; i++) {
+      if (!tags[index].element.hasAttribute("disabled")) return index;
+      index = (index + direction + count) % count;
+    }
+
+    return -1;
   }
 
   // SEARCH & FILTERING HELPERS
@@ -1978,13 +2005,23 @@ export class TySelect extends TyComponent<SelectState> {
                 ${searchHeaderHtml}
 
                 <!-- BODY: options list with toggleable selected state -->
-                <div class="mobile-body">
+                <div class="mobile-body" data-expanded="available">
+
+                  <!-- SELECTED STRIP (pinned above the list, collapses when empty) -->
+                  <div class="mobile-selected-section" data-empty="true">
+                    <button class="section-header" type="button" data-section="selected" aria-expanded="false">
+                      <span class="section-title">${this._selectedLabel} <span class="section-count">(0)</span></span>
+                      ${CHEVRON_DOWN_SVG}
+                    </button>
+                    <div class="section-content mobile-selected-chips"></div>
+                  </div>
 
                   <!-- AVAILABLE LIST (always visible, takes remaining space) -->
                   <div class="mobile-available-section" data-empty="false">
-                    <div class="section-header">
-                      <span class="section-title">${this._availableLabel}</span>
-                    </div>
+                    <button class="section-header" type="button" data-section="available" aria-expanded="true">
+                      <span class="section-title">${this._availableLabel} <span class="section-count"></span></span>
+                      ${CHEVRON_DOWN_SVG}
+                    </button>
                     <div class="section-content dropdown-options-wrapper" id="${listboxId}" role="listbox" ${this._multiple ? 'aria-multiselectable="true"' : ""}>
                       <slot id="options-slot"></slot>
                       <div class="empty-state">${this._noOptionsMessage}</div>
@@ -2013,6 +2050,18 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private setupMobileEventListeners(): void {
+    // Mobile never called setupEventListeners() (desktop-only concerns like
+    // click-outside don't apply to a modal dialog), so handleKeyboard's
+    // document-level Escape/Enter/Arrow handling was never wired up here —
+    // real Escape only worked via the dialog's own native `cancel` event,
+    // never for a programmatically dispatched key. handleKeyboard already
+    // branches on `_state.mode` wherever mobile needs different behavior
+    // (selectByTag, tryCreateFromSearch), so it's safe to share.
+    if (!this._keyboardHandler) {
+      this._keyboardHandler = this.handleKeyboard.bind(this);
+      document.addEventListener("keydown", this._keyboardHandler);
+    }
+
     const shadow = this.shadowRoot!;
     const stub = shadow.querySelector(".select-stub");
     const optionsSlot = shadow.querySelector("#options-slot");
@@ -2039,6 +2088,14 @@ export class TySelect extends TyComponent<SelectState> {
     if (searchInput) {
       searchInput.addEventListener("input", (e) => this.handleSearchInput(e));
     }
+
+    shadow.querySelectorAll(".mobile-body .section-header").forEach((header) => {
+      header.addEventListener("click", () =>
+        this.expandMobileSection(
+          (header as HTMLElement).dataset.section === "selected" ? "selected" : "available",
+        ),
+      );
+    });
 
     if (closeButton) {
       closeButton.addEventListener("click", () => this.closeMobileModal());
@@ -2092,12 +2149,16 @@ export class TySelect extends TyComponent<SelectState> {
     if (this._state.mode !== "mobile") return;
 
     const shadow = this.shadowRoot!;
+    this.renderMobileSelectedChips();
     const availableSection = shadow.querySelector(".mobile-available-section");
 
     if (availableSection) {
-      // Count *visible* options — options hidden by search filtering count as 0
+      // Count what's actually still on offer: options hidden by search
+      // filtering don't count, and neither do ones already in the strip
+      // above — "Selected (11)" next to "Available (40)" out of 40 total
+      // reads like 51 options exist.
       const visibleAvailable = this.getTagElements().filter(
-        (tag) => !tag.hasAttribute("hidden"),
+        (tag) => !tag.hasAttribute("hidden") && !tag.hasAttribute("selected"),
       ).length;
 
       availableSection.setAttribute(
@@ -2105,26 +2166,101 @@ export class TySelect extends TyComponent<SelectState> {
         String(visibleAvailable === 0),
       );
 
-      const availableTitleSpan = shadow.querySelector(
-        ".mobile-available-section .section-title",
+      this.setMobileSectionTitle(availableSection, this._availableLabel, visibleAvailable);
+    }
+  }
+
+  /** "Label (n)" with the count in its own muted span — same shape for both
+      sections, and re-reads the label so selected-label/available-label
+      changes after first render show up. */
+  private setMobileSectionTitle(section: Element, label: string, n: number): void {
+    const title = section.querySelector(".section-title");
+    if (!title) return;
+    const count = document.createElement("span");
+    count.className = "section-count";
+    count.textContent = `(${n})`;
+    title.replaceChildren(`${label} `, count);
+  }
+
+  /**
+   * Hand the dialog's spare vertical space to one section or the other. Only
+   * one can own it: on a phone there isn't enough height for two scrollable
+   * lists to both be usefully tall, so tapping a header trades the space
+   * rather than splitting it. Selecting from the list hands it back to
+   * "available" — you're still picking, so that's the list you want open.
+   */
+  private expandMobileSection(section: "selected" | "available"): void {
+    const shadow = this.shadowRoot;
+    const body = shadow?.querySelector(".mobile-body") as HTMLElement | null;
+    if (!body) return;
+
+    // Nothing selected means nothing to expand into — the strip is a 36px
+    // header at that point, so the request is a no-op rather than a jump to
+    // an empty panel.
+    if (section === "selected" && this._state.selectedValues.length === 0) return;
+
+    body.dataset.expanded = section;
+    shadow!.querySelectorAll(".mobile-body .section-header").forEach((header) => {
+      const owns = (header as HTMLElement).dataset.section === section;
+      header.setAttribute("aria-expanded", String(owns));
+    });
+  }
+
+  /**
+   * The selected values as dismissible chips, pinned above the available
+   * list so a long list can never scroll the current selection out of sight.
+   * Rebuilt wholesale: the strip is small, and diffing it would have to
+   * track chip identity for the sake of a handful of nodes.
+   */
+  private renderMobileSelectedChips(): void {
+    const shadow = this.shadowRoot!;
+    const section = shadow.querySelector(".mobile-selected-section");
+    const host = shadow.querySelector(".mobile-selected-chips");
+    if (!section || !host) return;
+
+    const selected = this._state.selectedValues;
+    section.setAttribute("data-empty", String(selected.length === 0));
+
+    this.setMobileSectionTitle(section, this._selectedLabel, selected.length);
+
+    // Last chip dismissed while the strip had the space — give it back.
+    if (selected.length === 0) this.expandMobileSection("available");
+
+    const labelFor = (value: string): string => {
+      const option = this.getTagElements().find(
+        (tag) => this.getTagData(tag).value === value,
       );
-      if (availableTitleSpan) {
-        availableTitleSpan.textContent = `${this._availableLabel} (${visibleAvailable})`;
-      }
+      return option ? this.getTagData(option).text : value;
+    };
+
+    host.textContent = "";
+    for (const value of selected) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "mobile-selected-chip";
+      chip.dataset.value = value;
+      chip.setAttribute("aria-label", `Remove ${labelFor(value)}`);
+      chip.innerHTML = `<span class="chip-label"></span>${CLEAR_ICON_SVG}`;
+      (chip.querySelector(".chip-label") as HTMLElement).textContent = labelFor(value);
+      chip.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.deselectValue(value);
+      });
+      host.appendChild(chip);
     }
   }
 
   /**
-   * Should the popup show a search row? external-search always (the input is
-   * the mechanism); searchable always/never wins otherwise; 'auto' shows it
-   * only when the option list is long enough to need filtering.
+   * Should the popup show a search row? external-search/allow-create pin it
+   * on (the input is the only way to get a query out at all), not-searchable
+   * forces it off, and otherwise it follows the list: shown once there are
+   * more options than fit without scrolling.
    */
   private shouldShowSearch(): boolean {
     if (this._externalSearch) return true;
-    // allow-create's only input mechanism IS the search box.
     if (this._allowCreate) return true;
-    if (this._searchable === "always") return true;
-    if (this._searchable === "never") return false;
+    if (this._notSearchable) return false;
     return this.getTagElements().length > SEARCH_AUTO_THRESHOLD;
   }
 
@@ -2389,12 +2525,12 @@ export class TySelect extends TyComponent<SelectState> {
     this.setProperty("readonly", value);
   }
 
-  get clearable(): boolean {
-    return this.getProperty("clearable");
+  get noClear(): boolean {
+    return this.getProperty("noClear");
   }
 
-  set clearable(value: boolean) {
-    this.setProperty("clearable", value);
+  set noClear(value: boolean) {
+    this.setProperty("noClear", value);
   }
 
   get required(): boolean {
@@ -2405,12 +2541,12 @@ export class TySelect extends TyComponent<SelectState> {
     this.setProperty("required", value);
   }
 
-  get searchable(): "auto" | "always" | "never" {
-    return this.getProperty("searchable");
+  get notSearchable(): boolean {
+    return this.getProperty("notSearchable");
   }
 
-  set searchable(value: "auto" | "always" | "never" | boolean) {
-    this.setProperty("searchable", value);
+  set notSearchable(value: boolean) {
+    this.setProperty("notSearchable", value);
   }
 
   get externalSearch(): boolean {

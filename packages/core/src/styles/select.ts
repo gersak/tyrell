@@ -74,6 +74,14 @@ export const selectStyles = `
   border-radius: var(--ty-radius-sm);
   transition: var(--ty-local-transition, all 0.15s ease);
 }
+/* Pull toward the chevron: the stub's right padding (chevron room) left 12px
+   between them on the field skin, 8px on compact. Both land at 6px. */
+.select-stub .select-clear {
+  margin-right: -0.375rem;
+}
+.select-stub.compact .select-clear {
+  margin-right: -0.125rem;
+}
 .select-clear[hidden] {
   display: none;
 }

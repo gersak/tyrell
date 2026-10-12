@@ -32,8 +32,8 @@
            "<script>\n  tyResizeObserver.onResize('panel', ({ width, height }) => {\n"
            "    chart.resize(width, height);\n  });\n</script>")]
      ["react" "React" "javascript"
-      (str "import { TyResizeObserver } from 'tyrell-react'\nimport { onResize } from '@gersak/ty'\n\n"
-           "useEffect(() => onResize('panel', ({ width }) => setWidth(width)), []);\n\n"
+      (str "import { TyResizeObserver } from 'tyrell-react'\nimport { onResize } from 'tyrell-components'\n\n"
+           "useEffect(() =>\n  onResize('panel', ({ width }) => setWidth(width)), []);\n\n"
            "<TyResizeObserver id=\"panel\"" d ">…</TyResizeObserver>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n"
@@ -41,8 +41,12 @@
      ["replicant" "Replicant" "clojure"
       (str "[:ty-resize-observer {:id \"panel\"" (when d (str " :debounce \"" debounce "\"")) "}\n chart]\n\n"
            ";; tyrell.layout reads the same registry:\n(layout/with-container \"panel\"\n  (layout/container-breakpoint))")]
+     ;; no events: subscribe to the registry once and keep the size in a signal
      ["datastar" "Datastar" "html"
-      (str "<ty-resize-observer id=\"panel\"" d ">…</ty-resize-observer>")]]))
+      (str "<ty-resize-observer id=\"panel\"" d "\n  data-signals=\"{panelWidth: 0, panelHeight: 0}\""
+           "\n  data-init=\"tyResizeObserver.onResize('panel', (size) => {\n"
+           "    $panelWidth = size.width\n    $panelHeight = size.height\n  })\">\n  …\n</ty-resize-observer>\n\n"
+           "<span data-text=\"$panelWidth + ' × ' + $panelHeight\"></span>")]]))
 
 (defn- render-playground [{:keys [debounce]}]
   (let [{:keys [w h]} (doc-state :play)]
@@ -133,7 +137,7 @@
 const stop = tyResizeObserver.onResize('panel', draw);
 tyResizeObserver.getAllSizes();   // debugging
 stop();"}
-      [:p.text-sm.ty-text- "ES module users import the same functions: getSize, onResize, getAllSizes from @gersak/ty."])))
+      [:p.text-sm.ty-text- "ES module users import the same functions: getSize, onResize, getAllSizes from tyrell-components."])))
 
    (api-section
     {:attributes [["id" "string" "Required. The key its size is published under. Renaming moves the entry."]

@@ -191,7 +191,7 @@
        [:div.flex.flex-wrap.gap-2.mt-3
         [:ty-selected-options {:for "booking-addons"}
          [:template
-          [:ty-tag {:flavor "{flavor}" :dismissible true :pill true}
+          [:ty-tag {:flavor "{flavor}" :dismissible true}
            [:ty-icon {:slot "start" :name "{data-icon}" :size "xs"}]
            "{label}"
            [:span.ty-text-- {:slot "end" :style {:font-size "0.6875rem"}} "{data-price}"]]]]]

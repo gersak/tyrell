@@ -14,7 +14,7 @@
                               org.clojure/clojurescript {:mvn/version "1.12.42"}
                               no.cjohansen/replicant {:mvn/version "2025.06.21"}
                               cljs-bean/cljs-bean {:mvn/version "1.9.0"}
-                              dev.gersak/tyrell-icons {:mvn/version "1.0.0-RC6"}}
+                              dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC16-SNAPSHOT"}}
                :replace-paths ["src" "resources/tyrell"]
                :exec-fn clojure.tools.build.api/create-basis}
 
@@ -22,6 +22,12 @@
                                     org.clojure/clojurescript {:mvn/version "1.12.42"}}
                      :replace-paths ["gen" "icons" "resources/tyrell-icons"]
                      :exec-fn clojure.tools.build.api/create-basis}
+
+  ;; Router unit tests, compiled for Node without the shadow-cljs server:
+  ;;   clojure -M:test && node target/test/router-test.js
+  :test {:extra-paths ["test"]
+         :main-opts ["-m" "cljs.main" "-t" "node" "-d" "target/test/out"
+                     "-o" "target/test/router-test.js" "-c" "tyrell.router-test"]}
 
   :build {:extra-paths ["." "src"]
           :deps {io.github.clojure/tools.build {:mvn/version "0.10.5"}

@@ -6,7 +6,7 @@ import { useTheme } from '../../../lib/theme-provider'
 import {
   TyButton,
   TyInput,
-  TyDropdown,
+  TySelect,
   TyOption,
   TyIcon,
   TyModal,
@@ -128,7 +128,7 @@ export default function SettingsPanelExample() {
     setSettings(prev => ({
       ...prev,
       [category]: {
-        ...prev[category],
+        ...(prev[category] as object),
         [key]: value
       }
     }))
@@ -149,29 +149,7 @@ export default function SettingsPanelExample() {
   }
 
   const confirmReset = () => {
-    // Reset current section to defaults
-    const defaultSettings: Partial<SettingsState> = {
-      appearance: {
-        theme: 'auto',
-        language: 'en',
-        fontSize: 'medium',
-        compactMode: false
-      },
-      notifications: {
-        emailNotifications: true,
-        pushNotifications: true,
-        desktopNotifications: false,
-        notificationSound: true,
-        notificationTypes: {
-          updates: true,
-          mentions: true,
-          messages: true,
-          security: true
-        }
-      }
-    }
-
-    // Apply reset logic based on active section
+    // Reset logic for the active section is left out of this demo
     confirmModalRef.current?.hide()
     setHasUnsavedChanges(true)
   }
@@ -355,10 +333,10 @@ export default function SettingsPanelExample() {
                     <label className="block text-sm font-medium ty-text+ mb-2">
                       Language
                     </label>
-                    <TyDropdown
+                    <TySelect
                       value={settings.language}
                       onChange={(e) => {
-                        const value = e.detail.option?.getAttribute('value') || 'en'
+                        const value = (e.detail.value as string) || 'en'
                         updateSetting('language', value)
                       }}
                       className="w-full md:w-80"
@@ -368,7 +346,7 @@ export default function SettingsPanelExample() {
                       <TyOption value="fr">Français</TyOption>
                       <TyOption value="de">Deutsch</TyOption>
                       <TyOption value="ja">日本語</TyOption>
-                    </TyDropdown>
+                    </TySelect>
                   </div>
 
                   {/* Font Size */}
@@ -376,10 +354,10 @@ export default function SettingsPanelExample() {
                     <label className="block text-sm font-medium ty-text+ mb-2">
                       Font Size
                     </label>
-                    <TyDropdown
+                    <TySelect
                       value={settings.fontSize}
                       onChange={(e) => {
-                        const value = e.detail.option?.getAttribute('value') || 'medium'
+                        const value = (e.detail.value as string) || 'medium'
                         updateSetting('fontSize', value)
                       }}
                       className="w-full md:w-60"
@@ -388,7 +366,7 @@ export default function SettingsPanelExample() {
                       <TyOption value="medium">Medium</TyOption>
                       <TyOption value="large">Large</TyOption>
                       <TyOption value="x-large">Extra Large</TyOption>
-                    </TyDropdown>
+                    </TySelect>
                   </div>
 
                   {/* Compact Mode Toggle */}
@@ -525,10 +503,10 @@ export default function SettingsPanelExample() {
                       </TyTooltip>
                     </label>
 
-                    <TyDropdown
+                    <TySelect
                       value={settings.profileVisibility}
                       onChange={(e) => {
-                        const value = e.detail.option?.getAttribute('value') as 'public' | 'friends' | 'private'
+                        const value = (e.detail.value as string) as 'public' | 'friends' | 'private'
                         updateSetting('profileVisibility', value)
                       }}
                       className="w-full md:w-80"
@@ -536,7 +514,7 @@ export default function SettingsPanelExample() {
                       <TyOption value="public">Public - Anyone can see</TyOption>
                       <TyOption value="friends">Friends Only - Connected users</TyOption>
                       <TyOption value="private">Private - Only you</TyOption>
-                    </TyDropdown>
+                    </TySelect>
                   </div>
 
                   {/* Privacy Options */}
@@ -617,10 +595,10 @@ export default function SettingsPanelExample() {
                         <label className="block text-sm font-medium ty-text+ mb-3">
                           Session Timeout
                         </label>
-                        <TyDropdown
+                        <TySelect
                           value={settings.sessionTimeout}
                           onChange={(e) => {
-                            const value = e.detail.option?.getAttribute('value') || '30m'
+                            const value = (e.detail.value as string) || '30m'
                             updateSetting('sessionTimeout', value)
                           }}
                           className="w-full md:w-60"
@@ -631,7 +609,7 @@ export default function SettingsPanelExample() {
                           <TyOption value="4h">4 hours</TyOption>
                           <TyOption value="24h">24 hours</TyOption>
                           <TyOption value="never">Never</TyOption>
-                        </TyDropdown>
+                        </TySelect>
                         <p className="text-xs ty-text- mt-2">
                           Automatically log out after period of inactivity
                         </p>
@@ -723,10 +701,10 @@ export default function SettingsPanelExample() {
                         <label className="block text-sm font-medium ty-text+ mb-2">
                           Timezone
                         </label>
-                        <TyDropdown
+                        <TySelect
                           value={settings.timezone}
                           onChange={(e) => {
-                            const value = e.detail.option?.getAttribute('value') || 'America/New_York'
+                            const value = (e.detail.value as string) || 'America/New_York'
                             updateSetting('timezone', value)
                           }}
                           className="w-full md:w-80"
@@ -738,7 +716,7 @@ export default function SettingsPanelExample() {
                           <TyOption value="Europe/London">London (GMT)</TyOption>
                           <TyOption value="Europe/Paris">Paris (CET)</TyOption>
                           <TyOption value="Asia/Tokyo">Tokyo (JST)</TyOption>
-                        </TyDropdown>
+                        </TySelect>
                       </div>
                     </div>
                   </div>

@@ -12,14 +12,18 @@
                 (when (not= flavor "primary") (str " flavor=\"" flavor "\""))
                 (when (not= locale "en-US") (str " locale=\"" locale "\""))]))
 
+(defn- html-code
+  "The HTML tab, plus `extra` attributes for the Datastar tab."
+  [props extra]
+  (str "<ty-calendar-month display-year=\"2026\" display-month=\"9\""
+       (attrs->html props) extra ">\n</ty-calendar-month>"))
+
 (defn- snippets [{:keys [size flavor locale] :as props}]
   (let [kv (fn [k v] (str "\n  " k " \"" v "\""))
         opts (str (when (not= size "md") (kv ":size" size))
                   (when (not= flavor "primary") (kv ":flavor" flavor))
                   (when (not= locale "en-US") (kv ":locale" locale)))]
-    [["html" "HTML" "html"
-      (str "<ty-calendar-month display-year=\"2026\" display-month=\"9\""
-           (attrs->html props) ">\n</ty-calendar-month>")]
+    [["html" "HTML" "html" (html-code props "")]
      ["react" "React" "javascript"
       (str "import { TyCalendarMonth } from 'tyrell-react'\n\n"
            "<TyCalendarMonth\n  displayYear={2026}\n  displayMonth={9}"
@@ -35,8 +39,7 @@
       (str "[:ty-calendar-month\n {:display-year \"2026\"\n  :display-month \"9\"" opts
            "\n  :on {:day-click #(select! (.. % -detail -dayContext))}}]")]
      ["datastar" "Datastar" "html"
-      (str "<ty-calendar-month display-year=\"2026\" display-month=\"9\"" (attrs->html props)
-           "\n  data-on:day-click=\"$day = evt.detail.day\">\n</ty-calendar-month>")]]))
+      (html-code props "\n  data-signals:day=\"0\"\n  data-on:day-click=\"$day = evt.detail.day\"")]]))
 
 (defn- today []
   (let [d (js/Date.)]

@@ -4,9 +4,8 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
 import {
   TyButton,
-  TyDropdown,
+  TySelect,
   TyOption,
-  TyMultiselect,
   TyCalendar,
   TyIcon,
   TyTag,
@@ -297,7 +296,7 @@ export default function DataDashboardExample() {
       dayElement.addEventListener('click', () => {
         if (dayMetric) {
           setDayDetailsData(dayMetric)
-          setSelectedDate(dayDate)
+          setSelectedDate(new Date(year, month - 1, dayInMonth))
           dayDetailsModalRef.current?.show()
         }
       })
@@ -377,10 +376,10 @@ export default function DataDashboardExample() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium ty-text+">Date Range:</label>
-            <TyDropdown
+            <TySelect
               value={selectedDateRange}
               onChange={(e) => {
-                const value = e.detail.option?.getAttribute('value') || '30'
+                const value = (e.detail.value as string) || '30'
                 setSelectedDateRange(value)
               }}
               className="w-36"
@@ -388,12 +387,12 @@ export default function DataDashboardExample() {
               <TyOption value="7">Last 7 days</TyOption>
               <TyOption value="30">Last 30 days</TyOption>
               <TyOption value="90">Last 90 days</TyOption>
-            </TyDropdown>
+            </TySelect>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium ty-text+">Activity Types:</label>
-            <TyMultiselect
+            <TySelect multiple
               value={activityFilters}
               onChange={(e) => setActivityFilters(e.detail.values)}
               placeholder="All types"
@@ -404,15 +403,15 @@ export default function DataDashboardExample() {
               <TyTag value="login" flavor="neutral" size="sm">Logins</TyTag>
               <TyTag value="feature_use" flavor="neutral" size="sm">Features</TyTag>
               <TyTag value="support" flavor="warning" size="sm">Support</TyTag>
-            </TyMultiselect>
+            </TySelect>
           </div>
 
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium ty-text+">Primary Metric:</label>
-            <TyDropdown
+            <TySelect
               value={selectedMetric}
               onChange={(e) => {
-                const value = e.detail.option?.getAttribute('value') || 'users'
+                const value = (e.detail.value as string) || 'users'
                 setSelectedMetric(value)
               }}
               className="w-32"
@@ -421,7 +420,7 @@ export default function DataDashboardExample() {
               <TyOption value="revenue">Revenue</TyOption>
               <TyOption value="events">Events</TyOption>
               <TyOption value="conversions">Conversions</TyOption>
-            </TyDropdown>
+            </TySelect>
           </div>
         </div>
       </div>
@@ -527,7 +526,6 @@ export default function DataDashboardExample() {
             <div className="max-w-md mx-auto">
               <TyCalendar
                 dayContentFn={createDayContentFn()}
-                showNavigation={true}
                 className="w-full"
               />
             </div>
@@ -613,7 +611,6 @@ export default function DataDashboardExample() {
             <div className="max-w-2xl mx-auto">
               <TyCalendar
                 dayContentFn={createDayContentFn()}
-                showNavigation={true}
                 className="w-full text-center"
               />
             </div>

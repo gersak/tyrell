@@ -154,6 +154,21 @@ Bind Tyrell component attributes to signal values:
   <ty-tab id="overview" label="Overview">...</ty-tab>
   <ty-tab id="settings" label="Settings">...</ty-tab>
 </ty-tabs>
+<!-- Patching this ty-tabs keeps the user's tab: no data-preserve-attr needed.
+     $activeTab wins over any `active` the patch carries; to switch tabs
+     from the server, patch the signal. Without data-attr, a patch that
+     sends `active` switches to it, so render the current tab or leave it out. -->
+
+<!-- Lazy tab: loads when shown (not as the tab shown at page load: render
+     that one's content with the page). The response patches #reports (same
+     attributes, plus content). Datastar reports fetch errors on document,
+     so the tab picks out its own and calls loadFailed() for error + Retry.
+     A network failure reaches 'retries-failed' only after Datastar's retries
+     (10, about 2.5 minutes); @get('/tabs/reports', {retryMaxCount: 2}) gives up sooner. -->
+<ty-tab id="reports" label="Reports" lazy
+        data-on:ty-tab-load="@get('/tabs/reports')"
+        data-on:datastar-fetch="evt.detail.el === el && ['error', 'retries-failed'].includes(evt.detail.type) && el.loadFailed()">
+</ty-tab>
 
 <!-- Conditional wizard step -->
 <ty-wizard data-attr:active="$wizardStep"
@@ -304,13 +319,14 @@ Pre-read the body before Ring's `wrap-params` consumes it:
 
 ### ty-checkbox and ty-switch
 
-Wrap in `<label>` to make the text clickable. Read `evt.detail.checked` for boolean state:
+Wrap in `<label>` to make the text clickable. **Don't use `data-bind` here:** on a custom element it binds `value`, not `checked`, so the box ignores the signal and the signal gets the strings `"true"`/`"false"`. Mirror the signal with `data-attr:checked` and write it back from `evt.detail.checked`, which keeps both directions working (a server patch to `$agreed` checks the box):
 
 ```html
 <div data-signals="{agreed: false, darkMode: false}">
 
   <label class="flex items-center gap-2">
     <ty-checkbox
+      data-attr:checked="$agreed"
       data-on:change="$agreed = evt.detail.checked"
     ></ty-checkbox>
     I agree to the terms
@@ -318,6 +334,7 @@ Wrap in `<label>` to make the text clickable. Read `evt.detail.checked` for bool
 
   <label class="flex items-center gap-2">
     <ty-switch
+      data-attr:checked="$darkMode"
       data-on:change="$darkMode = evt.detail.checked;
                       document.documentElement.classList.toggle('dark', $darkMode)"
     ></ty-switch>
@@ -360,7 +377,7 @@ Wrap in `<label>` to make the text clickable. Read `evt.detail.checked` for bool
 </div>
 ```
 
-Add `orientation="horizontal"` for a side-by-side layout.
+Add `orientation="horizontal"` for a side-by-side layout. `data-bind="plan"` on the group also works, both ways.
 
 ---
 
@@ -368,15 +385,20 @@ Add `orientation="horizontal"` for a side-by-side layout.
 
 ### ty-date-picker (in a form)
 
-`data-bind` works on `ty-date-picker` — value is a UTC ISO string:
+The picker's `value` is a UTC ISO timestamp: right for a server, wrong for display (picking the 18th in Zagreb gives `…-17T22:00:00.000Z`). For the date as the user picked it, read `evt.detail.localValue` (`2026-03-18`, or `2026-03-18T14:30` with `with-time`):
 
 ```html
-<ty-date-picker
-  data-bind="txDate"
-  label="Date"
-  placeholder="Pick a date"
-></ty-date-picker>
+<div data-signals="{txDate: ''}">
+  <ty-date-picker
+    label="Date"
+    placeholder="Pick a date"
+    data-on:change="$txDate = evt.detail.localValue"
+  ></ty-date-picker>
+  <p data-text="$txDate"></p>
+</div>
 ```
+
+`data-bind="txDate"` also works if you want the UTC value; it then holds the timestamp, not the picked date.
 
 ### ty-calendar (standalone / inline)
 

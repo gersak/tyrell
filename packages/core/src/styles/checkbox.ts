@@ -56,9 +56,9 @@ export const checkboxStyles = `
   gap: var(--ty-spacing-1);
   /* Default (no flavor attribute) is neutral — defaults don't reflect to the
      host attribute, so the fallbacks here carry the default look. */
-  /* Unchecked: neutral tick at ~3:1 against the surface in both modes
-     (55% of body text over the background). */
-  color: var(--checkbox-color-off, color-mix(in oklab, var(--ty-text) 45%, transparent));
+  /* Unchecked: faint neutral tick (30% of body text) so it recedes
+     next to the label; checked jumps to full body text. */
+  color: var(--checkbox-color-off, color-mix(in oklab, var(--ty-text) 30%, transparent));
   /* Room for the hover pill, inside the one-line height (border-box). */
   box-sizing: border-box;
   padding: 2px;
@@ -69,8 +69,11 @@ export const checkboxStyles = `
   background: var(--checkbox-hover-bg, color-mix(in oklab, var(--ty-text) 8%, transparent));
 }
 
+/* Hover previews the tick, but stays well short of checked (100%): at 80%
+   a hovered unchecked box read as already checked. The pill carries the
+   hover feedback; the tick only hints. */
 .checkbox-container:not([aria-checked="true"]):not([aria-checked="mixed"]):hover {
-  color: var(--checkbox-color-off-hover, color-mix(in oklab, var(--ty-text) 80%, transparent));
+  color: var(--checkbox-color-off-hover, color-mix(in oklab, var(--ty-text) 50%, transparent));
 }
 
 /* Checked is the flavor's STRONG tone (neutral: body text) so it sits far

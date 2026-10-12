@@ -22,7 +22,7 @@
   (cond-> {}
     (not= flavor "neutral") (assoc :flavor flavor)
     (not= size "sm") (assoc :size size)
-    (not pill) (assoc :not-pill true)
+    (not pill) (assoc :no-pill true)
     clickable (assoc :clickable true)
     dismissible (assoc :dismissible true)
     disabled (assoc :disabled true)))
@@ -31,16 +31,14 @@
   (let [attrs (prop-attrs props)]
     (snippets/tabs
      (for [{:keys [label start end]} lineup]
-       [:ty-tag attrs
+       [:ty-tag (merge attrs {(snippets/ds "data-on:dismiss") (str "@delete('/filters/" (snippets/slug label) "')")})
         (when start [:ty-icon {:slot "start" :name start}])
         label
-        (when end [:b {:slot "end"} end])])
-     :datastar (str "<ty-tag" (snippets/attr-str attrs) " dismissible\n"
-                    "  data-on:dismiss=\"@delete('/filters/design')\">Design</ty-tag>"))))
+        (when end [:b {:slot "end"} end])]))))
 
 (defn- render-lineup [{:keys [size flavor pill clickable dismissible disabled]}]
   (let [base (cond-> {:flavor flavor :size size}
-               (not pill) (assoc :not-pill "")
+               (not pill) (assoc :no-pill "")
                clickable (assoc :clickable "")
                dismissible (assoc :dismissible "")
                disabled (assoc :disabled ""))]
@@ -188,14 +186,14 @@ container.addEventListener('dismiss', (e) => {
      (example
       {:title "Sizes & shape"
        :span 2
-       :description [:span "Pill by default. " [:code "not-pill"] " for square corners."]
+       :description [:span "Pill by default. " [:code "no-pill"] " for square corners."]
        :code "size=\"xs | sm | md | lg | xl\"
-<ty-tag not-pill>v2.4</ty-tag>"}
+<ty-tag no-pill>v2.4</ty-tag>"}
       [:div.flex.flex-col.items-start.gap-2
        [:div.flex.flex-wrap.items-center {:class ["gap-1.5"]}
         (for [s ["xs" "sm" "md" "lg" "xl"]]
           [:ty-tag {:replicant/key s :size s :flavor "primary-"} s])]
-       [:ty-tag {:not-pill "" :flavor "neutral"} [:ty-icon {:slot "start" :name "tag"}] "v2.4.0"]])
+       [:ty-tag {:no-pill "" :flavor "neutral"} [:ty-icon {:slot "start" :name "tag"}] "v2.4.0"]])
 
      (example
       {:title "JavaScript API"
@@ -245,14 +243,14 @@ tag.addEventListener('click', (e) => toggle(e.detail.target.value));"}
     {:attributes ["Appearance"
                   ["flavor" "string" "\"neutral\"" "primary, success, danger, warning, neutral, or any custom flavor. Append + or - for a stronger or softer tone."]
                   ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]
-                  ["pill" "boolean" "true" "Fully rounded. Use not-pill (or pill=\"false\") for square corners."]
+                  ["no-pill" "boolean" "false" "Square corners instead of fully rounded."]
                   "Behavior"
                   ["clickable" "boolean" "false" "Focusable; fires click on click, Enter or Space."]
                   ["dismissible" "boolean" "false" "Shows × and fires dismiss on it, or on Backspace / Delete."]
                   ["disabled" "boolean" "false" "No click or dismiss."]
                   "Data"
-                  ["value" "string" "Identifies the tag, e.g. inside ty-multiselect."]
-                  ["selected" "boolean" "false" "Selection state used by ty-multiselect. No visual change on its own."]]
+                  ["value" "string" "Identifies the tag, e.g. as an option inside ty-select."]
+                  ["selected" "boolean" "false" "Selection state set by ty-select when the tag is an option. No visual change on its own."]]
      :events [["click" "{target}" "Clickable tags only. Bubbles, composed, cancelable."]
               ["dismiss" "{target}" "The × was pressed, or Backspace / Delete. The tag stays until you remove it."]]
      :slots [["start" "Before the label: icon, avatar, dot."]
