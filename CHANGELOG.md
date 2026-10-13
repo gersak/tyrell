@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-RC16] - 2026-10-13
+
 ### Added
 
 - **`no-backdrop` on `ty-modal`** (#8). The backdrop is the default; `no-backdrop` turns it off. React: `noBackdrop`.
