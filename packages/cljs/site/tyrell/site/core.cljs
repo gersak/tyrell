@@ -292,9 +292,9 @@
                            :next (card (inc i) "Next")})])))
 
 ;; --- Sidebar -------------------------------------------------------------------
-;; One tree that keeps its shape on every page: start links, then the component
-;; categories with the current one open. The current page is marked by a brand
-;; dot — in the icon column up top, on the guide line inside a category.
+;; One tree that keeps its shape on every page: start links, then every
+;; component under its category. The current page is marked by a brand dot in
+;; the icon column.
 
 (defn- nav-dot
   "Rendered on every row so the state change transitions: the old dot shrinks
@@ -304,19 +304,11 @@
    {:class (when active? "is-on")
     :style (assoc style :background "var(--ty-color-primary)")}])
 
-(defn- scroll-parent [^js el]
-  (loop [^js p (.-parentElement el)]
-    (when p
-      (if (#{"auto" "scroll"} (.-overflowY (js/getComputedStyle p)))
-        p
-        (recur (.-parentElement p))))))
-
 (defn- reveal-current!
   "Scrolls the current page's row into the sidebar's view, once per page and
-   only when it's off-screen, after its category has opened (300ms). A sidebar
-   the reader scrolled stays put."
+   only when it's off-screen. A list the reader scrolled stays put."
   [{^js row :replicant/node}]
-  (when-let [^js box (scroll-parent row)]
+  (when-let [^js box (some-> (.closest row "ty-scroll-container") .-scrollElement)]
     (when (not= js/location.pathname (.-_revealedPath box))
       (js/clearTimeout (.-_revealTimer box))
       (set! (.-_revealTimer box)
@@ -335,20 +327,17 @@
              320)))))
 
 (defn- nav-row
-  "A sidebar entry. Nested rows sit on a category's guide line and carry no icon."
-  [{:keys [label icon active? nested? trail on-click]}]
-  [:button.site-focus.relative.w-full.flex.items-center.gap-3.rounded-md.text-left.text-sm.cursor-pointer.transition-colors
+  "A sidebar entry: icon, label, optional trail."
+  [{:keys [label icon active? trail on-click]}]
+  [:button.site-focus.relative.w-full.flex.items-center.gap-3.rounded-md.px-3.py-2.text-left.text-sm.cursor-pointer.transition-colors
    {:replicant/key label
     :replicant/on-render (when active? reveal-current!)
     :aria-current (when active? "page")
-    :class (into (if nested? ["pl-[18px]" "pr-3" "py-[9px]"] ["px-3" "py-2.5"])
-                 (if active? ["ty-text++" "font-semibold"] ["ty-text" "hover:ty-text++"]))
+    :class (if active? ["ty-text++" "font-semibold"] ["ty-text" "hover:ty-text++"])
     :on {:click (fn [] (on-click) (close-mobile-menu!))}}
-   (if nested?
-     (nav-dot active? {:left "-4px" :top "50%" :translate "0 -50%" :width "7px" :height "7px"})
-     [:span.relative.flex.shrink-0.items-center.justify-center.w-4.h-4
-      [:ty-icon.site-nav-icon.ty-text- {:name icon :size "sm" :class (when active? "is-off")}]
-      (nav-dot active? {:inset 0 :margin "auto" :width "6px" :height "6px"})])
+   [:span.relative.flex.shrink-0.items-center.justify-center.w-4.h-4
+    [:ty-icon.site-nav-icon.ty-text- {:name icon :size "sm" :class (when active? "is-off")}]
+    (nav-dot active? {:inset 0 :margin "auto" :width "6px" :height "6px"})]
    [:span.flex-1.truncate label]
    trail])
 
@@ -359,7 +348,7 @@
    {:id :tyrell.site.docs/icons :label "Icons" :icon "feather"}])
 
 (defn- start-section []
-  [:div.flex.flex-col.gap-1
+  [:div.flex.flex-col
    (for [{:keys [id label icon stack?]} start-links]
      (nav-row {:label label :icon icon
                ;; The chosen stack, quietly; switching happens on the page.
@@ -370,53 +359,33 @@
                :on-click #(router/navigate! id)}))])
 
 (defn- components-section
-  "Components by category. Only the category holding the current page is open;
-   clicking it toggles it until the next navigation. Clicking any other
-   category opens it on its first component."
+  "Every component at once, under its category."
   []
   (let [comp-map (components-index/by-id-map)
-        groups (for [{:keys [title ids]} components-index/category-groups]
-                 {:title title
-                  :items (keep #(when-let [{:keys [name]} (comp-map %)] {:id % :name name}) ids)})
+        groups (for [group components-index/category-groups]
+                 (assoc group :items (keep comp-map (:ids group))))
         on-index? (router/rendered? ::components true)]
-    [:div.flex.flex-col.gap-1
-     [:button.site-focus.flex.items-center.justify-between.rounded-md.px-3.pb-1.cursor-pointer.uppercase.font-semibold.transition-colors
+    [:div.flex.flex-col.gap-4.flex-1.min-h-0
+     [:button.site-focus.flex.items-center.justify-between.rounded-md.px-3.cursor-pointer.uppercase.font-semibold.transition-colors
       {:class (into ["text-[11px]" "tracking-[0.06em]"] (if on-index? ["ty-text++"] ["ty-text--" "hover:ty-text"]))
        :on {:click (fn [] (router/navigate! ::components) (close-mobile-menu!))}}
       "Components"
       [:span.font-mono.font-normal (reduce + (map (comp count :items) groups))]]
-     (for [{:keys [title items]} groups
-           :let [current? (boolean (some #(router/rendered? (:id %) true) items))
-                 open? (and current? (not (:nav/collapsed @state)))]]
-       [:div {:replicant/key title}
-        [:button.site-focus.w-full.flex.items-center.gap-3.rounded-md.px-3.py-2.5.text-left.text-sm.cursor-pointer.transition-colors
-         {:class (if open? ["ty-text++" "font-medium"] ["ty-text" "hover:ty-text++"])
-          :aria-expanded (str open?)
-          :on {:click #(if current?
-                         (swap! state assoc :nav/collapsed open?)
-                         (router/navigate! (:id (first items))))}}
-         [:span.flex.shrink-0.items-center.justify-center.w-4.h-4
-          [:ty-icon.transition-transform.duration-200 {:name "chevron-right" :size "xs"
-                                                       :class (if open? ["rotate-90" "ty-text"] ["ty-text--"])}]]
-         [:span.flex-1 title]
-         [:span.font-mono.ty-text-- {:class ["text-[10px]"]} (count items)]]
-        ;; Always rendered: the grid row eases 0fr <-> 1fr, which animates the
-        ;; real height. inert keeps closed rows out of the tab order.
-        [:div.grid.duration-300.ease-out.motion-reduce:transition-none
-         {:class ["transition-[grid-template-rows]"]
-          :style {:grid-template-rows (if open? "1fr" "0fr")}}
-         [:div.overflow-hidden.transition-opacity.duration-300.motion-reduce:transition-none
-          {:class (if open? "opacity-100" "opacity-0")
-           :style {:min-height 0}
-           :inert (when-not open? "")}
-          [:div.flex.flex-col.gap-1.border-l.ty-border-.ml-5.mt-0.5.mb-2
-           (for [{:keys [id name]} items]
-             (nav-row {:label name :nested? true
-                       :active? (router/rendered? id true)
-                       :on-click #(router/navigate! id)}))]]]])]))
+     ;; Only the list scrolls; start links and this header stay put.
+     [:ty-scroll-container.site-nav-scroll.flex-1.min-h-0 {:hide-scrollbar ""}
+      [:div.flex.flex-col.gap-4.pb-8
+       (for [{:keys [title items]} groups]
+         [:div.flex.flex-col {:replicant/key title}
+          [:p.px-3.pb-1.text-xs.ty-text-- title]
+          (for [{:keys [id name icon]} items]
+            (nav-row {:label name :icon icon
+                      :active? (router/rendered? id true)
+                      :on-click #(router/navigate! id)}))])]]]))
 
-(defn nav-items []
-  [:div.flex.flex-col.gap-7
+(defn nav-items
+  "Fills a container of definite height; the component list takes the rest."
+  []
+  [:div.flex.flex-col.gap-7.h-full.min-h-0
    (start-section)
    (components-section)])
 
@@ -433,7 +402,7 @@
     (when (ifn? view) (docs-common/keyed view (view)))))
 
 (defn sidebar-content []
-  [:nav.px-3.pt-8.pb-8
+  [:nav.px-3.pt-8.h-full
    (nav-items)])
 
 (defn slugify
@@ -757,7 +726,7 @@
                :on {:close close-mobile-menu!}}
     [:div.p-5.mx-auto.rounded-xl.ty-floating.box-border.flex.flex-col
      {:style {:width "300px"
-              :max-height "85vh"}}
+              :height "85vh"}}
      [:div.flex.items-center.gap-3.pb-4.border-b.ty-border-.flex-shrink-0
       [:ty-icon.ty-text-primary {:name "ty-logo"
                  :style {:width 40
@@ -765,9 +734,8 @@
                          :margin-top 3}}]
       [:span.text-xs.ty-text-- "web components"]]
 
-     [:div.flex-1.overflow-y-auto.pt-4.min-h-0
-      [:div.space-y-2
-       (nav-items)]]]]])
+     [:div.flex-1.pt-4.min-h-0
+      (nav-items)]]]])
 
 (defn page-title-text
   "Plain page title used when not viewing a component. Returns nil for generic pages."
@@ -979,9 +947,7 @@
          (when show-sidebar?
            [:div.sticky.top-0.self-start.site-chrome
             {:data-ty-theme true
-             :style {:max-height sidebar-max-h
-                     :overflow-y "auto"
-                     :scrollbar-width "none"}}
+             :style {:height sidebar-max-h}}
             (sidebar-content)])
          [:main.min-w-0
           {:style {:padding (if landing? "0" "32px 0")}}
@@ -1030,8 +996,6 @@
   (add-watch router/*router* ::render
              (fn [_ _ old-state new-state]
                (when (not= (:current old-state) (:current new-state))
-                 ;; A new page opens its category again.
-                 (when (:nav/collapsed @state) (swap! state dissoc :nav/collapsed))
                  (let [all-routes (flatten-routes (concat site-routes component-routes guide-routes))
                        current-route (some #(when (router/rendered? (:id %) true) %) all-routes)]
                    (when (should-scroll-for-route? (:id current-route))

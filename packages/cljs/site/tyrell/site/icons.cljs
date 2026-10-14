@@ -70,6 +70,14 @@
 
      ;; Component/UI icons (for docs)
   :square lucide/square
+  :mouse-pointer-click lucide/mouse-pointer-click
+  :text-cursor-input lucide/text-cursor-input
+  :chevrons-up-down lucide/chevrons-up-down
+  :calendar-days lucide/calendar-days
+  :calendar-range lucide/calendar-range
+  :app-window lucide/app-window
+  :message-circle lucide/message-circle
+  :panel-top lucide/panel-top
   :square-stack lucide/square-stack
   :list lucide/list
   :list-ordered lucide/list-ordered

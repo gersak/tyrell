@@ -231,6 +231,13 @@ code:not(.hljs) {
 @media (prefers-reduced-motion: reduce) {
   .site-nav-dot, .site-nav-dot.is-on, .site-nav-icon, .site-nav-icon.is-off { transition: none; }
 }
+/* The component list's edge shadows, redrawn as hairlines. ty-scroll-container
+   still fades them in only while rows hide past that edge; the stops land on
+   the host's top and bottom edges inside each shadow's visible half. */
+.site-nav-scroll {
+  --ty-scroll-shadow-top: linear-gradient(transparent 40px, var(--ty-border-soft) 40px 41px, transparent 41px);
+  --ty-scroll-shadow-bottom: linear-gradient(transparent 29px, var(--ty-border-soft) 29px 30px, transparent 30px);
+}
 ")
 
 (defn install!

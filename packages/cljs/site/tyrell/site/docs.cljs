@@ -414,7 +414,7 @@
 (def docs-components
   [{:id :tyrell.site.docs/button
     :segment "button"
-    :icon "square"
+    :icon "mouse-pointer-click"
     :view button-docs/view
     :name "Button"
     :description "7 semantic flavors, sizes xs–xl, start/end icon slots, and modifiers (pill, outlined, filled, plain, action, wide). Action mode for FAB-style icon buttons."
@@ -431,7 +431,7 @@
     :preview calendar-preview}
    {:id :tyrell.site.docs/calendar-month
     :segment "calendar-month"
-    :icon "calendar"
+    :icon "calendar-range"
     :view calendar-month-docs/view
     :name "Calendar Month"
     :description "Stateless 6-week month grid. Monday-first ordering, localized day headers, custom day rendering, sizes sm/md/lg."
@@ -440,7 +440,7 @@
     :preview calendar-month-preview}
    {:id :tyrell.site.docs/date-picker
     :segment "date-picker"
-    :icon "clock"
+    :icon "calendar-days"
     :view date-picker-docs/view
     :name "Date Picker"
     :description "Date input with integrated calendar popup. ISO date string value, form participation, locale-aware."
@@ -464,7 +464,7 @@
     :view (fn [] (router/navigate! :tyrell.site.docs/input-field) nil)
     :children [{:id :tyrell.site.docs/input-field
                 :segment "input-field"
-                :icon "edit-3"
+                :icon "text-cursor-input"
                 :view input-docs/view
                 :name "Input Field"
                 :description "Text, currency, percent, integer, and float types — locale-aware numeric formatting. Debounce control, start/end icon slots, label and error messages."
@@ -517,7 +517,7 @@
                 :preview copy-field-preview}
                {:id :tyrell.site.docs/textarea
                 :segment "textarea"
-                :icon "file-text"
+                :icon "align-left"
                 :view textarea-docs/view
                 :name "Textarea"
                 :description "Auto-resizing with min/max height, custom scrollbar, resize control (none, both, horizontal, vertical), label and error messages."
@@ -526,7 +526,7 @@
                 :preview textarea-preview}]}
    {:id :tyrell.site.docs/modal
     :segment "modal"
-    :icon "layout"
+    :icon "app-window"
     :view modal-docs/view
     :name "Modal"
     :description "Native `<dialog>` overlay with scroll locking, backdrop and ESC close, and protected mode for unsaved changes."
@@ -535,7 +535,7 @@
     :preview modal-preview}
    {:id :tyrell.site.docs/select
     :segment "select"
-    :icon "filter"
+    :icon "chevrons-up-down"
     :view select-docs/view
     :name "Select"
     :description "The select control — replaces dropdown and multiselect. Single select by default with a form-field look; `multiple` for multi-select, `compact` for a content-hugging trigger skin, or slot a custom trigger. Searchable popup with `ty-option` children, form-associated."
@@ -569,7 +569,7 @@
     :preview scroll-container-preview}
    {:id :tyrell.site.docs/tabs
     :segment "tabs"
-    :icon "layout"
+    :icon "panel-top"
     :view tabs-docs/view
     :name "Tabs"
     :description "Carousel-based tabs with smooth slide animations, animated active marker, and top or bottom placement. Uses `ty-tab` children."
@@ -595,7 +595,7 @@
     :preview tag-preview}
    {:id :tyrell.site.docs/tooltip
     :segment "tooltip"
-    :icon "message-square"
+    :icon "message-circle"
     :view tooltip-docs/view
     :name "Tooltip"
     :description "Hover and focus tooltips via the Popover API. Smart positioning, configurable delay, dark/light/semantic flavors."
