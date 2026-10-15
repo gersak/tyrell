@@ -42,7 +42,7 @@
   (let [attrs (str (when-not backdrop " no-backdrop")
                    (when-not outside " prevent-outside-click")
                    (when-not escape " prevent-escape")
-                   (when zoom " backdrop-zoom"))]
+                   (when-not zoom " no-zoom"))]
     [["html" "HTML" "html"
       (str "<ty-button onclick=\"invite.show()\">Invite</ty-button>\n\n"
            "<ty-modal id=\"invite\" label=\"Invite people\"" attrs ">\n"
@@ -52,18 +52,18 @@
       (str "import { TyModal } from 'tyrell-react'\n\n"
            "<TyModal open={open} label=\"Invite people\""
            (when-not backdrop " noBackdrop") (when-not outside " preventOutsideClick")
-           (when-not escape " preventEscape") (when zoom " backdrop-zoom")
+           (when-not escape " preventEscape") (when-not zoom " noZoom")
            "\n  onClose={() => setOpen(false)}>\n  <div className=\"panel\">…</div>\n</TyModal>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n"
            "[:> ty/Modal {:open @open? :label \"Invite people\""
            (when-not backdrop " :no-backdrop true") (when-not outside " :prevent-outside-click true")
-           (when-not escape " :prevent-escape true") (when zoom " :backdrop-zoom true")
+           (when-not escape " :prevent-escape true") (when-not zoom " :no-zoom true")
            "\n              :on-close #(reset! open? false)}\n [:div.panel …]]")]
      ["replicant" "Replicant" "clojure"
       (str "[:ty-modal {:open (when open? \"\") :label \"Invite people\""
            (when-not backdrop " :no-backdrop \"\"") (when-not outside " :prevent-outside-click \"\"")
-           (when-not escape " :prevent-escape \"\"") (when zoom " :backdrop-zoom \"\"")
+           (when-not escape " :prevent-escape \"\"") (when-not zoom " :no-zoom \"\"")
            "\n            :on {:close #(set-open! false)}}\n [:div.panel …]]")]
      ["datastar" "Datastar" "html"
       (str "<ty-button data-signals:invite-open=\"false\"\n  data-on:click=\"$inviteOpen = true\">Invite</ty-button>\n\n"
@@ -81,7 +81,7 @@
                   (not backdrop) (assoc :no-backdrop "")
                   (not outside) (assoc :prevent-outside-click "")
                   (not escape) (assoc :prevent-escape "")
-                  zoom (assoc :backdrop-zoom ""))
+                  (not zoom) (assoc :no-zoom ""))
           (panel (title "Invite people" "They'll get an email with a link to this workspace.")
                  [:ty-input {:label "Email" :type "email" :placeholder "name@company.com"}]
                  (actions [:ty-button {:appearance "ghost" :size "md" :on {:click #(hide! :play)}} "Cancel"]
@@ -103,12 +103,12 @@
 
    (playground
     {:id :modal
-     :defaults {:backdrop true :outside true :escape true :zoom false}
+     :defaults {:backdrop true :outside true :escape true :zoom true}
      :controls [{:key :backdrop :switch? true}
                 {:key :outside :switch? true}
                 {:key :escape :switch? true}
                 {:key :zoom :switch? true}]
-     :sub "Open it, then close it every way you can. outside = backdrop click closes; zoom = backdrop-zoom."
+     :sub "Open it, then close it every way you can. outside = backdrop click closes; zoom = the page behind scales down."
      :render render-playground
      :snippets snippets})
 
@@ -240,7 +240,7 @@ modal.addEventListener('close', (e) => console.log(e.detail.reason));"}
                   ["prevent-escape" "boolean" "false" "Escape doesn't close."]
                   "Backdrop"
                   ["no-backdrop" "boolean" "false" "No dimmed page behind the modal."]
-                  ["backdrop-zoom" "boolean" "false" "Scale the page behind slightly while open."]]
+                  ["no-zoom" "boolean" "false" "The page behind stays still instead of scaling down slightly."]]
      :properties [["show()" "() => void" "Open."]
                   ["hide(opts?)" "({force?}) => void" "Close. Fires beforeclose unless force is true."]]
      :events [["open" "{}" "Opened. Doesn't bubble: listen on the element."]

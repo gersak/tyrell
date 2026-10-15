@@ -1366,13 +1366,13 @@ RESPONSIVE VARIANTS
 }
 
 /* =================================================================
-   MODAL BACKDROP ZOOM (opt-in)
-   While any <ty-modal backdrop-zoom open> is open, the component toggles
+   MODAL BACKDROP ZOOM (default; turn off with no-zoom)
+   While any <ty-modal open> without no-zoom is open, the component toggles
    .ty-modal-zoom on <html> and the page body scales down slightly
    (Vaul/shadcn-style). The modal itself renders in the top layer, which
    escapes ancestor transforms — only the page behind it moves.
    Caveat: a scaled <body> becomes the containing block for position:fixed
-   descendants — apps with fixed headers/sidebars should not use backdrop-zoom.
+   descendants — apps with fixed headers/sidebars should set no-zoom.
 ================================================================= */
 
 body {

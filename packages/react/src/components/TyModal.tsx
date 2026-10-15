@@ -25,6 +25,9 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** No backdrop behind the modal (renders `no-backdrop`) */
   noBackdrop?: boolean;
 
+  /** The page behind no longer scales down while open (renders `no-zoom`) */
+  noZoom?: boolean;
+
   /** Backdrop clicks no longer close the modal (also hides the built-in ✕) */
   preventOutsideClick?: boolean;
 
@@ -69,6 +72,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
   ({
     open,
     noBackdrop,
+    noZoom,
     preventOutsideClick,
     preventEscape,
     label,
@@ -160,9 +164,10 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
         if (Boolean(el[prop]) !== next) el[prop] = next;
       };
       setIf('noBackdrop', noBackdrop);
+      setIf('noZoom', noZoom);
       setIf('preventOutsideClick', preventOutsideClick);
       setIf('preventEscape', preventEscape);
-    }, [noBackdrop, preventOutsideClick, preventEscape]);
+    }, [noBackdrop, noZoom, preventOutsideClick, preventEscape]);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -173,6 +178,9 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
 
     if (noBackdrop !== undefined && coerceBool(noBackdrop)) {
       webComponentProps['no-backdrop'] = '';
+    }
+    if (noZoom !== undefined && coerceBool(noZoom)) {
+      webComponentProps['no-zoom'] = '';
     }
     // Presence booleans: render the bare attribute only when true
     if (preventOutsideClick !== undefined && coerceBool(preventOutsideClick)) {

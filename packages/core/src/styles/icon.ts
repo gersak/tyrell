@@ -20,7 +20,7 @@ export const iconStyles = `
   
   
   color: inherit;
-  transition: color var(--ty-transition-fast);
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
   
   flex-shrink: 0;
   
@@ -207,7 +207,7 @@ export const iconStyles = `
 :host(.icon-clickable) {
   cursor: pointer;
   pointer-events: auto;
-  transition: color var(--ty-transition-fast), transform var(--ty-transition-fast);
+  transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :host(.icon-clickable:hover) {

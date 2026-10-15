@@ -48,14 +48,14 @@ ${inputStyles}
   flex-direction: column;
   gap: 0.4rem;
   font-family: inherit;
-  color: var(--ty-color-text);
+  color: var(--ty-text);
 }
 
 .radio-group-label {
   font-size: var(--ty-font-sm);
   line-height: var(--ty-leading-sm);
   font-weight: var(--ty-font-medium);
-  color: var(--ty-color-text);
+  color: var(--ty-text);
   display: flex;
   align-items: center;
   gap: 0.25rem;

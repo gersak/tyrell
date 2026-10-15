@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking: `ty-modal` zooms the page behind by default.** `backdrop-zoom` is gone; set `no-zoom` (`noZoom`, React `noZoom`) to keep the page still. Apps with `position: fixed` headers or sidebars want `no-zoom`: a scaled `<body>` becomes their containing block.
+
 ## [1.0.0-RC16] - 2026-10-13
 
 ### Added

@@ -490,7 +490,7 @@ Attrs: `value` (ISO `YYYY-MM-DD` — sets selection *and* the displayed month; r
 
 Also registered as **`ty-dialog`** — same element, platform/ARIA name (wraps native `<dialog>`).
 
-Attrs: `open`, `backdrop` (default true), **`prevent-escape`**, **`prevent-outside-click`** (presence booleans — see below), `backdrop-zoom` (opt-in: scales the page body down slightly while open, Vaul-style; the modal itself renders in the top layer and is unaffected — skip it if your app has `position: fixed` chrome, since a scaled body becomes its containing block), `label` — sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
+Attrs: `open`, **`no-backdrop`**, **`no-zoom`**, **`prevent-escape`**, **`prevent-outside-click`** (presence booleans — see below). By default the page body scales down slightly while a modal is open, Vaul-style; the modal itself renders in the top layer and is unaffected. Set `no-zoom` if your app has `position: fixed` chrome, since a scaled body becomes its containing block. `label` sets `aria-label` on the internal `<dialog>`. `<dialog>` gets `role="dialog"` for free, but nothing names it unless you set this (or wire your own `aria-labelledby` to a slotted heading yourself); unset is not a regression, just unlabeled, same as before.
 
 **Guarding the close paths.** Closing on ESC and on backdrop click is the default, so the switches follow the HTML convention of naming the *deviation*, like `disabled`:
 

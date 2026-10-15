@@ -61,7 +61,7 @@ export const fileUploadStyles = `
 .drop-zone.drag-active {
   border-color: var(--ty-color-primary);
   border-style: solid;
-  background: var(--ty-bg-primary-);
+  background: var(--ty-bg-primary-soft);
 }
 
 .drop-zone.drag-active .upload-icon {
@@ -85,7 +85,7 @@ export const fileUploadStyles = `
 }
 
 .drop-zone.error:not(.disabled) {
-  background: var(--ty-bg-danger-);
+  background: var(--ty-bg-danger-soft);
 }
 
 .upload-icon {
@@ -190,7 +190,7 @@ export const fileUploadStyles = `
 
 .file-remove:hover {
   color: var(--ty-color-danger);
-  background: var(--ty-bg-danger-);
+  background: var(--ty-bg-danger-soft);
 }
 
 .file-remove:focus-visible {

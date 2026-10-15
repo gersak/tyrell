@@ -132,8 +132,8 @@
   "Code tabs [[id label lang code] ...] for code-tabs / playground.
    nodes: hiccup examples, printed in every tab. Put Datastar bindings on them
    as :datastar/… attributes. datastar: other nodes for the Datastar tab, for
-   the rare case where it needs a different wrapper (e.g. a <form> for
-   @post(…, {contentType: 'form'}))."
+   the rare case where it needs a different wrapper (e.g. a <form> for a
+   form-encoded @post)."
   [nodes & {:keys [datastar]}]
   (let [nodes (vec nodes)
         imports (str/join ", " (map #(str "Ty" (pascal %)) (ty-tags nodes)))]

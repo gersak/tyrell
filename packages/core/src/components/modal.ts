@@ -428,6 +428,8 @@ function render(el: TyModal): void {
       dispatchModalEvent(el, 'close', { reason } as ModalCloseDetail);
     }
   }
+  // no-zoom can flip while the modal is open
+  syncBackdropZoom();
   
   // Handle dialog's native close event.
   //
@@ -455,21 +457,16 @@ function render(el: TyModal): void {
 }
 
 /**
- * Opt-in Vaul-style page zoom: while any modal with `backdrop-zoom` is open,
+ * Vaul-style page zoom, on by default: while any open modal lacks `no-zoom`,
  * <html> carries .ty-modal-zoom and tyrell.css scales <body> down slightly.
  * The dialog itself lives in the top layer, which escapes ancestor
  * transforms, so only the page behind it moves. State is derived, not
  * counted — the last zooming modal out clears the class, nested modals keep it.
  */
 function syncBackdropZoom(): void {
-  // Same string-tolerant boolean parsing as the other modal attrs —
-  // backdrop-zoom="false" must count as off, not as present.
   const anyOpen = Array.from(
-    document.querySelectorAll('ty-modal[open][backdrop-zoom], ty-dialog[open][backdrop-zoom]'),
-  ).some((m) => {
-    const v = m.getAttribute('backdrop-zoom')!.toLowerCase().trim();
-    return v !== 'false' && v !== '0';
-  });
+    document.querySelectorAll('ty-modal[open], ty-dialog[open]'),
+  ).some((m) => parseBoolAttr(m as HTMLElement, 'open') && !parseBoolAttr(m as HTMLElement, 'no-zoom'));
   document.documentElement.classList.toggle('ty-modal-zoom', anyOpen);
 }
 
@@ -542,7 +539,7 @@ export class TyModal extends HTMLElement {
   hide?: (opts?: { force?: boolean }) => void;
   
   static get observedAttributes() {
-    return ['open', 'no-backdrop', 'prevent-outside-click', 'prevent-escape', 'label'];
+    return ['open', 'no-backdrop', 'no-zoom', 'prevent-outside-click', 'prevent-escape', 'label'];
   }
 
   // Property mirrors for the boolean attributes. Frameworks that
@@ -555,6 +552,11 @@ export class TyModal extends HTMLElement {
   get noBackdrop(): boolean { return parseBoolAttr(this, 'no-backdrop'); }
   set noBackdrop(v: boolean) {
     v ? this.setAttribute('no-backdrop', '') : this.removeAttribute('no-backdrop');
+  }
+
+  get noZoom(): boolean { return parseBoolAttr(this, 'no-zoom'); }
+  set noZoom(v: boolean) {
+    v ? this.setAttribute('no-zoom', '') : this.removeAttribute('no-zoom');
   }
 
   // Presence-boolean mirrors: true sets the attribute, false removes it —

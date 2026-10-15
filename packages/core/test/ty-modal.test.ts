@@ -37,6 +37,31 @@ describe('ty-modal', () => {
     expect(dialog.getAttribute('data-backdrop')).to.equal('true');
   });
 
+  it('zooms the page by default; no-zoom (and noZoom) keeps it still', async () => {
+    const zoomed = () => document.documentElement.classList.contains('ty-modal-zoom');
+    const el = (await fixture(html`<ty-modal open><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+    expect(zoomed(), 'default').to.equal(true);
+
+    el.noZoom = true; // flips while open
+    await nextFrame();
+    expect(el.getAttribute('no-zoom')).to.equal('');
+    expect(zoomed(), 'no-zoom').to.equal(false);
+
+    el.noZoom = false;
+    await nextFrame();
+    expect(zoomed(), 'no-zoom removed').to.equal(true);
+
+    el.hide({ force: true });
+    await nextFrame();
+    expect(zoomed(), 'closed').to.equal(false);
+
+    const still = (await fixture(html`<ty-modal no-zoom open><p>Hi</p></ty-modal>`)) as any;
+    await nextFrame();
+    expect(zoomed(), 'opened with no-zoom').to.equal(false);
+    still.hide({ force: true });
+  });
+
   it('tolerates the open attribute being set before insertion into the document', async () => {
     // React sets initial attributes BEFORE appending the element (conditional
     // mount of an already-open modal). showModal() on a disconnected <dialog>

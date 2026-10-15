@@ -119,7 +119,7 @@ ${fieldSizeVars}
   justify-content: center;
   flex-shrink: 0;
   margin-right: 0.5rem;
-  color: var(--ty-color-text-soft);
+  color: var(--ty-text-soft);
 }
 
 .date-picker-stub ::slotted(ty-icon[slot="start"]) {

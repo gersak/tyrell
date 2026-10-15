@@ -136,7 +136,7 @@ ${fieldSizeVars}
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--ty-color-text-soft);
+  color: var(--ty-text-soft);
 }
 
 /* Password reveal toggle (rendered for type="password") */
