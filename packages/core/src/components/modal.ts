@@ -5,7 +5,9 @@
  */
 
 import { lockScroll, unlockScroll } from '../utils/scroll-lock.js';
+import { coerceBoolean } from '../utils/property-manager.js';
 import { ensureStyles } from '../utils/styles.js';
+import { upgradeProperties } from '../utils/upgrade-properties.js';
 import { modalStyles } from '../styles/modal.js';
 
 // Types
@@ -61,6 +63,16 @@ const modalIds = new WeakMap<TyModal, string>(); // Store unique modal ID for sc
 // report 'programmatic' and the reason the consumer saw in `beforeclose`
 // (backdrop / escape / close-button) is lost.
 const pendingCloseReasons = new WeakMap<TyModal, ModalCloseReason>();
+// Open modals whose dialog cleanup() closed on removal: shown again on
+// re-insertion without a second `open` event (see cleanup()).
+const detachedOpen = new WeakSet<TyModal>();
+// Open modals, in the order they were shown: the last one is on top.
+const openStack: TyModal[] = [];
+
+function dropFromStack(el: TyModal): void {
+  const i = openStack.indexOf(el);
+  if (i >= 0) openStack.splice(i, 1);
+}
 
 // Constants
 
@@ -223,13 +235,90 @@ function handleBackdropClick(el: TyModal, event: Event): void {
   }
 }
 
+/**
+ * The key comes from inside a modal dialog nested in this one that is still
+ * open — a ty-select list, a date-picker calendar, a ty-popup. That one is on
+ * top, so the key is its own (native nested dialogs close top-down): leave it
+ * alone entirely, propagation included, since those components listen on
+ * document.
+ */
+function fromNestedDialog(dialog: HTMLDialogElement, event: Event): boolean {
+  for (const node of event.composedPath()) {
+    if (node === dialog) return false;
+    if (node instanceof HTMLDialogElement && node.matches(':modal')) return true;
+  }
+  return false;
+}
+
+/**
+ * Close the modal dialogs still open inside the modal's content (a select
+ * list, a calendar, a popup, a nested modal). Each sits in the top layer on
+ * its own, so closing the modal would leave it open: hidden along with the
+ * modal, yet still modal (the page stays inert) and still holding its scroll
+ * lock. The components watch their dialog and tidy up after it. A nested
+ * ty-modal closes its own way, so its `close` carries the reason and its lock
+ * goes at once. Content a wrapper component slots into the modal from its own
+ * light DOM counts as well.
+ */
+function closeNestedDialogs(root: ParentNode): void {
+  walkNested(root, (node) => {
+    if (node instanceof TyModal && node.open) node.removeAttribute('open');
+    if (node instanceof HTMLDialogElement && node.matches(':modal')) node.close();
+    return false;
+  });
+}
+
+/** A modal dialog is open inside the modal's content: it is on top. */
+function hasOpenNestedDialog(root: ParentNode): boolean {
+  return walkNested(root, (node) => node instanceof HTMLDialogElement && node.matches(':modal'));
+}
+
+/** Every element in the content, through shadow roots and slots; stops when `visit` says so. */
+function walkNested(root: ParentNode, visit: (node: Element) => boolean, seen = new WeakSet<Element>()): boolean {
+  const walk = (node: Element): boolean => {
+    if (seen.has(node)) return false;
+    seen.add(node);
+    if (visit(node)) return true;
+    if (node.shadowRoot && walkNested(node.shadowRoot, visit, seen)) return true;
+    if (node instanceof HTMLSlotElement) {
+      for (const assigned of node.assignedElements({ flatten: true })) {
+        if (walk(assigned) || walkNested(assigned, visit, seen)) return true;
+      }
+    }
+    return false;
+  };
+  return Array.from(root.querySelectorAll('*')).some(walk);
+}
+
 function handleEscapeKey(el: TyModal, event: KeyboardEvent): void {
+  const dialog = event.currentTarget as HTMLDialogElement;
+  if (fromNestedDialog(dialog, event)) return;
   event.stopPropagation();
   if (event.key === 'Escape') {
     event.preventDefault();
     closeModal(el, 'escape');
   }
 }
+
+/**
+ * Escape with focus outside every open dialog (on <body>: after a click on
+ * the backdrop, or a blur) belongs to the top modal. The dialog's own keydown
+ * handler never sees it, and the browser's close request alone isn't enough:
+ * a second Escape without user activation in between can't be cancelled, so
+ * prevent-escape would give way. Consume the key and decide here.
+ */
+function handleDocumentEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || event.defaultPrevented) return;
+  const top = openStack[openStack.length - 1];
+  if (!top) return;
+  if (event.composedPath().some((n) => n instanceof HTMLDialogElement && n.open)) return;
+  // A select list, calendar or popup open in it is on top: the key is theirs
+  if (hasOpenNestedDialog(top)) return;
+  event.preventDefault();
+  if (getModalAttributes(top).closeOnEscape) closeModal(top, 'escape');
+}
+
+if (typeof document !== 'undefined') document.addEventListener('keydown', handleDocumentEscape);
 
 function handleCloseButtonClick(el: TyModal, event: Event): void {
   event.preventDefault();
@@ -293,7 +382,7 @@ function setupEscapeKey(el: TyModal, dialog: HTMLDialogElement, enabled: boolean
     // a separate close-request path we deliberately leave force-closable, so
     // an ultimate escape hatch always remains.
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') e.preventDefault();
+      if (e.key === 'Escape' && !fromNestedDialog(dialog, e)) e.preventDefault();
     };
     escapeKeyHandlers.set(el, handler);
     dialog.addEventListener('keydown', handler);
@@ -405,20 +494,20 @@ function render(el: TyModal): void {
   if (attributes.open) {
     if (!dialog.open) {
       lockScroll(modalId);
-
-      if (attributes.backdrop) {
-        dialog.showModal();
-      } else {
-        dialog.show();
-      }
-
+      // Always modal: no-backdrop only makes ::backdrop transparent
+      dialog.showModal();
+      dropFromStack(el);
+      openStack.push(el);
       syncBackdropZoom();
-      dispatchModalEvent(el, 'open', {});
+      if (!detachedOpen.delete(el)) dispatchModalEvent(el, 'open', {});
     }
   } else {
+    detachedOpen.delete(el);
+    dropFromStack(el);
     if (dialog.open) {
       unlockScroll(modalId);
 
+      closeNestedDialogs(el);
       dialog.close();
       syncBackdropZoom();
 
@@ -433,17 +522,19 @@ function render(el: TyModal): void {
   
   // Handle dialog's native close event.
   //
-  // Child components (ty-select, ty-date-picker) dispatch a
-  // bubbling+composed `close` custom event when their popups close. Those
-  // events bubble up to *this* dialog and trigger `onclose` too — without this
-  // guard, opening a dropdown inside a modal and closing the dropdown would
-  // close the whole modal. The native dialog `close` event is not composed
-  // and targets the dialog itself, so we only react when `event.target` is
-  // the dialog.
+  // Only the dialog's own: a bubbling `close` from a component inside it
+  // (ty-select's and ty-date-picker's don't bubble, a third-party one's may)
+  // would reach `onclose` too and close the whole modal with its dropdown.
+  // The native dialog `close` event is not composed and targets the dialog
+  // itself, so we only react when `event.target` is the dialog.
   dialog.onclose = (event: Event) => {
-    if (event.target !== dialog) return;
+    // Stale: the close of a removal (cleanup()), arriving while the modal is
+    // still out of the document or already shown again
+    if (event.target !== dialog || dialog.open || !el.isConnected) return;
 
     unlockScroll(modalId);
+    dropFromStack(el);
+    closeNestedDialogs(el);
 
     if (el.hasAttribute('open')) {
       el.removeAttribute('open');
@@ -457,17 +548,17 @@ function render(el: TyModal): void {
 }
 
 /**
- * Vaul-style page zoom, on by default: while any open modal lacks `no-zoom`,
- * <html> carries .ty-modal-zoom and tyrell.css scales <body> down slightly.
- * The dialog itself lives in the top layer, which escapes ancestor
- * transforms, so only the page behind it moves. State is derived, not
- * counted — the last zooming modal out clears the class, nested modals keep it.
+ * Vaul-style page zoom, on by default: while an open modal with a backdrop
+ * lacks `no-zoom`, <html> carries .ty-modal-zoom and tyrell.css scales <body>
+ * down slightly. The dialog lives in the top layer, which escapes ancestor
+ * transforms, so only the page behind it moves. A no-backdrop modal never
+ * zooms: there is no dim to go with it. State is derived, not counted — the
+ * last zooming modal out clears the class, nested modals keep it.
  */
 function syncBackdropZoom(): void {
-  const anyOpen = Array.from(
-    document.querySelectorAll('ty-modal[open], ty-dialog[open]'),
-  ).some((m) => parseBoolAttr(m as HTMLElement, 'open') && !parseBoolAttr(m as HTMLElement, 'no-zoom'));
-  document.documentElement.classList.toggle('ty-modal-zoom', anyOpen);
+  const zoom = Array.from(document.querySelectorAll('ty-modal[open], ty-dialog[open]'))
+    .some((m) => parseBoolAttr(m, 'open') && !parseBoolAttr(m, 'no-backdrop') && !parseBoolAttr(m, 'no-zoom'));
+  document.documentElement.classList.toggle('ty-modal-zoom', zoom);
 }
 
 function cleanup(el: TyModal): void {
@@ -475,6 +566,7 @@ function cleanup(el: TyModal): void {
   const shadowRoot = el.shadowRoot;
   const dialog = shadowRoot ? getModalDialog(shadowRoot) : null;
   
+  dropFromStack(el);
   // Force unlock scroll if modal removed while open
   if (modalId) {
     unlockScroll(modalId);
@@ -483,6 +575,15 @@ function cleanup(el: TyModal): void {
   syncBackdropZoom();
   
   if (!dialog) return;
+
+  // Removed while open: out of the document the dialog leaves the top layer
+  // but stays open, so a re-insertion (a framework moving the modal) found
+  // it open, skipped showModal() and left a non-modal dialog with no lock.
+  // Close it; `open` stays set, and render() shows it again on insertion.
+  if (dialog.open) {
+    dialog.close();
+    detachedOpen.add(el);
+  }
   
   const backdropHandler = backdropClickHandlers.get(el);
   if (backdropHandler) {
@@ -547,28 +648,28 @@ export class TyModal extends HTMLElement {
   // `preventEscape = true` — which never reach attributeChangedCallback.
   // Reflect them to the attribute so one code path (getModalAttributes) rules.
   get open(): boolean { return parseBoolAttr(this, 'open'); }
-  set open(v: boolean) { v ? this.setAttribute('open', 'true') : this.removeAttribute('open'); }
+  set open(v: boolean) { coerceBoolean(v) ? this.setAttribute('open', 'true') : this.removeAttribute('open'); }
 
   get noBackdrop(): boolean { return parseBoolAttr(this, 'no-backdrop'); }
   set noBackdrop(v: boolean) {
-    v ? this.setAttribute('no-backdrop', '') : this.removeAttribute('no-backdrop');
+    coerceBoolean(v) ? this.setAttribute('no-backdrop', '') : this.removeAttribute('no-backdrop');
   }
 
   get noZoom(): boolean { return parseBoolAttr(this, 'no-zoom'); }
   set noZoom(v: boolean) {
-    v ? this.setAttribute('no-zoom', '') : this.removeAttribute('no-zoom');
+    coerceBoolean(v) ? this.setAttribute('no-zoom', '') : this.removeAttribute('no-zoom');
   }
 
   // Presence-boolean mirrors: true sets the attribute, false removes it —
   // like native `disabled`.
   get preventOutsideClick(): boolean { return parseBoolAttr(this, 'prevent-outside-click'); }
   set preventOutsideClick(v: boolean) {
-    v ? this.setAttribute('prevent-outside-click', '') : this.removeAttribute('prevent-outside-click');
+    coerceBoolean(v) ? this.setAttribute('prevent-outside-click', '') : this.removeAttribute('prevent-outside-click');
   }
 
   get preventEscape(): boolean { return parseBoolAttr(this, 'prevent-escape'); }
   set preventEscape(v: boolean) {
-    v ? this.setAttribute('prevent-escape', '') : this.removeAttribute('prevent-escape');
+    coerceBoolean(v) ? this.setAttribute('prevent-escape', '') : this.removeAttribute('prevent-escape');
   }
 
   constructor() {
@@ -577,6 +678,7 @@ export class TyModal extends HTMLElement {
   }
   
   connectedCallback() {
+    upgradeProperties(this);
     render(this);
     
     this.show = () => openModal(this);

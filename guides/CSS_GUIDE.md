@@ -677,7 +677,7 @@ Notes:
 - **Missing tokens degrade to neutral.** Any token you don't define falls back to the `neutral` equivalent, so you can start with `--ty-solid-X` + `--ty-solid-X-fg` and fill in the rest later.
 - **Field emphasis ladders need the shade tokens.** Flavored fields (`ty-input`, `ty-select`, `ty-date-picker`) rest on `--ty-color-X-soft` and escalate to `--ty-color-X` on hover/focus. Define only the base token and rest and focus look the same.
 - **Scoping works like any CSS variable:** define on `:root` for the whole app, or on a container for one section.
-- **Per-instance overrides still win.** Each component's local flavor vars (table below) take precedence over the token wiring, e.g. `ty-tag[flavor="X"] { --tag-bg: … }`.
+- **Per-instance overrides still win.** Each component's local flavor vars (table below) take precedence over the token wiring, e.g. `ty-tag[flavor="X"] { --tag-bg: … }`. On `ty-input`, `ty-select` and `ty-date-picker` such a rule also beats the danger look an `error` gives. To let the error show, skip the error state: `ty-input[flavor="X"]:not([error]:not([error=""])) { --input-accent: … }`.
 
 Each flavored component funnels its colors through a few local vars, which double as the per-instance override API (set them on the host from any page-level rule):
 
@@ -874,7 +874,7 @@ Per-flavor border overrides (apply when the `flavor` attribute is set):
 |---|---|
 | `--ty-input-primary-border` | `flavor="primary"` |
 | `--ty-input-success-border` | `flavor="success"` |
-| `--ty-input-danger-border` | `flavor="danger"` |
+| `--ty-input-danger-border` | `flavor="danger"`, and any field with an `error` |
 | `--ty-input-warning-border` | `flavor="warning"` |
 
 ```html

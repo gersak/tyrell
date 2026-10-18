@@ -137,6 +137,7 @@ declare global {
     tyResizeObserver: {
       getSize: (id: string) => ResizeSize | undefined
       onResize: (id: string, callback: ResizeCallback) => () => void
+      getAllSizes: () => Record<string, ResizeSize>
       sizes: Record<string, ResizeSize>
     }
     tyLoader: {
@@ -178,6 +179,7 @@ if (typeof window !== 'undefined') {
   window.tyResizeObserver = {
     getSize: (id: string) => getResizeSize(id),
     onResize: (id: string, callback: ResizeCallback) => subscribeResize(id, callback),
+    getAllSizes: () => getAllSizes(),
     get sizes() { return getAllSizes() }
   }
 }

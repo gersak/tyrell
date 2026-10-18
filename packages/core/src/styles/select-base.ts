@@ -15,7 +15,7 @@ import { customScrollbarStyles } from "./custom-scrollbar.js";
    unstyled chrome (--ty-input-* tokens), same convention as
    ty-input/ty-date-picker. Fallback flavor `fb` is used for custom flavors
    so missing tokens degrade to neutral. */
-const selectFlavor = (f: string, fb?: string) => {
+const selectFlavor = (f: string, fb?: string, also = "") => {
   const c = (s: string) =>
     fb
       ? s
@@ -25,7 +25,7 @@ const selectFlavor = (f: string, fb?: string) => {
         ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
         : `var(--ty-color-${f})`;
   return `
-:host([flavor="${f}"]) {
+:host([flavor="${f}"])${also} {
   --select-accent: var(--ty-input-${f}-border, ${c("-soft")});
   --select-accent-bold: ${c("")};
   --select-ring: color-mix(in oklab, ${c("")} 15%, transparent);
@@ -42,6 +42,13 @@ const selectFlavor = (f: string, fb?: string) => {
 }
 `;
 };
+
+/* An error looks like flavor="danger" whatever the flavor: the same rule,
+   so page-level --select-accent* still win. Its (0,3,0) beats every flavor
+   rule's (0,2,0), custom ones adopted later included. Nothing is written on
+   the host to get there; `error` is matched as the attribute TyComponent
+   always reflects it to. Same as ty-input. */
+const errorLook = `,\n:host([error]:not([error=""]))`;
 
 /** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
 export const selectCustomFlavorCss = (base: string) => selectFlavor(base, "neutral");
@@ -330,6 +337,39 @@ ${fieldSizeVars}
 .select-stub.custom-trigger:focus-visible {
   border-color: transparent;
   box-shadow: none;
+}
+
+/* Error line + state — same as ty-input's. A custom trigger keeps its own
+   look; only the line shows under it. contain: inline-size — compact and
+   slot="trigger" selects hug their trigger, and the message must not widen
+   the host. */
+.error-message {
+  font-size: var(--ty-font-xs);
+  line-height: var(--ty-leading-xs);
+  letter-spacing: var(--ty-tracking-xs);
+  color: var(--ty-color-danger);
+  margin-top: 4px;
+  padding-left: var(--ty-field-outer-pad-x);
+  contain: inline-size;
+}
+
+/* Under a trigger narrower than the message it wraps at a readable width,
+   spilling past the trigger instead of stacking a word per line. The
+   percentage keeps it out of the host's width. A custom trigger is the
+   consumer's own box: the line starts at its edge. */
+:host([compact]) .error-message,
+:host([has-trigger]) .error-message {
+  box-sizing: border-box;
+  width: max(100%, 20em);
+}
+:host([has-trigger]) .error-message {
+  padding-left: 0;
+}
+
+/* Border, hover and open/focus ring: the danger accent errorLook sets.
+   Disabled keeps its own background, as on flavor="danger". */
+.select-stub.error:not(.custom-trigger):not([disabled]) {
+  background: var(--ty-bg-danger-soft);
 }
 
 /* Hide stub chips when mobile dialog is open (let modal show them) */
@@ -1054,6 +1094,6 @@ ${fieldSizeVars}
 ${customScrollbarStyles}
 
 /* Flavor variants set --select-accent*, consumed above */
-${FLAVORS.filter((f) => f !== "neutral").map((f) => selectFlavor(f)).join("")}
+${FLAVORS.filter((f) => f !== "neutral").map((f) => selectFlavor(f, undefined, f === "danger" ? errorLook : "")).join("")}
 `;
 

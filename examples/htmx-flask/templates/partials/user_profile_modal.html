@@ -2,37 +2,37 @@
     <div class="flex items-start space-x-6">
         <!-- User Avatar -->
         <div class="flex-shrink-0">
-            <div class="w-20 h-20 rounded-full ty-bg-primary-soft flex items-center justify-center">
-                <ty-icon name="user" class="w-10 h-10 ty-text-primary-strong"></ty-icon>
+            <div class="w-20 h-20 rounded-full ty-bg-primary- flex items-center justify-center">
+                <ty-icon name="user" class="w-10 h-10 ty-text-primary++"></ty-icon>
             </div>
         </div>
         
         <!-- User Information -->
         <div class="flex-1">
             <div class="flex items-center space-x-3 mb-4">
-                <h3 class="text-2xl font-semibold ty-text-neutral-strong">{{ user.name }}</h3>
+                <h3 class="text-2xl font-semibold ty-text-neutral++">{{ user.name }}</h3>
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                           {% if user.role == 'Admin' %}ty-bg-danger-soft ty-text-danger-strong
-                           {% elif user.role == 'Editor' %}ty-bg-warning-soft ty-text-warning-strong  
-                           {% else %}ty-bg-info-soft ty-text-info-strong{% endif %}">
+                           {% if user.role == 'Admin' %}ty-bg-danger- ty-text-danger++
+                           {% elif user.role == 'Editor' %}ty-bg-warning- ty-text-warning++  
+                           {% else %}ty-bg-primary- ty-text-primary++{% endif %}">
                     {{ user.role }}
                 </span>
             </div>
             
             <div class="space-y-3">
                 <div class="flex items-center space-x-3">
-                    <ty-icon name="mail" class="w-5 h-5 ty-text-neutral-bold"></ty-icon>
-                    <span class="ty-text-neutral-bold">{{ user.email }}</span>
+                    <ty-icon name="mail" class="w-5 h-5 ty-text-neutral+"></ty-icon>
+                    <span class="ty-text-neutral+">{{ user.email }}</span>
                 </div>
                 
                 <div class="flex items-center space-x-3">
-                    <ty-icon name="user-check" class="w-5 h-5 ty-text-neutral-bold"></ty-icon>
-                    <span class="ty-text-neutral-bold">User ID: {{ user.id }}</span>
+                    <ty-icon name="user-check" class="w-5 h-5 ty-text-neutral+"></ty-icon>
+                    <span class="ty-text-neutral+">User ID: {{ user.id }}</span>
                 </div>
                 
                 <div class="flex items-center space-x-3">
-                    <ty-icon name="calendar" class="w-5 h-5 ty-text-neutral-bold"></ty-icon>
-                    <span class="ty-text-neutral-bold">Member since January 2025</span>
+                    <ty-icon name="calendar" class="w-5 h-5 ty-text-neutral+"></ty-icon>
+                    <span class="ty-text-neutral+">Member since January 2025</span>
                 </div>
             </div>
         </div>
@@ -40,55 +40,57 @@
     
     <!-- User Stats -->
     <div class="mt-8 pt-6 border-t ty-border">
-        <h4 class="text-lg font-medium ty-text-neutral-strong mb-4">Activity Overview</h4>
+        <h4 class="text-lg font-medium ty-text-neutral++ mb-4">Activity Overview</h4>
         <div class="grid grid-cols-3 gap-4">
-            <div class="text-center ty-bg-primary-soft rounded-lg p-4">
-                <div class="text-2xl font-bold ty-text-primary-strong">{{ 12 + user.id * 3 }}</div>
-                <div class="text-sm ty-text-neutral-bold">Projects</div>
+            <div class="text-center ty-bg-primary- rounded-lg p-4">
+                <div class="text-2xl font-bold ty-text-primary++">{{ 12 + user.id * 3 }}</div>
+                <div class="text-sm ty-text-neutral+">Projects</div>
             </div>
-            <div class="text-center ty-bg-success-soft rounded-lg p-4">
-                <div class="text-2xl font-bold ty-text-success-strong">{{ 87 + user.id * 5 }}%</div>
-                <div class="text-sm ty-text-neutral-bold">Completion</div>
+            <div class="text-center ty-bg-success- rounded-lg p-4">
+                <div class="text-2xl font-bold ty-text-success++">{{ 87 + user.id * 5 }}%</div>
+                <div class="text-sm ty-text-neutral+">Completion</div>
             </div>
-            <div class="text-center ty-bg-info-soft rounded-lg p-4">
-                <div class="text-2xl font-bold ty-text-info-strong">{{ 156 + user.id * 12 }}</div>
-                <div class="text-sm ty-text-neutral-bold">Tasks</div>
+            <div class="text-center ty-bg-primary- rounded-lg p-4">
+                <div class="text-2xl font-bold ty-text-primary++">{{ 156 + user.id * 12 }}</div>
+                <div class="text-sm ty-text-neutral+">Tasks</div>
             </div>
         </div>
     </div>
     
     <!-- Recent Activity -->
     <div class="mt-6">
-        <h4 class="text-lg font-medium ty-text-neutral-strong mb-4">Recent Activity</h4>
+        <h4 class="text-lg font-medium ty-text-neutral++ mb-4">Recent Activity</h4>
         <div class="space-y-3">
             <div class="flex items-center space-x-3 py-2">
                 <ty-icon name="check-circle" class="w-5 h-5 ty-text-success"></ty-icon>
-                <span class="text-sm ty-text-neutral-bold">Completed project milestone</span>
-                <span class="text-xs ty-text-neutral-faint ml-auto">2 hours ago</span>
+                <span class="text-sm ty-text-neutral+">Completed project milestone</span>
+                <span class="text-xs ty-text-neutral-- ml-auto">2 hours ago</span>
             </div>
             <div class="flex items-center space-x-3 py-2">
-                <ty-icon name="edit" class="w-5 h-5 ty-text-info"></ty-icon>
-                <span class="text-sm ty-text-neutral-bold">Updated team documentation</span>
-                <span class="text-xs ty-text-neutral-faint ml-auto">1 day ago</span>
+                <ty-icon name="edit" class="w-5 h-5 ty-text-primary"></ty-icon>
+                <span class="text-sm ty-text-neutral+">Updated team documentation</span>
+                <span class="text-xs ty-text-neutral-- ml-auto">1 day ago</span>
             </div>
             <div class="flex items-center space-x-3 py-2">
                 <ty-icon name="users" class="w-5 h-5 ty-text-primary"></ty-icon>
-                <span class="text-sm ty-text-neutral-bold">Joined new project team</span>
-                <span class="text-xs ty-text-neutral-faint ml-auto">3 days ago</span>
+                <span class="text-sm ty-text-neutral+">Joined new project team</span>
+                <span class="text-xs ty-text-neutral-- ml-auto">3 days ago</span>
             </div>
         </div>
     </div>
     
+    <div id="contact-result-{{ user.id }}" class="mt-6"></div>
+
     <!-- Action Buttons -->
     <div class="flex justify-end space-x-3 mt-8 pt-6 border-t ty-border">
-        <ty-button flavor="neutral" onclick="document.getElementById('demo-modal').hide()">
+        <ty-button type="button" flavor="neutral" onclick="this.closest('ty-modal').hide()">
             Close
         </ty-button>
-        <ty-button flavor="primary" 
+        <ty-button type="button" flavor="primary" 
                    hx-post="/api/users/{{ user.id }}/contact"
-                   hx-target="#dynamic-modal-content"
+                   hx-target="#contact-result-{{ user.id }}"
                    hx-swap="innerHTML">
-            <ty-icon name="mail" class="mr-2"></ty-icon>
+            <ty-icon slot="start" name="mail"></ty-icon>
             Contact User
         </ty-button>
     </div>

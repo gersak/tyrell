@@ -4,6 +4,7 @@
    [tyrell.router :as router]
    [tyrell.site.docs.common :as common]
    [tyrell.site.docs.quickstart :as quickstart]
+   [tyrell.site.state :as state]
    [tyrell.site.versions :as versions]
    [tyrell.site.views.contact-form :as contact-form]
    [tyrell.site.views.event-booking :as event-booking]
@@ -65,52 +66,63 @@
   "Hero demo: one form built from five primitives on a real grid, with the
    keyboard map in its footer instead of a claim floating beside it."
   []
-  [:div.ty-elevated.w-full.rounded-2xl.border.ty-border.overflow-hidden
-   {:class ["@container"]
-    :style {:box-shadow "0 24px 48px -16px rgb(0 0 0 / 0.18), 0 2px 6px rgb(0 0 0 / 0.04)"}}
-   [:div.flex.items-center.justify-between.gap-3.px-5.py-3.border-b.ty-border
-    [:div.flex.items-baseline.gap-3.min-w-0
-     [:span.text-sm.font-semibold.ty-text++ "New booking"]
-     [:span.font-mono.ty-text--.truncate {:class ["hidden" "@md:inline"] :style {:font-size "11px"}} "5 primitives · 0 wrappers"]]
-    [:span.inline-flex.items-center.rounded-full.text-xs.font-medium.ty-bg-success-.ty-text-success.shrink-0 {:class ["gap-1.5" "px-2.5" "py-0.5"]}
-     [:span.inline-block.rounded-full {:class ["w-1.5" "h-1.5"] :style {:background "currentColor"}}]
-     "Draft saved"]]
-   [:div.flex.flex-col {:class ["@md:flex-row"]}
-    [:div.p-4.flex.justify-center.border-b.ty-border {:class ["@md:border-b-0" "@md:border-r"]}
-     [:ty-calendar {:size "sm" :value "2026-09-24"}]]
-    [:div.flex-1.min-w-0.flex.flex-col.gap-4.p-4
-     [:ty-select {:label "Timezone" :value "Europe/Zagreb"}
-      [:ty-option {:value "Europe/London"} "Europe/London"]
-      [:ty-option {:value "Europe/Zagreb"} "Europe/Zagreb"]
-      [:ty-option {:value "America/New_York"} "America/New_York"]
-      [:ty-option {:value "Asia/Tokyo"} "Asia/Tokyo"]]
-     [:div.flex.flex-col.gap-2
-      [:ty-select {:id "hero-stack" :label "Stack" :multiple true :compact true
-                   :placeholder "Add framework" :value "cljs,react,htmx"}
-       [:ty-option {:value "cljs" :flavor "primary"} "ClojureScript"]
-       [:ty-option {:value "react" :flavor "success"} "React"]
-       [:ty-option {:value "htmx" :flavor "warning"} "HTMX"]
-       [:ty-option {:value "vue"} "Vue"]
-       [:ty-option {:value "svelte"} "Svelte"]]
-      [:div.flex.flex-wrap.gap-2
-       [:ty-selected-options {:for "hero-stack"}
-        [:template
-         [:ty-tag {:flavor "{flavor}" :size "sm" :dismissible true} "{label}"]]]]]
-     [:div.flex-1]
-     [:div.flex.flex-col.gap-3.pt-4.border-t.ty-border
-      [:label.flex.items-center.justify-between.gap-3.cursor-pointer.text-sm.ty-text
-       "Auto-save drafts" [:ty-switch {:flavor "success" :checked ""}]]
-      [:label.flex.items-center.justify-between.gap-3.cursor-pointer.text-sm.ty-text
-       "Two-factor auth" [:ty-switch]]]]]
-   [:div.flex.items-center.justify-end.gap-4.pl-5.pr-3.border-t.ty-border {:class ["py-2.5"] :style {:background "color-mix(in oklch, var(--ty-text-strong) 4%, transparent)"}}
-    ;; Keyboard hints only where there's room (and a keyboard, usually)
-    [:ty-icon.ty-text-- {:class ["hidden" "@md:inline-flex"] :name "keyboard" :size "sm"}]
-    [:div.flex-1.flex-wrap.items-center.gap-x-4.gap-y-1.text-xs.ty-text- {:class ["hidden" "@md:flex"]}
-     (for [[ks label] [[["←" "→"] "move"] [["↵"] "select"] [["Esc"] "close"] [["Tab"] "next field"]]]
-       (into [:span.inline-flex.items-center.gap-1 {:replicant/key label}]
-             (concat (map keycap ks) [[:span {:class ["ml-0.5"]} label]])))]
-    [:ty-button {:size "sm" :style ink-button}
-     "Book" [:ty-icon {:slot "end" :name "arrow-right"}]]]])
+  (let [{:keys [booked? auto-save?] :or {auto-save? true}} (:landing-hero @state/state)
+        ;; Any edit reopens the booking; the switch decides whether it's kept.
+        edited! #(swap! state/state assoc-in [:landing-hero :booked?] false)]
+    [:div.ty-elevated.w-full.rounded-2xl.border.ty-border.overflow-hidden
+     {:class ["@container"]
+      :on {:change edited!}
+      :style {:box-shadow "0 24px 48px -16px rgb(0 0 0 / 0.18), 0 2px 6px rgb(0 0 0 / 0.04)"}}
+     [:div.flex.items-center.justify-between.gap-3.px-5.py-3.border-b.ty-border
+      [:div.flex.items-baseline.gap-3.min-w-0
+       [:span.text-sm.font-semibold.ty-text++ "New booking"]
+       [:span.font-mono.ty-text--.truncate {:class ["hidden" "@md:inline"] :style {:font-size "11px"}} "5 primitives · 0 wrappers"]]
+      (let [[label tone] (cond booked? ["Booked" "success"]
+                               auto-save? ["Draft saved" "success"]
+                               :else ["Auto-save off" "warning"])]
+        [:span.inline-flex.items-center.rounded-full.text-xs.font-medium.shrink-0
+         {:class ["gap-1.5" "px-2.5" "py-0.5" (str "ty-bg-" tone "-") (str "ty-text-" tone)]}
+         [:span.inline-block.rounded-full {:class ["w-1.5" "h-1.5"] :style {:background "currentColor"}}]
+         label])]
+     [:div.flex.flex-col {:class ["@md:flex-row"]}
+      [:div.p-4.flex.justify-center.border-b.ty-border {:class ["@md:border-b-0" "@md:border-r"]}
+       [:ty-calendar {:size "sm" :value "2026-09-24"}]]
+      [:div.flex-1.min-w-0.flex.flex-col.gap-4.p-4
+       [:ty-select {:label "Timezone" :value "Europe/Zagreb"}
+        [:ty-option {:value "Europe/London"} "Europe/London"]
+        [:ty-option {:value "Europe/Zagreb"} "Europe/Zagreb"]
+        [:ty-option {:value "America/New_York"} "America/New_York"]
+        [:ty-option {:value "Asia/Tokyo"} "Asia/Tokyo"]]
+       [:div.flex.flex-col.gap-2
+        [:ty-select {:id "hero-stack" :label "Stack" :multiple true :compact true
+                     :placeholder "Add framework" :value "cljs,react,htmx"}
+         [:ty-option {:value "cljs" :flavor "primary"} "ClojureScript"]
+         [:ty-option {:value "react" :flavor "success"} "React"]
+         [:ty-option {:value "htmx" :flavor "warning"} "HTMX"]
+         [:ty-option {:value "vue"} "Vue"]
+         [:ty-option {:value "svelte"} "Svelte"]]
+        ;; Room for two rows of tags, so picking all five doesn't grow the panel.
+        [:div.flex.flex-wrap.items-start.gap-2 {:style {:min-height "56px"}}
+         [:ty-selected-options {:for "hero-stack"}
+          [:template
+           [:ty-tag {:flavor "{flavor}" :size "sm" :dismissible true} "{label}"]]]]]
+       [:div.flex-1]
+       [:div.flex.flex-col.gap-3.pt-4.border-t.ty-border
+        [:label.flex.items-center.justify-between.gap-3.cursor-pointer.text-sm.ty-text
+         "Auto-save drafts" [:ty-switch {:flavor "success" :checked (when auto-save? "")
+                                         :on {:change #(swap! state/state assoc-in [:landing-hero :auto-save?] (.. % -detail -checked))}}]]
+        [:label.flex.items-center.justify-between.gap-3.cursor-pointer.text-sm.ty-text
+         "Two-factor auth" [:ty-switch]]]]]
+     [:div.flex.items-center.justify-end.gap-4.pl-5.pr-3.border-t.ty-border {:class ["py-2.5"] :style {:background "color-mix(in oklch, var(--ty-text-strong) 4%, transparent)"}}
+      ;; Keyboard hints only where there's room (and a keyboard, usually)
+      [:ty-icon.ty-text-- {:class ["hidden" "@md:inline-flex"] :name "keyboard" :size "sm"}]
+      [:div.flex-1.flex-wrap.items-center.gap-x-4.gap-y-1.text-xs.ty-text- {:class ["hidden" "@md:flex"]}
+       (for [[ks label] [[["←" "→"] "move"] [["↵"] "select"] [["Esc"] "close"] [["Tab"] "next field"]]]
+         (into [:span.inline-flex.items-center.gap-1 {:replicant/key label}]
+               (concat (map keycap ks) [[:span {:class ["ml-0.5"]} label]])))]
+      [:ty-button {:size "sm" :style ink-button
+                   :on {:click #(swap! state/state assoc-in [:landing-hero :booked?] true)}}
+       (if booked? "Booked" "Book") [:ty-icon {:slot "end" :name (if booked? "check" "arrow-right")}]]]]))
 
 (declare primitive-count)
 

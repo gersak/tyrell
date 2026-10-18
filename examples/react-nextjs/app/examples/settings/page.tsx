@@ -12,6 +12,8 @@ import {
   TyModal,
   TyTooltip,
   TyTag,
+  TySwitch,
+  TyTextarea,
   type TyModalRef
 } from 'tyrell-react'
 
@@ -63,6 +65,9 @@ export default function SettingsPanelExample() {
   const { theme: currentTheme, toggleTheme } = useTheme()
 
   const confirmModalRef = useRef<TyModalRef>(null)
+  const deleteModalRef = useRef<TyModalRef>(null)
+  // Only mounted while the Account section is shown
+  const accountFormRef = useRef<HTMLFormElement>(null)
   const successModalRef = useRef<TyModalRef>(null)
 
   const [settings, setSettings] = useState<SettingsState>({
@@ -136,6 +141,10 @@ export default function SettingsPanelExample() {
   }
 
   const handleSaveSettings = async () => {
+    // Validate without submitting: shows each failing field's message and
+    // focuses the first one. Nothing to check when the form isn't mounted.
+    if (accountFormRef.current && !accountFormRef.current.reportValidity()) return
+
     // Simulate API save
     await new Promise(resolve => setTimeout(resolve, 1000))
 
@@ -283,9 +292,10 @@ export default function SettingsPanelExample() {
                   <div>
                     <label className="block text-sm font-medium ty-text+ mb-3">
                       Theme Preference
-                      <TyTooltip content="Choose how the interface should appear. Auto follows your system preference.">
-                        <TyIcon name="help-circle" size="14" className="ml-2 ty-text--" />
-                      </TyTooltip>
+                      <span className="inline-flex ml-2 ty-text-- align-middle" tabIndex={0}>
+                        <TyIcon name="help-circle" size="14" />
+                        <TyTooltip>Choose how the interface should appear. Auto follows your system preference.</TyTooltip>
+                      </span>
                     </label>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -373,16 +383,14 @@ export default function SettingsPanelExample() {
                   <div className="ty-bg-primary- p-4 rounded-lg border ty-border-">
                     <div className="flex items-start justify-between">
                       <div>
-                        <label className="flex items-center text-sm font-medium ty-text-primary+ cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={settings.compactMode}
-                            onChange={(e) => updateSetting('compactMode', e.target.checked)}
-                            className="mr-3 w-4 h-4 ty-text-primary border-2 ty-border-primary rounded focus:ring-2 focus:ring-opacity-50"
-                          />
+                        <label className="flex items-center gap-3 text-sm font-medium ty-text-primary+ cursor-pointer">
+                          <TySwitch
+                              checked={settings.compactMode}
+                              onChange={(e) => updateSetting('compactMode', e.detail.checked)}
+                            />
                           Compact Mode
                         </label>
-                        <p className="text-xs ty-text-primary mt-1 ml-7">
+                        <p className="text-xs ty-text-primary mt-1 ml-12">
                           Reduce spacing and padding for a more dense interface layout.
                         </p>
                       </div>
@@ -430,11 +438,9 @@ export default function SettingsPanelExample() {
                                 <p className="text-xs ty-text- mt-1">{item.desc}</p>
                               </div>
                             </div>
-                            <input
-                              type="checkbox"
+                            <TySwitch
                               checked={settings[item.key as keyof SettingsState] as boolean}
-                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.detail.checked as any)}
                             />
                           </div>
                         </div>
@@ -466,11 +472,9 @@ export default function SettingsPanelExample() {
                                 <p className="text-xs ty-text- mt-1">{item.desc}</p>
                               </div>
                             </div>
-                            <input
-                              type="checkbox"
+                            <TySwitch
                               checked={settings.notificationTypes[item.key as keyof typeof settings.notificationTypes]}
-                              onChange={(e) => updateNestedSetting('notificationTypes', item.key as keyof typeof settings.notificationTypes, e.target.checked)}
-                              className="w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              onChange={(e) => updateNestedSetting('notificationTypes', item.key as keyof typeof settings.notificationTypes, e.detail.checked)}
                             />
                           </div>
                         </div>
@@ -498,9 +502,10 @@ export default function SettingsPanelExample() {
                   <div>
                     <label className="block text-sm font-medium ty-text+ mb-3">
                       Profile Visibility
-                      <TyTooltip content="Control who can see your profile information and activity.">
-                        <TyIcon name="help-circle" size="14" className="ml-2 ty-text--" />
-                      </TyTooltip>
+                      <span className="inline-flex ml-2 ty-text-- align-middle" tabIndex={0}>
+                        <TyIcon name="help-circle" size="14" />
+                        <TyTooltip>Control who can see your profile information and activity.</TyTooltip>
+                      </span>
                     </label>
 
                     <TySelect
@@ -539,11 +544,9 @@ export default function SettingsPanelExample() {
                                 <p className="text-xs ty-text- mt-1">{item.desc}</p>
                               </div>
                             </div>
-                            <input
-                              type="checkbox"
+                            <TySwitch
                               checked={settings[item.key as keyof SettingsState] as boolean}
-                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-neutral border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.detail.checked as any)}
                             />
                           </div>
                         </div>
@@ -633,63 +636,57 @@ export default function SettingsPanelExample() {
                 </div>
 
                 <div className="space-y-8">
-                  {/* Basic Information */}
-                  <div>
+                  {/* Basic Information: the rules live on the fields. Save calls
+                      reportValidity() on this form (see handleSaveSettings). */}
+                  <form
+                    ref={accountFormRef}
+                    onSubmit={(e) => { e.preventDefault(); handleSaveSettings() }}
+                  >
                     <h3 className="text-lg font-medium mb-4 ty-text+">
                       Basic Information
                     </h3>
 
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium ty-text+ mb-2">
-                            Username
-                          </label>
-                          <TyInput
-                            type="text"
-                            value={settings.username}
-                            onChange={(e) => updateSetting('username', e.detail.value)}
-                            className="w-full"
-                            placeholder="Enter username"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium ty-text+ mb-2">
-                            Display Name
-                          </label>
-                          <TyInput
-                            type="text"
-                            value={settings.displayName}
-                            onChange={(e) => updateSetting('displayName', e.detail.value)}
-                            className="w-full"
-                            placeholder="Enter display name"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium ty-text+ mb-2">
-                          Email Address
-                        </label>
                         <TyInput
-                          type="email"
-                          value={settings.email}
-                          onChange={(e) => updateSetting('email', e.detail.value)}
-                          className="w-full"
-                          placeholder="Enter email address"
+                          name="username"
+                          label="Username"
+                          value={settings.username}
+                          onChange={(e) => updateSetting('username', e.detail.value)}
+                          placeholder="ada_lovelace"
+                          required
+                          pattern="[a-z0-9_]{3,20}"
+                        />
+                        <TyInput
+                          name="displayName"
+                          label="Display name"
+                          value={settings.displayName}
+                          onChange={(e) => updateSetting('displayName', e.detail.value)}
+                          placeholder="Ada Lovelace"
+                          maxLength={50}
                         />
                       </div>
+                      <p className="text-xs ty-text- -mt-2">
+                        Username: 3–20 lowercase letters, digits or underscores.
+                      </p>
+
+                      <TyInput
+                        name="email"
+                        type="email"
+                        label="Email address"
+                        value={settings.email}
+                        onChange={(e) => updateSetting('email', e.detail.value)}
+                        placeholder="you@company.com"
+                        required
+                      />
 
                       <div>
-                        <label className="block text-sm font-medium ty-text+ mb-2">
-                          Bio
-                        </label>
-                        <textarea
+                        <TyTextarea
+                          name="bio"
+                          label="Bio"
                           value={settings.bio}
-                          onChange={(e) => updateSetting('bio', e.target.value)}
+                          onChange={(e) => updateSetting('bio', String(e.detail.value ?? ''))}
                           rows={3}
-                          className="w-full p-3 border rounded-lg ty-input resize-y ty-border focus:ty-border-primary focus:outline-none focus:ring-2 focus:ring-opacity-50"
                           placeholder="Tell us about yourself..."
                         />
                         <p className="text-xs ty-text- mt-1">
@@ -697,29 +694,24 @@ export default function SettingsPanelExample() {
                         </p>
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-medium ty-text+ mb-2">
-                          Timezone
-                        </label>
-                        <TySelect
-                          value={settings.timezone}
-                          onChange={(e) => {
-                            const value = (e.detail.value as string) || 'America/New_York'
-                            updateSetting('timezone', value)
-                          }}
-                          className="w-full md:w-80"
-                        >
-                          <TyOption value="America/New_York">Eastern Time (ET)</TyOption>
-                          <TyOption value="America/Chicago">Central Time (CT)</TyOption>
-                          <TyOption value="America/Denver">Mountain Time (MT)</TyOption>
-                          <TyOption value="America/Los_Angeles">Pacific Time (PT)</TyOption>
-                          <TyOption value="Europe/London">London (GMT)</TyOption>
-                          <TyOption value="Europe/Paris">Paris (CET)</TyOption>
-                          <TyOption value="Asia/Tokyo">Tokyo (JST)</TyOption>
-                        </TySelect>
-                      </div>
+                      <TySelect
+                        name="timezone"
+                        label="Timezone"
+                        value={settings.timezone}
+                        onChange={(e) => updateSetting('timezone', (e.detail.value as string) || 'America/New_York')}
+                        className="w-full md:w-80"
+                        noClear
+                      >
+                        <TyOption value="America/New_York">Eastern Time (ET)</TyOption>
+                        <TyOption value="America/Chicago">Central Time (CT)</TyOption>
+                        <TyOption value="America/Denver">Mountain Time (MT)</TyOption>
+                        <TyOption value="America/Los_Angeles">Pacific Time (PT)</TyOption>
+                        <TyOption value="Europe/London">London (GMT)</TyOption>
+                        <TyOption value="Europe/Paris">Paris (CET)</TyOption>
+                        <TyOption value="Asia/Tokyo">Tokyo (JST)</TyOption>
+                      </TySelect>
                     </div>
-                  </div>
+                  </form>
 
                   {/* Danger Zone */}
                   <div className="ty-bg-danger- p-6 rounded-lg border ty-border-danger">
@@ -740,7 +732,7 @@ export default function SettingsPanelExample() {
                         <TyButton
                           flavor="danger"
                           size="sm"
-                          onClick={() => alert('Account deletion would be implemented here')}
+                          onClick={() => deleteModalRef.current?.show()}
                           className="flex items-center gap-2"
                         >
                           <TyIcon name="trash-2" size="16" />
@@ -788,11 +780,9 @@ export default function SettingsPanelExample() {
                                 <p className="text-xs ty-text-warning mt-1">{item.desc}</p>
                               </div>
                             </div>
-                            <input
-                              type="checkbox"
+                            <TySwitch
                               checked={settings[item.key as keyof SettingsState] as boolean}
-                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-warning border-2 ty-border-warning rounded focus:ring-2 focus:ring-opacity-50"
+                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.detail.checked as any)}
                             />
                           </div>
                         </div>
@@ -822,11 +812,9 @@ export default function SettingsPanelExample() {
                                 <p className="text-xs ty-text- mt-1">{item.desc}</p>
                               </div>
                             </div>
-                            <input
-                              type="checkbox"
+                            <TySwitch
                               checked={settings[item.key as keyof SettingsState] as boolean}
-                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.target.checked as any)}
-                              className="w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50"
+                              onChange={(e) => updateSetting(item.key as keyof SettingsState, e.detail.checked as any)}
                             />
                           </div>
                         </div>
@@ -916,6 +904,25 @@ export default function SettingsPanelExample() {
               flavor="neutral"
             >
               Cancel
+            </TyButton>
+          </div>
+        </div>
+      </TyModal>
+
+      {/* Delete confirmation: guarded, so only the buttons close it */}
+      <TyModal ref={deleteModalRef} label="Delete account" preventOutsideClick preventEscape>
+        <div className="p-6 ty-floating rounded-xl max-w-md">
+          <h2 className="mb-2 ty-text++ text-xl font-semibold">Delete your account?</h2>
+          <p className="mb-6 ty-text- leading-relaxed">
+            All of your data goes with it. This can&apos;t be undone.
+          </p>
+          <div className="flex gap-3 justify-end">
+            <TyButton appearance="ghost" onClick={() => deleteModalRef.current?.hide()}>
+              Cancel
+            </TyButton>
+            <TyButton flavor="danger" onClick={() => deleteModalRef.current?.hide()}>
+              <TyIcon slot="start" name="trash-2" />
+              Delete account
             </TyButton>
           </div>
         </div>

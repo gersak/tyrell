@@ -35,7 +35,21 @@ ${inputStyles}
 :host(ty-radio) {
   display: inline-flex;
   width: auto;
-  vertical-align: middle;
+  /* Exactly one line box of the surrounding text, the visual centered in
+     it; a bigger one overhangs the line equally above and below instead of
+     growing it (same as ty-checkbox). */
+  height: 1.25em;
+  height: 1lh;
+  align-items: center;
+  vertical-align: baseline;
+  overflow: visible;
+}
+
+/* Zero-width text strut: the host gets the surrounding text's baseline, so
+   inline its line box coincides with the text's. */
+:host(ty-radio)::before {
+  content: "\\200b";
+  width: 0;
 }
 
 :host(ty-radio-group) {
@@ -96,16 +110,12 @@ ${inputStyles}
 
 /* A radio item is just the circle */
 .radio-container {
-  /* One line box of the surrounding text, circle centered in it — lines up
-     with the first line of a wrapping <label> (same as ty-checkbox). */
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
-  min-height: 1.25em;
-  min-height: 1lh;
   cursor: pointer;
   user-select: none;
   outline: none;
-  vertical-align: middle;
 }
 
 .radio-container:not(.disabled):not([aria-checked="true"]):hover .radio-circle {

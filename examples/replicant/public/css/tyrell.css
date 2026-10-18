@@ -382,12 +382,16 @@ DESIGN SYSTEM TOKENS
      ty-button's 4px ladder (see button.ts): field sm = button md (32px),
      field md = button lg (36px), field lg = button xl (40px) — a button
      and a field of the paired size sit flush, same height, in a row. */
+  --ty-size-xs: 1.75rem;
+  /* 28px */
   --ty-size-sm: 2rem;
   /* 32px */
   --ty-size-md: 2.25rem;
   /* 36px */
   --ty-size-lg: 2.5rem;
   /* 40px */
+  --ty-size-xl: 2.75rem;
+  /* 44px */
 
   /* Z-Index Scale */
   --ty-z-auto: auto;
@@ -430,7 +434,7 @@ DESIGN SYSTEM TOKENS
   on, light page or dark; every major library (Material, Bootstrap, Ant,
   Shoelace) keeps its default tooltip a fixed dark chip regardless of page
   theme. Override on :root (or scope to a container) to retheme globally
-  without touching flavor="light"/"info"/other components.
+  without touching other flavors or components.
   Values are pure achromatic gray (R=G=B, no hue) — matches
   --ty-solid-neutral's "no tint" convention. Don't reuse a Tailwind
   slate/cool-gray hex here (e.g. #1f2937) — those carry a real blue
@@ -440,24 +444,19 @@ DESIGN SYSTEM TOKENS
   --ty-tooltip-bg: #262626;
   --ty-tooltip-color: #f5f5f5;
   --ty-tooltip-border: #404040;
-
-  /* =================================================================
-  CALENDAR — "other month" day de-emphasis
-  --ty-color-neutral-faint alone is only ~2.5:1 against white — already
-  below the 4.5:1 WCAG AA text minimum before the (now-removed) opacity
-  fade made it worse still. This is its own token, calibrated to actually
-  pass, rather than reusing -faint here. Real bug, caught by adding
-  axe-core coverage for the first time, not a design choice being revised.
-  ================================================================= */
-  --ty-calendar-other-month-color: #6b7280; /* 4.83:1 vs white */
 }
 
 /* =================================================================
 DARK THEME OVERRIDES
 ================================================================= */
 
+/* [data-ty-theme].dark scopes dark mode to a subtree, matching the selectors
+   in tyrell-theme.css — without it, colors flip there but labels, modals,
+   shadows and scrollbars keep their light values. */
 html.dark,
-html[data-theme="dark"] {
+html[data-theme="dark"],
+[data-ty-theme].dark,
+[data-ty-theme][data-theme="dark"] {
   /* Weight dials flip with the mode — light-on-dark text blooms, so dark
      mode runs genuinely lighter. See the :root definitions. */
   --ty-weight-action: var(--ty-font-normal);
@@ -526,10 +525,6 @@ html[data-theme="dark"] {
     rgba(0, 0, 0, 0),
     transparent
   );
-
-  /* Calendar "other month" de-emphasis — see the :root definition for why
-     this is its own token instead of --ty-color-neutral-faint. */
-  --ty-calendar-other-month-color: #8a8a8a; /* 5.04:1 vs dark content bg (#1a1a1a) */
 }
 
 /* =================================================================
@@ -1368,4 +1363,25 @@ RESPONSIVE VARIANTS
   :root {
     --ty-font-sm: 1rem;
   }
+}
+
+/* =================================================================
+   MODAL BACKDROP ZOOM (default; turn off with no-zoom)
+   While an open <ty-modal> with a backdrop and without no-zoom is open, the
+   component toggles .ty-modal-zoom on <html> and the page body scales down
+   slightly (Vaul/shadcn-style). The modal itself renders in the top layer,
+   which escapes ancestor transforms — only the page behind it moves.
+   Caveat: a scaled <body> becomes the containing block for position:fixed
+   descendants — apps with fixed headers/sidebars should set no-zoom. A
+   no-backdrop modal is one of them (not in the top layer): it never zooms,
+   and while one is open in the page nothing does.
+================================================================= */
+
+body {
+  transition: scale var(--ty-modal-duration, 200ms) ease-out;
+}
+
+html.ty-modal-zoom body {
+  scale: 0.99;
+  transform-origin: 50% 50%;
 }

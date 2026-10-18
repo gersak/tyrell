@@ -232,7 +232,7 @@
    * light AND set its inverse (1 / factor, roughly) in `html.dark`.
    * --------------------------------------------------------------*/
 
-  --ty-primary-l-factor: 0.8;
+  --ty-primary-l-factor: 0.96;
   --ty-success-l-factor: 1;
   --ty-warning-l-factor: 1.3;
   --ty-danger-l-factor: 0.93;
@@ -652,6 +652,7 @@ html:root,
     from var(--ty-neutral-seed-resolved) var(--ty-l-bg-neutral-faint)
       calc(c * var(--ty-c-bg-neutral-faint-mult)) h
   );
+  --ty-border-neutral: var(--ty-color-neutral-soft);
 
   /* ----------------------------------------------------------------
    * Global neutral borders — own family, own L ladder (Tier 2).
@@ -736,11 +737,22 @@ html:root,
    * Inputs — tied to neutral ramp so form controls retint with primary.
    * --------------------------------------------------------------*/
   --ty-input-bg: var(--ty-surface-input);
-  --ty-input-color: var(--ty-color-neutral-strong);
-  --ty-input-border: var(--ty-color-neutral-faint);
-  --ty-input-border-hover: var(--ty-color-neutral-soft);
+  /* Value text and placeholder ride the TEXT ladder, like the static
+     palette (#111827 / #9ca3af). The neutral ink ramp they used before is
+     scaled by --ty-neutral-l-factor (0.8 in dark), which put typed text at
+     L 0.58 — dimmer than the field's own label — and the placeholder at
+     L 0.37 on an L 0.18 surface. */
+  --ty-input-color: var(--ty-text);
+  /* Borders come from the BORDER family, not the neutral ink ramp: ink is
+     multiplied by --ty-neutral-l-factor (0.8 in dark), which crushed the
+     resting input border to L 0.24 against an L 0.18 input surface — half
+     the separation light gets (0.88 on 1.0). The border ladder is exempt
+     from that factor by design, and its own comments name these two as the
+     successors of neutral-faint / neutral-soft. */
+  --ty-input-border: var(--ty-border-soft);
+  --ty-input-border-hover: var(--ty-border);
   --ty-input-border-focus: var(--ty-color-primary);
-  --ty-input-placeholder: var(--ty-color-neutral-soft);
+  --ty-input-placeholder: var(--ty-text-faint);
   --ty-input-disabled-bg: var(--ty-color-neutral-faint);
   --ty-input-disabled-border: var(--ty-color-neutral-faint);
   --ty-input-disabled-color: var(--ty-color-neutral-bold);
@@ -749,6 +761,23 @@ html:root,
     var(--ty-color-primary) var(--ty-focus-ring-alpha),
     transparent
   );
+}
+
+/* Dark takes the border family one rung harder than light. Genuine per-mode
+   DATA, not a formula duplicate: a small L delta at the dark end of an
+   emissive screen reads much weaker than the same delta mid-scale (the same
+   reason dark hover/active offsets are bigger — see Tier 5 dark), so light's
+   soft/base pair lands too quiet here. Dark uses base/bold instead.
+
+   Placed AFTER the block above on purpose: html.dark and html:root are both
+   (0,1,1), so source order is what decides this one — moving it up to the
+   dial block at the top of the file would lose the tie. */
+html.dark,
+html[data-theme="dark"],
+[data-ty-theme].dark,
+[data-ty-theme][data-theme="dark"] {
+  --ty-input-border: var(--ty-border);
+  --ty-input-border-hover: var(--ty-border-bold);
 }
 
 /* ----------------------------------------------------------------
@@ -1373,20 +1402,21 @@ html:root,
   html,
   [data-ty-theme] {
     transition-property:
-      --ty-primary-hue, --ty-primary-chroma, --ty-surface-chroma, --ty-success-hue,
-      --ty-success-chroma, --ty-warning-hue, --ty-warning-chroma,
-      --ty-danger-hue, --ty-danger-chroma, --ty-neutral-hue,
-      --ty-neutral-chroma, --ty-l-strong, --ty-l-bold, --ty-l-base, --ty-l-soft,
-      --ty-l-faint, --ty-a-bg-base, --ty-a-bg-bold, --ty-a-bg-soft,
-      --ty-l-text-strong, --ty-l-text-bold, --ty-l-text-base, --ty-l-text-soft,
-      --ty-l-text-faint, --ty-l-border-content, --ty-l-border-elevated,
-      --ty-l-border-floating, --ty-l-border-strong, --ty-l-border-bold,
-      --ty-l-border, --ty-l-border-soft, --ty-l-border-faint,
-      --ty-l-surface-canvas, --ty-l-surface-content, --ty-l-surface-elevated,
-      --ty-l-surface-floating, --ty-l-surface-input, --ty-l-solid-neutral,
-      --ty-l-solid-neutral-strong, --ty-l-bg-neutral-strong,
-      --ty-l-bg-neutral-faint, --ty-c-bg-neutral-faint-mult, --ty-c-strong-mult,
-      --ty-c-bold-mult, --ty-c-base-mult, --ty-c-soft-mult, --ty-c-faint-mult,
+      --ty-primary-hue, --ty-primary-chroma, --ty-surface-chroma,
+      --ty-success-hue, --ty-success-chroma, --ty-warning-hue,
+      --ty-warning-chroma, --ty-danger-hue, --ty-danger-chroma,
+      --ty-neutral-hue, --ty-neutral-chroma, --ty-l-strong, --ty-l-bold,
+      --ty-l-base, --ty-l-soft, --ty-l-faint, --ty-a-bg-base, --ty-a-bg-bold,
+      --ty-a-bg-soft, --ty-l-text-strong, --ty-l-text-bold, --ty-l-text-base,
+      --ty-l-text-soft, --ty-l-text-faint, --ty-l-border-content,
+      --ty-l-border-elevated, --ty-l-border-floating, --ty-l-border-strong,
+      --ty-l-border-bold, --ty-l-border, --ty-l-border-soft,
+      --ty-l-border-faint, --ty-l-surface-canvas, --ty-l-surface-content,
+      --ty-l-surface-elevated, --ty-l-surface-floating, --ty-l-surface-input,
+      --ty-l-solid-neutral, --ty-l-solid-neutral-strong,
+      --ty-l-bg-neutral-strong, --ty-l-bg-neutral-faint,
+      --ty-c-bg-neutral-faint-mult, --ty-c-strong-mult, --ty-c-bold-mult,
+      --ty-c-base-mult, --ty-c-soft-mult, --ty-c-faint-mult,
       --ty-primary-l-factor, --ty-success-l-factor, --ty-warning-l-factor,
       --ty-danger-l-factor, --ty-neutral-l-factor, --ty-primary-solid-l,
       --ty-success-solid-l, --ty-warning-solid-l, --ty-danger-solid-l,

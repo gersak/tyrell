@@ -60,6 +60,126 @@
 
 Delete the text and it shrinks back to min-height.")
 
+(def ^:private counter-snippets
+  "Character counter, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-textarea id=\"note\" label=\"Status update\">
+  <span slot=\"footer\" id=\"counter\">0 / 140</span>
+</ty-textarea>
+
+<script>
+  note.addEventListener('input', (e) => {
+    const n = e.detail.value.length;
+    counter.textContent = `${n} / 140`;
+    note.error = n > 140 ? `${n - 140} characters over` : '';
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyTextarea } from 'tyrell-react'
+
+const over = note.length - 140
+
+<TyTextarea label=\"Status update\" value={note}
+  error={over > 0 ? `${over} characters over` : ''}
+  onChange={(e) => setNote(e.detail.value)}>
+  <span slot=\"footer\">{note.length} / 140</span>
+</TyTextarea>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+(let [over (- (count @note) 140)]
+  [:> ty/Textarea {:label \"Status update\" :value @note
+                   :error (if (pos? over) (str over \" characters over\") \"\")
+                   :on-change #(reset! note (.. % -detail -value))}
+   [:span {:slot \"footer\"} (count @note) \" / 140\"]])"]
+   ["replicant" "Replicant" "clojure"
+    "(let [over (- (count note) 140)]
+  [:ty-textarea {:label \"Status update\" :value note
+                 :error (if (pos? over) (str over \" characters over\") \"\")
+                 :on {:input #(set-note! (.. % -detail -value))}}
+   [:span {:slot \"footer\"} (count note) \" / 140\"]])"]
+   ["datastar" "Datastar" "html"
+    "<ty-textarea label=\"Status update\"
+  data-signals:note=\"''\" data-bind=\"note\"
+  data-attr:error=\"$note.length > 140 ? `${$note.length - 140} characters over` : ''\">
+  <span slot=\"footer\" data-text=\"`${$note.length} / 140`\"></span>
+</ty-textarea>"]])
+
+(def ^:private form-snippets
+  "HTML form example, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/feedback\" method=\"post\">
+  <ty-textarea name=\"feedback\" label=\"Feedback\" required
+    minlength=\"20\" maxlength=\"500\"
+    too-short-message=\"At least {minlength} characters ({length} so far)\">
+  </ty-textarea>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TyTextarea, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyTextarea name=\"feedback\" label=\"Feedback\" required
+    minLength={20} maxLength={500}
+    tooShortMessage=\"At least {minlength} characters ({length} so far)\" />
+  <TyButton flavor=\"primary\">Send</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/Textarea {:name \"feedback\" :label \"Feedback\" :required true
+                  :min-length 20 :max-length 500
+                  :too-short-message \"At least {minlength} characters ({length} so far)\"}]
+ [:> ty/Button {:flavor \"primary\"} \"Send\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-textarea {:name \"feedback\" :label \"Feedback\" :required \"\"
+                :minlength \"20\" :maxlength \"500\"
+                :too-short-message \"At least {minlength} characters ({length} so far)\"}]
+ [:ty-button {:flavor \"primary\"} \"Send\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/feedback', {contentType: 'form'})\">
+  <ty-textarea name=\"feedback\" label=\"Feedback\" required
+    minlength=\"20\" maxlength=\"500\"
+    too-short-message=\"At least {minlength} characters ({length} so far)\">
+  </ty-textarea>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const ta = document.querySelector('ty-textarea');
+
+ta.value = 'Hello';
+ta.error = '';                     // set a message to show it
+
+// input on every edit; change on blur, if the value changed
+ta.addEventListener('input', (e) => preview(e.detail.value));
+ta.addEventListener('change', (e) => save(e.detail.value));"]
+   ["react" "React" "javascript"
+    "import { TyTextarea } from 'tyrell-react'
+
+<TyTextarea value={text} error={error}
+  onChange={(e) => setText(e.detail.value)}         // input: every edit
+  onChangeCommit={(e) => save(e.detail.value)} />  // change: on blur"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Textarea {:value @text :error @error
+                 :on-change #(reset! text (.. % -detail -value))
+                 :on-change-commit #(save! (.. % -detail -value))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-textarea {:value text :error error
+               :on {:input #(set-text! (.. % -detail -value))
+                    :change #(save! (.. % -detail -value))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-textarea data-signals=\"{text: '', error: ''}\" data-bind=\"text\"
+  data-attr:error=\"$error\"
+  data-on:change=\"@post('/save')\">
+</ty-textarea>"]])
+
 (defn view []
   (component-page
    {:title "Textarea"
@@ -69,11 +189,14 @@ Delete the text and it shrinks back to min-height.")
     :chips [["Form-associated" "send"] ["Auto-resize" "move-vertical"] ["TyTextarea (React)" "atom"]]
     :source "packages/core/src/components/textarea.ts"
     :mark "¶"
-    :demo [:div {:style {:width "340px"}}
-           [:ty-textarea {:label "Comment" :size "md" :value "Nice work on the calendar. The month view is much faster to use."}
-            (footer-bar :left [:span.text-xs.ty-text-- "62 / 280"]
-                        :button [:ty-button {:size "sm" :flavor "primary"}
-                                 [:ty-icon {:slot "start" :name "send"}] "Post"])]]}
+    :demo (let [v (or (doc-state :comment) "Nice work on the calendar. The month view is much faster to use.")
+                n (count v)]
+            [:div {:style {:width "340px"}}
+             [:ty-textarea {:label "Comment" :size "md" :value v :min-height "160px" :max-height "160px"
+                            :on {:input #(set-doc! :comment (.. % -detail -value))}}
+              (footer-bar :left [:span.text-xs {:class (if (> n 280) "ty-text-danger" "ty-text--")} (str n " / 280")]
+                          :button [:ty-button {:size "sm" :flavor "primary" :disabled (when (> n 280) "")}
+                                   [:ty-icon {:slot "start" :name "send"}] "Post"])]])}
 
    (playground
     {:id :textarea
@@ -93,11 +216,7 @@ Delete the text and it shrinks back to min-height.")
       {:title "Character counter"
        :span 4
        :description [:span "Count in the " [:code "footer"] " slot, and set " [:code "error"] " when it runs over."]
-       :code "note.addEventListener('input', (e) => {
-  const n = e.detail.value.length;
-  counter.textContent = `${n} / 140`;
-  note.error = n > 140 ? 'Too long' : '';
-});"}
+       :tabs counter-snippets}
       (let [v (or (doc-state :note) "Shipped the new calendar today. Month view, keyboard years, and a cleaner selected day.")
             n (count v)
             over? (> n limit)]
@@ -145,13 +264,10 @@ Delete the text and it shrinks back to min-height.")
      (example
       {:title "With an HTML form"
        :span 6
-       :description [:span "Set " [:code "name"] " and the text is in FormData. " [:code "required"]
-                     " blocks submission while empty."]
-       :code "<form>
-  <ty-textarea name=\"feedback\" label=\"Feedback\" required></ty-textarea>
-  <ty-button size=\"md\" flavor=\"primary\">Send</ty-button>
-</form>
-<!-- FormData: feedback=… -->"}
+       :description [:span "Set " [:code "name"] " and the text is in FormData. " [:code "required"] ", "
+                     [:code "minlength"] " and " [:code "maxlength"] " block submission and show their message under the field; typing stops at "
+                     [:code "maxlength"] ". " [:code "too-short-message"] " / " [:code "too-long-message"] " set the wording."]
+       :tabs form-snippets}
       (let [sent (doc-state :sent)]
         [:form.flex.flex-col.gap-4.w-full
          {:on {:submit (fn [^js e]
@@ -159,21 +275,15 @@ Delete the text and it shrinks back to min-height.")
                          (set-doc! :sent (.get (js/FormData. (.-target e)) "feedback")))}}
          [:div.flex.items-end.gap-3
           [:ty-textarea {:name "feedback" :label "Feedback" :required "" :rows "2"
+                         :minlength "20" :maxlength "500"
+                         :too-short-message "At least {minlength} characters ({length} so far)"
                          :value "The new calendar is great." :style {:flex "1"}}]
           [:ty-button {:size "md" :flavor "primary"} "Send"]]
-         [:code.ty-text-.text-xs (if sent (str "FormData: feedback=" (pr-str sent)) "Press Send. Clear the text first to see required at work.")]]))
+         [:code.ty-text-.text-xs (if sent (str "FormData: feedback=" (pr-str sent)) "Press Send. Cut the text below 20 characters first to see minlength at work.")]]))
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const ta = document.querySelector('ty-textarea');
-
-ta.value = 'Hello';
-ta.error = '';                     // set a message to show it
-
-// input on every edit; change on blur, if the value changed
-ta.addEventListener('input', (e) => preview(e.detail.value));
-ta.addEventListener('change', (e) => save(e.detail.value));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -210,8 +320,10 @@ ta.addEventListener('change', (e) => save(e.detail.value));"}
                   ["placeholder" "string" "Hint shown while empty."]
                   "Label & state"
                   ["label" "string" "Label above the field."]
-                  ["required" "boolean" "false" "Marks the label and blocks form submission while empty."]
-                  ["error" "string" "Message under the field. Empty string clears it."]
+                  ["required" "boolean" "false" "Marks the label and blocks form submission while empty. The message shows on submit, or on blur once edited."]
+                  ["minlength / maxlength" "number" "Character limits. Typing stops at maxlength; an empty value only fails required. Properties minLength / maxLength are -1 when unset, and a negative value removes the rule."]
+                  ["too-short-message / too-long-message" "string" "Wording for the length messages. {minlength} {maxlength} {length} are filled in. Defaults: \"Use at least {minlength} characters (now {length})\" and \"Use at most {maxlength} characters (now {length})\". After the user types, too-short is the browser's own unless you set it."]
+                  ["error" "string" "Message under the field. Empty string clears it. Validation never overwrites one you set."]
                   ["disabled" "boolean" "false" "Not editable, left out of the form."]
                   "Size & growth"
                   ["size" "string" "\"sm\"" "xs, sm, md, lg or xl."]

@@ -76,9 +76,23 @@ function isSameDay(date1: Date, date2: Date): boolean {
     && date1.getDate() === date2.getDate();
 }
 
-/** Create a date at midnight local time. */
-function createMidnightDate(year: number, month: number, day: number): Date {
-  return new Date(year, month - 1, day, 0, 0, 0, 0);
+/**
+ * Local midnight of a calendar day. Not the Date constructor: it reads years
+ * 0-99 as 1900-1999. Noon is never skipped by a clock change, so the day
+ * can't shift before setHours.
+ */
+export function localMidnight(year: number, month: number, day: number): Date {
+  const date = new Date(2000, 0, 1, 12);
+  date.setFullYear(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+/** UTC midnight of a calendar day, as a timestamp. Not Date.UTC(): it reads years 0-99 as 1900-1999. */
+export function utcMidnight(year: number, month: number, day: number): number {
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
+  return date.getTime();
 }
 
 /** Today at midnight local time. */
@@ -130,7 +144,7 @@ function createDayContext(
 
   // value: UTC midnight (consistent worldwide for the same date)
   // localValue: Local midnight (respects user's timezone)
-  const utcValue = Date.UTC(year, month - 1, dayInMonth, 0, 0, 0, 0);
+  const utcValue = utcMidnight(year, month, dayInMonth);
   const localValue = date.getTime();
   
   return {
@@ -181,7 +195,7 @@ function getMondayOfWeek(date: Date): Date {
  */
 function getMonthGridStart(year: number, month: number): Date {
   // month is 1-based, Date constructor is 0-based
-  const firstDay = createMidnightDate(year, month, 1);
+  const firstDay = localMidnight(year, month, 1);
   return getMondayOfWeek(firstDay);
 }
 
@@ -339,11 +353,106 @@ export function parseISODate(isoString: string): { year: number; month: number; 
   if (day < 1 || day > 31) return null;
   
   // Check if date is valid (handles Feb 30, etc.)
-  const date = new Date(year, month - 1, day);
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+  const date = new Date(utcMidnight(year, month, day));
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
     return null;
   }
   
   return { year, month, day };
 }
 
+
+/**
+ * Date/time components in local time, as ty-date-picker holds them.
+ */
+export interface DateTimeParts {
+  year?: number;
+  month?: number;  // 1-12
+  day?: number;
+  hour?: number;   // 0-23
+  minute?: number; // 0-59
+  second?: number; // 0-59
+  // The instant a zoned value (ISO with Z/offset, epoch ms) was read from,
+  // kept until the user edits: in the hour repeated when summer time ends
+  // the wall-clock alone can't say which of the two instants it was.
+  epoch?: number;
+}
+
+/** Zone-less date or date-time ('2024-09-21', '2024-09-21T10:30[:00[.000]]'): local wall-clock. */
+const LOCAL_VALUE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?)?$/;
+
+/** A Date whose UTC fields are these components: formats a wall-clock as written (timeZone 'UTC'). */
+export function wallClockDate(c: DateTimeParts): Date {
+  const date = new Date(0);
+  date.setUTCFullYear(c.year!, c.month! - 1, c.day!);
+  date.setUTCHours(c.hour || 0, c.minute || 0, c.second || 0);
+  return date;
+}
+
+/**
+ * Parse any date value ty-date-picker reads into local components:
+ * - Date only: '2024-09-21' (that calendar day)
+ * - Datetime-local: '2024-09-21T10:30[:45]' (local wall-clock)
+ * - UTC strings: '2024-09-21T08:30:00Z' or '2024-09-21T08:30:00.000Z'
+ * - With timezone: '2024-09-21T10:30:00+02:00'
+ * - Timestamps: milliseconds since epoch (a number, not a digit string)
+ *
+ * A zone-less value is taken as written, even a time the clocks skip when
+ * summer time starts (like <input type=datetime-local>); 2024-02-30 or 24:00
+ * is no value. An instant reads as its LOCAL day and time, and keeps its
+ * epoch.
+ */
+export function parseDateTime(value: string | number | null | undefined): DateTimeParts | null {
+  if (value === null || value === undefined || value === '') return null;
+
+  if (typeof value === 'string') {
+    const local = LOCAL_VALUE.exec(value);
+    if (local) {
+      const [year, month, day, hour, minute, second] = local.slice(1, 7).map((g) => Number(g ?? 0));
+      const components = { year, month, day, hour, minute, second };
+      const check = wallClockDate(components);
+      const real = check.getUTCMonth() === month - 1 && check.getUTCDate() === day &&
+        hour < 24 && minute < 60 && second < 60;
+      return real ? components : null;
+    }
+  }
+
+  const dateObj = typeof value === 'number' || typeof value === 'string' ? new Date(value) : null;
+  if (!dateObj || isNaN(dateObj.getTime())) {
+    return null;
+  }
+
+  return {
+    year: dateObj.getFullYear(),
+    month: dateObj.getMonth() + 1,
+    day: dateObj.getDate(),
+    hour: dateObj.getHours(),
+    minute: dateObj.getMinutes(),
+    second: dateObj.getSeconds(),
+    epoch: dateObj.getTime(),
+  };
+}
+
+/**
+ * The calendar day of any value parseDateTime reads, or a Date: an instant
+ * is its local day. Years outside 1-9999 (no 4-digit YYYY-MM-DD) are no day.
+ */
+export function parseDateDay(
+  value: string | number | Date | null | undefined,
+): { year: number; month: number; day: number } | null {
+  const parts = parseDateTime(value instanceof Date ? value.getTime() : value);
+  if (!parts || parts.year! < 1 || parts.year! > 9999) return null;
+  return { year: parts.year!, month: parts.month!, day: parts.day! };
+}
+
+/** 'YYYY-MM-DD' of a calendar day (years below 1000 padded to 4 digits). */
+export function formatISODay(year: number, month: number, day: number): string {
+  const pad = (n: number, w: number) => n.toString().padStart(w, '0');
+  return `${pad(year, 4)}-${pad(month, 2)}-${pad(day, 2)}`;
+}
+
+/** Any value parseDateDay reads as 'YYYY-MM-DD', or null. */
+export function toISODay(value: string | number | Date | null | undefined): string | null {
+  const d = parseDateDay(value);
+  return d && formatISODay(d.year, d.month, d.day);
+}

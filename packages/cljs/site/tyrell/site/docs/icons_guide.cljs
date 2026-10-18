@@ -82,7 +82,8 @@
    (page-section
     {:title "HTML pages"
      :sub "Flask, Django, Go, Rails, HTMX, Datastar. Build the icons you use into one icons.js and load it right after tyrell.js. Every page and swapped fragment reuses the cached file."}
-    [:div.gap-4 {:class ["md:grid-cols-3"] :style {:display "grid"}}
+    ;; grid-cols-1 on phones: an implicit track grows to the longest code line.
+    [:div.gap-4 {:class ["grid-cols-1" "md:grid-cols-3"] :style {:display "grid"}}
      [:div.flex.flex-col.gap-3
       [:span.text-sm.font-semibold.ty-text++ "1 · List the icons"]
       (code-card "icons.js" nil

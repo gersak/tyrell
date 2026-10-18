@@ -1,8 +1,7 @@
-{:paths ["src"
-         "../../packages/cljs/src"
-         "../../packages/cljs/icons"
-         "../../packages/cljs/gen"]
+{:paths ["src"]
  :deps {org.clojure/clojure       {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.121"}
-        lilactown/helix           {:mvn/version "0.2.0"}}
- :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "2.28.10"}}}}}
+        lilactown/helix           {:mvn/version "0.2.0"}
+        ;; tyrell.icons + tyrell.lucide (and the tyrell-components npm pin)
+        dev.gersak/tyrell         {:mvn/version "1.0.0-RC17-SNAPSHOT"}}
+ :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "2.28.23"}}}}}

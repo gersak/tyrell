@@ -314,7 +314,7 @@
                     (println \"Resized to\" size))))
      ;; Later: (unsub)"
   [id callback]
-  (if (and js/window (.-tyResizeObserver js/window))
+  (if-not (and (exists? js/window) (.-tyResizeObserver js/window))
     (throw (js/Error. "tyResizeObserver not available! Check if tyrell.js is loaded properly"))
     (let [js-callback (fn [size]
                         (callback {:width (.-width size)

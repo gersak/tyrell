@@ -111,7 +111,7 @@
       (kit/summary [["Name" (str (:first-name saved) " " (:last-name saved))] ["Email" (:email saved)]
                     ["Phone" (:phone saved)] ["Company" (:company saved)]]))
      (kit/result-modal
-      {:open (= modal :export) :on-close close :icon "download" :flavor "info"
+      {:open (= modal :export) :on-close close :icon "download" :flavor "primary"
        :title "Export Profile" :subtitle "Choose a format"
        :actions [[:ty-button {:flavor "neutral" :size "sm" :on {:click close}} "Cancel"]
                  [:ty-button {:flavor "primary" :size "sm"} [:ty-icon {:name "download" :size "xs" :slot "start"}] "Download"]]}

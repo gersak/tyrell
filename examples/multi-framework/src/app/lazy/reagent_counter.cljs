@@ -6,9 +6,9 @@
 
 (defn- loading-html [label]
   (str "<div style='display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1rem 0;'>"
-       "<div style='font-size:2.5rem;font-weight:700;color:var(--ty-text-weak,#aaa);'>···</div>"
+       "<div style='font-size:2.5rem;font-weight:700;color:var(--ty-text-faint,#aaa);'>···</div>"
        "<div style='font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;"
-       "color:var(--ty-text-weak,#aaa);'>loading " label "</div>"
+       "color:var(--ty-text-faint,#aaa);'>loading " label "</div>"
        "</div>"))
 
 (defn- notify-loaded! [^js el module-name ms]

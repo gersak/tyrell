@@ -64,6 +64,8 @@ html {
   --ty-bg-neutral: #e0e0e0;
   --ty-bg-neutral-bold: #cecece;
   --ty-bg-neutral-soft: #ededed;
+  --ty-bg-neutral-strong: #222222;
+  --ty-bg-neutral-faint: #fcfcfc;
 
   /* Borders */
   --ty-border: #e5e7eb;
@@ -165,6 +167,12 @@ html {
   --ty-solid-neutral-strong-fg: white;
   --ty-solid-neutral-soft-fg: white;
 
+  /* Solid interaction offsets — OKLCH L nudges the tone+/tone- fills take
+     on hover/active (they have no literal -hover/-active token). Same
+     values as tyrell-theme.css; light darkens on press. */
+  --ty-solid-hover-l: -0.04;
+  --ty-solid-active-l: -0.08;
+
 }
 
 /* =================================================================
@@ -224,6 +232,8 @@ html[data-theme="dark"] {
   --ty-bg-neutral: #323232;
   --ty-bg-neutral-bold: #414141;
   --ty-bg-neutral-soft: #242424;
+  --ty-bg-neutral-strong: #eeeeee;
+  --ty-bg-neutral-faint: #0b0b0b;
 
   /* Borders */
   --ty-border: #3e3e3e;
@@ -312,5 +322,9 @@ html[data-theme="dark"] {
   --ty-solid-neutral-fg: white;
   --ty-solid-neutral-strong-fg: black;
   --ty-solid-neutral-soft-fg: white;
+
+  /* Solid interaction offsets — dark lightens on press */
+  --ty-solid-hover-l: 0.07;
+  --ty-solid-active-l: 0.11;
 
 }

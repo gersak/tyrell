@@ -228,7 +228,7 @@
              ($ :div.text-center
                 (if (and size (>= (:width size) 768))
                   ($ :div.ty-text-success "✓ Wide enough for desktop layout")
-                  ($ :div.text-orange-600 "⚠ Using compact mobile layout"))))))))
+                  ($ :div.ty-text-warning "⚠ Using compact mobile layout"))))))))
 
 ;; =============================================================================
 ;; Container-Aware Grid Demo

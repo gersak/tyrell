@@ -2,8 +2,10 @@
   "Helix + tyrell-react demo — JSX-style ($ Component ...) over Tyrell web components.
 
    This file exercises a wide slice of the component library: input, checkbox,
-   dropdown + option, multiselect + tag, date-picker, textarea, button, modal,
-   tooltip, icon. Type into the form and watch the live state pane update."
+   select + option (single and multiple, with selected-options chips),
+   date-picker, textarea, button, modal, tooltip, icon. The form validates with
+   the fields' own rules (no validation code); type into it and watch the live
+   state pane update."
   (:require ["tyrell-components"]   ; side-effect import: registers all <ty-*> custom elements
             ["tyrell-react" :as ty]
             ["react-dom/client" :as rdom]
@@ -29,26 +31,26 @@
 (defnc section-header
   [{:keys [eyebrow title icon right]}]
   (d/div {:class "flex items-end justify-between gap-3 mb-4 pb-3"
-          :style #js {:border-bottom "1px solid var(--ty-border-)"}}
+          :style {:border-bottom "1px solid var(--ty-border-)"}}
     (d/div {:class "flex items-start gap-3 min-w-0"}
       (when icon
-        (d/div {:class "flex items-center justify-center rounded-lg ty-bg-accent- flex-shrink-0"
-                :style #js {:width "36px" :height "36px"}}
-          ($ ty/Icon {:name icon :size "md" :class "ty-text-accent++"})))
+        (d/div {:class "flex items-center justify-center rounded-lg ty-bg-primary- flex-shrink-0"
+                :style {:width "36px" :height "36px"}}
+          ($ ty/Icon {:name icon :size "md" :class "ty-text-primary++"})))
       (d/div {:class "min-w-0"}
-        (d/div {:class "text-xs font-bold ty-text-accent tracking-widest uppercase"} eyebrow)
+        (d/div {:class "text-xs font-bold ty-text-primary tracking-widest uppercase"} eyebrow)
         (d/h2 {:class "text-lg font-bold ty-text++ tracking-tight"} title)))
     (when right right)))
 
 (defnc feature-row
   [{:keys [n icon title body]}]
   (d/div {:class "flex items-start gap-3"}
-    (d/div {:class "flex items-center justify-center rounded-md ty-bg-accent- flex-shrink-0"
-            :style #js {:width "32px" :height "32px"}}
-      ($ ty/Icon {:name icon :size "sm" :class "ty-text-accent++"}))
+    (d/div {:class "flex items-center justify-center rounded-md ty-bg-primary- flex-shrink-0"
+            :style {:width "32px" :height "32px"}}
+      ($ ty/Icon {:name icon :size "sm" :class "ty-text-primary++"}))
     (d/div {:class "flex-1 min-w-0"}
       (d/div {:class "flex items-center gap-2 mb-0.5"}
-        (d/span {:class "text-xs font-bold ty-text-accent tracking-widest"} (str "0" n))
+        (d/span {:class "text-xs font-bold ty-text-primary tracking-widest"} (str "0" n))
         (d/h3 {:class "text-sm font-bold ty-text++ tracking-tight"} title))
       (d/p {:class "text-sm ty-text- leading-snug"} body))))
 
@@ -66,26 +68,25 @@
    :bio       ""
    :news?     false})
 
-(defn validate
-  [profile]
-  (cond-> {}
-    (str/blank? (:name profile))
-    (assoc :name "Name is required")
+(def roles
+  [["developer" "code"      "Software Developer"]
+   ["designer"  "palette"   "UI/UX Designer"]
+   ["manager"   "briefcase" "Product Manager"]
+   ["analyst"   "database"  "Data Analyst"]])
 
-    (str/blank? (:email profile))
-    (assoc :email "Email is required")
-
-    (and (not (str/blank? (:email profile)))
-         (not (re-matches #".+@.+\..+" (:email profile))))
-    (assoc :email "Doesn't look like an email")
-
-    (> (count (:bio profile)) 280)
-    (assoc :bio "Bio must be under 280 characters")))
+(def skills
+  [["clojure"    "Clojure"    "primary"]
+   ["react"      "React"      "primary"]
+   ["typescript" "TypeScript" "neutral"]
+   ["postgres"   "PostgreSQL" "neutral"]
+   ["design"     "Design"     "success"]])
 
 (defnc demo []
-  (let [;; Form state
+  (let [;; Form state. `errors` only holds what a server would say; the
+        ;; fields check their own rules before onSubmit ever runs.
         [profile setProfile] (hooks/use-state empty-profile)
         [errors setErrors]   (hooks/use-state {})
+        [form-key setFormKey] (hooks/use-state 0)
         [submitted setSubmitted] (hooks/use-state false)
         ;; Modal — imperative ref (React idiom for dialogs)
         modal-ref (hooks/use-ref nil)
@@ -100,19 +101,21 @@
                          (setProfile #(assoc % k v))
                          (setErrors #(dissoc % k))
                          (setSubmitted false)))
+        ;; Only fires once every field passes its rules
         on-submit (hooks/use-callback [profile]
                     (fn [^js e]
                       (.preventDefault e)
-                      (let [errs (validate profile)]
-                        (setErrors errs)
-                        (when (empty? errs)
-                          (setSubmitted true)
-                          (js/setTimeout #(setSubmitted false) 3000)))))
+                      (if (str/ends-with? (:email profile) "@taken.com")
+                        (setErrors {:email "That email is already registered"})
+                        (do (setSubmitted true)
+                            (js/setTimeout #(setSubmitted false) 3000)))))
+        ;; Remount the form so any shown messages go with the values
         on-reset (hooks/use-callback :auto-deps
                    (fn []
                      (setProfile empty-profile)
                      (setErrors {})
-                     (setSubmitted false)))
+                     (setSubmitted false)
+                     (setFormKey inc)))
 
         ;; Live-state derived values
         filled (count (filter (fn [[_ v]]
@@ -130,20 +133,20 @@
 
         ;; -------------------------------------------------------------- Hero
         (d/div {:class "ty-elevated rounded-2xl relative overflow-hidden"
-                :style #js {:border "1px solid var(--ty-border-)"}}
-          (d/div {:class "absolute top-0 left-0 right-0 h-2 ty-bg-accent+"})
+                :style {:border "1px solid var(--ty-border-)"}}
+          (d/div {:class "absolute top-0 left-0 right-0 h-2 ty-bg-primary"})
           (d/div {:class "p-6 md:p-8 pt-8 md:pt-10"}
             (d/div {:class "flex items-center gap-2 mb-4"}
-              (d/span {:class "text-xs font-bold ty-text-accent tracking-widest uppercase"}
+              (d/span {:class "text-xs font-bold ty-text-primary tracking-widest uppercase"}
                 "tyrell-react · CLJS")
               (d/span {:class "h-1 w-1 rounded-full ty-bg-neutral"})
               (d/span {:class "text-xs font-medium ty-text-- tracking-widest uppercase"}
                 "Helix demo · component sandbox"))
 
             (d/div {:class "flex items-start gap-4 mb-3"}
-              (d/div {:class "flex items-center justify-center rounded-xl ty-bg-accent- flex-shrink-0"
-                      :style #js {:width "56px" :height "56px"}}
-                ($ ty/Icon {:name "rocket" :size "lg" :class "ty-text-accent++"}))
+              (d/div {:class "flex items-center justify-center rounded-xl ty-bg-primary- flex-shrink-0"
+                      :style {:width "56px" :height "56px"}}
+                ($ ty/Icon {:name "rocket" :size "lg" :class "ty-text-primary++"}))
               (d/div {:class "flex-1 min-w-0"}
                 (d/h1 {:class "text-3xl font-bold ty-text++ tracking-tight leading-tight mb-1"}
                   "Helix + Tyrell")
@@ -155,7 +158,7 @@
                   " package.")))
 
             (d/div {:class "flex flex-wrap gap-2"}
-              ($ badge {:icon "sparkles" :label "tyrell-react"        :flavor "accent"})
+              ($ badge {:icon "sparkles" :label "tyrell-react"        :flavor "primary"})
               ($ badge {:icon "user"     :label "Helix 0.2.0"         :flavor "neutral"})
               ($ badge {:icon "check"    :label "event.detail bridged" :flavor "success"})
               ($ badge {:icon "rocket"   :label "Controlled :open"    :flavor "neutral"}))))
@@ -165,26 +168,29 @@
 
           ;; ---- Form
           (d/section {:class "ty-elevated rounded-xl p-5"
-                      :style #js {:border "1px solid var(--ty-border-)"}}
+                      :style {:border "1px solid var(--ty-border-)"}}
             ($ section-header
                {:eyebrow "Form" :title "Profile" :icon "user"})
 
-            (d/form {:onSubmit on-submit
+            (d/form {:key form-key
+                     :onSubmit on-submit
                      :class "flex flex-col gap-4"}
 
               ;; Name
               ($ ty/Input
-                 {:label "Full name"
+                 {:name "name"
+                  :label "Full name"
                   :placeholder "Jane Doe"
                   :required true
+                  :minLength 2
                   :value (:name profile)
-                  :error (:name errors)
                   :onChange #(update-field :name (.. % -detail -value))}
                  ($ ty/Icon {:slot "start" :name "user" :size "sm"}))
 
               (d/div {:class "grid grid-cols-1 md:grid-cols-2 gap-4"}
                 ($ ty/Input
-                   {:label "Email"
+                   {:name "email"
+                    :label "Email"
                     :type "email"
                     :placeholder "you@example.com"
                     :required true
@@ -193,64 +199,70 @@
                     :onChange #(update-field :email (.. % -detail -value))}
                    ($ ty/Icon {:slot "start" :name "mail" :size "sm"}))
                 ($ ty/Input
-                   {:label "Phone"
+                   {:name "phone"
+                    :label "Phone"
                     :type "tel"
                     :placeholder "+1 555 123 4567"
+                    :pattern "[0-9+ ]{7,}"
                     :value (:phone profile)
                     :onChange #(update-field :phone (.. % -detail -value))}
                    ($ ty/Icon {:slot "start" :name "phone" :size "sm"})))
 
               (d/div {:class "grid grid-cols-1 md:grid-cols-2 gap-4"}
                 ($ ty/DatePicker
-                   {:label "Birth date"
+                   {:name "birthdate"
+                    :label "Birth date"
                     :placeholder "Select…"
                     :value (:birthdate profile)
                     :onChange #(update-field :birthdate (.. % -detail -value))})
-                ($ ty/Dropdown
-                   {:label "Role"
+                ($ ty/Select
+                   {:name "role"
+                    :label "Role"
                     :placeholder "Pick one"
                     :value (:role profile)
-                    :onChange #(update-field :role (.. % -detail -option -value))}
-                   ($ ty/Option {:value "developer"} "Software Developer")
-                   ($ ty/Option {:value "designer"}  "UI/UX Designer")
-                   ($ ty/Option {:value "manager"}   "Product Manager")
-                   ($ ty/Option {:value "analyst"}   "Data Analyst")
-                   ($ ty/Option {:value "other"}     "Other")))
+                    :onChange #(update-field :role (or (.. % -detail -value) ""))}
+                   (for [[v icon label] roles]
+                     ($ ty/Option {:key v :value v :label label}
+                        (d/span {:class "flex items-center gap-2"}
+                          ($ ty/Icon {:name icon :size "xs"})
+                          label)))))
 
-              ($ ty/Multiselect
-                 {:label "Skills"
-                  :placeholder "Pick a few"
-                  :value (when (seq (:skills profile))
-                           (str/join "," (:skills profile)))
-                  :onChange (fn [^js e]
-                              (let [vs (.. e -detail -values)
-                                    vec-vs (if (array? vs) (vec vs) [])]
-                                (update-field :skills vec-vs)))}
-                 ($ ty/Tag {:value "clojure"     :flavor "primary"}   "Clojure")
-                 ($ ty/Tag {:value "react"       :flavor "primary"}   "React")
-                 ($ ty/Tag {:value "typescript"  :flavor "neutral"}   "TypeScript")
-                 ($ ty/Tag {:value "postgres"    :flavor "neutral"}   "PostgreSQL")
-                 ($ ty/Tag {:value "design"      :flavor "success"}   "Design"))
+              (d/div {:class "flex flex-col gap-2"}
+                ($ ty/Select
+                   {:id "helix-skills"
+                    :name "skills"
+                    :label "Skills"
+                    :placeholder "Pick a few"
+                    :multiple true
+                    :value (clj->js (:skills profile))
+                    :onChange #(update-field :skills (vec (.. % -detail -values)))}
+                   (for [[v label flavor] skills]
+                     ($ ty/Option {:key v :value v :flavor flavor} label)))
+                ;; The picks as dismissible chips, anywhere in the layout
+                (d/div {:class "flex flex-wrap gap-2"}
+                  ($ ty/SelectedOptions {:htmlFor "helix-skills"})))
 
               ($ ty/Textarea
-                 {:label "Bio"
+                 {:name "bio"
+                  :label "Bio"
                   :placeholder "Tell us about yourself…"
                   :rows 3
                   :value (:bio profile)
-                  :error (:bio errors)
+                  :error (when (> (count (:bio profile)) 280) "Keep it under 280 characters")
                   :onChange #(update-field :bio (.. % -detail -value))})
 
               (d/label {:class "flex items-center gap-2 text-sm ty-text cursor-pointer select-none"}
                 ($ ty/Checkbox
-                   {:checked (:news? profile)
+                   {:name "news"
+                    :checked (:news? profile)
                     :onChange #(update-field :news? (.. % -detail -checked))})
                 "Send me product updates")
 
               (d/div {:class "flex gap-2 mt-2"}
-                ($ ty/Button {:flavor "primary" :pill true :type "submit" :class "flex-1"}
+                ($ ty/Button {:flavor "primary" :pill true :type "submit" :wide true}
                    ($ ty/Icon {:slot "start" :name "send" :size "sm"})
                    "Submit")
-                ($ ty/Button {:flavor "neutral" :pill true :onClick on-reset}
+                ($ ty/Button {:flavor "neutral" :appearance "outlined" :pill true :type "button" :onClick on-reset}
                    ($ ty/Icon {:slot "start" :name "refresh" :size "sm"})
                    "Reset"))
 
@@ -261,7 +273,7 @@
 
           ;; ---- Live state
           (d/div {:class "ty-floating rounded-xl p-5 flex flex-col gap-4"
-                  :style #js {:border "1px solid var(--ty-border-)"}}
+                  :style {:border "1px solid var(--ty-border-)"}}
             ($ section-header
                {:eyebrow "Live state"
                 :title "Bridged via tyrell-react"
@@ -273,16 +285,16 @@
                 (d/span (str filled "/" total " fields"))
                 (d/span (str (.toFixed progress 0) "%")))
               (d/div {:class "w-full ty-bg-neutral- rounded-full"
-                      :style #js {:height "6px"}}
-                (d/div {:class "ty-bg-accent rounded-full transition-all duration-300"
-                        :style #js {:width (str progress "%")
+                      :style {:height "6px"}}
+                (d/div {:class "ty-bg-primary rounded-full transition-all duration-300"
+                        :style {:width (str progress "%")
                                     :height "6px"}})))
 
             (d/div
               (d/div {:class "text-xs font-bold ty-text-- tracking-widest uppercase mb-2"}
                 "Form data")
               (d/pre {:class "ty-elevated rounded-lg p-3 text-xs ty-text font-mono leading-relaxed overflow-x-auto"
-                      :style #js {:max-height "260px"}}
+                      :style {:max-height "260px"}}
                 (d/code (with-out-str (pprint/pprint profile)))))
 
             ;; Component coverage — chips light up green when their field
@@ -302,13 +314,13 @@
                   (chip {:icon "user"      :label "Input"       :k :name})
                   (chip {:icon "check"     :label "Checkbox"    :k :news?})
                   (chip {:icon "calendar"  :label "DatePicker"  :k :birthdate})
-                  (chip {:icon "briefcase" :label "Dropdown"    :k :role})
-                  (chip {:icon "code"      :label "Multiselect" :k :skills})
+                  (chip {:icon "briefcase" :label "Select"      :k :role})
+                  (chip {:icon "code"      :label "Select · multiple" :k :skills})
                   (chip {:icon "info"      :label "Textarea"    :k :bio}))))))
 
         ;; ------------------------------------------------------ Overlays
         (d/section {:class "ty-elevated rounded-xl p-5"
-                    :style #js {:border "1px solid var(--ty-border-)"}}
+                    :style {:border "1px solid var(--ty-border-)"}}
           ($ section-header
              {:eyebrow "Overlays" :title "Modal · Tooltip" :icon "rocket"})
 
@@ -332,11 +344,11 @@
           ;; Imperative-ref modal — React idiom for dialogs.
           ($ ty/Modal {:ref modal-ref}
              (d/div {:class "p-6 ty-elevated rounded-2xl flex flex-col gap-4"
-                     :style #js {:border "1px solid var(--ty-border-)"
+                     :style {:border "1px solid var(--ty-border-)"
                                  :min-width "320px"}}
                (d/div {:class "flex items-start gap-3"}
                  (d/div {:class "flex items-center justify-center rounded-xl ty-bg-success- flex-shrink-0"
-                         :style #js {:width "44px" :height "44px"}}
+                         :style {:width "44px" :height "44px"}}
                    ($ ty/Icon {:name "check" :size "lg" :class "ty-text-success++"}))
                  (d/div {:class "flex-1 min-w-0"}
                    (d/h3 {:class "text-lg font-bold ty-text++"} "Imperative refs work")
@@ -352,7 +364,7 @@
 
         ;; ----------------------------------------- "Why Helix" + footer
         (d/section {:class "ty-elevated rounded-xl p-5"
-                    :style #js {:border "1px solid var(--ty-border-)"}}
+                    :style {:border "1px solid var(--ty-border-)"}}
           ($ section-header
              {:eyebrow "Reference" :title "Why Helix?" :icon "sparkles"})
           (d/div {:class "grid grid-cols-1 md:grid-cols-3 gap-4"}
@@ -364,14 +376,14 @@
                             :body "The same npm package Reagent and UIx use. Drop-in wrapper components."})))
 
         (d/div {:class "ty-floating rounded-xl p-5"
-                :style #js {:border "1px solid var(--ty-border-)"}}
+                :style {:border "1px solid var(--ty-border-)"}}
           (d/div {:class "flex items-center justify-between mb-3"}
             (d/span {:class "text-xs font-bold ty-text-- tracking-widest uppercase"}
               "One wrapper, three shapes")
-            ($ badge {:icon "sparkles" :label "tyrell-react" :flavor "accent"}))
+            ($ badge {:icon "sparkles" :label "tyrell-react" :flavor "primary"}))
           (d/div {:class "grid grid-cols-1 md:grid-cols-3 gap-3"}
             (d/div {:class "ty-elevated rounded-lg p-3"}
-              (d/div {:class "text-xs font-bold ty-text-accent tracking-widest uppercase mb-2"}
+              (d/div {:class "text-xs font-bold ty-text-primary tracking-widest uppercase mb-2"}
                 "Helix · this app")
               (d/pre {:class "text-xs ty-text font-mono leading-relaxed overflow-x-auto"}
                 (d/code "($ ty/Button\n   {:flavor \"primary\"}\n   \"Save\")")))

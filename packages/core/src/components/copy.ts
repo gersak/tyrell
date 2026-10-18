@@ -161,7 +161,9 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
   protected onDisconnect(): void {
     if (this._copyTimeout !== null) {
       clearTimeout(this._copyTimeout)
-      this._copyTimeout = null
+      // The feedback ends with its timer: a move (a keyed reorder) within
+      // the 2s left 'Copied!' on for good
+      this.resetCopyButton()
     }
   }
 
@@ -197,16 +199,18 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
         composed: true
       }))
     } catch (err) {
-      // Fallback for non-secure contexts (non-HTTPS)
+      // Fallback for non-secure contexts (non-HTTPS). select() moves focus
+      // to the helper textarea — hand it back, or a keyboard user's focus
+      // drops to <body> after every copy.
+      const focused = this.shadowRoot!.activeElement as HTMLElement | null
+      const textarea = document.createElement('textarea')
       try {
-        const textarea = document.createElement('textarea')
         textarea.value = value
         textarea.style.position = 'fixed'
         textarea.style.opacity = '0'
         document.body.appendChild(textarea)
         textarea.select()
         document.execCommand('copy')
-        document.body.removeChild(textarea)
 
         this.dispatchEvent(new CustomEvent('copy-success', {
           detail: { value },
@@ -222,6 +226,9 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
         }))
         this.showCopyError()
         return
+      } finally {
+        textarea.remove()
+        focused?.focus()
       }
     }
 
@@ -247,16 +254,19 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       copyButton.setAttribute('aria-label', 'Copied!')
     }
 
-    this._copyTimeout = window.setTimeout(() => {
-      this._showingSuccess = false
-      const btn = this.shadowRoot!.querySelector('.copy-button')
-      if (btn) {
-        btn.classList.remove('success')
-        btn.innerHTML = COPY_ICON_SVG
-        btn.setAttribute('aria-label', 'Copy to clipboard')
-      }
-      this._copyTimeout = null
-    }, 2000)
+    this._copyTimeout = window.setTimeout(() => this.resetCopyButton(), 2000)
+  }
+
+  /** Feedback over: the copy icon again. */
+  private resetCopyButton(): void {
+    this._showingSuccess = false
+    const btn = this.shadowRoot!.querySelector('.copy-button')
+    if (btn) {
+      btn.classList.remove('success', 'error')
+      btn.innerHTML = COPY_ICON_SVG
+      btn.setAttribute('aria-label', 'Copy to clipboard')
+    }
+    this._copyTimeout = null
   }
 
   /**
@@ -276,41 +286,20 @@ export class TyCopy extends TyComponent<CopyState> implements TyCopyElement {
       copyButton.setAttribute('aria-label', 'Copy failed')
     }
 
-    this._copyTimeout = window.setTimeout(() => {
-      const btn = this.shadowRoot!.querySelector('.copy-button')
-      if (btn) {
-        btn.classList.remove('error')
-        btn.innerHTML = COPY_ICON_SVG
-        btn.setAttribute('aria-label', 'Copy to clipboard')
-      }
-      this._copyTimeout = null
-    }, 2000)
+    this._copyTimeout = window.setTimeout(() => this.resetCopyButton(), 2000)
   }
 
   private setupEventListeners(): void {
-    const shadow = this.shadowRoot!
-    const inputWrapper = shadow.querySelector('.input-wrapper')
-    const copyButton = shadow.querySelector('.copy-button')
+    const inputWrapper = this.shadowRoot!.querySelector('.input-wrapper') as HTMLElement | null
 
-    // Make entire field clickable for copying
+    // One listener for the whole field, copy button included (its clicks —
+    // and Enter/Space on it — bubble here). A second listener on the button
+    // copied twice on WebKit: a real click runs microtasks between
+    // listeners, so the success icon swap detached the clicked <svg> and the
+    // wrapper's "was it the button?" check missed it.
     if (inputWrapper && !this.disabled) {
-      const wrapperEl = inputWrapper as HTMLElement
-      wrapperEl.addEventListener('click', (e) => {
-        // Prevent double-triggering if button was clicked
-        if (e.target === copyButton || (e.target as HTMLElement).closest('.copy-button')) {
-          return
-        }
-        this.copyToClipboard()
-      })
-
-      // Add visual feedback - make it look clickable
-      wrapperEl.style.cursor = 'pointer'
-    }
-
-    if (copyButton) {
-      copyButton.addEventListener('click', () => {
-        this.copyToClipboard()
-      })
+      inputWrapper.addEventListener('click', () => this.copyToClipboard())
+      inputWrapper.style.cursor = 'pointer'
     }
   }
 

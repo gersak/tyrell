@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}HTMX + Ty Components Demo{% endblock %}</title>
+    <title>{% block title %}HTMX + Tyrell Demo{% endblock %}</title>
     
-    <!-- Ty Component CSS System - CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/css/ty.css">
-    <!-- Ty Components JavaScript - CDN (TypeScript Build) -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@gersak/ty@latest/dist/ty.js"></script>
+    <!-- Tyrell components from jsDelivr, pinned. Icons register right after tyrell.js. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{ tyrell_version }}/css/tyrell.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@{{ tyrell_version }}/css/tyrell-theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/tyrell-components@{{ tyrell_version }}/dist/tyrell.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/icons.js') }}"></script>
     
     <!-- Custom Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
@@ -16,7 +17,7 @@
     <!-- Dialog-friendly layout styles -->
     <style>
         /* 
-         * Dialog-Friendly Layout for HTMX + Ty Components
+         * Dialog-Friendly Layout for HTMX + Tyrell
          * 
          * Previous: html.h-full + body.h-full (height: 100%) caused conflicts 
          * with native dialog scroll prevention in showModal()
@@ -51,39 +52,22 @@
            for older browsers, the native dialog behavior should still work */
     </style>
     
-    <!-- HTMX - Full Debug Version -->
-    <script src="https://unpkg.com/htmx.org@2.0.6/dist/htmx.js"></script>
-    
-    <!-- HTMX Extensions -->
-    <script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@2.0.6/dist/htmx.min.js"></script>
 
-    
-    <!-- HTMX Debug Configuration -->
-    <script>
-        
-        document.addEventListener('htmx:responseError', function(event) {
-            console.error('💥 HTMX Response Error:', event.detail);
-        });
-        
-        document.addEventListener('htmx:sendError', function(event) {
-            console.error('📡 HTMX Send Error:', event.detail);
-        });
-        
-    </script>
-    
     {% block extra_head %}{% endblock %}
 </head>
 <body class="ty-canvas antialiased">
     <div class="app-container">
         <!-- Navigation -->
-        <nav class="ty-elevated border-b ty-border-neutral-soft backdrop-blur-md">
+        <nav class="ty-elevated border-b ty-border- backdrop-blur-md">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between h-16">
                     <div class="flex items-center space-x-8">
                         <div class="flex-shrink-0">
                             <h1 class="text-xl font-bold">
                                 <a href="{{ url_for('index') }}" class="text-gradient-primary hover:scale-[1.02] transition-transform duration-200 inline-block">
-                                    ✨ Ty + HTMX Demo
+                                    ✨ Tyrell + HTMX Demo
                                 </a>
                             </h1>
                         </div>
@@ -120,18 +104,18 @@
                     
                     <div class="flex items-center space-x-4">
                         <!-- Theme Toggle -->
-                        <ty-button size="sm" flavor="outline" onclick="toggleTheme()" class="group theme-toggle">
+                        <ty-button type="button" size="sm" appearance="outlined" action aria-label="Toggle theme" onclick="toggleTheme()" class="group theme-toggle">
                             <ty-icon name="sun" class="w-4 h-4 hidden dark:inline-block group-hover:rotate-180 transition-transform duration-300"></ty-icon>
                             <ty-icon name="moon" class="w-4 h-4 inline-block dark:hidden group-hover:rotate-180 transition-transform duration-300"></ty-icon>
                         </ty-button>
                         
                         <!-- Demo Notification Trigger -->
-                        <ty-button size="sm" flavor="primary" 
+                        <ty-button type="button" size="sm" flavor="primary"
                                    hx-get="/api/notifications/demo"
                                    hx-target="#notification-area"
                                    hx-swap="innerHTML"
                                    class="hidden sm:inline-flex hover:scale-[1.02] transition-transform duration-200">
-                            <ty-icon name="bell" class="mr-1"></ty-icon>
+                            <ty-icon slot="start" name="bell"></ty-icon>
                             Test Notification
                         </ty-button>
                     </div>
@@ -152,28 +136,16 @@
             <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center">
                     <div class="ty-text-">
-                        <p>&copy; 2025 Ty Components + HTMX Demo</p>
+                        <p>&copy; 2026 Tyrell + HTMX Demo</p>
                     </div>
                     <div class="ty-text-">
-                        <p>Built with ❤️ using Ty Components, HTMX, and Flask</p>
+                        <p>Built with ❤️ using Tyrell, HTMX, and Flask</p>
                     </div>
                 </div>
             </div>
         </footer>
     </div>
 
-    
-    <!-- CDN Build Verification -->
-    <script>
-        window.addEventListener('load', function() {
-            console.log('✅ Ty components loaded from CDN!');
-            console.log('📦 Package: @gersak/ty (TypeScript build)');
-            console.log('🎯 Version: latest');
-        });
-    </script>
-    
-    <!-- Ty Icons Registration -->
-    <script defer src="{{ url_for('static', filename='js/icons-bundle.js') }}"></script>
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>

@@ -18,6 +18,14 @@ export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>,
   disabled?: boolean;
   required?: boolean;
   name?: string; // Important for HTMX/form compatibility
+
+  /** Minimum / maximum number of characters */
+  minLength?: number;
+  maxLength?: number;
+
+  /** Wording for minlength / maxlength failures. Placeholders: {minlength} {maxlength} {length} */
+  tooShortMessage?: string;
+  tooLongMessage?: string;
   
   // Textarea-specific props
   rows?: string | number;
@@ -50,7 +58,7 @@ export interface TyTextareaProps extends Omit<React.HTMLAttributes<HTMLElement>,
 let _warnedOnInputProp = false;
 
 export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
-  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, minHeight, maxHeight, ...props }, ref) => {
+  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, minHeight, maxHeight, minLength, maxLength, tooShortMessage, tooLongMessage, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     // Same `onInput` → `onChange` redirect as TyInput. React's synthetic-event
@@ -165,6 +173,11 @@ export const TyTextarea = React.forwardRef<HTMLElement, TyTextareaProps>(
         ...(isRequired && { required: "" }),
         ...(minHeight && { 'min-height': minHeight }),  // Convert camelCase to kebab-case
         ...(maxHeight && { 'max-height': maxHeight }),  // Convert camelCase to kebab-case
+        // Length rules as plain attributes (ty-textarea reads `minlength`, not `minLength`)
+        ...(minLength !== undefined && { minlength: String(minLength) }),
+        ...(maxLength !== undefined && { maxlength: String(maxLength) }),
+        ...(tooShortMessage && { 'too-short-message': tooShortMessage }),
+        ...(tooLongMessage && { 'too-long-message': tooLongMessage }),
         ref: elementRef,
       }
     );

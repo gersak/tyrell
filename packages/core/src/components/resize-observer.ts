@@ -6,6 +6,7 @@
 import { ensureStyles } from '../utils/styles.js'
 import { resizeObserverStyles } from '../styles/resize-observer.js'
 import { updateSize, removeSize } from '../utils/resize-observer.js'
+import { upgradeProperties } from '../utils/upgrade-properties.js'
 
 export class TyResizeObserver extends HTMLElement {
   private _resizeObserver: ResizeObserver | null = null
@@ -36,6 +37,7 @@ export class TyResizeObserver extends HTMLElement {
   }
 
   connectedCallback(): void {
+    upgradeProperties(this)
     this.setupObserver()
   }
 

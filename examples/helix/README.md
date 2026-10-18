@@ -1,20 +1,22 @@
 # Helix + Tyrell Example
 
-Compact demo: ClojureScript + [Helix](https://github.com/lilactown/helix) + `tyrell-react` typed wrappers
-+ Tyrell web components loaded via CDN.
+Compact demo: ClojureScript + [Helix](https://github.com/lilactown/helix) + the `tyrell-react` wrappers over Tyrell web components.
 
-This example exists to **verify the patterns documented on the ClojureScript guide page**. If you're choosing
-between React-based CLJS libs, Helix gives you JSX-style macros (`($ Component …)`) over the same `tyrell-react`
-package that Reagent / re-frame / UIx use.
+**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-TC59 (npm), `dev.gersak/tyrell` 1.0.0-RC17-SNAPSHOT (Clojars), Helix 0.2.0, React 18.
+
+Helix gives you JSX-style macros (`($ Component …)`) over the same `tyrell-react` package that Reagent, re-frame and UIx use.
 
 ## What it shows
 
-- Icon registration with `tyrell.icons` + `tyrell.lucide` (tree-shaken at advanced compile)
-- Typed React wrappers via `(:require ["tyrell-react" :as ty])`, used as `($ ty/Input ...)`, `($ ty/Button ...)`
-- `event.detail.value` access from a CLJS event handler — bridged through the wrapper
-- Composition of `<ty-icon>` inside `<ty-button>` / `<ty-input>` via the `:slot` attribute
-
-The whole demo is a one-screen signup form with success state — small on purpose so the integration shape is clear.
+- Icon registration with `tyrell.icons` + `tyrell.lucide` (tree-shaken at advanced compile).
+- Wrappers via `(:require ["tyrell-react" :as ty])`, used as `($ ty/Input ...)`, `($ ty/Select ...)`.
+- **A form with no validation code.**
+  - The fields carry their rules: `:required`, `:type "email"`, `:minLength`, `:pattern`.
+  - The browser checks them before `:onSubmit` runs; failing fields show their message and the first takes focus.
+  - The one hand-set `:error` is a server-side one: an email ending in `@taken.com`.
+- `ty/Select`, single with icon options and `:multiple` with flavored options, plus `ty/SelectedOptions` chips.
+- An imperative-ref `ty/Modal` (`.show` / `.hide`) and `ty/Tooltip`s.
+- `event.detail` read from a CLJS handler, shown live in the state pane.
 
 ## Run
 
@@ -35,7 +37,7 @@ The shadow-cljs nREPL is on port 7890.
 | `src/hello/icons.cljs` | Icon registration — only the icons used in the demo |
 | `public/index.html` | Loads `tyrell.css` + `tyrell-theme.css` (copied by `postinstall`), then mounts the compiled CLJS |
 | `shadow-cljs.edn` | dev-http on 3003, nREPL on 7890 |
-| `deps.edn` | `lilactown/helix 0.2.0` + paths to the local `dev.gersak/tyrell` source |
+| `deps.edn` | `lilactown/helix 0.2.0` + `dev.gersak/tyrell` from Clojars |
 
 ## Helix idiom vs Reagent / UIx
 
@@ -60,13 +62,11 @@ The same Tyrell wrapper, three render shapes:
 
 `tyrell-react` is the same npm package across all three.
 
-## Substrate notes
+## Dependencies
 
-- `tyrell-components` (web components + CSS) is loaded via CDN in `index.html` — no npm install for the base.
-- `tyrell-react` is npm-installed because it's the React wrapper layer (separate package).
-- `dev.gersak/tyrell` (CLJS-side icon registry, router, i18n, layout) is referenced from the local source via
-  `deps.edn` paths — replace those with a Maven coord (`{:mvn/version "1.0.0-RC6"}`) once the artifact ships
-  to Clojars.
+- `tyrell-components` (web components + CSS) is npm-installed and imported once with `(:require ["tyrell-components"])`. `postinstall` copies its CSS into `public/css`.
+- `tyrell-react` is the React wrapper layer, npm-installed alongside it.
+- `dev.gersak/tyrell` (Clojars) brings the CLJS side: icon registry, Lucide icons, router, i18n, layout.
 
 ## Where this fits
 

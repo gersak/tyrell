@@ -9,9 +9,9 @@
                 </div>
                 <!-- Role Badge -->
                 <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm
-                           {% if user.role == 'Admin' %}ty-bg-danger ty-text-white
-                           {% elif user.role == 'Editor' %}ty-bg-warning ty-text-white
-                           {% else %}ty-bg-neutral ty-text-white{% endif %}">
+                           {% if user.role == 'Admin' %}ty-bg-danger ty-text-danger++
+                           {% elif user.role == 'Editor' %}ty-bg-warning ty-text-warning++
+                           {% else %}ty-bg-neutral ty-text-neutral++{% endif %}">
                     {% if user.role == 'Admin' %}A{% elif user.role == 'Editor' %}E{% else %}U{% endif %}
                 </div>
             </div>
@@ -19,17 +19,17 @@
             <!-- User Info -->
             <div class="flex-1 min-w-0">
                 <div class="flex items-center space-x-2 mb-1">
-                    <h4 class="font-semibold ty-text-neutral-strong truncate">
+                    <h4 class="font-semibold ty-text-neutral++ truncate">
                         {{ user.name }}
                     </h4>
                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wide
-                                {% if user.role == 'Admin' %}ty-bg-danger-soft ty-text-danger-strong
-                                {% elif user.role == 'Editor' %}ty-bg-warning-soft ty-text-warning-strong  
-                                {% else %}ty-bg-neutral-soft ty-text-neutral-strong{% endif %}">
+                                {% if user.role == 'Admin' %}ty-bg-danger- ty-text-danger++
+                                {% elif user.role == 'Editor' %}ty-bg-warning- ty-text-warning++  
+                                {% else %}ty-bg-neutral- ty-text-neutral++{% endif %}">
                         {{ user.role }}
                     </span>
                 </div>
-                <div class="ty-text-neutral-bold text-sm truncate flex items-center">
+                <div class="ty-text-neutral+ text-sm truncate flex items-center">
                     <ty-icon name="mail" class="w-3 h-3 mr-1 align-text-top"></ty-icon>
                     {{ user.email }}
                 </div>
@@ -37,7 +37,7 @@
             
             <!-- Action Button (shown on hover) -->
             <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0">
-                <ty-button size="sm" flavor="primary"
+                <ty-button type="button" size="sm" flavor="primary"
                            hx-get="/api/modal/content/user-profile?user_id={{ user.id }}"
                            hx-target="#modal-content"
                            onclick="document.getElementById('demo-modal').show()">
@@ -49,8 +49,8 @@
         {% endfor %}
         
         <!-- Results Summary -->
-        <div class="text-center py-3 border-t ty-border-neutral-soft">
-            <p class="ty-text-neutral-bold text-sm">
+        <div class="text-center py-3 border-t ty-border-">
+            <p class="ty-text-neutral+ text-sm">
                 {% if users|length == 5 %}
                     Showing all {{ users|length }} users - start typing to search!
                 {% else %}
@@ -61,10 +61,10 @@
     </div>
 {% else %}
     <div class="text-center py-12 animate-fade-in">
-        <div class="w-20 h-20 mx-auto mb-6 rounded-full ty-bg-neutral-soft flex items-center justify-center">
-            <ty-icon name="search-x" class="w-10 h-10 ty-text-neutral-bold"></ty-icon>
+        <div class="w-20 h-20 mx-auto mb-6 rounded-full ty-bg-neutral- flex items-center justify-center">
+            <ty-icon name="search-x" class="w-10 h-10 ty-text-neutral+"></ty-icon>
         </div>
-        <h3 class="text-lg font-semibold ty-text-neutral-bold mb-2">No Users Found</h3>
-        <p class="ty-text-neutral-soft">Try a different search term or check your spelling.</p>
+        <h3 class="text-lg font-semibold ty-text-neutral+ mb-2">No Users Found</h3>
+        <p class="ty-text-neutral-">Try a different search term or check your spelling.</p>
     </div>
 {% endif %}

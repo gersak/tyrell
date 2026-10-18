@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Calendar & Date Components - Ty Components Demo{% endblock %}
+{% block title %}Calendar & Date Components - Tyrell Demo{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -8,9 +8,9 @@
     <div class="text-center mb-16">
         <h1 class="text-4xl md:text-5xl font-bold mb-6">
             <span class="text-gradient-primary">📅 Calendar</span>
-            <span class="ty-text-primary-strong"> Component Excellence</span>
+            <span class="ty-text-primary++"> Component Excellence</span>
         </h1>
-        <p class="text-xl ty-text-neutral-bold max-w-3xl mx-auto">
+        <p class="text-xl ty-text-neutral+ max-w-3xl mx-auto">
             Showcasing component-native patterns with smart event loading, intelligent caching, and graceful fallbacks. No HTMX required.
         </p>
     </div>
@@ -20,10 +20,10 @@
     <!-- Calendar Components Demo -->
     <div class="mb-20">
         <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold ty-text-primary-strong mb-4">
+            <h2 class="text-3xl font-bold ty-text-primary++ mb-4">
                 🌟 Smart Event Calendar
             </h2>
-            <p class="text-lg ty-text-neutral-bold">
+            <p class="text-lg ty-text-neutral+">
                 Component excellence with instant navigation, intelligent caching, and graceful error handling
             </p>
         </div>
@@ -33,16 +33,16 @@
             <!-- Example 1: Basic Event Calendar -->
             <div class="glass-card">
                 <div class="flex items-center mb-6">
-                    <div class="feature-icon ty-bg-primary-soft mr-4">
-                        <ty-icon name="calendar-days" class="ty-text-primary-strong"></ty-icon>
+                    <div class="feature-icon ty-bg-primary- mr-4">
+                        <ty-icon name="calendar-days" class="ty-text-primary++"></ty-icon>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold ty-text-primary-strong">Smart Event Loading</h3>
-                        <p class="ty-text-neutral-bold">Instant navigation, background prefetching, graceful fallbacks</p>
+                        <h3 class="text-2xl font-bold ty-text-primary++">Smart Event Loading</h3>
+                        <p class="ty-text-neutral+">Instant navigation, background prefetching, graceful fallbacks</p>
                     </div>
                 </div>
                 
-                <div class="flex flex-col -row gap-8">
+                <div class="flex flex-col lg:flex-row gap-8">
                     <!-- Calendar Component -->
                     <div class="lg:flex-1 ty-elevated rounded-xl p-6 max-w-4xl">
                         <ty-calendar id="event-calendar"
@@ -53,7 +53,7 @@
                     <!-- Event List -->
                     <div class="lg:w-80 lg:flex-shrink-0">
                         <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-semibold ty-text-neutral-strong">
+                            <h4 class="font-semibold ty-text-neutral++">
                                 <span id="events-month-header">Events This Month</span>
                             </h4>
                             <div class="htmx-indicator" id="events-loading">
@@ -69,19 +69,19 @@
             <!-- Interactive Calendar Example -->
             <div class="glass-card">
                 <div class="flex items-center mb-6">
-                    <div class="feature-icon ty-bg-success-soft mr-4">
-                        <ty-icon name="calendar-check" class="ty-text-success-strong"></ty-icon>
+                    <div class="feature-icon ty-bg-success- mr-4">
+                        <ty-icon name="calendar-check" class="ty-text-success++"></ty-icon>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold ty-text-success-strong">Component Excellence</h3>
-                        <p class="ty-text-neutral-bold">Smart event loading, instant navigation, graceful fallbacks</p>
+                        <h3 class="text-2xl font-bold ty-text-success++">Component Excellence</h3>
+                        <p class="ty-text-neutral+">Smart event loading, instant navigation, graceful fallbacks</p>
                     </div>
                 </div>
                 
                 <div class="space-y-4">
-                    <div class="ty-bg-success-soft rounded-lg p-4">
-                        <h4 class="font-semibold ty-text-success-strong mb-2">✨ Features Demonstrated</h4>
-                        <ul class="text-sm ty-text-success-bold space-y-1">
+                    <div class="ty-bg-success- rounded-lg p-4">
+                        <h4 class="font-semibold ty-text-success++ mb-2">✨ Features Demonstrated</h4>
+                        <ul class="text-sm ty-text-success+ space-y-1">
                             <li>• Instant month navigation (no loading delays)</li>
                             <li>• Background event fetching with smart caching</li>
                             <li>• Event count badges on calendar days</li>
@@ -90,21 +90,21 @@
                         </ul>
                     </div>
                     
-                    <div class="ty-bg-info-soft rounded-lg p-4">
-                        <h4 class="font-semibold ty-text-info-strong mb-2">🛠 Technical Excellence</h4>
-                        <ul class="text-sm ty-text-info-bold space-y-1">
+                    <div class="ty-bg-primary- rounded-lg p-4">
+                        <h4 class="font-semibold ty-text-primary++ mb-2">🛠 Technical Excellence</h4>
+                        <ul class="text-sm ty-text-primary+ space-y-1">
                             <li>• Web Components with native browser APIs</li>
                             <li>• Async/await with intelligent batching</li>
                             <li>• In-memory caching with LRU eviction</li>
                             <li>• Progressive enhancement layers</li>
-                            <li>• Zero dependencies beyond Ty core</li>
+                            <li>• Zero dependencies beyond Tyrell</li>
                         </ul>
                     </div>
                     
-                    <div class="ty-bg-neutral-soft rounded-lg p-4">
-                        <h4 class="font-semibold ty-text-neutral-strong mb-2">🔍 Try It Out</h4>
-                        <p class="text-sm ty-text-neutral-bold mb-3">Open browser dev tools and navigate months to see:</p>
-                        <ul class="text-xs ty-text-neutral-bold space-y-1">
+                    <div class="ty-bg-neutral- rounded-lg p-4">
+                        <h4 class="font-semibold ty-text-neutral++ mb-2">🔍 Try It Out</h4>
+                        <p class="text-sm ty-text-neutral+ mb-3">Open browser dev tools and navigate months to see:</p>
+                        <ul class="text-xs ty-text-neutral+ space-y-1">
                             <li>• Console logs showing cache hits/misses</li>
                             <li>• Background prefetching of adjacent months</li>
                             <li>• Event count loading for calendar badges</li>
@@ -277,10 +277,10 @@ class CalendarEventManager {
         if (this.currentEvents.length === 0) {
             const monthName = this.monthNames[this.currentMonth - 1];
             this.eventListElement.innerHTML = `
-                <div class="ty-bg-neutral-soft rounded-lg p-6 text-center animate-fade-in">
-                    <ty-icon name="calendar" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-bold"></ty-icon>
-                    <p class="font-medium ty-text-neutral-strong">No Events This Month</p>
-                    <p class="text-sm ty-text-neutral-bold">${monthName} ${this.currentYear} is currently clear</p>
+                <div class="ty-bg-neutral- rounded-lg p-6 text-center animate-fade-in">
+                    <ty-icon name="calendar" class="w-12 h-12 mx-auto mb-3 ty-text-neutral+"></ty-icon>
+                    <p class="font-medium ty-text-neutral++">No Events This Month</p>
+                    <p class="text-sm ty-text-neutral+">${monthName} ${this.currentYear} is currently clear</p>
                 </div>
             `;
             return;
@@ -292,13 +292,13 @@ class CalendarEventManager {
         this.currentEvents.forEach(event => {
             const monthName = this.monthNames[this.currentMonth - 1];
             eventsHTML += `
-                <div class="flex items-center space-x-3 ty-bg-${event.color}-soft rounded-lg p-3 hover:shadow-sm transition-shadow">
+                <div class="flex items-center space-x-3 ty-bg-${event.color}- rounded-lg p-3 hover:shadow-sm transition-shadow">
                     <div class="flex-shrink-0">
-                        <ty-icon name="${event.icon}" class="ty-text-${event.color}-strong"></ty-icon>
+                        <ty-icon name="${event.icon}" class="ty-text-${event.color}++"></ty-icon>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-medium ty-text-${event.color}-strong truncate">${event.title}</p>
-                        <p class="text-sm ty-text-neutral-bold">${monthName} ${event.day}, ${this.currentYear} at ${event.time}</p>
+                        <p class="font-medium ty-text-${event.color}++ truncate">${event.title}</p>
+                        <p class="text-sm ty-text-neutral+">${monthName} ${event.day}, ${this.currentYear} at ${event.time}</p>
                     </div>
                     <div class="flex-shrink-0">
                         <div class="w-4 h-4 rounded-full shadow-sm border-2 border-white " style="background-color:var(--ty-color-${event.color})"></div>
@@ -458,8 +458,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             font-size: 9px;
             padding: 1px 4px;
             border-radius: 6px;
-            color: white;
-            background: var(--ty-color-primary);
+            color: var(--ty-solid-primary-fg);
+            background: var(--ty-solid-primary);
             font-weight: 500;
             white-space: nowrap;
         }
@@ -469,7 +469,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 🔧 NOTE: dayContentFn will be set AFTER loading initial data
     // This prevents rendering before eventCountsByDate is populated
     let dayContentFnDefined = function(dayContext) {
-        console.log('computin day', dayContext)
         const dayDiv = document.createElement('div');
         dayDiv.className = 'simple-day';
         

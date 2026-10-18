@@ -47,6 +47,24 @@ export interface PropertyChange {
 /**
  * Manages component properties with unified lifecycle
  */
+/**
+ * Boolean coercion for a property set from JS, HTML-style: '' (what React 19
+ * and Vue hand a property for a bare attribute) is true; false, null,
+ * undefined, 0, 'false' and '0' are false.
+ */
+export function coerceBoolean(value: unknown): boolean {
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase().trim()
+    return normalized !== 'false' && normalized !== '0'
+  }
+  return Boolean(value)
+}
+
+/** A default may be a thunk, evaluated per element (e.g. "the current month"). */
+function defaultOf(config: PropertyConfig): any {
+  return typeof config.default === 'function' ? config.default() : config.default
+}
+
 export class PropertyManager<T = any> {
   private _props = new Map<string, any>()
   private _config: Record<string, PropertyConfig>
@@ -62,7 +80,7 @@ export class PropertyManager<T = any> {
   private _initializeDefaults(): void {
     for (const [name, config] of Object.entries(this._config)) {
       if (config.default !== undefined) {
-        this._props.set(name, config.default)
+        this._props.set(name, defaultOf(config))
       }
     }
   }
@@ -122,7 +140,7 @@ export class PropertyManager<T = any> {
     }
 
     if (value === null || value === undefined) {
-      return config.default ?? null
+      return defaultOf(config) ?? null
     }
 
     switch (config.type) {
@@ -142,7 +160,7 @@ export class PropertyManager<T = any> {
         
       case 'number':
         const num = Number(value)
-        return isNaN(num) ? (config.default ?? 0) : num
+        return isNaN(num) ? (defaultOf(config) ?? 0) : num
         
       case 'string':
         return String(value)
@@ -154,7 +172,7 @@ export class PropertyManager<T = any> {
             return JSON.parse(value)
           } catch {
             console.warn(`[PropertyManager] Failed to parse ${name}:`, value)
-            return config.default ?? (config.type === 'array' ? [] : {})
+            return defaultOf(config) ?? (config.type === 'array' ? [] : {})
           }
         }
         return value
@@ -247,7 +265,7 @@ export class PropertyManager<T = any> {
         // dropping the alias would leave its value applied and the
         // property could never turn back on from markup (React 19, HTMX
         // swaps, plain removeAttribute).
-        if (value === null) return this.updateProperty(propName, config.default, 'attribute')
+        if (value === null) return this.updateProperty(propName, defaultOf(config), 'attribute')
         const aliasedValue = config.aliases[aliasName]
         return this.updateProperty(propName, aliasedValue, 'attribute')
       }

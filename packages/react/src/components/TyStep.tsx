@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
+import { coerceBool } from '../utils/use-boolean-prop';
 
 export interface TyStepProps extends React.HTMLAttributes<HTMLElement> {
   /** Required unique identifier for the step */
@@ -53,7 +54,7 @@ export const TyStep = React.forwardRef<HTMLElement, TyStepProps>(
     if (description) webComponentProps.description = description;
     if (status) webComponentProps.status = status;
 
-    if (disabled) webComponentProps.disabled = true;
+    if (coerceBool(disabled)) webComponentProps.disabled = '';
 
     return React.createElement(
       'ty-step',

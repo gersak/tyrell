@@ -1,6 +1,6 @@
 <div class="group flex items-center space-x-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:shadow-sm hover:scale-[1.02] transition-all duration-200 mb-3 animate-fade-in">
     <!-- Task Status Toggle -->
-    <ty-button size="sm" 
+    <ty-button type="button" size="sm" 
                flavor="{% if task.status == 'completed' %}success{% else %}neutral{% endif %}"
                class="flex-shrink-0"
                hx-post="/api/tasks/{{ task.id }}/toggle"
@@ -15,7 +15,7 @@
     
     <!-- Task Content -->
     <div class="flex-1 min-w-0">
-        <h4 class="font-semibold ty-text-neutral-strong truncate 
+        <h4 class="font-semibold ty-text-neutral++ truncate 
                  {% if task.status == 'completed' %}line-through opacity-60{% endif %}">
             {{ task.title }}
         </h4>
@@ -48,13 +48,13 @@
     
     <!-- Task Actions (shown on hover) -->
     <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex space-x-2">
-        <ty-button size="xs" flavor="neutral"
+        <ty-button type="button" size="xs" flavor="neutral"
                    hx-get="/api/modal/content/task-details?task_id={{ task.id }}"
                    hx-target="#modal-content"
                    onclick="document.getElementById('demo-modal').show()">
             <ty-icon name="eye" class="w-3 h-3"></ty-icon>
         </ty-button>
-        <ty-button size="xs" flavor="outline">
+        <ty-button type="button" size="xs" appearance="outlined">
             <ty-icon name="edit" class="w-3 h-3"></ty-icon>
         </ty-button>
     </div>

@@ -87,6 +87,144 @@
                  (actions [:ty-button {:appearance "ghost" :size "md" :on {:click #(hide! :play)}} "Cancel"]
                           [:ty-button {:flavor "primary" :size "md" :on {:click #(hide! :play)}} "Send invite"])))])
 
+(def ^:private guard-snippets
+  "Guard unsaved changes: cancel beforeclose, ask, then hide({force: true})."
+  [["html" "HTML" "html"
+    "<ty-modal id=\"note\" label=\"Edit note\">…</ty-modal>
+
+<script>
+  const modal = document.getElementById('note');
+  modal.addEventListener('beforeclose', (e) => {
+    if (!dirty) return;
+    e.preventDefault();          // stay open
+    askToDiscard().then((yes) => {
+      if (yes) modal.hide({ force: true });
+    });
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyModal } from 'tyrell-react'
+
+const modal = useRef(null)
+
+<TyModal ref={modal} label=\"Edit note\"
+  onBeforeClose={(e) => {
+    if (!dirty) return
+    e.preventDefault()           // stay open
+    askToDiscard().then((yes) => yes && modal.current.hide({ force: true }))
+  }}>…</TyModal>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Modal
+ {:ref #(reset! modal %) :label \"Edit note\"
+  :on-before-close (fn [e]
+                     (when @dirty?
+                       (.preventDefault e)   ; stay open
+                       (-> (ask-to-discard)
+                           (.then #(when % (.hide @modal #js {:force true}))))))}
+ …]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-modal
+ {:label \"Edit note\"
+  :on {:beforeclose (fn [e]
+                      (when dirty?
+                        (.preventDefault e)   ; stay open
+                        (let [modal (.-currentTarget e)]
+                          (-> (ask-to-discard)
+                              (.then #(when % (.hide modal #js {:force true})))))))}}
+ …]"]
+   ["datastar" "Datastar" "html"
+    "<ty-modal label=\"Edit note\" data-signals:asking=\"false\"
+  data-on:beforeclose=\"$dirty && (evt.preventDefault(), $asking = true)\">
+  …
+  <div data-show=\"$asking\">
+    Discard your changes?
+    <ty-button data-on:click=\"$asking = false; el.closest('ty-modal').hide({force: true})\">
+      Discard
+    </ty-button>
+  </div>
+</ty-modal>"]])
+
+(def ^:private reason-snippets
+  "Close reasons: e.detail.reason on close."
+  [["html" "HTML" "html"
+    "<ty-modal id=\"why\">…</ty-modal>
+
+<script>
+  document.getElementById('why')
+    .addEventListener('close', (e) => log(e.detail.reason));
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyModal } from 'tyrell-react'
+
+<TyModal onClose={(e) => log(e.detail.reason)}>…</TyModal>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Modal {:on-close #(log (.. % -detail -reason))} …]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-modal {:on {:close #(log (.. % -detail -reason))}} …]"]
+   ["datastar" "Datastar" "html"
+    "<ty-modal data-on:close=\"$reason = evt.detail.reason\">…</ty-modal>"]])
+
+(def ^:private api-snippets
+  "Methods, the open property and the open/close events."
+  [["html" "HTML" "html"
+    "<ty-modal id=\"invite\">…</ty-modal>
+
+<script>
+  const modal = document.getElementById('invite');
+
+  modal.show();
+  modal.hide();                    // fires beforeclose first
+  modal.hide({ force: true });     // skips beforeclose
+  modal.open = true;               // same as the open attribute
+
+  modal.addEventListener('open', () => focusFirstField());
+  modal.addEventListener('close', (e) => console.log(e.detail.reason));
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyModal } from 'tyrell-react'
+
+const modal = useRef(null)
+
+<TyModal ref={modal} open={open}
+  onOpen={() => focusFirstField()}
+  onClose={(e) => { setOpen(false); console.log(e.detail.reason) }}>…</TyModal>
+
+modal.current.show()
+modal.current.hide()                   // fires beforeclose first
+modal.current.hide({ force: true })    // skips beforeclose"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Modal {:ref #(reset! modal %) :open @open?
+              :on-open #(focus-first-field!)
+              :on-close #(do (reset! open? false)
+                             (js/console.log (.. % -detail -reason)))}
+ …]
+
+(.show @modal)
+(.hide @modal #js {:force true})       ; skips beforeclose"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-modal {:open (when open? \"\")
+            :on {:open #(focus-first-field!)
+                 :close #(do (set-open! false)
+                             (js/console.log (.. % -detail -reason)))}}
+ …]
+;; open and close by rendering :open"]
+   ["datastar" "Datastar" "html"
+    "<ty-button data-on:click=\"$open = true\">Invite</ty-button>
+
+<ty-modal data-signals:open=\"false\" data-attr:open=\"$open\"
+  data-on:open=\"@get('/invite/form')\"
+  data-on:close=\"$open = false; console.log(evt.detail.reason)\">
+  …
+</ty-modal>"]])
+
 (defn view []
   (component-page
    {:title "Modal"
@@ -96,10 +234,23 @@
     :chips [["Top layer" "layers"] ["Keyboard" "zap"] ["TyModal (React)" "atom"]]
     :source "packages/core/src/components/modal.ts"
     :mark "▣"
-    :demo [:div.ty-floating.rounded-2xl.p-6.flex.flex-col.gap-4 {:style {:width "320px"}}
-           (title "Delete project?" "Everything in \"Tyrell docs\" goes with it. This can't be undone.")
-           (actions [:ty-button {:appearance "ghost" :size "md"} "Cancel"]
-                    [:ty-button {:flavor "danger" :size "md"} "Delete"])]}
+    :demo (let [deleted? (= :deleted (doc-state :hero))]
+            [:div.flex.items-center.justify-between.gap-4.p-2 {:style {:width "340px"}}
+             [:div.flex.items-center.gap-3.min-w-0
+              [:ty-icon.ty-text- {:name (if deleted? "trash-2" "book-open") :size "lg"}]
+              [:div.flex.flex-col.min-w-0
+               [:span.font-semibold.ty-text++.truncate "Tyrell docs"]
+               [:span.text-xs.ty-text-.whitespace-nowrap (if deleted? "Project deleted" "12 pages")]]]
+             (if deleted?
+               [:ty-button {:replicant/key "restore" :appearance "ghost" :size "md"
+                            :on {:click #(set-doc! :hero nil)}} "Restore"]
+               [:ty-button {:replicant/key "delete" :flavor "danger" :appearance "outlined" :size "md"
+                            :on {:click #(open! :hero)}} "Delete project…"])
+             (modal :hero {:label "Delete project?"}
+                    (panel (title "Delete project?" "Everything in \"Tyrell docs\" goes with it.")
+                           (actions [:ty-button {:appearance "ghost" :size "md" :on {:click #(hide! :hero)}} "Cancel"]
+                                    [:ty-button {:flavor "danger" :size "md"
+                                                 :on {:click #(do (set-doc! :hero :deleted) (hide! :hero))}} "Delete"])))])}
 
    (playground
     {:id :modal
@@ -118,16 +269,9 @@
      (example
       {:title "Guard unsaved changes"
        :span 4
-       :lang "javascript"
        :description [:span [:code "beforeclose"] " is cancelable. Stop the close, ask, then close for real with "
                      [:code "hide({force: true})"] "."]
-       :code "modal.addEventListener('beforeclose', (e) => {
-  if (!dirty) return;
-  e.preventDefault();          // stay open
-  askToDiscard().then((yes) => {
-    if (yes) modal.hide({ force: true });
-  });
-});"}
+       :tabs guard-snippets}
       (let [confirm? (doc-state :confirm)]
         [:div
          [:ty-button {:size "md" :on {:click #(do (set-doc! :confirm false) (open! :guard))}}
@@ -152,8 +296,7 @@
       {:title "Close reasons"
        :span 2
        :description [:span [:code "close"] " says how: backdrop, escape, close-button or programmatic."]
-       :code "modal.addEventListener('close',
-  (e) => log(e.detail.reason));"}
+       :tabs reason-snippets}
       [:div.flex.flex-col.items-start.gap-3
        [:ty-button {:size "md" :on {:click #(open! :why)}} "Open"]
        [:code.ty-text-.text-xs (str "reason: " (or (doc-state :reason) "—"))]
@@ -199,16 +342,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const modal = document.querySelector('ty-modal');
-
-modal.show();
-modal.hide();                    // fires beforeclose first
-modal.hide({ force: true });     // skips beforeclose
-modal.open = true;               // same as the open attribute
-
-modal.addEventListener('open', () => focusFirstField());
-modal.addEventListener('close', (e) => console.log(e.detail.reason));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -233,20 +367,20 @@ modal.addEventListener('close', (e) => console.log(e.detail.reason));"}
 
    (api-section
     {:attributes ["State"
-                  ["open" "boolean" "false" "Shown. The modal removes it when it closes itself."]
+                  ["open" "boolean" "false" "Shown. The modal removes it when it closes itself. Closing closes anything still open inside: a select list, a date picker calendar, a popup, a nested modal."]
                   ["label" "string" "Accessible name of the dialog."]
                   "Closing"
                   ["prevent-outside-click" "boolean" "false" "Backdrop clicks don't close."]
                   ["prevent-escape" "boolean" "false" "Escape doesn't close."]
                   "Backdrop"
-                  ["no-backdrop" "boolean" "false" "No dimmed page behind the modal."]
+                  ["no-backdrop" "boolean" "false" "No dim and no zoom. Still a modal: the page behind isn't usable, a click outside closes it."]
                   ["no-zoom" "boolean" "false" "The page behind stays still instead of scaling down slightly."]]
      :properties [["show()" "() => void" "Open."]
                   ["hide(opts?)" "({force?}) => void" "Close. Fires beforeclose unless force is true."]]
      :events [["open" "{}" "Opened. Doesn't bubble: listen on the element."]
               ["beforeclose" "{reason}" "About to close. preventDefault() keeps it open."]
               ["close" "{reason, returnValue?}" "Closed. reason: backdrop, escape, close-button, programmatic or native. Doesn't bubble."]]
-     :keyboard [["Esc" "Close, unless prevent-escape."]
+     :keyboard [["Esc" "Close, unless prevent-escape. A popup open inside (a select list, a date picker, a ty-popup, a nested modal) closes first."]
                 ["Tab" "Cycles inside the dialog; the page behind is inert."]]
      :css-vars [["--ty-modal-backdrop" "Backdrop color."]
                 ["--ty-modal-backdrop-blur" "Backdrop blur."]

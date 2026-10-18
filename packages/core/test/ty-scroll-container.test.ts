@@ -1,5 +1,5 @@
 import { fixture, html, expect, nextFrame, oneEvent } from '@open-wc/testing';
-import '../lib/components/scroll-container.js';
+import { TyScrollContainer } from '../lib/components/scroll-container.js';
 
 // Template spec — regression coverage for:
 //   1. double scrollbar (setup ran twice → two tracks)
@@ -570,5 +570,30 @@ describe('ty-scroll-container batch prepend anchoring', () => {
     await nextFrame();
 
     expect(wrap.scrollTop, 'appended content is below the anchor').to.equal(150);
+  });
+});
+
+describe('ty-scroll-container — properties set before the element upgrades', () => {
+  let n = 0;
+  const tag = () => `ty-scroll-container-upgrade-${++n}`;
+  const hasOwn = (el: object, p: string) => Object.prototype.hasOwnProperty.call(el, p);
+
+  it('maxHeight and customScrollbar set early apply; later assignments reach the setters', async () => {
+    const name = tag();
+    const el = document.createElement(name) as any;
+    el.maxHeight = '120px';
+    el.customScrollbar = true;
+    document.body.append(el);
+    customElements.define(name, class extends TyScrollContainer {});
+    await nextFrame();
+    const wrapper = el.shadowRoot.querySelector('.scroll-wrapper') as HTMLElement;
+    expect(el.getAttribute('max-height')).to.equal('120px');
+    expect(wrapper.style.maxHeight).to.equal('120px');
+    expect(el.hasAttribute('custom-scrollbar')).to.equal(true);
+    expect(hasOwn(el, 'maxHeight') || hasOwn(el, 'customScrollbar'), 'no own properties left').to.equal(false);
+
+    el.maxHeight = '80px';
+    expect(wrapper.style.maxHeight).to.equal('80px');
+    el.remove();
   });
 });

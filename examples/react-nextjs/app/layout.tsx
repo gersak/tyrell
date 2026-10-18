@@ -1,5 +1,5 @@
-import './globals.css'
-// Bundler-only setup (TC6 sideEffects fix) — no script tag, no public/ty/ copy.
+import './globals.css' // Tailwind + app styles (PostCSS)
+// Bundler-only setup: no script tag, no public/ copy of tyrell-components.
 // tyrell-components CSS imported here in the Server Component (safe on the server).
 import 'tyrell-components/css/tyrell.css'
 // Colors — tyrell.css alone has none. Loaded AFTER tyrell.css so source order

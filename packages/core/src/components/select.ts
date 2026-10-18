@@ -41,6 +41,7 @@ function getElementHash(element: object): number {
 // SVG Icons
 
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
+import { nativeMessage } from "../utils/validity.js";
 
 /**
  * Option count above which the popup grows a search row. Tied to the list's
@@ -198,6 +199,13 @@ export class TySelect extends TyComponent<SelectState> {
       type: "boolean" as const,
       visual: true,
       default: false,
+    },
+    // Error line under the field, same as ty-input's; '' clears it.
+    // Validation writes it too (submit, reportValidity — utils/validity.ts).
+    error: {
+      type: "string" as const,
+      visual: true,
+      default: "",
     },
     // Built-in × clear button in the default/compact trigger, shown once
     // something is selected. Automatically absent under slot="trigger" —
@@ -373,6 +381,11 @@ export class TySelect extends TyComponent<SelectState> {
 
   private _customFlavorSheet: CSSStyleSheet | null = null;
 
+  // The slotted trigger carrying the error's aria, and the watch that keeps
+  // it there (see syncTriggerAria).
+  private _ariaTrigger: HTMLElement | null = null;
+  private _ariaObserver: MutationObserver | null = null;
+
   constructor() {
     super(); // TyComponent handles attachInternals() and attachShadow()
 
@@ -411,6 +424,8 @@ export class TySelect extends TyComponent<SelectState> {
     // the full unit + e2e suite with no deferral: nothing here actually
     // depended on waiting a frame.
     this.initializeState();
+    // Empty single selects still submit name= (see getFormValue)
+    this.updateFormValue();
 
     // Observe light-DOM children — re-sync selected state when consumers swap
     // tag children (external-search refresh). syncSelectedTags is idempotent
@@ -443,6 +458,15 @@ export class TySelect extends TyComponent<SelectState> {
     this.ensureOptionRoles();
 
     this._syncCustomFlavor();
+
+    // Keys while the list is open (handleKeyboard). Here, not in the
+    // build-once render paths, so a moved select gets it back. Capture: the
+    // open list is the topmost dialog, so its keys are ours before a ty-popup
+    // or ty-modal around it stops them.
+    if (!this._keyboardHandler) {
+      this._keyboardHandler = this.handleKeyboard.bind(this);
+      document.addEventListener("keydown", this._keyboardHandler, true);
+    }
   }
 
   /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
@@ -456,6 +480,13 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   protected onDisconnect(): void {
+    // Removed while open (e.g. along with the ty-modal around it): close
+    // properly, or the scroll lock outlives the element.
+    if (this._state.open) {
+      if (this._state.mode === "mobile") this.closeMobileModal();
+      else this.closeDropdown();
+    }
+
     // CRITICAL: Close all dialogs to prevent scroll locking
     const shadow = this.shadowRoot!;
     const dialogs = shadow.querySelectorAll("dialog");
@@ -466,7 +497,7 @@ export class TySelect extends TyComponent<SelectState> {
     });
 
     if (this._keyboardHandler) {
-      document.removeEventListener("keydown", this._keyboardHandler);
+      document.removeEventListener("keydown", this._keyboardHandler, true);
       this._keyboardHandler = null;
     }
 
@@ -619,7 +650,28 @@ export class TySelect extends TyComponent<SelectState> {
       return formData;
     }
 
+    // Native fidelity: a single select with nothing chosen submits name=
+    // (like a <select> on its empty placeholder option); multiple submits nothing.
+    if (this._name && !this._multiple) return "";
     return null;
+  }
+
+  /**
+   * Focus the trigger: a slotted one, else the field. The host itself isn't
+   * focusable. A slotted trigger that can't take focus (a <span>, a disabled
+   * button) leaves it to the field.
+   */
+  focus(options?: FocusOptions): void {
+    if (this._disabled) return; // like a disabled <select>
+    const trigger = this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null;
+    if (trigger) {
+      trigger.focus(options);
+      const active = (trigger.getRootNode() as Document | ShadowRoot).activeElement;
+      if (active && trigger.contains(active)) return;
+    }
+    const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
+    if (stub) stub.focus(options);
+    else super.focus(options);
   }
 
   private parseValue(value: string | null): string[] {
@@ -725,6 +777,17 @@ export class TySelect extends TyComponent<SelectState> {
     ) as HTMLElement[];
   }
 
+  /**
+   * The options on offer: all but the ones the author hid (`hidden`, like a
+   * native <option hidden>). The search filters these and the keyboard walks
+   * them; a hidden option can still be the value.
+   */
+  private getOfferedTags(): TagData[] {
+    return this.getTagElements()
+      .filter((el) => !el.hasAttribute("hidden"))
+      .map((el) => this.getTagData(el));
+  }
+
   private getTagData(element: HTMLElement): TagData {
     const value =
       (element as any).value ||
@@ -809,6 +872,7 @@ export class TySelect extends TyComponent<SelectState> {
     dispatchChange: boolean = false,
     action: ChangeAction = "set",
     item: string | null = null,
+    reveal: boolean = dispatchChange,
   ): void {
     const oldValues = this.getSelectedValues();
 
@@ -837,6 +901,10 @@ export class TySelect extends TyComponent<SelectState> {
           action,
           item,
         });
+        // A user change, like a native select's :user-invalid: show the
+        // message now if it left the field invalid (including a
+        // setCustomValidity() the change handler just made).
+        if (reveal) this.revealValidity();
       }
     }
   }
@@ -1015,8 +1083,7 @@ export class TySelect extends TyComponent<SelectState> {
     const searchChevron = shadow.querySelector(".dropdown-search-chevron");
     if (searchChevron) searchChevron.classList.add("open");
 
-    const tags = this.getTagElements().map((el) => this.getTagData(el));
-    this._state.filteredTags = tags;
+    this._state.filteredTags = this.getOfferedTags();
     this._state.highlightedIndex = -1;
 
     // Ensure options area is visible (may have been hidden from previous search)
@@ -1094,7 +1161,7 @@ export class TySelect extends TyComponent<SelectState> {
     } else {
       // Internal mode — restore visibility of all tags ourselves
       const allTags = this.getTagElements().map((el) => this.getTagData(el));
-      this._state.filteredTags = allTags;
+      this._state.filteredTags = this.getOfferedTags();
       this.updateTagVisibility(allTags, allTags);
       this.clearHighlights(allTags);
     }
@@ -1131,10 +1198,11 @@ export class TySelect extends TyComponent<SelectState> {
     // ("may have been hidden from previous search"), which openMobileModal()
     // never had a mobile-appropriate equivalent for: desktop hides the whole
     // options container (a single display:none toggle, harmless to reset
-    // unconditionally), mobile hides individual options via their `hidden`
-    // attribute (updateTagVisibility), so the reset has to happen here.
+    // unconditionally), mobile hides individual options via their
+    // `filtered-out` attribute (updateTagVisibility), so the reset has to
+    // happen here.
     const tags = this.getTagElements().map((el) => this.getTagData(el));
-    this._state.filteredTags = tags;
+    this._state.filteredTags = this.getOfferedTags();
     this.updateTagVisibility(tags, tags);
 
     // Focus the search input: the `autofocus` attribute on
@@ -1202,7 +1270,7 @@ export class TySelect extends TyComponent<SelectState> {
     } else {
       // Internal mode — unhide all tags ourselves
       const allTags = this.getTagElements();
-      allTags.forEach((el) => el.removeAttribute("hidden"));
+      allTags.forEach((el) => el.removeAttribute("filtered-out"));
     }
 
     // Lifecycle event
@@ -1235,6 +1303,8 @@ export class TySelect extends TyComponent<SelectState> {
     }
 
     this.clear();
+    // The user emptied it: show the message now if that left it invalid
+    this.revealValidity();
   }
 
   /**
@@ -1395,7 +1465,7 @@ export class TySelect extends TyComponent<SelectState> {
     if (mobileInput) mobileInput.value = "";
 
     const allTags = this.getTagElements().map((el) => this.getTagData(el));
-    this._state.filteredTags = allTags;
+    this._state.filteredTags = this.getOfferedTags();
     this.updateTagVisibility(allTags, allTags);
     this.updateOptionsVisibility(true);
     this.clearHighlights(allTags);
@@ -1426,7 +1496,7 @@ export class TySelect extends TyComponent<SelectState> {
 
     // Internal search: filter ALL options locally — selected ones stay visible
     // (with selected styling) so they can be toggled off while searching
-    const allTags = this.getTagElements().map((el) => this.getTagData(el));
+    const allTags = this.getOfferedTags();
     const filtered = this.filterTags(allTags, query);
 
     this._state.filteredTags = filtered;
@@ -1473,6 +1543,8 @@ export class TySelect extends TyComponent<SelectState> {
         } else {
           this.closeDropdown();
         }
+        // Back on the trigger, like a native select
+        this.focus();
         break;
 
       case "Enter":
@@ -1521,8 +1593,10 @@ export class TySelect extends TyComponent<SelectState> {
   /**
    * Next tag index in `direction` (-1/1) that isn't disabled, wrapping
    * around — mirrors handleTagClick's disabled check so keyboard nav can
-   * never land on/select what a click already refuses to. Returns -1 if
-   * every tag is disabled (or there are none).
+   * never land on/select what a click already refuses to. Nor on one out of
+   * sight: `tags` is the list as it was offered, and an option can get
+   * `hidden` while it's open (a server patch). Returns -1 if every tag is
+   * skipped (or there are none).
    */
   private nextEnabledTagIndex(
     tags: TagData[],
@@ -1537,7 +1611,8 @@ export class TySelect extends TyComponent<SelectState> {
       : (fromIndex + direction + count) % count;
 
     for (let i = 0; i < count; i++) {
-      if (!tags[index].element.hasAttribute("disabled")) return index;
+      const el = tags[index].element;
+      if (!el.hasAttribute("disabled") && !el.hasAttribute("hidden") && !el.hasAttribute("filtered-out")) return index;
       index = (index + direction + count) % count;
     }
 
@@ -1555,6 +1630,10 @@ export class TySelect extends TyComponent<SelectState> {
     return tags.filter(({ text }) => text.toLowerCase().includes(searchLower));
   }
 
+  /**
+   * Search filtering marks the options it leaves out `filtered-out`, never
+   * `hidden`: that one is the author's (see getOfferedTags).
+   */
   private updateTagVisibility(
     filteredTags: TagData[],
     allTags: TagData[],
@@ -1562,11 +1641,7 @@ export class TySelect extends TyComponent<SelectState> {
     const visibleValues = new Set(filteredTags.map((tag) => tag.value));
 
     allTags.forEach(({ value, element }) => {
-      if (visibleValues.has(value)) {
-        element.removeAttribute("hidden");
-      } else {
-        element.setAttribute("hidden", "");
-      }
+      element.toggleAttribute("filtered-out", !visibleValues.has(value));
     });
   }
 
@@ -1718,28 +1793,89 @@ export class TySelect extends TyComponent<SelectState> {
       label?.remove();
     }
 
+    // Error line under the trigger (every skin, custom trigger included) —
+    // same markup as ty-input's
+    const error: string = this.getProperty("error") || "";
+    const errorId = `select-error-${getElementHash(this)}`;
+    let errorLine = container.querySelector(":scope > .error-message");
+    if (error) {
+      if (!errorLine) {
+        errorLine = document.createElement("div");
+        errorLine.className = "error-message";
+        errorLine.id = errorId;
+        container.append(errorLine);
+      }
+      errorLine.textContent = error;
+    } else {
+      errorLine?.remove();
+    }
+
     const stub = shadow.querySelector(".select-stub") as HTMLElement | null;
     if (stub) {
       stub.classList.toggle("disabled", this._disabled);
       stub.classList.toggle("compact", this._compact);
+      stub.classList.toggle("error", !!error);
       stub.tabIndex = this._disabled ? -1 : 0;
       stub.toggleAttribute("disabled", this._disabled);
       if (this._disabled) stub.setAttribute("aria-disabled", "true");
       else stub.removeAttribute("aria-disabled");
       if (this._label) stub.setAttribute("aria-labelledby", labelId);
       else stub.removeAttribute("aria-labelledby");
+      // The combobox carries the invalid state and reads the line out
+      if (error) {
+        stub.setAttribute("aria-invalid", "true");
+        stub.setAttribute("aria-describedby", errorId);
+      } else {
+        stub.removeAttribute("aria-invalid");
+        stub.removeAttribute("aria-describedby");
+      }
     }
+    this.syncTriggerAria();
     shadow
       .querySelectorAll<HTMLInputElement>(".dropdown-search-input, .mobile-search-input")
       .forEach((input) => (input.disabled = this._disabled));
   }
 
   /**
+   * A slotted trigger is what takes focus (focus()), so it carries the error
+   * state too. aria-describedby can't reach into our shadow root from the
+   * light DOM: the message goes in aria-description instead. The trigger is
+   * the author's markup, so a morph can strip these while the error stays:
+   * a watch on them puts them back. Writes only on a real change, or the
+   * watch would feed itself.
+   */
+  private syncTriggerAria(): void {
+    const error: string = this.getProperty("error") || "";
+    const trigger = error
+      ? (this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null)
+      : null;
+    if (this._ariaTrigger && this._ariaTrigger !== trigger) {
+      this._ariaTrigger.removeAttribute("aria-invalid");
+      this._ariaTrigger.removeAttribute("aria-description");
+    }
+    if (trigger) {
+      if (trigger.getAttribute("aria-invalid") !== "true") trigger.setAttribute("aria-invalid", "true");
+      if (trigger.getAttribute("aria-description") !== error) trigger.setAttribute("aria-description", error);
+    }
+    this._ariaTrigger = trigger;
+
+    this._ariaObserver ??= new MutationObserver(() => this.syncTriggerAria());
+    this._ariaObserver.disconnect();
+    if (trigger) {
+      this._ariaObserver.observe(trigger, {
+        attributes: true,
+        attributeFilter: ["aria-invalid", "aria-description"],
+      });
+    }
+  }
+
+  /**
    * Reflect constraint validation to the owning <form> via ElementInternals.
    * Without this `required` is only cosmetic — form.checkValidity() (and a
    * real submit) never actually blocks on an empty required select. Mirrors
-   * ty-input's updateValidity(): empty + required => valueMissing; disabled
-   * fields are barred from constraint validation.
+   * ty-input's updateValidity(): empty + required => valueMissing, with a
+   * native <select>'s message; disabled fields are barred from constraint
+   * validation.
    */
   private updateValidity(): void {
     if (this.disabled) {
@@ -1750,7 +1886,7 @@ export class TySelect extends TyComponent<SelectState> {
       const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
       this.applyValidity(
         { valueMissing: true },
-        "Please select a value",
+        nativeMessage("select", { required: true, multiple: this._multiple }),
         stub ?? undefined,
       );
     } else {
@@ -1776,7 +1912,10 @@ export class TySelect extends TyComponent<SelectState> {
       // Blink does not parse :has() inside :host(), so detection lives here.
       this.toggleAttribute("has-trigger", hasTrigger);
     };
-    slot.addEventListener("slotchange", sync);
+    slot.addEventListener("slotchange", () => {
+      sync();
+      this.syncFieldChrome(); // error aria onto a newly slotted trigger
+    });
     sync();
   }
 
@@ -1820,10 +1959,15 @@ export class TySelect extends TyComponent<SelectState> {
           this.closeDropdown();
         }
       });
+      // A close request handleKeyboard didn't get (Escape whose keydown
+      // someone else stopped, a back gesture): close our way, not natively.
+      dialog.addEventListener("cancel", (e) => {
+        e.preventDefault();
+        this.closeDropdown();
+        this.focus();
+      });
+      this.syncOnOutsideClose(dialog, () => this.closeDropdown());
     }
-
-    this._keyboardHandler = this.handleKeyboard.bind(this);
-    document.addEventListener("keydown", this._keyboardHandler);
   }
 
   private buildStubClasses(): string {
@@ -2050,18 +2194,9 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private setupMobileEventListeners(): void {
-    // Mobile never called setupEventListeners() (desktop-only concerns like
-    // click-outside don't apply to a modal dialog), so handleKeyboard's
-    // document-level Escape/Enter/Arrow handling was never wired up here —
-    // real Escape only worked via the dialog's own native `cancel` event,
-    // never for a programmatically dispatched key. handleKeyboard already
-    // branches on `_state.mode` wherever mobile needs different behavior
-    // (selectByTag, tryCreateFromSearch), so it's safe to share.
-    if (!this._keyboardHandler) {
-      this._keyboardHandler = this.handleKeyboard.bind(this);
-      document.addEventListener("keydown", this._keyboardHandler);
-    }
-
+    // handleKeyboard (wired in onConnect) serves mobile too: it branches on
+    // `_state.mode` wherever mobile needs different behavior (selectByTag,
+    // tryCreateFromSearch).
     const shadow = this.shadowRoot!;
     const stub = shadow.querySelector(".select-stub");
     const optionsSlot = shadow.querySelector("#options-slot");
@@ -2115,8 +2250,25 @@ export class TySelect extends TyComponent<SelectState> {
       dialog.addEventListener("cancel", (e) => {
         e.preventDefault(); // Prevent default to handle it our way
         this.closeMobileModal();
+        this.focus();
       });
+      this.syncOnOutsideClose(dialog, () => this.closeMobileModal());
     }
+  }
+
+  /**
+   * The dialog was closed by someone else — a ty-modal around this select
+   * closes the dialogs still open inside it. Run our own close too, so the
+   * open state, aria-expanded and the scroll lock follow. Watches the `open`
+   * attribute rather than the `close` event: that one comes a task later,
+   * so right after modal.hide() the stub would still say expanded. Our own
+   * close() calls land here with the state already closed, and a dialog
+   * reopened since then is open again: both are no-ops.
+   */
+  private syncOnOutsideClose(dialog: HTMLDialogElement, close: () => void): void {
+    new MutationObserver(() => {
+      if (this._state.open && !dialog.open) close();
+    }).observe(dialog, { attributes: true, attributeFilter: ["open"] });
   }
 
   private handleMobileStubClick(e: Event): void {
@@ -2153,12 +2305,12 @@ export class TySelect extends TyComponent<SelectState> {
     const availableSection = shadow.querySelector(".mobile-available-section");
 
     if (availableSection) {
-      // Count what's actually still on offer: options hidden by search
-      // filtering don't count, and neither do ones already in the strip
-      // above — "Selected (11)" next to "Available (40)" out of 40 total
-      // reads like 51 options exist.
-      const visibleAvailable = this.getTagElements().filter(
-        (tag) => !tag.hasAttribute("hidden") && !tag.hasAttribute("selected"),
+      // Count what's actually still on offer: options hidden (by the author
+      // or by search filtering) don't count, and neither do ones already in
+      // the strip above — "Selected (11)" next to "Available (40)" out of 40
+      // total reads like 51 options exist.
+      const visibleAvailable = this.getOfferedTags().filter(
+        ({ element }) => !element.hasAttribute("filtered-out") && !element.hasAttribute("selected"),
       ).length;
 
       availableSection.setAttribute(
@@ -2397,6 +2549,9 @@ export class TySelect extends TyComponent<SelectState> {
     if (option) {
       const clone = option.cloneNode(true) as HTMLElement;
       clone.removeAttribute("selected"); // no tick/selected styling in the stub
+      // A hidden option isn't on offer, but as the value it still shows
+      clone.removeAttribute("hidden");
+      clone.removeAttribute("filtered-out");
       clone.setAttribute("slot", "selected");
       clone.setAttribute("cloned", "true");
       this.appendChild(clone);
@@ -2446,10 +2601,12 @@ export class TySelect extends TyComponent<SelectState> {
    * Clear the entire selection programmatically WITH a change event
    * (action: 'clear'). No-op if nothing is selected. Exists so slot="trigger"
    * consumers (custom chrome, built-in clear UI hidden by design) can wire
-   * their own clear icon's click handler to it.
+   * their own clear icon's click handler to it. Shows no validation
+   * message (a code reset after a save shouldn't flag the field); the
+   * built-in × does.
    */
   clear(): void {
-    this.updateComponentValue([], true, "clear", null);
+    this.updateComponentValue([], true, "clear", null, false);
   }
 
   get value(): string {
@@ -2539,6 +2696,14 @@ export class TySelect extends TyComponent<SelectState> {
 
   set required(value: boolean) {
     this.setProperty("required", value);
+  }
+
+  get error(): string {
+    return this.getProperty("error");
+  }
+
+  set error(value: string) {
+    this.setProperty("error", value);
   }
 
   get notSearchable(): boolean {

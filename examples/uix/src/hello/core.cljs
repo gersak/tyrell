@@ -1,20 +1,18 @@
 (ns hello.core
   (:require
-   ;; Tyrell web components — side-effect import registers all <ty-*> custom elements
-    ["tyrell-components"]
-   ;; Clean React wrappers
-    ["tyrell-react" :as ty]
-    [hello.icons]
-    ;; Views
-    [hello.views.forms :as forms]
-    [hello.views.layout :as layout-views]
-    [hello.views.modals :as modals-views]
-    ;; All component configurations
-   ;; TY Router
-    [tyrell.router :as router]
-   ;; UIx for React-like development
-    [uix.core :as uix :refer [defui $]]
-    [uix.dom]))
+   ;; Tyrell web components: side-effect import registers all <ty-*> custom elements
+   ["tyrell-components"]
+   ;; React wrappers
+   ["tyrell-react" :as ty]
+   [hello.icons]
+   [hello.views.forms :as forms]
+   [hello.views.layout :as layout-views]
+   [hello.views.modals :as modals-views]
+   ;; Tyrell router + layout context
+   [tyrell.layout]
+   [tyrell.router :as router]
+   [uix.core :as uix :refer [defui $]]
+   [uix.dom]))
 
 ;; Define routes
 (router/link ::router/root
@@ -76,14 +74,17 @@
         ($ :p.ty-text.text-lg.max-w-2xl.mx-auto.mb-8
            "A modern ClojureScript application showcasing the perfect integration of UIx hooks, ty-react components, and Tailwind CSS following the TY design system.")
         ($ :div.flex.flex-wrap.justify-center.gap-4
-           ($ ty/Button {:variant "primary"
-                         :class "flex items-center gap-2"}
-              ($ ty/Icon {:name "play"})
-              "Explore Components")
-           ($ ty/Button {:flavor "outline"
-                         :class "flex items-center gap-2"}
-              ($ ty/Icon {:name "code"})
-              "View Source")))
+           ($ ty/Button {:flavor "primary"
+                         :size "md"
+                         :on-click #(router/navigate! ::forms)}
+              ($ ty/Icon {:slot "start" :name "play"})
+              "Try the forms")
+           ($ ty/Button {:flavor "primary"
+                         :appearance "outlined"
+                         :size "md"
+                         :on-click #(router/navigate! ::modals)}
+              ($ ty/Icon {:slot "start" :name "layers"})
+              "Modals & overlays")))
 
      ;; Feature grid
      ($ :div.grid.grid-cols-1.md:grid-cols-2.lg:grid-cols-3.gap-6
@@ -124,12 +125,21 @@
      ($ :div.ty-elevated.rounded-lg.p-6.mb-8
         ($ :h2.ty-text++.text-xl.font-semibold.mb-4
            "Button Variants")
-        ($ :div.flex.flex-wrap.gap-4
-           ($ ty/Button {:flavor "primary"} "Primary")
-           ($ ty/Button {:flavor "neutral"} "Neutral")
-           ($ ty/Button {:flavor "success"
-                         :outlined true} "Outline")
-           ($ ty/Button {:flavor "ghost"} "Ghost")))
+        ($ :div.space-y-4
+           ($ :div.flex.flex-wrap.gap-4
+              ($ ty/Button {:flavor "primary"} "Solid")
+              ($ ty/Button {:flavor "primary" :appearance "outlined"} "Outlined")
+              ($ ty/Button {:flavor "primary" :appearance "ghost"} "Ghost"))
+           ($ :div.flex.flex-wrap.gap-4
+              (for [f ["neutral" "success" "warning" "danger"]]
+                ($ ty/Button {:key f :flavor f} f)))
+           ($ :div.flex.flex-wrap.gap-4.items-center
+              ($ ty/Button {:flavor "primary" :pill true}
+                 ($ ty/Icon {:slot "start" :name "save"}) "Save")
+              ($ ty/Button {:flavor "neutral" :loading true} "Loading")
+              ($ ty/Button {:flavor "neutral" :action true :aria-label "Settings"}
+                 ($ ty/Icon {:name "settings"}))
+              ($ ty/Button {:flavor "neutral" :disabled true} "Disabled"))))
 
      ;; Icon gallery
      ($ :div.ty-elevated.rounded-lg.p-6
@@ -185,6 +195,11 @@
         ;; Subscribe to router state changes for re-rendering
         router-state (use-router)]
 
+    ;; Close the mobile sidebar on navigation
+    (uix/use-effect
+      (fn [] (set-sidebar-open false))
+      [(:current router-state)])
+
     ;; Apply theme to html element
     (uix/use-effect
       (fn []
@@ -202,25 +217,27 @@
           ($ :div.flex.items-center.gap-4
              ;; Mobile menu button
              ($ ty/Button
-                {:variant "ghost"
-                 :size "sm"
+                {:appearance "ghost"
+                 :flavor "neutral"
+                 :action true
+                 :aria-label "Menu"
                  :on-click #(set-sidebar-open true)
                  :class "lg:hidden"}
                 ($ ty/Icon {:name "menu"}))
 
              ;; Logo/Title derived from current route
              ($ :h1.ty-text++.text-xl.font-bold
-                (get route-titles (:current router-state) "UIx + ty-react")))
+                (or (some (fn [[id title]] (when (router/rendered? id true) title)) route-titles)
+                    "UIx + ty-react")))
 
           ;; Header actions
           ($ :div.flex.items-center.gap-3
              ;; Theme toggle
              ($ ty/Button
-                {:variant "ghost"
-                 :size "sm"
-                 :on-click #(set-theme (if (= theme "light") "dark" "light"))
-                 :class "flex items-center gap-2"}
-                ($ ty/Icon {:name (if (= theme "light") "sun" "moon")})
+                {:appearance "ghost"
+                 :flavor "neutral"
+                 :on-click #(set-theme (if (= theme "light") "dark" "light"))}
+                ($ ty/Icon {:slot "start" :name (if (= theme "light") "sun" "moon")})
                 (when (>= (.-innerWidth js/window) 768)
                   (if (= theme "light") "Light" "Dark")))
 
@@ -275,14 +292,7 @@
                 ($ buttons-view)
                 ($ forms-view)
                 ($ layout-view)
-                ($ modals-view))))
-
-       ;; Close sidebar on navigation (mobile)
-       (uix/use-effect
-         (fn []
-           (when sidebar-open
-             (set-sidebar-open false)))
-         [sidebar-open (:current router-state)]))))
+                ($ modals-view)))))))
 
 (defonce root-ref (atom nil))
 

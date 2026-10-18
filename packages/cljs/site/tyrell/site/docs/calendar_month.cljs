@@ -108,6 +108,133 @@
 (defonce ^:private weekend-sheet
   (doto (js/CSSStyleSheet.) (.replaceSync weekend-css)))
 
+(def ^:private availability-snippets
+  "Availability example, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-calendar-month id=\"grid\" size=\"lg\"></ty-calendar-month>
+
+<script>
+  const slotDay = (ctx) => {
+    const el = document.createElement('div');
+    el.className = `slot ${statusFor(ctx)}`;   // open | limited | booked
+    el.innerHTML = `<span>${ctx.dayInMonth}</span><i></i>`;
+    return el;
+  };
+
+  const slotSheet = new CSSStyleSheet();
+  slotSheet.replaceSync(`
+    .slot.open i    { background: var(--ty-color-success); }
+    .slot.limited i { background: var(--ty-color-warning); }
+    .slot.booked    { color: var(--ty-text-faint); text-decoration: line-through; }
+  `);
+
+  const grid = document.getElementById('grid');
+  grid.dayContentFn = slotDay;
+  grid.customCSS = slotSheet;
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyCalendarMonth } from 'tyrell-react'
+
+// slotDay and slotSheet as in the HTML tab
+<TyCalendarMonth size=\"lg\" dayContentFn={slotDay} customCSS={slotSheet} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+;; slot-day: (fn [ctx] element), slot-sheet: a CSSStyleSheet (see HTML tab)
+[:> ty/CalendarMonth {:size \"lg\" :day-content-fn slot-day :customCSS slot-sheet}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-calendar-month {:size \"lg\"
+                     :replicant/on-mount (fn [{:replicant/keys [node]}]
+                                           (set! (.-dayContentFn node) slot-day)
+                                           (set! (.-customCSS node) slot-sheet))}]"]
+   ["datastar" "Datastar" "html"
+    "<!-- slotDay and slotSheet: globals, as in the HTML tab -->
+<ty-calendar-month size=\"lg\"
+  data-init=\"el.dayContentFn = slotDay; el.customCSS = slotSheet\">
+</ty-calendar-month>"]])
+
+(def ^:private selection-snippets
+  "Selection example, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-calendar-month id=\"grid\"></ty-calendar-month>
+
+<script>
+  const grid = document.getElementById('grid');
+  grid.addEventListener('day-click',
+    (e) => grid.value = e.detail.dayContext.localValue);
+</script>"]
+   ["react" "React" "javascript"
+    "import { useState } from 'react'
+import { TyCalendarMonth } from 'tyrell-react'
+
+const [day, setDay] = useState(null)
+
+<TyCalendarMonth value={day}
+  onDayClick={(e) => setDay(e.detail.dayContext.localValue)} />"]
+   ["reagent" "Reagent" "clojure"
+    "[:> ty/CalendarMonth
+ {:value @day
+  :on-day-click #(reset! day (.. % -detail -dayContext -localValue))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-calendar-month
+ {:on {:day-click (fn [e]
+                    (set! (.. e -currentTarget -value)
+                          (.. e -detail -dayContext -localValue)))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-calendar-month
+  data-on:day-click=\"el.value = evt.detail.dayContext.localValue\">
+</ty-calendar-month>"]])
+
+(def ^:private api-snippets
+  "JavaScript API example, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-calendar-month id=\"grid\"></ty-calendar-month>
+
+<script>
+  const grid = document.getElementById('grid');
+
+  grid.displayYear = 2026;
+  grid.displayMonth = 12;                  // 1–12
+  grid.value = new Date(2026, 11, 24).getTime();  // local midnight
+  grid.min = '2026-12-01';                 // ISO; outside days are disabled
+
+  grid.addEventListener('day-click', (e) => {
+    const { year, month, day, dayContext } = e.detail;
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyCalendarMonth } from 'tyrell-react'
+
+<TyCalendarMonth value={new Date(2026, 11, 24).getTime()}
+  displayYear={2026} displayMonth={12}   // 1–12
+  min=\"2026-12-01\"                       // ISO; outside days are disabled
+  onDayClick={(e) => {
+    const { year, month, day, dayContext } = e.detail
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "[:> ty/CalendarMonth
+ {:display-year 2026 :display-month 12   ; 1–12
+  :min \"2026-12-01\"                      ; ISO; outside days are disabled
+  :value (.getTime (js/Date. 2026 11 24))
+  :on-day-click #(let [{:keys [year month day]} (js->clj (.-detail %) :keywordize-keys true)]
+                   …)}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-calendar-month
+ {:display-year \"2026\" :display-month \"12\"   ; 1–12
+  :min \"2026-12-01\"                          ; ISO; outside days are disabled
+  :replicant/on-mount (fn [{:replicant/keys [node]}]
+                        (set! (.-value node) (.getTime (js/Date. 2026 11 24))))
+  :on {:day-click (fn [e]
+                    (let [{:keys [year month day]} (js->clj (.-detail e) :keywordize-keys true)]
+                      …))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-calendar-month display-year=\"2026\" display-month=\"12\"
+  min=\"2026-12-01\"
+  data-signals:day=\"0\"
+  data-init=\"el.value = new Date(2026, 11, 24).getTime()\"
+  data-on:day-click=\"$day = evt.detail.day\">
+</ty-calendar-month>"]])
+
 (defn view []
   (let [{:keys [year month] :as now} (today)]
     (component-page
@@ -145,32 +272,18 @@
        (example
         {:title "Availability"
          :span 6
-         :lang "javascript"
          :description [:span [:code "dayContentFn"] " renders each cell; " [:code "customCSS"]
                        " styles it inside the shadow root. Theme variables pass straight through."]
-         :code "const grid = document.querySelector('ty-calendar-month');
-
-grid.dayContentFn = (ctx) => {
-  const el = document.createElement('div');
-  el.className = `slot ${statusFor(ctx)}`;   // open | limited | booked
-  el.innerHTML = `<span>${ctx.dayInMonth}</span><i></i>`;
-  return el;
-};
-
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`
-  .slot.open i    { background: var(--ty-color-success); }
-  .slot.limited i { background: var(--ty-color-warning); }
-  .slot.booked    { color: var(--ty-text-faint); text-decoration: line-through; }
-`);
-grid.customCSS = sheet;"}
-        [:div.flex.flex-wrap.items-center.gap-x-12.gap-y-4
-         [:ty-calendar-month {:display-year (str year)
-                              :display-month (str month)
-                              :size "lg"
-                              :replicant/on-mount (fn [{:replicant/keys [node]}]
-                                                    (set! (.-customCSS ^js node) availability-sheet)
-                                                    (set! (.-dayContentFn ^js node) availability-day))}]
+         :tabs availability-snippets}
+        [:div.min-w-0.flex.flex-wrap.items-center.gap-x-12.gap-y-4
+         ;; lg is 360px wide, more than a phone's card: scroll there.
+         [:div.max-w-full.overflow-x-auto
+          [:ty-calendar-month {:display-year (str year)
+                               :display-month (str month)
+                               :size "lg"
+                               :replicant/on-mount (fn [{:replicant/keys [node]}]
+                                                     (set! (.-customCSS ^js node) availability-sheet)
+                                                     (set! (.-dayContentFn ^js node) availability-day))}]]
          [:div.flex.flex-col.gap-3
           (map legend [["Open" "var(--ty-color-success)"]
                        ["Few left" "var(--ty-color-warning)"]
@@ -178,7 +291,7 @@ grid.customCSS = sheet;"}
 
        (example
         {:title "Your own navigation"
-         :span 4
+         :span 3
          :description "Two grids, one month apart, driven by your state. Useful for range pickers and booking forms."
          :code "<ty-button id=\"prev\">‹</ty-button>
 <ty-button id=\"next\">›</ty-button>
@@ -203,11 +316,9 @@ grid.customCSS = sheet;"}
 
        (example
         {:title "Selection"
-         :span 2
+         :span 3
          :description [:span "The grid doesn't select. Write " [:code "dayContext.localValue"] " back to " [:code "value"] "."]
-         :code "grid.addEventListener('day-click',
-  (e) => grid.value =
-    e.detail.dayContext.localValue);"}
+         :tabs selection-snippets}
         (let [value (get-in @state/state [:calendar-month-doc :value])]
           [:div.flex.flex-col.items-start.gap-3
            [:ty-calendar-month {:display-year (str year)
@@ -226,17 +337,7 @@ grid.customCSS = sheet;"}
 
        (example
         {:title "JavaScript API"
-         :lang "javascript"
-         :code "const grid = document.querySelector('ty-calendar-month');
-
-grid.displayYear = 2026;
-grid.displayMonth = 12;                  // 1–12
-grid.value = new Date(2026, 11, 24).getTime();  // local midnight
-grid.min = '2026-12-01';                 // ISO; outside days are disabled
-
-grid.addEventListener('day-click', (e) => {
-  const { year, month, day, dayContext } = e.detail;
-});"}
+         :tabs api-snippets}
         nil)))
 
      (page-section
@@ -281,7 +382,7 @@ grid.addEventListener('day-click', (e) => {
                     "Appearance"
                     ["size" "string" "\"md\"" "sm, md or lg."]
                     ["flavor" "string" "\"primary\"" "Selected-day fill: any flavor, with + and - tones."]
-                    ["locale" "string" "\"en-US\"" "Weekday names. Falls back to the nearest lang attribute."]]
+                    ["locale" "string" "Weekday names. Unset: the nearest lang attribute, then the browser's language."]]
        :properties [["value" "number" "Selected day as a local-midnight timestamp (dayContext.localValue)."]
                     ["dayContentFn" "(ctx) => HTMLElement | string" "Renders each cell. Receives DayContext: year, month, dayInMonth, weekend, otherMonth, today, isSelected, value, localValue."]
                     ["customCSS" "CSSStyleSheet" "Adopted into the shadow root, after the built-in styles."]

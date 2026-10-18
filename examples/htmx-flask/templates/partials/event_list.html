@@ -1,20 +1,20 @@
 {% if events %}
 <div class="animate-fade-in space-y-3">
     {% for event in events %}
-    <div class="flex items-center space-x-3 ty-bg-{{ event.color }}-soft rounded-lg p-3 hover:shadow-sm transition-shadow group">
+    <div class="flex items-center space-x-3 ty-bg-{{ event.color }}- rounded-lg p-3 hover:shadow-sm transition-shadow group">
         <div class="flex-shrink-0">
-            <ty-icon name="{{ event.icon }}" class="ty-text-{{ event.color }}-strong"></ty-icon>
+            <ty-icon name="{{ event.icon }}" class="ty-text-{{ event.color }}++"></ty-icon>
         </div>
         <div class="flex-1 min-w-0">
-            <p class="font-medium ty-text-{{ event.color }}-strong truncate">{{ event.title }}</p>
-            <p class="text-sm ty-text-neutral-bold">
+            <p class="font-medium ty-text-{{ event.color }}++ truncate">{{ event.title }}</p>
+            <p class="text-sm ty-text-neutral+">
                 {{ event.formatted_date }}
-                {% if event.time %}<span class="ty-text-{{ event.color }}-bold font-medium"> • {{ event.time }}</span>{% endif %}
+                {% if event.time %}<span class="ty-text-{{ event.color }}+ font-medium"> • {{ event.time }}</span>{% endif %}
             </p>
         </div>
         <div class="flex-shrink-0 flex items-center space-x-2">
             <div class="w-3 h-3 rounded-full ty-bg-{{ event.color }}"></div>
-            <ty-button size="xs" flavor="danger" class="opacity-0 group-hover:opacity-100 transition-opacity"
+            <ty-button type="button" size="xs" flavor="danger" class="opacity-0 group-hover:opacity-100 transition-opacity"
                        hx-delete="/api/calendar/events/{{ event.id }}"
                        hx-target="#calendar-events"
                        hx-confirm="Delete this event?">
@@ -26,15 +26,15 @@
 </div>
 {% else %}
 <div class="text-center py-8 animate-fade-in">
-    <ty-icon name="calendar-days" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-soft"></ty-icon>
+    <ty-icon name="calendar-days" class="w-12 h-12 mx-auto mb-3 ty-text-neutral-"></ty-icon>
     {% if selected_date %}
-    <p class="ty-text-neutral-bold mb-2">No events on {{ selected_date }}</p>
-    <p class="text-sm ty-text-neutral-faint">
+    <p class="ty-text-neutral+ mb-2">No events on {{ selected_date }}</p>
+    <p class="text-sm ty-text-neutral--">
         Use the form above to add your first event
     </p>
     {% else %}
-    <p class="ty-text-neutral-bold mb-2">Select a date to view events</p>
-    <p class="text-sm ty-text-neutral-faint">
+    <p class="ty-text-neutral+ mb-2">Select a date to view events</p>
+    <p class="text-sm ty-text-neutral--">
         Click on any date in the calendar above
     </p>
     {% endif %}

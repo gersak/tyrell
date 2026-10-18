@@ -1,6 +1,14 @@
 /** Option Component Styles */
 
 export const optionStyles = `
+/* Options the author hid and options a ty-select search left out, at any
+   depth in the select (a framework component's element around each option
+   too). !important beats the select's mobile list display:block. */
+:host([hidden]),
+:host([filtered-out]) {
+  display: none !important;
+}
+
 .option-content {
   display: flex;
   align-items: center;

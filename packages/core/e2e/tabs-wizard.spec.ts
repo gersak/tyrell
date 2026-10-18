@@ -112,6 +112,29 @@ test.describe('ty-tabs — keyboard edge cases', () => {
   })
 })
 
+// The marker is placed without a transition when it never had a place, or
+// had one while the tabs were hidden. The style flush that kept that place
+// from animating was a bare `marker.offsetWidth;`, which the CDN build's
+// terser dropped: shown again, the marker grew in from nothing.
+test('ty-tabs shown after they were hidden: the marker is in place at once', async ({ page }) => {
+  await mount(page, `<div id="box" style="display: none; width: 600px"><ty-tabs id="t" active="b"><ty-tab id="a" label="First tab">A</ty-tab><ty-tab id="b" label="Second tab">B</ty-tab></ty-tabs></div>`)
+  await page.waitForTimeout(300)
+  const r = await page.evaluate(() => new Promise<{ widths: number[]; final: number }>((resolve) => {
+    document.getElementById('box')!.style.display = 'block'
+    const root = document.getElementById('t')!.shadowRoot!
+    const widths: number[] = []
+    const tick = () => {
+      widths.push(Math.round((root.querySelector('.marker-wrapper') as HTMLElement).getBoundingClientRect().width))
+      if (widths.length < 6) requestAnimationFrame(tick)
+      else resolve({ widths, final: (root.querySelector("[data-tab-id='b']") as HTMLElement).offsetWidth })
+    }
+    requestAnimationFrame(() => requestAnimationFrame(tick))
+  }))
+  const placed = r.widths.filter((w) => w > 0)
+  expect(placed.length).toBeGreaterThan(0)
+  expect(placed[0]).toBe(r.final)
+})
+
 test.describe('ty-tabs — overflow menu', () => {
   const manyTabs = Array.from({ length: 6 }, (_, i) =>
     `<ty-tab id="tab${i}" label="Tab ${i}">Content ${i}</ty-tab>`

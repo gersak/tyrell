@@ -11,6 +11,46 @@
 
 import { PropertyManager, PropertyConfig, PropertyChange } from '../utils/property-manager.js'
 import { ValidityController } from '../utils/validity.js'
+import { upgradeProperties } from '../utils/upgrade-properties.js'
+
+export { upgradeProperties }
+
+/** Hosts that drop a <label>'s forwarded click (see watchLabelForwards). */
+const labelClickHosts = new WeakSet<Element>()
+/** Point of the last click on such a host's shadow content; a timeout (a
+ *  later task) forgets it. */
+const directClicks = new WeakMap<Element, string>()
+let labelForwardsWatched = false
+
+/**
+ * For components whose whole host is the click target AND that expect a
+ * wrapping <label> to delegate to them (checkbox, switch, radio). Firefox's
+ * <label> doesn't count a click on the control's shadow content as a click
+ * on the control, so once that click has dispatched it forwards one more to
+ * the host: two clicks for one gesture. The forward comes later in the same
+ * task (after a microtask checkpoint for real input), targets the host
+ * itself and copies the original's coordinates — that's what is matched
+ * here. Clicks on the label text, el.click() and keyboard activation never
+ * match. The duplicate is dropped at the window, in its capture phase, so
+ * page listeners don't see it either: not one added before the component's
+ * own, nor a capture one on the document (React's onClickCapture).
+ */
+function watchLabelForwards(): void {
+  if (labelForwardsWatched) return
+  labelForwardsWatched = true
+  window.addEventListener('click', (e) => {
+    const path = e.composedPath()
+    const host = path.find((n): n is Element => labelClickHosts.has(n as Element))
+    if (!host) return
+    const at = `${e.clientX},${e.clientY}`
+    if (path[0] !== host) {
+      directClicks.set(host, at)
+      setTimeout(() => { if (directClicks.get(host) === at) directClicks.delete(host) })
+    } else if (directClicks.get(host) === at) {
+      e.stopImmediatePropagation()
+    }
+  }, true)
+}
 
 /**
  * Base class for all Ty components with unified property lifecycle
@@ -20,6 +60,14 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   
   // Subclasses must define their property configuration
   protected static properties: Record<string, PropertyConfig> = {}
+
+  /** attachShadow delegatesFocus: the host itself counts as focusable when
+   *  its focusable role element lives in the shadow (checkbox/switch) —
+   *  Firefox checks the host, not the validation anchor, on a blocked submit. */
+  protected static delegatesFocus = false
+
+  /** A wrapping <label> delegates clicks to the host (see watchLabelForwards). */
+  protected static labelClicks = false
   
   protected props: PropertyManager<T>
 
@@ -30,6 +78,10 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   protected _connected = false
 
   protected _rendered = false
+
+  /** The user edited the field since it was created or its form reset:
+   *  blur then shows its validation message (like native :user-invalid). */
+  protected _userEdited = false
 
   constructor() {
     super()
@@ -42,7 +94,12 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     
     // Setup shadow DOM (subclasses can override by checking if shadowRoot exists)
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open' })
+      this.attachShadow({ mode: 'open', delegatesFocus: ctor.delegatesFocus })
+    }
+
+    if (ctor.labelClicks) {
+      labelClickHosts.add(this)
+      watchLabelForwards()
     }
   }
   
@@ -146,8 +203,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * Connected callback - handle pre-set properties
    */
   connectedCallback(): void {
-    this._connected = true
-
     // Native defaultValue/defaultChecked semantics: form.reset() restores the
     // ATTRIBUTE-declared state. Property changes reflect back to attributes
     // here (unlike native inputs), so the original attribute must be captured
@@ -158,16 +213,15 @@ export abstract class TyComponent<T = any> extends HTMLElement {
       for (const [name, config] of Object.entries(ctor.properties)) {
         if (!config.formValue) continue
         const attr = this.getAttribute(this._toKebabCase(name))
-        this._resetDefaults.set(name, attr ?? config.default ?? null)
+        this._resetDefaults.set(name, attr ?? (typeof config.default === 'function' ? config.default() : config.default) ?? null)
       }
     }
 
-    // Capture pre-set properties (React/Vue/Reagent pattern)
-    const preSetProps = this._capturePreSetProperties()
+    // Before _connected: the setters update state, render happens once below
+    this._upgradeProperties()
 
-    if (preSetProps.length > 0) {
-      this._handlePropertyChanges(preSetProps)
-    }
+    this._connected = true
+    if (this._validates) this._validity.track()
 
     this.onConnect()
 
@@ -182,28 +236,30 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    */
   disconnectedCallback(): void {
     this._connected = false
+    if (this._validates) this._validity.track()
     this.onDisconnect()
+  }
+
+  /** The form owner changed (moved, `form` attribute): see ValidityController.track(). */
+  formAssociatedCallback(): void {
+    if (this._validates) this._validity.track()
   }
   
   /**
-   * Capture properties that were set before connectedCallback
-   * (React, Vue, Reagent set properties before element is connected)
+   * upgradeProperties(), plus declared properties without an accessor of
+   * their own name (e.g. ty-input's `minlength`): those go straight to
+   * setProperty().
    */
-  private _capturePreSetProperties(): PropertyChange[] {
-    const changes: PropertyChange[] = []
-    const ctor = this.constructor as typeof TyComponent
-    
-    for (const propName of Object.keys(ctor.properties)) {
-      const descriptor = Object.getOwnPropertyDescriptor(this, propName)
-      if (descriptor && descriptor.value !== undefined) {
-        const change = this.props.updateProperty(propName, descriptor.value, 'property')
-        if (change) {
-          changes.push(change)
-        }
-      }
+  private _upgradeProperties(): void {
+    for (const name of Object.keys((this.constructor as typeof TyComponent).properties)) {
+      if (!Object.prototype.hasOwnProperty.call(this, name)) continue
+      const value = (this as any)[name]
+      delete (this as any)[name]
+      if (value === undefined) continue
+      if (name in this) (this as any)[name] = value
+      else this.setProperty(name, value)
     }
-    
-    return changes
+    upgradeProperties(this)
   }
   
   /**
@@ -326,6 +382,12 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     this._validity.set(flags, message, anchor)
   }
 
+  /** Show the field's current validation message in its error display, if
+   *  it's invalid. Called on blur after the user edited the field. */
+  protected revealValidity(): void {
+    if (this._validates) this._validity.reveal()
+  }
+
   get validity(): ValidityState | undefined {
     return this._validates ? this._internals.validity : undefined
   }
@@ -378,25 +440,6 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     else roleEl.removeAttribute('aria-label')
   }
 
-  private _handlingActivationClick = false
-
-  /**
-   * Guard for click-driven toggle handlers (checkbox/switch) on components
-   * whose whole host is the click target AND that expect a wrapping
-   * <label> to delegate to them. Some browsers still forward a label's own
-   * synthetic click to the associated control even when the original click
-   * already targeted that control directly, firing 'click' twice for one
-   * user gesture. Both arrive synchronously in the same task, so a flag
-   * cleared on the next microtask catches only the spurious duplicate —
-   * two genuinely separate clicks are always in different tasks.
-   */
-  protected isDuplicateActivationClick(): boolean {
-    if (this._handlingActivationClick) return true
-    this._handlingActivationClick = true
-    queueMicrotask(() => { this._handlingActivationClick = false })
-    return false
-  }
-
   private _resetDefaults: Map<string, any> | null = null
 
   /**
@@ -406,8 +449,14 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    * semantics). Non-form state (e.g. a checkbox's submission `value`, a
    * ty-radio's option `value`) is deliberately left alone — the old
    * blanket 'value' reset corrupted radio groups by wiping child values.
+   * Like a native control the field also looks untouched again: the
+   * validation message it showed is gone (an `error` the author set stays)
+   * and a blur shows nothing until the user edits it.
    */
   formResetCallback(): void {
+    this._userEdited = false
+    if (this._validates) this._validity.reset()
+
     for (const [name, def] of this._resetDefaults ?? []) {
       this.setProperty(name, def)
     }

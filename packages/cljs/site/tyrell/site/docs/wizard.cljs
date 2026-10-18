@@ -87,6 +87,102 @@
            (str/join "\n" (for [[id l d] steps] (str "  <ty-step id=\"" id "\" label=\"" l "\"\n    description=\"" d "\">…</ty-step>")))
            "\n</ty-wizard>")]]))
 
+(def ^:private drive-snippets
+  "You drive it: the wizard only reports clicks; your code sets active and completed."
+  [["html" "HTML" "html"
+    "<ty-wizard id=\"wizard\" active=\"account\">…</ty-wizard>
+<ty-button id=\"next\">Next</ty-button>
+
+<script>
+  const wizard = document.getElementById('wizard');
+  wizard.addEventListener('ty-wizard-step-change', (e) => {
+    if (done.has(e.detail.activeId)) wizard.setAttribute('active', e.detail.activeId);
+  });
+  document.getElementById('next').onclick = () => {
+    if (!valid(current)) return;
+    done.add(current);
+    wizard.setAttribute('completed', [...done].join(','));
+    wizard.setAttribute('active', nextId);
+  };
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyWizard, TyButton } from 'tyrell-react'
+
+<TyWizard active={active} completed={done.join(',')}
+  onStepChange={(e) => done.includes(e.detail.activeId) && setActive(e.detail.activeId)}>
+  …
+</TyWizard>
+<TyButton onClick={() => {
+  if (!valid(active)) return
+  setDone([...done, active])
+  setActive(nextId(active))
+}}>Next</TyButton>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Wizard {:active (:active @s) :completed (str/join \",\" (:done @s))
+               :on-step-change #(let [id (.. % -detail -activeId)]
+                                  (when ((:done @s) id) (swap! s assoc :active id)))}
+ …]
+[:> ty/Button {:on-click #(when (valid? (:active @s)) (complete-and-next! s))} \"Next\"]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-wizard {:active active :completed (str/join \",\" done)
+             :on {:ty-wizard-step-change #(let [id (.. % -detail -activeId)]
+                                            (when (done id) (go-to! id)))}}
+ …]
+[:ty-button {:on {:click #(when (valid? active) (complete-and-next! active))}} \"Next\"]"]
+   ["datastar" "Datastar" "html"
+    "<ty-wizard data-signals:step=\"'account'\" data-signals:done=\"''\"
+  data-attr:active=\"$step\" data-attr:completed=\"$done\"
+  data-on:ty-wizard-step-change=\"$done.split(',').includes(evt.detail.activeId) && ($step = evt.detail.activeId)\">
+  …
+</ty-wizard>
+<!-- the server validates, then patches $step and $done -->
+<ty-button data-on:click=\"@post('/wizard/next')\">Next</ty-button>"]])
+
+(def ^:private api-snippets
+  "Set active and completed; read the step-change event."
+  [["html" "HTML" "html"
+    "<ty-wizard id=\"wizard\">…</ty-wizard>
+
+<script>
+  const wizard = document.getElementById('wizard');
+
+  wizard.setAttribute('active', 'payment');
+  wizard.setAttribute('completed', 'account,plan');
+
+  wizard.addEventListener('ty-wizard-step-change', (e) => {
+    const { activeId, activeIndex, previousId, direction } = e.detail;
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyWizard } from 'tyrell-react'
+
+<TyWizard active=\"payment\" completed=\"account,plan\"
+  onStepChange={(e) => {
+    const { activeId, activeIndex, previousId, direction } = e.detail
+  }}>
+  …
+</TyWizard>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Wizard {:active \"payment\" :completed \"account,plan\"
+               :on-step-change #(let [d (.-detail %)]
+                                  (go-to! (.-activeId d) (.-direction d)))}
+ …]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-wizard {:active \"payment\" :completed \"account,plan\"
+             :on {:ty-wizard-step-change #(let [d (.-detail %)]
+                                            (go-to! (.-activeId d) (.-direction d)))}}
+ …]"]
+   ["datastar" "Datastar" "html"
+    "<ty-wizard data-signals:step=\"'payment'\" data-signals:done=\"'account,plan'\"
+  data-attr:active=\"$step\" data-attr:completed=\"$done\"
+  data-on:ty-wizard-step-change=\"$step = evt.detail.activeId\">
+  …
+</ty-wizard>"]])
+
 (defn view []
   (component-page
    {:title "Wizard"
@@ -96,11 +192,16 @@
     :chips [["Controlled" "sliders-horizontal"] ["Error states" "zap"] ["TyWizard (React)" "atom"]]
     :source "packages/core/src/components/wizard.ts"
     :mark "→"
-    :demo [:div {:style {:width "380px"}}
-           [:ty-wizard {:active "plan" :completed "account"}
-            (for [[id l] (take 3 steps)]
-              [:ty-step {:replicant/key id :id id :label l}
-               [:div.p-4.text-sm.ty-text- (str l " step")]])]]}
+    :demo (let [ids (take 3 step-ids)
+                active (or (doc-state :hero) "plan")]
+            [:div {:style {:width "380px"}}
+             ;; Indicator clicks only report: move there, everything before it is done.
+             [:ty-wizard {:active active
+                          :completed (str/join "," (take-while #(not= % active) ids))
+                          :on {:ty-wizard-step-change (fn [^js e] (set-doc! :hero (.. e -detail -activeId)))}}
+              (for [[id l] (take 3 steps)]
+                [:ty-step {:replicant/key id :id id :label l}
+                 [:div.p-4.text-sm.ty-text- (str l " step")]])]])}
 
    (playground
     {:id :wizard
@@ -118,20 +219,9 @@
      (example
       {:title "You drive it"
        :span 3
-       :lang "javascript"
        :description [:span "Clicking an indicator only fires " [:code "ty-wizard-step-change"]
                      ". Decide whether to move, then set " [:code "active"] " and " [:code "completed"] "."]
-       :code "wizard.addEventListener('ty-wizard-step-change', (e) => {
-  const { activeId } = e.detail;
-  if (done.has(activeId)) wizard.setAttribute('active', activeId);
-});
-
-next.onclick = () => {
-  if (!valid(current)) return step.setAttribute('status', 'error');
-  done.add(current);
-  wizard.setAttribute('completed', [...done].join(','));
-  wizard.setAttribute('active', nextId);
-};"}
+       :tabs drive-snippets}
       [:div.flex.flex-col.gap-2
        [:p.text-sm.ty-text- "The playground above is exactly this. The wizard never navigates on its own, so validation stays in your code."]])
 
@@ -186,15 +276,7 @@ next.onclick = () => {
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const wizard = document.querySelector('ty-wizard');
-
-wizard.setAttribute('active', 'payment');
-wizard.setAttribute('completed', 'account,plan');
-
-wizard.addEventListener('ty-wizard-step-change', (e) => {
-  const { activeId, activeIndex, previousId, direction } = e.detail;
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

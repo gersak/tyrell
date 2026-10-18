@@ -1,5 +1,6 @@
 (ns app.core
-  (:require [app.lazy.reagent-counter]
+  (:require [tyrell.components] ; registers the ty-* elements the counters render
+            [app.lazy.reagent-counter]
             [app.lazy.uix-counter]
             [app.lazy.replicant-counter]
             [app.lazy.shared-reagent]

@@ -66,6 +66,109 @@
 (defn- doc-state [k] (get-in @state/state [:switch-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:switch-doc k] v))
 
+(def ^:private compact-snippets
+  "Settings that apply now, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const compact = document.getElementById('compact');
+
+compact.addEventListener('change', (e) => {
+  document.documentElement
+    .classList.toggle('compact', e.detail.checked);
+});"]
+   ["react" "React" "javascript"
+    "import { TySwitch } from 'tyrell-react'
+
+<TySwitch checked={compact}
+  onChange={(e) => setCompact(e.detail.checked)} />
+<main className={compact ? 'compact' : ''}>…</main>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Switch {:checked @compact?
+               :on-change #(reset! compact? (.. % -detail -checked))}]
+[:main {:class (when @compact? \"compact\")} …]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-switch {:checked (when compact? \"\")
+             :on {:change #(set-compact! (.. % -detail -checked))}}]
+[:main {:class (when compact? \"compact\")} …]"]
+   ["datastar" "Datastar" "html"
+    "<ty-switch data-signals:compact=\"false\"
+  data-on:change=\"$compact = evt.detail.checked\"></ty-switch>
+<main data-class:compact=\"$compact\">…</main>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const sw = document.getElementById('notify');
+
+sw.checked = true;
+
+sw.addEventListener('change', (e) => {
+  const { checked, formValue } = e.detail;  // formValue: value or null
+});"]
+   ["react" "React" "javascript"
+    "import { TySwitch } from 'tyrell-react'
+
+<TySwitch checked={on}
+  onChange={(e) => {
+    const { checked, formValue } = e.detail  // formValue: value or null
+    setOn(checked)
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Switch {:checked @on?
+               :on-change #(reset! on? (.. % -detail -checked))}]   ; -formValue: value or nil"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-switch {:checked (when on? \"\")
+             :on {:change #(set-on! (.. % -detail -checked))}}]   ; -formValue: value or nil"]
+   ["datastar" "Datastar" "html"
+    "<ty-switch data-signals:on=\"true\" data-attr:checked=\"$on\"
+  data-on:change=\"$on = evt.detail.checked\"></ty-switch>"]])
+
+(def ^:private form-snippets
+  "Required in a form, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/onboarding\" method=\"post\">
+  <label>
+    <ty-switch name=\"consent\" required></ty-switch>
+    Share usage data
+  </label>
+  <ty-button flavor=\"primary\">Continue</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TySwitch, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <label>
+    <TySwitch name=\"consent\" required />
+    Share usage data
+  </label>
+  <TyButton flavor=\"primary\">Continue</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:label
+  [:> ty/Switch {:name \"consent\" :required true}]
+  \"Share usage data\"]
+ [:> ty/Button {:flavor \"primary\"} \"Continue\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:label
+  [:ty-switch {:name \"consent\" :required \"\"}]
+  \"Share usage data\"]
+ [:ty-button {:flavor \"primary\"} \"Continue\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/onboarding', {contentType: 'form'})\">
+  <label>
+    <ty-switch name=\"consent\" required></ty-switch>
+    Share usage data
+  </label>
+  <ty-button flavor=\"primary\">Continue</ty-button>
+</form>"]])
+
 (defn view []
   (component-page
    {:title "Switch"
@@ -98,10 +201,7 @@
        :span 4
        :description [:span "A switch means the change takes effect immediately. React to "
                      [:code "change"] "; there's no Save button."]
-       :code "compact.addEventListener('change', (e) => {
-  document.documentElement
-    .classList.toggle('compact', e.detail.checked);
-});"}
+       :tabs compact-snippets}
       (let [compact? (doc-state :compact)]
         [:div.flex.flex-col.gap-4.w-full
          (setting (cond-> {:on {:change #(set-doc! :compact (.. % -detail -checked))}}
@@ -143,11 +243,7 @@
        :span 3
        :description [:span "Submits " [:code "name=value"] " while on. " [:code "required"]
                      " blocks submission while off."]
-       :code "<label>
-  <ty-switch name=\"consent\" required>
-  </ty-switch>
-  Share usage data
-</label>"}
+       :tabs form-snippets}
       (let [status (doc-state :status)]
         [:form.flex.flex-col.gap-3.w-full
          {:on {:submit (fn [^js e]
@@ -162,14 +258,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const sw = document.querySelector('ty-switch');
-
-sw.checked = true;
-
-sw.addEventListener('change', (e) => {
-  const { checked, formValue } = e.detail;  // formValue: value or null
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

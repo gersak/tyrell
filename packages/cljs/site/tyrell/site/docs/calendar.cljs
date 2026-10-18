@@ -89,6 +89,171 @@
                "<span style=\"font-size:0.62em;opacity:" (if (.-otherMonth ctx) 0 0.7) "\">€" rate "</span>"))
     el))
 
+(def ^:private day-content-snippets
+  "Custom day content card, one tab per stack. dayContentFn is a property, so
+   HTML and Datastar set it from a script."
+  [["html" "HTML" "html"
+    "<ty-calendar id=\"rates\" size=\"lg\"></ty-calendar>
+
+<script>
+  rates.dayContentFn = (ctx) => {
+    const el = document.createElement('div');
+    el.innerHTML = `<span>${ctx.dayInMonth}</span>
+      <small>€${rateFor(ctx)}</small>`;
+    return el;
+  };
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyCalendar } from 'tyrell-react'
+
+const priceDay = (ctx) => {
+  const el = document.createElement('div')
+  el.innerHTML = `<span>${ctx.dayInMonth}</span>
+    <small>€${rateFor(ctx)}</small>`
+  return el
+}
+
+<TyCalendar size=\"lg\" dayContentFn={priceDay} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+(defn price-day [ctx]
+  (doto (js/document.createElement \"div\")
+    (set! -innerHTML (str \"<span>\" (.-dayInMonth ctx) \"</span>\"
+                          \"<small>€\" (rate-for ctx) \"</small>\"))))
+
+[:> ty/Calendar {:size \"lg\" :day-content-fn price-day}]"]
+   ["replicant" "Replicant" "clojure"
+    "(defn price-day [ctx]
+  (doto (js/document.createElement \"div\")
+    (set! -innerHTML (str \"<span>\" (.-dayInMonth ctx) \"</span>\"
+                          \"<small>€\" (rate-for ctx) \"</small>\"))))
+
+[:ty-calendar {:size \"lg\"
+               :replicant/on-mount
+               (fn [{:replicant/keys [node]}]
+                 (set! (.-dayContentFn node) price-day))}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-calendar id=\"rates\" size=\"lg\" data-bind=\"day\"></ty-calendar>
+
+<script>
+  rates.dayContentFn = (ctx) => {
+    const el = document.createElement('div');
+    el.innerHTML = `<span>${ctx.dayInMonth}</span>
+      <small>€${rateFor(ctx)}</small>`;
+    return el;
+  };
+</script>"]])
+
+(def ^:private controlled-snippets
+  "Controlled (stateless) card, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-calendar id=\"cal\" stateless value=\"2026-09-24\"></ty-calendar>
+
+<script>
+  cal.addEventListener('day-click', (e) => {
+    const { year, month, day } = e.detail;
+    cal.value = toISO(year, month, day);
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyCalendar } from 'tyrell-react'
+
+<TyCalendar stateless value={date}
+  onDayClick={(e) => {
+    const { year, month, day } = e.detail
+    setDate(toISO(year, month, day))
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Calendar
+ {:stateless true :value @date
+  :on-day-click #(let [d (.-detail %)]
+                   (reset! date (to-iso (.-year d) (.-month d) (.-day d))))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-calendar
+ {:stateless \"\" :value date
+  :on {:day-click #(let [d (.-detail %)]
+                     (set-date! (to-iso (.-year d) (.-month d) (.-day d))))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-calendar stateless data-signals:day=\"'2026-09-24'\"
+  data-attr:value=\"$day\"
+  data-on:day-click=\"$day = [evt.detail.year, evt.detail.month, evt.detail.day]
+    .map((n) => String(n).padStart(2, '0')).join('-')\">
+</ty-calendar>"]])
+
+(def ^:private form-snippets
+  "HTML form card, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/events\" method=\"post\">
+  <ty-calendar name=\"event-date\"></ty-calendar>
+  <ty-button type=\"submit\" size=\"md\">Submit</ty-button>
+</form>
+<!-- FormData: event-date=2026-09-24 -->"]
+   ["react" "React" "javascript"
+    "import { TyCalendar, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyCalendar name=\"event-date\" />
+  <TyButton type=\"submit\" size=\"md\">Submit</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/Calendar {:name \"event-date\"}]
+ [:> ty/Button {:type \"submit\" :size \"md\"} \"Submit\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-calendar {:name \"event-date\"}]
+ [:ty-button {:type \"submit\" :size \"md\"} \"Submit\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/events', {contentType: 'form'})\">
+  <ty-calendar name=\"event-date\"></ty-calendar>
+  <ty-button type=\"submit\" size=\"md\">Submit</ty-button>
+</form>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const cal = document.querySelector('ty-calendar');
+
+cal.value = '2026-12-24';           // select and show that month
+cal.min = '2026-01-01';             // clamp selection and navigation
+
+cal.addEventListener('change', (e) => {
+  const { year, month, day, dayContext } = e.detail;
+});
+
+cal.addEventListener('navigate', (e) => {
+  const { year, month } = e.detail; // fires for arrows, month view, Page Up/Down
+});"]
+   ["react" "React" "javascript"
+    "import { TyCalendar } from 'tyrell-react'
+
+<TyCalendar value={date} min=\"2026-01-01\"
+  onChange={(e) => {
+    const { year, month, day, dayContext } = e.detail
+  }}
+  onNavigate={(e) => {
+    const { year, month } = e.detail  // arrows, month view, Page Up/Down
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Calendar {:value @date :min \"2026-01-01\"
+                 :on-change #(on-pick (.-detail %))        ; year month day dayContext
+                 :on-navigate #(on-month (.-detail %))}]   ; year month"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-calendar {:value date :min \"2026-01-01\"
+               :on {:change #(on-pick (.-detail %))        ; year month day dayContext
+                    :navigate #(on-month (.-detail %))}}]  ; year month"]
+   ["datastar" "Datastar" "html"
+    "<ty-calendar min=\"2026-01-01\" data-bind=\"day\" data-signals:shown=\"''\"
+  data-on:navigate=\"$shown = evt.detail.year + '-' + evt.detail.month\">
+</ty-calendar>"]])
+
 (defn view []
   (component-page
    {:title "Calendar"
@@ -120,7 +285,7 @@
     (bento
      (example
       {:title "Month & year view"
-       :span 4
+       :span 3
        :description [:span "Click the title to jump by month. The arrows step whole years there; "
                      [:kbd "Esc"] " goes back to days."]
        :code "<ty-calendar value=\"2026-09-24\"></ty-calendar>"}
@@ -128,7 +293,7 @@
 
      (example
       {:title "Min & max"
-       :span 2
+       :span 3
        :description "Days outside the range are disabled; navigation stops at the edges."
        :code (str "<ty-calendar min=\"" (today+ -3) "\"\n  max=\"" (today+ 21) "\">")}
       [:ty-calendar {:size "sm" :min (today+ -3) :max (today+ 21)}])
@@ -136,33 +301,22 @@
      (example
       {:title "Custom day content"
        :span 6
-       :lang "javascript"
        :description [:span "Set " [:code "dayContentFn"] " (a property, not an attribute) to render anything in a day cell. It receives a "
                      [:code "DayContext"] ": " [:code "year"] ", " [:code "month"] ", " [:code "dayInMonth"] ", "
                      [:code "weekend"] ", " [:code "otherMonth"] ", " [:code "today"] ", " [:code "value"] "."]
-       :code "const cal = document.querySelector('ty-calendar');
-
-cal.dayContentFn = (ctx) => {
-  const el = document.createElement('div');
-  el.innerHTML = `<span>${ctx.dayInMonth}</span>
-    <small>€${rateFor(ctx)}</small>`;
-  return el;
-};"}
-      [:ty-calendar {:size "lg"
-                     :replicant/on-mount (fn [{:replicant/keys [node]}]
-                                           (set! (.-dayContentFn ^js node) price-day))}])
+       :tabs day-content-snippets}
+      ;; lg is 360px wide, more than a phone's card: scroll there.
+      [:div.max-w-full.overflow-x-auto
+       [:ty-calendar {:size "lg"
+                      :replicant/on-mount (fn [{:replicant/keys [node]}]
+                                            (set! (.-dayContentFn ^js node) price-day))}]])
 
      (example
       {:title "Controlled"
        :span 3
        :description [:span "With " [:code "stateless"] " the calendar only reports. Clicks fire "
                      [:code "day-click"] "; you write " [:code "value"] " back."]
-       :code "<ty-calendar stateless value=\"2026-09-24\"></ty-calendar>
-
-cal.addEventListener('day-click', (e) => {
-  const { year, month, day } = e.detail;
-  cal.value = toISO(year, month, day);
-});"}
+       :tabs controlled-snippets}
       (let [value (or (get-in @state/state [:calendar-doc :controlled]) (near-today))]
         [:div.flex.flex-col.items-start.gap-3
          [:ty-calendar {:stateless ""
@@ -179,11 +333,7 @@ cal.addEventListener('day-click', (e) => {
       {:title "With an HTML form"
        :span 3
        :description [:span "Set " [:code "name"] " and the ISO date is in FormData on submit."]
-       :code "<form>
-  <ty-calendar name=\"event-date\"></ty-calendar>
-  <ty-button type=\"submit\" size=\"md\">Submit</ty-button>
-</form>
-<!-- FormData: event-date=2026-09-24 -->"}
+       :tabs form-snippets}
       [:form.flex.flex-col.items-start.gap-3
        {:on {:submit (fn [e]
                        (.preventDefault e)
@@ -194,19 +344,7 @@ cal.addEventListener('day-click', (e) => {
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const cal = document.querySelector('ty-calendar');
-
-cal.value = '2026-12-24';           // select and show that month
-cal.min = '2026-01-01';             // clamp selection and navigation
-
-cal.addEventListener('change', (e) => {
-  const { year, month, day, dayContext } = e.detail;
-});
-
-cal.addEventListener('navigate', (e) => {
-  const { year, month } = e.detail; // fires for arrows, month view, Page Up/Down
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -262,16 +400,17 @@ cal.addEventListener('navigate', (e) => {
    (api-section
     {:properties validation-properties
      :attributes ["Value"
-                  ["value" "string" "\"\"" "Selected date as ISO YYYY-MM-DD. Also sets the displayed month."]
+                  ["value" "string" "\"\"" "Selected date as YYYY-MM-DD; also sets the displayed month. An ISO instant or YYYY-MM-DDTHH:mm sets its local day (the property also takes epoch ms or a Date), so a ty-date-picker value fits as is. Reads back as YYYY-MM-DD."]
                   ["name" "string" "Form field name. Submits the ISO value with its form."]
-                  ["min" "string" "Earliest selectable date (ISO). Earlier days are disabled and navigation is clamped."]
-                  ["max" "string" "Latest selectable date (ISO). Later days are disabled and navigation is clamped."]
+                  ["min" "string" "Earliest selectable date (YYYY-MM-DD, or an instant's local day). Earlier days are disabled and navigation is clamped."]
+                  ["max" "string" "Latest selectable date (YYYY-MM-DD, or an instant's local day). Later days are disabled and navigation is clamped."]
+                  ["required" "boolean" "false" "Blocks form submission while no day is picked. On submit the day grid takes focus and the browser shows its bubble."]
                   ["year / month / day" "number" "current" "Displayed month and selected day as separate numbers. Prefer value."]
                   "Appearance"
                   ["size" "string" "\"md\"" "sm, md or lg. Clears width."]
                   ["width" "string" "Explicit width, e.g. 320px. Clears size."]
                   ["flavor" "string" "\"primary\"" "Selected-day fill: any flavor, with + and - tones (success+, danger-)."]
-                  ["locale" "string" "\"en-US\"" "Day and month names, e.g. de-DE. Falls back to the nearest lang attribute."]
+                  ["locale" "string" "Day and month names, e.g. de-DE. Unset: the nearest lang attribute, then the browser's language."]
                   ["hide-navigation" "boolean" "false" "Drop the title and arrow bar. Bare attribute, like disabled."]
                   "Behavior"
                   ["stateless" "boolean" "false" "Never updates itself. Clicks fire day-click; the parent sets value."]]

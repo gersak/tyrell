@@ -36,21 +36,31 @@ ${inputStyles}
 :host {
   display: inline-flex;
   width: auto;
-  vertical-align: middle;
+  /* Exactly one line box of the surrounding text, the visual centered in
+     it; a bigger one overhangs the line equally above and below instead of
+     growing it (same as ty-checkbox). */
+  height: 1.25em;
+  height: 1lh;
+  align-items: center;
+  vertical-align: baseline;
+  overflow: visible;
+}
+
+/* Zero-width text strut: the host gets the surrounding text's baseline, so
+   inline its line box coincides with the text's. */
+:host::before {
+  content: "\\200b";
+  width: 0;
 }
 
 /* The switch container is just the visual */
 .switch-container {
-  /* One line box of the surrounding text, track centered in it — lines up
-     with the first line of a wrapping <label> (same fix as ty-checkbox). */
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
-  min-height: 1.25em;
-  min-height: 1lh;
   cursor: pointer;
   user-select: none;
   outline: none;
-  vertical-align: middle;
 }
 
 .switch-container.disabled {
@@ -58,7 +68,8 @@ ${inputStyles}
   opacity: 0.55;
 }
 
-.switch-container:focus-visible .switch-track,
+/* Keyboard focus ring — .focused is toggled by the component (not
+   :focus-visible: Chromium matches that when a <label> click focuses it). */
 .switch-container.focused .switch-track {
   box-shadow: 0 0 0 3px var(--ty-input-shadow-focus);
 }

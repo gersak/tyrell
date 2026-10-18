@@ -1,7 +1,10 @@
 import { fixture, html, expect, oneEvent } from '@open-wc/testing';
+import { sendMouse, resetMouse } from '@web/test-runner-commands';
 import '../lib/components/select.js';
 import '../lib/components/input.js';
 import '../lib/components/option.js';
+import '../lib/components/popup.js';
+import '../lib/components/button.js';
 import { getActiveLocks } from '../lib/utils/scroll-lock.js';
 
 const tick = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -1190,16 +1193,21 @@ describe('ty-select form participation — reset & required', () => {
     expect(form.checkValidity(), 'disabled fields never block validity').to.be.true;
   });
 
-  it('no FormData entry is submitted when nothing is selected', async () => {
+  it('nothing selected: single submits name= (like a native select), multiple submits nothing', async () => {
     const form = (await fixture(html`
       <form>
         <ty-select name="robot">
           <ty-option value="bobo">Bobo</ty-option>
         </ty-select>
+        <ty-select name="crew" multiple>
+          <ty-option value="bobo">Bobo</ty-option>
+        </ty-select>
       </form>
     `)) as HTMLFormElement;
     await tick();
-    expect(new FormData(form).has('robot')).to.be.false;
+    const data = new FormData(form);
+    expect(data.get('robot')).to.equal('');
+    expect(data.has('crew')).to.be.false;
   });
 
   it('dropping `multiple` off a multi-value selection keeps only the first value', async () => {
@@ -1350,13 +1358,13 @@ describe('ty-select popup search — on by default & no-results', () => {
     search.value = 'zzz-nope';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(options.style.display, 'no matches hides the options container').to.equal('none');
-    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('hidden')).to.be.true;
-    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('hidden')).to.be.true;
+    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('filtered-out')).to.be.true;
+    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('filtered-out')).to.be.true;
 
     search.value = '';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(options.style.display, 'clearing the query restores the list').to.equal('');
-    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('hidden')).to.be.false;
+    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('filtered-out')).to.be.false;
   });
 
   it('a label attribute participates in filtering even when it does not appear in the rendered rich HTML', async () => {
@@ -1373,12 +1381,12 @@ describe('ty-select popup search — on by default & no-results', () => {
 
     search.value = 'xyzzy';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(el.querySelector('ty-option[value="x"]')!.hasAttribute('hidden'), 'matched via label attribute').to.be.false;
-    expect(el.querySelector('ty-option[value="y"]')!.hasAttribute('hidden'), 'not a match').to.be.true;
+    expect(el.querySelector('ty-option[value="x"]')!.hasAttribute('filtered-out'), 'matched via label attribute').to.be.false;
+    expect(el.querySelector('ty-option[value="y"]')!.hasAttribute('filtered-out'), 'not a match').to.be.true;
 
     search.value = 'rich';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(el.querySelector('ty-option[value="x"]')!.hasAttribute('hidden'), 'its own rich textContent no longer participates once label is set').to.be.true;
+    expect(el.querySelector('ty-option[value="x"]')!.hasAttribute('filtered-out'), 'its own rich textContent no longer participates once label is set').to.be.true;
   });
 });
 
@@ -1548,6 +1556,119 @@ describe('ty-select keyboard navigation — disabled options', () => {
     await arrow('ArrowDown'); // should skip disabled b, land on c
     const highlighted = el.querySelector('ty-option[highlighted]')?.getAttribute('value');
     expect(highlighted, 'disabled option b must not be highlightable via keyboard').to.equal('c');
+  });
+});
+
+// `hidden` on an option is the author's, like a native <option hidden>: not
+// on offer, but still a value. The search marks its own `filtered-out`.
+describe('ty-select — options the author hid (hidden)', () => {
+  const openPopup = async (el: any) => {
+    (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+    await tick();
+  };
+  const press = async (key: string) => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    await tick();
+  };
+  const search = (el: any, query: string) => {
+    const input = el.shadowRoot.querySelector('.dropdown-search-input') as HTMLInputElement;
+    input.value = query;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const opt = (el: any, v: string) => el.querySelector(`ty-option[value="${v}"]:not([cloned])`) as HTMLElement;
+
+  it('the keyboard skips a hidden option and Enter cannot pick it', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b" hidden>B</ty-option>
+        <ty-option value="c">C</ty-option>
+      </ty-select>
+    `)) as any;
+    await openPopup(el);
+    await press('ArrowDown');
+    await press('ArrowDown');
+    expect(el.querySelector('ty-option[highlighted]')?.getAttribute('value')).to.equal('c');
+    await press('Enter');
+    expect(el.value).to.equal('c');
+  });
+
+  it('searching and closing never unhide it, and the search writes its own attribute', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b" hidden>Apricot</ty-option>
+        <ty-option value="c">Cherry</ty-option>
+      </ty-select>
+    `)) as any;
+    await openPopup(el);
+    search(el, 'ap');
+    expect(opt(el, 'b').hasAttribute('hidden'), 'still hidden while it matches').to.equal(true);
+    expect(opt(el, 'c').hasAttribute('hidden'), 'a non-match is not marked hidden').to.equal(false);
+    expect(opt(el, 'c').hasAttribute('filtered-out')).to.equal(true);
+    await press('ArrowDown');
+    await press('ArrowDown');
+    expect(el.querySelector('ty-option[highlighted]')?.getAttribute('value'), 'only Apple is on offer').to.equal('a');
+
+    await press('Escape');
+    expect(opt(el, 'b').hasAttribute('hidden'), 'still hidden after close').to.equal(true);
+    expect(el.querySelectorAll('[filtered-out]').length, 'search marks cleared').to.equal(0);
+    await openPopup(el);
+    expect(getComputedStyle(opt(el, 'b')).display).to.equal('none');
+    expect(getComputedStyle(opt(el, 'c')).display).to.not.equal('none');
+  });
+
+  // `filtered` was a snapshot of the list at open: a server patch hiding an
+  // option while it's open (Datastar, HTMX) left it on the keyboard's path.
+  it('an option hidden while the list is open is skipped too', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b">B</ty-option>
+        <ty-option value="c">C</ty-option>
+      </ty-select>
+    `)) as any;
+    await openPopup(el);
+    opt(el, 'b').setAttribute('hidden', '');
+    await press('ArrowDown');
+    await press('ArrowDown');
+    expect(el.querySelector('ty-option[highlighted]')?.getAttribute('value')).to.equal('c');
+    await press('Enter');
+    expect(el.value).to.equal('c');
+  });
+
+  // A framework component per option (Angular, Lit, Stencil) puts its own
+  // element around each ty-option: the select's ::slotted() rule only
+  // reaches its direct children.
+  it('the search hides options nested in a wrapper element', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <div class="group">
+          <ty-option value="a">Apple</ty-option>
+          <ty-option value="b">Banana</ty-option>
+          <ty-option value="c">Cherry</ty-option>
+        </div>
+      </ty-select>
+    `)) as any;
+    await openPopup(el);
+    search(el, 'ban');
+    expect(getComputedStyle(opt(el, 'a')).display, 'left out').to.equal('none');
+    expect(getComputedStyle(opt(el, 'b')).display, 'a match').to.not.equal('none');
+    expect(opt(el, 'c').getBoundingClientRect().height).to.equal(0);
+  });
+
+  it('a hidden option can still be the value, and shows in the trigger', async () => {
+    const el = (await fixture(html`
+      <ty-select value="b">
+        <ty-option value="a">A</ty-option>
+        <ty-option value="b" hidden>Legacy plan</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const clone = el.querySelector('ty-option[cloned]') as HTMLElement;
+    expect(clone.textContent).to.equal('Legacy plan');
+    expect(clone.hasAttribute('hidden')).to.equal(false);
+    expect(clone.getBoundingClientRect().width).to.be.above(0);
   });
 });
 
@@ -1895,13 +2016,13 @@ describe('ty-select mobile mode', () => {
 
     search.value = 'app';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('hidden'), 'apple matches').to.be.false;
-    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('hidden'), 'banana filtered out').to.be.true;
+    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('filtered-out'), 'apple matches').to.be.false;
+    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('filtered-out'), 'banana filtered out').to.be.true;
 
     search.value = '';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('hidden')).to.be.false;
-    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('hidden'), 'restored after clearing').to.be.false;
+    expect(el.querySelector('ty-option[value="a"]')!.hasAttribute('filtered-out')).to.be.false;
+    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('filtered-out'), 'restored after clearing').to.be.false;
   });
 
   it('mobile search updates the "available" section count label live', async () => {
@@ -1922,6 +2043,45 @@ describe('ty-select mobile mode', () => {
     search.value = 'app';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     expect(title().textContent, 'count reflects only visible/matching options').to.include('(1)');
+  });
+
+  it('search takes the filtered rows off screen (the mobile row display does not beat it)', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b">Banana</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+    await tick();
+    const search = el.shadowRoot.querySelector('.mobile-search-input') as HTMLInputElement;
+    search.value = 'app';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    const shown = (v: string) => getComputedStyle(el.querySelector(`ty-option[value="${v}"]`)!).display !== 'none';
+    expect(shown('a')).to.equal(true);
+    expect(shown('b'), 'banana filtered out').to.equal(false);
+  });
+
+  it('an option the author hid stays out of the list and its count', async () => {
+    const el = (await fixture(html`
+      <ty-select>
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b" hidden>Banana</ty-option>
+        <ty-option value="c">Cherry</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+    await tick();
+    const banana = el.querySelector('ty-option[value="b"]') as HTMLElement;
+    expect(banana.hasAttribute('hidden'), 'not unhidden on open').to.equal(true);
+    expect(getComputedStyle(banana).display).to.equal('none');
+    const title = el.shadowRoot.querySelector('.mobile-available-section .section-title') as HTMLElement;
+    expect(title.textContent).to.include('(2)');
+    (el.shadowRoot.querySelector('.mobile-close-button') as HTMLElement).click();
+    await tick();
+    expect(banana.hasAttribute('hidden'), 'not unhidden on close').to.equal(true);
   });
 
   it('closing via the close button runs closeMobileModal: dialog closes, scroll unlocks, aria-expanded resets, close event fires', async () => {
@@ -1964,14 +2124,14 @@ describe('ty-select mobile mode', () => {
     const search = el.shadowRoot.querySelector('.mobile-search-input') as HTMLInputElement;
     search.value = 'app';
     search.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('hidden')).to.be.true;
+    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('filtered-out')).to.be.true;
 
     const closeBtn = el.shadowRoot.querySelector('.mobile-close-button') as HTMLElement;
     closeBtn.click();
     await tick();
 
     expect(search.value, 'search input cleared on close').to.equal('');
-    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('hidden'), 'all options unhidden on close').to.be.false;
+    expect(el.querySelector('ty-option[value="b"]')!.hasAttribute('filtered-out'), 'all options unhidden on close').to.be.false;
   });
 
   it('closing via a backdrop click on the dialog itself (not its content) closes the modal', async () => {
@@ -2256,5 +2416,824 @@ describe('ty-select mobile selected strip', () => {
     (el.shadowRoot.querySelector('.mobile-selected-chip') as HTMLElement).click();
     await tick();
     expect(body.dataset.expanded, 'last chip gone — space goes back to the list').to.equal('available');
+  });
+});
+
+describe('ty-select error line (same as ty-input)', () => {
+  const line = (el: any) =>
+    el.shadowRoot.querySelector('.select-container > .error-message') as HTMLElement | null;
+  const stubOf = (el: any) => el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+
+  it('renders under the field with aria-invalid + aria-describedby; "" clears it', async () => {
+    const el = (await fixture(html`
+      <ty-select label="Robot" error="Pick one"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const msg = line(el)!;
+    const stub = stubOf(el);
+    expect(msg.textContent).to.equal('Pick one');
+    expect(msg.previousElementSibling!.classList.contains('dropdown-wrapper'), 'under the field').to.be.true;
+    expect(stub.classList.contains('error')).to.be.true;
+    expect(stub.getAttribute('aria-invalid')).to.equal('true');
+    expect(stub.getAttribute('aria-describedby')).to.equal(msg.id);
+    expect(el.shadowRoot.getElementById(msg.id)).to.equal(msg);
+
+    el.error = 'Still nothing';
+    await tick();
+    expect(line(el)!.textContent, 'updates in place').to.equal('Still nothing');
+
+    el.error = '';
+    await tick();
+    expect(line(el)).to.equal(null);
+    expect(stub.classList.contains('error')).to.be.false;
+    expect(stub.hasAttribute('aria-invalid')).to.be.false;
+    expect(stub.hasAttribute('aria-describedby')).to.be.false;
+  });
+
+  it('looks like ty-input\'s error line (font, color, spacing) and the field turns danger', async () => {
+    const wrap = await fixture(html`
+      <div>
+        <ty-select error="Pick one"><ty-option value="a">A</ty-option></ty-select>
+        <ty-input error="Pick one"></ty-input>
+      </div>
+    `);
+    await tick();
+    const select = wrap.querySelector('ty-select') as any;
+    const input = wrap.querySelector('ty-input') as any;
+    const a = getComputedStyle(line(select)!);
+    const b = getComputedStyle(input.shadowRoot.querySelector('.error-message'));
+    for (const prop of ['color', 'fontSize', 'lineHeight', 'letterSpacing', 'marginTop', 'paddingLeft'] as const) {
+      expect(a[prop], prop).to.equal(b[prop]);
+    }
+    const stub = getComputedStyle(stubOf(select));
+    const wrapper = getComputedStyle(input.shadowRoot.querySelector('.input-wrapper'));
+    expect(stub.borderTopColor).to.equal(wrapper.borderTopColor);
+    expect(stub.backgroundColor).to.equal(wrapper.backgroundColor);
+  });
+
+  it('compact and slot="trigger": the line sits under the trigger without widening the host', async () => {
+    const long = 'A message much longer than the trigger it belongs to, so it has to wrap';
+    const wrap = await fixture(html`
+      <div>
+        <ty-select compact multiple placeholder="Status" error=${long}>
+          <ty-option value="a">A</ty-option>
+        </ty-select>
+        <ty-select error=${long}>
+          <button slot="trigger" type="button">Pick</button>
+          <ty-option value="a">A</ty-option>
+        </ty-select>
+      </div>
+    `);
+    await tick();
+    const [compact, custom] = Array.from(wrap.querySelectorAll('ty-select')) as any[];
+    for (const el of [compact, custom]) {
+      const msg = line(el)!;
+      expect(msg, 'line rendered').to.exist;
+      const trigger = el.getAttribute('has-trigger') !== null
+        ? el.querySelector('[slot="trigger"]')
+        : stubOf(el);
+      const host = el.getBoundingClientRect();
+      expect(host.width, 'host still hugs the trigger').to.be.closeTo(trigger.getBoundingClientRect().width, 1);
+      expect(msg.getBoundingClientRect().top).to.be.at.least(trigger.getBoundingClientRect().bottom);
+    }
+    // a custom trigger keeps its own look — no danger chrome around it
+    expect(getComputedStyle(stubOf(custom)).borderTopStyle).to.equal('none');
+  });
+
+  it('slot="trigger": a short message under a narrow trigger stays readable, starting at its edge', async () => {
+    const el = (await fixture(html`
+      <ty-select error="Please select an item in the list.">
+        <button slot="trigger" type="button">Pick</button>
+        <ty-option value="a">A</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const msg = line(el)!;
+    const trigger = el.querySelector('button') as HTMLElement;
+    const fontSize = parseFloat(getComputedStyle(msg).fontSize);
+    expect(msg.getBoundingClientRect().height, 'one line, not a word per line').to.be.below(fontSize * 2);
+    expect(msg.getBoundingClientRect().left, 'starts at the trigger').to.be.closeTo(trigger.getBoundingClientRect().left, 1);
+    expect(el.getBoundingClientRect().width, 'host still hugs the trigger').to.be.closeTo(trigger.getBoundingClientRect().width, 1);
+  });
+
+  it('slot="trigger": the focused trigger carries aria-invalid and the message; cleared with the error', async () => {
+    const el = (await fixture(html`
+      <ty-select error="Pick one">
+        <button slot="trigger" type="button">Pick</button>
+        <ty-option value="a">A</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const trigger = el.querySelector('button') as HTMLElement;
+    expect(trigger.getAttribute('aria-invalid')).to.equal('true');
+    expect(trigger.getAttribute('aria-description')).to.equal('Pick one');
+
+    el.error = 'Still nothing';
+    await tick();
+    expect(trigger.getAttribute('aria-description')).to.equal('Still nothing');
+
+    el.error = '';
+    await tick();
+    expect(trigger.hasAttribute('aria-invalid')).to.equal(false);
+    expect(trigger.hasAttribute('aria-description')).to.equal(false);
+
+    // a trigger slotted while the error shows gets it too
+    el.error = 'Again';
+    await tick();
+    const next = document.createElement('button');
+    next.slot = 'trigger';
+    trigger.replaceWith(next);
+    await tick();
+    expect(next.getAttribute('aria-invalid')).to.equal('true');
+    expect(trigger.hasAttribute('aria-invalid'), 'old one let go').to.equal(false);
+  });
+
+  it('slot="trigger": a morph stripping its aria while the error stays gets it back', async () => {
+    const el = (await fixture(html`
+      <ty-select error="Pick one">
+        <button slot="trigger" type="button">Pick</button>
+        <ty-option value="a">A</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    const trigger = el.querySelector('button') as HTMLElement;
+    // idiomorph syncing the button to server markup that has no aria; the
+    // host's error is the same, so nothing re-renders
+    trigger.removeAttribute('aria-invalid');
+    trigger.removeAttribute('aria-description');
+    el.setAttribute('error', 'Pick one');
+    await tick();
+    expect(trigger.getAttribute('aria-invalid')).to.equal('true');
+    expect(trigger.getAttribute('aria-description')).to.equal('Pick one');
+
+    el.removeAttribute('error');
+    await tick();
+    expect(trigger.hasAttribute('aria-invalid'), 'cleared with the error').to.equal(false);
+    expect(trigger.hasAttribute('aria-description')).to.equal(false);
+  });
+
+  it('required: a submit attempt puts the message under the field, focuses the trigger, blocks submit', async () => {
+    const form = await fixture<HTMLFormElement>(html`
+      <form>
+        <ty-select name="robot" required><ty-option value="a">A</ty-option></ty-select>
+        <ty-select name="crew" required multiple><ty-option value="a">A</ty-option></ty-select>
+        <button>Send</button>
+      </form>
+    `);
+    let submitted = false;
+    form.addEventListener('submit', (e) => { submitted = true; e.preventDefault(); });
+    await tick();
+    const [one, many] = Array.from(form.querySelectorAll('ty-select')) as any[];
+
+    (form.querySelector('button') as HTMLElement).click();
+    await tick();
+    expect(submitted).to.equal(false);
+    expect(one.getAttribute('error')).to.equal(one.validationMessage);
+    expect(many.getAttribute('error')).to.equal(many.validationMessage);
+    expect(line(one)!.textContent).to.equal(one.validationMessage);
+    expect(one.shadowRoot.activeElement, 'first bad field focused').to.equal(stubOf(one));
+
+    one.value = 'a';
+    many.value = 'a';
+    await tick();
+    expect(one.hasAttribute('error'), 'cleared once valid').to.equal(false);
+    expect(line(one)).to.equal(null);
+    (form.querySelector('button') as HTMLElement).click();
+    await tick();
+    expect(submitted).to.equal(true);
+  });
+
+  it('reportValidity() writes the message and focuses the trigger (slotted one too)', async () => {
+    const wrap = await fixture(html`
+      <div>
+        <ty-select required><ty-option value="a">A</ty-option></ty-select>
+        <ty-select required><button slot="trigger" type="button">Pick</button><ty-option value="a">A</ty-option></ty-select>
+      </div>
+    `);
+    await tick();
+    const [plain, custom] = Array.from(wrap.querySelectorAll('ty-select')) as any[];
+    expect(plain.reportValidity()).to.equal(false);
+    expect(line(plain)!.textContent).to.equal(plain.validationMessage);
+    expect(plain.shadowRoot.activeElement).to.equal(stubOf(plain));
+
+    expect(custom.reportValidity()).to.equal(false);
+    expect(line(custom)!.textContent).to.equal(custom.validationMessage);
+    expect(document.activeElement).to.equal(custom.querySelector('button'));
+  });
+
+  it('a ty-button trigger takes focus from focus() and a submit; a <span> trigger leaves it to the field', async () => {
+    const form = await fixture<HTMLFormElement>(html`
+      <form>
+        <input id="before">
+        <ty-select id="tb" name="a" required><ty-button slot="trigger" type="button">Pick</ty-button><ty-option value="a">A</ty-option></ty-select>
+        <ty-select id="sp" name="b"><span slot="trigger">Pick</span><ty-option value="a">A</ty-option></ty-select>
+        <button id="send">Send</button>
+      </form>
+    `);
+    await tick();
+    form.addEventListener('submit', (e) => e.preventDefault());
+    const tb = form.querySelector('#tb') as any;
+    const sp = form.querySelector('#sp') as any;
+    const before = form.querySelector('#before') as HTMLInputElement;
+    const tyButton = tb.querySelector('ty-button') as HTMLElement;
+    const onTrigger = () => tyButton.shadowRoot!.activeElement === tyButton.shadowRoot!.querySelector('button');
+
+    before.focus();
+    tb.focus();
+    expect(onTrigger(), 'focus() reaches the button inside the ty-button').to.equal(true);
+
+    before.focus();
+    (form.querySelector('#send') as HTMLElement).click();
+    await tick();
+    expect(tb.getAttribute('error')).to.equal(tb.validationMessage);
+    expect(onTrigger(), 'a submit focuses the trigger').to.equal(true);
+
+    before.focus();
+    sp.focus();
+    expect(sp.shadowRoot.activeElement === sp.shadowRoot.querySelector('.select-stub'), 'the field takes it').to.equal(true);
+  });
+
+  it('checkValidity() shows the message but moves no focus', async () => {
+    const form = await fixture<HTMLFormElement>(html`
+      <form><ty-select name="robot" required><ty-option value="a">A</ty-option></ty-select></form>
+    `);
+    await tick();
+    const el = form.querySelector('ty-select') as any;
+    expect(el.hasAttribute('error'), 'nothing before a check').to.equal(false);
+    expect(form.checkValidity()).to.equal(false);
+    expect(el.getAttribute('error')).to.equal(el.validationMessage);
+    expect(el.shadowRoot.activeElement).to.equal(null);
+  });
+
+  it('a user emptying a required select shows the message right away', async () => {
+    const el = (await fixture(html`
+      <ty-select required multiple value="a"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(el.hasAttribute('error')).to.equal(false);
+    el.deselectValue('a'); // what a chip's × or a list toggle does
+    await tick();
+    expect(el.getAttribute('error')).to.equal(el.validationMessage);
+    el.value = 'a';
+    await tick();
+    expect(el.hasAttribute('error')).to.equal(false);
+  });
+
+  it('a value set in code shows nothing (only user changes do)', async () => {
+    const el = (await fixture(html`
+      <ty-select required value="a"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    el.value = '';
+    await tick();
+    expect(el.validity.valueMissing).to.equal(true);
+    expect(el.hasAttribute('error')).to.equal(false);
+  });
+
+  it('clear() from code shows nothing; the built-in × (a user) does', async () => {
+    const el = (await fixture(html`
+      <ty-select required value="a"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    let changes = 0;
+    el.addEventListener('change', () => changes++);
+    el.clear();
+    await tick();
+    expect(changes, 'still a change event').to.equal(1);
+    expect(el.validity.valueMissing).to.equal(true);
+    expect(el.hasAttribute('error')).to.equal(false);
+
+    el.value = 'a';
+    await tick();
+    (el.shadowRoot.querySelector('.select-clear') as HTMLElement).click();
+    await tick();
+    expect(el.value).to.equal('');
+    expect(el.getAttribute('error')).to.equal(el.validationMessage);
+  });
+});
+
+describe('ty-select error look (flavor="danger" whatever the flavor, flavor untouched)', () => {
+  // The token sheet isn't loaded in tests: distinct colors per token, so two
+  // looks only match when they resolve the same tokens.
+  const TOKENS: Record<string, string> = {
+    '--ty-color-danger': 'rgb(200, 0, 0)',
+    '--ty-color-danger-soft': 'rgb(201, 0, 0)',
+    '--ty-color-danger-strong': 'rgb(202, 0, 0)',
+    '--ty-color-danger-faint': 'rgb(203, 0, 0)',
+    '--ty-color-danger-bold': 'rgb(204, 0, 0)',
+    '--ty-bg-danger-soft': 'rgb(255, 230, 230)',
+    '--ty-color-success': 'rgb(0, 200, 0)',
+    '--ty-color-success-soft': 'rgb(0, 201, 0)',
+    '--ty-color-success-strong': 'rgb(0, 202, 0)',
+    '--ty-color-brand': 'rgb(0, 0, 200)',
+    '--ty-color-primary': 'rgb(1, 2, 3)',
+    '--ty-color-primary-strong': 'rgb(4, 5, 6)',
+    '--ty-input-border': 'rgb(100, 100, 100)',
+    '--ty-input-border-focus': 'rgb(101, 101, 101)',
+    '--ty-input-shadow-focus': 'rgb(102, 102, 102)',
+    '--ty-input-border-hover': 'rgb(103, 103, 103)',
+    '--ty-input-bg': 'rgb(250, 250, 250)',
+  };
+  before(() => {
+    for (const [k, v] of Object.entries(TOKENS)) document.documentElement.style.setProperty(k, v);
+  });
+  after(() => {
+    for (const k of Object.keys(TOKENS)) document.documentElement.style.removeProperty(k);
+  });
+
+  /** Everything the flavor colors: accent variables, count badge, spinner. */
+  const accent = (el: any) => {
+    const root = el.shadowRoot;
+    const stub = getComputedStyle(root.querySelector('.select-stub'));
+    const badge = getComputedStyle(root.querySelector('.select-count'));
+    const spinner = getComputedStyle(root.querySelector('.dropdown-loading-spinner'));
+    return [
+      stub.getPropertyValue('--select-accent'),
+      stub.getPropertyValue('--select-accent-bold'),
+      stub.getPropertyValue('--select-ring'),
+      badge.color,
+      badge.backgroundColor,
+      spinner.color,
+    ].join(' | ');
+  };
+  /** accent() plus the field itself. */
+  const look = (el: any) => {
+    const stub = getComputedStyle(el.shadowRoot.querySelector('.select-stub'));
+    return `${accent(el)} | ${stub.borderTopColor} | ${stub.backgroundColor}`;
+  };
+  /** Counts flavor writes under `target` until called back. */
+  const watchFlavor = (target: Node) => {
+    const records: MutationRecord[] = [];
+    const mo = new MutationObserver((r) => records.push(...r));
+    mo.observe(target, { attributes: true, subtree: true, attributeFilter: ['flavor'] });
+    return () => {
+      records.push(...mo.takeRecords());
+      mo.disconnect();
+      return records.length;
+    };
+  };
+  const stubOf = (el: any) => el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+  /** The field at rest, its border under a real mouse, and focused. */
+  const states = async (el: any) => {
+    const stub = stubOf(el);
+    const rest = look(el);
+    stub.scrollIntoView({ block: 'center' });
+    const r = stub.getBoundingClientRect();
+    await sendMouse({ type: 'move', position: [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)] });
+    const hover = getComputedStyle(stub).borderTopColor;
+    await resetMouse();
+    stub.focus();
+    const s = getComputedStyle(stub);
+    const focused = `${s.borderTopColor} | ${s.boxShadow}`;
+    stub.blur();
+    return `rest ${rest} || hover ${hover} || focused ${focused}`;
+  };
+  // Error beats every flavor: built-in, +/- shades, the neutral ones, and a
+  // custom one (its sheet is adopted after the built-in one)
+  const ANY_FLAVOR = [null, 'neutral', 'success', 'primary+', 'neutral-', 'danger-', 'brand'];
+  const tag = (flavor: string | null, attrs = '') =>
+    `<ty-select${flavor === null ? '' : ` flavor="${flavor}"`}${attrs}><ty-option value="a">A</ty-option></ty-select>`;
+  const selects = async (markup: string) => {
+    const wrap = await fixture(html`<div></div>`);
+    wrap.innerHTML = markup;
+    await tick();
+    return Array.from(wrap.querySelectorAll('ty-select')) as any[];
+  };
+  const twins = async () => {
+    const wrap = await fixture(html`
+      <div>
+        <ty-select id="plain"><ty-option value="a">A</ty-option></ty-select>
+        <ty-select id="danger" flavor="danger"><ty-option value="a">A</ty-option></ty-select>
+        <ty-select id="danger-err" flavor="danger" error="x"><ty-option value="a">A</ty-option></ty-select>
+      </div>
+    `);
+    await tick();
+    const [plain, danger, dangerErr] = Array.from(wrap.querySelectorAll('ty-select')) as any[];
+    return { plain, danger, dangerErr };
+  };
+
+  it('a neutral select with an error looks exactly like flavor="danger"; clearing it looks neutral again', async () => {
+    const t = await twins();
+    const wrap = await fixture(html`
+      <div>
+        <ty-select><ty-option value="a">A</ty-option></ty-select>
+        <ty-select flavor="neutral"><ty-option value="a">A</ty-option></ty-select>
+      </div>
+    `);
+    await tick();
+    const writes = watchFlavor(wrap);
+    const [none, neutral] = Array.from(wrap.querySelectorAll('ty-select')) as any[];
+    expect(accent(t.danger) !== accent(t.plain), 'the probe tells danger from neutral').to.equal(true);
+
+    for (const el of [none, neutral]) el.error = 'Taken';
+    await tick();
+    for (const el of [none, neutral]) {
+      expect(look(el)).to.equal(look(t.dangerErr));
+      expect(accent(el)).to.equal(accent(t.danger));
+      expect(el.flavor).to.equal('neutral');
+    }
+    expect(none.hasAttribute('flavor')).to.equal(false);
+    expect(neutral.getAttribute('flavor')).to.equal('neutral');
+
+    for (const el of [none, neutral]) el.error = '';
+    await tick();
+    for (const el of [none, neutral]) {
+      expect(look(el)).to.equal(look(t.plain));
+      expect(el.flavor).to.equal('neutral');
+    }
+    expect(none.hasAttribute('flavor')).to.equal(false);
+    expect(writes(), 'no flavor attribute written').to.equal(0);
+  });
+
+  it('open: the border and ring are danger\'s too, whatever the flavor', async () => {
+    const ring = (el: any) => {
+      const stub = getComputedStyle(el.shadowRoot.querySelector('.select-stub'));
+      return `${stub.borderTopColor} | ${stub.boxShadow}`;
+    };
+    const openRing = async (el: any) => {
+      (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+      await tick();
+      expect(el.shadowRoot.querySelector('.dropdown-dialog').open).to.equal(true);
+      // read while open, then close for the next one
+      const seen = ring(el);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await tick();
+      return seen;
+    };
+    const [danger, plain] = await selects(tag('danger', ' not-searchable error="x"') + tag(null, ' not-searchable'));
+    const dangerRing = await openRing(danger);
+    expect(dangerRing !== await openRing(plain), 'not the neutral ring').to.equal(true);
+    for (const flavor of ANY_FLAVOR) {
+      const [el] = await selects(tag(flavor, ' not-searchable error="x"'));
+      expect(await openRing(el), String(flavor)).to.equal(dangerRing);
+    }
+  });
+
+  it('any flavor: an error looks exactly like flavor="danger" at rest, hovered and focused; cleared, the flavor look is back', async () => {
+    const [plain] = await selects(tag(null));
+    expect((await states(plain)).split(' || ')[1], 'the probe sees the hover').to.equal('hover rgb(103, 103, 103)');
+    const writes = watchFlavor(document.body);
+    for (const flavor of ANY_FLAVOR) {
+      const [el, own, danger] = await selects(tag(flavor) + tag(flavor) + tag('danger', ' error="x"'));
+      const names = el.getAttributeNames().join();
+      const ownLook = await states(own);
+      el.error = 'Taken';
+      await tick();
+      expect(await states(el), `${flavor} + error`).to.equal(await states(danger));
+      expect(el.getAttribute('flavor'), `${flavor}: the attribute`).to.equal(flavor);
+      expect(el.flavor).to.equal(flavor ?? 'neutral');
+      el.error = '';
+      await tick();
+      expect(await states(el), `${flavor}: cleared`).to.equal(ownLook);
+      expect(el.getAttributeNames().filter((a: string) => a !== 'error').join(), 'only error came and went').to.equal(names);
+    }
+    expect(writes(), 'no flavor attribute written').to.equal(0);
+  });
+
+  it('any flavor: compact, and a slotted trigger left bare, look like flavor="danger" with the error', async () => {
+    const trigger = '<button slot="trigger" type="button">Pick</button>';
+    for (const flavor of ANY_FLAVOR) {
+      const [compact, dangerCompact] = await selects(tag(flavor, ' compact multiple error="x"') + tag('danger', ' compact multiple error="x"'));
+      expect(await states(compact), `${flavor} compact`).to.equal(await states(dangerCompact));
+      const [slotted, dangerSlotted] = await selects(
+        tag(flavor, ' error="x"').replace('<ty-option', trigger + '<ty-option') +
+        tag('danger', ' error="x"').replace('<ty-option', trigger + '<ty-option'));
+      expect(look(slotted), `${flavor} slot="trigger"`).to.equal(look(dangerSlotted));
+      expect(getComputedStyle(stubOf(slotted)).borderTopStyle, 'no chrome around it').to.equal('none');
+    }
+  });
+
+  it('any flavor: a page-level --select-accent* override shows on the error as on flavor="danger"', async () => {
+    const style = document.createElement('style');
+    style.textContent = 'ty-select.ov { --select-accent: rgb(7, 7, 7); --select-accent-bold: rgb(8, 8, 8); --select-ring: rgb(9, 9, 9); }';
+    document.head.append(style);
+    try {
+      for (const flavor of ANY_FLAVOR) {
+        const [el, danger] = await selects(tag(flavor, ' class="ov" error="x"') + tag('danger', ' class="ov" error="x"'));
+        expect(getComputedStyle(stubOf(danger)).borderTopColor, 'the override is the resting border').to.equal('rgb(7, 7, 7)');
+        expect(await states(el), String(flavor)).to.equal(await states(danger));
+      }
+    } finally {
+      style.remove();
+    }
+  });
+
+  it('any flavor: disabled with an error looks like flavor="danger" disabled, no red tint', async () => {
+    const [danger, dangerErr, enabled] = await selects(tag('danger', ' disabled') + tag('danger', ' disabled error="x"') + tag('danger', ' error="x"'));
+    expect(look(danger) !== look(enabled), 'the probe sees disabled').to.equal(true);
+    expect(look(dangerErr), 'flavor="danger" with the error').to.equal(look(danger));
+    for (const flavor of ANY_FLAVOR) {
+      const [el] = await selects(tag(flavor, ' disabled error="x"'));
+      expect(look(el), String(flavor)).to.equal(look(danger));
+    }
+  });
+
+  it('attribute order does not matter, and nothing is rewritten', async () => {
+    const t = await twins();
+    const wrap = await fixture(html`<div></div>`);
+    const writes = watchFlavor(wrap);
+    wrap.innerHTML = `
+      <ty-select error="x" flavor="success"><ty-option value="a">A</ty-option></ty-select>
+      <ty-select flavor="success" error="x"><ty-option value="a">A</ty-option></ty-select>
+      <ty-select error="x" flavor="neutral"><ty-option value="a">A</ty-option></ty-select>
+      <ty-select flavor="neutral" error="x"><ty-option value="a">A</ty-option></ty-select>
+      <ty-select error="x"><ty-option value="a">A</ty-option></ty-select>
+      <ty-select flavor="success"><ty-option value="a">A</ty-option></ty-select>`;
+    await tick();
+    const [s1, s2, n1, n2, none, success] = Array.from(wrap.querySelectorAll('ty-select')) as any[];
+    for (const el of [s1, s2, n1, n2, none]) expect(look(el)).to.equal(look(t.dangerErr));
+
+    for (const el of [s1, s2, n1, n2, none]) el.error = '';
+    await tick();
+    for (const el of [s1, s2]) expect(look(el)).to.equal(look(success));
+    for (const el of [n1, n2, none]) expect(look(el)).to.equal(look(t.plain));
+    expect(s1.getAttribute('flavor')).to.equal('success');
+    expect(n1.getAttribute('flavor')).to.equal('neutral');
+    expect(none.hasAttribute('flavor')).to.equal(false);
+    expect(writes()).to.equal(0);
+  });
+
+  it('error set while detached shows once connected', async () => {
+    const t = await twins();
+    const wrap = await fixture(html`<div></div>`);
+    const byProp = document.createElement('ty-select') as any;
+    byProp.error = 'x';
+    const byAttr = document.createElement('ty-select') as any;
+    byAttr.setAttribute('error', 'x');
+    wrap.append(byProp, byAttr);
+    await tick();
+    for (const el of [byProp, byAttr]) {
+      expect(look(el)).to.equal(look(t.dangerErr));
+      expect(el.hasAttribute('flavor')).to.equal(false);
+    }
+  });
+
+  it('the author changing flavor while the error shows: still danger, and theirs once it clears', async () => {
+    const t = await twins();
+    const success = (await fixture(html`<ty-select flavor="success"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    const el = (await fixture(html`<ty-select error="x"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await tick();
+    expect(look(el)).to.equal(look(t.dangerErr));
+
+    el.flavor = 'success';
+    await tick();
+    expect(look(el), 'success: danger').to.equal(look(t.dangerErr));
+    el.error = '';
+    await tick();
+    expect(look(el), 'cleared: success').to.equal(look(success));
+    el.error = 'x';
+    el.removeAttribute('flavor');
+    await tick();
+    expect(look(el), 'none again: danger').to.equal(look(t.dangerErr));
+    el.setAttribute('flavor', 'neutral');
+    await tick();
+    expect(look(el), 'neutral: danger').to.equal(look(t.dangerErr));
+
+    // The author's own danger stays once the error clears
+    el.flavor = 'danger';
+    el.error = '';
+    await tick();
+    expect(el.flavor).to.equal('danger');
+    expect(look(el)).to.equal(look(t.danger));
+  });
+
+  it('a copy (cloneNode, innerHTML) looks the same and clears the same', async () => {
+    const t = await twins();
+    const el = (await fixture(html`<ty-select error="x"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await tick();
+    const clone = el.cloneNode(true) as any;
+    el.after(clone);
+    const holder = document.createElement('div');
+    holder.innerHTML = el.outerHTML;
+    el.after(holder);
+    const html2 = holder.querySelector('ty-select') as any;
+    await tick();
+    for (const copy of [clone, html2]) {
+      expect(copy.hasAttribute('flavor')).to.equal(false);
+      expect(look(copy)).to.equal(look(t.dangerErr));
+      copy.error = '';
+    }
+    await tick();
+    for (const copy of [clone, html2]) {
+      expect(look(copy)).to.equal(look(t.plain));
+      expect(copy.flavor).to.equal('neutral');
+    }
+  });
+
+  it('a morph rewriting the attributes: the look always follows them', async () => {
+    const t = await twins();
+    const success = (await fixture(html`<ty-select flavor="success"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    const el = (await fixture(html`<ty-select error="x"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await tick();
+    // What idiomorph does: set the new attributes, drop the ones not there
+    const morph = async (attrs: Record<string, string>) => {
+      for (const name of ['flavor', 'error']) {
+        if (name in attrs) el.setAttribute(name, attrs[name]);
+        else el.removeAttribute(name);
+      }
+      await tick();
+    };
+    await morph({ flavor: 'success', error: 'x' });
+    expect(look(el)).to.equal(look(t.dangerErr));
+    await morph({ flavor: 'success' });
+    expect(look(el)).to.equal(look(success));
+    await morph({ error: 'x' });
+    expect(look(el)).to.equal(look(t.dangerErr));
+    await morph({});
+    expect(look(el), 'no error: neutral, not stuck danger').to.equal(look(t.plain));
+    await morph({ flavor: 'danger' });
+    expect(look(el)).to.equal(look(t.danger));
+    await morph({});
+    expect(look(el)).to.equal(look(t.plain));
+  });
+
+  it('validation (submit, a fix, reportValidity, reset): danger while its message shows; flavor never touched', async () => {
+    const t = await twins();
+    const form = await fixture<HTMLFormElement>(html`
+      <form><ty-select name="robot" required><ty-option value="a">A</ty-option></ty-select><button>Send</button></form>
+    `);
+    form.addEventListener('submit', (e) => e.preventDefault());
+    await tick();
+    const el = form.querySelector('ty-select') as any;
+    const writes = watchFlavor(form);
+
+    (form.querySelector('button') as HTMLElement).click();
+    await tick();
+    expect(el.getAttribute('error')).to.equal(el.validationMessage);
+    expect(accent(el)).to.equal(accent(t.danger));
+
+    el.value = 'a';
+    await tick();
+    expect(el.hasAttribute('error')).to.equal(false);
+    expect(accent(el)).to.equal(accent(t.plain));
+
+    el.value = '';
+    expect(el.reportValidity()).to.equal(false);
+    await tick();
+    expect(accent(el)).to.equal(accent(t.danger));
+
+    form.reset();
+    await tick();
+    expect(el.hasAttribute('error')).to.equal(false);
+    expect(accent(el)).to.equal(accent(t.plain));
+    expect(el.flavor).to.equal('neutral');
+    expect(writes()).to.equal(0);
+  });
+});
+
+describe('ty-select error line — mobile skin', () => {
+  let originalMatchMedia: typeof window.matchMedia;
+  beforeEach(() => {
+    originalMatchMedia = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: true, media: query, onchange: null,
+      addListener: () => {}, removeListener: () => {},
+      addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+  });
+  afterEach(() => { window.matchMedia = originalMatchMedia; });
+
+  it('renders the line under the mobile trigger, with the same aria', async () => {
+    const el = (await fixture(html`
+      <ty-select error="Pick one"><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(el.shadowRoot.querySelector('.dropdown-mode-mobile')).to.exist;
+    const msg = el.shadowRoot.querySelector('.select-container > .error-message') as HTMLElement;
+    expect(msg.textContent).to.equal('Pick one');
+    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+    expect(stub.getAttribute('aria-describedby')).to.equal(msg.id);
+  });
+});
+
+describe('ty-select closing paths release the scroll lock', () => {
+  const open = async (el: any) => {
+    (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+    await tick();
+  };
+  const lockedBy = (el: any) => Array.from(getActiveLocks()).some((id) => id.startsWith(`select-${el.id}-`));
+
+  it('Escape closes the list and puts focus back on the trigger', async () => {
+    const el = (await fixture(html`<ty-select id="esc-focus"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await open(el);
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(dialog.open).to.be.true;
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, composed: true }));
+    await tick();
+    expect(dialog.open).to.be.false;
+    expect(el.shadowRoot.activeElement).to.equal(el.shadowRoot.querySelector('.select-stub'));
+    expect(lockedBy(el)).to.be.false;
+  });
+
+  it('closed from outside (native close): state, aria-expanded and lock follow', async () => {
+    const el = (await fixture(html`<ty-select id="outside-close"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await open(el);
+    expect(lockedBy(el)).to.be.true;
+    let closes = 0;
+    el.addEventListener('close', () => closes++);
+    (el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement).close();
+    await tick();
+    expect(lockedBy(el)).to.be.false;
+    expect(el.shadowRoot.querySelector('.select-stub').getAttribute('aria-expanded')).to.equal('false');
+    expect(closes).to.equal(1);
+
+    await open(el); // and it opens again
+    expect((el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement).open).to.be.true;
+  });
+
+  it('a native cancel (close request) closes it our way', async () => {
+    const el = (await fixture(html`<ty-select id="cancel-close"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await open(el);
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+    await tick();
+    expect(dialog.open).to.be.false;
+    expect(lockedBy(el)).to.be.false;
+  });
+
+  it('closed from outside: aria-expanded follows before the next task (no wait for the close event)', async () => {
+    const el = (await fixture(html`<ty-select id="outside-sync"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await open(el);
+    (el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement).close();
+    await Promise.resolve();
+    expect(el.shadowRoot.querySelector('.select-stub').getAttribute('aria-expanded')).to.equal('false');
+    expect(lockedBy(el)).to.be.false;
+  });
+
+  it('removed while open: the lock goes with it', async () => {
+    const el = (await fixture(html`<ty-select id="removed-open"><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await open(el);
+    expect(lockedBy(el)).to.be.true;
+    el.remove();
+    expect(lockedBy(el)).to.be.false;
+  });
+});
+
+describe('ty-select keys reach the open list wherever it lives', () => {
+  const key = (target: EventTarget, k: string) =>
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, composed: true, cancelable: true }));
+  const openList = async (el: any) => {
+    (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+    await tick();
+    const list = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    expect(list.open, 'list open').to.equal(true);
+    return list;
+  };
+
+  it('after a DOM move: ArrowDown + Enter still pick', async () => {
+    const wrap = await fixture(html`
+      <div>
+        <div id="a"><ty-select id="moved"><ty-option value="o1">One</ty-option><ty-option value="o2">Two</ty-option></ty-select></div>
+        <div id="b"></div>
+      </div>
+    `);
+    const el = wrap.querySelector('ty-select') as any;
+    await tick();
+    wrap.querySelector('#b')!.append(el);
+    await tick();
+    const list = await openList(el);
+    key(list, 'ArrowDown');
+    key(list, 'Enter');
+    await tick();
+    expect(el.value).to.equal('o1');
+    expect(list.open).to.equal(false);
+  });
+
+  it('inside a ty-popup: arrows and Enter pick, Escape closes the list and leaves the popup open', async () => {
+    const wrap = await fixture(html`
+      <span id="anchor" tabindex="0">Open
+        <ty-popup><div><ty-select id="in-popup"><ty-option value="o1">One</ty-option><ty-option value="o2">Two</ty-option></ty-select></div></ty-popup>
+      </span>
+    `);
+    const popup = wrap.querySelector('ty-popup') as any;
+    const el = wrap.querySelector('ty-select') as any;
+    popup.openPopup();
+    await tick();
+    const popupDialog = popup.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    expect(popupDialog.open, 'popup open').to.equal(true);
+
+    let list = await openList(el);
+    key(list, 'ArrowDown');
+    key(list, 'ArrowDown');
+    key(list, 'Enter');
+    await tick();
+    expect(el.value).to.equal('o2');
+    expect(popupDialog.open, 'popup stays open after a pick').to.equal(true);
+
+    list = await openList(el);
+    key(list, 'Escape');
+    await tick();
+    expect(list.open, 'list closed').to.equal(false);
+    expect(popupDialog.open, 'popup stays open').to.equal(true);
+    expect(el.shadowRoot.activeElement, 'focus back on the trigger').to.equal(el.shadowRoot.querySelector('.select-stub'));
+    popupDialog.close();
+  });
+
+  it('focus() on a disabled select does nothing, like a disabled <select>', async () => {
+    const el = (await fixture(html`<ty-select disabled><ty-option value="a">A</ty-option></ty-select>`)) as any;
+    await tick();
+    el.focus();
+    expect(el.shadowRoot.activeElement).to.equal(null);
+    expect(document.activeElement).to.not.equal(el);
   });
 });

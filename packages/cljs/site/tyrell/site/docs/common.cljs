@@ -25,10 +25,12 @@
 (defonce page-sections (atom []))
 
 (defn- collect-sections!
-  "Index the page's h2/h3 headings for the \"On this page\" rail."
+  "Index the page's h2/h3 headings for the \"On this page\" rail. Not the
+   titles inside demos (the hero's, modals, popups): they aren't sections."
   [{^js node :replicant/node}]
   (when node
     (let [sections (->> (array-seq (.querySelectorAll node "h2, h3"))
+                        (remove (fn [^js h] (.closest h ".site-demo, ty-modal, ty-popup")))
                         (keep (fn [^js h]
                                 (let [text (str/trim (.-textContent h))
                                       id   (or (not-empty (.-id h)) (slugify text))]
@@ -135,15 +137,29 @@
                             (highlight code lang)
                             (-> code (str/replace "&" "&amp;") (str/replace "<" "&lt;") (str/replace ">" "&gt;")))}]]])))
 
+(defn- stack-tab
+  "The code tab for the stack picked in Getting started, when the card has it.
+   Reads the same sources as quickstart/current (?stack=, this session,
+   localStorage); quickstart requires this ns, so it can't be called here."
+  [ids]
+  (let [stack (or (.get (js/URLSearchParams. (.-search js/location)) "stack")
+                  (:quickstart/stack @state)
+                  (try (.getItem js/localStorage "tyrell.quickstart.stack") (catch :default _ nil))
+                  "clojure")
+        tab (get {"clojure" "replicant" "react" "react"} stack "html")]
+    (some #{tab} ids)))
+
 (defn code-tabs
   "Tabbed code window on a soft surface. snippets: [[id label lang code] ...].
    ty-tabs needs a fixed height, so it's sized from the longest snippet.
+   Opens on the stack picked in Getting started.
    :compact? matches compact code-view (no gutter, smaller type)."
   ([snippets] (code-tabs snippets nil))
   ([snippets {:keys [compact?] :as opts}]
    (let [lines (apply max (map #(line-count (nth % 3)) snippets))]
      [:div.ty-text.site-chrome.border-t.ty-border- {:data-ty-theme "" :style (surface "content")}
-      [:ty-tabs {:width "100%" :height (str (if compact? (+ 76 (* 20 lines)) (+ 80 (* 24 lines))) "px")}
+      [:ty-tabs {:width "100%" :height (str (if compact? (+ 76 (* 20 lines)) (+ 80 (* 24 lines))) "px")
+                 :active (stack-tab (map first snippets))}
        (for [[id label lang code] snippets]
          [:ty-tab {:replicant/key id :id id :label label}
           (code-view code lang opts)])]])))
@@ -305,8 +321,10 @@
       {:style {:left "-0.06em" :bottom "-0.3em" :font-size "26rem" :line-height "1"
                :letter-spacing "-0.08em" :opacity "0.04"}}
       mark])
-   [:div.relative.flex.flex-col.lg:flex-row.lg:items-center.gap-10.p-8.md:p-12
-    [:div.flex.flex-col.gap-5.flex-1 {:style {:max-width "26rem"}}
+   ;; Side by side when the copy (from 16rem) and the demo (its own width)
+   ;; both fit, else the demo wraps below. On phones the demo shrinks to fit.
+   [:div.relative.flex.flex-col.lg:flex-row.lg:flex-wrap.lg:items-center.gap-10.p-8.md:p-12
+    [:div.flex.flex-col.gap-5.flex-1.lg:basis-64 {:style {:max-width "26rem"}}
      [:span.text-xs.font-semibold.uppercase.ty-text-primary {:style {:letter-spacing "0.16em"}} group]
      [:h1.ty-text++.font-bold
       {:style {:font-size "clamp(2.75rem, 6vw, 4.25rem)" :line-height "1" :letter-spacing "-0.045em"}}
@@ -327,10 +345,10 @@
           :target "_blank" :rel "noopener noreferrer"}
          [:ty-icon {:name "github" :size "xs"}] "Source"])]]
     (when demo
-      [:div.flex-1.flex.justify-center.lg:justify-end
+      [:div.flex-1.lg:basis-auto.min-w-0.flex.justify-center.lg:justify-end
        ;; site-demo: a component demo, so library defaults, not the identity.
-       [:div.site-demo.dark.rounded-2xl.border.ty-border-.p-4.shadow-2xl
-        {:data-ty-theme "" :style (surface "floating")}
+       [:div.site-demo.dark.rounded-2xl.border.ty-border-.p-4.shadow-2xl.min-w-0.max-w-full
+        {:class ["*:max-w-full"] :data-ty-theme "" :style (surface "floating")}
         demo]])]))
 
 (defn doc-page
@@ -446,12 +464,12 @@
 
 (defn example
   "Card: heading, one line of explanation, the demo, and its code pinned at
-   the foot. Code up to 10 lines shows inline; longer code folds.
+   the foot, always shown.
    span: columns out of 6 inside bento (default: full width).
-   side?: demo left, code right (full-width recipes, e.g. theming)."
-  [{:keys [title description code lang span side?] :or {lang "html" span 6}} demo]
-  (let [lines (when code (line-count code))
-        compact? (<= span 2)
+   side?: demo left, code right (full-width recipes, e.g. theming).
+   tabs: [[id label lang code] ...] instead of code, one tab per stack."
+  [{:keys [title description code lang span side? tabs] :or {lang "html" span 6}} demo]
+  (let [compact? (<= span 2)
         foot {:data-ty-theme ""}
         ;; Compact cards float the copy button over the (short) first line.
         body (fn []
@@ -480,13 +498,9 @@
      (if demo
        [:div.flex-1.flex.items-center.px-6.py-8 demo]
        [:div.h-4])
+     (when tabs (code-tabs tabs))
      (when code
-       (if (or (not demo) (<= lines 10))
-         [:div.border-t.ty-border-.site-chrome foot (body)]
-         [:details.border-t.ty-border-.site-chrome foot
-          [:summary.cursor-pointer.px-5.py-3.text-xs.font-medium.ty-text-
-           (str "Show code · " lines " lines")]
-          [:div.border-t.ty-border- (body)]]))])))
+       [:div.border-t.ty-border-.site-chrome foot (body)])])))
 
 ;; --- API ---------------------------------------------------------------------
 
@@ -531,8 +545,8 @@
 
 (def validation-properties
   "Constraint-validation members shared by every form field (api-section :properties)."
-  [["checkValidity()" "() => boolean" "Valid? Fires invalid when not; shows nothing."]
-   ["reportValidity()" "() => boolean" "Also shows the message: in error when the field has one (cleared once valid), otherwise the browser's bubble."]
+  [["checkValidity()" "() => boolean" "Valid? Fires invalid when not. A field with an error line shows the message there; no bubble, no focus."]
+   ["reportValidity()" "() => boolean" "Also shows the message, in error when the field has one (cleared once valid), otherwise the browser's bubble, and focuses the field."]
    ["setCustomValidity(msg)" "(string) => void" "Your own error, e.g. from the server. Blocks submit until set to \"\"."]
    ["validity · validationMessage · willValidate" "ValidityState · string · boolean" "Same as native form controls."]])
 

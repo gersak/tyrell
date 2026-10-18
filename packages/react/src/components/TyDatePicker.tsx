@@ -12,9 +12,11 @@ type Placement =
   | 'left-start' | 'left' | 'left-end';
 
 export interface TyDatePickerEventDetail {
-  /** The selected date value (ISO string or formatted string based on format) */
+  /** What the form submits: a UTC ISO instant, or with `native` "YYYY-MM-DD" / "YYYY-MM-DDTHH:mm"; null when cleared */
   value: string | null;
-  /** The selected date as milliseconds since epoch */
+  /** Local wall-clock: "YYYY-MM-DD", or "YYYY-MM-DDTHH:mm" with time */
+  localValue: string | null;
+  /** The selected date as milliseconds since epoch (date-only: when the day starts locally) */
   milliseconds: number | null;
   /** Source of the change: "selection" | "time-change" | "clear" | "external" */
   source: 'selection' | 'time-change' | 'clear' | 'external';
@@ -23,8 +25,14 @@ export interface TyDatePickerEventDetail {
 }
 
 export interface TyDatePickerProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
-  /** The selected date value (ISO string or formatted string) */
-  value?: string;
+  /** The selected date. Reads "YYYY-MM-DD" (that day), "YYYY-MM-DDTHH:mm[:ss]" (local wall-clock), an ISO instant with Z/offset (its local day/time) or epoch milliseconds (a number); it then holds what the form submits: a UTC ISO instant, or with `native` "YYYY-MM-DD" / "YYYY-MM-DDTHH:mm". */
+  value?: string | number;
+
+  /** Submit wall-clock values like the browser's own date inputs ("YYYY-MM-DD", or "YYYY-MM-DDTHH:mm" with time) instead of a UTC instant. */
+  native?: boolean;
+
+  /** Error message shown under the field — also applies danger styling */
+  error?: string;
   
   /** Field size — the ladder shared by every field component
    *  (styles/field-size.ts). Defaults to 'sm'. */
@@ -98,6 +106,8 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     format,
     locale,
     withTime,
+    native,
+    error,
     min,
     max,
     placement,
@@ -107,6 +117,11 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     ...props 
   }, ref) => {
     const elementRef = useRef<TyDatePickerElement>(null);
+    // Epoch milliseconds go to the element as an ISO instant: React 18 writes
+    // the attribute, where a digit string is no date. NaN clears.
+    const elementValue = typeof value === 'number'
+      ? (Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : '')
+      : value;
 
     useEffect(() => {
       if (ref && elementRef.current) {
@@ -124,10 +139,10 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     useEffect(() => {
       if (!needsPropertyBridge) return;
       const element = elementRef.current;
-      if (element && value !== undefined) {
-        (element as any).value = value || '';
+      if (element && elementValue !== undefined) {
+        (element as any).value = elementValue || '';
       }
-    }, [value]);
+    }, [elementValue]);
 
     const handleChange = useCallback((event: Event) => {
       const customEvent = event as CustomEvent<TyDatePickerEventDetail>;
@@ -181,8 +196,8 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
       ref: elementRef,
     };
 
-    if (value !== undefined) {
-      webComponentProps.value = value;
+    if (elementValue !== undefined) {
+      webComponentProps.value = elementValue;
     }
 
     if (size) {
@@ -204,10 +219,15 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
     const isRequired = useBooleanProperty(elementRef, 'required', required);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
     const isNoClear = useBooleanProperty(elementRef, 'noClear', noClear);
+    const isWithTime = useBooleanProperty(elementRef, 'withTime', withTime);
+    const isNative = useBooleanProperty(elementRef, 'native', native);
 
     if (isRequired) webComponentProps.required = '';
     if (isDisabled) webComponentProps.disabled = '';
     if (isNoClear) webComponentProps['no-clear'] = '';
+    if (isWithTime) webComponentProps['with-time'] = '';  // Convert camelCase to kebab-case
+    if (isNative) webComponentProps.native = '';
+    if (error) webComponentProps.error = error;
 
     if (name) {
       webComponentProps.name = name;
@@ -219,10 +239,6 @@ export const TyDatePicker = React.forwardRef<TyDatePickerElement, TyDatePickerPr
 
     if (locale) {
       webComponentProps.locale = locale;
-    }
-
-    if (withTime) {
-      webComponentProps['with-time'] = '';  // Convert camelCase to kebab-case
     }
 
     if (min) {

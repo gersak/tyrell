@@ -1,5 +1,5 @@
 import { fixture, html, expect, nextFrame } from '@open-wc/testing';
-import '../lib/components/calendar-month.js';
+import { TyCalendarMonth } from '../lib/components/calendar-month.js';
 
 // Fixed month for deterministic grid math: July 2026 (Monday-first weeks).
 const YEAR = 2026;
@@ -197,5 +197,89 @@ describe('ty-calendar-month keyboard: arrow-key navigation + Enter/Space to sele
     await nextFrame();
 
     expect(firstEnabled.getAttribute('tabindex'), 'refused to move onto a disabled day').to.equal('0');
+  });
+
+  it('a clicked day becomes the only tab stop and takes the focus', async () => {
+    const el = (await fixture(html`
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
+    `)) as any;
+    await nextFrame();
+    const day20 = cells(el).find((c) => !c.classList.contains('other-month') && c.textContent === '20')!;
+    day20.click();
+    expect(cells(el).filter((c) => c.getAttribute('tabindex') === '0').map((c) => c.textContent)).to.deep.equal(['20']);
+    expect(el.shadowRoot.activeElement === day20, 'focused').to.equal(true);
+  });
+
+  it('a new value re-renders the grid: the focus moves to the newly selected day', async () => {
+    const el = (await fixture(html`
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH}></ty-calendar-month>
+    `)) as any;
+    await nextFrame();
+    focusRovingCell(el);
+    el.value = new Date(YEAR, MONTH - 1, 22).getTime();
+    const focused = el.shadowRoot.activeElement as HTMLElement | null;
+    expect(focused?.textContent).to.equal('22');
+    expect(focused?.getAttribute('tabindex')).to.equal('0');
+    expect(focused?.classList.contains('selected')).to.equal(true);
+  });
+});
+
+describe('ty-calendar-month — properties set before the element upgrades', () => {
+  let n = 0;
+  const tag = () => `ty-calendar-month-upgrade-${++n}`;
+  const hasOwn = (el: object, p: string) => Object.prototype.hasOwnProperty.call(el, p);
+
+  it('displayYear, displayMonth and min set early apply; later assignments reach the setters', async () => {
+    const name = tag();
+    const el = document.createElement(name) as any;
+    el.displayYear = YEAR;
+    el.displayMonth = MONTH;
+    el.min = '2026-07-10';
+    document.body.append(el);
+    customElements.define(name, class extends TyCalendarMonth {});
+    await nextFrame();
+    const grid = () => el.shadowRoot.querySelector('.calendar-flex-container').getAttribute('aria-label');
+    expect(grid()).to.include('2026');
+    const disabled = () => cells(el).filter((c) => c.getAttribute('aria-disabled') === 'true').length;
+    expect(disabled(), 'days before min disabled').to.be.greaterThan(9);
+    for (const p of ['displayYear', 'displayMonth', 'min']) {
+      expect(hasOwn(el, p), `no own ${p} left`).to.equal(false);
+    }
+
+    el.displayYear = 2031;
+    el.min = undefined;
+    expect(grid()).to.include('2031');
+    expect(disabled(), 'min cleared').to.equal(0);
+    el.remove();
+  });
+
+  // While it upgrades, the attributes go through the same setters first
+  it('displayYear and displayMonth set early win over their attributes', async () => {
+    const name = tag();
+    const el = document.createElement(name) as any;
+    el.setAttribute('display-year', '2020');
+    el.setAttribute('display-month', '2');
+    el.displayYear = 2030;
+    el.displayMonth = 7;
+    document.body.append(el);
+    customElements.define(name, class extends TyCalendarMonth {});
+    await nextFrame();
+    expect(el.displayYear).to.equal(2030);
+    expect(el.displayMonth).to.equal(7);
+    el.remove();
+  });
+});
+
+describe('ty-calendar-month — min/max as instants', () => {
+  it('an ISO instant min/max bounds by its local day', async () => {
+    const min = new Date(YEAR, MONTH - 1, 10, 0, 0).toISOString();
+    const max = new Date(YEAR, MONTH - 1, 20, 23, 0).toISOString();
+    const el = (await fixture(html`
+      <ty-calendar-month .displayYear=${YEAR} .displayMonth=${MONTH} min=${min} max=${max}></ty-calendar-month>
+    `)) as any;
+    await nextFrame();
+    const inMonth = cells(el).filter((c) => !c.classList.contains('other-month'));
+    const disabledDays = inMonth.filter((c) => c.classList.contains('disabled')).map((c) => Number(c.textContent));
+    expect(disabledDays).to.deep.equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]);
   });
 });

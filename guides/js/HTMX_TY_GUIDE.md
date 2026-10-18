@@ -187,7 +187,7 @@ Server returns on 422:
           hx-swap-oob="true"></ty-input>
 ```
 
-The OOB swap replaces the input with one carrying the error message. Tyrell renders the error text and the danger-flavored border automatically.
+The OOB swap replaces the input with one carrying the error message. Tyrell renders the error text and the danger colors automatically.
 
 ## Common pitfalls
 
@@ -203,7 +203,7 @@ The OOB swap replaces the input with one carrying the error message. Tyrell rend
   The response is the panel's content (`innerHTML` of the tab). A failed request shows the tab's error and Retry only through `loadFailed()`; ty-tab doesn't watch htmx events itself.
 - **Boolean values from `ty-checkbox`** post as `"on"` (or absent) — same as native `<input type="checkbox">`. `ty-switch` follows the same rule. If you need explicit `true`/`false`, wire it via `hx-vals='js:{enabled: this.checked}'`.
 - **`ty-select multiple` posts repeated `name=` entries** (one per selected value). Confirm your backend reads multi-value fields (Express `body-parser` does, Ring's wrap-params does, Rails' `permit(:tags => [])` does).
-- **Date format**: `ty-date-picker` posts ISO `YYYY-MM-DD` strings. Parse on the server accordingly.
+- **Date format**: `ty-date-picker` posts a UTC ISO instant (date-only: when the day starts in the browser's timezone, e.g. `2026-10-15T22:00:00.000Z` for Oct 16 in Zagreb). Add `native` to post `YYYY-MM-DD`, or `YYYY-MM-DDTHH:mm` with `with-time`, like `<input type="date">`. An empty picker posts `name=`.
 - **Don't manually re-register components after a swap** — `customElements.define` is global, registration persists across swaps. Re-running the CDN bundle script will throw `NotSupportedError: already defined`.
 
 ## Why no wrapper package?

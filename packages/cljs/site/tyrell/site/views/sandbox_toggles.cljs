@@ -5,13 +5,15 @@
 
    Verifies the label double-fire fix on ty-switch / ty-checkbox. Reported
    symptom: clicking the LABEL TEXT fired `change` once (correct), but clicking
-   the control itself inside the label fired it TWICE — some browsers forward a
-   label's synthetic click to the associated form control even when the original
-   click already targeted that control directly.
+   the control itself inside the label fired it TWICE — Firefox's <label>
+   doesn't count a click on the control's shadow content as a click on the
+   control, so after it, later in the same task, it forwards one more click to
+   the host.
 
-   Guarded by TyComponent/isDuplicateActivationClick: both events arrive in the
-   same task, so a flag cleared on the next microtask catches only the spurious
-   duplicate — two genuinely separate clicks are always in different tasks.
+   Guarded in TyComponent (watchLabelForwards): a host-targeted click at the
+   same point as a click on its shadow content in the same task is dropped at
+   the window, before any page listener sees it. Two genuinely separate clicks
+   are always in different tasks.
 
    Expected here: every counter reads 1 per click. A 2 is the bug back."
   (:require
@@ -66,7 +68,7 @@
    [:p.ty-text-.max-w-2xl {:style {:font-size "0.875rem" :line-height "1.7"}}
     "Click the label text, then the control itself. Both must count "
     [:strong "exactly 1"] " per click. A 2 means the label's synthetic click is reaching the "
-    "control on top of the original — the case isDuplicateActivationClick guards."]
+    "control on top of the original — the case TyComponent's watchLabelForwards guards."]
 
    [:div.space-y-4
     (case-card

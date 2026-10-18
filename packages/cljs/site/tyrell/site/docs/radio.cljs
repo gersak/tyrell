@@ -49,6 +49,87 @@
 (defn- doc-state [k] (get-in @state/state [:radio-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:radio-doc k] v))
 
+(def ^:private form-snippets
+  "Required in a form, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/book\" method=\"post\">
+  <ty-radio-group name=\"seat\" label=\"Seat\" required orientation=\"horizontal\">
+    <label><ty-radio value=\"window\"></ty-radio> Window</label>
+    <label><ty-radio value=\"aisle\"></ty-radio> Aisle</label>
+  </ty-radio-group>
+  <ty-button flavor=\"primary\">Book</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TyRadioGroup, TyRadio, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyRadioGroup name=\"seat\" label=\"Seat\" required orientation=\"horizontal\">
+    <label><TyRadio value=\"window\" /> Window</label>
+    <label><TyRadio value=\"aisle\" /> Aisle</label>
+  </TyRadioGroup>
+  <TyButton flavor=\"primary\">Book</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/RadioGroup {:name \"seat\" :label \"Seat\" :required true :orientation \"horizontal\"}
+  [:label [:> ty/Radio {:value \"window\"}] \"Window\"]
+  [:label [:> ty/Radio {:value \"aisle\"}] \"Aisle\"]]
+ [:> ty/Button {:flavor \"primary\"} \"Book\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-radio-group {:name \"seat\" :label \"Seat\" :required \"\" :orientation \"horizontal\"}
+  [:label [:ty-radio {:value \"window\"}] \"Window\"]
+  [:label [:ty-radio {:value \"aisle\"}] \"Aisle\"]]
+ [:ty-button {:flavor \"primary\"} \"Book\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/book', {contentType: 'form'})\">
+  <ty-radio-group name=\"seat\" label=\"Seat\" required orientation=\"horizontal\">
+    <label><ty-radio value=\"window\"></ty-radio> Window</label>
+    <label><ty-radio value=\"aisle\"></ty-radio> Aisle</label>
+  </ty-radio-group>
+  <ty-button flavor=\"primary\">Book</ty-button>
+</form>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const group = document.querySelector('ty-radio-group');
+
+group.value = 'team';          // checks the matching ty-radio
+group.error = 'Pick a plan';   // message under the group
+
+group.addEventListener('change', (e) => {
+  const { value } = e.detail;   // click, arrow keys or Space
+});"]
+   ["react" "React" "javascript"
+    "import { TyRadioGroup, TyRadio } from 'tyrell-react'
+
+// onChangeCommit is change: click, arrow keys or Space
+<TyRadioGroup value={plan} error={error}
+  onChangeCommit={(e) => setPlan(e.detail.value)}>
+  <label><TyRadio value=\"pro\" /> Pro</label>
+  <label><TyRadio value=\"team\" /> Team</label>
+</TyRadioGroup>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/RadioGroup {:value @plan :error @error
+                   :on-change-commit #(reset! plan (.. % -detail -value))}
+ [:label [:> ty/Radio {:value \"pro\"}] \"Pro\"]
+ [:label [:> ty/Radio {:value \"team\"}] \"Team\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-radio-group {:value plan :error error
+                  :on {:change #(set-plan! (.. % -detail -value))}}
+ [:label [:ty-radio {:value \"pro\"}] \"Pro\"]
+ [:label [:ty-radio {:value \"team\"}] \"Team\"]]"]
+   ["datastar" "Datastar" "html"
+    "<ty-radio-group data-signals:plan=\"'pro'\" data-bind=\"plan\">
+  <label><ty-radio value=\"pro\"></ty-radio> Pro</label>
+  <label><ty-radio value=\"team\"></ty-radio> Team</label>
+</ty-radio-group>"]])
+
 (defn view []
   (component-page
    {:title "Radio"
@@ -128,9 +209,7 @@
        :span 3
        :description [:span "The group submits " [:code "name=value"] ". " [:code "required"]
                      " blocks submission until one is picked."]
-       :code "<ty-radio-group name=\"seat\" required>
-  …
-</ty-radio-group>"}
+       :tabs form-snippets}
       (let [status (doc-state :status)]
         [:form.flex.flex-col.gap-3.w-full
          {:on {:submit (fn [^js e]
@@ -147,15 +226,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const group = document.querySelector('ty-radio-group');
-
-group.value = 'team';          // checks the matching ty-radio
-group.error = 'Pick a plan';   // message under the group
-
-group.addEventListener('change', (e) => {
-  const { value } = e.detail;   // click, arrow keys or Space
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

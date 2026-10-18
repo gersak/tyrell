@@ -11,6 +11,7 @@ import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { checkboxStyles, checkboxCustomFlavorCss } from "../styles/checkbox.js";
+import { nativeMessage } from "../utils/validity.js";
 
 /**
  * Component internal state (for typing TyComponent)
@@ -56,6 +57,9 @@ export class TyCheckbox
   implements TyCheckboxElement
 {
   static formAssociated = true;
+  // Host counts as focusable (see TyComponent.delegatesFocus).
+  protected static delegatesFocus = true;
+  protected static labelClicks = true;
 
   protected static properties = {
     checked: {
@@ -141,6 +145,10 @@ export class TyCheckbox
     // first connect (no container yet — render() attaches them).
     this.setupEventListeners();
     this._syncCustomFlavor();
+    // Moved in the DOM (a keyed reorder): Firefox and WebKit take focus
+    // away without a blur, so the ring would stay
+    const el = this.shadowRoot!.querySelector(".checkbox-container");
+    if (el && this.shadowRoot!.activeElement !== el) el.classList.remove("focused");
   }
 
   /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
@@ -184,7 +192,7 @@ export class TyCheckbox
 
   private handleCheckboxClick(e: Event): void {
     if (this.disabled) return;
-    if (this.isDuplicateActivationClick()) return;
+    this.showFocusRing(e instanceof KeyboardEvent);
 
     // Native semantics: clicking an indeterminate checkbox resolves to checked
     const newValue = this.indeterminate ? true : !this.checked;
@@ -216,6 +224,12 @@ export class TyCheckbox
         }),
       );
     }, 0);
+  }
+
+  /** The ring is for keyboard use: keys show it, a click hides it — also a
+   *  <label>'s, which in Chromium focuses the box as :focus-visible. */
+  private showFocusRing(on: boolean): void {
+    this.shadowRoot?.querySelector(".checkbox-container")?.classList.toggle("focused", on);
   }
 
   private handleCheckboxKeydown(e: KeyboardEvent): void {
@@ -287,7 +301,7 @@ export class TyCheckbox
     };
 
     this._focusHandler = () => {
-      checkboxEl.classList.add("focused");
+      checkboxEl.classList.toggle("focused", checkboxEl.matches(":focus-visible"));
     };
 
     this._blurHandler = () => {
@@ -318,7 +332,7 @@ export class TyCheckbox
     if (!checkboxEl) {
       checkboxEl = document.createElement("div");
       checkboxEl.className = "checkbox-container " + classes;
-      checkboxEl.tabIndex = this.disabled ? -1 : 0;
+      if (!this.disabled) checkboxEl.tabIndex = 0;
       checkboxEl.setAttribute("role", "checkbox");
       checkboxEl.setAttribute("aria-checked", ariaChecked);
       checkboxEl.setAttribute("aria-disabled", String(this.disabled));
@@ -330,8 +344,15 @@ export class TyCheckbox
 
       shadow.appendChild(checkboxEl);
     } else {
+      // The ring outlives a re-render only while the checkbox has focus
+      const focused = checkboxEl.classList.contains("focused") && shadow.activeElement === checkboxEl;
       checkboxEl.className = "checkbox-container " + classes;
-      checkboxEl.tabIndex = this.disabled ? -1 : 0;
+      checkboxEl.classList.toggle("focused", focused && !this.disabled);
+      // Disabled: not focusable at all, like a native disabled checkbox. At
+      // tabindex=-1 it still was, and the host (delegatesFocus) handed it
+      // the focus of a <label> click.
+      if (this.disabled) checkboxEl.removeAttribute("tabindex");
+      else checkboxEl.tabIndex = 0;
       checkboxEl.setAttribute("aria-checked", ariaChecked);
       checkboxEl.setAttribute("aria-disabled", String(this.disabled));
       checkboxEl.setAttribute("aria-required", String(this.required));
@@ -355,12 +376,23 @@ export class TyCheckbox
     this.updateValidity();
   }
 
-  /** required + unchecked => valueMissing; otherwise valid. */
+  /** Focus the checkbox itself (the host is not focusable; its role element is). */
+  focus(options?: FocusOptions): void {
+    const el = this.shadowRoot?.querySelector(".checkbox-container") as HTMLElement | null;
+    if (el) el.focus(options);
+    else super.focus(options);
+  }
+
+  /** required + unchecked => valueMissing (the browser's own message); otherwise valid. */
   private updateValidity(): void {
     const anchor = this.shadowRoot?.querySelector(".checkbox-container") as HTMLElement | null;
     if (this.disabled) { this.applyValidity({}); return; }
     if (this.required && !this.checked) {
-      this.applyValidity({ valueMissing: true }, "Please check this box", anchor ?? undefined);
+      this.applyValidity(
+        { valueMissing: true },
+        nativeMessage("input", { type: "checkbox", required: true }),
+        anchor ?? undefined,
+      );
     } else {
       this.applyValidity({});
     }

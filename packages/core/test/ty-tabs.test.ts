@@ -1,4 +1,5 @@
 import { fixture, html, expect, nextFrame, oneEvent } from '@open-wc/testing';
+import { sendKeys } from '@web/test-runner-commands';
 import '../lib/components/tabs.js';
 import '../lib/components/tab.js';
 // The "…" jump-menu trigger nests its menu inside a ty-popup — without this
@@ -131,6 +132,40 @@ describe('ty-tabs', () => {
       // At scroll start with overflow: fade only on the right edge.
       expect(strip.style.getPropertyValue('--fade-left')).to.equal('0px');
       expect(strip.style.getPropertyValue('--fade-right')).to.equal('28px');
+    });
+
+    // The item's click (detail 0) bubbles on to the "…" trigger, the popup's
+    // anchor: taken for a press on the trigger, it reopened the menu.
+    it('Enter on a jump-menu item picks the tab and closes the menu', async () => {
+      const host = await fixture(html`
+        <div style="width: 300px;">
+          <ty-tabs active="a" width="100%">
+            <ty-tab id="a" label="First">1</ty-tab>
+            <ty-tab id="b" label="Second">2</ty-tab>
+            <ty-tab id="c" label="Third">3</ty-tab>
+            <ty-tab id="d" label="Fourth">4</ty-tab>
+            <ty-tab id="e" label="Fifth">5</ty-tab>
+          </ty-tabs>
+        </div>
+      `);
+      const el = host.querySelector('ty-tabs') as HTMLElement;
+      await nextFrame();
+      await nextFrame();
+      const sr = el.shadowRoot!;
+      const popup = sr.querySelector('.tab-overflow-trigger ty-popup') as HTMLElement;
+      const dialog = popup.shadowRoot!.querySelector('dialog') as HTMLDialogElement;
+      const settle = () => new Promise((r) => setTimeout(r, 400));
+
+      (sr.querySelector('.tab-overflow-trigger') as HTMLElement).focus();
+      await sendKeys({ press: 'Enter' });
+      await settle();
+      expect(dialog.open, 'menu open').to.equal(true);
+
+      (sr.querySelector('.tab-overflow-item[data-tab-id="d"]') as HTMLElement).focus();
+      await sendKeys({ press: 'Enter' });
+      await settle();
+      expect(el.getAttribute('active')).to.equal('d');
+      expect(dialog.open, 'menu closed').to.equal(false);
     });
 
     it('activating an off-screen tab scrolls it into view', async () => {

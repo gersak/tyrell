@@ -1,5 +1,5 @@
 import { fixture, html, expect, nextFrame } from '@open-wc/testing';
-import '../lib/components/option.js';
+import { TyOption } from '../lib/components/option.js';
 
 describe('ty-option', () => {
   describe('construction', () => {
@@ -273,5 +273,32 @@ describe('ty-option', () => {
       el.innerHTML = '<i>New</i> Value';
       expect(el.value).to.equal('New Value');
     });
+  });
+});
+
+describe('ty-option — properties set before the element upgrades', () => {
+  let n = 0;
+  const tag = () => `ty-option-upgrade-${++n}`;
+  const hasOwn = (el: object, p: string) => Object.prototype.hasOwnProperty.call(el, p);
+
+  it('selected and disabled set early apply, not only value', async () => {
+    const name = tag();
+    const el = document.createElement(name) as any;
+    el.value = 'a';
+    el.selected = true;
+    el.disabled = true;
+    document.body.append(el);
+    customElements.define(name, class extends TyOption {});
+    await nextFrame();
+    expect(el.value).to.equal('a');
+    expect(el.hasAttribute('selected')).to.equal(true);
+    expect(el.hasAttribute('disabled')).to.equal(true);
+    for (const p of ['value', 'selected', 'disabled']) {
+      expect(hasOwn(el, p), `no own ${p} left`).to.equal(false);
+    }
+
+    el.selected = false;
+    expect(el.hasAttribute('selected'), 'later assignments reach the setter').to.equal(false);
+    el.remove();
   });
 });

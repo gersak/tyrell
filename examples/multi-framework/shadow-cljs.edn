@@ -1,6 +1,7 @@
 {:deps true
- :nrepl {:port 7890}
- :dev-http {3010 "public"}
+ :nrepl {:port 7893}
+ :http {:port 9642}
+ :dev-http {3020 "public"}
  :builds
  {:dev
   {:target      :browser

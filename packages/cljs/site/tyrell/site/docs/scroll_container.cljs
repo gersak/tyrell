@@ -55,6 +55,129 @@
                         (set-doc! :loading false))
                    500)))
 
+(def ^:private infinite-snippets
+  "Infinite list: load the next page on nearend."
+  [["html" "HTML" "html"
+    "<ty-scroll-container id=\"list\" max-height=\"400px\"></ty-scroll-container>
+
+<script>
+  const list = document.getElementById('list');
+  list.addEventListener('nearend', async () => {
+    list.append(...await nextPage());
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyScrollContainer } from 'tyrell-react'
+
+<TyScrollContainer maxHeight=\"400px\"
+  onNearEnd={async () => setItems([...items, ...await nextPage()])}>
+  {items.map((it) => <Row key={it.id} {...it} />)}
+</TyScrollContainer>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/ScrollContainer {:max-height \"400px\" :on-near-end #(load-next-page!)}
+ (for [it @items] ^{:key (:id it)} [row it])]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-scroll-container {:max-height \"400px\" :on {:nearend load-next-page!}}
+ (for [it items] (row it))]"]
+   ["datastar" "Datastar" "html"
+    "<ty-scroll-container max-height=\"400px\" data-signals:cursor=\"0\"
+  data-on:nearend=\"@get('/people?after=' + $cursor)\">
+  <div id=\"people\">…</div>
+</ty-scroll-container>"]])
+
+(def ^:private scroll-methods-snippets
+  "Scroll from code: the methods on the element."
+  [["html" "HTML" "html"
+    "<ty-scroll-container id=\"list\" max-height=\"400px\">…</ty-scroll-container>
+
+<script>
+  const list = document.getElementById('list');
+  list.scrollToBottom();
+  list.scrollToTop(false);  // jump
+  list.scrollToElement('#row-7');
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyScrollContainer, TyButton } from 'tyrell-react'
+
+const list = useRef(null)
+
+<TyScrollContainer ref={list} maxHeight=\"400px\">…</TyScrollContainer>
+<TyButton onClick={() => list.current.scrollToBottom()}>Bottom</TyButton>
+<TyButton onClick={() => list.current.scrollToTop(false)}>Top</TyButton>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/ScrollContainer {:ref #(reset! list %) :max-height \"400px\"} …]
+[:> ty/Button {:on-click #(.scrollToBottom @list)} \"Bottom\"]
+[:> ty/Button {:on-click #(.scrollToTop @list false)} \"Top\"]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-scroll-container
+ {:max-height \"400px\"
+  :replicant/on-mount (fn [{:replicant/keys [node]}] (reset! list node))}
+ …]
+[:ty-button {:on {:click #(.scrollToBottom @list)}} \"Bottom\"]
+[:ty-button {:on {:click #(.scrollToTop @list false)}} \"Top\"]"]
+   ["datastar" "Datastar" "html"
+    "<!-- the _ keeps the element out of the signals sent to the server -->
+<ty-scroll-container data-ref:_list max-height=\"400px\">…</ty-scroll-container>
+<ty-button data-on:click=\"$_list.scrollToBottom()\">Bottom</ty-button>
+<ty-button data-on:click=\"$_list.scrollToTop(false)\">Top</ty-button>"]])
+
+(def ^:private api-snippets
+  "Properties, methods and the edge events."
+  [["html" "HTML" "html"
+    "<ty-scroll-container id=\"box\"></ty-scroll-container>
+
+<script>
+  const box = document.getElementById('box');
+
+  box.maxHeight = '400px';
+  box.nearEdgeThreshold = 200;          // px
+  box.scrollElement.scrollTop;          // the element that actually scrolls
+  box.updateShadows();                  // after changing content size yourself
+
+  box.addEventListener('nearstart', (e) => loadNewer(e.detail.distance));
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyScrollContainer } from 'tyrell-react'
+
+const box = useRef(null)
+
+<TyScrollContainer ref={box} maxHeight=\"400px\" nearEdgeThreshold={200}
+  onNearStart={(e) => loadNewer(e.detail.distance)}>…</TyScrollContainer>
+
+box.current.scrollElement.scrollTop   // the element that actually scrolls
+box.current.updateShadows()           // after changing content size yourself"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/ScrollContainer
+ {:ref #(reset! box %) :max-height \"400px\" :near-edge-threshold 200
+  :on-near-start #(load-newer! (.. % -detail -distance))}
+ …]
+
+(.-scrollTop (.-scrollElement @box))  ; the element that actually scrolls
+(.updateShadows @box)                 ; after changing content size yourself"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-scroll-container
+ {:max-height \"400px\" :near-edge-threshold \"200\"
+  :replicant/on-mount (fn [{:replicant/keys [node]}] (reset! box node))
+  :on {:nearstart #(load-newer! (.. % -detail -distance))}}
+ …]
+
+(.updateShadows @box)                 ; after changing content size yourself"]
+   ["datastar" "Datastar" "html"
+    "<ty-scroll-container data-ref:_box max-height=\"400px\" near-edge-threshold=\"200\"
+  data-on:nearstart=\"@get('/older?distance=' + evt.detail.distance)\">
+  …
+</ty-scroll-container>
+<!-- $_box.updateShadows() after changing content size yourself.
+     The _ keeps the element out of the signals sent to the server. -->"]])
+
 (defn view []
   (component-page
    {:title "Scroll Container"
@@ -86,9 +209,7 @@
        :span 3
        :description [:span [:code "nearend"] " fires once when you get within " [:code "near-edge-threshold"]
                      " px of the bottom, and re-arms after the list grows."]
-       :code "list.addEventListener('nearend', async () => {
-  list.append(...await nextPage());
-});"}
+       :tabs infinite-snippets}
       (let [n (or (doc-state :count) 10)]
         [:div.rounded-xl.border.ty-border-.overflow-hidden.w-full
          [:ty-scroll-container {:max-height "220px" :on {:nearend load-more!}}
@@ -113,7 +234,7 @@ chat.prepend(...olderMessages);"}
          [:div.rounded-xl.border.ty-border-.overflow-hidden
           [:ty-scroll-container {:max-height "180px" :scroll-anchoring ""}
            (map-indexed (fn [i m] [:div.px-4.py-2.text-sm.ty-text {:replicant/key m} m]) msgs)]]
-         [:ty-button {:size "sm" :appearance "outlined" :on {:click #(set-doc! :older (+ older 3))}}
+         [:ty-button.self-start {:size "sm" :appearance "outlined" :on {:click #(set-doc! :older (+ older 3))}}
           [:ty-icon {:slot "start" :name "arrow-up"}] "Load 3 older"]]))
 
      (example
@@ -135,9 +256,7 @@ chat.prepend(...olderMessages);"}
       {:title "Scroll from code"
        :span 2
        :description "Methods scroll the inner element, smoothly by default."
-       :code "list.scrollToBottom();
-list.scrollToTop(false);  // jump
-list.scrollToElement('#row-7');"}
+       :tabs scroll-methods-snippets}
       [:div.flex.flex-col.gap-2.w-full
        [:div.rounded-xl.border.ty-border-.overflow-hidden
         [:ty-scroll-container {:id "doc-scroll-methods" :max-height "120px"}
@@ -148,15 +267,7 @@ list.scrollToElement('#row-7');"}
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const box = document.querySelector('ty-scroll-container');
-
-box.maxHeight = '400px';
-box.nearEdgeThreshold = 200;          // px
-box.scrollElement.scrollTop;          // the element that actually scrolls
-box.updateShadows();                  // after changing content size yourself
-
-box.addEventListener('nearstart', (e) => loadNewer(e.detail.distance));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

@@ -83,6 +83,47 @@
   --ty-bg-teal-soft: #134e4a;
 }")
 
+(def ^:private form-snippets
+  "Form actions, one tab per stack. FormData: title=…&intent=publish"
+  [["html" "HTML" "html"
+    "<form action=\"/posts\" method=\"post\">
+  <ty-input name=\"title\" label=\"Title\" required></ty-input>
+  <ty-button type=\"reset\" appearance=\"ghost\">Reset</ty-button>
+  <ty-button name=\"intent\" value=\"draft\" appearance=\"outlined\">Save draft</ty-button>
+  <ty-button name=\"intent\" value=\"publish\" flavor=\"primary\">Publish</ty-button>
+</form>
+<!-- title=…&intent=publish -->"]
+   ["react" "React" "javascript"
+    "import { TyInput, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyInput name=\"title\" label=\"Title\" required />
+  <TyButton type=\"reset\" appearance=\"ghost\">Reset</TyButton>
+  <TyButton name=\"intent\" value=\"draft\" appearance=\"outlined\">Save draft</TyButton>
+  <TyButton name=\"intent\" value=\"publish\" flavor=\"primary\">Publish</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/Input {:name \"title\" :label \"Title\" :required true}]
+ [:> ty/Button {:type \"reset\" :appearance \"ghost\"} \"Reset\"]
+ [:> ty/Button {:name \"intent\" :value \"draft\" :appearance \"outlined\"} \"Save draft\"]
+ [:> ty/Button {:name \"intent\" :value \"publish\" :flavor \"primary\"} \"Publish\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-input {:name \"title\" :label \"Title\" :required \"\"}]
+ [:ty-button {:type \"reset\" :appearance \"ghost\"} \"Reset\"]
+ [:ty-button {:name \"intent\" :value \"draft\" :appearance \"outlined\"} \"Save draft\"]
+ [:ty-button {:name \"intent\" :value \"publish\" :flavor \"primary\"} \"Publish\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/posts', {contentType: 'form'})\">
+  <ty-input name=\"title\" label=\"Title\" required></ty-input>
+  <ty-button type=\"reset\" appearance=\"ghost\">Reset</ty-button>
+  <ty-button name=\"intent\" value=\"draft\" appearance=\"outlined\">Save draft</ty-button>
+  <ty-button name=\"intent\" value=\"publish\" flavor=\"primary\">Publish</ty-button>
+</form>"]])
+
 (defn view []
   (component-page
    {:title "Button"
@@ -150,10 +191,12 @@
      (example
       {:title "Icon-only"
        :span 2
-       :description [:span [:code "action"] " makes it square and centers the icon. Give it an " [:code "aria-label"] "."]
+       :description [:span [:code "action"] " makes it square and centers the icon; " [:code "action pill"]
+                     " makes it round. Give it an " [:code "aria-label"] "."]
        :code "<ty-button action aria-label=\"Edit\">
   <ty-icon name=\"edit\"></ty-icon>
-</ty-button>"}
+</ty-button>
+<ty-button action pill aria-label=\"Add\">…</ty-button>"}
       [:div.flex.flex-wrap.items-center.gap-2
        (for [[icon flavor appearance] [["plus" "primary" "solid"] ["edit" "neutral" "outlined"]
                                        ["trash" "danger" "ghost"] ["check" "success" "solid"]]]
@@ -182,7 +225,7 @@
      (example
       {:title "Loading"
        :span 2
-       :description "Spinner on top, width kept, clicks blocked, aria-busy set."
+       :description "Spinner on top, width kept, clicks blocked, aria-busy set. Set it in the click handler: that press still submits, later ones wait until you clear it."
        :code "<ty-button loading>Saving</ty-button>
 
 // swap the spinner everywhere
@@ -216,14 +259,9 @@ setLoaderSvg('<svg>…</svg>');"}
       {:title "Form actions"
        :span 6
        :description [:span "A " [:code "ty-button"] " submits by default (" [:code "type=\"submit\""] "). With "
-                     [:code "name"] " and " [:code "value"] ", the pressed button is in FormData, so one form can have several intents."]
-       :code "<form>
-  <ty-input name=\"title\" label=\"Title\" required></ty-input>
-  <ty-button type=\"reset\" appearance=\"ghost\">Reset</ty-button>
-  <ty-button name=\"intent\" value=\"draft\" appearance=\"outlined\">Save draft</ty-button>
-  <ty-button name=\"intent\" value=\"publish\" flavor=\"primary\">Publish</ty-button>
-</form>
-<!-- FormData: title=…&intent=publish -->"}
+                     [:code "name"] " and " [:code "value"] ", the pressed button is in FormData, so one form can have several intents. "
+                     [:code "preventDefault()"] " in a click listener cancels the submit, like a native button."]
+       :tabs form-snippets}
       (let [sent (get-in @state/state [:button-doc :sent])]
         [:form.flex.flex-col.gap-4.w-full
          {:on {:submit (fn [^js e]
@@ -312,18 +350,19 @@ setLoaderSvg('<svg>…</svg>');"}
                   ["flavor" "string" "\"neutral\"" "primary, success, danger, warning, neutral, or any custom flavor. Append + or - for a stronger or softer tone."]
                   ["appearance" "string" "\"solid\"" "solid, outlined or ghost."]
                   ["size" "string" "\"sm\"" "xs, sm, md, lg or xl. Same height ladder as the fields."]
-                  ["pill" "boolean" "false" "Fully rounded ends."]
+                  ["pill" "boolean" "false" "Fully rounded ends. A round icon button is action pill; a plain pill with only an icon isn't made round."]
                   ["action" "boolean" "false" "Square, icon-only button."]
-                  ["wide" "boolean" "false" "Grow to fill the parent flex row."]
+                  ["wide" "boolean" "false" "Grow to fill the parent flex row. Keeps its own height, also in a flex column."]
                   ["muted" "boolean" "false" "Desaturated at rest; color returns on hover, press and focus."]
                   "State"
-                  ["disabled" "boolean" "false" "Not focusable, no click."]
-                  ["loading" "boolean" "false" "Spinner overlay, clicks blocked, aria-busy. Width is kept."]
+                  ["disabled" "boolean" "false" "Not focusable, no click. Also when inside <fieldset disabled>."]
+                  ["loading" "boolean" "false" "Spinner overlay, clicks blocked, aria-busy and aria-disabled. Width is kept, and it stays focusable."]
                   "Form"
                   ["type" "string" "\"submit\"" "submit, reset or button. Set button for actions inside a form that shouldn't submit."]
                   ["name" "string" "Field name sent with the pressing button's value."]
-                  ["value" "string" "Value sent when this button submits the form."]]
-     :events [["click" "{originalEvent}" "Bubbles and crosses shadow roots. Not fired while disabled or loading."]]
+                  ["value" "string" "Value sent when this button submits the form."]
+                  ["form" "string" "id of the form to submit or reset when the button sits outside it."]]
+     :events [["click" "{originalEvent}" "Cancelable. Fires once per press, before the default action: preventDefault() cancels the submit or reset, like a native button. Bubbles and crosses shadow roots. Not fired while disabled, loading or inside a disabled fieldset. button.click() and a wrapping <label> act like a real press. Capture listeners above the button also see the browser's own click on the way in, so put button logic in bubbling listeners."]]
      :slots [["start" "Before the label, usually an icon."]
              ["(default)" "The label."]
              ["end" "After the label."]]

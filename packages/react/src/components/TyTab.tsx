@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
 
 export interface TyTabProps extends React.HTMLAttributes<HTMLElement> {
   /** Required unique identifier */
@@ -69,7 +69,7 @@ export const TyTab = React.forwardRef<HTMLElement, TyTabProps>(
     if (isDisabled) webComponentProps.disabled = '';
     
     if (label) webComponentProps.label = label;
-    if (lazy) webComponentProps.lazy = '';
+    if (coerceBool(lazy)) webComponentProps.lazy = '';
 
     return React.createElement(
       'ty-tab',

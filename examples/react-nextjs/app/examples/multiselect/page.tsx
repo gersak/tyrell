@@ -7,6 +7,8 @@ import {
   TyButton,
   TyIcon,
   TySelect,
+  TyOption,
+  TySelectedOptions,
   type TySelectEventDetail,
 } from 'tyrell-react'
 
@@ -22,6 +24,13 @@ interface SearchEntry {
   ts: number
   query: string
 }
+
+const PLANS = [
+  { value: 'free', icon: 'feather', title: 'Free', detail: 'One project, community support, monthly limits.' },
+  { value: 'pro', icon: 'zap', title: 'Pro', detail: 'Unlimited projects, priority builds, email support.' },
+  { value: 'team', icon: 'users', title: 'Team', detail: 'Shared workspaces, roles and an audit log.' },
+  { value: 'enterprise', icon: 'building', title: 'Enterprise', detail: 'SSO, custom contracts, uptime guarantee.' },
+]
 
 const ALL_OPTIONS = [
   { value: 'react',     label: 'React' },
@@ -161,7 +170,7 @@ export default function MultiselectExample() {
               <h2 className="ty-text+ text-xl font-semibold flex items-center gap-2">
                 External search
                 <span className="ty-bg-warning- ty-text-warning++ px-2 py-0.5 rounded text-xs font-normal">
-                  NEW prop: onSearch (TC6)
+                  onSearch
                 </span>
               </h2>
               <p className="ty-text- text-sm mt-1">
@@ -202,6 +211,40 @@ export default function MultiselectExample() {
             <span className="ty-text-- ml-auto">
               {filteredOptions.length} of {ALL_OPTIONS.length} options shown
             </span>
+          </div>
+        </section>
+
+        {/* Mode 3: rich options shown outside the field */}
+        <section className="ty-elevated rounded-xl p-6 space-y-4 border ty-border">
+          <div>
+            <h2 className="ty-text+ text-xl font-semibold">Rich options</h2>
+            <p className="ty-text- text-sm mt-1">
+              Options with an icon, a title and a line of detail don&apos;t fit in a field, so the select
+              gets its own trigger button and <code className="ty-bg-neutral- px-1 rounded">TySelectedOptions</code>{' '}
+              shows the picks below it. Each chip is the option&apos;s own content; the chip styling is
+              plain CSS in <code>globals.css</code> (<code>.rich-chips</code>).
+            </p>
+          </div>
+
+          <TySelect id="plans" multiple value={['team']} placement="bottom-start">
+            <TyButton slot="trigger" appearance="outlined">
+              <TyIcon slot="start" name="layers" />
+              Choose plans
+            </TyButton>
+            {PLANS.map(plan => (
+              <TyOption key={plan.value} value={plan.value}>
+                <div className="flex items-center gap-3">
+                  <TyIcon name={plan.icon} className="ty-text-primary shrink-0" />
+                  <div className="flex flex-col">
+                    <span className="font-semibold ty-text++">{plan.title}</span>
+                    <span className="text-xs ty-text-">{plan.detail}</span>
+                  </div>
+                </div>
+              </TyOption>
+            ))}
+          </TySelect>
+          <div className="rich-chips flex flex-wrap gap-3">
+            <TySelectedOptions htmlFor="plans" />
           </div>
         </section>
 

@@ -36,18 +36,32 @@ export const checkboxStyles = `
 :host {
   display: inline-flex;
   width: auto;
-  vertical-align: middle;
+  /* The host is exactly one line box of the surrounding text (inherited
+     font + line-height) and the tick is centered in it. A tick bigger than
+     the line overhangs it equally above and below instead of growing it, so
+     the control sits on the first line's middle in a flex row (start or
+     center), inline in text, and next to a wrapping label — and never
+     pushes the label. */
+  height: 1.25em;
+  height: 1lh;
+  align-items: center;
+  vertical-align: baseline;
+  overflow: visible;
+}
+
+/* Zero-width text strut: gives the host the same baseline as the
+   surrounding text, so inline (vertical-align: baseline) its line box
+   coincides with the text's line box exactly. */
+:host::before {
+  content: "\\200b";
+  width: 0;
 }
 
 .checkbox-container {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  /* One line box of the surrounding text (inherited line-height), tick
-     centered in it: next to a <label> the tick sits on the first line's
-     middle instead of 2px high (a 16px box top-aligned with a 20px line). */
-  min-height: 1.25em;
-  min-height: 1lh;
   outline: none;
   transition: var(--ty-local-transition, all 0.15s ease-in-out);
   user-select: none;
@@ -59,7 +73,8 @@ export const checkboxStyles = `
   /* Unchecked: faint neutral tick (30% of body text) so it recedes
      next to the label; checked jumps to full body text. */
   color: var(--checkbox-color-off, color-mix(in oklab, var(--ty-text) 30%, transparent));
-  /* Room for the hover pill, inside the one-line height (border-box). */
+  /* Room for the hover pill around the tick; the pill may overhang the
+     line by a few px at sizes bigger than the line. */
   box-sizing: border-box;
   padding: 2px;
   border-radius: 5px;
@@ -82,11 +97,11 @@ export const checkboxStyles = `
   color: var(--checkbox-color, var(--ty-text));
 }
 
-/* Visible focus ring (keyboard) — .focused is toggled by the component.
-   Matches the checked-state color so a danger checkbox gets a red ring,
-   not a fixed primary one. */
-.checkbox-container.focused,
-.checkbox-container:focus-visible {
+/* Visible focus ring (keyboard) — .focused is toggled by the component
+   (not :focus-visible: Chromium matches that when a <label> click focuses
+   the box). Matches the checked-state color so a danger checkbox gets a
+   red ring, not a fixed primary one. */
+.checkbox-container.focused {
   box-shadow: 0 0 0 3px var(--checkbox-ring, color-mix(in oklab, var(--ty-color-primary) 25%, transparent));
 }
 

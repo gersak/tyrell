@@ -12,7 +12,7 @@
    .buttons { display: flex; gap: 0.5rem; }
    .buttons ty-button { cursor: pointer; }
    .label { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
-            color: var(--ty-text-weak, #888); }")
+            color: var(--ty-text-faint, #888); }")
 
 (defn counter-view [count]
   [:div.wrapper

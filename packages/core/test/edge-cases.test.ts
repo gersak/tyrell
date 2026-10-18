@@ -206,7 +206,10 @@ describe('ty-file-upload edge cases', () => {
     form.reset();
     await nextFrame();
     expect(el.files.length).to.equal(0);
-    expect(new FormData(form).get('f')).to.equal(null);
+    // Back to empty: one empty file, like a native <input type=file>
+    const f = new FormData(form).get('f') as File;
+    expect(f.name).to.equal('');
+    expect(f.size).to.equal(0);
   });
 });
 
@@ -276,6 +279,27 @@ describe('ty-selected-tags basics and edges', () => {
     await tick(50);
     expect(tags.querySelectorAll('ty-tag').length).to.equal(1);
     expect((wrap.querySelector('#pick') as any).value).to.equal('b');
+  });
+
+  it('a rich option makes a rich chip; an explicit label makes a text chip', async () => {
+    const wrap = (await fixture(html`
+      <div>
+        <ty-select id="rich" multiple value="a,b">
+          <ty-option value="a"><ty-icon name="zap"></ty-icon><b>Pro</b><small>Unlimited</small></ty-option>
+          <ty-option value="b" label="Team"><b>Team</b><small>Shared</small></ty-option>
+        </ty-select>
+        <ty-selected-tags for="rich"></ty-selected-tags>
+      </div>
+    `)) as HTMLElement;
+    await nextFrame();
+    await tick(50);
+
+    const [rich, plain] = Array.from(wrap.querySelector('ty-selected-tags')!.querySelectorAll('ty-tag'));
+    expect(rich.querySelector('ty-icon'), 'icon cloned').to.exist;
+    expect(rich.querySelector('b')!.textContent).to.equal('Pro');
+    expect(rich.querySelector('small')!.textContent).to.equal('Unlimited');
+    expect(plain.children.length, 'label → text only').to.equal(0);
+    expect(plain.textContent).to.equal('Team');
   });
 
   it('falls back to the previous sibling when `for` is absent', async () => {

@@ -1,39 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Page Not Found - Ty Components Demo{% endblock %}
+{% block title %}Page Not Found - Tyrell Demo{% endblock %}
 
 {% block content %}
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full text-center">
         <div class="animate-fade-in">
             <!-- 404 Icon -->
-            <div class="mx-auto w-24 h-24 ty-bg-danger-soft rounded-full flex items-center justify-center mb-8">
-                <ty-icon name="alert-circle" class="w-12 h-12 ty-text-danger-strong"></ty-icon>
+            <div class="mx-auto w-24 h-24 ty-bg-danger- rounded-full flex items-center justify-center mb-8">
+                <ty-icon name="alert-circle" class="w-12 h-12 ty-text-danger++"></ty-icon>
             </div>
             
             <!-- Error Message -->
-            <h1 class="text-6xl font-bold ty-text-danger-strong mb-4">404</h1>
-            <h2 class="text-2xl font-semibold ty-text-neutral-strong mb-4">Page Not Found</h2>
-            <p class="ty-text-neutral-bold mb-8 max-w-sm mx-auto leading-relaxed">
+            <h1 class="text-6xl font-bold ty-text-danger++ mb-4">404</h1>
+            <h2 class="text-2xl font-semibold ty-text-neutral++ mb-4">Page Not Found</h2>
+            <p class="ty-text-neutral+ mb-8 max-w-sm mx-auto leading-relaxed">
                 Oops! The page you're looking for seems to have wandered off into the digital void.
             </p>
             
             <!-- Action Buttons -->
             <div class="space-y-4">
-                <ty-button flavor="primary" size="lg" class="w-full" onclick="window.history.back()">
-                    <ty-icon name="arrow-left" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="primary" size="lg" class="w-full" onclick="window.history.back()">
+                    <ty-icon slot="start" name="arrow-left"></ty-icon>
                     Go Back
                 </ty-button>
                 
-                <ty-button flavor="neutral" size="lg" class="w-full" onclick="window.location.href='{{ url_for('index') }}'">
-                    <ty-icon name="home" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="neutral" size="lg" class="w-full" onclick="window.location.href='{{ url_for('index') }}'">
+                    <ty-icon slot="start" name="home"></ty-icon>
                     Return Home
                 </ty-button>
             </div>
             
             <!-- Helpful Links -->
-            <div class="mt-12 pt-8 border-t ty-border-neutral-soft">
-                <p class="ty-text-neutral-soft text-sm mb-4">Maybe try one of these instead:</p>
+            <div class="mt-12 pt-8 border-t ty-border-">
+                <p class="ty-text-neutral- text-sm mb-4">Maybe try one of these instead:</p>
                 <div class="flex flex-wrap gap-3 justify-center">
                     <a href="{{ url_for('index') }}" class="btn-ghost text-sm">
                         <ty-icon name="home" class="w-4 h-4 mr-1"></ty-icon>
@@ -58,7 +58,7 @@
 // Add some fun interaction
 document.addEventListener('DOMContentLoaded', function() {
     // Animate the error icon on hover
-    const errorIcon = document.querySelector('.ty-bg-danger-soft');
+    const errorIcon = document.querySelector('.ty-bg-danger-');
     if (errorIcon) {
         errorIcon.addEventListener('mouseenter', function() {
             this.classList.add('animate-pulse');

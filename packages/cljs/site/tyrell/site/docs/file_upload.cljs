@@ -26,9 +26,10 @@
      (for [{:keys [label accept placeholder multiple?]} lineup]
        [:ty-file-upload (merge {:label label :multiple multiple? :accept accept :placeholder placeholder} attrs
                                {:jsx/onChange "{(e) => setFiles(e.detail.files)}"})])
-     ;; @post with contentType 'form' sends the enclosing form as multipart,
-     ;; files included, so the Datastar tab needs the <form> around them.
-     :datastar [(into [:form {:data-on:submit "@post('/upload', {contentType: 'form'})"}]
+     ;; @post with contentType 'form' sends the enclosing form; only with
+     ;; enctype multipart are the files themselves sent (else "[object File]").
+     :datastar [(into [:form {:enctype "multipart/form-data"
+                              :data-on:submit "@post('/upload', {contentType: 'form'})"}]
                       (concat
                        (for [{:keys [label accept placeholder multiple?]} lineup]
                          [:ty-file-upload (merge {:name (snippets/slug label) :label label :multiple multiple?
@@ -59,6 +60,177 @@
 
 (def ^:private max-bytes (* 2 1024 1024))
 
+(def ^:private read-snippets
+  "Read what was picked: change carries the File objects."
+  [["html" "HTML" "html"
+    "<ty-file-upload id=\"upload\" multiple></ty-file-upload>
+
+<script>
+  document.getElementById('upload').addEventListener('change', (e) => {
+    const { files, names } = e.detail;
+    const total = files.reduce((n, f) => n + f.size, 0);
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyFileUpload } from 'tyrell-react'
+
+<TyFileUpload multiple onChange={(e) => {
+  const { files, names } = e.detail
+  setTotal(files.reduce((n, f) => n + f.size, 0))
+}} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/FileUpload {:multiple true
+                  :on-change #(->> (.. % -detail -files)
+                                   (map (fn [f] (.-size f)))
+                                   (reduce +)
+                                   (reset! total))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-file-upload {:multiple \"\"
+                  :on {:change #(->> (.. % -detail -files)
+                                     (map (fn [f] (.-size f)))
+                                     (reduce +)
+                                     (set-total!))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-file-upload multiple data-signals:total=\"0\"
+  data-on:change=\"$total = evt.detail.files.reduce((n, f) => n + f.size, 0)\">
+</ty-file-upload>"]])
+
+(def ^:private size-limit-snippets
+  "Size limit: check in change, set error."
+  [["html" "HTML" "html"
+    "<ty-file-upload id=\"receipt\" label=\"Receipt (max 2 MB)\"></ty-file-upload>
+
+<script>
+  const MAX = 2 * 1024 * 1024;
+  const receipt = document.getElementById('receipt');
+  receipt.addEventListener('change', (e) => {
+    const big = e.detail.files.find((f) => f.size > MAX);
+    receipt.error = big ? `${big.name} is over 2 MB` : '';
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyFileUpload } from 'tyrell-react'
+
+const MAX = 2 * 1024 * 1024
+
+<TyFileUpload label=\"Receipt (max 2 MB)\" error={error}
+  onChange={(e) => {
+    const big = e.detail.files.find((f) => f.size > MAX)
+    setError(big ? `${big.name} is over 2 MB` : '')
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+(def max-bytes (* 2 1024 1024))
+
+[:> ty/FileUpload
+ {:label \"Receipt (max 2 MB)\" :error @error
+  :on-change #(let [big (some (fn [f] (when (> (.-size f) max-bytes) f))
+                              (.. % -detail -files))]
+                (reset! error (if big (str (.-name big) \" is over 2 MB\") \"\")))}]"]
+   ["replicant" "Replicant" "clojure"
+    "(def max-bytes (* 2 1024 1024))
+
+[:ty-file-upload
+ {:label \"Receipt (max 2 MB)\" :error error
+  :on {:change #(let [big (some (fn [f] (when (> (.-size f) max-bytes) f))
+                                (.. % -detail -files))]
+                  (set-error! (if big (str (.-name big) \" is over 2 MB\") \"\")))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-file-upload label=\"Receipt (max 2 MB)\"
+  data-on:change=\"el.error = evt.detail.files.some((f) => f.size > 2 * 1024 * 1024)
+    ? 'A file is over 2 MB' : ''\">
+</ty-file-upload>"]])
+
+(def ^:private api-snippets
+  "Properties, form reset and the change event."
+  [["html" "HTML" "html"
+    "<ty-file-upload id=\"upload\" multiple></ty-file-upload>
+
+<script>
+  const upload = document.getElementById('upload');
+
+  upload.files;                 // File[] currently listed (read-only)
+  upload.error = 'Upload failed, try again';
+  upload.form?.reset();         // clear the list the way a form does
+
+  upload.addEventListener('change', async (e) => {
+    const body = new FormData();
+    e.detail.files.forEach((f) => body.append('files', f));
+    await fetch('/upload', { method: 'POST', body });
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyFileUpload } from 'tyrell-react'
+
+const upload = useRef(null)     // upload.current.files: File[] listed
+
+<TyFileUpload ref={upload} multiple error={error}
+  onChange={async (e) => {
+    const body = new FormData()
+    e.detail.files.forEach((f) => body.append('files', f))
+    await fetch('/upload', { method: 'POST', body })
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/FileUpload
+ {:multiple true :error @error
+  :ref #(reset! upload %)        ; (.-files @upload): File[] listed
+  :on-change (fn [e]
+               (let [body (js/FormData.)]
+                 (doseq [f (.. e -detail -files)] (.append body \"files\" f))
+                 (js/fetch \"/upload\" #js {:method \"POST\" :body body})))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-file-upload
+ {:multiple \"\" :error error
+  :replicant/on-mount (fn [{:replicant/keys [node]}] (reset! upload node))
+  :on {:change (fn [e]
+                 (let [body (js/FormData.)]
+                   (doseq [f (.. e -detail -files)] (.append body \"files\" f))
+                   (js/fetch \"/upload\" #js {:method \"POST\" :body body})))}}]"]
+   ["datastar" "Datastar" "html"
+    "<form enctype=\"multipart/form-data\"
+  data-on:change=\"@post('/upload', {contentType: 'form'})\">
+  <ty-file-upload name=\"files\" multiple data-ref:_upload></ty-file-upload>
+</form>
+<!-- $_upload.files: File[] listed; $_upload.error = '…' shows an error.
+     The _ keeps the element out of the signals sent to the server. -->"]])
+
+(def ^:private form-snippets
+  "Required in a form, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/apply\" method=\"post\" enctype=\"multipart/form-data\">
+  <ty-file-upload name=\"cv\" label=\"CV\" accept=\".pdf\" required></ty-file-upload>
+  <ty-button flavor=\"primary\">Apply</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TyFileUpload, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyFileUpload name=\"cv\" label=\"CV\" accept=\".pdf\" required />
+  <TyButton flavor=\"primary\">Apply</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/FileUpload {:name \"cv\" :label \"CV\" :accept \".pdf\" :required true}]
+ [:> ty/Button {:flavor \"primary\"} \"Apply\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-file-upload {:name \"cv\" :label \"CV\" :accept \".pdf\" :required \"\"}]
+ [:ty-button {:flavor \"primary\"} \"Apply\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form enctype=\"multipart/form-data\"
+  data-on:submit__prevent=\"@post('/apply', {contentType: 'form'})\">
+  <ty-file-upload name=\"cv\" label=\"CV\" accept=\".pdf\" required></ty-file-upload>
+  <ty-button flavor=\"primary\">Apply</ty-button>
+</form>"]])
+
 (defn view []
   (component-page
    {:title "File Upload"
@@ -68,8 +240,10 @@
     :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyFileUpload (React)" "atom"]]
     :source "packages/core/src/components/file-upload.ts"
     :mark "↑"
+    ;; The file list grows with each pick: past the empty field's height it scrolls.
     :demo [:div {:style {:width "340px"}}
-           [:ty-file-upload {:label "Attachments" :multiple "" :accept ".pdf,image/*"}]]}
+           [:ty-scroll-container {:max-height "243px" :style {:height "243px"}}
+            [:ty-file-upload {:label "Attachments" :multiple "" :accept ".pdf,image/*"}]]]}
 
    (playground
     {:id :file-upload
@@ -88,10 +262,7 @@
       {:title "Read what was picked"
        :span 4
        :description [:span [:code "change"] " carries the " [:code "File"] " objects. Picking again replaces the list; the × on a row removes one."]
-       :code "upload.addEventListener('change', (e) => {
-  const { files, names } = e.detail;
-  const total = files.reduce((n, f) => n + f.size, 0);
-});"}
+       :tabs read-snippets}
       (let [picked (doc-state :picked)]
         [:div.flex.flex-col.gap-3.w-full
          [:ty-file-upload {:multiple ""
@@ -117,15 +288,7 @@
       {:title "Size limit"
        :span 3
        :description [:span "No built-in limit: check in " [:code "change"] " and set " [:code "error"] "."]
-       :code "const MAX = 2 * 1024 * 1024;
-
-upload.addEventListener('change', (e) => {
-  const big = e.detail.files
-    .find((f) => f.size > MAX);
-  upload.error = big
-    ? `${big.name} is over 2 MB`
-    : '';
-});"}
+       :tabs size-limit-snippets}
       (let [err (doc-state :size-error)]
         [:ty-file-upload {:label "Receipt (max 2 MB)"
                           :error (or err "")
@@ -138,11 +301,7 @@ upload.addEventListener('change', (e) => {
        :span 3
        :description [:span "With " [:code "name"] " the files are in FormData. " [:code "required"]
                      " blocks submission while nothing is picked."]
-       :code "<form>
-  <ty-file-upload name=\"cv\" required>
-  </ty-file-upload>
-  <ty-button size=\"md\">Apply</ty-button>
-</form>"}
+       :tabs form-snippets}
       (let [status (doc-state :status)]
         [:form.flex.flex-col.gap-3.w-full
          {:on {:submit (fn [^js e]
@@ -157,21 +316,7 @@ upload.addEventListener('change', (e) => {
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const upload = document.querySelector('ty-file-upload');
-
-upload.files;                 // File[] currently listed (read-only)
-upload.multiple = true;
-upload.error = 'Upload failed, try again';
-
-// clear the list the way a form does
-upload.form?.reset();
-
-upload.addEventListener('change', async (e) => {
-  const body = new FormData();
-  e.detail.files.forEach((f) => body.append('files', f));
-  await fetch('/upload', { method: 'POST', body });
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

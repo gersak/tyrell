@@ -47,5 +47,18 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true },
       testIgnore: /\.desktop\.spec\.ts$/,
     },
+    // Real Firefox and WebKit engines, for behavior that is engine-specific
+    // (form validation, localized validationMessage, implicit submission).
+    // Only the *.engines.spec.ts files run here.
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+      testMatch: /\.engines\.spec\.ts$/,
+    },
+    {
+      name: 'webkit',
+      use: { ...devices['Desktop Safari'] },
+      testMatch: /\.engines\.spec\.ts$/,
+    },
   ],
 })

@@ -14,12 +14,13 @@
 
 (defn- prop-attrs
   "Non-default live props, as they appear in the snippets."
-  [{:keys [size clear required disabled]}]
+  [{:keys [size clear required disabled error]}]
   (cond-> {}
     (not= size "sm") (assoc :size size)
     (not clear) (assoc :no-clear true)
     required (assoc :required true)
-    disabled (assoc :disabled true)))
+    disabled (assoc :disabled true)
+    error (assoc :error "Pick one we ship to")))
 
 (defn- snippets [props]
   (let [attrs (prop-attrs props)]
@@ -34,11 +35,12 @@
                                         (snippets/ds "data-bind") "country"]))]
             (for [[v l] (take 3 countries)] [:ty-option {:value v} l]))])))
 
-(defn- render-lineup [{:keys [size clear required disabled]}]
+(defn- render-lineup [{:keys [size clear required disabled error]}]
   (let [base (cond-> {:size size}
                (not clear) (assoc :no-clear "")
                required (assoc :required "")
-               disabled (assoc :disabled ""))]
+               disabled (assoc :disabled "")
+               error (assoc :error "Pick one we ship to"))]
     [:div.flex.flex-col.gap-4 {:style {:width "100%" :max-width "340px"}}
      [:ty-select (assoc base :label "Country" :value "hr" :replicant/key "c")
       (for [[v l] countries] [:ty-option {:replicant/key v :value v} l])]
@@ -67,6 +69,159 @@
      (set-doc! :loading false))
    450))
 
+(def ^:private rich-chip-css
+  "Rich chips: capped width, left-aligned, detail wraps. Plain CSS on the
+   light-DOM chips; the same lines are in the example's code."
+  "ty-selected-options ty-tag { max-width: 18rem; }
+   ty-selected-options ty-tag::part(container) { border-radius: 0.75rem; padding-block: 0.25rem; }
+   ty-selected-options ty-tag > * { white-space: normal; text-align: start; }")
+
+(def ^:private search-snippets
+  "Options from your API, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const sel = document.getElementById('robot');
+
+sel.addEventListener('search', async (e) => {
+  sel.loading = true;
+  const rows = await api(e.detail.query);
+  sel.replaceChildren(...rows.map(toOption));
+  sel.loading = false;
+});"]
+   ["react" "React" "javascript"
+    "import { TySelect, TyOption } from 'tyrell-react'
+
+<TySelect externalSearch loading={loading}
+  onSearch={async (e) => {
+    setLoading(true)
+    setRows(await api(e.detail.query))
+    setLoading(false)
+  }}>
+  {rows.map((r) => <TyOption key={r.id} value={r.id}>{r.name}</TyOption>)}
+</TySelect>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Select {:external-search true :loading @loading?
+               :on-search #(search! (.. % -detail -query))}
+ (for [{:keys [id name]} @rows]
+   ^{:key id} [:> ty/Option {:value id} name])]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-select {:external-search \"\" :loading (when loading? \"\")
+             :on {:search #(search! (.. % -detail -query))}}
+ (for [{:keys [id name]} rows]
+   [:ty-option {:replicant/key id :value id} name])]"]
+   ["datastar" "Datastar" "html"
+    "<!-- the server patches the <ty-option>s back in -->
+<ty-select id=\"robot\" external-search data-indicator:searching
+  data-attr:loading=\"$searching\"
+  data-on:search=\"@get('/robots?q=' + evt.detail.query)\">
+</ty-select>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const sel = document.getElementById('lang');
+
+sel.value = 'de';                 // multiple: ['clj', 'rs'] or 'clj,rs'
+sel.clear();
+
+sel.addEventListener('change', (e) => {
+  const { value, values, items, action } = e.detail;
+  // action: set | add | remove | clear | create
+});
+sel.addEventListener('open', () => track('select-open'));"]
+   ["react" "React" "javascript"
+    "import { TySelect } from 'tyrell-react'
+
+<TySelect value={lang}             // multiple: ['clj', 'rs']
+  onChange={(e) => {
+    const { value, values, items, action } = e.detail
+    // action: set | add | remove | clear | create
+  }}
+  onOpen={() => track('select-open')}>
+  …
+</TySelect>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Select {:value @lang      ; multiple: [\"clj\" \"rs\"]
+               :on-change #(reset! lang (.. % -detail -value))
+               :on-open #(track! \"select-open\")}
+ …]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-select {:value lang      ; multiple: \"clj,rs\"
+             :on {:change #(set-lang! (.. % -detail -value))
+                  :open #(track! \"select-open\")}}
+ …]"]
+   ["datastar" "Datastar" "html"
+    "<ty-select data-signals:lang=\"'de'\" data-attr:value=\"$lang\"
+  data-on:change=\"$lang = evt.detail.value\"
+  data-on:open=\"@post('/track/select-open')\">
+  …
+</ty-select>"]])
+
+(def ^:private form-snippets
+  "In a form, one tab per stack. FormData: country=hr&langs=clj&langs=rs"
+  [["html" "HTML" "html"
+    "<form action=\"/profile\" method=\"post\">
+  <ty-select name=\"country\" label=\"Country\" required>
+    <ty-option value=\"hr\">Croatia</ty-option>
+    <ty-option value=\"de\">Germany</ty-option>
+  </ty-select>
+  <ty-select name=\"langs\" label=\"Languages\" multiple value=\"clj,rs\">
+    <ty-option value=\"clj\">Clojure</ty-option>
+    <ty-option value=\"rs\">Rust</ty-option>
+  </ty-select>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>
+<!-- country=hr&langs=clj&langs=rs -->"]
+   ["react" "React" "javascript"
+    "import { TySelect, TyOption, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TySelect name=\"country\" label=\"Country\" required>
+    <TyOption value=\"hr\">Croatia</TyOption>
+    <TyOption value=\"de\">Germany</TyOption>
+  </TySelect>
+  <TySelect name=\"langs\" label=\"Languages\" multiple value={['clj', 'rs']}>
+    <TyOption value=\"clj\">Clojure</TyOption>
+    <TyOption value=\"rs\">Rust</TyOption>
+  </TySelect>
+  <TyButton flavor=\"primary\">Send</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/Select {:name \"country\" :label \"Country\" :required true}
+  [:> ty/Option {:value \"hr\"} \"Croatia\"]
+  [:> ty/Option {:value \"de\"} \"Germany\"]]
+ [:> ty/Select {:name \"langs\" :label \"Languages\" :multiple true :value [\"clj\" \"rs\"]}
+  [:> ty/Option {:value \"clj\"} \"Clojure\"]
+  [:> ty/Option {:value \"rs\"} \"Rust\"]]
+ [:> ty/Button {:flavor \"primary\"} \"Send\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-select {:name \"country\" :label \"Country\" :required \"\"}
+  [:ty-option {:value \"hr\"} \"Croatia\"]
+  [:ty-option {:value \"de\"} \"Germany\"]]
+ [:ty-select {:name \"langs\" :label \"Languages\" :multiple \"\" :value \"clj,rs\"}
+  [:ty-option {:value \"clj\"} \"Clojure\"]
+  [:ty-option {:value \"rs\"} \"Rust\"]]
+ [:ty-button {:flavor \"primary\"} \"Send\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/profile', {contentType: 'form'})\">
+  <ty-select name=\"country\" label=\"Country\" required>
+    <ty-option value=\"hr\">Croatia</ty-option>
+    <ty-option value=\"de\">Germany</ty-option>
+  </ty-select>
+  <ty-select name=\"langs\" label=\"Languages\" multiple value=\"clj,rs\">
+    <ty-option value=\"clj\">Clojure</ty-option>
+    <ty-option value=\"rs\">Rust</ty-option>
+  </ty-select>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>"]])
+
 (defn view []
   (component-page
    {:title "Select"
@@ -85,11 +240,12 @@
 
    (playground
     {:id :select
-     :defaults {:size "md" :clear true :required false :disabled false}
+     :defaults {:size "md" :clear true :required false :disabled false :error false}
      :controls [{:key :size :options ["xs" "sm" "md" "lg" "xl"]}
                 {:key :clear :switch? true}
                 {:key :required :switch? true}
-                {:key :disabled :switch? true}]
+                {:key :disabled :switch? true}
+                {:key :error :switch? true}]
      :sub "Open them. Country has 8 options, so it gets a search row."
      :render render-lineup
      :snippets snippets})
@@ -144,12 +300,7 @@
        :description [:span [:code "external-search"] " stops local filtering and fires a debounced "
                      [:code "search"] ". Set " [:code "loading"] ", fetch, swap the options. Try "
                      [:code "rob"] "."]
-       :code "sel.addEventListener('search', async (e) => {
-  sel.loading = true;
-  const rows = await api(e.detail.query);
-  sel.replaceChildren(...rows.map(toOption));
-  sel.loading = false;
-});"}
+       :tabs search-snippets}
       (let [results (doc-state :results)]
         [:ty-select (cond-> {:label "Robot" :external-search "" :debounce "250" :placeholder "Type to search…"
                              :on {:search #(fake-search! (.. % -detail -query))}}
@@ -205,39 +356,56 @@
      (example
       {:title "Rich options"
        :span 6
-       :description [:span "Options take any markup: icon, title, a line of detail. Long text wraps inside the popup."]
-       :code "<ty-option value=\"pro\">
-  <div class=\"flex items-center gap-3\">
-    <ty-icon name=\"zap\"></ty-icon>
-    <div class=\"flex flex-col\">
-      <span class=\"font-semibold\">Pro</span>
-      <span class=\"text-xs ty-text-\">Unlimited projects, …</span>
+       :description [:span "Options take any markup: icon, title, a line of detail. That doesn't fit in a field, so use a "
+                     [:code "slot=\"trigger\""] " and show the picks with " [:code "ty-selected-options"]
+                     ": each chip is the option itself."]
+       :code "<ty-select id=\"plan\" multiple value=\"team\">
+  <ty-button slot=\"trigger\">Choose plans</ty-button>
+  <ty-option value=\"pro\">
+    <div class=\"flex items-center gap-3\">
+      <ty-icon name=\"zap\"></ty-icon>
+      <div class=\"flex flex-col\">
+        <span class=\"font-semibold\">Pro</span>
+        <span class=\"text-xs ty-text-\">Unlimited projects, …</span>
+      </div>
     </div>
-  </div>
-</ty-option>"}
-      [:ty-select {:label "Plan" :multiple "" :value "team" :style {:width "340px" :max-width "100%"}}
-       (for [[v icon title detail]
-             [["free" "feather" "Free" "One project, community support, and a monthly limit on builds and storage."]
-              ["pro" "zap" "Pro" "Unlimited projects, priority builds, and email support during business hours."]
-              ["team" "users" "Team" "Everything in Pro, plus shared workspaces, roles, and an audit log for every change."]
-              ["enterprise" "building" "Enterprise" "Single sign-on, custom contracts, a dedicated contact, and an uptime guarantee."]]]
-         [:ty-option {:replicant/key v :value v}
-          [:div.flex.items-center.gap-3
-           [:ty-icon.ty-text-primary.shrink-0 {:name icon}]
-           [:div.flex.flex-col
-            [:span.font-semibold.ty-text++ title]
-            [:span.text-xs.ty-text- detail]]]])])
+  </ty-option>
+  …
+</ty-select>
+
+<ty-selected-options for=\"plan\"></ty-selected-options>
+
+<style>
+  ty-selected-options ty-tag { max-width: 18rem; }
+  ty-selected-options ty-tag::part(container) { border-radius: 0.75rem; padding-block: 0.25rem; }
+  ty-selected-options ty-tag > * { white-space: normal; text-align: start; }
+</style>"}
+      [:div.flex.flex-col.items-start.gap-3
+       [:ty-select {:id "doc-plan" :multiple "" :value "team" :placement "bottom-start"}
+        [:ty-button {:slot "trigger" :appearance "outlined" :size "md"}
+         [:ty-icon {:slot "start" :name "layers"}] "Choose plans"]
+        (for [[v icon title detail]
+              [["free" "feather" "Free" "One project, community support, and a monthly limit on builds and storage."]
+               ["pro" "zap" "Pro" "Unlimited projects, priority builds, and email support during business hours."]
+               ["team" "users" "Team" "Everything in Pro, plus shared workspaces, roles, and an audit log for every change."]
+               ["enterprise" "building" "Enterprise" "Single sign-on, custom contracts, a dedicated contact, and an uptime guarantee."]]]
+          [:ty-option {:replicant/key v :value v}
+           [:div.flex.items-center.gap-3
+            [:ty-icon.ty-text-primary.shrink-0 {:name icon}]
+            [:div.flex.flex-col
+             [:span.font-semibold.ty-text++ title]
+             [:span.text-xs.ty-text- detail]]]])]
+       [:style rich-chip-css]
+       [:div.flex.flex-wrap.gap-3
+        [:ty-selected-options {:for "doc-plan"}]]])
 
      (example
       {:title "In a form"
        :span 6
        :description [:span "Single submits one " [:code "name=value"] "; " [:code "multiple"]
-                     " submits one entry per value, like native. " [:code "required"] " blocks an empty submit."]
-       :code "<form>
-  <ty-select name=\"country\" label=\"Country\" required>…</ty-select>
-  <ty-select name=\"langs\" label=\"Languages\" multiple>…</ty-select>
-</form>
-<!-- FormData: country=hr&langs=clj&langs=rs -->"}
+                     " submits one entry per value, like native. " [:code "required"]
+                     " blocks an empty submit: the browser's message shows under the field and the select takes focus. No JS needed."]
+       :tabs form-snippets}
       (let [sent (doc-state :sent)]
         [:form.flex.flex-col.gap-4.w-full
          {:on {:submit (fn [^js e]
@@ -254,17 +422,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const sel = document.querySelector('ty-select');
-
-sel.value = 'de';                 // multiple: ['clj', 'rs'] or 'clj,rs'
-sel.clear();
-
-sel.addEventListener('change', (e) => {
-  const { value, values, items, action } = e.detail;
-  // action: set | add | remove | clear | create
-});
-sel.addEventListener('open', () => track('select-open'));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -292,7 +450,8 @@ sel.addEventListener('open', () => track('select-open'));"}
       [:ty-input {:label "Search" :placeholder "Service name"}]]))
 
    (api-section
-    {:properties validation-properties
+    {:properties (into [["clear()" "() => void" "Clears the selection and fires change (action clear). Shows no validation message, so it's safe for resetting a form in code; the built-in × does show it."]]
+                       validation-properties)
      :attributes ["Value"
                   ["value" "string" "\"\"" "Selected value. With multiple: comma-separated, or an array from frameworks."]
                   ["name" "string" "Form field name. Multiple submits one entry per value."]
@@ -300,7 +459,8 @@ sel.addEventListener('open', () => track('select-open'));"}
                   "Field"
                   ["label" "string" "Label above the field."]
                   ["placeholder" "string" "\"Select...\"" "Shown while nothing is selected."]
-                  ["required" "boolean" "false" "Blocks form submission while empty."]
+                  ["required" "boolean" "false" "Blocks form submission while empty. The message shows under the field on submit, and as soon as a user change leaves it empty."]
+                  ["error" "string" "\"\"" "Message under the field; \"\" clears it. While it's set, the select looks like flavor=\"danger\", whatever its flavor, and your flavor's look comes back when it clears. Validation writes it too and clears it once the select is valid."]
                   ["disabled" "boolean" "false" "Not interactive, left out of the form."]
                   ["readonly" "boolean" "false" "Shows the value; doesn't open."]
                   ["no-clear" "boolean" "false" "No × button (it shows once something is selected)."]
@@ -322,22 +482,24 @@ sel.addEventListener('open', () => track('select-open'));"}
                   ["no-options-message" "string" "\"No options available\"" "Shown when nothing matches the search."]
                   "ty-option"
                   ["value" "string" "What the select takes when this option is picked."]
+                  ["label" "string" "Plain text for chips and the multiple field instead of the option's content."]
                   ["disabled" "boolean" "false" "Shown, not selectable."]
+                  ["hidden" "boolean" "false" "Not offered: left out of the list, the arrow keys and the search. Can still be the value, like <option hidden>."]
                   ["flavor" "string" "Tag color for this option in ty-selected-options."]
                   "ty-selected-options"
-                  ["for" "string" "id of the select to mirror. Chips are dismissible ty-tags; a <template> child customizes them."]]
+                  ["for" "string" "id of the select to mirror. Each chip is a dismissible ty-tag holding the option's own content (plain text with label); a <template> child replaces it."]]
      :events [["change" "{value, values, items, action, item}" "Selection changed. action: set, add, remove, clear or create."]
               ["search" "{query}" "Typing in the search row (external-search). Debounced."]
               ["create" "{value, label}" "allow-create minted an option. Cancelable."]
               ["open / close" "{mode, element}" "Popup lifecycle."]]
-     :slots [["trigger" "Your own trigger element; replaces the field chrome."]
+     :slots [["trigger" "Your own trigger element; replaces the field chrome. An error line shows under it, and the trigger gets aria-invalid and aria-description."]
              ["start / end" "Icons or badges inside the field."]
              ["(default)" "ty-option children."]]
      :keyboard [["Enter / Space / ↓" "Open."]
                 ["↑ ↓" "Move through options."]
                 ["Enter" "Pick the highlighted option (toggle when multiple)."]
                 ["Type" "Filter, when the search row is shown."]
-                ["Esc" "Close."]]
+                ["Esc" "Close the list; focus returns to the select. Inside a ty-popup or ty-modal only the list closes."]]
      :css-vars [["--ty-input-bg / -border / -border-focus" "Trigger field, shared with ty-input."]
                 ["--ty-input-shadow-focus" "Focus ring."]
                 ["--ty-select-popup-width" "Popup width, independent of the trigger."]]})))

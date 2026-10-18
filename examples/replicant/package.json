@@ -1,32 +1,25 @@
 {
   "name": "replicant-ty-example",
   "version": "1.0.0",
-  "description": "Replicant example using dev.gersak/ty web components",
+  "description": "Replicant example using Tyrell web components (dev.gersak/tyrell + tyrell-components)",
   "main": "public/js/main.js",
   "scripts": {
-    "dev": "concurrently \"npm run dev:cljs\" \"npm run dev:css\" \"npm run serve\"",
-    "dev:cljs": "shadow-cljs watch main",
-    "dev:css": "npx @tailwindcss/cli -i ./src/input.css -o ./public/css/app.css --watch",
-    "build": "npm run build:cljs && npm run build:css",
-    "build:cljs": "shadow-cljs release main",
-    "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./public/css/app.css --minify",
-    "serve": "python3 -m http.server 8080 --directory public"
+    "postinstall": "cp node_modules/tyrell-components/css/tyrell.css node_modules/tyrell-components/css/tyrell-theme.css public/css/",
+    "dev": "shadow-cljs watch main",
+    "build": "shadow-cljs release main"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.0",
-    "concurrently": "^8.2.2",
-    "shadow-cljs": "^2.28.0",
-    "tailwindcss": "4.1"
+    "shadow-cljs": "^2.28.0"
   },
   "keywords": [
     "replicant",
     "clojurescript",
     "web-components",
-    "ty"
+    "tyrell"
   ],
   "author": "Gersak",
   "license": "MIT",
   "dependencies": {
-    "tyrell-components": "1.0.0-RC6"
+    "tyrell-components": "1.0.0-TC59"
   }
 }

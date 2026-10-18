@@ -5,37 +5,43 @@ support-ticket demo doesn't cover**, so you can sanity-check the latest TC
 build end-to-end.
 
 > Sibling to `../datastar-go/`. Standard library only, single `main.go`.
+> Uses **tyrell-components `1.0.0-TC59`** (pinned on jsDelivr) and **Datastar `v1.0.0-RC.8`**.
 
 ## What it shows
 
 | Component | Where |
 |---|---|
-| `ty-tabs` + `ty-tab` | Primary navigation (Overview / Members / Calendar / Files / Onboarding) |
+| `ty-tabs` + `ty-tab` | Primary navigation (Overview / Members / Reports / Calendar / Files / Onboarding) |
+| Lazy `ty-tab` (`lazy` + `data-on:ty-tab-load`) | Members and Reports load the first time they're shown, with a spinner; Reports fails its first load on purpose to show `loadFailed()` → "Couldn't load." + Retry |
 | `ty-tooltip` | Help indicators on the Overview metric cards |
 | `ty-tag` (standalone) | Status pills throughout |
 | `ty-copy` | API key + webhook URL (both `code` and `text` formats) |
 | `ty-popup` | Workspace-settings button (header) + per-member action menu |
 | `ty-resize-observer` | Live width readout on the Overview "Responsive panel" |
-| `ty-select multiple` + `ty-tag` (as option) | Skill filter on the Members tab, with server-side filtering via `data-on:change → @get('/api/members')` |
+| `ty-select multiple compact` + `ty-tag` (as option) + `ty-selected-options` | Skill filter on the Members tab: picks show as dismissible chips, server-side filtering via `data-on:change → @get('/api/members')` |
 | `ty-calendar` | Date picker on the Calendar tab; selecting a day triggers `@get('/api/events')` and the day's schedule renders in the side panel |
 | `ty-file-upload` | Drop zone on the Files tab; clicking Upload streams progress via SSE `patch-elements` |
-| `ty-wizard` + `ty-step` | Onboarding flow with server-driven step transitions and validation |
+| `ty-wizard` + `ty-step` | Onboarding flow with server-driven step transitions; the Profile step is a real `<form>` (native `required` / `minlength` / `type="email"`, Enter submits) |
 
 ## Run
 
 ```bash
-go run .
+cd examples/datastar-go-workspace
+go run .                 # http://localhost:8081
+PORT=8091 go run .       # if 8081 is taken
 ```
-
-Open <http://localhost:8081>.
 
 If `../datastar-go/` is already running on `:8080`, both can coexist.
 
 ## Patterns worth noting
 
-- **`@tc` dist tag.** `dist/tyrell.js`, `css/tyrell.css`, and `css/tyrell-theme.css` are all pulled from
-  `tyrell-components@tc` on jsDelivr — that tag tracks the latest TC build
-  (e.g. `1.0.0-TC15`). `@latest` would pin to RC6.
+- **Pinned version.** `dist/tyrell.js`, `css/tyrell.css`, and `css/tyrell-theme.css` are pulled from
+  `tyrell-components@1.0.0-TC59` on jsDelivr. Pinned rather than `@tc` (which moves with
+  every test build) so the page always loads what it was written against.
+- **Lazy tabs.** An empty `<ty-tab lazy>` fires `ty-tab-load` when first shown. The
+  server answers with the same `<ty-tab>` plus content (`patch-elements`, morphed by
+  id), so the opening tag is shared in Go (`lazyTabOpen`). A failed fetch reaches the
+  tab's `data-on:datastar-fetch` listener, which calls `el.loadFailed()`.
 - **Server-rendered icons.** Same trick as the first example: a `tyIcon()`
   helper inlines an `<svg>` as a child of `<ty-icon>`, so the slot wins over
   the registry fallback and icons paint with zero client JS.
@@ -48,8 +54,11 @@ If `../datastar-go/` is already running on `:8080`, both can coexist.
   selection as a comma-separated string that the server uses to filter the
   member list.
 - **Resize observer + Datastar.** `ty-resize-observer` doesn't fire events, so
-  we listen to `window.resize` via `data-on-window:resize` and read the
-  registry: `window.tyResizeObserver.getSize('overview-panel').width`.
+  we listen to window resizes via `data-on:resize__window__debounce.150ms` and read
+  the registry: `window.tyResizeObserver.getSize('overview-panel').width`.
+- **Popup anchors.** A `ty-popup` anchors to its parent. The member menu's anchor
+  is a `div role="button"`, not a `<button>`: the menu holds buttons, and HTML can't
+  nest them.
 
 ## File structure
 

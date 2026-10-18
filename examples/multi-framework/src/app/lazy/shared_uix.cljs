@@ -14,7 +14,7 @@
                 (let [shadow (shim/ensure-shadow el)
                       t0     (js/Date.now)]
                   (set! (.-innerHTML shadow)
-                    "<div style='padding:1rem;color:var(--ty-text-weak,#aaa);font-size:0.8rem;'>loading…</div>")
+                    "<div style='padding:1rem;color:var(--ty-text-faint,#aaa);font-size:0.8rem;'>loading…</div>")
                   (-> (lazy/load config)
                       (.then (fn [cfg]
                                (set! (.-innerHTML shadow) "")

@@ -8,24 +8,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
-    "build:css": "tailwindcss -i ./app/tailwind-input.css -o ./app/globals.css",
-    "build:css:watch": "tailwindcss -i ./app/tailwind-input.css -o ./app/globals.css --watch",
-    "dev:full": "concurrently \"npm run build:css:watch\" \"npm run dev\""
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "next": "^16.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tyrell-components": "^1.0.0-TC23",
-    "tyrell-react": "^1.0.0-TC23"
+    "tyrell-components": "1.0.0-TC59",
+    "tyrell-react": "1.0.0-TC59"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
     "postcss": "^8.4.31",

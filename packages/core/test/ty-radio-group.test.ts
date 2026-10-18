@@ -36,6 +36,54 @@ describe('ty-radio-group', () => {
     expect(role(free).tabIndex).to.equal(-1);
   });
 
+  it('ignores the click a <label> forwards after a click on the radio itself (Firefox)', async () => {
+    const group = (await fixture(html`
+      <ty-radio-group>
+        <label><ty-radio value="a"></ty-radio> A</label>
+        <label><ty-radio value="b"></ty-radio> B</label>
+      </ty-radio-group>
+    `)) as any;
+    await nextFrame();
+    const b = group.querySelectorAll('ty-radio')[1] as any;
+    let changes = 0;
+    let clicks = 0;
+    group.addEventListener('change', () => { changes++; });
+    b.addEventListener('click', () => { clicks++; });
+
+    // Same Firefox forward as ty-checkbox's: harmless for the value, but
+    // page listeners must see one click, not two.
+    const at = { bubbles: true, composed: true, clientX: 5, clientY: 7 };
+    b.shadowRoot.querySelector('.radio-container').dispatchEvent(new MouseEvent('click', at));
+    await Promise.resolve();
+    b.dispatchEvent(new MouseEvent('click', at));
+    await new Promise((r) => setTimeout(r));
+    expect(group.value).to.equal('b');
+    expect(changes).to.equal(1);
+    expect(clicks).to.equal(1);
+  });
+
+  it('arrow keys and Space fire input and change like a click; nothing for the selected one', async () => {
+    const group = (await fixture(html`
+      <ty-radio-group value="a">
+        <ty-radio value="a"></ty-radio>
+        <ty-radio value="b"></ty-radio>
+      </ty-radio-group>
+    `)) as any;
+    await nextFrame();
+    const seen: string[] = [];
+    group.addEventListener('input', (e: any) => seen.push(`input:${e.detail.value}`));
+    group.addEventListener('change', (e: any) => seen.push(`change:${e.detail.value}`));
+    const key = async (k: string) => {
+      group.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+      await new Promise((r) => setTimeout(r, 10));
+    };
+    group.querySelector('ty-radio[value="a"]').focus();
+    await key('ArrowDown');
+    expect(seen).to.deep.equal(['input:b', 'change:b']);
+    await key(' ');
+    expect(seen.length, 'Space on the selected radio fires nothing').to.equal(2);
+  });
+
   it('setting value selects the matching radio', async () => {
     const group = (await fixture(html`
       <ty-radio-group>

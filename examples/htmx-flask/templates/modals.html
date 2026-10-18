@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Modal Examples - HTMX + Ty Components{% endblock %}
+{% block title %}Modal Examples - HTMX + Tyrell{% endblock %}
 
 {% block content %}
 <div class="min-h-screen py-12">
@@ -8,12 +8,12 @@
         
         <!-- Page Header -->
         <div class="text-center mb-16">
-            <h1 class="text-4xl font-bold ty-text-primary-strong mb-4 flex items-center justify-center">
+            <h1 class="text-4xl font-bold ty-text-primary++ mb-4 flex items-center justify-center">
                 <ty-icon name="layers" class="mr-4"></ty-icon>
                 Modal Integration with HTMX
             </h1>
-            <p class="text-lg ty-text-neutral-bold max-w-3xl mx-auto">
-                Discover how Ty modal components integrate seamlessly with HTMX for dynamic content loading, 
+            <p class="text-lg ty-text-neutral+ max-w-3xl mx-auto">
+                Discover how Tyrell modal components integrate seamlessly with HTMX for dynamic content loading, 
                 server-side validation, and real-time interactions.
             </p>
         </div>
@@ -23,7 +23,7 @@
 
             <!-- Basic Modal Examples -->
             <section>
-                <h2 class="text-3xl font-bold ty-text-info-strong mb-8 flex items-center">
+                <h2 class="text-3xl font-bold ty-text-primary++ mb-8 flex items-center">
                     <ty-icon name="window" class="mr-3"></ty-icon>
                     Basic Modal Examples
                 </h2>
@@ -31,18 +31,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <!-- Static Content Modals -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Static Content</h3>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Static Content</h3>
                         <div class="space-y-3">
-                            <ty-button flavor="primary" onclick="document.getElementById('modal-welcome').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="star" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-welcome').show()" class="w-full">
+                                <ty-icon slot="start" name="star"></ty-icon>
                                 Welcome Modal
                             </ty-button>
-                            <ty-button flavor="info" onclick="document.getElementById('modal-info').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="info" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-info').show()" class="w-full">
+                                <ty-icon slot="start" name="info"></ty-icon>
                                 Info Modal
                             </ty-button>
-                            <ty-button flavor="warning" onclick="document.getElementById('modal-confirm').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="alert-triangle" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="warning" onclick="document.getElementById('modal-confirm').show()" class="w-full">
+                                <ty-icon slot="start" name="alert-triangle"></ty-icon>
                                 Confirmation
                             </ty-button>
                         </div>
@@ -50,18 +50,18 @@
 
                     <!-- Different Sizes -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Modal Sizes</h3>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Modal Sizes</h3>
                         <div class="space-y-3">
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-sm').setAttribute('open', 'true')" class="w-full">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-sm').show()" class="w-full">
                                 Small
                             </ty-button>
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-md').setAttribute('open', 'true')" class="w-full">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-md').show()" class="w-full">
                                 Medium
                             </ty-button>
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-lg').setAttribute('open', 'true')" class="w-full">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-lg').show()" class="w-full">
                                 Large
                             </ty-button>
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-xl').setAttribute('open', 'true')" class="w-full">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-xl').show()" class="w-full">
                                 Extra Large
                             </ty-button>
                         </div>
@@ -69,18 +69,18 @@
 
                     <!-- Different Flavors -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Modal Flavors</h3>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Modal Flavors</h3>
                         <div class="space-y-3">
-                            <ty-button flavor="success" onclick="document.getElementById('modal-success').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="check-circle" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="success" onclick="document.getElementById('modal-success').show()" class="w-full">
+                                <ty-icon slot="start" name="check-circle"></ty-icon>
                                 Success
                             </ty-button>
-                            <ty-button flavor="danger" onclick="document.getElementById('modal-danger').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="x-circle" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="danger" onclick="document.getElementById('modal-danger').show()" class="w-full">
+                                <ty-icon slot="start" name="x-circle"></ty-icon>
                                 Danger
                             </ty-button>
-                            <ty-button flavor="warning" onclick="document.getElementById('modal-warning-flavor').setAttribute('open', 'true')" class="w-full">
-                                <ty-icon name="alert-triangle" class="mr-2"></ty-icon>
+                            <ty-button type="button" flavor="warning" onclick="document.getElementById('modal-warning-flavor').show()" class="w-full">
+                                <ty-icon slot="start" name="alert-triangle"></ty-icon>
                                 Warning
                             </ty-button>
                         </div>
@@ -88,15 +88,15 @@
 
                     <!-- Close Behaviors -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Close Behaviors</h3>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Close Behaviors</h3>
                         <div class="space-y-3">
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-backdrop-close').setAttribute('open', 'true')" class="w-full text-sm">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-backdrop-close').show()" class="w-full text-sm">
                                 Backdrop Close
                             </ty-button>
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-no-backdrop').setAttribute('open', 'true')" class="w-full text-sm">
-                                No Backdrop Close
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-no-backdrop').show()" class="w-full text-sm">
+                                No Backdrop Click
                             </ty-button>
-                            <ty-button flavor="neutral" onclick="document.getElementById('modal-no-escape').setAttribute('open', 'true')" class="w-full text-sm">
+                            <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-no-escape').show()" class="w-full text-sm">
                                 No Escape Close
                             </ty-button>
                         </div>
@@ -106,7 +106,7 @@
 
             <!-- HTMX Dynamic Content -->
             <section>
-                <h2 class="text-3xl font-bold ty-text-success-strong mb-8 flex items-center">
+                <h2 class="text-3xl font-bold ty-text-success++ mb-8 flex items-center">
                     <ty-icon name="zap" class="mr-3"></ty-icon>
                     HTMX Dynamic Content Loading
                 </h2>
@@ -114,16 +114,16 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- User Profile Modal -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">User Profiles</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Click any user to load their profile dynamically</p>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">User Profiles</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Click any user to load their profile dynamically</p>
                         <div class="space-y-2">
                             {% for user in users %}
-                            <ty-button flavor="primary" 
+                            <ty-button type="button" flavor="primary" 
                                        class="w-full text-left justify-start"
                                        hx-get="/api/modal/content/user-profile?user_id={{ user.id }}"
                                        hx-target="#dynamic-modal-content"
-                                       onclick="document.getElementById('dynamic-modal').setAttribute('open', 'true')">
-                                <ty-icon name="user" class="mr-2"></ty-icon>
+                                       onclick="document.getElementById('dynamic-modal').show()">
+                                <ty-icon slot="start" name="user"></ty-icon>
                                 {{ user.name }}
                             </ty-button>
                             {% endfor %}
@@ -132,16 +132,16 @@
 
                     <!-- Task Details Modal -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Task Details</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">View detailed task information loaded from server</p>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Task Details</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">View detailed task information loaded from server</p>
                         <div class="space-y-2">
                             {% for task in tasks %}
-                            <ty-button flavor="info" 
+                            <ty-button type="button" flavor="primary" 
                                        class="w-full text-left justify-start"
                                        hx-get="/api/modal/content/task-details?task_id={{ task.id }}"
                                        hx-target="#dynamic-modal-content"
-                                       onclick="document.getElementById('dynamic-modal').setAttribute('open', 'true')">
-                                <ty-icon name="list" class="mr-2"></ty-icon>
+                                       onclick="document.getElementById('dynamic-modal').show()">
+                                <ty-icon slot="start" name="list"></ty-icon>
                                 {{ task.title }}
                             </ty-button>
                             {% endfor %}
@@ -150,31 +150,31 @@
 
                     <!-- Server Response Examples -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Server Responses</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Different types of server-generated content</p>
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Server Responses</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Different types of server-generated content</p>
                         <div class="space-y-2">
-                            <ty-button flavor="success" 
+                            <ty-button type="button" flavor="success" 
                                        class="w-full"
                                        hx-get="/api/modal/content/weather-report"
                                        hx-target="#dynamic-modal-content"
-                                       onclick="document.getElementById('dynamic-modal').setAttribute('open', 'true')">
-                                <ty-icon name="cloud" class="mr-2"></ty-icon>
+                                       onclick="document.getElementById('dynamic-modal').show()">
+                                <ty-icon slot="start" name="cloud"></ty-icon>
                                 Weather Report
                             </ty-button>
-                            <ty-button flavor="warning" 
+                            <ty-button type="button" flavor="warning" 
                                        class="w-full"
                                        hx-get="/api/modal/content/system-status"
                                        hx-target="#dynamic-modal-content"
-                                       onclick="document.getElementById('dynamic-modal').setAttribute('open', 'true')">
-                                <ty-icon name="activity" class="mr-2"></ty-icon>
+                                       onclick="document.getElementById('dynamic-modal').show()">
+                                <ty-icon slot="start" name="activity"></ty-icon>
                                 System Status
                             </ty-button>
-                            <ty-button flavor="neutral" 
+                            <ty-button type="button" flavor="neutral" 
                                        class="w-full"
                                        hx-get="/api/modal/content/random-quote"
                                        hx-target="#dynamic-modal-content"
-                                       onclick="document.getElementById('dynamic-modal').setAttribute('open', 'true')">
-                                <ty-icon name="message-circle" class="mr-2"></ty-icon>
+                                       onclick="document.getElementById('dynamic-modal').show()">
+                                <ty-icon slot="start" name="message-circle"></ty-icon>
                                 Random Quote
                             </ty-button>
                         </div>
@@ -184,7 +184,7 @@
 
             <!-- HTMX Form Integration -->
             <section>
-                <h2 class="text-3xl font-bold ty-text-warning-strong mb-8 flex items-center">
+                <h2 class="text-3xl font-bold ty-text-warning++ mb-8 flex items-center">
                     <ty-icon name="edit" class="mr-3"></ty-icon>
                     HTMX Form Integration
                 </h2>
@@ -192,26 +192,26 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Modal with Form -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Contact Form Modal</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Server-side form validation within modal</p>
-                        <ty-button flavor="primary" 
-                                   onclick="document.getElementById('form-modal').setAttribute('open', 'true')"
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Contact Form Modal</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Server-side form validation within modal</p>
+                        <ty-button type="button" flavor="primary" 
+                                   onclick="document.getElementById('form-modal').show()"
                                    class="w-full">
-                            <ty-icon name="mail" class="mr-2"></ty-icon>
+                            <ty-icon slot="start" name="mail"></ty-icon>
                             Open Contact Form
                         </ty-button>
                     </div>
 
                     <!-- Multi-step Modal -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Multi-step Process</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Server-driven modal flow with multiple steps</p>
-                        <ty-button flavor="neutral" 
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Multi-step Process</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Server-driven modal flow with multiple steps</p>
+                        <ty-button type="button" flavor="neutral" 
                                    hx-get="/api/modal/wizard/start"
                                    hx-target="#wizard-modal-content"
-                                   onclick="document.getElementById('wizard-modal').setAttribute('open', 'true')"
+                                   onclick="document.getElementById('wizard-modal').show()"
                                    class="w-full">
-                            <ty-icon name="arrow-right" class="mr-2"></ty-icon>
+                            <ty-icon slot="start" name="arrow-right"></ty-icon>
                             Start Wizard
                         </ty-button>
                     </div>
@@ -220,7 +220,7 @@
 
             <!-- Advanced Modal Features -->
             <section>
-                <h2 class="text-3xl font-bold ty-text-danger-strong mb-8 flex items-center">
+                <h2 class="text-3xl font-bold ty-text-danger++ mb-8 flex items-center">
                     <ty-icon name="settings" class="mr-3"></ty-icon>
                     Advanced Modal Features
                 </h2>
@@ -228,41 +228,41 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Loading States -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Loading States</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Modals with loading indicators and delays</p>
-                        <ty-button flavor="info" 
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Loading States</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Modals with loading indicators and delays</p>
+                        <ty-button type="button" flavor="primary" 
                                    hx-get="/api/modal/content/slow-loading"
                                    hx-target="#loading-modal-content"
                                    hx-indicator="#loading-spinner"
-                                   onclick="document.getElementById('loading-modal').setAttribute('open', 'true')"
+                                   onclick="document.getElementById('loading-modal').show()"
                                    class="w-full">
-                            <ty-icon name="loader" class="mr-2"></ty-icon>
+                            <ty-icon slot="start" name="loader"></ty-icon>
                             Slow Loading
                         </ty-button>
                     </div>
 
                     <!-- Error Handling -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Error Handling</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Server error responses in modals</p>
-                        <ty-button flavor="danger" 
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Error Handling</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Server error responses in modals</p>
+                        <ty-button type="button" flavor="danger" 
                                    hx-get="/api/modal/content/error-demo"
                                    hx-target="#error-modal-content"
-                                   onclick="document.getElementById('error-modal').setAttribute('open', 'true')"
+                                   onclick="document.getElementById('error-modal').show()"
                                    class="w-full">
-                            <ty-icon name="alert-circle" class="mr-2"></ty-icon>
+                            <ty-icon slot="start" name="alert-circle"></ty-icon>
                             Error Demo
                         </ty-button>
                     </div>
 
                     <!-- Nested Modals -->
                     <div class="glass-card">
-                        <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Nested Modals</h3>
-                        <p class="ty-text-neutral-bold text-sm mb-4">Modals that open other modals</p>
-                        <ty-button flavor="neutral" 
-                                   onclick="document.getElementById('parent-modal').setAttribute('open', 'true')"
+                        <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Nested Modals</h3>
+                        <p class="ty-text-neutral+ text-sm mb-4">Modals that open other modals</p>
+                        <ty-button type="button" flavor="neutral" 
+                                   onclick="document.getElementById('parent-modal').show()"
                                    class="w-full">
-                            <ty-icon name="layers" class="mr-2"></ty-icon>
+                            <ty-icon slot="start" name="layers"></ty-icon>
                             Parent Modal
                         </ty-button>
                     </div>
@@ -275,22 +275,22 @@
 <!-- ============ STATIC MODAL DEFINITIONS ============ -->
 
 <!-- Welcome Modal -->
-<ty-modal id="modal-welcome" size="md">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-welcome">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <div class="mb-6">
                 <ty-icon name="star" class="w-16 h-16 mx-auto ty-text-primary mb-4"></ty-icon>
-                <h3 class="text-2xl font-bold ty-text-primary-strong mb-2">Welcome to Ty Modals!</h3>
-                <p class="ty-text-neutral-bold">
-                    This modal demonstrates the basic functionality of Ty modal components with beautiful styling and smooth animations.
+                <h3 class="text-2xl font-bold ty-text-primary++ mb-2">Welcome to Tyrell modals!</h3>
+                <p class="ty-text-neutral+">
+                    This modal demonstrates the basic functionality of Tyrell modal components with beautiful styling and smooth animations.
                 </p>
             </div>
             <div class="flex justify-center space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-welcome').removeAttribute('open')">
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-welcome').hide()">
                     Maybe Later
                 </ty-button>
-                <ty-button flavor="primary" onclick="document.getElementById('modal-welcome').removeAttribute('open')">
-                    <ty-icon name="check" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-welcome').hide()">
+                    <ty-icon slot="start" name="check"></ty-icon>
                     Got it!
                 </ty-button>
             </div>
@@ -299,21 +299,20 @@
 </ty-modal>
 
 <!-- Info Modal -->
-<ty-modal id="modal-info" size="md" flavor="info">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-info">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8">
             <div class="flex items-start space-x-4 mb-6">
-                <ty-icon name="info" class="w-8 h-8 ty-text-info flex-shrink-0 mt-1"></ty-icon>
+                <ty-icon name="info" class="w-8 h-8 ty-text-primary flex-shrink-0 mt-1"></ty-icon>
                 <div>
-                    <h3 class="text-xl font-semibold ty-text-info-strong mb-2">Information</h3>
-                    <p class="ty-text-neutral-bold">
-                        This is an informational modal using the info flavor. Notice how the styling automatically 
-                        adapts to provide appropriate visual cues for the content type.
+                    <h3 class="text-xl font-semibold ty-text-primary++ mb-2">Information</h3>
+                    <p class="ty-text-neutral+">
+                        A modal is an invisible frame: the panel inside is yours, so its colors come from the classes you put on it.
                     </p>
                 </div>
             </div>
             <div class="flex justify-end">
-                <ty-button flavor="info" onclick="document.getElementById('modal-info').removeAttribute('open')">
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-info').hide()">
                     Understood
                 </ty-button>
             </div>
@@ -322,18 +321,18 @@
 </ty-modal>
 
 <!-- Confirmation Modal -->
-<ty-modal id="modal-confirm" size="sm">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-sm mx-auto">
+<ty-modal id="modal-confirm">
+    <div class="ty-floating rounded-xl shadow-xl max-w-sm mx-auto">
         <div class="p-6 text-center">
             <ty-icon name="alert-triangle" class="w-12 h-12 mx-auto mb-4 ty-text-warning"></ty-icon>
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">Confirm Action</h3>
-            <p class="ty-text-neutral-bold mb-6">Are you sure you want to proceed? This action cannot be undone.</p>
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">Confirm Action</h3>
+            <p class="ty-text-neutral+ mb-6">Are you sure you want to proceed? This action cannot be undone.</p>
             <div class="flex justify-center space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-confirm').removeAttribute('open')">
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-confirm').hide()">
                     Cancel
                 </ty-button>
-                <ty-button flavor="warning" onclick="document.getElementById('modal-confirm').removeAttribute('open')">
-                    <ty-icon name="check" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="warning" onclick="document.getElementById('modal-confirm').hide()">
+                    <ty-icon slot="start" name="check"></ty-icon>
                     Confirm
                 </ty-button>
             </div>
@@ -342,151 +341,151 @@
 </ty-modal>
 
 <!-- Size Examples -->
-<ty-modal id="modal-sm" size="sm">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-sm mx-auto">
+<ty-modal id="modal-sm">
+    <div class="ty-floating rounded-xl shadow-xl max-w-sm mx-auto">
         <div class="p-6 text-center">
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">Small Modal</h3>
-            <p class="ty-text-neutral-bold mb-4">Perfect for simple confirmations and quick actions.</p>
-            <ty-button flavor="primary" onclick="document.getElementById('modal-sm').removeAttribute('open')">Close</ty-button>
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">Small Modal</h3>
+            <p class="ty-text-neutral+ mb-4">Perfect for simple confirmations and quick actions.</p>
+            <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-sm').hide()">Close</ty-button>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-md" size="md">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-lg mx-auto">
+<ty-modal id="modal-md">
+    <div class="ty-floating rounded-xl shadow-xl max-w-lg mx-auto">
         <div class="p-8">
-            <h3 class="text-xl font-semibold ty-text-neutral-strong mb-4">Medium Modal</h3>
-            <p class="ty-text-neutral-bold mb-6">
+            <h3 class="text-xl font-semibold ty-text-neutral++ mb-4">Medium Modal</h3>
+            <p class="ty-text-neutral+ mb-6">
                 This medium-sized modal provides balanced space for content without overwhelming the interface.
                 It's ideal for forms, detailed information, and moderate amounts of content.
             </p>
             <div class="flex justify-end space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-md').removeAttribute('open')">Cancel</ty-button>
-                <ty-button flavor="primary" onclick="document.getElementById('modal-md').removeAttribute('open')">OK</ty-button>
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-md').hide()">Cancel</ty-button>
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-md').hide()">OK</ty-button>
             </div>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-lg" size="lg">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-2xl mx-auto">
+<ty-modal id="modal-lg">
+    <div class="ty-floating rounded-xl shadow-xl max-w-2xl mx-auto">
         <div class="p-8">
-            <h3 class="text-2xl font-semibold ty-text-neutral-strong mb-6">Large Modal</h3>
+            <h3 class="text-2xl font-semibold ty-text-neutral++ mb-6">Large Modal</h3>
             <div class="space-y-4 mb-8">
-                <p class="ty-text-neutral-bold">
+                <p class="ty-text-neutral+">
                     Large modals accommodate more complex content, detailed forms, or rich media.
                     They provide ample space while maintaining focus and usability.
                 </p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="ty-bg-primary-soft rounded-lg p-4">
-                        <h4 class="font-medium ty-text-primary-strong mb-2">Primary Feature</h4>
-                        <p class="text-sm ty-text-neutral-bold">Detailed description of the primary feature or content.</p>
+                    <div class="ty-bg-primary- rounded-lg p-4">
+                        <h4 class="font-medium ty-text-primary++ mb-2">Primary Feature</h4>
+                        <p class="text-sm ty-text-neutral+">Detailed description of the primary feature or content.</p>
                     </div>
-                    <div class="ty-bg-neutral-soft rounded-lg p-4">
-                        <h4 class="font-medium ty-text-neutral-strong mb-2">Neutral Feature</h4>
-                        <p class="text-sm ty-text-neutral-bold">Additional information or supporting functionality.</p>
+                    <div class="ty-bg-neutral- rounded-lg p-4">
+                        <h4 class="font-medium ty-text-neutral++ mb-2">Neutral Feature</h4>
+                        <p class="text-sm ty-text-neutral+">Additional information or supporting functionality.</p>
                     </div>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-lg').removeAttribute('open')">Cancel</ty-button>
-                <ty-button flavor="primary" onclick="document.getElementById('modal-lg').removeAttribute('open')">Apply</ty-button>
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-lg').hide()">Cancel</ty-button>
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-lg').hide()">Apply</ty-button>
             </div>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-xl" size="xl">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-4xl mx-auto">
+<ty-modal id="modal-xl">
+    <div class="ty-floating rounded-xl shadow-xl max-w-4xl mx-auto">
         <div class="p-12">
-            <h3 class="text-3xl font-semibold ty-text-neutral-strong mb-8">Extra Large Modal</h3>
+            <h3 class="text-3xl font-semibold ty-text-neutral++ mb-8">Extra Large Modal</h3>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                 <div>
-                    <h4 class="text-xl font-medium ty-text-neutral-strong mb-4">Main Content</h4>
-                    <p class="ty-text-neutral-bold mb-6">
+                    <h4 class="text-xl font-medium ty-text-neutral++ mb-4">Main Content</h4>
+                    <p class="ty-text-neutral+ mb-6">
                         Extra large modals are perfect for complex interfaces, detailed dashboards, 
                         or comprehensive forms that require significant screen real estate.
                     </p>
                     <div class="space-y-3">
-                        <div class="ty-bg-info-soft rounded-lg p-4">
+                        <div class="ty-bg-primary- rounded-lg p-4">
                             <div class="flex items-center space-x-3 mb-2">
-                                <ty-icon name="check-circle" class="ty-text-info-strong"></ty-icon>
+                                <ty-icon name="check-circle" class="ty-text-primary++"></ty-icon>
                                 <h5 class="font-medium">Advanced Feature 1</h5>
                             </div>
-                            <p class="text-sm ty-text-neutral-bold">Comprehensive functionality with detailed options.</p>
+                            <p class="text-sm ty-text-neutral+">Comprehensive functionality with detailed options.</p>
                         </div>
-                        <div class="ty-bg-success-soft rounded-lg p-4">
+                        <div class="ty-bg-success- rounded-lg p-4">
                             <div class="flex items-center space-x-3 mb-2">
-                                <ty-icon name="zap" class="ty-text-success-strong"></ty-icon>
+                                <ty-icon name="zap" class="ty-text-success++"></ty-icon>
                                 <h5 class="font-medium">Performance Metrics</h5>
                             </div>
-                            <p class="text-sm ty-text-neutral-bold">Real-time data and analytics display.</p>
+                            <p class="text-sm ty-text-neutral+">Real-time data and analytics display.</p>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <h4 class="text-xl font-medium ty-text-neutral-strong mb-4">Configuration</h4>
-                    <div class="ty-bg-neutral-soft rounded-lg p-6">
-                        <p class="ty-text-neutral-bold mb-4">
+                    <h4 class="text-xl font-medium ty-text-neutral++ mb-4">Configuration</h4>
+                    <div class="ty-bg-neutral- rounded-lg p-6">
+                        <p class="ty-text-neutral+ mb-4">
                             This section demonstrates how extra large modals can accommodate 
                             complex layouts with multiple sections and rich interactive content.
                         </p>
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium">Option A</span>
-                                <ty-button size="sm" flavor="neutral">Configure</ty-button>
+                                <ty-button type="button" size="sm" flavor="neutral">Configure</ty-button>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium">Option B</span>
-                                <ty-button size="sm" flavor="neutral">Configure</ty-button>
+                                <ty-button type="button" size="sm" flavor="neutral">Configure</ty-button>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium">Option C</span>
-                                <ty-button size="sm" flavor="neutral">Configure</ty-button>
+                                <ty-button type="button" size="sm" flavor="neutral">Configure</ty-button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-xl').removeAttribute('open')">Cancel</ty-button>
-                <ty-button flavor="primary" onclick="document.getElementById('modal-xl').removeAttribute('open')">Save All Changes</ty-button>
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-xl').hide()">Cancel</ty-button>
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-xl').hide()">Save All Changes</ty-button>
             </div>
         </div>
     </div>
 </ty-modal>
 
 <!-- Flavor Examples -->
-<ty-modal id="modal-success" size="md" flavor="success">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-success">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="check-circle" class="w-16 h-16 mx-auto mb-4 ty-text-success"></ty-icon>
-            <h3 class="text-xl font-semibold ty-text-success-strong mb-2">Success!</h3>
-            <p class="ty-text-neutral-bold mb-6">
+            <h3 class="text-xl font-semibold ty-text-success++ mb-2">Success!</h3>
+            <p class="ty-text-neutral+ mb-6">
                 Your operation completed successfully. This modal uses the success flavor for positive feedback.
             </p>
-            <ty-button flavor="success" onclick="document.getElementById('modal-success').removeAttribute('open')">
-                <ty-icon name="check" class="mr-2"></ty-icon>
+            <ty-button type="button" flavor="success" onclick="document.getElementById('modal-success').hide()">
+                <ty-icon slot="start" name="check"></ty-icon>
                 Great!
             </ty-button>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-danger" size="md" flavor="danger">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-danger">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="x-circle" class="w-16 h-16 mx-auto mb-4 ty-text-danger"></ty-icon>
-            <h3 class="text-xl font-semibold ty-text-danger-strong mb-2">Error Occurred</h3>
-            <p class="ty-text-neutral-bold mb-6">
+            <h3 class="text-xl font-semibold ty-text-danger++ mb-2">Error Occurred</h3>
+            <p class="ty-text-neutral+ mb-6">
                 Something went wrong with your request. This modal uses the danger flavor for error states.
             </p>
             <div class="flex justify-center space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-danger').removeAttribute('open')">
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-danger').hide()">
                     Cancel
                 </ty-button>
-                <ty-button flavor="danger" onclick="document.getElementById('modal-danger').removeAttribute('open')">
-                    <ty-icon name="refresh-cw" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="danger" onclick="document.getElementById('modal-danger').hide()">
+                    <ty-icon slot="start" name="refresh-cw"></ty-icon>
                     Try Again
                 </ty-button>
             </div>
@@ -494,24 +493,24 @@
     </div>
 </ty-modal>
 
-<ty-modal id="modal-warning-flavor" size="md" flavor="warning">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-warning-flavor">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8">
             <div class="flex items-start space-x-4 mb-6">
                 <ty-icon name="alert-triangle" class="w-8 h-8 ty-text-warning flex-shrink-0 mt-1"></ty-icon>
                 <div>
-                    <h3 class="text-xl font-semibold ty-text-warning-strong mb-2">Warning</h3>
-                    <p class="ty-text-neutral-bold">
+                    <h3 class="text-xl font-semibold ty-text-warning++ mb-2">Warning</h3>
+                    <p class="ty-text-neutral+">
                         This action requires your attention. The warning flavor provides visual cues 
                         for potentially risky or important operations.
                     </p>
                 </div>
             </div>
             <div class="flex justify-end space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('modal-warning-flavor').removeAttribute('open')">
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('modal-warning-flavor').hide()">
                     Cancel
                 </ty-button>
-                <ty-button flavor="warning" onclick="document.getElementById('modal-warning-flavor').removeAttribute('open')">
+                <ty-button type="button" flavor="warning" onclick="document.getElementById('modal-warning-flavor').hide()">
                     Proceed Anyway
                 </ty-button>
             </div>
@@ -520,45 +519,45 @@
 </ty-modal>
 
 <!-- Close Behavior Examples -->
-<ty-modal id="modal-backdrop-close" size="md">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-backdrop-close">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
-            <ty-icon name="mouse-pointer" class="w-12 h-12 mx-auto mb-4 ty-text-info"></ty-icon>
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">Click Outside to Close</h3>
-            <p class="ty-text-neutral-bold mb-4">
+            <ty-icon name="mouse-pointer" class="w-12 h-12 mx-auto mb-4 ty-text-primary"></ty-icon>
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">Click Outside to Close</h3>
+            <p class="ty-text-neutral+ mb-4">
                 This modal can be closed by clicking on the backdrop/overlay behind it.
             </p>
-            <ty-button flavor="info" onclick="document.getElementById('modal-backdrop-close').removeAttribute('open')">
+            <ty-button type="button" flavor="primary" onclick="document.getElementById('modal-backdrop-close').hide()">
                 Or click here to close
             </ty-button>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-no-backdrop" size="md" prevent-outside-click>
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-no-backdrop" prevent-outside-click>
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="lock" class="w-12 h-12 mx-auto mb-4 ty-text-warning"></ty-icon>
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">No Backdrop Close</h3>
-            <p class="ty-text-neutral-bold mb-4">
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">No Backdrop Close</h3>
+            <p class="ty-text-neutral+ mb-4">
                 This modal cannot be closed by clicking the backdrop. You must use the button or escape key.
             </p>
-            <ty-button flavor="warning" onclick="document.getElementById('modal-no-backdrop').removeAttribute('open')">
+            <ty-button type="button" flavor="warning" onclick="document.getElementById('modal-no-backdrop').hide()">
                 Close Modal
             </ty-button>
         </div>
     </div>
 </ty-modal>
 
-<ty-modal id="modal-no-escape" size="md" prevent-escape>
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="modal-no-escape" prevent-escape>
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
             <ty-icon name="key" class="w-12 h-12 mx-auto mb-4 ty-text-danger"></ty-icon>
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">No Escape Key</h3>
-            <p class="ty-text-neutral-bold mb-4">
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">No Escape Key</h3>
+            <p class="ty-text-neutral+ mb-4">
                 This modal cannot be closed with the escape key. You must click the button.
             </p>
-            <ty-button flavor="danger" onclick="document.getElementById('modal-no-escape').removeAttribute('open')">
+            <ty-button type="button" flavor="danger" onclick="document.getElementById('modal-no-escape').hide()">
                 Close Modal
             </ty-button>
         </div>
@@ -566,54 +565,39 @@
 </ty-modal>
 
 <!-- Dynamic Content Modal -->
-<ty-modal id="dynamic-modal" size="lg">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-3xl mx-auto">
+<ty-modal id="dynamic-modal">
+    <div class="ty-floating rounded-xl shadow-xl max-w-3xl mx-auto">
         <div id="dynamic-modal-content" class="p-8">
             <div class="text-center py-8">
-                <ty-icon name="loader" class="w-8 h-8 mx-auto mb-4 ty-text-neutral-bold animate-spin"></ty-icon>
-                <p class="ty-text-neutral-bold">Loading content...</p>
+                <ty-icon name="loader" class="w-8 h-8 mx-auto mb-4 ty-text-neutral+ animate-spin"></ty-icon>
+                <p class="ty-text-neutral+">Loading content...</p>
             </div>
         </div>
     </div>
 </ty-modal>
 
 <!-- Form Modal -->
-<ty-modal id="form-modal" size="md" prevent-outside-click>
-    <div class="ty-elevated rounded-xl shadow-xl max-w-lg mx-auto">
+<ty-modal id="form-modal" prevent-outside-click>
+    <div class="ty-floating rounded-xl shadow-xl max-w-lg mx-auto">
         <div class="p-8">
-            <h3 class="text-xl font-semibold ty-text-neutral-strong mb-6">Contact Us</h3>
-            <form hx-post="/api/modal/contact/submit" 
-                  hx-target="#form-response" 
+            <h3 class="text-xl font-semibold ty-text-neutral++ mb-6">Contact Us</h3>
+            <form hx-post="/api/modal/contact/submit"
+                  hx-target="#form-response"
                   hx-swap="innerHTML"
                   class="space-y-4">
-                
-                <div>
-                    <label class="block text-sm font-medium ty-text-neutral-strong mb-2">Name</label>
-                    <ty-input name="name" placeholder="Your full name" required></ty-input>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium ty-text-neutral-strong mb-2">Email</label>
-                    <ty-input name="email" type="email" placeholder="your@email.com" required></ty-input>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium ty-text-neutral-strong mb-2">Message</label>
-                    <textarea name="message" 
-                              class="w-full p-3 border rounded-md ty-bg-elevated ty-text-neutral-strong ty-border focus:ty-border-primary focus:outline-none"
-                              rows="4" 
-                              placeholder="Your message..."
-                              required></textarea>
-                </div>
-                
+                <ty-input name="name" label="Name" placeholder="Your full name" required minlength="2"></ty-input>
+                <ty-input name="email" label="Email" type="email" placeholder="your@email.com" required></ty-input>
+                <ty-textarea name="message" label="Message" placeholder="Your message..." rows="4"
+                             required></ty-textarea>
+
                 <div id="form-response" class="min-h-[20px]"></div>
-                
-                <div class="flex justify-end space-x-3 pt-4">
-                    <ty-button flavor="neutral" onclick="document.getElementById('form-modal').removeAttribute('open')">
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <ty-button type="button" appearance="outlined" onclick="this.closest('ty-modal').hide()">
                         Cancel
                     </ty-button>
-                    <ty-button flavor="primary" type="submit">
-                        <ty-icon name="send" class="mr-2"></ty-icon>
+                    <ty-button type="submit" flavor="primary">
+                        <ty-icon slot="start" name="send"></ty-icon>
                         Send Message
                     </ty-button>
                 </div>
@@ -623,44 +607,44 @@
 </ty-modal>
 
 <!-- Wizard Modal -->
-<ty-modal id="wizard-modal" size="lg" prevent-outside-click>
-    <div class="ty-elevated rounded-xl shadow-xl max-w-3xl mx-auto">
+<ty-modal id="wizard-modal" prevent-outside-click>
+    <div class="ty-floating rounded-xl shadow-xl max-w-3xl mx-auto">
         <div id="wizard-modal-content" class="p-8">
             <div class="text-center py-8">
-                <ty-icon name="loader" class="w-8 h-8 mx-auto mb-4 ty-text-neutral-bold animate-spin"></ty-icon>
-                <p class="ty-text-neutral-bold">Initializing wizard...</p>
+                <ty-icon name="loader" class="w-8 h-8 mx-auto mb-4 ty-text-neutral+ animate-spin"></ty-icon>
+                <p class="ty-text-neutral+">Initializing wizard...</p>
             </div>
         </div>
     </div>
 </ty-modal>
 
 <!-- Loading Modal -->
-<ty-modal id="loading-modal" size="md">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="loading-modal">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8">
             <div class="flex items-center space-x-4 mb-6">
                 <div id="loading-spinner" class="htmx-indicator">
-                    <ty-icon name="loader" class="w-6 h-6 ty-text-info animate-spin"></ty-icon>
+                    <ty-icon name="loader" class="w-6 h-6 ty-text-primary animate-spin"></ty-icon>
                 </div>
-                <h3 class="text-lg font-semibold ty-text-neutral-strong">Loading Content</h3>
+                <h3 class="text-lg font-semibold ty-text-neutral++">Loading Content</h3>
             </div>
             <div id="loading-modal-content">
-                <p class="ty-text-neutral-bold">Content will appear here...</p>
+                <p class="ty-text-neutral+">Content will appear here...</p>
             </div>
         </div>
     </div>
 </ty-modal>
 
 <!-- Error Modal -->
-<ty-modal id="error-modal" size="md" flavor="danger">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="error-modal">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8">
-            <h3 class="text-lg font-semibold ty-text-danger-strong mb-4">Error Demonstration</h3>
+            <h3 class="text-lg font-semibold ty-text-danger++ mb-4">Error Demonstration</h3>
             <div id="error-modal-content">
-                <p class="ty-text-neutral-bold">Error content will be loaded here...</p>
+                <p class="ty-text-neutral+">Error content will be loaded here...</p>
             </div>
             <div class="flex justify-end mt-6">
-                <ty-button flavor="danger" onclick="document.getElementById('error-modal').removeAttribute('open')">
+                <ty-button type="button" flavor="danger" onclick="document.getElementById('error-modal').hide()">
                     Close
                 </ty-button>
             </div>
@@ -669,19 +653,19 @@
 </ty-modal>
 
 <!-- Parent Modal (for nesting demo) -->
-<ty-modal id="parent-modal" size="md">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-md mx-auto">
+<ty-modal id="parent-modal">
+    <div class="ty-floating rounded-xl shadow-xl max-w-md mx-auto">
         <div class="p-8 text-center">
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-4">Parent Modal</h3>
-            <p class="ty-text-neutral-bold mb-6">
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-4">Parent Modal</h3>
+            <p class="ty-text-neutral+ mb-6">
                 This modal can open another modal, demonstrating modal layering capabilities.
             </p>
             <div class="flex justify-center space-x-3">
-                <ty-button flavor="neutral" onclick="document.getElementById('parent-modal').removeAttribute('open')">
+                <ty-button type="button" flavor="neutral" onclick="document.getElementById('parent-modal').hide()">
                     Close
                 </ty-button>
-                <ty-button flavor="primary" onclick="document.getElementById('child-modal').setAttribute('open', 'true')">
-                    <ty-icon name="layers" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="primary" onclick="document.getElementById('child-modal').show()">
+                    <ty-icon slot="start" name="layers"></ty-icon>
                     Open Child Modal
                 </ty-button>
             </div>
@@ -690,15 +674,15 @@
 </ty-modal>
 
 <!-- Child Modal (nested) -->
-<ty-modal id="child-modal" size="sm">
-    <div class="ty-elevated rounded-xl shadow-xl max-w-sm mx-auto">
+<ty-modal id="child-modal">
+    <div class="ty-floating rounded-xl shadow-xl max-w-sm mx-auto">
         <div class="p-6 text-center">
             <ty-icon name="layers" class="w-12 h-12 mx-auto mb-4 ty-text-neutral"></ty-icon>
-            <h3 class="text-lg font-semibold ty-text-neutral-strong mb-2">Child Modal</h3>
-            <p class="ty-text-neutral-bold mb-4">
+            <h3 class="text-lg font-semibold ty-text-neutral++ mb-2">Child Modal</h3>
+            <p class="ty-text-neutral+ mb-4">
                 This modal opened from another modal, demonstrating layering.
             </p>
-            <ty-button flavor="neutral" onclick="document.getElementById('child-modal').removeAttribute('open')">
+            <ty-button type="button" flavor="neutral" onclick="document.getElementById('child-modal').hide()">
                 Close Child Modal
             </ty-button>
         </div>
@@ -709,33 +693,6 @@
 
 {% block extra_scripts %}
 <script>
-// Modal event listeners for debugging and enhanced functionality
-document.addEventListener('ty-modal-open', function(event) {
-    console.log('🔓 Modal opened:', event.target.id);
-});
-
-document.addEventListener('ty-modal-close', function(event) {
-    console.log('🔒 Modal closed:', event.target.id, 'Reason:', event.detail?.reason);
-});
-
-// Enhanced HTMX loading for modals
-document.body.addEventListener('htmx:beforeRequest', function(event) {
-    const target = event.detail.target;
-    if (target && target.closest('ty-modal')) {
-        console.log('📡 Loading modal content...');
-        // Add loading state if needed
-    }
-});
-
-document.body.addEventListener('htmx:afterRequest', function(event) {
-    const target = event.detail.target;
-    if (target && target.closest('ty-modal')) {
-        console.log('✅ Modal content loaded');
-        // Remove loading state, add animations, etc.
-        target.classList.add('animate-fade-in');
-    }
-});
-
 // Handle HTMX errors in modals gracefully
 document.body.addEventListener('htmx:responseError', function(event) {
     const target = event.detail.target;
@@ -744,12 +701,12 @@ document.body.addEventListener('htmx:responseError', function(event) {
         target.innerHTML = `
             <div class="p-8 text-center">
                 <ty-icon name="alert-circle" class="w-12 h-12 mx-auto mb-4 ty-text-danger"></ty-icon>
-                <h3 class="text-lg font-semibold ty-text-danger-strong mb-2">Error Loading Content</h3>
-                <p class="ty-text-neutral-bold mb-4">
+                <h3 class="text-lg font-semibold ty-text-danger++ mb-2">Error Loading Content</h3>
+                <p class="ty-text-neutral+ mb-4">
                     Failed to load content (${event.detail.xhr.status}). Please try again.
                 </p>
-                <ty-button flavor="danger" onclick="location.reload()">
-                    <ty-icon name="refresh-cw" class="mr-2"></ty-icon>
+                <ty-button type="button" flavor="danger" onclick="location.reload()">
+                    <ty-icon slot="start" name="refresh-cw"></ty-icon>
                     Reload Page
                 </ty-button>
             </div>

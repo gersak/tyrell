@@ -58,6 +58,9 @@ export interface TyButtonProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Form field value for form submission */
   value?: string;
 
+  /** `id` of the form to submit or reset, when the button sits outside it */
+  form?: string;
+
   /** Full-width button */
   wide?: boolean;
 
@@ -82,6 +85,7 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     label,
     name,
     value,
+    form,
     onClick,
     ...props
   }, ref) => {
@@ -90,33 +94,32 @@ export const TyButton = React.forwardRef<HTMLElement, TyButtonProps>(
     // Imperatively attach the click listener so onClick reliably fires for the
     // CustomEvent('click') that <ty-button> re-dispatches on its host (the
     // inner <button> calls stopPropagation, so React's delegated onClick can
-    // miss it). Also handles type=submit by dispatching a synthetic submit.
+    // miss it). Form submit/reset is left to <ty-button> itself: it is
+    // form-associated and calls form.requestSubmit(), which validates the form
+    // and fires the real submit event React's onSubmit listens for.
     useEffect(() => {
       const element = elementRef.current;
-      if (!element) return;
+      if (!element || !onClick) return;
 
       const handler = (event: Event) => {
-        if (type === 'submit') {
-          const form = element.closest('form');
-          if (form) {
-            event.preventDefault();
-            event.stopPropagation();
-            form.dispatchEvent(new Event('submit', {
-              bubbles: true,
-              cancelable: true,
-            }));
-          }
-        }
-        if (onClick) {
-          onClick(event as unknown as React.MouseEvent<HTMLElement>);
-        }
+        onClick(event as unknown as React.MouseEvent<HTMLElement>);
       };
 
       element.addEventListener('click', handler);
       return () => {
         element.removeEventListener('click', handler);
       };
-    }, [type, onClick]);
+    }, [onClick]);
+
+    // `form` is read-only on <ty-button>, like on a native <button>. React 19
+    // assigns a prop as a property when the element has one, so passing it
+    // through throws; the attribute is what picks the form.
+    useEffect(() => {
+      const element = elementRef.current;
+      if (!element) return;
+      if (form) element.setAttribute('form', form);
+      else element.removeAttribute('form');
+    }, [form]);
 
     useEffect(() => {
       if (ref && elementRef.current) {

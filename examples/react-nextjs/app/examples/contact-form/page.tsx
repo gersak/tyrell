@@ -1,584 +1,264 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useRef, useState } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
 import {
   TyButton,
-  TyInput,
+  TyCheckbox,
   TyIcon,
+  TyInput,
   TyModal,
-  TySelect,
   TyOption,
-  type TyModalRef
+  TySelect,
+  TyTextarea,
+  type TyModalRef,
 } from 'tyrell-react'
-import { useRef } from 'react'
 
-interface FormData {
-  name: string
-  email: string
-  company: string
-  phone: string
-  subject: string
-  message: string
-  priority: string
-  contactMethod: string
-  newsletter: boolean
+// Pretend server: the only check the browser can't make.
+async function sendMessage(data: Record<string, FormDataEntryValue>) {
+  await new Promise((resolve) => setTimeout(resolve, 1200))
+  if (String(data.email).endsWith('@example.com')) {
+    return { errors: { email: 'example.com addresses are not accepted. Use your real address.' } }
+  }
+  return { errors: {} as Record<string, string> }
 }
 
-interface FormErrors {
-  [key: string]: string
-}
+const PRIORITIES = [
+  { value: 'low', label: 'Low', detail: 'General inquiry' },
+  { value: 'medium', label: 'Medium', detail: 'Business question' },
+  { value: 'high', label: 'High', detail: 'Urgent matter' },
+  { value: 'critical', label: 'Critical', detail: 'Needs attention today' },
+]
 
 export default function ContactFormExample() {
-  const [mounted, setMounted] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    email: '',
-    company: '',
-    phone: '',
-    subject: '',
-    message: '',
-    priority: 'medium',
-    contactMethod: 'email',
-    newsletter: false
-  })
-  const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  // Server-side errors only. Required fields, formats and lengths are checked
+  // by the fields themselves: onSubmit doesn't run until they all pass.
+  const [serverErrors, setServerErrors] = useState<Record<string, string>>({})
+  const [sent, setSent] = useState<Record<string, FormDataEntryValue> | null>(null)
+  const [messageLength, setMessageLength] = useState(0)
   const modalRef = useRef<TyModalRef>(null)
 
-  console.log('Submitting: ', isSubmitting)
-  console.log('ERROR: ', errors);
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const validateField = (name: string, value: string): string => {
-    switch (name) {
-      case 'name':
-        if (!value.trim()) return 'Name is required'
-        if (value.trim().length < 2) return 'Name must be at least 2 characters'
-        return ''
-
-      case 'email':
-        if (!value.trim()) return 'Email is required'
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(value)) return 'Please enter a valid email address'
-        return ''
-
-      case 'phone':
-        if (value && !/^[\d\s\-\+\(\)]{10,}$/.test(value.replace(/\s/g, ''))) {
-          return 'Please enter a valid phone number'
-        }
-        return ''
-
-      case 'subject':
-        if (!value.trim()) return 'Subject is required'
-        if (value.trim().length < 5) return 'Subject must be at least 5 characters'
-        return ''
-
-      case 'message':
-        if (!value.trim()) return 'Message is required'
-        if (value.trim().length < 10) return 'Message must be at least 10 characters'
-        if (value.trim().length > 1000) return 'Message must be less than 1000 characters'
-        return ''
-
-      default:
-        return ''
-    }
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }))
-    }
-
-    // Real-time validation for better UX
-    const error = validateField(field, value)
-    if (error) {
-      setErrors(prev => ({ ...prev, [field]: error }))
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-
-    // Validate all fields
-    const newErrors: FormErrors = {}
-    Object.keys(formData).forEach(key => {
-      if (key !== 'company' && key !== 'phone' && key !== 'newsletter' && key !== 'priority' && key !== 'contactMethod') {
-        const error = validateField(key, formData[key as keyof FormData] as string)
-        if (error) newErrors[key] = error
-      }
-    })
-
-    setErrors(newErrors)
-
-    if (Object.keys(newErrors).length > 0) {
-      return
-    }
-
+    const form = e.currentTarget
+    const data = Object.fromEntries(new FormData(form))
     setIsSubmitting(true)
-
-    // Simulate API call
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000))
+    const { errors } = await sendMessage(data)
+    setIsSubmitting(false)
+    setServerErrors(errors)
+    if (Object.keys(errors).length === 0) {
+      setSent(data)
       modalRef.current?.show()
-
-      // Reset form
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          email: '',
-          company: '',
-          phone: '',
-          subject: '',
-          message: '',
-          priority: 'medium',
-          contactMethod: 'email',
-          newsletter: false
-        })
-      }, 3000)
-
-    } catch (error) {
-      console.error('Form submission error:', error)
-    } finally {
-      setIsSubmitting(false)
+      form.reset()
+      setMessageLength(0)
     }
   }
 
-  if (!mounted) {
-    return (
-      <div className="ty-canvas flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block w-8 h-8 border-4 border-current border-t-transparent rounded-full animate-spin ty-text-primary mb-4"></div>
-          <p className="ty-text-">Loading...</p>
-        </div>
-      </div>
-    )
+  const clearServerError = (field: string) => {
+    if (serverErrors[field]) setServerErrors(({ [field]: _, ...rest }) => rest)
   }
 
   return (
     <AppLayout>
-      {/* Page Header */}
       <div className="mb-8 pb-4 border-b ty-border+">
-        <h1 className="text-3xl font-bold mb-2 ty-text++">
-          Contact Form Example
-        </h1>
+        <h1 className="text-3xl font-bold mb-2 ty-text++">Contact Form Example</h1>
         <p className="text-base leading-relaxed ty-text-">
-          A comprehensive contact form showcasing Tyrell Components with validation, different input types,
-          and professional styling using the TY + Tailwind design system.
+          A plain <code>&lt;form&gt;</code> with no validation code. Each field carries its own rules
+          (<code>required</code>, <code>type=&quot;email&quot;</code>, <code>pattern</code>,{' '}
+          <code>minLength</code>); <code>onSubmit</code> only runs once they all pass.
         </p>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-        {/* Contact Form - Main Content */}
         <div className="xl:col-span-2">
           <div className="ty-elevated rounded-xl p-8 border ty-border">
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-2 ty-text++">
-                Get in Touch
-              </h2>
+              <h2 className="text-2xl font-semibold mb-2 ty-text++">Get in Touch</h2>
               <p className="ty-text- leading-relaxed">
-                We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+                Press Send with empty fields to see the messages. Try an <code>@example.com</code>{' '}
+                address to see a server-side error.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-
-              {/* Personal Information */}
-              <div className="space-y-4">
+            <form onSubmit={handleSubmit} onReset={() => setServerErrors({})} className="space-y-6">
+              <section className="space-y-4">
                 <h3 className="text-lg font-medium ty-text+ border-b ty-border- pb-2">
                   Personal Information
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Full Name *
-                    </label>
-                    <TyInput
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.detail.value)}
-                      className={`w-full ${errors.name ? 'ty-border-danger' : ''}`}
-                    />
-                    {errors.name && (
-                      <p className="text-xs ty-text-danger mt-1 flex items-center gap-1">
-                        <TyIcon name="alert-circle" size="12" />
-                        {errors.name}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Email Address *
-                    </label>
-                    <TyInput
-                      type="email"
-                      placeholder="your.email@example.com"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.detail.value)}
-                      className={`w-full ${errors.email ? 'ty-border-danger' : ''}`}
-                    />
-                    {errors.email && (
-                      <p className="text-xs ty-text-danger mt-1 flex items-center gap-1">
-                        <TyIcon name="alert-circle" size="12" />
-                        {errors.email}
-                      </p>
-                    )}
-                  </div>
+                  <TyInput
+                    name="name"
+                    label="Full name"
+                    placeholder="Ada Lovelace"
+                    required
+                    minLength={2}
+                    maxLength={80}
+                  />
+                  <TyInput
+                    name="email"
+                    type="email"
+                    label="Email address"
+                    placeholder="you@company.com"
+                    required
+                    error={serverErrors.email ?? ''}
+                    onChange={() => clearServerError('email')}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Company
-                    </label>
-                    <TyInput
-                      type="text"
-                      placeholder="Your company name"
-                      value={formData.company}
-                      onChange={(e) => handleInputChange('company', e.detail.value)}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Phone Number
-                    </label>
-                    <TyInput
-                      type="tel"
-                      placeholder="+1 (555) 123-4567"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.detail.value)}
-                      className={`w-full ${errors.phone ? 'ty-border-danger' : ''}`}
-                    />
-                    {errors.phone && (
-                      <p className="text-xs ty-text-danger mt-1 flex items-center gap-1">
-                        <TyIcon name="alert-circle" size="12" />
-                        {errors.phone}
-                      </p>
-                    )}
-                  </div>
+                  <TyInput name="company" label="Company" placeholder="Analytical Engines Ltd." />
+                  <TyInput
+                    name="phone"
+                    type="tel"
+                    label="Phone"
+                    placeholder="+1 555 123 4567"
+                    pattern="\+?[0-9 \(\)\-]{7,20}"
+                  />
                 </div>
-              </div>
+              </section>
 
-              {/* Message Details */}
-              <div className="space-y-4">
+              <section className="space-y-4">
                 <h3 className="text-lg font-medium ty-text+ border-b ty-border- pb-2">
                   Message Details
                 </h3>
 
-                <div>
-                  <label className="block text-sm font-medium ty-text+ mb-2">
-                    Subject *
-                  </label>
-                  <TyInput
-                    type="text"
-                    placeholder="Brief subject line"
-                    value={formData.subject}
-                    onChange={(e) => handleInputChange('subject', e.detail.value)}
-                    className={`w-full ${errors.subject ? 'ty-border-danger' : ''}`}
-                  />
-                  {errors.subject && (
-                    <p className="text-xs ty-text-danger mt-1 flex items-center gap-1">
-                      <TyIcon name="alert-circle" size="12" />
-                      {errors.subject}
-                    </p>
-                  )}
-                </div>
+                <TyInput
+                  name="subject"
+                  label="Subject"
+                  placeholder="Brief subject line"
+                  required
+                  minLength={5}
+                  maxLength={120}
+                  tooShortMessage="A few more words, please (at least {minlength} characters)"
+                />
 
                 <div>
-                  <label className="block text-sm font-medium ty-text+ mb-2">
-                    Message *
-                  </label>
-                  <textarea
+                  <TyTextarea
+                    name="message"
+                    label="Message"
                     placeholder="Tell us about your project, questions, or how we can help..."
-                    value={formData.message}
-                    onChange={(e) => handleInputChange('message', e.target.value)}
+                    required
                     rows={6}
-                    className={`
-                      w-full p-3 border rounded-lg ty-input resize-y min-h-[120px] max-h-[300px]
-                      focus:outline-none focus:ring-2 focus:ring-opacity-50
-                      ${errors.message ? 'ty-border-danger focus:ty-border-danger' : 'ty-border focus:ty-border-primary'}
-                    `}
+                    onChange={(e) => setMessageLength(String(e.detail.value ?? '').length)}
                   />
-                  <div className="flex justify-between items-center mt-1">
-                    {errors.message ? (
-                      <p className="text-xs ty-text-danger flex items-center gap-1">
-                        <TyIcon name="alert-circle" size="12" />
-                        {errors.message}
-                      </p>
-                    ) : (
-                      <span />
-                    )}
-                    <span className="text-xs ty-text- ml-auto">
-                      {formData.message.length}/1000
-                    </span>
-                  </div>
+                  <p className="text-xs ty-text- mt-1 text-right">{messageLength} characters</p>
                 </div>
 
-                {/* Priority and Contact Method */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Priority Level
-                    </label>
-                    <TySelect
-                      value={formData.priority}
-                      onChange={(e) => {
-                        const value = (e.detail.value as string) || 'medium'
-                        handleInputChange('priority', value)
-                      }}
-                      className="w-full"
-                      placeholder="Select priority level"
-                    >
-                      <TyOption value="low">Low - General inquiry</TyOption>
-                      <TyOption value="medium">Medium - Business question</TyOption>
-                      <TyOption value="high">High - Urgent matter</TyOption>
-                      <TyOption value="critical">Critical - Immediate attention needed</TyOption>
-                    </TySelect>
-                  </div>
+                  <TySelect name="priority" label="Priority" value="medium" noClear>
+                    {PRIORITIES.map((p) => (
+                      <TyOption key={p.value} value={p.value}>
+                        {p.label} — {p.detail}
+                      </TyOption>
+                    ))}
+                  </TySelect>
 
-                  <div>
-                    <label className="block text-sm font-medium ty-text+ mb-2">
-                      Preferred Contact Method
-                    </label>
-                    <TySelect
-                      value={formData.contactMethod}
-                      onChange={(e) => {
-                        const value = (e.detail.value as string) || 'email'
-                        handleInputChange('contactMethod', value)
-                      }}
-                      className="w-full"
-                      placeholder="Select contact method"
-                    >
-                      <TyOption value="email">Email</TyOption>
-                      <TyOption value="phone">Phone Call</TyOption>
-                      <TyOption value="text">Text Message</TyOption>
-                      <TyOption value="any">Any Method</TyOption>
-                    </TySelect>
-                  </div>
+                  <TySelect name="contactMethod" label="Preferred contact method" value="email" noClear>
+                    <TyOption value="email">Email</TyOption>
+                    <TyOption value="phone">Phone call</TyOption>
+                    <TyOption value="text">Text message</TyOption>
+                    <TyOption value="any">Any method</TyOption>
+                  </TySelect>
                 </div>
 
-                {/* Newsletter Subscription */}
-                <div className="ty-bg-primary- p-4 rounded-lg border ty-border-">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.newsletter}
-                      onChange={(e) => setFormData(prev => ({ ...prev, newsletter: e.target.checked }))}
-                      className="mt-1 w-4 h-4 ty-text-primary border-2 ty-border rounded focus:ring-2 focus:ring-opacity-50 focus:ty-border-primary"
-                    />
-                    <div>
-                      <span className="text-sm font-medium ty-text+">
-                        Subscribe to our newsletter
-                      </span>
-                      <p className="text-xs ty-text- mt-1">
-                        Get updates about new features, tips, and industry insights.
-                        You can unsubscribe at any time.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
+                {/* ty-checkbox is just the box: the <label> around it names it and forwards clicks */}
+                <label className="flex items-start gap-3 cursor-pointer ty-bg-primary- p-4 rounded-lg border ty-border-">
+                  <TyCheckbox name="newsletter" value="yes" className="mt-0.5" />
+                  <span>
+                    <span className="block text-sm font-medium ty-text+">Subscribe to our newsletter</span>
+                    <span className="block text-xs ty-text- mt-1">
+                      Updates about new features and tips. Unsubscribe any time.
+                    </span>
+                  </span>
+                </label>
+              </section>
 
-              {/* Form Actions */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t ty-border-">
-                <TyButton
-                  type="submit"
-                  flavor="primary"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 ${isSubmitting ? 'cursor-not-allowed opacity-75' : 'hover:shadow-lg'
-                    } transition-all duration-200`}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Sending Message...
-                    </>
-                  ) : (
-                    <>
-                      <TyIcon name="send" size="18" />
-                      Send Message
-                    </>
-                  )}
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t ty-border-">
+                {/* No type prop: ty-button already submits its form (validation included).
+                    TyButton type="submit" in tyrell-react TC57 also fires a synthetic
+                    submit event that skips validation and doubles onSubmit. */}
+                <TyButton flavor="primary" size="lg" loading={isSubmitting}>
+                  <TyIcon slot="start" name="send" />
+                  {isSubmitting ? 'Sending…' : 'Send message'}
                 </TyButton>
-
-                <TyButton
-                  type="button"
-                  flavor="neutral"
-                  size="lg"
-                  disabled={isSubmitting}
-                  onClick={() => {
-                    setFormData({
-                      name: '',
-                      email: '',
-                      company: '',
-                      phone: '',
-                      subject: '',
-                      message: '',
-                      priority: 'medium',
-                      contactMethod: 'email',
-                      newsletter: false
-                    })
-                    setErrors({})
-                  }}
-                  className="flex items-center justify-center gap-2 hover:shadow-md transition-shadow duration-200"
-                >
-                  <TyIcon name="refresh-cw" size="18" />
-                  Clear Form
+                <TyButton type="reset" appearance="ghost" size="lg" disabled={isSubmitting}>
+                  <TyIcon slot="start" name="refresh-cw" />
+                  Clear form
                 </TyButton>
               </div>
             </form>
           </div>
         </div>
 
-        {/* Sidebar - Contact Information & Features */}
         <div className="space-y-6">
+          <div className="ty-elevated rounded-xl p-6 border ty-border">
+            <h3 className="text-lg font-semibold mb-4 ty-text++ flex items-center gap-2">
+              <TyIcon name="check-circle" size="20" />
+              What the form does for you
+            </h3>
+            <ul className="space-y-3 text-sm ty-text-">
+              {[
+                'Blocks the submit until every rule passes',
+                'Shows each message under its field, focuses the first',
+                'Shows a message when you leave a field you edited',
+                'Clears it as soon as the value is fixed',
+                'Enter in any field submits, like a native input',
+                'Messages in the browser’s language',
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-3">
+                  <span className="w-2 h-2 mt-1.5 rounded-full ty-bg-success shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          {/* Contact Information */}
           <div className="ty-elevated rounded-xl p-6 border ty-border">
             <h3 className="text-lg font-semibold mb-4 ty-text++ flex items-center gap-2">
               <TyIcon name="map-pin" size="20" />
               Contact Information
             </h3>
-
             <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <TyIcon name="mail" size="18" className="ty-text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium ty-text+">Email</p>
-                  <p className="text-sm ty-text-">hello@tycomponents.com</p>
+              {[
+                ['mail', 'Email', 'hello@tycomponents.com'],
+                ['phone', 'Phone', '+1 (555) 123-4567'],
+                ['clock', 'Business Hours', 'Mon-Fri: 9AM - 6PM PST'],
+                ['globe', 'Location', 'San Francisco, CA'],
+              ].map(([icon, title, text]) => (
+                <div key={title} className="flex items-start gap-3">
+                  <TyIcon name={icon} size="18" className="ty-text-primary mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium ty-text+">{title}</p>
+                    <p className="text-sm ty-text-">{text}</p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <TyIcon name="phone" size="18" className="ty-text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium ty-text+">Phone</p>
-                  <p className="text-sm ty-text-">+1 (555) 123-4567</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <TyIcon name="clock" size="18" className="ty-text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium ty-text+">Business Hours</p>
-                  <p className="text-sm ty-text-">Mon-Fri: 9AM - 6PM PST</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <TyIcon name="globe" size="18" className="ty-text-primary mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium ty-text+">Location</p>
-                  <p className="text-sm ty-text-">San Francisco, CA</p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
-
-          {/* Form Features */}
-          <div className="ty-elevated rounded-xl p-6 border ty-border">
-            <h3 className="text-lg font-semibold mb-4 ty-text++ flex items-center gap-2">
-              <TyIcon name="check-circle" size="20" />
-              Form Features
-            </h3>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Real-time validation</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Form state management</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Loading states</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Error handling</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Success feedback</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full ty-bg-success"></div>
-                <span className="text-sm ty-text-">Responsive design</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Debug Info */}
-          <div className="ty-elevated rounded-xl p-4 border ty-border ty-bg-primary-">
-            <h4 className="text-sm font-semibold mb-2 ty-text++">Debug Info</h4>
-            <div className="space-y-1 text-xs ty-text-">
-              <div>Submitting: {isSubmitting ? 'Yes' : 'No'}</div>
-              <div>Name: {formData.name || 'Empty'}</div>
-              <div>Email: {formData.email || 'Empty'}</div>
-              <div>Errors: {Object.keys(errors).length}</div>
-            </div>
-          </div>
-
-          {/* Response Time */}
-          <div className="ty-elevated rounded-xl p-6 border ty-border ty-bg-primary-">
-            <h3 className="text-lg font-semibold mb-2 ty-text-primary++">
-              Quick Response
-            </h3>
-            <p className="text-sm ty-text-primary leading-relaxed">
-              We typically respond to all inquiries within 24 hours during business days.
-              For urgent matters, please mark your message as "Critical" priority.
-            </p>
-          </div>
-
         </div>
       </div>
 
-      {/* Success Modal */}
-      <TyModal ref={modalRef} className="max-w-md">
-        <div className="p-8 text-center ty-floating rounded-lg">
-          <div className="w-16 h-16 ty-bg-success rounded-full flex items-center justify-center mx-auto mb-4">
+      <TyModal ref={modalRef} label="Message sent">
+        <div className="p-8 ty-floating rounded-xl max-w-md">
+          <div className="w-14 h-14 ty-bg-success rounded-full flex items-center justify-center mx-auto mb-4">
             <TyIcon name="check" size="32" className="ty-text-success++" />
           </div>
-
-          <h2 className="text-xl font-semibold ty-text++ mb-2">
-            Message Sent Successfully!
-          </h2>
-
-          <p className="ty-text- mb-6 leading-relaxed">
-            Thank you for contacting us. We've received your message and will get back to you
-            within 24 hours during business days.
-          </p>
-
-          <TyButton
-            flavor="success"
-            onClick={() => modalRef.current?.hide()}
-            className="flex items-center gap-2 mx-auto"
-          >
-            <TyIcon name="check" size="16" />
-            Got it!
-          </TyButton>
+          <h2 className="text-xl font-semibold ty-text++ mb-2 text-center">Message sent</h2>
+          <p className="ty-text- mb-4 text-center">We&apos;ll get back to you within 24 hours.</p>
+          {sent && (
+            <pre className="text-xs ty-bg-neutral- rounded-lg p-3 mb-6 overflow-auto max-h-48">
+              {JSON.stringify(sent, null, 2)}
+            </pre>
+          )}
+          <div className="flex justify-center">
+            <TyButton flavor="success" onClick={() => modalRef.current?.hide()}>
+              Got it
+            </TyButton>
+          </div>
         </div>
       </TyModal>
-
     </AppLayout>
   )
 }

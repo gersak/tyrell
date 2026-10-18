@@ -30,3 +30,43 @@ describe('ty-file-upload', () => {
     expect(new FormData(form).getAll('docs').length).to.be.at.least(1);
   });
 });
+
+describe('ty-file-upload placeholder', () => {
+  const hint = (el: any) => el.shadowRoot.querySelector('.upload-hint') as HTMLElement;
+
+  it('shows the placeholder as the drop-zone hint', async () => {
+    const el = (await fixture(html`<ty-file-upload placeholder="Upload your CV (PDF)"></ty-file-upload>`)) as any;
+    await nextFrame();
+    expect(hint(el).textContent).to.equal('Upload your CV (PDF)');
+  });
+
+  it('keeps the default hint, with its browse link, when no placeholder is set', async () => {
+    const el = (await fixture(html`<ty-file-upload></ty-file-upload>`)) as any;
+    await nextFrame();
+    expect(hint(el).textContent).to.equal('Drop files here or click to browse');
+    expect(hint(el).querySelector('.browse-link')?.textContent).to.equal('click to browse');
+  });
+
+  it('renders the placeholder as text, not markup', async () => {
+    const el = (await fixture(html`<ty-file-upload placeholder="<img src=x onerror=alert(1)> <b>PDF</b>"></ty-file-upload>`)) as any;
+    await nextFrame();
+    expect(hint(el).textContent).to.equal('<img src=x onerror=alert(1)> <b>PDF</b>');
+    expect(hint(el).children.length).to.equal(0);
+  });
+
+  it('follows placeholder changes, and gives way to the selected-file count', async () => {
+    const el = (await fixture(html`<ty-file-upload placeholder="First"></ty-file-upload>`)) as any;
+    await nextFrame();
+    el.placeholder = 'Second';
+    await nextFrame();
+    expect(hint(el).textContent).to.equal('Second');
+
+    const input = el.shadowRoot.querySelector('.file-input') as HTMLInputElement;
+    const dt = new DataTransfer();
+    dt.items.add(new File(['hi'], 'note.txt', { type: 'text/plain' }));
+    input.files = dt.files;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    await nextFrame();
+    expect(hint(el).textContent).to.equal('1 file selected');
+  });
+});

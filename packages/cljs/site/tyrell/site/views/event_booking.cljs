@@ -113,7 +113,9 @@
                (merge attrs {:value (get b k) :on {(or event :change) #(put! k (kit/value %))}}))
         type-label (:label (by-id event-types event-type) "Meeting")]
     [:div
-     [:div.gap-6 {:class ["grid" "grid-cols-1" "lg:grid-cols-2"]}
+     ;; Inline grid: index.html's global .grid rule overrides grid-cols-*, and
+     ;; its 1fr on phones let the calendar column grow past the card.
+     [:div.gap-6 {:class ["grid-cols-1" "lg:grid-cols-2"] :style {:display "grid"}}
       ;; Left: date and time
       [:div
        (heading "Date")
@@ -122,7 +124,10 @@
          {:style {:background "radial-gradient(ellipse 70% 60% at 50% 0%, color-mix(in oklch, var(--ty-color-primary) 7%, transparent), transparent 70%)"}}
          [:ty-calendar
           (merge date
-                 {:width "340px"
+                 ;; 340px, or what a phone's card leaves (the grid's own
+                 ;; floor, --ty-calendar-width, follows it down)
+                 {:width "min(340px, calc(100vw - 108px))"
+                  :style {"--ty-calendar-width" "min(280px, calc(100vw - 108px))"}
                   :min (let [{:keys [year month day]} (days-from-now 0)]
                          (str/join "-" [year (.padStart (str month) 2 "0") (.padStart (str day) 2 "0")]))
                   :on {:change (fn [^js e] (let [d (.-detail e)] (put! :date {:year (.-year d) :month (.-month d) :day (.-day d)})))}

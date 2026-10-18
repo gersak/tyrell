@@ -1,14 +1,12 @@
 {:deps true
- :dev-http {8080 "public"}
+ :http {:port 9641}
+ :dev-http {8030 "public"}
  :builds
  {:main
   {:target :browser
    :output-dir "public/js"
    :asset-path "/js"
    :modules {:main {:init-fn replicant-example.core/init}}
-   :devtools {:http-root "public"
-              :http-port 8080
-              :preloads []}
    :dev {:compiler-options {:optimizations :none
                             :source-map true}}
    :release {:compiler-options {:optimizations :advanced

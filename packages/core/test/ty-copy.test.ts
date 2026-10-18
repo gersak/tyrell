@@ -1,4 +1,5 @@
 import { fixture, html, expect, nextFrame, oneEvent, aTimeout } from '@open-wc/testing';
+import { sendMouse, resetMouse, sendKeys } from '@web/test-runner-commands';
 import '../lib/components/copy.js';
 
 // navigator.clipboard is an own accessor on Navigator.prototype in Chrome;
@@ -224,6 +225,22 @@ describe('ty-copy rapid repeated clicks', () => {
     expect(getBtn().classList.contains('success')).to.be.true;
     expect(getBtn().getAttribute('aria-label')).to.equal('Copied!');
   });
+
+  // A keyed reorder within the 2s: the disconnect cleared the revert timer,
+  // and 'Copied!' stayed on until the next copy.
+  it('moved in the DOM while it shows "Copied!", it goes back to the copy icon', async () => {
+    restoreClipboard = stubClipboardWriteText(async () => {});
+    const wrap = (await fixture(html`<div><div id="a"><ty-copy value="x"></ty-copy></div><div id="b"></div></div>`)) as HTMLElement;
+    const el = wrap.querySelector('ty-copy') as any;
+    await nextFrame();
+    const btn = () => el.shadowRoot.querySelector('.copy-button') as HTMLElement;
+    btn().click();
+    await aTimeout(10);
+    expect(btn().getAttribute('aria-label')).to.equal('Copied!');
+    wrap.querySelector('#b')!.append(el);
+    expect(btn().classList.contains('success')).to.equal(false);
+    expect(btn().getAttribute('aria-label')).to.equal('Copy to clipboard');
+  });
 });
 
 describe('ty-copy value edge cases', () => {
@@ -395,5 +412,97 @@ describe('ty-copy keyboard activation', () => {
     const evPromise = oneEvent(el, 'copy-success');
     btn.click();
     await evPromise;
+  });
+});
+
+// btn.click() can't catch this: a script-dispatched click runs every listener
+// before any microtask. A REAL click, tap or Enter/Space runs microtasks between
+// listeners, so a writeText that settles at once (WebKit) had already swapped
+// the button's icon — detaching the clicked <svg> — by the time the same click
+// reached the field's click-to-copy listener, which then copied a second time.
+describe('ty-copy — one copy per real activation', () => {
+  let restoreClipboard: (() => void) | null = null;
+  let writes = 0;
+  let events = 0;
+
+  beforeEach(() => {
+    writes = 0;
+    events = 0;
+    restoreClipboard = stubClipboardWriteText(async () => { writes += 1; });
+  });
+
+  afterEach(async () => {
+    restoreClipboard?.();
+    restoreClipboard = null;
+    await resetMouse();
+  });
+
+  async function mount(tag: 'ty-copy' | 'ty-copy-field') {
+    const el = (await fixture(tag === 'ty-copy'
+      ? html`<ty-copy value="secret-42"></ty-copy>`
+      : html`<ty-copy-field value="secret-42"></ty-copy-field>`)) as any;
+    await nextFrame();
+    el.addEventListener('copy-success', () => { events += 1; });
+    return el;
+  }
+
+  const center = (node: Element): [number, number] => {
+    const r = node.getBoundingClientRect();
+    return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)];
+  };
+
+  for (const tag of ['ty-copy', 'ty-copy-field'] as const) {
+    it(`${tag}: a mouse click on the copy icon copies once`, async () => {
+      const el = await mount(tag);
+      const svg = el.shadowRoot.querySelector('.copy-button svg');
+      await sendMouse({ type: 'click', position: center(svg) });
+      await aTimeout(50);
+      expect(writes, 'clipboard writes').to.equal(1);
+      expect(events, 'copy-success events').to.equal(1);
+    });
+  }
+
+  it('a mouse click on the value copies once', async () => {
+    const el = await mount('ty-copy');
+    await sendMouse({ type: 'click', position: center(el.shadowRoot.querySelector('.copy-field-value')) });
+    await aTimeout(50);
+    expect(writes).to.equal(1);
+    expect(events).to.equal(1);
+  });
+
+  for (const key of ['Enter', 'Space']) {
+    it(`${key} on the focused copy button copies once`, async () => {
+      const el = await mount('ty-copy');
+      el.shadowRoot.querySelector('.copy-button').focus();
+      await sendKeys({ press: key });
+      await aTimeout(50);
+      expect(writes).to.equal(1);
+      expect(events).to.equal(1);
+    });
+  }
+});
+
+describe('ty-copy — execCommand fallback keeps keyboard focus', () => {
+  it('focus returns to the copy button, so the next Enter/Space copies again', async () => {
+    const restoreClipboard = stubClipboardWriteText(async () => { throw new Error('denied'); });
+    const restoreExec = stubExecCommand(() => true);
+    try {
+      const el = (await fixture(html`<ty-copy value="x"></ty-copy>`)) as any;
+      await nextFrame();
+      let events = 0;
+      el.addEventListener('copy-success', () => { events += 1; });
+      const btn = el.shadowRoot.querySelector('.copy-button') as HTMLButtonElement;
+      btn.focus();
+      await sendKeys({ press: 'Enter' });
+      await aTimeout(50);
+      expect(el.shadowRoot.activeElement === btn, 'button still focused').to.be.true;
+      expect(document.querySelector('body > textarea'), 'helper textarea removed').to.be.null;
+      await sendKeys({ press: 'Space' });
+      await aTimeout(50);
+      expect(events).to.equal(2);
+    } finally {
+      restoreExec();
+      restoreClipboard();
+    }
   });
 });

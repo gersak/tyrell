@@ -632,9 +632,13 @@
                                   (swap! state update-in [:search :selected-index]
                                          #(max (dec %) 0)))
 
+                              ;; preventDefault: closing the dialog returns focus to
+                              ;; the Search button, and the Enter would then click it
+                              ;; and reopen the palette.
                               (= key "Enter")
-                              (when-let [result (nth all-results selected-index nil)]
-                                (select-search-result! result))
+                              (do (.preventDefault e)
+                                  (when-let [result (nth all-results selected-index nil)]
+                                    (select-search-result! result)))
 
                               (= key "Escape")
                               (close-search!))))}}]
@@ -649,8 +653,13 @@
              [:div.px-4.py-2.text-xs.font-medium.ty-text-.uppercase.tracking-wide
               "Guides"]
              [:ul
+              ;; Unkeyed on purpose: results reorder on every keystroke, and
+              ;; replicant's keyed move (move-nodes) keeps the stale vdom of a
+              ;; node it moves forward, so the next render removes children
+              ;; that are gone (removeChild crash, then every render freezes).
+              ;; Positional diffing of a 12-row list is cheap and never moves.
               (for [[idx result] (map-indexed vector guides)]
-                (docs-common/keyed (:id result) (search-result-item result idx selected-index query)))]])
+                (search-result-item result idx selected-index query))]])
           (when (seq components)
             [:div {:class (when (seq guides) "mt-2")}
              [:div.px-4.py-2.text-xs.font-medium.ty-text-.uppercase.tracking-wide
@@ -658,7 +667,7 @@
              [:ul
               (let [offset (count guides)]
                 (for [[idx result] (map-indexed vector components)]
-                  (docs-common/keyed (:id result) (search-result-item result (+ offset idx) selected-index query))))]])]
+                  (search-result-item result (+ offset idx) selected-index query)))]])]
          [:div.flex.flex-col.items-center.justify-center.gap-3.h-full.ty-text-
           [:ty-icon.opacity-20 {:name "search"
                      :size "xl"}]
@@ -968,9 +977,24 @@
               (docs-common/on-this-page)
               (right-sidebar toc))])]]])))
 
-(defn render-app! []
-  (binding [router/*roles* (:user/roles @state)]
-    (rdom/render (.getElementById js/document "app") (app))))
+(defonce ^:private rendering? (volatile! false))
+(defonce ^:private render-queued? (volatile! false))
+
+(defn render-app!
+  "Render from the current state. Called during a render (a hook resetting an
+   atom, like the docs scroll-spy), it renders on the next frame instead:
+   replicant would queue hiccup built from the state now and apply it a frame
+   later, over any render in between."
+  []
+  (if @rendering?
+    (when-not @render-queued?
+      (vreset! render-queued? true)
+      (js/requestAnimationFrame (fn [] (vreset! render-queued? false) (render-app!))))
+    (do (vreset! rendering? true)
+        (try
+          (binding [router/*roles* (:user/roles @state)]
+            (rdom/render (.getElementById js/document "app") (app)))
+          (finally (vreset! rendering? false))))))
 
 (defn ^:dev/after-load init []
   ;; Inject site-chrome styles (inline-code pills, etc.) into <head>.

@@ -155,8 +155,13 @@ export class TySelectedOptions extends HTMLElement {
    * Interpolation context for a value: value, label, flavor plus every
    * data-* attribute of the picker's matching option.
    */
+  /** The picker's option for a value (never its display clone). */
+  private option(value: string): HTMLElement | null {
+    return this._picker?.querySelector(`[value="${CSS.escape(value)}"]:not([cloned])`) as HTMLElement | null
+  }
+
   private context(value: string): Record<string, string> {
-    const opt = this._picker?.querySelector(`[value="${CSS.escape(value)}"]`) as HTMLElement | null
+    const opt = this.option(value)
     const ctx: Record<string, string> = {
       value,
       // label attribute wins (native <option label> semantics)
@@ -226,14 +231,23 @@ export class TySelectedOptions extends HTMLElement {
     return clone
   }
 
-  /** Default chip when no template is provided. */
+  /**
+   * Default chip when no template is provided: the option's own content,
+   * cloned, so a rich option makes a rich chip. An explicit `label` on the
+   * option replaces it with that text; a <template> child replaces it entirely.
+   */
   private defaultChip(value: string): HTMLElement {
     const ctx = this.context(value)
+    const opt = this.option(value)
     const tag = document.createElement('ty-tag')
     tag.setAttribute('value', value)
     tag.setAttribute('dismissible', 'true')
     if (ctx.flavor) tag.setAttribute('flavor', ctx.flavor)
-    tag.textContent = ctx.label
+    if (opt && !opt.hasAttribute('label') && opt.hasChildNodes()) {
+      opt.childNodes.forEach(n => tag.appendChild(n.cloneNode(true)))
+    } else {
+      tag.textContent = ctx.label
+    }
     tag.addEventListener('dismiss', () => this.deselect(value))
     return tag
   }

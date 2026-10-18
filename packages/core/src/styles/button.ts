@@ -169,13 +169,55 @@ export const buttonCustomFlavorCss = (base: string) =>
   solidFlavor(base, 'neutral') + outlinedFlavor(base, 'neutral') + ghostFlavor(base, 'neutral')
 
 export const buttonStyles = `
+/* One-cell grid. Unconstrained, the host hugs the button exactly; a box
+   imposed on it (flex-column or grid-cell stretch, width/height/min-height
+   from outside) grows the cell and the button fills it — the whole host is
+   the click target, no dead strip that looks clickable and isn't.
+   height: fit-content opts out of a flex/grid ROW's default stretch, which
+   would turn the button into a slab as tall as its tallest sibling; an
+   explicit height still wins (outer-tree declarations beat :host). Column
+   floor is min-content, not auto: auto floors at the button's min-width
+   (4rem), and a squeezed flex row would crush a long label. Row floor is
+   the rung, so a ::part(button) { height: 100% } can't shrink the button to
+   its text. Both maxes are 1fr, not auto: a consumer justify-content /
+   align-content (Tailwind justify-center) stops an auto track from
+   stretching, fr ignores it. */
 :host {
-  display: inline-block;
+  --_rung: var(--ty-button-height);
+  display: inline-grid;
+  grid-template: minmax(var(--_rung), 1fr) / minmax(min-content, 1fr);
+  height: fit-content;
   font-family: inherit;
 }
 
+:host([action]) {
+  --_rung: var(--ty-button-action-size);
+}
+
+/* Action is a square — stretching it would distort it. A flex column or
+   grid cell doesn't widen it; a height (or width) alone makes a bigger
+   square. Unless asked: wide still means full width. */
+:host([action]:not([wide])) {
+  width: fit-content;
+  aspect-ratio: 1;
+}
+
+/* flex-grow fills a flex ROW. In a flex column it would grow the height, so
+   the host stops at the button's own height, the rung: full width, not a
+   slab. (Not max-height: max-content, which Firefox ignores in the block
+   axis.) The row track stops there too, and a press on an empty host below
+   it is no press (see button.ts). The cost: a height set on a wide host,
+   or on its ::part(button), isn't followed; size it with size /
+   --ty-button-height. The button's own flex-grow covers a consumer
+   display: flex on the host. */
 :host([wide]) {
-  display: flex;
+  display: grid;
+  flex-grow: 1;
+  max-height: var(--_rung);
+  grid-template-rows: minmax(var(--_rung), max-content);
+}
+
+:host([wide]) button {
   flex-grow: 1;
 }
 
@@ -268,6 +310,9 @@ button {
   justify-content: center;
   gap: var(--ty-button-gap);
   height: var(--ty-button-height);
+  /* Fill a host made taller than the rung (see :host above). Cyclic while
+     the grid sizes its track, so it never inflates an unconstrained host. */
+  min-height: 100%;
   padding: var(--ty-button-pad-y) var(--ty-button-pad-x);
   font-size: var(--ty-button-font);
   line-height: var(--ty-button-leading);
@@ -356,15 +401,17 @@ button.loading > .loader-icon {
   flex-shrink: 0;
 }
 
-:host([wide]) button {
-  flex-grow: 1;
-}
-
-/* Action = icon-only square */
+/* Action = icon-only square. Its size is a floor, not a fixed box: the
+   grid stretches it over a host given a size (the host never stretches it —
+   see :host), and a ::part(button) min-width / min-height raises the floor
+   without losing that. An icon never outgrows the square, so auto height
+   is safe here; a text button keeps its fixed height, because its padding
+   plus line-height can exceed the rung. */
 button.action {
   gap: 0px !important;
-  height: var(--ty-button-action-size);
-  width: var(--ty-button-action-size);
+  height: auto;
+  min-width: var(--ty-button-action-size);
+  min-height: var(--ty-button-action-size);
   padding: 0px !important;
 }
 
@@ -441,19 +488,9 @@ button.pill.sm { padding-left: 1.125em; padding-right: 1.125em; }
 button.pill.lg { padding-left: 1.5em; padding-right: 1.5em; }
 button.pill.xl { padding-left: 1.75em; padding-right: 1.75em; }
 
-button.pill:has(ty-icon:only-child),
-button.pill:has(slot[name="start"]:only-child),
-button.pill:has(slot[name="end"]:only-child) {
-  padding: 0;
-  aspect-ratio: 1;
-  min-width: var(--ty-size-md);
-}
-
-button.pill.xs:has(ty-icon:only-child) { min-width: 1.375rem; min-height: 1.375rem; }
-button.pill.sm:has(ty-icon:only-child) { min-width: 1.5rem; min-height: 1.5rem; }
-button.pill.md:has(ty-icon:only-child) { min-width: 2rem; min-height: 2rem; }
-button.pill.lg:has(ty-icon:only-child) { min-width: 2.25rem; min-height: 2.25rem; }
-button.pill.xl:has(ty-icon:only-child) { min-width: 2.5rem; min-height: 2.5rem; }
+/* An icon-only round button is "action pill": action's square (padding 0,
+   !important) with pill's radius. The shadow <button> can't see what is
+   slotted into it, so no :has() here could detect an icon-only pill. */
 
 /* SOLID — flat: one variable per segment. No color math here; all the
    --ty-solid-{flavor}-{hover,active,strong,soft} tokens are DERIVED in

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { hostProps } from '../utils/host-props';
+import { coerceBool } from '../utils/use-boolean-prop';
 
 export interface TyTabsProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Content area width (accepts px or %) */
@@ -81,7 +82,7 @@ export const TyTabs = React.forwardRef<HTMLElement, TyTabsProps>(
     if (active) webComponentProps.active = active;
     if (placement) webComponentProps.placement = placement;
     // Presence boolean — render the bare attribute only when true.
-    if (fixed) webComponentProps.fixed = '';
+    if (coerceBool(fixed)) webComponentProps.fixed = '';
 
     return React.createElement(
       'ty-tabs',

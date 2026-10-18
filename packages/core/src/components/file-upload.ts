@@ -8,6 +8,7 @@ import { TyComponent } from "../base/ty-component.js";
 import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
 import { fileUploadStyles } from "../styles/file-upload.js";
+import { nativeMessage } from "../utils/validity.js";
 
 interface FileUploadState {
   listenersSetup: boolean;
@@ -26,7 +27,9 @@ export interface TyFileUploadElement extends HTMLElement {
   form: HTMLFormElement | null;
 }
 
-const UPLOAD_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
+const DEFAULT_PLACEHOLDER = "Drop files here or click to browse";
+
+const UPLOAD_ICON =`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`;
 
 const FILE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
@@ -78,7 +81,7 @@ export class TyFileUpload
     placeholder: {
       type: "string" as const,
       visual: true,
-      default: "Drop files here or click to browse",
+      default: DEFAULT_PLACEHOLDER,
     },
     error: {
       type: "string" as const,
@@ -105,7 +108,10 @@ export class TyFileUpload
     ensureStyles(this.shadowRoot!, { css: fileUploadStyles, id: "ty-file-upload" });
   }
 
-  protected onConnect(): void {}
+  protected onConnect(): void {
+    // Empty still submits (see getFormValue), so set the value up front
+    this.updateFormValue();
+  }
 
   protected onDisconnect(): void {
     this.removeEventListeners();
@@ -130,13 +136,14 @@ export class TyFileUpload
   }
 
   /** Report `required` to the owning form, like ty-input and ty-textarea
-      do — without this the asterisk showed but submission went through. */
+      do — without this the asterisk showed but submission went through.
+      The message is a native file input's. */
   private updateValidity(): void {
     if (this.required && !this.disabled && this._files.length === 0) {
       const anchor = this.shadowRoot?.querySelector(".drop-zone") as HTMLElement | null;
       this.applyValidity(
         { valueMissing: true },
-        "Please select a file",
+        nativeMessage("input", { type: "file", required: true, multiple: this.multiple }),
         anchor ?? undefined,
       );
     } else {
@@ -145,13 +152,24 @@ export class TyFileUpload
   }
 
   protected getFormValue(): FormData | string | null {
-    // Native fidelity: an unnamed control is excluded from submission.
-    if (this._files.length === 0 || !this.name) return null;
+    // Native fidelity: an unnamed control is excluded from submission, and a
+    // named one with no file submits one empty file (like <input type=file>).
+    if (!this.name) return null;
     const fd = new FormData();
+    if (this._files.length === 0) {
+      fd.append(this.name, new File([], '', { type: 'application/octet-stream' }));
+    }
     for (const file of this._files) {
       fd.append(this.name, file);
     }
     return fd;
+  }
+
+  /** Focus the drop zone: the host itself isn't focusable. */
+  focus(options?: FocusOptions): void {
+    const zone = this.shadowRoot?.querySelector('.drop-zone') as HTMLElement | null;
+    if (zone) zone.focus(options);
+    else super.focus(options);
   }
 
   /**
@@ -251,6 +269,10 @@ export class TyFileUpload
       this.dispatchEvent(
         new CustomEvent("change", { detail, bubbles: true, composed: true }),
       );
+      // The user changed the files (setFiles is only reached from picking,
+      // dropping or removing): show the message now if the field is invalid,
+      // including a setCustomValidity() the change handler just made.
+      this.revealValidity();
     }, 0);
   }
 
@@ -527,8 +549,11 @@ export class TyFileUpload
     const hintEl = container.querySelector(".upload-hint") as HTMLElement;
     if (this._files.length > 0) {
       hintEl.innerHTML = `<strong>${this._files.length} file${this._files.length !== 1 ? "s" : ""} selected</strong>`;
-    } else {
+    } else if (!this.placeholder || this.placeholder === DEFAULT_PLACEHOLDER) {
       hintEl.innerHTML = `Drop files here or <span class="browse-link">click to browse</span>`;
+    } else {
+      // Author text — set as text, never parsed as markup
+      hintEl.textContent = this.placeholder;
     }
 
     const subHintEl = container.querySelector(

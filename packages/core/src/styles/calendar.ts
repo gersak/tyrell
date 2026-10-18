@@ -23,6 +23,12 @@ export const calendarStyles = `
   align-items: center;
 }
 
+/* Focused only after a click on the chrome (see calendar.ts render()): no
+   ring around the whole calendar on the next key press */
+.calendar-container:focus {
+  outline: none;
+}
+
 @media (max-width: 320px) {
   .calendar-container {
     gap: 0.375rem;

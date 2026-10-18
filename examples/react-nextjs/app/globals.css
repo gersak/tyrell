@@ -5,9 +5,8 @@
  * It preserves Ty's semantic color system while adding Tailwind's utility classes.
  */
 
-/* Import Ty CSS first - foundation for our semantic system */
-@import url('https://unpkg.com/tyrell-components@latest/css/tyrell.css');
-@import url('https://unpkg.com/tyrell-components@latest/css/tyrell-theme.css');
+/* tyrell.css + tyrell-theme.css are imported from the installed package in
+   app/layout.tsx. This file is processed by Next's PostCSS (Tailwind). */
 
 /* Tailwind CSS directives - will be processed by PostCSS */
 @tailwind base;
@@ -306,3 +305,9 @@
     color: var(--ty-color-primary);
   }
 }
+
+/* Rich chips for TySelectedOptions (multiselect page): each chip holds the
+   option's own markup, so cap the width, left-align it and let the detail wrap. */
+.rich-chips ty-tag { max-width: 18rem; }
+.rich-chips ty-tag::part(container) { border-radius: 0.75rem; padding-block: 0.25rem; }
+.rich-chips ty-tag > * { white-space: normal; text-align: start; }

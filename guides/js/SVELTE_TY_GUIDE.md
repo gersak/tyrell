@@ -317,7 +317,7 @@ Event detail: `{ value: File[], files: File[], names: string[] }`. Files appear 
 />
 ```
 
-Value is a UTC ISO string (`2024-09-21T08:30:00.000Z`). Pass `null` or empty string to clear. Add `with-time` for datetime selection, `locale="de-DE"` for locale-aware display.
+Value is a UTC ISO string (`2024-09-21T08:30:00.000Z`). Date-only, it's the instant the day starts in the browser's timezone, so it reads a day early east of UTC (Sept 21 in Zagreb is `2024-09-20T22:00:00.000Z`). Add `native` for `YYYY-MM-DD` / `YYYY-MM-DDTHH:mm` like `<input type="date">`; `e.detail.localValue` has that shape either way. Pass `null` or empty string to clear. Add `with-time` for datetime selection, `locale="de-DE"` for locale-aware display.
 
 ### ty-calendar (standalone)
 
@@ -478,7 +478,7 @@ Nest `<ty-popup>` inside the trigger — opens on click, closes on outside click
 </ty-button>
 ```
 
-For programmatic control, add `manual` and call `popupEl.show()` / `popupEl.hide()` after `bind:this`.
+For programmatic control, add `manual` and call `popupEl.openPopup()` / `popupEl.closePopup()` after `bind:this`.
 
 ---
 

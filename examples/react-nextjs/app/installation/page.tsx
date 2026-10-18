@@ -265,23 +265,33 @@ export default function InstallationPage() {
               </h3>
               <div className="space-y-3">
                 <p className="text-sm ty-text- mb-3">
-                  Add the CSS import to your main layout or _app.tsx file:
+                  Import the CSS in the root layout, and register the elements on the client only:
                 </p>
                 <div className="ty-bg-primary++ ty-text-- p-4 rounded-lg overflow-x-auto">
                   <pre className="text-sm font-mono">
-                    {`// app/layout.tsx or pages/_app.tsx
-import 'tyrell-components/dist/tyrell.css'
+                    {`// app/layout.tsx
+import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'   // colors
+import { TyRegistry } from './TyRegistry'
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <TyRegistry />
+        {children}
+      </body>
     </html>
   )
+}
+
+// app/TyRegistry.tsx — the elements extend HTMLElement,
+// which doesn't exist on the server
+'use client'
+import { useEffect } from 'react'
+export function TyRegistry() {
+  useEffect(() => { import('tyrell-components') }, [])
+  return null
 }`}
                   </pre>
                 </div>
@@ -301,7 +311,9 @@ export default function RootLayout({
                 <div className="ty-bg-primary++ ty-text-- p-4 rounded-lg overflow-x-auto">
                   <pre className="text-sm font-mono">
                     {`// src/index.tsx or src/App.tsx
-import 'tyrell-components/dist/tyrell.css'
+import 'tyrell-components'                         // registers <ty-*>
+import 'tyrell-components/css/tyrell.css'
+import 'tyrell-components/css/tyrell-theme.css'   // colors
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 
@@ -422,7 +434,9 @@ export function MyComponent() {
                 If components appear unstyled, ensure you've imported the CSS file correctly:
               </p>
               <div className="ty-bg-warning- p-3 rounded text-sm font-mono">
-                <code>import 'tyrell-components/dist/tyrell.css'</code>
+                <code>import 'tyrell-components/css/tyrell.css'</code>
+                <br />
+                <code>import 'tyrell-components/css/tyrell-theme.css'</code>
               </div>
             </div>
 
@@ -482,7 +496,7 @@ export function MyComponent() {
           </TyButton>
 
           <TyButton
-            flavor="ghost"
+            appearance="ghost"
             size="lg"
             className="flex items-center gap-2 hover:ty-bg-primary- transition-colors duration-200"
           >

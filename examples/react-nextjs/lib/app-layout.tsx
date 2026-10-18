@@ -27,6 +27,8 @@ const navigation: NavigationSection[] = [
       { name: 'Getting Started', href: '/', icon: 'home' },
       { name: 'Installation', href: '/installation', icon: 'download' },
       { name: 'Theme System', href: '/theme', icon: 'palette' },
+      { name: 'Buttons', href: '/components/buttons', icon: 'square' },
+      { name: 'Icons', href: '/examples/icons', icon: 'star' },
     ]
   },
   {
@@ -37,6 +39,7 @@ const navigation: NavigationSection[] = [
       { name: 'Settings Panel', href: '/examples/settings', icon: 'settings' },
       { name: 'Tabs', href: '/examples/tabs', icon: 'layout' },
       { name: 'Multiselect', href: '/examples/multiselect', icon: 'layers' },
+      { name: 'Date Picker', href: '/examples/date-picker', icon: 'calendar' },
       { name: 'Modal × popups', href: '/examples/modal-popups', icon: 'square' },
     ]
   }
@@ -130,7 +133,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             href="/"
             className="text-2xl font-semibold no-underline transition-colors duration-150 text-primary-ty-base hover:text-primary-ty-bold"
           >
-            Ty + Tailwind Showcase
+            Tyrell + Next.js
           </Link>
         </div>
 

@@ -102,15 +102,24 @@ ${fieldSizeVars}
   color: var(--ty-label-color);
   margin-bottom: var(--ty-field-label-gap);
   padding-left: var(--ty-field-outer-pad-x);
+  display: flex;
+  align-items: center;
 }
 
+/* Required marker — same as ty-input's (styles/input.ts). */
 .required-icon {
   display: inline-flex;
   align-items: center;
   color: var(--ty-color-danger);
   width: 12px;
   height: 12px;
+  margin-left: 4px;
   vertical-align: middle;
+}
+
+.required-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .error-message {

@@ -66,6 +66,182 @@
 (defn- doc-state [k] (get-in @state/state [:checkbox-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:checkbox-doc k] v))
 
+(def ^:private select-all-snippets
+  "Select all example, one tab per stack."
+  [["html" "HTML" "html"
+    "<label><ty-checkbox id=\"all\"></ty-checkbox> Repository access</label>
+<label><ty-checkbox class=\"perm\" checked></ty-checkbox> Read</label>
+<label><ty-checkbox class=\"perm\"></ty-checkbox> Write</label>
+<label><ty-checkbox class=\"perm\"></ty-checkbox> Delete</label>
+
+<script>
+  const all = document.getElementById('all');
+  const items = [...document.querySelectorAll('.perm')];
+
+  function sync() {
+    const on = items.filter((c) => c.checked).length;
+    all.checked = on === items.length;
+    all.indeterminate = on > 0 && on < items.length;
+  }
+  all.addEventListener('change', (e) =>
+    items.forEach((c) => (c.checked = e.detail.checked)));
+  items.forEach((c) => c.addEventListener('change', sync));
+  sync();
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyCheckbox } from 'tyrell-react'
+
+const perms = ['Read', 'Write', 'Delete']
+const n = on.length
+
+<label>
+  <TyCheckbox checked={n === perms.length}
+    indeterminate={n > 0 && n < perms.length}
+    onChange={(e) => setOn(e.detail.checked ? perms : [])} />
+  Repository access
+</label>
+{perms.map((p) => (
+  <label key={p}>
+    <TyCheckbox checked={on.includes(p)}
+      onChange={(e) => setOn(e.detail.checked
+        ? [...on, p] : on.filter((x) => x !== p))} />
+    {p}
+  </label>
+))}"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+(def perms [\"Read\" \"Write\" \"Delete\"])
+
+(let [n (count @on)]
+  [:<>
+   [:label
+    [:> ty/Checkbox {:checked (= n (count perms))
+                     :indeterminate (< 0 n (count perms))
+                     :on-change #(reset! on (if (.. % -detail -checked) (set perms) #{}))}]
+    \"Repository access\"]
+   (for [p perms]
+     ^{:key p}
+     [:label
+      [:> ty/Checkbox {:checked (contains? @on p)
+                       :on-change #(swap! on (if (.. % -detail -checked) conj disj) p)}]
+      p])])"]
+   ["replicant" "Replicant" "clojure"
+    "(def perms [\"Read\" \"Write\" \"Delete\"])
+
+(let [n (count on)]
+  [:div
+   [:label
+    [:ty-checkbox {:checked (when (= n (count perms)) \"\")
+                   :indeterminate (when (< 0 n (count perms)) \"\")
+                   :on {:change #(set-on! (if (.. % -detail -checked) (set perms) #{}))}}]
+    \"Repository access\"]
+   (for [p perms]
+     [:label {:replicant/key p}
+      [:ty-checkbox {:checked (when (on p) \"\")
+                     :on {:change #(set-on! ((if (.. % -detail -checked) conj disj) on p))}}]
+      p])])"]
+   ["datastar" "Datastar" "html"
+    "<div data-signals=\"{read: true, write: false, del: false}\">
+  <label>
+    <ty-checkbox
+      data-attr:checked=\"$read && $write && $del\"
+      data-attr:indeterminate=\"($read || $write || $del) && !($read && $write && $del)\"
+      data-on:change=\"$read = $write = $del = evt.detail.checked\">
+    </ty-checkbox>
+    Repository access
+  </label>
+  <label>
+    <ty-checkbox data-attr:checked=\"$read\"
+      data-on:change=\"$read = evt.detail.checked\"></ty-checkbox>
+    Read
+  </label>
+  <label>
+    <ty-checkbox data-attr:checked=\"$write\"
+      data-on:change=\"$write = evt.detail.checked\"></ty-checkbox>
+    Write
+  </label>
+  <label>
+    <ty-checkbox data-attr:checked=\"$del\"
+      data-on:change=\"$del = evt.detail.checked\"></ty-checkbox>
+    Delete
+  </label>
+</div>"]])
+
+(def ^:private form-snippets
+  "Required in a form, one tab per stack."
+  [["html" "HTML" "html"
+    "<form action=\"/signup\" method=\"post\">
+  <label>
+    <ty-checkbox name=\"terms\" value=\"yes\" required></ty-checkbox>
+    I accept the terms
+  </label>
+  <ty-button flavor=\"primary\">Continue</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TyCheckbox, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <label>
+    <TyCheckbox name=\"terms\" value=\"yes\" required />
+    I accept the terms
+  </label>
+  <TyButton flavor=\"primary\">Continue</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:label
+  [:> ty/Checkbox {:name \"terms\" :value \"yes\" :required true}]
+  \"I accept the terms\"]
+ [:> ty/Button {:flavor \"primary\"} \"Continue\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:label
+  [:ty-checkbox {:name \"terms\" :value \"yes\" :required \"\"}]
+  \"I accept the terms\"]
+ [:ty-button {:flavor \"primary\"} \"Continue\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/signup', {contentType: 'form'})\">
+  <label>
+    <ty-checkbox name=\"terms\" value=\"yes\" required></ty-checkbox>
+    I accept the terms
+  </label>
+  <ty-button flavor=\"primary\">Continue</ty-button>
+</form>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const box = document.querySelector('ty-checkbox');
+
+box.checked = true;
+box.indeterminate = true;   // shows the dash; aria-checked=\"mixed\"
+
+box.addEventListener('change', (e) => {
+  const { checked, formValue } = e.detail;  // formValue: value or null
+});"]
+   ["react" "React" "javascript"
+    "import { TyCheckbox } from 'tyrell-react'
+
+<TyCheckbox checked={on} indeterminate={mixed}
+  onChange={(e) => {
+    const { checked, formValue } = e.detail  // formValue: value or null
+    setOn(checked)
+  }} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Checkbox {:checked @on? :indeterminate @mixed?
+                 :on-change #(reset! on? (.. % -detail -checked))}]   ; -formValue: value or nil"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-checkbox {:checked (when on? \"\") :indeterminate (when mixed? \"\")
+               :on {:change #(set-on! (.. % -detail -checked))}}]   ; -formValue: value or nil"]
+   ["datastar" "Datastar" "html"
+    "<ty-checkbox data-signals:on=\"true\" data-attr:checked=\"$on\"
+  data-on:change=\"$on = evt.detail.checked\"></ty-checkbox>"]])
+
 (defn view []
   (component-page
    {:title "Checkbox"
@@ -75,10 +251,20 @@
     :chips [["Form-associated" "send"] ["Keyboard" "zap"] ["TyCheckbox (React)" "atom"]]
     :source "packages/core/src/components/checkbox.ts"
     :mark "✓"
-    :demo [:div.flex.flex-col.gap-4
-           (row {:checked "" :size "md" :flavor "primary"} "Email me release notes" "Once a month, no spam.")
-           (row {:size "md" :flavor "primary"} "Weekly digest" "Top discussions from your teams.")
-           (row {:indeterminate "" :size "md" :flavor "primary"} "Product updates" "2 of 4 selected.")]}
+    :demo (let [emails [["notes" "Email me release notes" "Once a month, no spam."]
+                        ["digest" "Weekly digest" "Top discussions from your teams."]]
+                on (or (doc-state :hero) #{"notes"})
+                n (count on)
+                base {:size "md" :flavor "primary"}]
+            [:div.flex.flex-col.gap-4
+             (for [[id label hint] emails]
+               (row (cond-> (assoc base :on {:change #(set-doc! :hero ((if (.. % -detail -checked) conj disj) on id))})
+                      (on id) (assoc :checked ""))
+                    label hint))
+             (row (cond-> (assoc base :on {:change #(set-doc! :hero (if (.. % -detail -checked) (set (map first emails)) #{}))})
+                    (= n (count emails)) (assoc :checked "")
+                    (< 0 n (count emails)) (assoc :indeterminate ""))
+                  "All emails" (str n " of " (count emails) " selected."))])}
 
    (playground
     {:id :checkbox
@@ -97,16 +283,7 @@
       {:title "Select all"
        :span 4
        :description [:span "The parent is " [:code "indeterminate"] " while some children are on. Clicking a mixed box checks it, like the native one."]
-       :code "const all = document.querySelector('#all');
-const items = [...document.querySelectorAll('.perm')];
-
-function sync() {
-  const on = items.filter((c) => c.checked).length;
-  all.checked = on === items.length;
-  all.indeterminate = on > 0 && on < items.length;
-}
-all.addEventListener('change', (e) =>
-  items.forEach((c) => (c.checked = e.detail.checked)));"}
+       :tabs select-all-snippets}
       (let [on (or (doc-state :perms) #{"Read"})
             n (count on)
             set-all! #(set-doc! :perms (if % (set perms) #{}))]
@@ -140,12 +317,7 @@ all.addEventListener('change', (e) =>
        :span 3
        :description [:span "Submits " [:code "name=value"] " when checked (value defaults to " [:code "on"] "). "
                      [:code "required"] " blocks submission while unchecked."]
-       :code "<label>
-  <ty-checkbox name=\"terms\"
-    value=\"yes\" required>
-  </ty-checkbox>
-  I accept the terms
-</label>"}
+       :tabs form-snippets}
       (let [status (doc-state :status)]
         [:form.flex.flex-col.gap-3
          {:on {:submit (fn [^js e]
@@ -174,15 +346,7 @@ all.addEventListener('change', (e) =>
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const box = document.querySelector('ty-checkbox');
-
-box.checked = true;
-box.indeterminate = true;   // shows the dash; aria-checked=\"mixed\"
-
-box.addEventListener('change', (e) => {
-  const { checked, formValue } = e.detail;  // formValue: value or null
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -43,12 +44,12 @@ func tyIcon(name, attrs string) string {
 
 // renderedHTML is the index page with icon placeholders replaced at startup.
 var renderedHTML = strings.NewReplacer(
-	`{icon:user:start}`,       tyIcon("user", `slot="start"`),
-	`{icon:mail:start}`,       tyIcon("mail", `slot="start"`),
-	`{icon:calendar:start}`,   tyIcon("calendar", `slot="start"`),
-	`{icon:send:start}`,       tyIcon("send", `slot="start"`),
+	`{icon:user:start}`, tyIcon("user", `slot="start"`),
+	`{icon:mail:start}`, tyIcon("mail", `slot="start"`),
+	`{icon:calendar:start}`, tyIcon("calendar", `slot="start"`),
+	`{icon:send:start}`, tyIcon("send", `slot="start"`),
 	`{icon:activity:sm:pulse}`, tyIcon("activity", `size="sm" pulse`),
-	`{icon:code:sm}`,          tyIcon("code", `size="sm"`),
+	`{icon:code:sm}`, tyIcon("code", `size="sm"`),
 	`{icon:check:lg:success}`, tyIcon("check", `size="lg" class="ty-text-success"`),
 ).Replace(indexHTMLTemplate)
 
@@ -82,9 +83,13 @@ func patchElements(w http.ResponseWriter, selector, html string, opts ...string)
 	for _, opt := range opts {
 		sb.WriteString("data: " + opt + "\n")
 	}
-	sb.WriteString("data: elements ")
-	sb.WriteString(html)
-	sb.WriteString("\n\n")
+	// SSE: every line of the HTML needs its own "data: elements " prefix
+	if html != "" {
+		for _, line := range strings.Split(html, "\n") {
+			sb.WriteString("data: elements " + line + "\n")
+		}
+	}
+	sb.WriteString("\n")
 	fmt.Fprint(w, sb.String())
 	flush(w)
 }
@@ -114,31 +119,33 @@ func signalString(signals map[string]any, key string) string {
 }
 
 // ── Validation ────────────────────────────────────────────────────────────────
+// The browser checks required / type="email" / minlength before the form is
+// sent (the ty-* fields take part in native form validation). The server only
+// checks what the browser can't know, and answers through the field's `error`.
 
 var emailRe = regexp.MustCompile(`^[^@\s]+@[^@\s]+\.[^@\s]+$`)
+
+// Domains we won't reply to — a rule only the server knows.
+var blockedDomains = map[string]bool{"example.com": true, "mailinator.com": true, "test.com": true}
 
 func validateField(field, value string) string {
 	switch field {
 	case "name":
-		if value == "" {
-			return "Name is required"
-		}
 		if len(value) < 2 {
 			return "Name must be at least 2 characters"
 		}
 	case "email":
-		if value == "" {
-			return "Email is required"
-		}
 		if !emailRe.MatchString(value) {
 			return "Enter a valid email address"
 		}
-	case "message":
-		if value == "" {
-			return "Message is required"
+		domain := strings.ToLower(value[strings.LastIndex(value, "@")+1:])
+		if blockedDomains[domain] {
+			return "We can't reply to " + domain + " addresses. Use your work email."
 		}
+	case "message":
+		// ty-textarea only has `required`, so the length rule lives here
 		if len(value) < 10 {
-			return "Message must be at least 10 characters"
+			return "Tell us a bit more: at least 10 characters"
 		}
 	}
 	return ""
@@ -249,6 +256,7 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
+	first := true
 	for {
 		select {
 		case <-ctx.Done():
@@ -261,7 +269,11 @@ func handleLive(w http.ResponseWriter, r *http.Request) {
 				`<div id="%s" class="ty-text- text-xs font-mono border-b ty-border-neutral- pb-1"><span class="ty-text--">%s</span> %s</div>`,
 				entryID, ts, msg,
 			)
-			patchElements(w, "#activity-feed", html, "mergeMode prepend")
+			if first {
+				patchElements(w, "#feed-empty", "", "mode remove")
+				first = false
+			}
+			patchElements(w, "#activity-feed", html, "mode prepend")
 		}
 	}
 }
@@ -278,9 +290,9 @@ const indexHTMLTemplate = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tyrell + Datastar — Support Ticket</title>
 
-  <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@tc/dist/tyrell.js"></script>
-  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@tc/css/tyrell.css">
-  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@tc/css/tyrell-theme.css">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC59/dist/tyrell.js"></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC59/css/tyrell.css">
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-TC59/css/tyrell-theme.css">
   <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-RC.8/bundles/datastar.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -313,27 +325,35 @@ const indexHTMLTemplate = `<!DOCTYPE html>
     <div class="grid md:grid-cols-[1fr_320px] gap-6 items-start">
 
       <!-- ── Left: ticket form ───────────────────────────────────────────── -->
-      <div class="ty-elevated p-6 rounded-2xl flex flex-col gap-5">
+      <!-- A real <form>: the browser checks required / type="email" / minlength
+           on every ty-* field before submit fires, shows each message in the
+           field's error line and focuses the first bad field. So
+           data-on:submit__prevent only ever runs with a valid form. Enter in a
+           field submits it, like a native input. -->
+      <form class="ty-elevated p-6 rounded-2xl flex flex-col gap-5"
+        data-on:submit__prevent="$submitting = true; @post('/api/submit')">
 
         <ty-input
           label="Your Name"
           name="name"
           required
-          debounce="400"
+          minlength="2"
           data-bind="name"
-          data-on:change="@get('/api/validate?field=name')"
+          data-on:input="$nameError = ''"
           data-attr:error="$nameError ? $nameError : null">
           {icon:user:start}
         </ty-input>
 
+        <!-- Format is checked by the browser; the domain rule only the server
+             knows: it answers on change through $emailError → error. -->
         <ty-input
           label="Email Address"
           name="email"
           type="email"
           required
-          debounce="400"
           data-bind="email"
-          data-on:change="@get('/api/validate?field=email')"
+          data-on:input="$emailError = ''"
+          data-on:change="el.validity.valid && @get('/api/validate?field=email')"
           data-attr:error="$emailError ? $emailError : null">
           {icon:mail:start}
         </ty-input>
@@ -341,6 +361,8 @@ const indexHTMLTemplate = `<!DOCTYPE html>
         <ty-select
           label="Department"
           name="department"
+          required
+          no-clear
           data-bind="department">
           <ty-option value="engineering">Engineering</ty-option>
           <ty-option value="billing">Billing</ty-option>
@@ -367,9 +389,9 @@ const indexHTMLTemplate = `<!DOCTYPE html>
           name="message"
           required
           rows="4"
-          debounce="600"
           data-bind="message"
-          data-on:change="@get('/api/validate?field=message')"
+          data-on:input="$messageError = ''"
+          data-on:change="el.validity.valid && @get('/api/validate?field=message')"
           data-attr:error="$messageError ? $messageError : null">
         </ty-textarea>
 
@@ -395,14 +417,13 @@ const indexHTMLTemplate = `<!DOCTYPE html>
           <div id="submit-progress"></div>
           <ty-button
             flavor="primary"
-            type="button"
-            data-attr:disabled="$submitting ? '' : null"
-            data-on:click="$submitting = true; @post('/api/submit')">
+            class="self-start"
+            data-attr:disabled="$submitting">
             {icon:send:start}
             Submit Ticket
           </ty-button>
         </div>
-      </div>
+      </form>
 
       <!-- ── Right: live feed + signal inspector ───────────────────────────── -->
       <div class="flex flex-col gap-4">
@@ -416,11 +437,11 @@ const indexHTMLTemplate = `<!DOCTYPE html>
             <p class="ty-text-- text-xs mt-0.5">Real-time updates via SSE</p>
           </div>
 
-          <div data-on:load="@get('/api/live')"></div>
+          <div data-init="@get('/api/live')"></div>
 
           <ty-scroll-container max-height="280px">
             <div id="activity-feed" class="flex flex-col gap-2 p-3">
-              <p class="ty-text-- text-xs text-center py-4">Connecting...</p>
+              <p id="feed-empty" class="ty-text-- text-xs text-center py-4">Connecting...</p>
             </div>
           </ty-scroll-container>
         </div>
@@ -459,8 +480,11 @@ const indexHTMLTemplate = `<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- The page behind zooms out slightly while the modal is open (default;
+       no-zoom turns it off). -->
   <ty-modal
-    data-attr:open="$modalOpen ? '' : null"
+    label="Ticket submitted"
+    data-attr:open="$modalOpen"
     data-on:close="$modalOpen = false">
     <div class="ty-floating p-8 rounded-2xl flex flex-col gap-4 max-w-sm w-full mx-auto">
       <div class="flex items-center gap-3">
@@ -471,7 +495,7 @@ const indexHTMLTemplate = `<!DOCTYPE html>
         We've received your request and will get back to you at
         <strong data-text="$email"></strong>.
       </p>
-      <ty-button flavor="primary" data-on:click="$modalOpen = false; $name = ''; $email = ''; $message = ''">
+      <ty-button flavor="primary" data-on:click="$modalOpen = false; $name = ''; $email = ''; $message = ''; $preferredDate = ''">
         Done
       </ty-button>
     </div>
@@ -489,6 +513,9 @@ func main() {
 	mux.HandleFunc("/api/live", handleLive)
 
 	addr := ":8080"
+	if port := os.Getenv("PORT"); port != "" {
+		addr = ":" + port
+	}
 	log.Printf("Tyrell + Datastar example running at http://localhost%s", addr)
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)

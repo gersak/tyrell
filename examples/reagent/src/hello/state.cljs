@@ -8,19 +8,26 @@
         "dark")
       "light"))
 
+(def empty-form
+  {:name ""
+   :email ""
+   :phone ""
+   :role ""
+   :skills []
+   :bio ""
+   :birthdate ""
+   :newsletter false})
+
 (defonce app-state
   (r/atom {:theme (get-initial-theme)
            :mobile-menu-open false
-           :form {:name ""
-                  :email ""
-                  :phone ""
-                  :role ""
-                  :skills []
-                  :bio ""
-                  :birthdate ""
-                  :newsletter false}
-           :form-errors {}
-           :form-submitting false}))
+           :form empty-form
+           ;; Errors only the "server" can know; field rules live on the inputs
+           :server-errors {}
+           :form-submitting false
+           :form-sent nil
+           ;; Bumped by Reset: the form remounts, so shown messages go with it
+           :form-key 0}))
 
 ;; Route definitions - ID vars for use in other namespaces
 (def home-id       ::home)

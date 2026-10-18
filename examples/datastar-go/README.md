@@ -4,28 +4,43 @@ A self-contained Go server demonstrating how Tyrell web components compose natur
 
 **No external Go dependencies** — standard library only. No build step for the server.
 
+Uses **tyrell-components `1.0.0-TC59`** (pinned on jsDelivr, so the page is reproducible) and **Datastar `v1.0.0-RC.8`**.
+
 ## What it shows
 
 | Pattern | Where |
 |---|---|
 | **Server-rendered icons** — Go puts `<svg>` inside `<ty-icon>` slot, zero icon JS | All icon usages |
+| A real `<form>` + `data-on:submit__prevent="@post(...)"` — native validation (`required`, `minlength`, `type="email"`) blocks the submit, shows each message under its field and focuses the first bad one; no validation JS | Ticket form |
+| Messages on blur after an edit, cleared as soon as the value is fixed; Enter in a field submits | Ticket form |
+| Server-only rules (blocked email domains, message length) via `@get('/api/validate')` + `patch-signals`, shown through `data-attr:error` | Email, message |
 | `data-bind` → ty-input, ty-textarea, ty-select, ty-date-picker | Form fields |
-| Server-side validation via `@get('/api/validate')` + `patch-signals` | Name, email, message |
-| `data-attr:error` binding to ty-input error attribute | Live error display |
+| `required no-clear` ty-select | Department |
 | ty-radio-group with `data-bind` | Priority selection |
 | ty-switch + ty-checkbox with `data-on:change` | Urgent flag, follow-up |
 | Multi-step SSE progress stream on submit (`patch-elements`) | Submit button area |
-| `data-attr:open` on ty-modal driven by server `patch-signals` | Success modal |
-| Keep-alive SSE stream (`@get('/api/live')`) into ty-scroll-container | Live queue feed |
+| `data-attr:open` on ty-modal driven by server `patch-signals`; the page behind zooms out while it's open (default; `no-zoom` turns it off) | Success modal |
+| Keep-alive SSE stream (`data-init="@get('/api/live')"`) prepending into ty-scroll-container | Live queue feed |
 | Client-side signal inspector with `data-text` | Right panel |
 
 ## Run
 
 ```bash
-go run .
+cd examples/datastar-go
+go run .                 # http://localhost:8080
+PORT=8090 go run .       # if 8080 is taken
 ```
 
-Open [http://localhost:8080](http://localhost:8080).
+Go 1.22+. If `go` isn't on your PATH but Homebrew installed it, use
+`/usr/local/Cellar/go/<version>/libexec/bin/go run .`.
+
+### Try it
+
+1. Press **Submit Ticket** with the form empty: no request is sent; every required field shows its message and focus jumps to *Your Name*.
+2. Type one letter in *Your Name* and Tab away: "at least 2 characters" appears; type a second letter and it clears.
+3. Enter `ada@example.com` and Tab: the server answers "We can't reply to example.com addresses" through the field's `error`; typing clears it.
+4. Fill everything in (message ≥ 10 characters) and press **Enter** in any field: the form submits, progress streams in, the success modal opens and the page behind zooms out.
+5. Press **Done**: the modal closes and the page zooms back.
 
 ## Server-rendered icons — zero client JS
 
@@ -61,25 +76,30 @@ The browser receives `<ty-icon slot="start"><svg>...</svg></ty-icon>` in the fir
 The entire UI is a single HTML page served by Go. Datastar turns HTML attributes into reactive bindings:
 
 ```html
-<!-- data-bind keeps the signal and the component in sync -->
-<ty-input data-bind="name" debounce="400"
-  data-on:change="@get('/api/validate?field=name')"
-  data-attr:error="$nameError ? $nameError : null">
-</ty-input>
+<!-- The browser does required + email format; submit only fires when valid -->
+<form data-on:submit__prevent="$submitting = true; @post('/api/submit')">
+  <ty-input name="email" type="email" required data-bind="email"
+    data-on:input="$emailError = ''"
+    data-on:change="el.validity.valid && @get('/api/validate?field=email')"
+    data-attr:error="$emailError ? $emailError : null">
+  </ty-input>
+  …
+  <ty-button flavor="primary">Submit Ticket</ty-button>
+</form>
 ```
 
-When the user types, Datastar calls `GET /api/validate?field=name&datastar={"name":"..."}`. The Go handler responds with a single SSE event:
+The browser handles everything it can: `required`, `minlength` and the email format block the submit and show their messages in each field's error line. For a rule only the server knows, a valid email is checked on change: Datastar calls `GET /api/validate?field=email&datastar={"email":"..."}` and the Go handler answers with one SSE event:
 
 ```
 event: datastar-patch-signals
-data: signals {"nameError":"Name must be at least 2 characters"}
+data: signals {"emailError":"We can't reply to example.com addresses. Use your work email."}
 ```
 
-Datastar merges the signal, and `data-attr:error` immediately reflects it on the component — no JavaScript written by hand.
+Datastar merges the signal and `data-attr:error` shows it on the field; `data-on:input` clears it as soon as the user types again.
 
 On submit, the server streams four progress events (each patching `#submit-progress`), then sets `$modalOpen = true` which opens the modal via `data-attr:open`.
 
-The `/api/live` route is a persistent SSE connection established via `data-on:load="@get('/api/live')"`. It streams random queue activity every 2 seconds directly into `ty-scroll-container`.
+The `/api/live` route is a persistent SSE connection opened by `data-init="@get('/api/live')"`. It streams random queue activity every 2 seconds, prepended (`mode prepend`) into `ty-scroll-container`. SSE needs a `data: elements` prefix on every line of the HTML, which `patchElements` adds.
 
 ## File structure
 

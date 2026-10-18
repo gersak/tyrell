@@ -37,6 +37,15 @@ export interface TyCalendarMonthProps extends React.HTMLAttributes<HTMLElement> 
 
   /** Day click event handler */
   onDayClick?: (event: CustomEvent<DayClickDetail>) => void;
+
+  /** Selected day as a timestamp (ms); null clears it */
+  value?: number | null;
+
+  /** Renders each day cell's content: (day) => element or string */
+  dayContentFn?: (day: any) => HTMLElement | string;
+
+  /** Extra stylesheet adopted into the grid's shadow root */
+  customCSS?: CSSStyleSheet;
 }
 
 export interface DayClickDetail {
@@ -64,9 +73,21 @@ export const TyCalendarMonth = React.forwardRef<HTMLElement, TyCalendarMonthProp
     min,
     max,
     onDayClick,
+    value,
+    dayContentFn,
+    customCSS,
     ...props 
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+
+    // Object/function/number properties: set on the element, not as attributes
+    useEffect(() => {
+      const el = elementRef.current as any;
+      if (!el) return;
+      if (value !== undefined) el.value = value;
+      if (dayContentFn !== undefined) el.dayContentFn = dayContentFn;
+      if (customCSS !== undefined) el.customCSS = customCSS;
+    }, [value, dayContentFn, customCSS]);
 
     useEffect(() => {
       const element = elementRef.current;

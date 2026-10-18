@@ -61,10 +61,10 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   /** Calendar width */
   width?: string | number;
   
-  /** Earliest selectable date (ISO "YYYY-MM-DD") — earlier days disabled, navigation clamped */
+  /** Earliest selectable date ("YYYY-MM-DD", or an ISO instant: its local day) — earlier days disabled, navigation clamped */
   min?: string;
 
-  /** Latest selectable date (ISO "YYYY-MM-DD") — later days disabled, navigation clamped */
+  /** Latest selectable date ("YYYY-MM-DD", or an ISO instant: its local day) — later days disabled, navigation clamped */
   max?: string;
 
   /** Minimum calendar width */
@@ -75,9 +75,12 @@ export interface TyCalendarProps extends Omit<React.HTMLAttributes<HTMLElement>,
   
   /** Form field name for form submission */
   name?: string;
+
+  /** A day must be picked before the form submits */
+  required?: boolean;
   
-  /** Form value (ISO date string) */
-  value?: string;
+  /** The selected day. Reads what TyDatePicker reads: "YYYY-MM-DD", "YYYY-MM-DDTHH:mm[:ss]" (that day), an ISO instant with Z/offset, epoch milliseconds or a Date (its local day); the element's value and form value stay "YYYY-MM-DD". */
+  value?: string | number | Date;
   
   /** Function to render custom day content */
   dayContentFn?: (dayContext: any) => HTMLElement | string;
@@ -114,6 +117,7 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     minWidth,
     maxWidth,
     name,
+    required,
     value,
     dayContentFn,
     dayClassesFn,
@@ -124,6 +128,11 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
     ...props 
   }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+    // Epoch milliseconds and a Date go to the element as an ISO instant:
+    // React 18 writes the attribute, where a digit string is no date.
+    const elementValue = typeof value === 'number' || value instanceof Date
+      ? (Number.isFinite(new Date(value).getTime()) ? new Date(value).toISOString() : '')
+      : value;
 
     useEffect(() => {
       if (ref && elementRef.current) {
@@ -229,9 +238,12 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
 
     const isHideNavigation = useBooleanProperty(elementRef, 'hideNavigation', hideNavigation);
     const isStateless = useBooleanProperty(elementRef, 'stateless', stateless);
+    const isRequired = useBooleanProperty(elementRef, 'required', required);
 
     if (isHideNavigation) webComponentProps['hide-navigation'] = '';
     if (isStateless) webComponentProps.stateless = '';
+    // true, not '': React 19 assigns the element's boolean `required` property
+    if (isRequired) webComponentProps.required = true;
 
     if (size) {
       webComponentProps.size = size;
@@ -269,8 +281,8 @@ export const TyCalendar = React.forwardRef<HTMLElement, TyCalendarProps>(
       webComponentProps.name = name;
     }
 
-    if (value) {
-      webComponentProps.value = value;
+    if (elementValue) {
+      webComponentProps.value = elementValue;
     }
 
     return React.createElement('ty-calendar', webComponentProps);

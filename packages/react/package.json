@@ -1,6 +1,6 @@
 {
   "name": "tyrell-react",
-  "version": "1.0.0-RC16",
+  "version": "1.0.0-TC59",
   "description": "React wrappers for Tyrell Components",
   "type": "module",
   "main": "./dist/components/index.js",
@@ -15,15 +15,24 @@
     "generate:version": "node scripts/generate-version.js",
     "build": "npm run generate:version && tsc",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build"
+    "prepublishOnly": "npm run clean && npm run build",
+    "test": "wtr && REACT=18 wtr"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
+    "@open-wc/testing": "^4.0.0",
+    "@types/mocha": "^10.0.10",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
+    "@web/dev-server-esbuild": "^1.0.5",
+    "@web/test-runner": "^0.20.2",
+    "react": "^19.3.1",
+    "react-18": "npm:react@^18.3.1",
+    "react-dom": "^19.3.1",
+    "react-dom-18": "npm:react-dom@^18.3.1",
     "typescript": "^5.7.0"
   },
   "keywords": [

@@ -1,6 +1,6 @@
 {
   "name": "tyrell-components",
-  "version": "1.0.0-RC16",
+  "version": "1.0.0-TC59",
   "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
   "sideEffects": [
@@ -175,6 +175,7 @@
     "@web/dev-server-esbuild": "^1.0.5",
     "@web/test-runner": "^0.20.2",
     "@web/test-runner-chrome": "^0.18.1",
+    "@web/test-runner-commands": "^0.9.0",
     "autoprefixer": "^10.4.27",
     "axe-core": "^4.12.1",
     "typescript": "^5.7.0",
@@ -183,7 +184,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gersak/tyrell.git",
+    "url": "git+https://github.com/gersak/tyrell.git",
     "directory": "packages/core"
   },
   "homepage": "https://gersak.github.io/tyrell/",

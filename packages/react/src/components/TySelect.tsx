@@ -69,6 +69,10 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
   /** Mark the field as required */
   required?: boolean;
 
+  /** Error message shown under the field (same line as TyInput's); '' or omitted clears it.
+   *  A failed required check on submit writes the browser's message here too. */
+  error?: string;
+
   /** Drop the popup search row. A select is searchable by default; this is
    *  the single opt-out. Cannot override externalSearch/allowCreate, where
    *  the input is the only way to get a query out. */

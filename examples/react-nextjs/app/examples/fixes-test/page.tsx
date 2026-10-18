@@ -115,7 +115,7 @@ export default function FixesTestPage() {
       <section className="ty-elevated rounded-xl p-6 mb-6 border ty-border">
         <h2 className="text-lg font-semibold mb-4 ty-text++">3. TyModal — onClose syncs React state</h2>
         <p className="text-sm ty-text- mb-4">
-          Controlled modal: backdrop click disabled, only X and ESC fire <code>onClose</code> and update state.
+          Controlled modal with <code>preventOutsideClick</code>: a backdrop click does nothing (and the built-in ✕ is hidden), so ESC or the button inside fire <code>onClose</code> and update state.
         </p>
         <div className="flex items-center gap-4 mb-4">
           <TyButton flavor="primary" onClick={() => setModalOpen(true)}>
@@ -136,7 +136,7 @@ export default function FixesTestPage() {
         >
           <div className="ty-floating p-6 rounded-xl max-w-sm">
             <h3 className="font-semibold mb-3 ty-text++">Modal is open</h3>
-            <p className="ty-text- mb-4 text-sm">Close via X or ESC — backdrop click is disabled (React controlled).</p>
+            <p className="ty-text- mb-4 text-sm">Close via ESC or the button below — backdrop click is disabled (React controlled).</p>
             <TyButton flavor="neutral" onClick={() => setModalOpen(false)}>Close from React</TyButton>
           </div>
         </TyModal>

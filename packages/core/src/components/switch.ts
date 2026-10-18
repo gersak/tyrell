@@ -13,6 +13,7 @@ import type { PropertyChange } from "../utils/property-manager.js";
 import { ensureStyles } from "../utils/styles.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { switchStyles, switchCustomFlavorCss } from "../styles/switch.js";
+import { nativeMessage } from "../utils/validity.js";
 
 interface SwitchState {
   checked: boolean;
@@ -34,6 +35,9 @@ export class TySwitch
   extends TyComponent<SwitchState>
   implements TySwitchElement {
   static formAssociated = true;
+  // Host counts as focusable (see TyComponent.delegatesFocus).
+  protected static delegatesFocus = true;
+  protected static labelClicks = true;
 
   protected static properties = {
     checked: {
@@ -102,6 +106,10 @@ export class TySwitch
     // rendered; onDisconnect removed them). No-op on first connect.
     this.setupEventListeners();
     this._syncCustomFlavor();
+    // Moved in the DOM (a keyed reorder): Firefox and WebKit take focus
+    // away without a blur, so the ring would stay
+    const el = this.shadowRoot!.querySelector(".switch-container");
+    if (el && this.shadowRoot!.activeElement !== el) el.classList.remove("focused");
   }
   protected onDisconnect(): void {
     this.removeEventListeners();
@@ -135,7 +143,7 @@ export class TySwitch
 
   private handleSwitchClick(e: Event): void {
     if (this.disabled) return;
-    if (this.isDuplicateActivationClick()) return;
+    this.showFocusRing(e instanceof KeyboardEvent);
     const newValue = !this.checked;
     this.checked = newValue;
 
@@ -153,6 +161,11 @@ export class TySwitch
         new CustomEvent("change", { detail: eventDetail, bubbles: true, composed: true }),
       );
     }, 0);
+  }
+
+  /** Keys show the ring, a click hides it (see checkbox.ts). */
+  private showFocusRing(on: boolean): void {
+    this.shadowRoot?.querySelector(".switch-container")?.classList.toggle("focused", on);
   }
 
   private handleSwitchKeydown(e: KeyboardEvent): void {
@@ -205,7 +218,7 @@ export class TySwitch
 
     this._clickHandler = (e: Event) => this.handleSwitchClick(e);
     this._keydownHandler = (e: Event) => this.handleSwitchKeydown(e as KeyboardEvent);
-    this._focusHandler = () => el.classList.add("focused");
+    this._focusHandler = () => el.classList.toggle("focused", el.matches(":focus-visible"));
     this._blurHandler = () => el.classList.remove("focused");
 
     // Click on the HOST: whole element is a trigger and a wrapping <label>
@@ -226,7 +239,7 @@ export class TySwitch
     if (!switchEl) {
       switchEl = document.createElement("div");
       switchEl.className = "switch-container " + classes;
-      switchEl.tabIndex = this.disabled ? -1 : 0;
+      if (!this.disabled) switchEl.tabIndex = 0;
       switchEl.setAttribute("role", "switch");
       switchEl.setAttribute("aria-checked", this.checked ? "true" : "false");
       switchEl.setAttribute("aria-disabled", this.disabled ? "true" : "false");
@@ -241,8 +254,15 @@ export class TySwitch
 
       shadow.appendChild(switchEl);
     } else {
+      // The ring outlives a re-render only while the switch has focus
+      const focused = switchEl.classList.contains("focused") && shadow.activeElement === switchEl;
       switchEl.className = "switch-container " + classes;
-      switchEl.tabIndex = this.disabled ? -1 : 0;
+      switchEl.classList.toggle("focused", focused && !this.disabled);
+      // Disabled: not focusable at all, like a native disabled checkbox. At
+      // tabindex=-1 it still was, and the host (delegatesFocus) handed it
+      // the focus of a <label> click.
+      if (this.disabled) switchEl.removeAttribute("tabindex");
+      else switchEl.tabIndex = 0;
       switchEl.setAttribute("aria-checked", this.checked ? "true" : "false");
       switchEl.setAttribute("aria-disabled", this.disabled ? "true" : "false");
       switchEl.setAttribute("aria-required", this.required ? "true" : "false");
@@ -259,12 +279,25 @@ export class TySwitch
     this.updateValidity();
   }
 
-  /** required + unchecked => valueMissing; otherwise valid. */
+  /** Focus the switch itself (the host is not focusable; its role element is). */
+  focus(options?: FocusOptions): void {
+    const el = this.shadowRoot?.querySelector(".switch-container") as HTMLElement | null;
+    if (el) el.focus(options);
+    else super.focus(options);
+  }
+
+  /** required + unchecked => valueMissing; otherwise valid. The message is a
+   *  native checkbox's, as a switch where the browser has one (Safari's
+   *  `switch` attribute). */
   private updateValidity(): void {
     const anchor = this.shadowRoot?.querySelector(".switch-container") as HTMLElement | null;
     if (this.disabled) { this.applyValidity({}); return; }
     if (this.required && !this.checked) {
-      this.applyValidity({ valueMissing: true }, "Please turn this on", anchor ?? undefined);
+      this.applyValidity(
+        { valueMissing: true },
+        nativeMessage("input", { type: "checkbox", switch: true, required: true }),
+        anchor ?? undefined,
+      );
     } else {
       this.applyValidity({});
     }

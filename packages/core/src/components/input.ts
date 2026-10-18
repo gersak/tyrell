@@ -20,6 +20,7 @@ import {
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js'
 
 import { REQUIRED_ICON_SVG } from '../utils/icons.js'
+import { nativeMessage, nativeValidity, lengthValidity, toLimit } from '../utils/validity.js'
 
 /** Password reveal toggle icons (Lucide eye / eye-off) */
 const EYE_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`
@@ -108,6 +109,47 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       visual: true,
       default: false
     },
+    // Native constraint rules. pattern/minlength/maxlength check text types;
+    // min/max check the numeric value of number/currency/percent/compact.
+    // Unset ('') means no rule.
+    pattern: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    minlength: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    maxlength: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    min: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    max: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    // Wording for the length messages; the browser only supplies too-short
+    // for typed text (see lengthValidity). Placeholders: {minlength}
+    // {maxlength} {length}.
+    tooShortMessage: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
+    tooLongMessage: {
+      type: 'string' as const,
+      visual: true,
+      default: ''
+    },
     error: {
       type: 'string' as const,
       visual: true,
@@ -186,10 +228,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   // Listener setup tracking
   private _listenersSetup = false
 
-  // True when WE auto-set flavor to 'danger' because `error` was present, so we
-  // know to restore 'neutral' when the error clears (and not clobber a flavor
-  // the consumer set themselves).
-  private _errorAutoDanger = false
   private _customFlavorSheet: CSSStyleSheet | null = null
 
   // Store references to handlers for cleanup
@@ -225,6 +263,13 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     })
 
     this._syncCustomFlavor()
+
+    // Put back after a disconnect: its listeners went with it, and changes
+    // made meanwhile (an error set while detached) never rendered.
+    if (this._rendered) {
+      this.render()
+      this.setupEventListeners()
+    }
   }
 
   /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
@@ -274,23 +319,6 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
           const currentValue = this.getProperty('value') || ''
           this._shadowValue = this.parseShadowValue(currentValue)
           break
-
-        case 'error':
-          if (newValue) {
-            // Auto-set flavor to danger when an error appears on a neutral field
-            if (this.getProperty('flavor') === 'neutral') {
-              this.setProperty('flavor', 'danger')
-              this._errorAutoDanger = true
-            }
-          } else if (this._errorAutoDanger) {
-            // Error cleared and WE were the ones who set danger → restore neutral
-            // (live validation passing should drop the danger styling).
-            if (this.getProperty('flavor') === 'danger') {
-              this.setProperty('flavor', 'neutral')
-            }
-            this._errorAutoDanger = false
-          }
-          break
       }
     }
   }
@@ -319,7 +347,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
    * This ensures numeric types submit their parsed values
    */
   protected getFormValue(): FormDataEntryValue | null {
-    const formValue = this._shadowValue !== null ? String(this._shadowValue) : null
+    const formValue = this._shadowValue !== null ? String(this._shadowValue) : ''
     return formValue
   }
 
@@ -328,8 +356,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     if (currentValue) {
       this._shadowValue = this.parseShadowValue(currentValue)
       this._internals.setFormValue(
-        this._shadowValue !== null ? String(this._shadowValue) : null
+        this._shadowValue !== null ? String(this._shadowValue) : ''
       )
+    } else {
+      // Empty still submits name= (like a native input), not nothing
+      this._internals.setFormValue('')
     }
   }
 
@@ -402,8 +433,34 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   get disabled(): boolean { return this.getProperty('disabled') }
   set disabled(v: boolean) { this.setProperty('disabled', v) }
 
+  /** Focus the inner <input>: the host itself isn't focusable. */
+  focus(options?: FocusOptions): void {
+    (this.shadowRoot?.querySelector('input') as HTMLInputElement | null)?.focus(options)
+  }
+
   get required(): boolean { return this.getProperty('required') }
   set required(v: boolean) { this.setProperty('required', v) }
+
+  get pattern(): string { return this.getProperty('pattern') }
+  set pattern(v: string) { this.setProperty('pattern', v ?? '') }
+
+  get minLength(): number { return toLimit(this.getProperty('minlength')) ?? -1 }
+  set minLength(v: number) { this.setProperty('minlength', v == null || v < 0 ? '' : String(v)) }
+
+  get maxLength(): number { return toLimit(this.getProperty('maxlength')) ?? -1 }
+  set maxLength(v: number) { this.setProperty('maxlength', v == null || v < 0 ? '' : String(v)) }
+
+  get min(): string { return this.getProperty('min') }
+  set min(v: string) { this.setProperty('min', v == null ? '' : String(v)) }
+
+  get max(): string { return this.getProperty('max') }
+  set max(v: string) { this.setProperty('max', v == null ? '' : String(v)) }
+
+  get tooShortMessage(): string { return this.getProperty('tooShortMessage') }
+  set tooShortMessage(v: string) { this.setProperty('tooShortMessage', v ?? '') }
+
+  get tooLongMessage(): string { return this.getProperty('tooLongMessage') }
+  set tooLongMessage(v: string) { this.setProperty('tooLongMessage', v ?? '') }
 
   get error(): string { return this.getProperty('error') }
   set error(v: string) { this.setProperty('error', v) }
@@ -497,11 +554,47 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       inputEl.removeEventListener('blur', this._blurHandler)
       this._blurHandler = null
     }
+    inputEl.removeEventListener('keydown', this._implicitSubmit)
 
     this._listenersSetup = false
   }
 
   /** IMPORTANT: Only called ONCE, not on every render. */
+  /**
+   * Enter submits the owning form, like a native input (HTML implicit
+   * submission): through the form's default button when it has one (nothing
+   * if that button is disabled), otherwise only when this is the form's only
+   * text field.
+   */
+  private _implicitSubmit = (e: KeyboardEvent): void => {
+    if (e.key !== 'Enter' || e.isComposing || e.defaultPrevented) return
+    const form = this._internals.form
+    if (!form) return
+    const controls = Array.from(form.elements) as HTMLElement[]
+    const isSubmitter = (el: HTMLElement) =>
+      (el instanceof HTMLButtonElement && el.type === 'submit') ||
+      (el instanceof HTMLInputElement && (el.type === 'submit' || el.type === 'image')) ||
+      (el.tagName === 'TY-BUTTON' && !['button', 'reset'].includes(el.getAttribute('type') ?? ''))
+    const submitter = controls.find(isSubmitter)
+    if (submitter) {
+      if ((submitter as HTMLButtonElement).disabled || submitter.hasAttribute('disabled')) return
+      e.preventDefault()
+      // ty-button handles clicks on its inner <button>
+      const target = submitter.tagName === 'TY-BUTTON'
+        ? submitter.shadowRoot?.querySelector('button') ?? submitter
+        : submitter
+      target.click()
+      return
+    }
+    const textFields = controls.filter((el) =>
+      el.tagName === 'TY-INPUT' ||
+      (el instanceof HTMLInputElement && !['button', 'checkbox', 'radio', 'file', 'hidden', 'image', 'reset', 'submit', 'range', 'color'].includes(el.type)))
+    if (textFields.length === 1) {
+      e.preventDefault()
+      form.requestSubmit()
+    }
+  }
+
   private setupEventListeners(): void {
     if (this._listenersSetup) {
       return // Already setup
@@ -519,6 +612,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
 
     // Input event - update shadow value and form (with debounce support)
     this._inputHandler = (e: Event) => {
+      this._userEdited = true
 
       // Stop native event from propagating - only our custom event should bubble
       e.stopPropagation()
@@ -530,7 +624,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       this._shadowValue = this.parseShadowValue(rawValue)
 
       this._internals.setFormValue(
-        this._shadowValue !== null ? String(this._shadowValue) : null
+        this._shadowValue !== null ? String(this._shadowValue) : ''
       )
       this.updateValidity()
 
@@ -561,7 +655,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       this._shadowValue = this.parseShadowValue(rawValue)
 
       this._internals.setFormValue(
-        this._shadowValue !== null ? String(this._shadowValue) : null
+        this._shadowValue !== null ? String(this._shadowValue) : ''
       )
       this.updateValidity()
 
@@ -619,6 +713,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       this._isFocused = false
       wrapperEl.classList.remove('focused')
 
+      // Like native :user-invalid: once edited, leaving the field shows its message
+      if (this._userEdited) this.revealValidity()
+
       // For numeric types, show formatted value
       if (this.shouldFormat()) {
         inputEl.value = this.getDisplayValue()
@@ -635,6 +732,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     inputEl.addEventListener('change', this._changeHandler)
     inputEl.addEventListener('focus', this._focusHandler)
     inputEl.addEventListener('blur', this._blurHandler)
+    inputEl.addEventListener('keydown', this._implicitSubmit)
 
     this._listenersSetup = true
   }
@@ -648,6 +746,11 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     const existingLabel = shadow.querySelector('.ty-field-label')
     const existingError = shadow.querySelector('.error-message')
     const classes = this.buildClassList()
+
+    // Real focus, not the last focus/blur event: Firefox and WebKit fire no
+    // blur when a focused field is moved or hidden.
+    const focused = !!existingInput && shadow.activeElement === existingInput
+    if (!focused) this._isFocused = false
 
     // Map input type (all numeric types use 'text' in DOM, others pass through)
     const inputType = ['password', 'email', 'tel', 'url'].includes(this.type)
@@ -666,14 +769,21 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     // If input exists, just update properties
     if (existingInput && existingWrapper) {
 
-      existingInput.type = inputType
-      existingInput.value = displayValue
+      // A revealed password stays revealed: the toggle owns the inner type
+      const revealed = inputType === 'password' &&
+        shadow.querySelector('.password-toggle')?.getAttribute('aria-pressed') === 'true'
+      existingInput.type = revealed ? 'text' : inputType
+      // Only on a real change: any write marks the value as set by script,
+      // and the inner input then stops reporting tooShort (updateValidity).
+      if (existingInput.value !== displayValue) existingInput.value = displayValue
       existingInput.placeholder = this.placeholder
       existingInput.name = this.name
       if (inputMode) existingInput.inputMode = inputMode
       else existingInput.removeAttribute('inputmode')
 
+      // An error shown on Enter lands while the field still has focus
       existingWrapper.className = `input-wrapper ${classes}`
+      existingWrapper.classList.toggle('focused', focused)
 
       // Set disabled property AND manage attribute
       existingInput.disabled = this.disabled
@@ -690,6 +800,8 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       } else {
         existingInput.removeAttribute('required')
       }
+
+      this.syncConstraintAttributes(existingInput)
 
       // a11y: the shadow <label> isn't programmatically linked to this input,
       // so give the control an accessible name directly.
@@ -768,6 +880,7 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       const inputEl = shadow.querySelector('input')!
       inputEl.disabled = this.disabled
       inputEl.required = this.required
+      this.syncConstraintAttributes(inputEl)
       if (this.label) inputEl.setAttribute('aria-label', this.label) // a11y: name the control
 
       this.setupPasswordToggle()
@@ -795,7 +908,15 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
     toggle.addEventListener('mousedown', (e) => e.preventDefault())
     toggle.addEventListener('click', () => {
       const reveal = inputEl.type === 'password'
+      // Chromium can put the caret back at 0 when it next lays the field out
+      // after the type change: lay it out now (a call: the CDN minifier drops
+      // a bare offsetWidth read), then put the caret or selection back
+      const { selectionStart, selectionEnd, selectionDirection } = inputEl
       inputEl.type = reveal ? 'text' : 'password'
+      if (selectionStart !== null && shadow.activeElement === inputEl) {
+        inputEl.getBoundingClientRect()
+        inputEl.setSelectionRange(selectionStart, selectionEnd, selectionDirection ?? undefined)
+      }
       toggle.innerHTML = reveal ? EYE_OFF_ICON_SVG : EYE_ICON_SVG
       toggle.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password')
       toggle.setAttribute('aria-pressed', String(reveal))
@@ -803,9 +924,30 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
   }
 
   /**
+   * pattern, minlength and maxlength go on the inner <input>: pattern for the
+   * browser's own patternMismatch check, minlength for its tooShort message
+   * after the user types, maxlength so typing stops at the limit like a
+   * native field. Formatted (numeric) types show a display string, so they
+   * get none.
+   */
+  private syncConstraintAttributes(inputEl: HTMLInputElement): void {
+    const text = !shouldFormatType(this.type)
+    const set = (name: string, v: string) =>
+      text && v !== '' ? inputEl.setAttribute(name, v) : inputEl.removeAttribute(name)
+    set('pattern', this.pattern)
+    set('minlength', toLimit(this.getProperty('minlength')) != null ? String(this.minLength) : '')
+    set('maxlength', toLimit(this.getProperty('maxlength')) != null ? String(this.maxLength) : '')
+  }
+
+  /**
    * Reflect constraint validation to the owning <form> via ElementInternals.
-   * Without this `required` is only cosmetic — the inner shadow <input> can't
-   * block the outer form. Empty + required => valueMissing; otherwise valid.
+   * Without this the inner shadow <input> can't block the outer form.
+   * Rules, first failing one supplies the message:
+   * - required: empty => valueMissing
+   * - email/url: the inner input's own typeMismatch
+   * - text types: pattern, minlength, maxlength
+   * - number/currency/percent/compact: min, max against the numeric value
+   * Empty values only fail `required`, like native inputs.
    * Disabled fields are barred from constraint validation.
    */
   private updateValidity(): void {
@@ -815,15 +957,46 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
       return
     }
     const current = inputEl ? inputEl.value : String(this.getProperty('value') ?? '')
-    if (this.required && current.trim() === '') {
-      this.applyValidity(
-        { valueMissing: true },
-        'Please fill out this field',
-        inputEl ?? undefined
-      )
-    } else {
-      this.applyValidity({})
+    if (current.trim() === '') {
+      if (this.required) {
+        this.applyValidity({ valueMissing: true }, nativeMessage('input', { type: 'text', required: true }), inputEl ?? undefined)
+      } else {
+        this.applyValidity({})
+      }
+      return
     }
+
+    const flags: ValidityStateFlags = {}
+    const messages: string[] = []
+    const fail = (flag: keyof ValidityStateFlags, message: string) => {
+      flags[flag] = true
+      messages.push(message)
+    }
+
+    if (shouldFormatType(this.type)) {
+      // A native number input judges min/max: it parses them (' 5 ' or
+      // '0x10' is no rule at all) and words the message, so the flag and
+      // the message can't disagree.
+      const n = typeof this._shadowValue === 'number' ? this._shadowValue : null
+      if (n !== null && (this.min || this.max)) {
+        const { validity, message } = nativeValidity('input', { type: 'number', step: 'any', min: this.min, max: this.max }, String(n))
+        if (validity.rangeUnderflow) fail('rangeUnderflow', message)
+        if (validity.rangeOverflow) fail('rangeOverflow', message)
+      }
+    } else {
+      if (inputEl?.validity.typeMismatch) fail('typeMismatch', inputEl.validationMessage)
+      if (inputEl?.validity.patternMismatch) fail('patternMismatch', inputEl.validationMessage)
+      const { tooShort, tooLong } = lengthValidity(current, {
+        minlength: this.getProperty('minlength'),
+        maxlength: this.getProperty('maxlength'),
+        tooShortMessage: this.tooShortMessage,
+        tooLongMessage: this.tooLongMessage,
+      }, inputEl)
+      if (tooShort) fail('tooShort', tooShort)
+      if (tooLong) fail('tooLong', tooLong)
+    }
+
+    this.applyValidity(flags, messages[0], inputEl ?? undefined)
   }
 }
 

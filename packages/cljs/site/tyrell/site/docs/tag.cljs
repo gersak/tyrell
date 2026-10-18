@@ -69,6 +69,86 @@
   --ty-border-teal: #0f766e;
 }")
 
+(def ^:private chips-snippets
+  "Filter chips, one tab per stack."
+  [["html" "HTML" "html"
+    "<div id=\"filters\">
+  <ty-tag dismissible>Design</ty-tag>
+  <ty-tag dismissible>Remote</ty-tag>
+  <ty-tag dismissible>Europe</ty-tag>
+</div>
+
+<script>
+  filters.addEventListener('dismiss', (e) => e.target.remove());
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyTag } from 'tyrell-react'
+
+{filters.map((f) => (
+  <TyTag key={f} dismissible
+    onTagDismiss={() => setFilters(filters.filter((x) => x !== f))}>
+    {f}
+  </TyTag>
+))}"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+(for [f @filters]
+  ^{:key f}
+  [:> ty/Tag {:dismissible true
+              :on-tag-dismiss #(swap! filters (partial remove #{f}))}
+   f])"]
+   ["replicant" "Replicant" "clojure"
+    "(for [f filters]
+  [:ty-tag {:replicant/key f :dismissible \"\"
+            :on {:dismiss #(remove-filter! f)}}
+   f])"]
+   ["datastar" "Datastar" "html"
+    "<!-- the server answers with the new #filters -->
+<div id=\"filters\">
+  <ty-tag dismissible data-on:dismiss=\"@delete('/filters/design')\">Design</ty-tag>
+  <ty-tag dismissible data-on:dismiss=\"@delete('/filters/remote')\">Remote</ty-tag>
+  <ty-tag dismissible data-on:dismiss=\"@delete('/filters/europe')\">Europe</ty-tag>
+</div>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const tag = document.querySelector('ty-tag');
+
+tag.flavor = 'success';
+tag.dismissible = true;
+
+// both bubble out of shadow roots, and both are cancelable
+tag.addEventListener('dismiss', (e) => e.detail.target.remove());
+tag.addEventListener('click', (e) => toggle(e.detail.target.value));"]
+   ["react" "React" "javascript"
+    "import { TyTag } from 'tyrell-react'
+
+<TyTag value=\"design\" flavor=\"success\" clickable dismissible
+  onClick={(e) => toggle(e.detail.target.value)}
+  onTagDismiss={(e) => remove(e.detail.target.value)}>
+  Design
+</TyTag>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Tag {:value \"design\" :flavor \"success\" :clickable true :dismissible true
+            :on-click #(toggle! (.. % -detail -target -value))
+            :on-tag-dismiss #(remove! (.. % -detail -target -value))}
+ \"Design\"]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-tag {:value \"design\" :flavor \"success\" :clickable \"\" :dismissible \"\"
+          :on {:click #(toggle! (.. % -detail -target -value))
+               :dismiss #(remove! (.. % -detail -target -value))}}
+ \"Design\"]"]
+   ["datastar" "Datastar" "html"
+    "<ty-tag value=\"design\" flavor=\"success\" clickable dismissible
+  data-on:click=\"@post('/tags/design/toggle')\"
+  data-on:dismiss=\"@delete('/tags/design')\">
+  Design
+</ty-tag>"]])
+
 (defn view []
   (component-page
    {:title "Tag"
@@ -83,10 +163,18 @@
             [:ty-tag {:flavor "success" :size "md"} [:ty-icon {:slot "start" :name "check"}] "Paid"]
             [:ty-tag {:flavor "warning" :size "md"} [:ty-icon {:slot "start" :name "clock"}] "Pending"]
             [:ty-tag {:flavor "primary" :size "md"} "Shipped"]]
-           [:div.flex.flex-wrap.gap-2
-            [:ty-tag {:size "md" :dismissible ""} "Design"]
-            [:ty-tag {:size "md" :dismissible ""} "Remote"]
-            [:ty-tag {:size "md" :flavor "primary-"} "Inbox" [:b {:slot "end"} "12"]]]]}
+           (let [all ["Design" "Remote"]
+                 kept (get-in @state/state [:tag-doc :hero] all)]
+             [:div.flex.flex-wrap.items-center.gap-2
+              (for [t kept]
+                [:ty-tag {:replicant/key t :size "md" :dismissible ""
+                          :on {:dismiss #(swap! state/state assoc-in [:tag-doc :hero] (vec (remove #{t} kept)))}}
+                 t])
+              [:ty-tag {:replicant/key "inbox" :size "md" :flavor "primary-"} "Inbox" [:b {:slot "end"} "12"]]
+              (when (< (count kept) (count all))
+                [:ty-button {:replicant/key "reset" :size "sm" :appearance "ghost" :action "" :aria-label "Bring the tags back"
+                             :on {:click #(swap! state/state assoc-in [:tag-doc :hero] all)}}
+                 [:ty-icon {:name "rotate-cw"}]])])]}
 
    (playground
     {:id :tag
@@ -109,11 +197,7 @@
        :span 4
        :description [:span [:code "dismissible"] " adds the ×. The tag fires " [:code "dismiss"]
                      " and your code removes it. Backspace and Delete work when it's focused."]
-       :code "<ty-tag dismissible>Design</ty-tag>
-
-container.addEventListener('dismiss', (e) => {
-  e.target.remove();
-});"}
+       :tabs chips-snippets}
       (let [fs (filters)]
         [:div.flex.flex-col.items-start.gap-3
          [:div.flex.flex-wrap.gap-2 {:style {:min-height "28px"}}
@@ -197,15 +281,7 @@ container.addEventListener('dismiss', (e) => {
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const tag = document.querySelector('ty-tag');
-
-tag.flavor = 'success';
-tag.dismissible = true;
-
-// both bubble out of shadow roots, and both are cancelable
-tag.addEventListener('dismiss', (e) => e.detail.target.remove());
-tag.addEventListener('click', (e) => toggle(e.detail.target.value));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

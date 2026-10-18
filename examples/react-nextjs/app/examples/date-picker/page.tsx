@@ -2,7 +2,21 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
-import { TyButton, TyDatePicker, type TyDatePickerEventDetail } from 'tyrell-react'
+import { TyButton, TyCalendarMonth, TyDatePicker, type TyDatePickerEventDetail } from 'tyrell-react'
+
+// Day cell for the TyCalendarMonth section: the day number, plus a dot on
+// "busy" days. Runs for every cell, so it only builds plain DOM.
+function busyDay(day: { dayInMonth: number; otherMonth: boolean }) {
+  const cell = document.createElement('div')
+  cell.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px'
+  cell.textContent = String(day.dayInMonth)
+  if (!day.otherMonth && day.dayInMonth % 5 === 0) {
+    const dot = document.createElement('span')
+    dot.style.cssText = 'width:5px;height:5px;border-radius:9999px;background:var(--ty-color-primary)'
+    cell.appendChild(dot)
+  }
+  return cell
+}
 
 export default function DatePickerExample() {
   const [mounted, setMounted] = useState(false)
@@ -28,6 +42,9 @@ export default function DatePickerExample() {
   // Test 5: Edge cases
   const [edgeCaseDate, setEdgeCaseDate] = useState<string>('')
   const [parseTestValue, setParseTestValue] = useState<string>('')
+
+  // TyCalendarMonth: selected day (local-midnight timestamp)
+  const [monthDay, setMonthDay] = useState<number | null>(null)
 
   // Performance monitoring
   const [changeCount, setChangeCount] = useState(0)
@@ -532,7 +549,8 @@ export default function DatePickerExample() {
             </div>
 
             <div className="flex gap-2">
-              <TyButton type="submit">Submit Form</TyButton>
+              {/* ty-button submits by default; see the contact form for why not type="submit" */}
+              <TyButton>Submit Form</TyButton>
               <TyButton type="reset" flavor="neutral">
                 Reset Form
               </TyButton>
@@ -941,6 +959,33 @@ export default function DatePickerExample() {
               </p>
             </div>
           )}
+        </section>
+
+        {/* TyCalendarMonth: value / onDayClick / dayContentFn as plain props */}
+        <section className="ty-elevated rounded-lg p-6">
+          <h2 className="text-xl font-semibold ty-text+ mb-2">TyCalendarMonth</h2>
+          <p className="ty-text- text-sm mb-4">
+            A bare month grid. <code>value</code> is the selected day, <code>onDayClick</code> picks one, and{' '}
+            <code>dayContentFn</code> renders each cell (a dot marks every fifth day).
+          </p>
+          <div className="flex flex-wrap items-start gap-6">
+            <TyCalendarMonth
+              value={monthDay}
+              onDayClick={(e) => setMonthDay(e.detail.dayContext.localValue)}
+              dayContentFn={busyDay}
+            />
+            <div className="ty-bg-neutral- rounded p-3 text-sm">
+              <p className="ty-text-">Selected</p>
+              <p className="ty-text++ font-semibold">
+                {monthDay ? new Date(monthDay).toLocaleDateString() : 'Nothing yet'}
+              </p>
+              {monthDay && (
+                <TyButton size="sm" appearance="ghost" onClick={() => setMonthDay(null)}>
+                  Clear
+                </TyButton>
+              )}
+            </div>
+          </div>
         </section>
       </div>
     </AppLayout>

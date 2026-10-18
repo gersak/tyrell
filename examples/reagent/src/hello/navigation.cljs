@@ -44,9 +44,8 @@
        [nav-items]]]]))
 
 (defn header []
-  (let [router-state @router/*router*  ; Deref for reactivity
-        current-id (:current router-state)
-        route-name (some #(when (= (:id %) current-id) (:name %)) state/route-defs)]
+  (let [_ @router/*router*  ; Deref for reactivity
+        route-name (some #(when (router/rendered? (:id %) true) (:name %)) state/route-defs)]
     [:header.ty-elevated.border-b.ty-border.px-6.py-4
      [:div.flex.justify-between.items-center
       [:div.flex.items-center.gap-4.min-w-0.flex-1

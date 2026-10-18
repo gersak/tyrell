@@ -13,6 +13,7 @@ import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { radioStyles, radioCustomFlavorCss } from "../styles/radio.js";
 
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
+import { nativeMessage } from "../utils/validity.js";
 
 // TyRadio — individual radio button
 
@@ -31,6 +32,8 @@ export interface TyRadioElement extends HTMLElement {
 export class TyRadio
   extends TyComponent<RadioState>
   implements TyRadioElement {
+
+  protected static labelClicks = true;
 
   protected static properties = {
     value: { type: "string" as const, default: "" },
@@ -333,6 +336,14 @@ export class TyRadioGroup
    * the accessors after upgrade. Each radio fires ty-radio-connected once
    * upgraded, which re-syncs the group.
    */
+  /** Focus the group's tab stop: the checked radio, else the first enabled one. */
+  focus(options?: FocusOptions): void {
+    const enabled = this.getRadios().filter((r) => !r.disabled);
+    const stop = enabled.find((r) => r.checked) ?? enabled[0];
+    if (stop) stop.focus(options);
+    else super.focus(options);
+  }
+
   private getRadios(): TyRadio[] {
     return (Array.from(this.querySelectorAll("ty-radio")) as TyRadio[])
       .filter((r) => typeof r.setTabStop === "function");
@@ -365,12 +376,17 @@ export class TyRadioGroup
   }
 
   /** Report `required` to the owning form — without this the asterisk
-      showed but an empty group submitted anyway. */
+      showed but an empty group submitted anyway. The message is a native
+      radio's; it needs a name, a nameless radio never reports valueMissing. */
   private updateValidity(): void {
     if (this.required && !this.disabled && !this.value) {
       const anchor = this.getRadios().find((r) => !r.disabled);
       const target = anchor?.shadowRoot?.querySelector(".radio-container") as HTMLElement | null;
-      this.applyValidity({ valueMissing: true }, "Please select an option", target ?? undefined);
+      this.applyValidity(
+        { valueMissing: true },
+        nativeMessage("input", { type: "radio", name: "ty", required: true }),
+        target ?? undefined,
+      );
     } else {
       this.applyValidity({});
     }
@@ -382,21 +398,21 @@ export class TyRadioGroup
     const newValue = detail?.value;
     if (typeof newValue !== "string" || newValue === this.value) return;
 
-    this.value = newValue;
-    this.syncChildren();
+    this.select(newValue, e);
+  }
 
+  /**
+   * Select a value as the user did: input + change, like a native radio,
+   * whether by click, arrow keys or Space. Nothing fires when it is already selected.
+   */
+  private select(value: string, originalEvent: Event): void {
+    if (value === this.value) return;
+    this.value = value;
+    this.syncChildren();
+    const detail = { value, formValue: value, originalEvent };
     setTimeout(() => {
-      const eventDetail = {
-        value: newValue,
-        formValue: newValue,
-        originalEvent: e,
-      };
-      this.dispatchEvent(
-        new CustomEvent("input", { detail: eventDetail, bubbles: true, composed: true }),
-      );
-      this.dispatchEvent(
-        new CustomEvent("change", { detail: eventDetail, bubbles: true, composed: true }),
-      );
+      this.dispatchEvent(new CustomEvent("input", { detail, bubbles: true, composed: true }));
+      this.dispatchEvent(new CustomEvent("change", { detail, bubbles: true, composed: true }));
     }, 0);
   }
 
@@ -424,16 +440,7 @@ export class TyRadioGroup
     } else if (["Space", " ", "Enter"].includes(e.key)) {
       if (current) {
         e.preventDefault();
-        this.value = current.value;
-        this.syncChildren();
-        const eventDetail = {
-          value: current.value,
-          formValue: current.value,
-          originalEvent: e,
-        };
-        setTimeout(() => {
-          this.dispatchEvent(new CustomEvent("change", { detail: eventDetail, bubbles: true, composed: true }));
-        }, 0);
+        this.select(current.value, e);
       }
       return;
     } else {
@@ -444,16 +451,7 @@ export class TyRadioGroup
     if (next) {
       next.focus();
       // Per W3C: arrow keys also change selection
-      this.value = next.value;
-      this.syncChildren();
-      const eventDetail = {
-        value: next.value,
-        formValue: next.value,
-        originalEvent: e,
-      };
-      setTimeout(() => {
-        this.dispatchEvent(new CustomEvent("change", { detail: eventDetail, bubbles: true, composed: true }));
-      }, 0);
+      this.select(next.value, e);
     }
   }
 

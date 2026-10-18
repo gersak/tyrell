@@ -6,6 +6,7 @@
 import { ensureStyles } from '../utils/styles.js'
 import { scrollContainerStyles } from '../styles/scroll-container.js'
 import { CustomScrollbar } from '../utils/custom-scrollbar.js'
+import { upgradeProperties } from '../utils/upgrade-properties.js'
 
 export class TyScrollContainer extends HTMLElement {
   private _scrollWrapper: HTMLElement | null = null
@@ -121,6 +122,7 @@ export class TyScrollContainer extends HTMLElement {
   }
 
   connectedCallback(): void {
+    upgradeProperties(this)
     this._scrollWrapper?.addEventListener('scroll', this._onScroll, { passive: true })
 
     this._resizeObserver = new ResizeObserver(() => {

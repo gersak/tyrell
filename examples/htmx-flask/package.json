@@ -1,25 +1,23 @@
 {
   "name": "ty-htmx-flask-example",
   "version": "1.0.0",
-  "description": "Beautiful Flask + HTMX + Ty Components example with Tailwind CSS (Using Ty Components from jsDelivr CDN @gersak/ty@0.1.0)",
+  "description": "Flask + HTMX + Tyrell components example (tyrell-components from jsDelivr, Tailwind CSS)",
   "private": true,
   "scripts": {
     "build:css": "npx @tailwindcss/cli -i ./src/input.css -o ./static/css/app.css --watch",
     "build:css:prod": "npx @tailwindcss/cli -i ./src/input.css -o ./static/css/app.css --minify",
-    "build:icons": "esbuild src/icons-source.js --bundle --minify --format=iife --tree-shaking=true --outfile=static/js/icons-bundle.js",
-    "build:icons:watch": "esbuild src/icons-source.js --bundle --watch --format=iife --tree-shaking=true --outfile=static/js/icons-bundle.js",
-    "dev": "concurrently \"npm run build:css\" \"npm run build:icons:watch\" \"python app.py\"",
+    "build:icons": "esbuild src/icons-source.js --bundle --minify --format=esm --outfile=static/js/icons.js",
+    "build:icons:watch": "esbuild src/icons-source.js --bundle --watch --format=esm --outfile=static/js/icons.js",
+    "dev": "concurrently \"npm run build:css\" \"npm run build:icons:watch\" \".venv/bin/python app.py\"",
     "build": "npm run build:css:prod && npm run build:icons",
-    "setup": "npm install && npm run build",
-    "start": "python app.py"
+    "setup": "./setup.sh",
+    "start": ".venv/bin/python app.py"
   },
   "devDependencies": {
-    "@gersak/ty": "^0.1.908",
     "@tailwindcss/cli": "^4.1.0",
-    "autoprefixer": "^10.4.16",
-    "chokidar-cli": "^3.0.0",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.0",
-    "tailwindcss": "4.1"
+    "tailwindcss": "4.1",
+    "tyrell-components": "1.0.0-TC59"
   }
 }

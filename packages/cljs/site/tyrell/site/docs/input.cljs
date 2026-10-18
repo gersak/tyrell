@@ -54,9 +54,88 @@
 (defn- doc-state [k] (get-in @state/state [:input-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:input-doc k] v))
 
-(defn- email-error [v]
-  (when (and (seq v) (not (re-matches #"[^@\s]+@[^@\s]+\.[^@\s]+" v)))
-    "That doesn't look like an email address"))
+(def ^:private rules-snippets
+  "Forms and validation example, one tab per stack. No validation code anywhere:
+   the form refuses to submit and each field shows its own message."
+  [["html" "HTML" "html"
+    "<form action=\"/invite\" method=\"post\">
+  <ty-input name=\"email\" label=\"Email\" type=\"email\" required></ty-input>
+  <ty-input name=\"code\" label=\"Invite code\" required pattern=\"[A-Z]{3}-[0-9]{4}\"></ty-input>
+  <ty-input name=\"handle\" label=\"Handle\" required minlength=\"3\" maxlength=\"15\"></ty-input>
+  <ty-input name=\"seats\" label=\"Seats\" type=\"number\" required min=\"1\" max=\"50\"></ty-input>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>"]
+   ["react" "React" "javascript"
+    "import { TyInput, TyButton } from 'tyrell-react'
+
+<form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget)) }}>
+  <TyInput name=\"email\" label=\"Email\" type=\"email\" required />
+  <TyInput name=\"code\" label=\"Invite code\" required pattern=\"[A-Z]{3}-[0-9]{4}\" />
+  <TyInput name=\"handle\" label=\"Handle\" required minLength={3} maxLength={15} />
+  <TyInput name=\"seats\" label=\"Seats\" type=\"number\" required min={1} max={50} />
+  <TyButton flavor=\"primary\">Send</TyButton>
+</form>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:form {:on-submit #(do (.preventDefault %) (send! (js/FormData. (.-currentTarget %))))}
+ [:> ty/Input {:name \"email\" :label \"Email\" :type \"email\" :required true}]
+ [:> ty/Input {:name \"code\" :label \"Invite code\" :required true :pattern \"[A-Z]{3}-[0-9]{4}\"}]
+ [:> ty/Input {:name \"handle\" :label \"Handle\" :required true :min-length 3 :max-length 15}]
+ [:> ty/Input {:name \"seats\" :label \"Seats\" :type \"number\" :required true :min 1 :max 50}]
+ [:> ty/Button {:flavor \"primary\"} \"Send\"]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:form {:on {:submit #(do (.preventDefault %) (send! (js/FormData. (.-target %))))}}
+ [:ty-input {:name \"email\" :label \"Email\" :type \"email\" :required \"\"}]
+ [:ty-input {:name \"code\" :label \"Invite code\" :required \"\" :pattern \"[A-Z]{3}-[0-9]{4}\"}]
+ [:ty-input {:name \"handle\" :label \"Handle\" :required \"\" :minlength \"3\" :maxlength \"15\"}]
+ [:ty-input {:name \"seats\" :label \"Seats\" :type \"number\" :required \"\" :min \"1\" :max \"50\"}]
+ [:ty-button {:flavor \"primary\"} \"Send\"]]"]
+   ["datastar" "Datastar" "html"
+    "<form data-on:submit__prevent=\"@post('/invite', {contentType: 'form'})\">
+  <ty-input name=\"email\" label=\"Email\" type=\"email\" required></ty-input>
+  <ty-input name=\"code\" label=\"Invite code\" required pattern=\"[A-Z]{3}-[0-9]{4}\"></ty-input>
+  <ty-input name=\"handle\" label=\"Handle\" required minlength=\"3\" maxlength=\"15\"></ty-input>
+  <ty-input name=\"seats\" label=\"Seats\" type=\"number\" required min=\"1\" max=\"50\"></ty-input>
+  <ty-button flavor=\"primary\">Send</ty-button>
+</form>"]])
+
+(def ^:private api-snippets
+  "Values and events card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const input = document.getElementById('amount');
+
+input.value = '42';
+
+input.addEventListener('input', (e) => {
+  const { value, formattedValue, rawValue } = e.detail;
+  // value: 1234.5 · formattedValue: '$1,234.50' · rawValue: what was typed
+});
+input.addEventListener('change', (e) => save(e.detail.value));"]
+   ["react" "React" "javascript"
+    "import { TyInput } from 'tyrell-react'
+
+<TyInput type=\"currency\" value={amount}
+  onChange={(e) => {
+    const { value, formattedValue, rawValue } = e.detail
+    // value: 1234.5 · formattedValue: '$1,234.50' · rawValue: what was typed
+  }}
+  onChangeCommit={(e) => save(e.detail.value)} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Input {:type \"currency\" :value @amount
+              :on-change #(reset! amount (.. % -detail -value))
+              :on-change-commit #(save! (.. % -detail -value))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-input {:type \"currency\" :value amount
+            :on {:input #(set-amount! (.. % -detail -value))
+                 :change #(save! (.. % -detail -value))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-input type=\"currency\" data-signals:amount=\"0\"
+  data-on:input=\"$amount = evt.detail.value\"
+  data-on:change=\"@post('/save')\">
+</ty-input>"]])
 
 (defn view []
   (component-page
@@ -71,8 +150,10 @@
            [:ty-input {:label "Email" :type "email" :value "ada@example.com" :size "md"}
             [:ty-icon {:slot "start" :name "mail"}]]
            [:ty-input {:label "Budget" :type "currency" :currency "EUR" :locale "de-DE" :value "2500" :size "md"}]
-           [:ty-input {:label "Handle" :value "ada lovelace" :size "md" :flavor "danger"
-                       :error "No spaces, please"}]]}
+           (let [handle (or (doc-state :handle) "ada lovelace")]
+             [:ty-input {:label "Handle" :value handle :size "md"
+                         :error (when (re-find #"\s" handle) "No spaces, please")
+                         :on {:input #(set-doc! :handle (.. % -detail -value))}}])]}
 
    (playground
     {:id :input
@@ -126,36 +207,35 @@
         [:span {:slot "end"} ".dev"]]])
 
      (example
-      {:title "Validation"
-       :span 3
-       :description [:span "The field checks " [:code "required"] ". Everything else is yours: set "
-                     [:code "error"] " and it shows under the field."]
-       :code "email.addEventListener('input', (e) => {
-  const ok = isEmail(e.detail.value);
-  email.error = ok ? '' : 'Not an email';
-});"}
-      (let [v (doc-state :email)]
-        [:ty-input {:label "Work email" :type "email" :required "" :placeholder "you@company.com"
-                    :value (or v "ada@")
-                    :error (or (email-error (or v "ada@")) "")
-                    :flavor (cond (email-error (or v "ada@")) "danger"
-                                  (seq v) "success"
-                                  :else "neutral")
-                    :on {:input #(set-doc! :email (.. % -detail -value))}}]))
-
-     (example
-      {:title "Debounce"
-       :span 3
-       :description [:span [:code "debounce"] " (ms) delays " [:code "input"] " and " [:code "change"]
-                     " until typing pauses. Blur fires anything pending."]
-       :code "<ty-input debounce=\"400\">
-</ty-input>"}
-      (let [{:keys [n q]} (doc-state :debounce)]
-        [:div.flex.flex-col.gap-3.w-full
-         [:ty-input {:debounce "400" :placeholder "Type fast…"
-                     :on {:input #(set-doc! :debounce {:n (inc (or n 0)) :q (.. % -detail -value)})}}
-          [:ty-icon {:slot "start" :name "search"}]]
-         [:code.ty-text-.text-xs (str (or n 0) " event" (when (not= 1 n) "s") (when q (str " · \"" q "\"")))]]))
+      {:title "Forms and validation"
+       :span 6
+       :description [:span "Give each field a " [:code "name"] " and its value goes into the form. Rules do the checking: "
+                     [:code "required"] ", " [:code "type=\"email\""] ", " [:code "pattern"] ", "
+                     [:code "minlength"] " / " [:code "maxlength"] ", " [:code "min"] " / " [:code "max"]
+                     ". A field you edit and leave shows its message; on submit every failing field does and the first one in form order takes focus. Nothing is sent until all pass, a message clears as soon as the value is fixed, and "
+                     [:code "form.reset()"] " clears them all. "
+                     "No validation code. Messages are the browser's own, in the user's language; length messages are Ty's, worded with "
+                     [:code "too-short-message"] " / " [:code "too-long-message"] ". "
+                     [:code "setCustomValidity()"] " replaces any of them, and for a check only your server can make, set "
+                     [:code "error"] " on the field: validation never overwrites or removes it."]
+       :tabs rules-snippets}
+      (let [sent (doc-state :rules-sent)]
+        [:form.flex.flex-col.gap-4.w-full
+         {:on {:submit (fn [^js e]
+                         (.preventDefault e)
+                         (set-doc! :rules-sent
+                                   (->> (js/FormData. (.-target e)) (.entries) (js/Array.from)
+                                        (map (fn [[k v]] (str k "=" v)))
+                                        (str/join "&"))))}}
+         [:div.gap-3 {:style {:display "grid" :grid-template-columns "repeat(auto-fit, minmax(150px, 1fr))"}}
+          [:ty-input {:name "email" :label "Email" :type "email" :required "" :value "ada@"}]
+          [:ty-input {:name "code" :label "Invite code" :required "" :pattern "[A-Z]{3}-[0-9]{4}" :value "abc-12"
+                      :placeholder "ABC-1234"}]
+          [:ty-input {:name "handle" :label "Handle" :required "" :minlength "3" :maxlength "15" :value "ad"}]
+          [:ty-input {:name "seats" :label "Seats" :type "number" :required "" :min "1" :max "50" :value "80"}]]
+         [:div.flex.items-center.gap-3
+          [:ty-button {:size "md" :flavor "primary"} "Send"]
+          [:code.ty-text-.text-xs (if sent (str "FormData: " sent) "Press Send, then fix the fields.")]]]))
 
      (example
       {:title "Sizes with buttons"
@@ -168,48 +248,27 @@
        (for [[fs bs] [["xs" "sm"] ["sm" "md"] ["md" "lg"] ["lg" "xl"]]]
          [:div.flex.items-center.gap-3 {:replicant/key fs}
           [:span.font-mono.text-xs.ty-text--.shrink-0 {:style {:width "4.5rem"}} (str fs " + " bs)]
-          [:ty-input {:size fs :placeholder "you@example.com" :style {:flex "1"}}]
+          [:ty-input {:size fs :placeholder "you@example.com" :style {:flex "1" :min-width "0"}}]
           [:ty-button {:size bs :flavor "primary"} "Subscribe"]])])
 
      (example
-      {:title "With an HTML form"
-       :span 6
-       :description [:span "Form-associated: set " [:code "name"] " and the value is in FormData. "
-                     [:code "required"] " blocks submission like a native field."]
-       :code "<form>
-  <ty-input name=\"name\" label=\"Name\" required></ty-input>
-  <ty-input name=\"salary\" label=\"Salary\" type=\"currency\"></ty-input>
-  <ty-button size=\"md\" flavor=\"primary\">Send</ty-button>
-</form>
-<!-- FormData: name=Ada&salary=85000 -->"}
-      (let [sent (doc-state :sent)]
-        [:form.flex.flex-col.gap-4.w-full
-         {:on {:submit (fn [^js e]
-                         (.preventDefault e)
-                         (set-doc! :sent (->> (js/FormData. (.-target e))
-                                              (.entries)
-                                              (js/Array.from)
-                                              (map (fn [[k v]] (str k "=" v)))
-                                              (str/join "&"))))}}
-         [:div.flex.flex-wrap.items-end.gap-3
-          [:ty-input {:name "name" :label "Name" :required "" :value "Ada" :style {:flex "1" :min-width "180px"}}]
-          [:ty-input {:name "salary" :label "Salary" :type "currency" :value "85000" :style {:flex "1" :min-width "180px"}}]
-          [:ty-button {:size "md" :flavor "primary"} "Send"]]
-         [:code.ty-text-.text-xs (if sent (str "FormData: " sent) "Press Send. Clear Name first to see required at work.")]]))
+      {:title "Debounce"
+       :span 2
+       :description [:span [:code "debounce"] " (ms) delays " [:code "input"] " and " [:code "change"]
+                     " until typing pauses. Blur fires anything pending."]
+       :code "<ty-input debounce=\"400\">
+</ty-input>"}
+      (let [{:keys [n q]} (doc-state :debounce)]
+        [:div.flex.flex-col.gap-3.w-full
+         [:ty-input {:debounce "400" :placeholder "Type fast…"
+                     :on {:input #(set-doc! :debounce {:n (inc (or n 0)) :q (.. % -detail -value)})}}
+          [:ty-icon {:slot "start" :name "search"}]]
+         [:code.ty-text-.text-xs (str (or n 0) " event" (when (not= 1 n) "s") (when q (str " · \"" q "\"")))]]))
 
      (example
-      {:title "JavaScript API"
-       :lang "javascript"
-       :code "const input = document.querySelector('ty-input');
-
-input.value = '42';
-input.error = 'Too low';        // '' clears it
-
-input.addEventListener('input', (e) => {
-  const { value, formattedValue, rawValue } = e.detail;
-  // value: 1234.5 · formattedValue: '$1,234.50' · rawValue: what was typed
-});
-input.addEventListener('change', (e) => save(e.detail.value));"}
+      {:title "Values and events"
+       :span 4
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -261,7 +320,11 @@ input.addEventListener('change', (e) => save(e.detail.value));"}
                   "Label & state"
                   ["label" "string" "Label above the field."]
                   ["required" "boolean" "false" "Marks the label and blocks form submission while empty."]
-                  ["error" "string" "Message under the field. Empty string clears it."]
+                  ["pattern" "string" "Regex the whole value must match. Text types."]
+                  ["minlength / maxlength" "number" "Character limits. Typing stops at maxlength. Text types."]
+                  ["min / max" "number" "Smallest / largest numeric value. number, currency, percent, compact."]
+                  ["too-short-message / too-long-message" "string" "Wording for the length messages. {minlength} {maxlength} {length} are filled in."]
+                  ["error" "string" "Message under the field. Empty string clears it. While it's set, the field looks like flavor=\"danger\", whatever its flavor. When it clears, your flavor's look comes back; the flavor attribute itself never changes. Validation never overwrites or removes one you set, not even on form.reset(); clear it to let validation messages show again."]
                   ["disabled" "boolean" "false" "Not editable, left out of the form."]
                   "Appearance"
                   ["size" "string" "\"sm\"" "xs, sm, md, lg or xl. Shared ladder with buttons and other fields."]

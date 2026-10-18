@@ -6,7 +6,7 @@
 
 import { ensureStyles } from '../utils/styles.js';
 import { calendarNavigationStyles } from '../styles/calendar-navigation.js';
-import { getMonthName, parseISODate } from '../utils/calendar-utils.js';
+import { getMonthName, parseDateDay } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
 import { TyComponent } from '../base/ty-component.js';
 import type { PropertyChange } from '../utils/property-manager.js';
@@ -86,10 +86,11 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
       }
     },
     
+    // Unset by default: `get locale` then reads the ancestor lang
     locale: {
       type: 'string' as const,
       visual: true,
-      default: 'en-US'
+      default: ''
     },
     
     size: {
@@ -157,9 +158,10 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     this._state.displayMonth = this.displayMonth;
     this._state.displayYear = this.displayYear;
     
-    // Setup locale observer to watch for ancestor lang changes
+    // Setup locale observer to watch for ancestor lang changes (moot with
+    // an explicit locale: ty-calendar sets one)
     this._localeObserver = observeLocaleChanges(this, () => {
-      this.render();
+      if (!this.getProperty('locale')) this.render();
     });
     
     this.render();
@@ -287,8 +289,8 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
    * min/max as month indices (null when unset/invalid)
    */
   private boundIndices(): { minIdx: number | null; maxIdx: number | null } {
-    const min = parseISODate(this.min);
-    const max = parseISODate(this.max);
+    const min = parseDateDay(this.min);
+    const max = parseDateDay(this.max);
     return {
       minIdx: min ? TyCalendarNavigation.monthIndex(min.year, min.month) : null,
       maxIdx: max ? TyCalendarNavigation.monthIndex(max.year, max.month) : null,
@@ -368,6 +370,16 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     const months = this.view === 'months';
     const monthName = getMonthName(this._state.displayMonth, this.locale, 'long');
 
+    // The buttons are rebuilt below; a focused one would take the focus
+    // with it (to <body>), and a keyboard user pressing an arrow again would
+    // press nothing. Focus its successor instead.
+    const had = root.activeElement;
+    const place = !had ? null
+      : had.classList.contains('nav-title') ? 'title'
+      : had.className.includes('-prev') ? 'prev'
+      : had.className.includes('-next') ? 'next'
+      : null;
+
     root.innerHTML = '';
 
     const header = document.createElement('div');
@@ -408,29 +420,33 @@ export class TyCalendarNavigation extends TyComponent<NavigationState> {
     const unit = months ? 'year' : 'month';
     const arrows = document.createElement('div');
     arrows.className = 'nav-group nav-arrows';
-    arrows.appendChild(
-      this.createButton(
-        `nav-btn nav-${unit}-prev`,
-        `Previous ${unit}`,
-        CHEVRON_LEFT_SVG,
-        () => this.navigateBy(-step),
-        this.isNavDisabled(-step)
-      )
+    const prev = this.createButton(
+      `nav-btn nav-${unit}-prev`,
+      `Previous ${unit}`,
+      CHEVRON_LEFT_SVG,
+      () => this.navigateBy(-step),
+      this.isNavDisabled(-step)
     );
-    arrows.appendChild(
-      this.createButton(
-        `nav-btn nav-${unit}-next`,
-        `Next ${unit}`,
-        CHEVRON_RIGHT_SVG,
-        () => this.navigateBy(step),
-        this.isNavDisabled(step)
-      )
+    const next = this.createButton(
+      `nav-btn nav-${unit}-next`,
+      `Next ${unit}`,
+      CHEVRON_RIGHT_SVG,
+      () => this.navigateBy(step),
+      this.isNavDisabled(step)
     );
+    arrows.appendChild(prev);
+    arrows.appendChild(next);
 
     header.appendChild(title);
     header.appendChild(arrows);
 
     root.appendChild(header);
+
+    if (place) {
+      // At a bound the arrow is disabled now: the title is always there
+      const successor = place === 'prev' ? prev : place === 'next' ? next : title;
+      (successor.disabled ? title : successor).focus({ preventScroll: true });
+    }
   }
 }
 

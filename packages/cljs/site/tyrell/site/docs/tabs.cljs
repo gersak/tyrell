@@ -74,6 +74,135 @@
     (for [[id l t] project-tabs]
       [:ty-tab {:replicant/key id :id id :label l} (pane l t)])]])
 
+(def ^:private controlled-snippets
+  "Controlled card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const tabs = document.querySelector('ty-tabs');
+
+tabs.addEventListener('ty-tab-change',
+  (e) => save(e.detail.activeId));
+tabs.setAttribute('active', 'c');"]
+   ["react" "React" "javascript"
+    "import { TyTabs, TyTab, TyButton } from 'tyrell-react'
+
+<TyTabs active={tab} height=\"90px\"
+  onChange={(e) => setTab(e.detail.activeId)}>
+  <TyTab id=\"a\" label=\"A\">…</TyTab>
+  <TyTab id=\"b\" label=\"B\">…</TyTab>
+  <TyTab id=\"c\" label=\"C\">…</TyTab>
+</TyTabs>
+<TyButton onClick={() => setTab('c')}>Jump to C</TyButton>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Tabs {:active @tab :height \"90px\"
+             :on-change #(reset! tab (.. % -detail -activeId))}
+ [:> ty/Tab {:id \"a\" :label \"A\"} …]
+ [:> ty/Tab {:id \"b\" :label \"B\"} …]
+ [:> ty/Tab {:id \"c\" :label \"C\"} …]]
+[:> ty/Button {:on-click #(reset! tab \"c\")} \"Jump to C\"]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-tabs {:active tab :height \"90px\"
+           :on {:ty-tab-change #(set-tab! (.. % -detail -activeId))}}
+ [:ty-tab {:id \"a\" :label \"A\"} …]
+ [:ty-tab {:id \"b\" :label \"B\"} …]
+ [:ty-tab {:id \"c\" :label \"C\"} …]]
+[:ty-button {:on {:click #(set-tab! \"c\")}} \"Jump to C\"]"]
+   ["datastar" "Datastar" "html"
+    "<div data-signals:tab=\"'a'\">
+  <ty-tabs height=\"90px\" data-attr:active=\"$tab\"
+    data-on:ty-tab-change=\"$tab = evt.detail.activeId\">
+    <ty-tab id=\"a\" label=\"A\">…</ty-tab>
+    <ty-tab id=\"b\" label=\"B\">…</ty-tab>
+    <ty-tab id=\"c\" label=\"C\">…</ty-tab>
+  </ty-tabs>
+  <ty-button data-on:click=\"$tab = 'c'\">Jump to C</ty-button>
+</div>"]])
+
+(def ^:private lazy-snippets
+  "Lazy card, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-tab id=\"reports\" label=\"Reports\" lazy></ty-tab>
+
+<script>
+  reports.addEventListener('ty-tab-load', async (e) => {
+    const res = await fetch(`/tabs/${e.detail.id}`).catch(() => null);
+    if (res?.ok) e.target.innerHTML = await res.text();
+    else e.target.loadFailed();
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyTab } from 'tyrell-react'
+
+<TyTab id=\"reports\" label=\"Reports\" lazy
+  onTabLoad={async (e) => {
+    const tab = e.target
+    const res = await fetch(`/tabs/${e.detail.id}`).catch(() => null)
+    if (res?.ok) setReports(await res.json())
+    else tab.loadFailed()
+  }}>
+  {reports && <Reports data={reports} />}
+</TyTab>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Tab {:id \"reports\" :label \"Reports\" :lazy true
+            :on-tab-load (fn [e]
+                           (let [tab (.-target e)]
+                             (-> (fetch-tab (.. e -detail -id))
+                                 (.then #(reset! reports %))
+                                 (.catch #(.loadFailed tab)))))}
+ (when @reports [reports-panel @reports])]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-tab {:id \"reports\" :label \"Reports\" :lazy \"\"
+          :on {:ty-tab-load
+               (fn [e]
+                 (let [tab (.-target e)]
+                   (-> (fetch-tab (.. e -detail -id))
+                       (.then #(set-reports! %))
+                       (.catch #(.loadFailed tab)))))}}
+ (when reports (reports-panel reports))]"]
+   ["datastar" "Datastar" "html"
+    "<!-- the response patches <ty-tab id=\"reports\"> with its content -->
+<ty-tab id=\"reports\" label=\"Reports\" lazy
+  data-on:ty-tab-load=\"@get('/tabs/reports')\"></ty-tab>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const tabs = document.querySelector('ty-tabs');
+
+tabs.setAttribute('active', 'settings');
+
+tabs.addEventListener('ty-tab-change', (e) => {
+  const { activeId, activeIndex, previousId } = e.detail;
+});"]
+   ["react" "React" "javascript"
+    "import { TyTabs, TyTab } from 'tyrell-react'
+
+<TyTabs active={tab}
+  onChange={(e) => {
+    const { activeId, activeIndex, previousId } = e.detail
+    setTab(activeId)
+  }}>
+  <TyTab id=\"settings\" label=\"Settings\">…</TyTab>
+</TyTabs>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Tabs {:active @tab
+             :on-change #(reset! tab (.. % -detail -activeId))}   ; -activeIndex, -previousId
+ [:> ty/Tab {:id \"settings\" :label \"Settings\"} …]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-tabs {:active tab
+           :on {:ty-tab-change #(set-tab! (.. % -detail -activeId))}}   ; -activeIndex, -previousId
+ [:ty-tab {:id \"settings\" :label \"Settings\"} …]]"]
+   ["datastar" "Datastar" "html"
+    "<ty-tabs data-signals:tab=\"'settings'\" data-attr:active=\"$tab\"
+  data-on:ty-tab-change=\"$tab = evt.detail.activeId\">
+  <ty-tab id=\"settings\" label=\"Settings\">…</ty-tab>
+</ty-tabs>"]])
+
 (defn view []
   (component-page
    {:title "Tabs"
@@ -123,9 +252,7 @@
       {:title "Controlled"
        :span 2
        :description [:span "Listen for " [:code "ty-tab-change"] " and write " [:code "active"] " back, or switch from outside."]
-       :code "tabs.addEventListener('ty-tab-change',
-  (e) => save(e.detail.activeId));
-tabs.setAttribute('active', 'b');"}
+       :tabs controlled-snippets}
       (let [active (or (doc-state :active) "a")]
         [:div.flex.flex-col.gap-3.w-full
          [:ty-tabs {:active active :height "90px"
@@ -166,13 +293,7 @@ tabs.setAttribute('active', 'b');"}
                      " when shown and spins (or shows your " [:code "slot=\"loading\""] ") until content arrives. "
                      "If loading fails, call " [:code "loadFailed()"] ": the tab shows " [:code "slot=\"error\""]
                      " and Retry. Invoices fails once."]
-       :code "<ty-tab id=\"reports\" label=\"Reports\" lazy></ty-tab>
-
-reports.addEventListener('ty-tab-load', async (e) => {
-  const res = await fetch(`/tabs/${e.detail.id}`).catch(() => null);
-  if (res?.ok) e.target.innerHTML = await res.text();
-  else e.target.loadFailed();
-});"}
+       :tabs lazy-snippets}
       [:div.flex.flex-col.gap-3.w-full
        [:ty-tabs {:active "summary" :height "120px"}
         (for [[id label text] lazy-tabs]
@@ -190,14 +311,7 @@ reports.addEventListener('ty-tab-load', async (e) => {
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const tabs = document.querySelector('ty-tabs');
-
-tabs.setAttribute('active', 'settings');
-
-tabs.addEventListener('ty-tab-change', (e) => {
-  const { activeId, activeIndex, previousId } = e.detail;
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

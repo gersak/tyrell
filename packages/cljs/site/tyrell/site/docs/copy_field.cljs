@@ -44,6 +44,64 @@
 (def ^:private config
   "{\"theme\": \"dark\", \"primary\": \"#e0473e\", \"radius\": 8, \"font\": \"Inter\", \"density\": \"comfortable\"}")
 
+(def ^:private confirm-snippets
+  "Confirm the copy, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const field = document.getElementById('coupon');
+
+field.addEventListener(
+  'copy-success',
+  (e) => toast(e.detail.value));"]
+   ["react" "React" "javascript"
+    "import { TyCopy } from 'tyrell-react'
+
+<TyCopy value=\"SPRING-25\"
+  onCopySuccess={(e) => toast(e.detail.value)} />"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Copy {:value \"SPRING-25\"
+             :on-copy-success #(toast! (.. % -detail -value))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-copy {:value \"SPRING-25\"
+           :on {:copy-success #(toast! (.. % -detail -value))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-copy value=\"SPRING-25\"
+  data-on:copy-success=\"$toast = 'Copied ' + evt.detail.value\"></ty-copy>"]])
+
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const field = document.getElementById('token');
+
+field.value = token;          // shown as text, copied verbatim
+
+field.addEventListener('copy-success', (e) => log(e.detail.value));
+field.addEventListener('copy-error', (e) => {
+  // no clipboard permission and the fallback failed too
+  console.warn(e.detail.error);
+});"]
+   ["react" "React" "javascript"
+    "import { TyCopy } from 'tyrell-react'
+
+<TyCopy value={token}           // shown as text, copied verbatim
+  onCopySuccess={(e) => log(e.detail.value)}
+  onCopyError={(e) => console.warn(e.detail.error)} />  {/* no clipboard, fallback failed */}"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Copy {:value @token     ; shown as text, copied verbatim
+             :on-copy-success #(log! (.. % -detail -value))
+             :on-copy-error #(js/console.warn (.. % -detail -error))}]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-copy {:value token       ; shown as text, copied verbatim
+           :on {:copy-success #(log! (.. % -detail -value))
+                :copy-error #(js/console.warn (.. % -detail -error))}}]"]
+   ["datastar" "Datastar" "html"
+    "<ty-copy data-attr:value=\"$token\"
+  data-on:copy-success=\"@post('/audit/copied')\"
+  data-on:copy-error=\"console.warn(evt.detail.error)\"></ty-copy>"]])
+
 (defn view []
   (component-page
    {:title "Copy Field"
@@ -92,9 +150,7 @@
        :span 3
        :description [:span "The icon turns into a check for two seconds. Listen for "
                      [:code "copy-success"] " to show more, like a toast."]
-       :code "field.addEventListener(
-  'copy-success',
-  (e) => toast(e.detail.value));"}
+       :tabs confirm-snippets}
       (let [n (doc-state :copies)]
         [:div.flex.flex-col.gap-3.w-full
          [:ty-copy {:label "Coupon" :value "SPRING-25" :format "code" :flavor "success"
@@ -113,16 +169,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const field = document.querySelector('ty-copy');
-
-field.value = token;          // shown as text, copied verbatim
-
-field.addEventListener('copy-success', (e) => log(e.detail.value));
-field.addEventListener('copy-error', (e) => {
-  // no clipboard permission and the fallback failed too
-  console.warn(e.detail.error);
-});"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

@@ -223,7 +223,7 @@
                 :label "Tech stack"
                 :id "select-preview"
                 :value "react,clojure"}
-    [:ty-option {:value "react" :flavor "info"} "React"]
+    [:ty-option {:value "react" :flavor "neutral"} "React"]
     [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
     [:ty-option {:value "node-js" :flavor "success"} "Node.js"]
     [:ty-option {:value "python" :flavor "warning"} "Python"]]
@@ -351,7 +351,7 @@
    [:div.flex.gap-2.h-full.items-center.px-3
     {:style {:padding-top "12px"
              :padding-bottom "12px"}}
-    (for [[i flavor] (map-indexed vector ["primary" "success" "warning" "info" "danger" "neutral"])]
+    (for [[i flavor] (map-indexed vector ["primary" "success" "warning" "danger" "neutral"])]
       [:div.flex-shrink-0.rounded
        {:replicant/key i :class (str "ty-bg-" flavor "-")
         :style {:width "60px"
@@ -392,7 +392,7 @@
               :size "lg"
               
               :pulse true}]
-   [:ty-icon.ty-text-info {:name "loader-2"
+   [:ty-icon.ty-text-primary {:name "loader-2"
               :size "lg"
               
               :spin true}]

@@ -133,6 +133,7 @@ if (typeof window !== 'undefined') {
   window.tyResizeObserver = {
     getSize: (id: string) => getResizeSize(id),
     onResize: (id: string, callback: ResizeCallback) => subscribeResize(id, callback),
+    getAllSizes: () => getAllSizes(),
     get sizes() { return getAllSizes() }
   }
 

@@ -2,5 +2,6 @@
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.121"}
         reagent/reagent {:mvn/version "2.0.0-alpha2"}
-        dev.gersak/tyrell {:mvn/version "1.0.0-RC6"}}
- :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "2.28.10"}}}}}
+        dev.gersak/tyrell {:mvn/version "1.0.0-RC17-SNAPSHOT"}
+        dev.gersak/tyrell-icons-material {:mvn/version "1.0.0-RC17-SNAPSHOT"}}
+ :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "2.28.23"}}}}}

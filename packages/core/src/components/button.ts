@@ -11,6 +11,7 @@ import { ensureStyles, buildClassList } from "../utils/styles.js";
 import { buttonStyles, buttonCustomFlavorCss } from "../styles/button.js";
 import { syncCustomFlavorSheet } from "../utils/flavor-sheet.js";
 import { getLoaderSvg } from "../utils/loader-registry.js";
+import { asSubmitAttempt } from "../utils/validity.js";
 
 type Appearance = "solid" | "outlined" | "ghost";
 
@@ -116,12 +117,58 @@ export class TyButton
 
   private _structureInitialized = false;
 
+  // Disabled by an ancestor <fieldset disabled> (or its own attribute), as
+  // reported by formDisabledCallback. Kept apart from the `disabled`
+  // property, like native: re-enabling the fieldset restores the button.
+  private _formDisabled = false;
+
   // Adopted sheet with generated rules for a custom (non-built-in) flavor
   private _customFlavorSheet: CSSStyleSheet | null = null;
+
+  // The click event this button dispatched last (see initializeButtonStructure)
+  private _ownClick: Event | null = null;
 
   constructor() {
     super();
     ensureStyles(this.shadowRoot!, { css: buttonStyles, id: "ty-button" });
+
+    // Some clicks land on the host and never pass the inner <button>:
+    // host.click(), a wrapping <label>, a press on host padding or border,
+    // fireEvent/userEvent on the host. Swallow them and press the inner
+    // button instead, so they get the same guard, the same single click
+    // event and the same submit/reset as a press on the button itself.
+    // Capture, so this runs before any bubbling listener on the host.
+    this.addEventListener(
+      "click",
+      (e: Event) => {
+        const button = this.shadowRoot!.querySelector("button");
+        if (!button || e === this._ownClick) return;
+        // On its way to the inner button, which handles it
+        if (e.composedPath().includes(button)) return;
+        e.stopImmediatePropagation();
+        if (!this._pressOffButton(e)) button.click();
+      },
+      true,
+    );
+  }
+
+  /**
+   * A real press inside the host's content box that missed the button: the
+   * empty host below a wide button that a min-height made taller, or around
+   * one a page's display: flex stretched. Nothing there looks like the
+   * button, so it's no press. Host padding and border are outside the
+   * content box.
+   */
+  private _pressOffButton(e: Event): boolean {
+    if (!e.isTrusted || !(e instanceof MouseEvent)) return false;
+    const r = this.getBoundingClientRect();
+    const s = getComputedStyle(this);
+    const px = (p: string) => parseFloat(s.getPropertyValue(p)) || 0;
+    const left = r.left + px("border-left-width") + px("padding-left");
+    const right = r.right - px("border-right-width") - px("padding-right");
+    const top = r.top + px("border-top-width") + px("padding-top");
+    const bottom = r.bottom - px("border-bottom-width") - px("padding-bottom");
+    return e.clientX >= left && e.clientX < right && e.clientY >= top && e.clientY < bottom;
   }
 
   protected onConnect(): void {
@@ -132,6 +179,22 @@ export class TyButton
     if (changes.some((c) => c.name === "flavor")) {
       this._syncCustomFlavor();
     }
+  }
+
+  formDisabledCallback(disabled: boolean): void {
+    this._formDisabled = disabled;
+    if (this._structureInitialized) this.render();
+  }
+
+  private get _isDisabled(): boolean {
+    return this.disabled || this._formDisabled;
+  }
+
+  /** Focus the inner <button>. The host itself isn't focusable. */
+  focus(options?: FocusOptions): void {
+    const button = this.shadowRoot?.querySelector("button");
+    if (button) button.focus(options);
+    else super.focus(options);
   }
 
   /**
@@ -271,8 +334,9 @@ export class TyButton
         if (this.name && this.value) {
           this._internals.setFormValue(this.value);
         }
+        // A submit attempt: the first failing field takes focus.
         try {
-          form.requestSubmit();
+          asSubmitAttempt(() => form.requestSubmit());
         } finally {
           if (this.name && this.value) this._internals.setFormValue(null);
         }
@@ -290,13 +354,12 @@ export class TyButton
     const classes = this.buildClasses();
 
     const button = document.createElement("button");
-    button.disabled = this.disabled;
+    button.disabled = this._isDisabled;
     button.className = classes;
-    // The only thing the outside can reach. Host styling never lands on the
-    // control (the host is a plain inline-block wrapper around it), so without
-    // this a consumer's `min-height` grows the host box and manufactures a
-    // dead strip that looks clickable and isn't. Same convention as
-    // ty-tag::part(container) / ty-tabs::part(strip).
+    // The only thing the outside can reach. The control fills whatever box
+    // the host gets (see :host in styles/button.ts), but host styling like
+    // padding or border-radius never lands on the control — this does.
+    // Same convention as ty-tag::part(container) / ty-tabs::part(strip).
     button.setAttribute("part", "button");
 
     const loader = document.createElement("span");
@@ -319,17 +382,29 @@ export class TyButton
     button.appendChild(defaultSlot);
     button.appendChild(endSlot);
 
+    // The native click never leaves the shadow root, so bubbling listeners
+    // see exactly one click per press: the CustomEvent below, or none at all
+    // while disabled or loading (a disabled native button fires no click).
+    // Capture listeners above the button can't be shielded: the native
+    // click passes them on its way in, before this runs.
+    // Like native, listeners run BEFORE the default action, and
+    // preventDefault() in any of them cancels the submit/reset.
     button.addEventListener("click", (e: Event) => {
-      if (this.disabled || this.loading) return;
+      // A click in a ty-popup slotted in here (<ty-button>Share<ty-popup>…)
+      // is not a press of this button: let it through as it is, so it
+      // doesn't submit the form and listeners see its real target.
+      const path = e.composedPath();
+      if (path.slice(0, path.indexOf(button)).some((n) => n instanceof Element && n.localName === "ty-popup")) return;
       e.stopPropagation();
-      this.handleFormAction();
-      this.dispatchEvent(
-        new CustomEvent("click", {
-          bubbles: true,
-          composed: true,
-          detail: { originalEvent: e },
-        }),
-      );
+      if (this._isDisabled || this.loading) return;
+      const click = new CustomEvent("click", {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: { originalEvent: e },
+      });
+      this._ownClick = click;
+      if (this.dispatchEvent(click)) this.handleFormAction();
     });
 
     this.applyLoadingState(button);
@@ -342,11 +417,14 @@ export class TyButton
     button.classList.toggle("loading", isLoading);
     if (isLoading) {
       button.setAttribute("aria-busy", "true");
+      // Clicks are swallowed while loading; say so, but stay focusable.
+      button.setAttribute("aria-disabled", "true");
       // Pull the latest registered loader SVG so registry changes take effect
       const loader = button.querySelector(".loader-icon");
       if (loader) loader.innerHTML = getLoaderSvg();
     } else {
       button.removeAttribute("aria-busy");
+      button.removeAttribute("aria-disabled");
     }
   }
 
@@ -361,7 +439,7 @@ export class TyButton
     const classes = this.buildClasses();
     const button = shadow.querySelector("button");
     if (button) {
-      button.disabled = this.disabled;
+      button.disabled = this._isDisabled;
       button.className = classes;
       this.applyLoadingState(button);
     }

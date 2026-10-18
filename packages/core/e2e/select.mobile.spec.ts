@@ -23,7 +23,7 @@ test.describe('ty-select — mobile full-screen dialog', () => {
     const opts = Array.from({ length: 10 }, (_, i) => `<ty-option value="v${i}">Item ${i}</ty-option>`).join('')
     await mount(page, `<ty-select id="sel" label="Items">${opts}</ty-select>`)
     await page.locator('#sel .select-stub').tap()
-    const visible = await page.locator('#sel ty-option:not([hidden])').count()
+    const visible = await page.locator('#sel ty-option:visible').count()
     expect(visible).toBe(10)
     await expect(page.locator('#sel .mobile-available-section')).toHaveAttribute('data-empty', 'false')
   })
@@ -44,7 +44,7 @@ test.describe('ty-select — mobile full-screen dialog', () => {
     await mount(page, `<ty-select id="sel" label="Items">${opts}</ty-select>`)
     await page.locator('#sel .select-stub').tap()
     await page.locator('#sel .mobile-search-input').fill('Item 5')
-    const visible = await page.locator('#sel ty-option:not([hidden])').count()
+    const visible = await page.locator('#sel ty-option:visible').count()
     expect(visible).toBe(1)
   })
 
@@ -57,7 +57,7 @@ test.describe('ty-select — mobile full-screen dialog', () => {
     await page.locator('#sel .mobile-close-button').tap()
     await expect(page.locator('#sel .mobile-dialog[open]')).toHaveCount(0)
     await stub.tap()
-    const visible = await page.locator('#sel ty-option:not([hidden])').count()
+    const visible = await page.locator('#sel ty-option:visible').count()
     expect(visible).toBe(10)
   })
 

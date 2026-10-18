@@ -439,7 +439,9 @@ function updateMarker(el: TyTabs, activeId: string, forceSnap = false): void {
   marker.style.height = `${position.height}px`;
 
   if (snap) {
-    marker.offsetWidth; // flush styles so the snap isn't animated
+    // Flush styles so the snap isn't animated. A call: the CDN build's
+    // terser drops a bare property read.
+    marker.getBoundingClientRect();
     marker.style.transition = '';
   }
 }

@@ -184,7 +184,7 @@ export const calendarMonthStyles = `
 }
 
 .calendar-day-cell.other-month:hover {
-  color: var(--ty-calendar-day-hover-color, var(--ty-text-soft, var(--ty-text-)));
+  color: var(--ty-calendar-day-hover-color, var(--ty-text-soft));
   background-color: var(--ty-calendar-day-hover-bg, var(--ty-bg-neutral-soft));
 }
 

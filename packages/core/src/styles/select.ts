@@ -316,4 +316,11 @@ export const selectStyles = `
   display: block;
   width: 100%;
 }
+
+/* Options the author hid and options the search left out. Beats the display
+   rule above, which beats the browser's own [hidden] { display: none }. */
+#options-slot::slotted([hidden]),
+#options-slot::slotted([filtered-out]) {
+  display: none !important;
+}
 `;

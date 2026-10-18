@@ -652,6 +652,7 @@ html:root,
     from var(--ty-neutral-seed-resolved) var(--ty-l-bg-neutral-faint)
       calc(c * var(--ty-c-bg-neutral-faint-mult)) h
   );
+  --ty-border-neutral: var(--ty-color-neutral-soft);
 
   /* ----------------------------------------------------------------
    * Global neutral borders — own family, own L ladder (Tier 2).

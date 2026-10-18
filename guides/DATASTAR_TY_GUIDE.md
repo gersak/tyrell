@@ -385,7 +385,7 @@ Add `orientation="horizontal"` for a side-by-side layout. `data-bind="plan"` on 
 
 ### ty-date-picker (in a form)
 
-The picker's `value` is a UTC ISO timestamp: right for a server, wrong for display (picking the 18th in Zagreb gives `…-17T22:00:00.000Z`). For the date as the user picked it, read `evt.detail.localValue` (`2026-03-18`, or `2026-03-18T14:30` with `with-time`):
+By default the picker's `value` is a UTC ISO timestamp: right for a server, wrong for display. Date-only, it's the instant the day starts in the browser's timezone, so it reads a day early east of UTC (picking the 18th in Zagreb gives `…-17T23:00:00.000Z`). For the date as the user picked it, read `evt.detail.localValue` (`2026-03-18`, or `2026-03-18T14:30` with `with-time`):
 
 ```html
 <div data-signals="{txDate: ''}">
@@ -398,7 +398,11 @@ The picker's `value` is a UTC ISO timestamp: right for a server, wrong for displ
 </div>
 ```
 
-`data-bind="txDate"` also works if you want the UTC value; it then holds the timestamp, not the picked date.
+`data-bind="txDate"` also works if you want the UTC value; it then holds the timestamp, not the picked date. Add `native` and the value is the picked date itself, like `<input type="date">` (`2026-03-18`, or `2026-03-18T14:30` with `with-time`), so `data-bind` holds it directly:
+
+```html
+<ty-date-picker label="Date" native data-bind="txDate"></ty-date-picker>
+```
 
 ### ty-calendar (standalone / inline)
 

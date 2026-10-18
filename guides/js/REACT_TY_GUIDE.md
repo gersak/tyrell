@@ -301,12 +301,19 @@ const modalRef = useRef<TyModalRef>(null)
 ### Popup
 
 ```tsx
-const popupRef = useRef<TyPopupRef>(null)
+const popupRef = useRef<TyPopupElement>(null)
 
-<TyPopup ref={popupRef}>
-  <TyButton onClick={() => popupRef.current?.togglePopup()}>Toggle</TyButton>
-  <div className="p-4 ty-floating rounded-lg">Popup content</div>
-</TyPopup>
+// The popup's parent is its trigger: a click, Enter or Space toggles it.
+// type="button" keeps the trigger from submitting a form it sits in.
+<TyButton type="button">
+  Share
+  <TyPopup ref={popupRef}>
+    <div className="p-4 ty-floating rounded-lg">
+      Popup content
+      <TyButton onClick={() => popupRef.current?.closePopup()}>Done</TyButton>
+    </div>
+  </TyPopup>
+</TyButton>
 ```
 
 ### Scroll Container
@@ -761,10 +768,35 @@ Tyrell components participate in HTML forms via `ElementInternals`:
     <TyOption value="admin">Admin</TyOption>
     <TyOption value="user">User</TyOption>
   </TySelect>
-  <TyCheckbox name="agree" required>I agree to terms</TyCheckbox>
+  <label><TyCheckbox name="agree" required /> I agree to terms</label>
   <TyButton type="submit" flavor="primary">Submit</TyButton>
 </form>
 ```
+
+The browser validates before `submit` fires, so `onSubmit` only runs when every field passes. Failing fields show their message under the field; see [TY_GUIDE → Forms and validation](../TY_GUIDE.md#forms-and-validation).
+
+### Validation and form props
+
+| Component | Props |
+|-----------|-------|
+| `TyInput` | `required`, `pattern`, `minLength`, `maxLength`, `min`, `max`, `tooShortMessage`, `tooLongMessage`, `error` |
+| `TyTextarea` | `required`, `minLength`, `maxLength`, `tooShortMessage`, `tooLongMessage`, `error`. Passed as the `minlength`, `maxlength`, `too-short-message` and `too-long-message` attributes, same as `TyInput` |
+| `TySelect` | `required`, `error?: string` (message under the field; `''` or leaving it out clears it) |
+| `TyDatePicker` | `required`, `error?: string`, `native` (submit `YYYY-MM-DD` / `YYYY-MM-DDTHH:mm` like `<input type="date">` instead of a UTC instant). `value` takes any string the element reads, or epoch milliseconds |
+| `TyCalendar` | `required`, `min`, `max`, `name`. No error line: the browser shows its bubble on the day grid |
+| `TyButton` | `type`, `name`, `value`, `form` (id of the form to submit or reset when the button sits outside it), `loading`, `disabled` |
+
+`error` is yours: validation never overwrites or removes it, so set it to `''` to let the field's own messages show again.
+
+`TyButton` submits through `form.requestSubmit()`, so validation runs and `onSubmit` gets the browser's real submit event. `onClick` runs first, and `e.preventDefault()` there stops the submit:
+
+```tsx
+<TyButton type="submit" onClick={(e) => { if (!confirm('Send?')) e.preventDefault() }}>
+  Send
+</TyButton>
+```
+
+To show a spinner while saving, set `loading` from the click handler: that press still submits, and later presses are blocked until `loading` is cleared. A disabled or loading button fires no `onClick`.
 
 ### File uploads
 
@@ -876,7 +908,7 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyCheckbox` | `checked` | `onChange` | -- |
 | `TySelect` | `value` (string, or array when `multiple`) | `onChange` / `onSearch` / `onOpen` / `onClose` | -- |
 | `TySelectedOptions` | `htmlFor` | -- | -- |
-| `TyDatePicker` | `value` (ISO) | `onChange` / `onOpen` / `onClose` | -- |
+| `TyDatePicker` | `value` (ISO string or epoch ms; `native` for `YYYY-MM-DD`) | `onChange` / `onOpen` / `onClose` | -- |
 | `TyCalendar` | `value` (ISO) | `onChange` / `onNavigate` | -- |
 | `TyTabs` | `active` | `onChange` | -- |
 | `TyModal` | `open` | `onOpen` / `onClose` | `show()` / `hide()` |

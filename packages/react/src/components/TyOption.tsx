@@ -13,7 +13,7 @@ export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
   label?: string;
 
   /** Semantic flavor — carried onto ty-selected-options chips */
-  flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral' | 'info';
+  flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 
   disabled?: boolean;
   selected?: boolean;

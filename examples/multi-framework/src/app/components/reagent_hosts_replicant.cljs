@@ -8,8 +8,8 @@
   ":host { display: block; --count-color: var(--reagent, #f97316); }
    .wrapper { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
    .label { font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase;
-            color: var(--ty-text-weak,#888); }
-   .total { font-size: 0.8rem; color: var(--ty-text-weak,#888); }")
+            color: var(--ty-text-faint,#888); }
+   .total { font-size: 0.8rem; color: var(--ty-text-faint,#888); }")
 
 (defn host-ui []
   [:div.wrapper

@@ -5,15 +5,16 @@
  */
 
 import { ensureStyles } from '../utils/styles.js';
+import { liftProperties, upgradeProperties } from '../utils/upgrade-properties.js';
 import { calendarStyles } from '../styles/calendar.js';
 // Side-effect imports: register the child elements this component createElements
 import './calendar-month.js';
 import './calendar-navigation.js';
 import type { DayContentFn, DayClickDetail, CalendarSize } from './calendar-month.js';
 import type { NavigationChangeDetail, CalendarView } from './calendar-navigation.js';
-import { parseISODate, getMonthName, type DayContext } from '../utils/calendar-utils.js';
+import { parseDateDay, formatISODay, toISODay, getMonthName, localMidnight, utcMidnight, type DayContext } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
-import { ValidityController } from '../utils/validity.js';
+import { ValidityController, nativeMessage } from '../utils/validity.js';
 
 /**
  * Internal calendar state
@@ -80,12 +81,11 @@ function parseDay(dayStr: string | null, year: number, month: number): number | 
   return day >= 1 && day <= daysInMonth ? day : null;
 }
 
-/** Format date as ISO string (YYYY-MM-DD) for form submission */
-function formatDateISO(year: number, month: number, day: number): string {
-  const monthStr = month.toString().padStart(2, '0');
-  const dayStr = day.toString().padStart(2, '0');
-  return `${year}-${monthStr}-${dayStr}`;
+/** A year as the `year` attribute holds it: 4 digits (99 -> "0099"), which parseYear reads back. */
+function formatYear(year: number): string {
+  return year.toString().padStart(4, '0');
 }
+
 
 /**
  * TyCalendar Web Component
@@ -118,13 +118,19 @@ export class TyCalendar extends HTMLElement {
   // since the value setter overwrites those attributes on every user pick.
   private _initialValue: string = '';
 
+  // Counts value sets: see `set value`
+  private _valueSets = 0;
+
+  // A press on the calendar is under way: see render()
+  private _pressing = false;
+
   // Locale observer cleanup
   private _localeObserver?: () => void;
 
   static formAssociated = true;
 
   static get observedAttributes(): string[] {
-    return ['value', 'year', 'month', 'day', 'hide-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor'];
+    return ['value', 'year', 'month', 'day', 'hide-navigation', 'stateless', 'locale', 'name', 'size', 'width', 'min', 'max', 'flavor', 'required'];
   }
 
   constructor() {
@@ -136,7 +142,14 @@ export class TyCalendar extends HTMLElement {
       displayMonth: current.month,
     };
 
-    this.attachShadow({ mode: 'open' });
+    // delegatesFocus: on a blocked submit Firefox checks that the host can
+    // take focus, not the validation anchor (a day cell), and logs "The
+    // invalid form control … is not focusable" otherwise. Tab order and
+    // focus() don't change (the delegate is the container, which hands the
+    // focus on to the grid, see render()).
+    this.attachShadow({ mode: 'open', delegatesFocus: true });
+    // The `value` attribute goes through the setter (attributeChangedCallback)
+    liftProperties(this);
 
     if ('attachInternals' in this) {
       this._internals = this.attachInternals();
@@ -147,48 +160,9 @@ export class TyCalendar extends HTMLElement {
   connectedCallback() {
     this.initializeFromAttributes();
 
-    // Properties set before custom element upgrade: when scripts run before
-    // the element is upgraded, properties are set as plain properties without
-    // triggering setters. We need to migrate them to private fields.
-    
-    // Check for dayContentFn set before upgrade
-    const plainDayContentFn = (this as any).dayContentFn;
-    if (plainDayContentFn && !this._dayContentFn) {
-      this._dayContentFn = plainDayContentFn;
-      delete (this as any).dayContentFn;
-    }
-
-    // Check for customCSS set before upgrade
-    const plainCustomCSS = (this as any).customCSS;
-    if (plainCustomCSS && !this._customCSS) {
-      this._customCSS = plainCustomCSS;
-      delete (this as any).customCSS;
-    }
-
-    // Check for value set before upgrade
-    const plainValue = (this as any).value;
-    if (plainValue && typeof plainValue === 'string' && plainValue !== this.value) {
-      const match = plainValue.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (match) {
-        const year = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
-        const day = parseInt(match[3], 10);
-        
-        this._state.selectedYear = year;
-        this._state.selectedMonth = month;
-        this._state.selectedDay = day;
-        this._state.displayYear = year;
-        this._state.displayMonth = month;
-        
-        // Update attributes if not in stateless mode
-        if (!this._stateless) {
-          this.setAttribute('year', year.toString());
-          this.setAttribute('month', month.toString());
-          this.setAttribute('day', day.toString());
-        }
-      }
-      delete (this as any).value;
-    }
+    // After the markup value is captured for form.reset(): a property set
+    // before upgrade is a property set, not the default
+    upgradeProperties(this);
 
     this.render();
 
@@ -278,6 +252,10 @@ export class TyCalendar extends HTMLElement {
         this.updateValidity(); // bounds change can (in)validate current selection
         break;
 
+      case 'required':
+        this.updateValidity();
+        break;
+
       case 'flavor':
         this._flavor = newValue || 'primary';
         this.syncChildComponents();
@@ -313,6 +291,14 @@ export class TyCalendar extends HTMLElement {
     else this.removeAttribute('flavor');
   }
 
+  get required(): boolean {
+    return this.hasAttribute('required');
+  }
+
+  set required(value: boolean) {
+    this.toggleAttribute('required', !!value);
+  }
+
   get year(): number | undefined {
     return this._state.selectedYear;
   }
@@ -322,12 +308,12 @@ export class TyCalendar extends HTMLElement {
       // In stateless mode, only update display
       if (this._stateless) {
         this._state.displayYear = value;
-        this.setAttribute('year', value.toString());
+        this.setAttribute('year', formatYear(value));
       } else {
         // In stateful mode, update both selection and display
         this._state.selectedYear = value;
         this._state.displayYear = value;
-        this.setAttribute('year', value.toString());
+        this.setAttribute('year', formatYear(value));
       }
     } else {
       if (!this._stateless) {
@@ -471,13 +457,24 @@ export class TyCalendar extends HTMLElement {
   get value(): string {
     const { selectedYear, selectedMonth, selectedDay } = this._state;
     if (selectedYear && selectedMonth && selectedDay) {
-      return formatDateISO(selectedYear, selectedMonth, selectedDay);
+      return formatISODay(selectedYear, selectedMonth, selectedDay);
     }
     return '';
   }
 
-  set value(isoDate: string) {
-    if (!isoDate) {
+  /**
+   * Reads what ty-date-picker reads: 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm[:ss]'
+   * (that day), an ISO instant with Z/offset or epoch ms / a Date (its local
+   * day). The value stays 'YYYY-MM-DD'; anything else is no value.
+   */
+  set value(isoDate: string | number | Date | null | undefined) {
+    // While the element upgrades, an attribute write below runs
+    // connectedCallback, where a `value` set before the upgrade comes in:
+    // that one stands, this one stops.
+    const set = ++this._valueSets;
+    const superseded = () => set !== this._valueSets;
+
+    if (isoDate === null || isoDate === undefined || isoDate === '') {
       delete this._state.selectedYear;
       delete this._state.selectedMonth;
       delete this._state.selectedDay;
@@ -485,15 +482,15 @@ export class TyCalendar extends HTMLElement {
       // In normal mode, also clear attributes
       if (!this._stateless) {
         this.removeAttribute('year');
+        if (superseded()) return;
         this.removeAttribute('month');
+        if (superseded()) return;
         this.removeAttribute('day');
       }
     } else {
-      const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (match) {
-        const year = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
-        const day = parseInt(match[3], 10);
+      const parsed = parseDateDay(isoDate);
+      if (parsed) {
+        const { year, month, day } = parsed;
 
         this._state.selectedYear = year;
         this._state.selectedMonth = month;
@@ -506,8 +503,10 @@ export class TyCalendar extends HTMLElement {
         // In normal mode, update attributes
         // In stateless mode, skip attribute updates (parent controls attributes)
         if (!this._stateless) {
-          this.setAttribute('year', year.toString());
+          this.setAttribute('year', formatYear(year));
+          if (superseded()) return;
           this.setAttribute('month', month.toString());
+          if (superseded()) return;
           this.setAttribute('day', day.toString());
         }
       }
@@ -646,12 +645,13 @@ export class TyCalendar extends HTMLElement {
       // Update selection value (convert to Date timestamp)
       const { selectedYear, selectedMonth, selectedDay } = this._state;
       if (selectedYear && selectedMonth && selectedDay) {
-        const date = new Date(selectedYear, selectedMonth - 1, selectedDay);
-        (this._monthDisplay as any).value = date.getTime();
+        (this._monthDisplay as any).value = localMidnight(selectedYear, selectedMonth, selectedDay).getTime();
       } else {
         (this._monthDisplay as any).value = null;
       }
     }
+
+    this.updateValidity(); // re-anchor to the new cells
   }
 
   private updateFormValue(): void {
@@ -664,7 +664,7 @@ export class TyCalendar extends HTMLElement {
     const { selectedYear, selectedMonth, selectedDay } = this._state;
 
     if (elementName && selectedYear && selectedMonth && selectedDay) {
-      const isoDate = formatDateISO(selectedYear, selectedMonth, selectedDay);
+      const isoDate = formatISODay(selectedYear, selectedMonth, selectedDay);
       this._internals.setFormValue(isoDate);
     } else {
       this._internals.setFormValue('');
@@ -674,35 +674,42 @@ export class TyCalendar extends HTMLElement {
   }
 
   /**
-   * Selection outside [min, max] => rangeUnderflow/rangeOverflow.
-   * UI can't produce this (days are disabled), but programmatic values can.
+   * required with no selection => valueMissing; a selection outside
+   * [min, max] => rangeUnderflow/rangeOverflow (UI can't pick one, days are
+   * disabled, but programmatic values can). With a native date input's
+   * message. The grid's tab stop is the anchor, so a submit focuses it and
+   * the browser shows its bubble there; the cells are rebuilt on every grid
+   * render, so each one runs this again.
    */
   private updateValidity(): void {
     if (!this._internals) return;
 
+    const anchor = this.gridCell() ?? undefined;
     const { selectedYear, selectedMonth, selectedDay } = this._state;
     if (selectedYear && selectedMonth && selectedDay) {
-      const sel = Date.UTC(selectedYear, selectedMonth - 1, selectedDay);
-      const min = this._min ? parseISODate(this._min) : null;
-      const max = this._max ? parseISODate(this._max) : null;
+      const sel = utcMidnight(selectedYear, selectedMonth, selectedDay);
+      const min = this._min ? parseDateDay(this._min) : null;
+      const max = this._max ? parseDateDay(this._max) : null;
+      const message = () => nativeMessage(
+        'input',
+        { type: 'date', min: toISODay(this._min) ?? undefined, max: toISODay(this._max) ?? undefined },
+        formatISODay(selectedYear, selectedMonth, selectedDay),
+      );
 
-      if (min && sel < Date.UTC(min.year, min.month - 1, min.day)) {
-        this._validity!.set(
-          { rangeUnderflow: true },
-          `Date must be ${this._min} or later`,
-        );
+      if (min && sel < utcMidnight(min.year, min.month, min.day)) {
+        this._validity!.set({ rangeUnderflow: true }, message(), anchor);
         return;
       }
-      if (max && sel > Date.UTC(max.year, max.month - 1, max.day)) {
-        this._validity!.set(
-          { rangeOverflow: true },
-          `Date must be ${this._max} or earlier`,
-        );
+      if (max && sel > utcMidnight(max.year, max.month, max.day)) {
+        this._validity!.set({ rangeOverflow: true }, message(), anchor);
         return;
       }
+    } else if (this.required) {
+      this._validity!.set({ valueMissing: true }, nativeMessage('input', { type: 'date', required: true }), anchor);
+      return;
     }
 
-    this._validity!.set({});
+    this._validity!.set({}, undefined, anchor);
   }
 
   // --- Constraint validation (same API as native form controls) -------------
@@ -770,7 +777,7 @@ export class TyCalendar extends HTMLElement {
     this._state.displayYear = year;
     this._state.displayMonth = month;
 
-    this.setAttribute('year', year.toString());
+    this.setAttribute('year', formatYear(year));
     this.setAttribute('month', month.toString());
     this.setAttribute('day', day.toString());
 
@@ -806,6 +813,7 @@ export class TyCalendar extends HTMLElement {
     if (this._monthDisplay && typeof (this._monthDisplay as any).refresh === 'function') {
       (this._monthDisplay as any).refresh();
     }
+    this.updateValidity(); // re-anchor to the new cells
   }
 
   private createNavigation(): HTMLElement {
@@ -854,8 +862,7 @@ export class TyCalendar extends HTMLElement {
 
     const { selectedYear, selectedMonth, selectedDay } = this._state;
     if (selectedYear && selectedMonth && selectedDay) {
-      const date = new Date(selectedYear, selectedMonth - 1, selectedDay);
-      (month as any).value = date.getTime();
+      (month as any).value = localMidnight(selectedYear, selectedMonth, selectedDay).getTime();
     }
 
     if (this._dayContentFn) {
@@ -867,6 +874,8 @@ export class TyCalendar extends HTMLElement {
     }
 
     month.addEventListener('day-click', (e) => this.handleDayClick(e as CustomEvent<DayClickDetail>));
+    // A focus move between two days doesn't leave the month's shadow root
+    month.shadowRoot?.addEventListener('focusin', () => this.updateValidity());
 
     this._monthDisplay = month;
 
@@ -884,7 +893,35 @@ export class TyCalendar extends HTMLElement {
 
     const container = document.createElement('div');
     container.className = 'calendar-container';
+    // Focusable, not a tab stop: the host's focus delegate. Firefox needs one
+    // when the focus is elsewhere (an earlier invalid field), and a click on
+    // the calendar's chrome (weekday names, gaps) focuses it. Without it that
+    // click focused the first month cell (Enter then picked January) or
+    // nothing, taking the focus out of a ty-modal: Escape got past
+    // prevent-escape.
+    container.tabIndex = -1;
+    // Only that click leaves the focus here. Any other way in (a dialog
+    // opening, a label, autofocus, the host's own focus) goes on to the grid's
+    // tab stop, as focus() does: on the container arrows did nothing and the
+    // whole calendar got a focus ring. After the running script: one that
+    // moves the focus on at once keeps its choice (ty-date-picker blurs it
+    // after opening its dialog, and Tab then starts before the navigation).
+    const press = () => {
+      this._pressing = true;
+      setTimeout(() => { this._pressing = false; });
+    };
+    container.addEventListener('pointerdown', press);
+    container.addEventListener('mousedown', press);
+    container.addEventListener('focus', () => {
+      if (this._pressing) return;
+      queueMicrotask(() => {
+        if (this.shadowRoot?.activeElement === container) this.gridCell()?.focus();
+      });
+    });
     container.addEventListener('keydown', (e) => this.handleKeydown(e as KeyboardEvent));
+    // Arrow keys move the tab stop without a re-render: the validity anchor
+    // follows the focus (month grid here; day grid in createMonthDisplay)
+    container.addEventListener('focusin', () => this.updateValidity());
     this._container = container;
 
     if (!this._hideNavigation) {
@@ -898,6 +935,7 @@ export class TyCalendar extends HTMLElement {
     root.appendChild(container);
 
     if (this._view === 'months') this.showBody();
+    this.updateValidity(); // re-anchor to the new grid
   }
 
   // ---------------------------------------------------------------------------
@@ -913,6 +951,7 @@ export class TyCalendar extends HTMLElement {
     this._view = view;
     if (this._navigation) (this._navigation as any).view = view;
     this.showBody();
+    this.updateValidity(); // re-anchor to the grid now shown
   }
 
   /** Put the day grid or a freshly built month grid under the navigation. */
@@ -942,8 +981,8 @@ export class TyCalendar extends HTMLElement {
 
   /** min/max as month indices (null when unset) */
   private boundIndices(): { minIdx: number | null; maxIdx: number | null } {
-    const min = this._min ? parseISODate(this._min) : null;
-    const max = this._max ? parseISODate(this._max) : null;
+    const min = this._min ? parseDateDay(this._min) : null;
+    const max = this._max ? parseDateDay(this._max) : null;
     return {
       minIdx: min ? TyCalendar.monthIndex(min.year, min.month) : null,
       maxIdx: max ? TyCalendar.monthIndex(max.year, max.month) : null,
@@ -1018,6 +1057,13 @@ export class TyCalendar extends HTMLElement {
   // ---------------------------------------------------------------------------
 
   private handleKeydown(e: KeyboardEvent): void {
+    // After a click on the chrome: an arrow goes into the grid
+    if (e.target === this._container && e.key.startsWith('Arrow')) {
+      e.preventDefault();
+      this.gridCell()?.focus();
+      return;
+    }
+
     if (e.key === 'Escape' && this._view === 'months') {
       e.preventDefault();
       e.stopPropagation();
@@ -1051,6 +1097,34 @@ export class TyCalendar extends HTMLElement {
     requestAnimationFrame(() => {
       (this._navigation?.shadowRoot?.querySelector('.nav-title') as HTMLElement | null)?.focus();
     });
+  }
+
+  /**
+   * The grid's tab stop: the focused day, or month in the month view. When
+   * every day shown is disabled (a value outside min/max) there is none: then
+   * the selected day, or the first one; disabled cells still take focus.
+   * Disabled month cells don't (buttons): with every month of the year
+   * disabled, the navigation title (back to the days) stands in.
+   */
+  private gridCell(): HTMLElement | null {
+    if (this._view === 'months') {
+      return this._monthGrid?.querySelector<HTMLElement>('.month-cell[tabindex="0"]:not(:disabled)')
+        ?? this._monthGrid?.querySelector<HTMLElement>('.month-cell:not(:disabled)')
+        ?? this._navigation?.shadowRoot?.querySelector<HTMLElement>('.nav-title')
+        ?? null;
+    }
+    const root = this._monthDisplay?.shadowRoot;
+    return root?.querySelector<HTMLElement>('.calendar-day-cell[tabindex="0"]')
+      ?? root?.querySelector<HTMLElement>('.calendar-day-cell.selected')
+      ?? root?.querySelector<HTMLElement>('.calendar-day-cell')
+      ?? null;
+  }
+
+  /** Focus the grid's tab stop (see gridCell). */
+  focus(options?: FocusOptions): void {
+    const cell = this.gridCell();
+    if (cell) cell.focus(options);
+    else super.focus(options);
   }
 
   private focusDayGrid(): void {

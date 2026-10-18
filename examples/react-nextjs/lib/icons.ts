@@ -82,6 +82,18 @@ import {
   zap,
   copy,
   packageIcon,
+  atSign,
+  barChart,
+  bug,
+  building,
+  feather,
+  logIn,
+  messageCircle,
+  shoppingCart,
+  smartphone,
+  tags,
+  userPlus,
+  volume2,
 } from 'tyrell-components/icons/lucide'
 
 /**
@@ -190,6 +202,18 @@ function registerIconsNow() {
     terminal,
     'trending-up': trendingUp,
     zap,
+    'at-sign': atSign,
+    'bar-chart': barChart,
+    bug,
+    building,
+    feather,
+    'log-in': logIn,
+    'message-circle': messageCircle,
+    'shopping-cart': shoppingCart,
+    smartphone,
+    tags,
+    'user-plus': userPlus,
+    'volume-2': volume2,
   })
 }
 

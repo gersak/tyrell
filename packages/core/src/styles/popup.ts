@@ -33,6 +33,9 @@ export const popupStyles = `
 
   /* Prevent interactions when hidden */
   pointer-events: none;
+
+  /* Focused on open when the content has nothing to focus: not a control */
+  outline: none;
 }
 
 /* Apply position variables only when position is calculated (like dropdown) */
@@ -75,6 +78,9 @@ export const popupStyles = `
   opacity: 1;
   transform: scale(1);
   pointer-events: auto;
+  /* Visible at once, the opacity fades it in: focusable as soon as openPopup
+     moves focus in. Closing still keeps it visible through the fade-out. */
+  transition-duration: var(--ty-popup-duration, 180ms), 0s, var(--ty-popup-duration, 180ms);
 }
 
 /* Make dialog backdrop transparent like dropdown/date-picker */

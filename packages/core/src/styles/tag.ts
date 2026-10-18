@@ -35,7 +35,9 @@ const tagFlavor = (f: string) => `
 `
 
 export const tagStyles = `
-:host([hidden]) {
+/* filtered-out: left out by a ty-select search (as an option) */
+:host([hidden]),
+:host([filtered-out]) {
   display: none !important;
 }
 

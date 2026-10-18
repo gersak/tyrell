@@ -2,7 +2,8 @@
   "Documentation for ty-tooltip component"
   (:require [clojure.string :as str]
             [tyrell.site.docs.common :refer [component-page page-section playground
-                                             bento example api-section]]))
+                                             bento example api-section]]
+            [tyrell.site.state :as state]))
 
 (def ^:private flavors ["neutral" "primary" "success" "danger" "warning"])
 
@@ -44,6 +45,33 @@
         (tool i t attrs))]
      [:span.text-xs.ty-text-- "Hover or Tab onto a button. Esc hides it."]]))
 
+(def ^:private api-snippets
+  "JavaScript API card, one tab per stack."
+  [["html" "HTML" "javascript"
+    "const tip = document.getElementById('saved-tip');
+
+tip.textContent = 'Saved 2 minutes ago';   // content is light DOM
+tip.setAttribute('placement', 'bottom');
+tip.toggleAttribute('disabled', true);    // stop showing it"]
+   ["react" "React" "javascript"
+    "import { TyTooltip } from 'tyrell-react'
+
+<TyTooltip placement=\"bottom\" disabled={saving}>   {/* disabled: stop showing it */}
+  Saved {ago}
+</TyTooltip>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Tooltip {:placement \"bottom\" :disabled @saving?}   ; disabled: stop showing it
+ (str \"Saved \" @ago)]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-tooltip {:placement \"bottom\" :disabled (when saving? \"\")}   ; disabled: stop showing it
+ (str \"Saved \" ago)]"]
+   ["datastar" "Datastar" "html"
+    "<ty-tooltip placement=\"bottom\"
+  data-attr:disabled=\"$saving\"
+  data-text=\"'Saved ' + $ago\"></ty-tooltip>"]])
+
 (defn view []
   (component-page
    {:title "Tooltip"
@@ -53,11 +81,23 @@
     :chips [["Top layer" "layers"] ["aria-describedby" "zap"] ["TyTooltip (React)" "atom"]]
     :source "packages/core/src/components/tooltip.ts"
     :mark "?"
-    :demo [:div.flex.flex-col.items-center.gap-2
-           [:div.rounded-lg.px-3.text-xs.font-semibold {:class ["py-1.5"] :style {:background "var(--ty-color-neutral-strong)" :color "var(--ty-surface-content)"}}
-            "Copy link  ⌘C"]
-           [:ty-button {:action "" :appearance "outlined" :size "md" :aria-label "Copy link"}
-            [:ty-icon {:name "link"}]]]}
+    ;; Copying swaps only the icon; the tooltip text stays, so it never re-positions.
+    :demo (let [copied? (get-in @state/state [:tooltip-doc :copied])
+                copy! (fn []
+                        (-> (js/navigator.clipboard.writeText (.-href js/location))
+                            (.then (fn []
+                                     (swap! state/state assoc-in [:tooltip-doc :copied] true)
+                                     (js/setTimeout #(swap! state/state assoc-in [:tooltip-doc :copied] false) 1500)))))]
+            [:div.flex.items-center.gap-1.rounded-xl.ty-floating.p-1
+             (tool "bold" "Bold  ⌘B" {})
+             (tool "italic" "Italic  ⌘I" {})
+             (tool "link" "Insert link  ⌘K" {})
+             [:ty-button {:replicant/key "copy" :action "" :appearance "ghost" :size "md" :aria-label "Copy page link"
+                          :on {:click copy!}}
+              [:ty-icon {:name (if copied? "check" "copy")}]
+              [:ty-tooltip "Copy page link  ⌘C"]]
+             [:div.w-px.h-6.mx-1.ty-bg-neutral-]
+             (tool "trash" "Delete" {:flavor "danger"})])}
 
    (playground
     {:id :tooltip
@@ -122,12 +162,7 @@
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const tip = document.querySelector('ty-tooltip');
-
-tip.textContent = 'Saved 2 minutes ago';   // content is light DOM
-tip.setAttribute('placement', 'bottom');
-tip.toggleAttribute('disabled', true);    // stop showing it"}
+       :tabs api-snippets}
       nil)))
 
    (page-section

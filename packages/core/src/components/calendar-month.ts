@@ -4,12 +4,15 @@
  */
 
 import { ensureStyles } from '../utils/styles.js';
+import { liftProperties, upgradeProperties } from '../utils/upgrade-properties.js';
 import { syncCustomFlavorSheet } from '../utils/flavor-sheet.js';
 import { calendarMonthStyles, calendarMonthCustomFlavorCss } from '../styles/calendar-month.js';
 import {
   getCalendarMonthDays,
   getLocalizedWeekdays,
-  parseISODate,
+  localMidnight,
+  parseDateDay,
+  utcMidnight,
   type DayContext
 } from '../utils/calendar-utils.js';
 import { getEffectiveLocale, observeLocaleChanges } from '../utils/locale.js';
@@ -60,14 +63,15 @@ function isDOMElement(value: unknown): value is HTMLElement {
 }
 
 /**
- * ISO date string ("YYYY-MM-DD") → UTC-midnight timestamp, matching
- * DayContext.value semantics. null when unset/invalid.
+ * A min/max day ("YYYY-MM-DD", or an instant: its local day, see parseDateDay)
+ * → UTC-midnight timestamp, matching DayContext.value semantics. null when
+ * unset/invalid.
  */
 function isoToUTCTimestamp(iso: string | null | undefined): number | null {
   if (!iso) return null;
-  const parsed = parseISODate(iso);
+  const parsed = parseDateDay(iso);
   if (!parsed) return null;
-  return Date.UTC(parsed.year, parsed.month - 1, parsed.day);
+  return utcMidnight(parsed.year, parsed.month, parsed.day);
 }
 
 function normalizeSizeValue(value: string | number | null | undefined): string | null {
@@ -89,7 +93,7 @@ function normalizeSizeValue(value: string | number | null | undefined): string |
 export class TyCalendarMonth extends HTMLElement {
   private _displayYear: number;
   private _displayMonth: number;
-  private _locale: string = 'en-US';
+  private _locale?: string; // explicit (property or attribute); else the ancestor lang
   private _size: CalendarSize = 'md';
   private _width?: string;
   private _minWidth?: string;
@@ -106,8 +110,9 @@ export class TyCalendarMonth extends HTMLElement {
   // null means "not yet resolved"; render() picks a sensible default
   // (selected day, else today, else the 1st rendered day) and persists it
   // across re-renders so keyboard focus survives unrelated prop changes.
-  // Reset to null on month/year navigation (see the property setters below)
-  // so the new month gets a fresh default instead of a stale index.
+  // Reset to null on month/year navigation and on a new value (see the
+  // property setters below) so the grid gets a fresh default instead of a
+  // stale index.
   private _focusedIndex: number | null = null;
   private _cellElements: HTMLElement[] = [];
 
@@ -127,6 +132,8 @@ export class TyCalendarMonth extends HTMLElement {
     this._displayMonth = today.getMonth() + 1; // 1-based month
 
     this.attachShadow({ mode: 'open' });
+    // display-year/display-month go through the setters (attributeChangedCallback)
+    liftProperties(this);
   }
 
   connectedCallback() {
@@ -137,30 +144,21 @@ export class TyCalendarMonth extends HTMLElement {
       this._displayYear = new Date().getFullYear();
     }
     if (!this._locale) {
-      this._locale = this.getAttribute('locale') || 'en-US';
+      this._locale = this.getAttribute('locale') || undefined;
     }
     const sizeAttr = this.getAttribute('size');
     if (sizeAttr && (sizeAttr === 'sm' || sizeAttr === 'md' || sizeAttr === 'lg')) {
       this._size = sizeAttr;
     }
 
-    // Check for dayContentFn set before upgrade
-    const plainDayContentFn = (this as any).dayContentFn;
-    if (plainDayContentFn && !this._dayContentFn) {
-      this._dayContentFn = plainDayContentFn;
-      delete (this as any).dayContentFn;
-    }
+    // After the attribute reads: a property set before upgrade wins
+    upgradeProperties(this);
 
-    // Check for customCSS set before upgrade
-    const plainCustomCSS = (this as any).customCSS;
-    if (plainCustomCSS && !this._customCSS) {
-      this._customCSS = plainCustomCSS;
-      delete (this as any).customCSS;
-    }
-
-    // Setup locale observer to watch for ancestor lang changes
+    // Setup locale observer to watch for ancestor lang changes. Moot with
+    // an explicit locale (ty-calendar sets one), and a redraw would replace
+    // the cell ty-calendar anchors its validation to behind its back.
     this._localeObserver = observeLocaleChanges(this, () => {
-      this.render();
+      if (!this._locale) this.render();
     });
 
     this._syncCustomFlavor();
@@ -183,7 +181,7 @@ export class TyCalendarMonth extends HTMLElement {
         else this.displayMonth = n;
       }
     } else if (name === 'locale') {
-      this._locale = newValue || 'en-US';
+      this._locale = newValue || undefined;
       this.render();
     } else if (name === 'size') {
       if (newValue === 'sm' || newValue === 'md' || newValue === 'lg') {
@@ -237,12 +235,12 @@ export class TyCalendarMonth extends HTMLElement {
   }
 
   get locale(): string {
-    return getEffectiveLocale(this, this.getAttribute('locale'));
+    return getEffectiveLocale(this, this._locale);
   }
 
   set locale(value: string) {
     if (this._locale !== value) {
-      this._locale = value;
+      this._locale = value || undefined;
       this.render();
     }
   }
@@ -352,6 +350,7 @@ export class TyCalendarMonth extends HTMLElement {
     const newValue = timestamp ?? undefined;
     if (this._value !== newValue) {
       this._value = newValue;
+      this._focusedIndex = null; // the tab stop moves to the new selection
       this.render();
     }
   }
@@ -400,6 +399,21 @@ export class TyCalendarMonth extends HTMLElement {
     this.render();
   }
 
+  /**
+   * A day was picked (click, Enter, Space): it becomes the grid's tab stop and
+   * takes the focus, which render() keeps on it when the pick re-renders the
+   * grid. Then the events go out.
+   */
+  private pickDay(cell: HTMLElement, dayContext: DayContext, domEvent: Event): void {
+    const index = this._cellElements.indexOf(cell);
+    if (index !== -1) {
+      this._cellElements.forEach((c) => c.setAttribute('tabindex', c === cell ? '0' : '-1'));
+      this._focusedIndex = index;
+      cell.focus({ preventScroll: true });
+    }
+    this.dispatchDayClick(dayContext, domEvent);
+  }
+
   private dispatchDayClick(dayContext: DayContext, _domEvent: Event): void {
     const detail: DayClickDetail = {
       dayContext,
@@ -430,7 +444,7 @@ export class TyCalendarMonth extends HTMLElement {
    * enters/exits the grid in one hop and arrow keys move focus inside it).
    * Disabled days are excluded from the roving set entirely.
    */
-  private renderDayCell(dayContext: DayContext, disabled: boolean, isRoving: boolean): HTMLElement {
+  private renderDayCell(dayContext: DayContext, disabled: boolean, isRoving: boolean, label: Intl.DateTimeFormat): HTMLElement {
     const dayElement = document.createElement('div');
 
     const content = this._dayContentFn
@@ -457,11 +471,7 @@ export class TyCalendarMonth extends HTMLElement {
     }
 
     dayElement.setAttribute('role', 'gridcell');
-    dayElement.setAttribute(
-      'aria-label',
-      new Intl.DateTimeFormat(this._locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-        .format(new Date(dayContext.localValue)),
-    );
+    dayElement.setAttribute('aria-label', label.format(new Date(dayContext.localValue)));
     dayElement.setAttribute('aria-selected', String(!!dayContext.isSelected));
     if (dayContext.today) dayElement.setAttribute('aria-current', 'date');
 
@@ -475,13 +485,13 @@ export class TyCalendarMonth extends HTMLElement {
       // day under the finger nor gets cancelled by the re-render a pick
       // triggers. Disabled days don't emit.
       dayElement.addEventListener('click', (event: Event) => {
-        this.dispatchDayClick(dayContext, event);
+        this.pickDay(dayElement, dayContext, event);
       });
       dayElement.addEventListener('keydown', (event: Event) => {
         const ke = event as KeyboardEvent;
         if (ke.key === 'Enter' || ke.key === ' ') {
           ke.preventDefault();
-          this.dispatchDayClick(dayContext, event);
+          this.pickDay(dayElement, dayContext, event);
         }
       });
     }
@@ -500,7 +510,7 @@ export class TyCalendarMonth extends HTMLElement {
     this.applyWidthProperties();
 
     let selection: { year?: number; month?: number; day?: number } | undefined;
-    if (this._value) {
+    if (this._value !== undefined) {
       const date = new Date(this._value);
       selection = {
         year: date.getFullYear(),
@@ -511,8 +521,12 @@ export class TyCalendarMonth extends HTMLElement {
 
     const days = getCalendarMonthDays(this._displayYear, this._displayMonth, selection);
 
-    const weekdays = getLocalizedWeekdays(this._locale, 'short');
+    const locale = this.locale;
+    const weekdays = getLocalizedWeekdays(locale, 'short');
+    const dayLabel = new Intl.DateTimeFormat(locale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+    // The cells are rebuilt: a focus in the grid moves to the new tab stop
+    const hadFocus = !!root.activeElement;
     root.innerHTML = '';
 
     const calendarContainer = document.createElement('div');
@@ -520,8 +534,8 @@ export class TyCalendarMonth extends HTMLElement {
     calendarContainer.setAttribute('role', 'grid');
     calendarContainer.setAttribute(
       'aria-label',
-      new Intl.DateTimeFormat(this._locale, { month: 'long', year: 'numeric' })
-        .format(new Date(this._displayYear, this._displayMonth - 1, 1)),
+      new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })
+        .format(localMidnight(this._displayYear, this._displayMonth, 1)),
     );
 
     const headerRow = document.createElement('div');
@@ -597,7 +611,7 @@ export class TyCalendarMonth extends HTMLElement {
         const disabled =
           (minTs !== null && dayContext.value < minTs) ||
           (maxTs !== null && dayContext.value > maxTs);
-        const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === effectiveFocusedIndex);
+        const dayCell = this.renderDayCell(dayContext, disabled, flatIndex === effectiveFocusedIndex, dayLabel);
         dayCell.className = `${dayCell.className} calendar-cell calendar-day-cell`;
         dayRow.appendChild(dayCell);
         this._cellElements[flatIndex] = dayCell;
@@ -639,6 +653,7 @@ export class TyCalendarMonth extends HTMLElement {
     });
 
     root.appendChild(calendarContainer);
+    if (hadFocus) this._cellElements[effectiveFocusedIndex]?.focus({ preventScroll: true });
   }
 }
 

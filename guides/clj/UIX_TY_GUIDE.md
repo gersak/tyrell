@@ -214,7 +214,7 @@ Tyrell components accept slotted children — pass them as `$` children with a `
              ($ ty/Button {:on-click close} "Close"))))))
 ```
 
-The same pattern works for `ty-popup` (`.show()` / `.hide()` / `.toggle()`).
+The same pattern works for `ty-popup` (`.openPopup()` / `.closePopup()` / `.togglePopup()`).
 
 ## Forms — controlled state
 

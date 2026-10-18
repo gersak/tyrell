@@ -1,0 +1,67 @@
+{#
+  The browser enforces every rule below (required, type="email", minlength,
+  min/max) before htmx sends anything. The server re-renders this form with
+  `error` on a field only for checks it alone can make, like a taken email.
+#}
+<form id="signup-form"
+      hx-post="/api/form/validate"
+      hx-target="this"
+      hx-swap="outerHTML"
+      class="space-y-6">
+
+    {% if success %}
+    <div class="ty-bg-success- rounded-lg p-4 flex items-center gap-3 animate-fade-in">
+        <ty-icon name="check-circle" class="ty-text-success++"></ty-icon>
+        <div>
+            <p class="font-medium ty-text-success++">Welcome aboard, {{ success }}!</p>
+            <p class="text-sm ty-text-success+">The server accepted the form. It's empty again for the next one.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ty-input name="name" label="Full name" placeholder="Ada Lovelace"
+                  required minlength="2"
+                  value="{{ values.name }}"
+                  {% if errors.name %}error="{{ errors.name }}"{% endif %}></ty-input>
+        <ty-input name="email" label="Email" type="email" placeholder="you@example.com"
+                  required
+                  value="{{ values.email }}"
+                  {% if errors.email %}error="{{ errors.email }}"{% endif %}></ty-input>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ty-input name="age" label="Age" type="number" placeholder="25"
+                  min="13" max="120"
+                  value="{{ values.age }}"
+                  {% if errors.age %}error="{{ errors.age }}"{% endif %}></ty-input>
+        <ty-select name="role" label="Role" placeholder="Select your role" required
+                   value="{{ values.role }}">
+            <ty-option value="developer">Developer</ty-option>
+            <ty-option value="designer">Designer</ty-option>
+            <ty-option value="manager">Manager</ty-option>
+            <ty-option value="analyst">Analyst</ty-option>
+            <ty-option value="other">Other</ty-option>
+        </ty-select>
+    </div>
+
+    <div class="space-y-3">
+        <ty-select id="signup-skills" name="skills" label="Skills" placeholder="Select your skills"
+                   multiple value="{{ values.skills | join(',') }}">
+            {% for value, label, flavor in skill_options %}
+            <ty-option value="{{ value }}" flavor="{{ flavor }}">{{ label }}</ty-option>
+            {% endfor %}
+        </ty-select>
+        <div class="flex flex-wrap gap-2">
+            <ty-selected-options for="signup-skills"></ty-selected-options>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-3">
+        <ty-button type="reset" appearance="outlined">Reset</ty-button>
+        <ty-button type="submit" flavor="primary">
+            <ty-icon slot="start" name="send"></ty-icon>
+            Create account
+        </ty-button>
+    </div>
+</form>

@@ -7,8 +7,7 @@ import { fieldSizeVars } from "./field-size.js";
    (hover/focus border), and --input-ring (focus shadow); the wrapper base
    rules consume them. They double as the per-instance override API:
    `ty-input { --input-accent: … }`. Neutral is skipped — it IS the default
-   chrome (--ty-input-* tokens), and input's auto-danger-on-error logic
-   relies on neutral being the unstyled state.
+   chrome (--ty-input-* tokens).
 
    Fallback flavor `fb` is used for custom flavors: suffixed tokens fall
    back to the custom base color first (a flavor defining only
@@ -18,7 +17,7 @@ import { fieldSizeVars } from "./field-size.js";
    focus + ring): a flavored field rests on its -soft shade and only
    escalates to the full color on hover/focus — a resting field shouldn't
    shout its full-saturation border (tones shift the whole ladder). */
-const inputFlavor = (f: string, fb?: string) => {
+const inputFlavor = (f: string, fb?: string, also = "") => {
   const c = (s: string) =>
     fb
       ? s
@@ -28,7 +27,7 @@ const inputFlavor = (f: string, fb?: string) => {
         ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
         : `var(--ty-color-${f})`;
   return `
-:host([flavor="${f}"]) {
+:host([flavor="${f}"])${also} {
   --input-accent: var(--ty-input-${f}-border, ${c("-soft")});
   --input-accent-bold: ${c("")};
   --input-ring: color-mix(in oklab, ${c("")} 15%, transparent);
@@ -45,6 +44,13 @@ const inputFlavor = (f: string, fb?: string) => {
 }
 `;
 };
+
+/* An error looks like flavor="danger" whatever the flavor: the same rule,
+   so page-level --input-accent* still win. Its (0,3,0) beats every flavor
+   rule's (0,2,0), custom ones adopted later included. Nothing is written on
+   the host to get there; `error` is matched as the attribute TyComponent
+   always reflects it to. */
+const errorLook = `,\n:host([error]:not([error=""]))`;
 
 /** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
 export const inputCustomFlavorCss = (base: string) => inputFlavor(base, "neutral");
@@ -182,14 +188,10 @@ ${fieldSizeVars}
   padding-left: var(--ty-field-outer-pad-x);
 }
 
-.input-wrapper.error {
-  border-color: var(--ty-color-danger);
+/* Border, hover and focus ring: the danger accent errorLook sets (below).
+   Disabled keeps its own background, as on flavor="danger". */
+.input-wrapper.error:not(.disabled) {
   background: var(--ty-bg-danger-soft);
-}
-
-.input-wrapper.error.focused {
-  border-color: var(--ty-color-danger-bold);
-  box-shadow: 0 0 0 3px var(--input-shadow-focus, var(--ty-input-shadow-focus));
 }
 
 input {
@@ -231,7 +233,7 @@ input::placeholder {
 }
 
 /* Semantic flavor modifiers set --input-accent*, consumed above */
-${FLAVORS.filter((f) => f !== "neutral").map((f) => inputFlavor(f)).join("")}
+${FLAVORS.filter((f) => f !== "neutral").map((f) => inputFlavor(f, undefined, f === "danger" ? errorLook : "")).join("")}
 
 input:focus-visible {
   outline: none;

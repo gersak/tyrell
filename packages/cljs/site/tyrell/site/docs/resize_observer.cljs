@@ -40,7 +40,7 @@
            "[:> ty/ResizeObserver {:id \"panel\"" (when d (str " :debounce " debounce)) "}\n chart]")]
      ["replicant" "Replicant" "clojure"
       (str "[:ty-resize-observer {:id \"panel\"" (when d (str " :debounce \"" debounce "\"")) "}\n chart]\n\n"
-           ";; tyrell.layout reads the same registry:\n(layout/with-container \"panel\"\n  (layout/container-breakpoint))")]
+           ";; tyrell.layout reads the same registry:\n(layout/with-resize-observer \"panel\"\n  (layout/container-breakpoint))")]
      ;; no events: subscribe to the registry once and keep the size in a signal
      ["datastar" "Datastar" "html"
       (str "<ty-resize-observer id=\"panel\"" d "\n  data-signals=\"{panelWidth: 0, panelHeight: 0}\""
@@ -60,6 +60,66 @@
         [:span.text-xs.ty-text- (str "breakpoint: " (breakpoint w))]]]]
      [:span.text-xs.ty-text-- "Drag the bottom-right corner."]]))
 
+(def ^:private registry-snippets
+  "Reading the size registry, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-resize-observer id=\"panel\">…</ty-resize-observer>
+
+<script>
+  const size = tyResizeObserver.getSize('panel');  // {width, height}
+  const stop = tyResizeObserver.onResize('panel', ({ width }) => {
+    panel.dataset.layout = width < 360 ? 'stack' : 'row';
+  });
+  tyResizeObserver.sizes;  // every id, for debugging
+  stop();
+</script>"]
+   ["react" "React" "javascript"
+    "import { useEffect, useState } from 'react'
+import { TyResizeObserver } from 'tyrell-react'
+import { onResize } from 'tyrell-components'
+
+const [layout, setLayout] = useState('row')
+useEffect(() => onResize('panel', ({ width }) =>
+  setLayout(width < 360 ? 'stack' : 'row')), [])  // returns stop
+
+<TyResizeObserver id=\"panel\">
+  <Card layout={layout} />
+</TyResizeObserver>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [reagent.core :as r]
+          [tyrell.react :as ty]
+          [tyrell.layout :as layout])
+
+(defonce size (r/atom nil))
+;; returns the unsubscribe fn
+(.onResize js/tyResizeObserver \"panel\"
+           #(reset! size {:width (.-width %) :height (.-height %)}))
+
+[:> ty/ResizeObserver {:id \"panel\"}
+ (layout/with-container {:width (:width @size) :height (:height @size)}
+   (case (layout/container-breakpoint)
+     :xs [compact-card]
+     [full-card]))]"]
+   ["replicant" "Replicant" "clojure"
+    "(:require [tyrell.layout :as layout])
+
+;; render again on change; returns the unsubscribe fn
+(.onResize js/tyResizeObserver \"panel\" #(render!))
+
+[:ty-resize-observer {:id \"panel\"}
+ (layout/with-resize-observer \"panel\"
+   (case (layout/container-breakpoint)
+     :xs (compact-card)
+     (full-card)))]"]
+   ["datastar" "Datastar" "html"
+    "<ty-resize-observer id=\"panel\"
+  data-signals=\"{layout: 'row'}\"
+  data-init=\"tyResizeObserver.onResize('panel', ({ width }) => {
+    $layout = width < 360 ? 'stack' : 'row'
+  })\">
+  <div class=\"card\" data-attr:data-layout=\"$layout\">…</div>
+</ty-resize-observer>"]])
+
 (defn view []
   (component-page
    {:title "Resize Observer"
@@ -69,11 +129,18 @@
     :chips [["Registry by id" "layers"] ["Debounce" "zap"] ["TyResizeObserver (React)" "atom"]]
     :source "packages/core/src/components/resize-observer.ts"
     :mark "⤡"
-    :demo [:div.flex.flex-col.gap-2 {:style {:width "300px"}}
-           [:div.ty-floating.rounded-xl.p-4.flex.items-center.justify-between
-            [:span.font-mono.text-lg.font-semibold.ty-text++ "640 × 360"]
-            [:ty-tag {:flavor "primary-" :size "sm"} "wide"]]
-           [:code.text-xs.ty-text- "getSize('panel') → {width: 640, height: 360}"]]}
+    :demo (let [{:keys [w h]} (doc-state :hero)]
+            [:div.flex.flex-col.gap-2 {:style {:width "300px"}}
+             ;; Drag the corner sideways: height is fixed so the hero doesn't move.
+             [:div.ty-floating.rounded-xl.overflow-hidden
+              {:style {:resize "horizontal" :width "300px" :min-width "200px" :max-width "100%"}}
+              [:ty-resize-observer (merge {:id "hero-panel" :style {:display "block"}}
+                                          (subscribed "hero-panel" :hero))
+               [:div.p-4.flex.items-center.justify-between.gap-2
+                [:span.font-mono.text-lg.font-semibold.ty-text++.whitespace-nowrap (if w (str w " × " h) "—")]
+                [:ty-tag {:flavor "primary-" :size "sm"}
+                 (cond (nil? w) "—" (< w 230) "compact" (< w 270) "medium" :else "wide")]]]]
+             [:code.text-xs.ty-text- (str "getSize('hero-panel') → {width: " (or w 0) ", height: " (or h 0) "}")]])}
 
    (playground
     {:id :resize
@@ -116,28 +183,14 @@
       [:p.text-sm.ty-text- "Set it in the playground above: at 400 the numbers update only after you stop dragging."])
 
      (example
-      {:title "ClojureScript layout"
-       :span 3
-       :lang "clojure"
-       :description [:span [:code "tyrell.layout"] " reads the same registry: breakpoints, orientation and density of a container."]
-       :code "(require '[tyrell.layout :as layout])
-
-(layout/with-container \"panel\"
-  (case (layout/container-breakpoint)
-    :xs (compact-view)
-    (full-view)))"}
-      [:p.text-sm.ty-text- "Wrap a subtree in with-container and read container-width, container-breakpoint or portrait? inside it."])
-
-     (example
-      {:title "Without a framework"
-       :span 3
-       :lang "javascript"
-       :description [:span "The CDN bundle exposes the registry as " [:code "window.tyResizeObserver"] "."]
-       :code "const size = tyResizeObserver.getSize('panel');
-const stop = tyResizeObserver.onResize('panel', draw);
-tyResizeObserver.getAllSizes();   // debugging
-stop();"}
-      [:p.text-sm.ty-text- "ES module users import the same functions: getSize, onResize, getAllSizes from tyrell-components."])))
+      {:title "Read the registry"
+       :span 6
+       :description [:span "Every observer publishes its size under its id. "
+                     [:code "window.tyResizeObserver"] " has " [:code "getSize"] " and " [:code "onResize"]
+                     "; ES modules import them from " [:code "tyrell-components"] ". In ClojureScript, "
+                     [:code "tyrell.layout"] " turns the size into breakpoint, orientation and density."]
+       :tabs registry-snippets}
+      nil)))
 
    (api-section
     {:attributes [["id" "string" "Required. The key its size is published under. Renaming moves the entry."]

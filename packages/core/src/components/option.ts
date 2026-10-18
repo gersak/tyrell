@@ -5,6 +5,8 @@
 
 import type { TyOptionElement } from '../types/common.js'
 import { ensureStyles } from '../utils/styles.js'
+import { coerceBoolean } from '../utils/property-manager.js'
+import { upgradeProperties } from '../utils/upgrade-properties.js'
 import { optionStyles } from '../styles/option.js'
 
 /** Lucide `check` — shown on selected options (kept inline: shadow DOM can't rely on the icon registry) */
@@ -36,16 +38,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
   connectedCallback(): void {
-    // CRITICAL: Reagent/React may set properties BEFORE the element is constructed
-    // Check if value was set directly on the instance before our getter/setter was available
-    const instanceValue = Object.getOwnPropertyDescriptor(this, 'value')
-
-    if (instanceValue) {
-      this._value = instanceValue.value
-      // Clean up the instance property so our getter/setter works
-      delete this.value
-    }
-
+    upgradeProperties(this)
     this.render()
   }
 
@@ -117,6 +110,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
   set selected(value: boolean) {
+    value = coerceBoolean(value)
     if (this._selected !== value) {
       this._selected = value
       if (value) {
@@ -133,6 +127,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
   set disabled(value: boolean) {
+    value = coerceBoolean(value)
     if (this._disabled !== value) {
       this._disabled = value
       if (value) {
@@ -149,6 +144,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
   set highlighted(value: boolean) {
+    value = coerceBoolean(value)
     if (this._highlighted !== value) {
       this._highlighted = value
       if (value) {
@@ -165,6 +161,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   }
 
   set hidden(value: boolean) {
+    value = coerceBoolean(value)
     if (this._hidden !== value) {
       this._hidden = value
       if (value) {

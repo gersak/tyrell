@@ -66,6 +66,126 @@
                   :on {:click #(.togglePopup (js/document.getElementById "doc-popup-play"))}}
       "togglePopup()"])])
 
+(def ^:private form-snippets
+  "Quick form, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-button>
+  Add label
+  <ty-popup placement=\"bottom-start\">
+    <form id=\"new-label\">
+      <ty-input name=\"label\" label=\"New label\"></ty-input>
+      <ty-button flavor=\"primary\">Add</ty-button>
+    </form>
+  </ty-popup>
+</ty-button>
+
+<script>
+  document.getElementById('new-label').addEventListener('submit', (e) => {
+    e.preventDefault();
+    addLabel(new FormData(e.target).get('label'));
+    e.target.closest('ty-popup').closePopup();
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TyButton, TyPopup, TyInput } from 'tyrell-react'
+
+<TyButton>
+  Add label
+  <TyPopup placement=\"bottom-start\">
+    <form onSubmit={(e) => {
+      e.preventDefault()
+      addLabel(new FormData(e.currentTarget).get('label'))
+      e.currentTarget.closest('ty-popup').closePopup()
+    }}>
+      <TyInput name=\"label\" label=\"New label\" />
+      <TyButton flavor=\"primary\">Add</TyButton>
+    </form>
+  </TyPopup>
+</TyButton>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Button \"Add label\"
+ [:> ty/Popup {:placement \"bottom-start\"}
+  [:form {:on-submit (fn [e]
+                       (.preventDefault e)
+                       (let [form (.-currentTarget e)]
+                         (add-label! (.get (js/FormData. form) \"label\"))
+                         (.closePopup (.closest form \"ty-popup\"))))}
+   [:> ty/Input {:name \"label\" :label \"New label\"}]
+   [:> ty/Button {:flavor \"primary\"} \"Add\"]]]]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-button \"Add label\"
+ [:ty-popup {:placement \"bottom-start\"}
+  [:form {:on {:submit (fn [e]
+                         (.preventDefault e)
+                         (let [form (.-target e)]
+                           (add-label! (.get (js/FormData. form) \"label\"))
+                           (.closePopup (.closest form \"ty-popup\"))))}}
+   [:ty-input {:name \"label\" :label \"New label\"}]
+   [:ty-button {:flavor \"primary\"} \"Add\"]]]]"]
+   ["datastar" "Datastar" "html"
+    "<ty-button>
+  Add label
+  <ty-popup placement=\"bottom-start\">
+    <form data-on:submit__prevent=\"@post('/labels', {contentType: 'form'});
+      el.closest('ty-popup').closePopup()\">
+      <ty-input name=\"label\" label=\"New label\"></ty-input>
+      <ty-button flavor=\"primary\">Add</ty-button>
+    </form>
+  </ty-popup>
+</ty-button>"]])
+
+(def ^:private api-snippets
+  "JavaScript API example, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-popup id=\"share\">…</ty-popup>
+
+<script>
+  const popup = document.getElementById('share');
+
+  popup.openPopup();
+  popup.closePopup();
+  popup.togglePopup();
+
+  popup.addEventListener('open', () => loadShareLinks());
+  popup.addEventListener('close', () => track('share-closed'));
+</script>"]
+   ["react" "React" "javascript"
+    "import { useRef } from 'react'
+import { TyPopup } from 'tyrell-react'
+
+const popup = useRef(null)
+// popup.current.openPopup() / closePopup() / togglePopup()
+
+<TyPopup ref={popup}
+  onOpen={() => loadShareLinks()}
+  onClose={() => track('share-closed')}>
+  …
+</TyPopup>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+;; (.openPopup @popup) / .closePopup / .togglePopup
+[:> ty/Popup {:ref #(reset! popup %)
+              :on-open #(load-share-links!)
+              :on-close #(track! \"share-closed\")}
+ …]"]
+   ["replicant" "Replicant" "clojure"
+    ";; (.openPopup @popup) / .closePopup / .togglePopup
+[:ty-popup {:replicant/on-mount (fn [{:replicant/keys [node]}] (reset! popup node))
+            :on {:open #(load-share-links!)
+                 :close #(track! \"share-closed\")}}
+ …]"]
+   ["datastar" "Datastar" "html"
+    "<!-- $_share.openPopup() / closePopup() / togglePopup().
+     The _ keeps the element out of the signals sent to the server. -->
+<ty-popup data-ref:_share
+  data-on:open=\"@get('/share-links')\"
+  data-on:close=\"@post('/track/share-closed')\">
+  …
+</ty-popup>"]])
+
 (defn view []
   (component-page
    {:title "Popup"
@@ -75,12 +195,13 @@
     :chips [["Top layer" "layers"] ["Keyboard" "zap"] ["TyPopup (React)" "atom"]]
     :source "packages/core/src/components/popup.ts"
     :mark "⌃"
-    :demo [:div.flex.flex-col.items-start.gap-2
-           [:ty-button {:size "md" :appearance "outlined"} "Actions" [:ty-icon {:slot "end" :name "chevron-down"}]]
-           (card (menu-item "edit" "Rename")
-                 (menu-item "copy" "Duplicate")
-                 (menu-item "archive" "Archive")
-                 (menu-item "trash" "Delete" "danger"))]}
+    :demo [:ty-button {:size "md" :appearance "outlined"}
+           "Actions" [:ty-icon {:slot "end" :name "chevron-down"}]
+           [:ty-popup {:placement "bottom-start"}
+            (card (menu-item "edit" "Edit")
+                  (menu-item "copy" "Duplicate")
+                  (menu-item "archive" "Archive")
+                  (menu-item "trash" "Delete" "danger"))]]}
 
    (playground
     {:id :popup
@@ -118,12 +239,7 @@ item.dispatchEvent(new CustomEvent(
       {:title "Quick form"
        :span 3
        :description "Fields work inside; the popup only closes on outside click, Escape, or when you say so."
-       :code "<ty-button>
-  Add label
-  <ty-popup>
-    <form>…</form>
-  </ty-popup>
-</ty-button>"}
+       :tabs form-snippets}
       (let [labels (or (doc-state :labels) ["bug" "docs"])]
         [:div.flex.flex-wrap.items-center.gap-2
          (for [l labels] [:ty-tag {:replicant/key l :size "sm"} l])
@@ -152,15 +268,7 @@ item.dispatchEvent(new CustomEvent(
 
      (example
       {:title "JavaScript API"
-       :lang "javascript"
-       :code "const popup = document.querySelector('ty-popup');
-
-popup.openPopup();
-popup.closePopup();
-popup.togglePopup();
-
-popup.addEventListener('open', () => loadShareLinks());
-popup.addEventListener('close', () => track('share-closed'));"}
+       :tabs api-snippets}
       nil)))
 
    (page-section
@@ -175,7 +283,7 @@ popup.addEventListener('close', () => track('share-closed'));"}
   --ty-popup-ease: cubic-bezier(.2, 1.6, .4, 1);
   --ty-popup-scale: .8;
 }"}
-     [:ty-button {:size "md"} "Bouncy popup"
+     [:ty-button.self-start {:size "md"} "Bouncy popup"
       [:ty-popup {:style {"--ty-popup-duration" "420ms"
                           "--ty-popup-ease" "cubic-bezier(.2, 1.6, .4, 1)"
                           "--ty-popup-scale" ".8"}}
@@ -194,9 +302,9 @@ popup.addEventListener('close', () => track('share-closed'));"}
      :events [["open" "—" "Opened and positioned. Doesn't bubble."]
               ["close" "—" "Closed. Doesn't bubble."]
               ["ty:close-popup" "—" "Dispatch it (bubbling) from inside the content to close the popup."]]
-     :slots [["(default)" "The popup content. The anchor is the popup's parent element."]]
-     :keyboard [["Enter / Space on the anchor" "Open."]
-                ["Esc" "Close, unless disable-close."]]
+     :slots [["(default)" "The popup content. The anchor is the popup's parent element; a ty-button anchor inside a form needs type=\"button\", or its press submits."]]
+     :keyboard [["Enter / Space on the anchor" "Open, on a ty-button as on a native button. Opening, by key or click, moves focus into the popup: an [autofocus] control in it, else the popup itself."]
+                ["Esc" "Close, unless disable-close. A select list or date picker calendar open inside closes first."]]
      :css-vars [["--ty-popup-duration" "Entrance and exit duration."]
                 ["--ty-popup-ease" "Entrance easing."]
                 ["--ty-popup-scale" "Starting scale of the entrance (.96)."]]})))

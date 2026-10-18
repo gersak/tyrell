@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Home - Beautiful Ty Components Demo{% endblock %}
+{% block title %}Home - Tyrellrell Demo{% endblock %}
 
 {% block content %}
 <!-- Hero Section with Modern Design -->
@@ -11,27 +11,27 @@
         <div class="text-center animate-fade-in">
             <h1 class="text-5xl md:text-6xl font-bold mb-8">
                 <span class="text-gradient-primary">Beautiful</span>
-                <span class="ty-text-primary-strong"> Web Components</span>
+                <span class="ty-text-primary++"> Web Components</span>
             </h1>
-            <p class="text-xl md:text-2xl ty-text-neutral-bold max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p class="text-xl md:text-2xl ty-text-neutral+ max-w-3xl mx-auto mb-12 leading-relaxed">
                 Experience the perfect fusion of 
-                <span class="ty-text-primary-strong font-semibold">Ty Components</span>,
-                <span class="ty-text-success-strong font-semibold">HTMX</span>, and 
-                <span class="ty-text-warning-strong font-semibold">Tailwind CSS</span>
+                <span class="ty-text-primary++ font-semibold">Tyrell</span>,
+                <span class="ty-text-success++ font-semibold">HTMX</span>, and 
+                <span class="ty-text-warning++ font-semibold">Tailwind CSS</span>
                 creating dynamic, server-rendered applications that feel magical.
             </p>
             
             <div class="flex flex-col sm:flex-row justify-center gap-6 animate-slide-up">
-                <ty-button flavor="primary" size="lg" 
+                <ty-button type="button" flavor="primary" size="lg" 
                            class="transform hover:scale-[1.02] transition-transform duration-200 shadow-lg"
                            onclick="window.location.href='{{ url_for('forms') }}'">
-                    <ty-icon name="zap" class="mr-1"></ty-icon>
+                    <ty-icon slot="start" name="zap"></ty-icon>
                     Explore Interactive Forms
                 </ty-button>
-                <ty-button flavor="neutral" size="lg"
+                <ty-button type="button" flavor="neutral" size="lg"
                            class="transform hover:scale-[1.02] transition-transform duration-200"
                            onclick="window.location.href='{{ url_for('components') }}'">
-                    <ty-icon name="layers" class="mr-1"></ty-icon>
+                    <ty-icon slot="start" name="layers"></ty-icon>
                     View Components
                 </ty-button>
             </div>
@@ -46,10 +46,10 @@
 <!-- Interactive Features Grid -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
     <div class="text-center mb-16">
-        <h2 class="text-4xl font-bold ty-text-primary-strong mb-6">
+        <h2 class="text-4xl font-bold ty-text-primary++ mb-6">
             Live Interactive Demos
         </h2>
-        <p class="text-xl ty-text-neutral-bold max-w-2xl mx-auto">
+        <p class="text-xl ty-text-neutral+ max-w-2xl mx-auto">
             See real-world patterns in action. Every interaction is powered by server-side logic.
         </p>
     </div>
@@ -59,10 +59,10 @@
         <div class="glass-card group hover:scale-[1.02] transition-all duration-300 animate-slide-up">
             <div class="flex items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-bold ty-text-primary-strong mb-2">
+                    <h3 class="text-2xl font-bold ty-text-primary++ mb-2">
                         🔍 Smart User Search
                     </h3>
-                    <p class="ty-text-neutral-bold">
+                    <p class="ty-text-neutral+">
                         Live server-side filtering with beautiful results
                     </p>
                 </div>
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 
-                <div id="user-results" class="min-h-32 ty-bg-neutral-soft rounded-xl p-6 transition-all duration-300">
+                <div id="user-results" class="min-h-32 ty-bg-neutral- rounded-xl p-6 transition-all duration-300">
                     {% include 'partials/user_search_results.html' %}
                 </div>
             </div>
@@ -95,10 +95,10 @@
         <div class="glass-card group hover:scale-[1.02] transition-all duration-300 animate-slide-up">
             <div class="flex items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-bold ty-text-success-strong mb-2">
+                    <h3 class="text-2xl font-bold ty-text-success++ mb-2">
                         📋 Task Dashboard
                     </h3>
-                    <p class="ty-text-neutral-bold">
+                    <p class="ty-text-neutral+">
                         Real-time filtering and status management
                     </p>
                 </div>
@@ -107,8 +107,7 @@
             <div class="space-y-6">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="form-label">Status Filter</label>
-                        <ty-dropdown id="status-filter" 
+                        <ty-select label="Status Filter" id="status-filter" 
                                      name="status"
                                      placeholder="All Statuses"
                                      class="w-full"
@@ -121,12 +120,11 @@
                             <ty-option value="pending">⏳ Pending</ty-option>
                             <ty-option value="in-progress">🚀 In Progress</ty-option>
                             <ty-option value="completed">✅ Completed</ty-option>
-                        </ty-dropdown>
+                        </ty-select>
                     </div>
                     
                     <div class="space-y-2">
-                        <label class="form-label">Priority Filter</label>
-                        <ty-dropdown id="priority-filter"
+                        <ty-select label="Priority Filter" id="priority-filter"
                                      name="priority"
                                      placeholder="All Priorities"
                                      class="w-full"
@@ -140,7 +138,7 @@
                             <ty-option value="medium">🟡 Medium</ty-option>
                             <ty-option value="high">🟠 High</ty-option>
                             <ty-option value="critical">🔴 Critical</ty-option>
-                        </ty-dropdown>
+                        </ty-select>
                     </div>
                 </div>
                 
@@ -159,10 +157,10 @@
         <div class="glass-card group hover:scale-[1.02] transition-all duration-300 animate-slide-up">
             <div class="flex items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-bold ty-text-warning-strong mb-2">
+                    <h3 class="text-2xl font-bold ty-text-warning++ mb-2">
                         📅 Event Scheduler
                     </h3>
-                    <p class="ty-text-neutral-bold">
+                    <p class="ty-text-neutral+">
                         Interactive calendar with real-time event management
                     </p>
                 </div>
@@ -181,7 +179,7 @@
                 <!-- Quick Event Creation -->
                 <div class="space-y-4">
                     <div class="flex items-center justify-between">
-                        <h4 class="font-semibold ty-text-neutral-strong">Quick Event</h4>
+                        <h4 class="font-semibold ty-text-neutral++">Quick Event</h4>
                         <div id="calendar-loading" class="htmx-indicator">
                             <div class="spinner ty-text-primary"></div>
                         </div>
@@ -197,27 +195,27 @@
                                   class="flex-1"
                                   required>
                         </ty-input>
-                        <ty-dropdown name="event_type" class="w-32">
+                        <ty-select name="event_type" value="meeting" class="w-40">
                             <ty-option value="meeting">🤝 Meeting</ty-option>
                             <ty-option value="deadline">📋 Deadline</ty-option>
                             <ty-option value="personal">👤 Personal</ty-option>
                             <ty-option value="reminder">⏰ Reminder</ty-option>
-                        </ty-dropdown>
+                        </ty-select>
                         <ty-button type="submit" flavor="primary" size="lg">
                             <ty-icon name="plus" slot="start"></ty-icon>
                             Add
                         </ty-button>
                     </form>
                     
-                    <div id="date-selection-status" class="text-sm ty-text-neutral-bold">
+                    <div id="date-selection-status" class="text-sm ty-text-neutral+">
                         📅 Click on a date above to start scheduling events
                     </div>
                 </div>
                 
                 <!-- Events Display -->
                 <div class="space-y-3">
-                    <h4 class="font-semibold ty-text-neutral-strong">Scheduled Events</h4>
-                    <div id="calendar-events" class="space-y-2 max-h-48 overflow-y-auto ty-bg-neutral-soft rounded-lg p-4">
+                    <h4 class="font-semibold ty-text-neutral++">Scheduled Events</h4>
+                    <div id="calendar-events" class="space-y-2 max-h-48 overflow-y-auto ty-bg-neutral- rounded-lg p-4">
                         {% include 'partials/event_list.html' %}
                     </div>
                 </div>
@@ -228,10 +226,10 @@
         <div class="glass-card group hover:scale-[1.02] transition-all duration-300 animate-slide-up">
             <div class="flex items-center mb-6">
                 <div>
-                    <h3 class="text-2xl font-bold ty-text-info-strong mb-2">
+                    <h3 class="text-2xl font-bold ty-text-primary++ mb-2">
                         🎭 Dynamic Modals
                     </h3>
-                    <p class="ty-text-neutral-bold">
+                    <p class="ty-text-neutral+">
                         Server-powered content loading in beautiful dialogs
                     </p>
                 </div>
@@ -239,28 +237,28 @@
             
             <div class="space-y-6">
                 <div class="grid grid-cols-2 gap-4">
-                    <ty-button flavor="primary" size="lg"
+                    <ty-button type="button" flavor="primary" size="lg"
                                class="w-full"
                                hx-get="/api/modal/content/user-profile?user_id=1"
                                hx-target="#modal-content"
                                onclick="document.getElementById('demo-modal').show()">
-                        <ty-icon name="user" class="mr-1"></ty-icon>
+                        <ty-icon slot="start" name="user"></ty-icon>
                         User Profile
                     </ty-button>
                     
-                    <ty-button flavor="neutral" size="lg"
+                    <ty-button type="button" flavor="neutral" size="lg"
                                class="w-full"
                                hx-get="/api/modal/content/task-details?task_id=1"
                                hx-target="#modal-content"
                                onclick="document.getElementById('demo-modal').show()">
-                        <ty-icon name="clipboard" class="mr-1"></ty-icon>
+                        <ty-icon slot="start" name="clipboard"></ty-icon>
                         Task Details
                     </ty-button>
                 </div>
                 
-                <div class="ty-bg-neutral-soft rounded-xl p-6 text-center">
-                    <ty-icon name="sparkles" class="w-12 h-12 mx-auto mb-3 ty-text-info-bold"></ty-icon>
-                    <p class="ty-text-neutral-bold">
+                <div class="ty-bg-neutral- rounded-xl p-6 text-center">
+                    <ty-icon name="sparkles" class="w-12 h-12 mx-auto mb-3 ty-text-primary+"></ty-icon>
+                    <p class="ty-text-neutral+">
                         Click the buttons above to see dynamic content loading in action!
                     </p>
                 </div>
@@ -269,7 +267,7 @@
                     <div id="modal-content">
                         <div class="text-center">
                             <div class="spinner ty-text-primary mb-4"></div>
-                            <p class="ty-text-neutral-bold">Loading amazing content...</p>
+                            <p class="ty-text-neutral+">Loading amazing content...</p>
                         </div>
                     </div>
                 </ty-modal>
@@ -280,41 +278,41 @@
     <!-- Technology Showcase -->
     <div class="ty-elevated rounded-2xl p-12 mb-16 bg-gradient-primary">
         <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold ty-text-primary-strong mb-6">
+            <h2 class="text-4xl font-bold ty-text-primary++ mb-6">
                 Powered by Modern Technologies
             </h2>
-            <p class="text-xl ty-text-neutral-bold max-w-3xl mx-auto">
+            <p class="text-xl ty-text-neutral+ max-w-3xl mx-auto">
                 See how beautifully these technologies work together to create amazing user experiences.
             </p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="text-center group">
-                <div class="feature-icon ty-bg-primary-soft group-hover:scale-[1.05] transition-transform duration-300">
-                    <ty-icon name="zap" class="ty-text-primary-strong"></ty-icon>
+                <div class="feature-icon ty-bg-primary- group-hover:scale-[1.05] transition-transform duration-300">
+                    <ty-icon name="zap" class="ty-text-primary++"></ty-icon>
                 </div>
-                <h3 class="text-xl font-bold ty-text-primary-strong mb-3">Real-time Validation</h3>
-                <p class="ty-text-neutral-bold">
+                <h3 class="text-xl font-bold ty-text-primary++ mb-3">Real-time Validation</h3>
+                <p class="ty-text-neutral+">
                     Server-side form validation with instant feedback and beautiful error states.
                 </p>
             </div>
             
             <div class="text-center group">
-                <div class="feature-icon ty-bg-success-soft group-hover:scale-[1.05] transition-transform duration-300">
-                    <ty-icon name="search" class="ty-text-success-strong"></ty-icon>
+                <div class="feature-icon ty-bg-success- group-hover:scale-[1.05] transition-transform duration-300">
+                    <ty-icon name="search" class="ty-text-success++"></ty-icon>
                 </div>
-                <h3 class="text-xl font-bold ty-text-success-strong mb-3">Dynamic Search</h3>
-                <p class="ty-text-neutral-bold">
+                <h3 class="text-xl font-bold ty-text-success++ mb-3">Dynamic Search</h3>
+                <p class="ty-text-neutral+">
                     Live search with server-side filtering, debouncing, and beautiful result presentation.
                 </p>
             </div>
             
             <div class="text-center group">
-                <div class="feature-icon ty-bg-warning-soft group-hover:scale-[1.05] transition-transform duration-300">
-                    <ty-icon name="calendar-plus" class="ty-text-warning-strong"></ty-icon>
+                <div class="feature-icon ty-bg-warning- group-hover:scale-[1.05] transition-transform duration-300">
+                    <ty-icon name="calendar-plus" class="ty-text-warning++"></ty-icon>
                 </div>
-                <h3 class="text-xl font-bold ty-text-warning-strong mb-3">Event Scheduler</h3>
-                <p class="ty-text-neutral-bold">
+                <h3 class="text-xl font-bold ty-text-warning++ mb-3">Event Scheduler</h3>
+                <p class="ty-text-neutral+">
                     Interactive calendar with real-time event creation, management, and server-side persistence.
                 </p>
             </div>
@@ -324,21 +322,21 @@
     <!-- Call to Action -->
     <div class="text-center">
         <div class="inline-block p-8 glass-card">
-            <h2 class="text-3xl font-bold ty-text-primary-strong mb-4">
+            <h2 class="text-3xl font-bold ty-text-primary++ mb-4">
                 Ready to Build Something Amazing?
             </h2>
-            <p class="text-lg ty-text-neutral-bold mb-6">
+            <p class="text-lg ty-text-neutral+ mb-6">
                 Explore all the features and see the source code.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <ty-button flavor="primary" size="lg"
+                <ty-button type="button" flavor="primary" size="lg"
                            onclick="window.location.href='{{ url_for('forms') }}'">
-                    <ty-icon name="play" class="mr-1"></ty-icon>
+                    <ty-icon slot="start" name="play"></ty-icon>
                     Try Interactive Forms
                 </ty-button>
-                <ty-button flavor="outline" size="lg"
-                           onclick="window.open('https://github.com/yourusername/ty', '_blank')">
-                    <ty-icon name="github" class="mr-1"></ty-icon>
+                <ty-button type="button" appearance="outlined" size="lg"
+                           onclick="window.open('https://github.com/gersak/tyrell', '_blank')">
+                    <ty-icon slot="start" name="github"></ty-icon>
                     View Source Code
                 </ty-button>
             </div>
@@ -417,20 +415,20 @@ function updateDateSelectionStatus(year, month, day) {
         }).format(date);
         
         statusDiv.innerHTML = `✅ Selected: <strong>${formattedDate}</strong> - Ready to add events!`;
-        statusDiv.className = 'text-sm ty-text-success-strong';
+        statusDiv.className = 'text-sm ty-text-success++';
         
         // Show success toast
         showDateSelectedToast(formattedDate);
     } else {
         statusDiv.innerHTML = '📅 Click on a date above to start scheduling events';
-        statusDiv.className = 'text-sm ty-text-neutral-bold';
+        statusDiv.className = 'text-sm ty-text-neutral+';
     }
 }
 
 function showDateSelectedToast(dateStr) {
     // Create a temporary toast notification
     const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 ty-bg-success rounded-lg p-3 text-white shadow-lg z-50 animate-slide-in-right';
+    toast.className = 'fixed top-4 right-4 ty-bg-success rounded-lg p-3 ty-text-success++ shadow-lg z-50 animate-slide-in-right';
     toast.innerHTML = `
         <div class="flex items-center space-x-2">
             <ty-icon name="calendar-check" class="text-white"></ty-icon>
@@ -464,12 +462,12 @@ document.body.addEventListener('htmx:beforeRequest', function(event) {
             const statusDiv = document.getElementById('date-selection-status');
             if (statusDiv) {
                 statusDiv.innerHTML = '❌ Please select a date from the calendar first!';
-                statusDiv.className = 'text-sm ty-text-danger-strong';
+                statusDiv.className = 'text-sm ty-text-danger++';
                 
                 // Reset after 3 seconds
                 setTimeout(() => {
                     statusDiv.innerHTML = '📅 Click on a date above to start scheduling events';
-                    statusDiv.className = 'text-sm ty-text-neutral-bold';
+                    statusDiv.className = 'text-sm ty-text-neutral+';
                 }, 3000);
             }
             
@@ -481,92 +479,10 @@ document.body.addEventListener('htmx:beforeRequest', function(event) {
 });
 
 document.body.addEventListener('htmx:afterRequest', function(event) {
-    if (event.target.matches('form[hx-post*="/api/calendar/create-event"]')) {
-        if (event.detail.xhr.status === 200) {
-            // Clear the form after successful submission
-            const form = event.target;
-            const titleInput = form.querySelector('ty-input[name="event_title"]');
-            if (titleInput) {
-                titleInput.value = '';
-                titleInput.setAttribute('value', '');
-            }
-            
-            // Reset dropdown
-            const dropdown = form.querySelector('ty-dropdown[name="event_type"]');
-            if (dropdown) {
-                dropdown.value = 'meeting';
-            }
-            
-            // Show success feedback
-            if (titleInput) {
-                titleInput.style.boxShadow = '0 0 0 2px var(--ty-color-success)';
-                setTimeout(() => {
-                    titleInput.style.boxShadow = '';
-                }, 1000);
-            }
-            
-            console.log('✅ Event created successfully');
-        } else {
-            console.error('❌ Failed to create event:', event.detail.xhr.status);
-        }
+    if (event.target.matches('form[hx-post*="/api/calendar/create-event"]') && event.detail.successful) {
+        event.target.reset(); // ty-input and ty-select go back to their initial values
     }
 });
 
-// Calendar component initialization check
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🔍 Checking event calendar setup...');
-    
-    const calendar = document.getElementById('event-calendar');
-    if (calendar) {
-        console.log('✅ Event calendar found');
-        
-        // Check if the calendar is properly initialized
-        setTimeout(() => {
-            const hasNavigation = calendar.querySelector('ty-calendar-navigation');
-            const hasMonth = calendar.querySelector('ty-calendar-month');
-            
-            console.log('🧭 Navigation component:', hasNavigation ? '✅' : '❌');
-            console.log('📅 Month component:', hasMonth ? '✅' : '❌');
-            
-            if (!hasNavigation || !hasMonth) {
-                console.warn('⚠️ Calendar components not fully initialized');
-            }
-        }, 1000);
-    } else {
-        console.error('❌ Event calendar element not found!');
-    }
-});
-
-// Add loading states and animations
-document.body.addEventListener('htmx:beforeRequest', function(event) {
-    const target = event.detail.target;
-    if (target) {
-        target.style.opacity = '0.8';
-        target.style.transform = 'scale(0.99)';
-    }
-});
-
-document.body.addEventListener('htmx:afterRequest', function(event) {
-    const target = event.detail.target;
-    if (target) {
-        target.style.opacity = '1';
-        target.style.transform = 'scale(1)';
-        target.classList.add('animate-fade-in');
-    }
-});
-
-// Theme toggle enhancement
-function toggleTheme() {
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-}
-
-// Initialize theme from localStorage
-document.addEventListener('DOMContentLoaded', function() {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-    }
-});
 </script>
 {% endblock %}

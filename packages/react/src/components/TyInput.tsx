@@ -57,6 +57,21 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
   /** Required field */
   required?: boolean;
 
+  /** Whole value must match this regex (text types) */
+  pattern?: string;
+
+  /** Minimum / maximum number of characters (text types) */
+  minLength?: number;
+  maxLength?: number;
+
+  /** Smallest / largest numeric value (number, currency, percent, compact) */
+  min?: number | string;
+  max?: number | string;
+
+  /** Wording for minlength / maxlength failures. Placeholders: {minlength} {maxlength} {length} */
+  tooShortMessage?: string;
+  tooLongMessage?: string;
+
   /** Form field name for form submission */
   name?: string;
 
@@ -95,7 +110,7 @@ export interface TyInputProps extends Omit<React.HTMLAttributes<HTMLElement>, 'o
 let _warnedOnInputProp = false;
 
 export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
-  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, name, checked, debounce, ...props }, ref) => {
+  ({ onChange, onChangeCommit, onFocus, onBlur, disabled, required, name, checked, debounce, pattern, minLength, maxLength, min, max, tooShortMessage, tooLongMessage, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     // Catch the most common mistake: passing `onInput` (React's prop) instead
@@ -221,6 +236,15 @@ export const TyInput = React.forwardRef<HTMLElement, TyInputProps>(
     if (name) webComponentProps.name = name;
 
     if (debounce !== undefined) webComponentProps.debounce = debounce;
+
+    // Constraint rules as plain attributes (ty-input reads `minlength`, not `minLength`)
+    if (pattern) webComponentProps.pattern = pattern;
+    if (minLength !== undefined) webComponentProps.minlength = String(minLength);
+    if (maxLength !== undefined) webComponentProps.maxlength = String(maxLength);
+    if (min !== undefined) webComponentProps.min = String(min);
+    if (max !== undefined) webComponentProps.max = String(max);
+    if (tooShortMessage) webComponentProps['too-short-message'] = tooShortMessage;
+    if (tooLongMessage) webComponentProps['too-long-message'] = tooLongMessage;
 
     return React.createElement(
       'ty-input',

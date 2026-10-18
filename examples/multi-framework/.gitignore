@@ -1,6 +1,6 @@
 # Compiled output
 public/js/
-public/css/tyrell.css
+public/css/
 
 # shadow-cljs
 .shadow-cljs/

@@ -127,6 +127,7 @@ export { TyWizard as Wizard } from './TyWizard';
 export { TyStep as Step } from './TyStep';
 export { TyResizeObserver as ResizeObserver } from './TyResizeObserver';
 export { TyScrollContainer as ScrollContainer } from './TyScrollContainer';
+export { TySelect as Select, TySelectedOptions as SelectedOptions } from './TySelect';
 
 export type { TyButtonProps as ButtonProps } from './TyButton';
 

@@ -1,0 +1,109 @@
+{#
+  Setup wizard rendered into #wizard-modal-content. Every step is a <form>:
+  the browser checks the fields before htmx posts, and "Back" posts without
+  validating (it's a plain button with hx-include, not a submit).
+#}
+{% macro carry(names) %}
+    {% for name in names %}<input type="hidden" name="{{ name }}" value="{{ v.get(name, '') }}">{% endfor %}
+{% endmacro %}
+
+<div class="p-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-xl font-semibold ty-text++">Setup Wizard</h3>
+        {% if step <= 3 %}
+        <span class="text-sm ty-text-">Step {{ step }} of 3</span>
+        {% endif %}
+    </div>
+
+    {% if step <= 3 %}
+    <div class="w-full ty-bg-neutral- rounded-full h-2 mb-8">
+        <div class="ty-bg-primary h-2 rounded-full transition-all" style="width: {{ (step * 100 / 3) | round(2) }}%"></div>
+    </div>
+    {% endif %}
+
+    {% if step == 1 %}
+    <form hx-post="/api/modal/wizard/step2" hx-target="#wizard-modal-content" class="space-y-4">
+        <h4 class="text-lg font-medium ty-text++">Personal information</h4>
+        <ty-input name="wizard_name" label="Full name" placeholder="Ada Lovelace"
+                  required minlength="2" value="{{ v.get('wizard_name', '') }}"></ty-input>
+        <ty-input name="wizard_email" label="Email" type="email" placeholder="you@example.com"
+                  required value="{{ v.get('wizard_email', '') }}"></ty-input>
+        <ty-input name="wizard_company" label="Company" placeholder="Optional"
+                  value="{{ v.get('wizard_company', '') }}"></ty-input>
+        {{ carry(['wizard_notifications', 'wizard_theme', 'wizard_newsletter']) }}
+        <div class="flex justify-between pt-4">
+            <ty-button type="button" appearance="outlined" onclick="this.closest('ty-modal').hide()">Cancel</ty-button>
+            <ty-button type="submit" flavor="primary">
+                Next
+                <ty-icon slot="end" name="arrow-right"></ty-icon>
+            </ty-button>
+        </div>
+    </form>
+
+    {% elif step == 2 %}
+    <form hx-post="/api/modal/wizard/step3" hx-target="#wizard-modal-content" class="space-y-6">
+        <h4 class="text-lg font-medium ty-text++">Preferences</h4>
+        {{ carry(['wizard_name', 'wizard_email', 'wizard_company']) }}
+        <ty-select name="wizard_notifications" label="Notification frequency"
+                   value="{{ v.get('wizard_notifications') or 'weekly' }}">
+            <ty-option value="daily">Daily</ty-option>
+            <ty-option value="weekly">Weekly</ty-option>
+            <ty-option value="monthly">Monthly</ty-option>
+            <ty-option value="never">Never</ty-option>
+        </ty-select>
+        <ty-radio-group name="wizard_theme" label="Theme" orientation="horizontal"
+                        value="{{ v.get('wizard_theme') or 'light' }}">
+            <ty-radio value="light">Light</ty-radio>
+            <ty-radio value="dark">Dark</ty-radio>
+            <ty-radio value="auto">Auto</ty-radio>
+        </ty-radio-group>
+        <ty-checkbox name="wizard_newsletter" value="yes" {% if v.get('wizard_newsletter') %}checked{% endif %}>
+            Subscribe to the newsletter
+        </ty-checkbox>
+        <div class="flex justify-between pt-2">
+            <ty-button type="button" appearance="outlined"
+                       hx-post="/api/modal/wizard/step1" hx-target="#wizard-modal-content" hx-include="closest form">
+                <ty-icon slot="start" name="arrow-left"></ty-icon>
+                Back
+            </ty-button>
+            <ty-button type="submit" flavor="primary">
+                Next
+                <ty-icon slot="end" name="arrow-right"></ty-icon>
+            </ty-button>
+        </div>
+    </form>
+
+    {% elif step == 3 %}
+    <form hx-post="/api/modal/wizard/complete" hx-target="#wizard-modal-content" class="space-y-6">
+        <h4 class="text-lg font-medium ty-text++">Review</h4>
+        {{ carry(['wizard_name', 'wizard_email', 'wizard_company', 'wizard_notifications', 'wizard_theme', 'wizard_newsletter']) }}
+        <dl class="ty-bg-neutral- rounded-lg p-6 grid grid-cols-2 gap-y-3 text-sm">
+            <dt class="font-medium">Name</dt><dd>{{ v.get('wizard_name') }}</dd>
+            <dt class="font-medium">Email</dt><dd>{{ v.get('wizard_email') }}</dd>
+            <dt class="font-medium">Company</dt><dd>{{ v.get('wizard_company') or '—' }}</dd>
+            <dt class="font-medium">Notifications</dt><dd class="capitalize">{{ v.get('wizard_notifications') }}</dd>
+            <dt class="font-medium">Theme</dt><dd class="capitalize">{{ v.get('wizard_theme') }}</dd>
+            <dt class="font-medium">Newsletter</dt><dd>{{ 'Yes' if v.get('wizard_newsletter') else 'No' }}</dd>
+        </dl>
+        <div class="flex justify-between">
+            <ty-button type="button" appearance="outlined"
+                       hx-post="/api/modal/wizard/step2" hx-target="#wizard-modal-content" hx-include="closest form">
+                <ty-icon slot="start" name="arrow-left"></ty-icon>
+                Back
+            </ty-button>
+            <ty-button type="submit" flavor="success">
+                <ty-icon slot="start" name="check"></ty-icon>
+                Complete setup
+            </ty-button>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="text-center">
+        <ty-icon name="check-circle" class="w-16 h-16 mx-auto mb-4 ty-text-success"></ty-icon>
+        <h3 class="text-2xl font-semibold ty-text-success++ mb-2">Setup complete</h3>
+        <p class="ty-text- mb-6">Welcome aboard, {{ v.get('wizard_name') }}!</p>
+        <ty-button type="button" flavor="success" onclick="this.closest('ty-modal').hide()">Get started</ty-button>
+    </div>
+    {% endif %}
+</div>

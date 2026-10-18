@@ -130,6 +130,7 @@
     :blocks
     [[:scale "Z-index." (map #(v (str "z-" %)) ["auto" "0" "10" "20" "30" "40" "50" "sticky" "fixed" "modal-backdrop" "modal" "popover" "tooltip" "dropdown"])]
      [:scale "Transitions." (map #(v (str "transition-" %)) ["none" "all" "colors" "shadow" "transform"])]
+     [:rows [[(v "theme-transition") :value "Optional. Light/dark crossfade duration, 0.45s when unset; 0s turns it off."]]]
      [:scale "Scroll shadows (ty-scroll-container)." (map v ["scroll-shadow-top" "scroll-shadow-bottom" "scroll-shadow-transition"])]
      [:scale "Scrollbars." (map #(v (str "scrollbar-" %)) ["track" "track-hover" "thumb" "thumb-hover" "thumb-active"])]]}
 

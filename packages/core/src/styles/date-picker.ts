@@ -9,7 +9,7 @@ import { fieldSizeVars } from "./field-size.js";
    skipped — the 'default' flavor is the unstyled --ty-date-picker-* chrome.
    Fallback flavor `fb` is used for custom flavors (suffixed tokens fall
    back to the custom base color, then neutral). */
-const datePickerFlavor = (f: string, fb?: string) => {
+const datePickerFlavor = (f: string, fb?: string, also = "") => {
   const c = (s: string) =>
     fb
       ? s
@@ -19,7 +19,7 @@ const datePickerFlavor = (f: string, fb?: string) => {
         ? `var(--ty-color-${f}${s}, var(--ty-color-${f}))`
         : `var(--ty-color-${f})`;
   return `
-:host([flavor="${f}"]) {
+:host([flavor="${f}"])${also} {
   --date-picker-accent: var(--ty-input-${f}-border, ${c("-soft")});
   --date-picker-accent-bold: ${c("")};
   --date-picker-ring: color-mix(in oklab, ${c("")} 15%, transparent);
@@ -36,6 +36,13 @@ const datePickerFlavor = (f: string, fb?: string) => {
 }
 `;
 };
+
+/* An error looks like flavor="danger" whatever the flavor: the same rule,
+   so page-level --date-picker-accent* still win. Its (0,3,0) beats every
+   flavor rule's (0,2,0), custom ones adopted later included. Nothing is
+   written on the host to get there; `error` is matched as the attribute
+   TyComponent always reflects it to. Same as ty-input. */
+const errorLook = `,\n:host([error]:not([error=""]))`;
 
 /** Rules for one custom (non-built-in) flavor — see utils/flavor-sheet.ts. */
 export const datePickerCustomFlavorCss = (base: string) => datePickerFlavor(base, "neutral");
@@ -167,7 +174,23 @@ ${fieldSizeVars}
 }
 
 /* Flavor variants — set --date-picker-accent*, consumed by the stub rules above */
-${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f)).join("")}
+${FLAVORS.filter((f) => f !== "neutral").map((f) => datePickerFlavor(f, undefined, f === "danger" ? errorLook : "")).join("")}
+
+/* Error line + state — same as ty-input's */
+.error-message {
+  font-size: var(--ty-font-xs);
+  line-height: var(--ty-leading-xs);
+  letter-spacing: var(--ty-tracking-xs);
+  color: var(--ty-color-danger);
+  margin-top: 4px;
+  padding-left: var(--ty-field-outer-pad-x);
+}
+
+/* Border, hover, focus ring and icon: the danger accent errorLook sets.
+   Disabled keeps its own background, as on flavor="danger". */
+.date-picker-stub.error:not([disabled]) {
+  background: var(--ty-bg-danger-soft);
+}
 
 .stub-text {
   flex: 1;

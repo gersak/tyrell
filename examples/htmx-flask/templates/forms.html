@@ -1,607 +1,164 @@
 {% extends "base.html" %}
 
-{% block title %}Forms - HTMX + Ty Components Demo{% endblock %}
+{% block title %}Forms - HTMX + Tyrell Demo{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-    <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="ty-text++ font-bold mb-4">Form Examples with Ty Components</h1>
+        <h1 class="text-3xl ty-text++ font-bold mb-4">Forms with Tyrell + HTMX</h1>
         <p class="ty-text- max-w-3xl">
-            These examples demonstrate how to use Ty form components with HTMX for 
-            server-side validation, dynamic updates, and enhanced user experience.
+            Tyrell fields are real form fields: they submit with the form, take the browser's
+            validation rules, and show their own messages. HTMX only sends once every field passes.
         </p>
-        
-        <!-- Debug Panel Toggle -->
-        <div class="mt-4 p-4 ty-bg-info-soft rounded-lg">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="font-medium ty-text-info-strong">🔧 HTMX Debugging</h3>
-                    <p class="text-sm ty-text-info-bold">Toggle detailed HTMX request/response logging in the browser console.</p>
-                </div>
-                <div class="flex space-x-2">
-                    <ty-button size="sm" flavor="neutral" 
-                               hx-get="/api/test-debug" 
-                               hx-target="#debug-test-result">
-                        Test Request
-                    </ty-button>
-                    <ty-button size="sm" flavor="info" onclick="toggleHTMXDebugging()" id="debug-toggle">
-                        Enable Debug Logging
-                    </ty-button>
-                </div>
-            </div>
-            <div id="debug-status" class="mt-2 text-sm ty-text-info-bold">
-                Debug logging is currently <span id="debug-state">disabled</span>. 
-                Open browser console (F12) to see logs when enabled.
-            </div>
-            <div id="debug-test-result" class="mt-2"></div>
-        </div>
     </div>
 
     <div class="space-y-8">
-        <!-- Real-time Validation Form -->
-        <div class="ty-elevated rounded-lg p-6">
-            <h2 class="ty-text+ font-semibold mb-6">📋 Real-time Form Validation</h2>
-            
-            <form hx-post="/api/form/validate"
-                  hx-target="#form-feedback"
-                  hx-swap="innerHTML"
-                  hx-trigger="submit"
-                  hx-ext="json-enc"
-                  hx-on:submit="event.preventDefault()"
-                  class="space-y-6">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-2">
-                        <label for="name" class="ty-text font-medium">Full Name</label>
-                        <ty-input 
-                            name="name" 
-                            id="name"
-                            placeholder="Enter your full name"
-                            required>
-                        </ty-input>
-                        <div id="name-feedback" class="min-h-5"></div>
-                    </div>
-                    
-                    <div class="space-y-2">
-                        <label for="email" class="ty-text font-medium">Email Address</label>
-                        <ty-input 
-                            name="email" 
-                            id="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            required>
-                        </ty-input>
-                        <div id="email-feedback" class="min-h-5"></div>
-                    </div>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="age" class="ty-text font-medium">Age</label>
-                    <ty-input 
-                        name="age" 
-                        id="age"
-                        type="number"
-                        placeholder="25"
-                        min="13"
-                        max="120">
-                    </ty-input>
-                    <div id="age-feedback" class="min-h-5"></div>
-                </div>
-
-                <div class="space-y-2">
-                    <label for="role" class="ty-text font-medium">Role</label>
-                    <ty-dropdown name="role" id="role" placeholder="Select your role">
-                        <ty-option value="developer">Developer</ty-option>
-                        <ty-option value="designer">Designer</ty-option>
-                        <ty-option value="manager">Manager</ty-option>
-                        <ty-option value="analyst">Analyst</ty-option>
-                        <ty-option value="other">Other</ty-option>
-                    </ty-dropdown>
-                </div>
-
-                <div class="space-y-2">
-                    <label class="ty-text font-medium">Skills</label>
-                    <ty-multiselect name="skills" placeholder="Select your skills">
-                        <ty-tag value="javascript" size="sm">JavaScript</ty-tag>
-                        <ty-tag value="python" size="sm">Python</ty-tag>
-                        <ty-tag value="react" size="sm">React</ty-tag>
-                        <ty-tag value="vue" size="sm">Vue.js</ty-tag>
-                        <ty-tag value="angular" size="sm">Angular</ty-tag>
-                        <ty-tag value="node" size="sm">Node.js</ty-tag>
-                        <ty-tag value="docker" size="sm">Docker</ty-tag>
-                        <ty-tag value="kubernetes" size="sm">Kubernetes</ty-tag>
-                        <ty-tag value="aws" size="sm">AWS</ty-tag>
-                        <ty-tag value="design" size="sm">UI/UX Design</ty-tag>
-                    </ty-multiselect>
-                </div>
-
-                <div class="flex justify-end space-x-3">
-                    <ty-button flavor="neutral" type="reset" onclick="this.closest('form').reset()">
-                        Reset Form
-                    </ty-button>
-                    <ty-button type="submit" flavor="primary">
-                        Validate & Submit
-                    </ty-button>
-                </div>
-                
-                <!-- 🧪 ATTRIBUTE CHANGE TEST SECTION -->
-                <div class="mt-6 p-4 ty-bg-neutral-soft rounded-lg border-2 border-dashed ty-border">
-                    <h4 class="font-medium ty-text mb-3">🧪 Attribute Change Propagation Test</h4>
-                    <p class="text-sm ty-text-soft mb-4">
-                        Test if external attribute changes on ty-input components trigger the internal attribute change hooks.
-                        Open browser console (F12) to see hook execution logs.
-                    </p>
-                    
-                    <div class="flex flex-wrap gap-2">
-                        <ty-button type="button" flavor="success" size="sm" onclick="fillAllInputs()">
-                            📝 Fill All Inputs
-                        </ty-button>
-                        <ty-button type="button" flavor="warning" size="sm" onclick="clearAllInputs()">
-                            🗑️ Clear All Inputs  
-                        </ty-button>
-                        <ty-button type="button" flavor="primary" size="sm" onclick="setSpecificValues()">
-                            🎯 Set Specific Values
-                        </ty-button>
-                        <ty-button type="button" flavor="info" size="sm" onclick="testPropertyVsAttribute()">
-                            ⚖️ Property vs Attribute
-                        </ty-button>
-                    </div>
-                    
-                    <div id="test-results" class="mt-4 p-3 ty-bg-neutral rounded text-sm font-mono ty-text-neutral-strong">
-                        <strong>Test Results:</strong><br>
-                        Click buttons above to test attribute change propagation. Check console for detailed logs.
-                    </div>
-                </div>
-            </form>
-
-            <!-- Form Feedback Area -->
-            <div id="form-feedback" class="mt-6"></div>
-        </div>
-
-        <!-- Dynamic Form Builder -->
-        <div class="ty-elevated rounded-lg p-6">
-            <h2 class="ty-text+ font-semibold mb-6">🔧 Dynamic Form Builder</h2>
-            <p class="ty-text- mb-4">
-                Build forms dynamically by adding/removing fields with HTMX.
+        <!-- Validated form -->
+        <section class="ty-elevated rounded-lg p-6">
+            <h2 class="text-xl ty-text+ font-semibold mb-2">Validation without JavaScript</h2>
+            <p class="text-sm ty-text- mb-6">
+                Press <strong>Create account</strong> empty, or leave a field you typed in: each field shows its
+                message and the first bad one takes focus. Try <code>alice@example.com</code> to see a check only
+                the server can make come back as the field's <code>error</code>.
             </p>
+            {% include "partials/signup_form.html" %}
+        </section>
 
-            <div id="dynamic-form-container">
-                <form class="space-y-4">
-                    <div class="form-field-group" data-field-id="1">
-                        <div class="flex space-x-3 items-end">
-                            <div class="flex-1 space-y-2">
-                                <label class="ty-text font-medium">Field Name</label>
-                                <ty-input placeholder="Enter field name"></ty-input>
-                            </div>
-                            <div class="flex-1 space-y-2">
-                                <label class="ty-text font-medium">Field Type</label>
-                                <ty-dropdown placeholder="Select type">
-                                    <ty-option value="text">Text</ty-option>
-                                    <ty-option value="email">Email</ty-option>
-                                    <ty-option value="number">Number</ty-option>
-                                    <ty-option value="textarea">Textarea</ty-option>
-                                    <ty-option value="select">Select</ty-option>
-                                </ty-dropdown>
-                            </div>
-                            <ty-button type="button" flavor="danger" size="sm" 
-                                       onclick="removeFormField(this)">
-                                Remove
-                            </ty-button>
-                        </div>
-                    </div>
-                </form>
+        <!-- Dynamic form builder -->
+        <section class="ty-elevated rounded-lg p-6">
+            <h2 class="text-xl ty-text+ font-semibold mb-2">Dynamic form builder</h2>
+            <p class="text-sm ty-text- mb-6">Add fields, pick their type, then preview the form they make.</p>
 
-                <div class="mt-4 flex space-x-3">
-                    <ty-button type="button" flavor="neutral" onclick="addFormField()">
-                        Add Field
-                    </ty-button>
-                    <ty-button type="button" flavor="primary" onclick="previewForm()">
-                        Preview Form
-                    </ty-button>
+            <div id="builder-fields" class="space-y-4"></div>
+
+            <div class="mt-4 flex gap-3">
+                <ty-button type="button" appearance="outlined" onclick="addFormField()">
+                    <ty-icon slot="start" name="plus"></ty-icon>
+                    Add field
+                </ty-button>
+                <ty-button type="button" flavor="primary" onclick="previewForm()">
+                    <ty-icon slot="start" name="eye"></ty-icon>
+                    Preview form
+                </ty-button>
+            </div>
+
+            <div id="form-preview" class="mt-6 ty-content rounded-lg p-4 hidden">
+                <h3 class="ty-text+ font-semibold mb-4">Preview</h3>
+                <div id="preview-content"></div>
+            </div>
+        </section>
+
+        <!-- File upload -->
+        <section class="ty-elevated rounded-lg p-6">
+            <h2 class="text-xl ty-text+ font-semibold mb-2">File upload</h2>
+            <p class="text-sm ty-text- mb-6">Pick or drop files; the upload progress is simulated.</p>
+
+            <ty-file-upload id="file-upload" name="files" multiple
+                            accept="image/*,.pdf,.doc,.docx"
+                            label="Attachments"
+                            placeholder="Drop files here or click to browse"></ty-file-upload>
+
+            <div id="upload-progress" class="mt-4 space-y-2 hidden">
+                <div class="flex justify-between text-sm">
+                    <span class="ty-text font-medium">Uploading…</span>
+                    <span class="ty-text-" id="progress-percent">0%</span>
                 </div>
-
-                <!-- Preview Area -->
-                <div id="form-preview" class="mt-6 ty-content rounded p-4 hidden">
-                    <h3 class="ty-text+ font-semibold mb-4">Form Preview</h3>
-                    <div id="preview-content"></div>
+                <div class="w-full ty-bg-neutral- rounded-full h-2">
+                    <div class="ty-bg-primary h-2 rounded-full transition-all duration-300" id="progress-bar" style="width: 0%"></div>
                 </div>
             </div>
-        </div>
-
-        <!-- File Upload with Progress -->
-        <div class="ty-elevated rounded-lg p-6">
-            <h2 class="ty-text+ font-semibold mb-6">📎 File Upload Example</h2>
-            <p class="ty-text- mb-4">
-                File upload simulation with progress indication using Ty components.
-            </p>
-
-            <div class="space-y-4">
-                <div class="space-y-2">
-                    <label class="ty-text font-medium">Choose Files</label>
-                    <div class="border-2 border-dashed ty-border rounded-lg p-6 text-center ty-bg-neutral-">
-                        <input type="file" multiple accept="image/*,.pdf,.doc,.docx" 
-                               class="hidden" id="file-input">
-                        <label for="file-input" class="cursor-pointer">
-                            <div class="space-y-2">
-                                <ty-icon name="upload" size="lg" class="ty-text-"></ty-icon>
-                                <p class="ty-text">Click to upload files or drag and drop</p>
-                                <p class="ty-text-- text-sm">PNG, JPG, PDF up to 10MB</p>
-                            </div>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="upload-progress" class="space-y-3 hidden">
-                    <div class="flex justify-between items-center">
-                        <span class="ty-text font-medium">Uploading files...</span>
-                        <span class="ty-text-" id="progress-percent">0%</span>
-                    </div>
-                    <div class="w-full ty-bg-neutral- rounded-full h-2">
-                        <div class="ty-bg-primary h-2 rounded-full transition-all duration-300" 
-                             id="progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-
-                <div id="uploaded-files" class="space-y-2"></div>
-            </div>
-        </div>
+            <p id="upload-done" class="mt-4 text-sm ty-text-success+ hidden"></p>
+        </section>
     </div>
 </div>
 
-<script>
-let fieldCounter = 1;
+<template id="builder-field">
+    <div class="builder-field flex flex-wrap gap-3 items-end">
+        <ty-input class="flex-1" label="Field name" placeholder="e.g. Company" style="min-width: 12rem"></ty-input>
+        <ty-select class="flex-1" label="Type" value="text" style="min-width: 10rem">
+            <ty-option value="text">Text</ty-option>
+            <ty-option value="email">Email</ty-option>
+            <ty-option value="number">Number</ty-option>
+            <ty-option value="textarea">Textarea</ty-option>
+            <ty-option value="select">Select</ty-option>
+        </ty-select>
+        <ty-button type="button" appearance="ghost" flavor="danger" action aria-label="Remove field"
+                   onclick="removeFormField(this)">
+            <ty-icon name="trash"></ty-icon>
+        </ty-button>
+    </div>
+</template>
+{% endblock %}
 
+{% block extra_scripts %}
+<script>
 function addFormField() {
-    fieldCounter++;
-    const container = document.querySelector('#dynamic-form-container form');
-    const newField = document.createElement('div');
-    newField.className = 'form-field-group';
-    newField.setAttribute('data-field-id', fieldCounter);
-    newField.innerHTML = `
-        <div class="flex space-x-3 items-end">
-            <div class="flex-1 space-y-2">
-                <label class="ty-text font-medium">Field Name</label>
-                <ty-input placeholder="Enter field name"></ty-input>
-            </div>
-            <div class="flex-1 space-y-2">
-                <label class="ty-text font-medium">Field Type</label>
-                <ty-dropdown placeholder="Select type">
-                    <ty-option value="text">Text</ty-option>
-                    <ty-option value="email">Email</ty-option>
-                    <ty-option value="number">Number</ty-option>
-                    <ty-option value="textarea">Textarea</ty-option>
-                    <ty-option value="select">Select</ty-option>
-                </ty-dropdown>
-            </div>
-            <ty-button type="button" flavor="danger" size="sm" 
-                       onclick="removeFormField(this)">
-                Remove
-            </ty-button>
-        </div>
-    `;
-    container.appendChild(newField);
+    const field = document.getElementById('builder-field').content.cloneNode(true);
+    document.getElementById('builder-fields').appendChild(field);
 }
 
 function removeFormField(button) {
-    const fieldGroup = button.closest('.form-field-group');
-    if (document.querySelectorAll('.form-field-group').length > 1) {
-        fieldGroup.remove();
+    if (document.querySelectorAll('.builder-field').length > 1) {
+        button.closest('.builder-field').remove();
     }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function previewForm() {
-    const fieldGroups = document.querySelectorAll('.form-field-group');
-    const preview = document.querySelector('#form-preview');
-    const content = document.querySelector('#preview-content');
-    
-    let formHTML = '<form class="space-y-4">';
-    
-    fieldGroups.forEach(group => {
-        const nameInput = group.querySelector('ty-input');
-        const typeSelect = group.querySelector('ty-dropdown');
-        const fieldName = nameInput.value || 'Untitled Field';
-        const fieldType = typeSelect.value || 'text';
-        
-        formHTML += `
-            <div class="space-y-2">
-                <label class="ty-text font-medium">${fieldName}</label>
-        `;
-        
-        switch(fieldType) {
+    const fields = [...document.querySelectorAll('.builder-field')].map((group) => {
+        const name = escapeHtml(group.querySelector('ty-input').value || 'Untitled field');
+        switch (group.querySelector('ty-select').value) {
             case 'textarea':
-                formHTML += '<ty-textarea placeholder="Enter text..."></ty-textarea>';
-                break;
+                return `<ty-textarea label="${name}" placeholder="Enter text…"></ty-textarea>`;
             case 'select':
-                formHTML += `
-                    <ty-dropdown placeholder="Choose option">
-                        <ty-option value="option1">Option 1</ty-option>
-                        <ty-option value="option2">Option 2</ty-option>
-                    </ty-dropdown>
-                `;
-                break;
+                return `<ty-select label="${name}" placeholder="Choose…">
+                            <ty-option value="1">Option 1</ty-option>
+                            <ty-option value="2">Option 2</ty-option>
+                        </ty-select>`;
+            case 'email':
+                return `<ty-input label="${name}" type="email" placeholder="you@example.com"></ty-input>`;
+            case 'number':
+                return `<ty-input label="${name}" type="number"></ty-input>`;
             default:
-                formHTML += `<ty-input type="${fieldType}" placeholder="Enter ${fieldName.toLowerCase()}..."></ty-input>`;
+                return `<ty-input label="${name}"></ty-input>`;
         }
-        
-        formHTML += '</div>';
     });
-    
-    formHTML += `
-        <div class="flex justify-end">
-            <ty-button type="submit" flavor="primary">Submit</ty-button>
-        </div>
-    </form>`;
-    
-    content.innerHTML = formHTML;
-    preview.classList.remove('hidden');
+    document.getElementById('preview-content').innerHTML =
+        `<div class="space-y-4">${fields.join('')}</div>`;
+    document.getElementById('form-preview').classList.remove('hidden');
 }
 
-// File upload simulation
-document.getElementById('file-input').addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
-    simulateUpload(files);
-});
+addFormField();
 
-function simulateUpload(files) {
-    const progressContainer = document.getElementById('upload-progress');
-    const progressBar = document.getElementById('progress-bar');
-    const progressPercent = document.getElementById('progress-percent');
-    const uploadedContainer = document.getElementById('uploaded-files');
-    
-    progressContainer.classList.remove('hidden');
-    uploadedContainer.innerHTML = '';
-    
+// Simulated upload progress for whatever was picked
+document.getElementById('file-upload').addEventListener('change', (event) => {
+    const files = event.detail.files;
+    const done = document.getElementById('upload-done');
+    done.classList.add('hidden');
+    if (!files.length) return;
+
+    const container = document.getElementById('upload-progress');
+    const bar = document.getElementById('progress-bar');
+    const percent = document.getElementById('progress-percent');
+    container.classList.remove('hidden');
+
     let progress = 0;
-    const interval = setInterval(() => {
-        progress += Math.random() * 15;
-        if (progress >= 100) {
-            progress = 100;
-            clearInterval(interval);
-            
-            // Show uploaded files
-            setTimeout(() => {
-                progressContainer.classList.add('hidden');
-                files.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'flex items-center space-x-3 ty-content rounded p-3';
-                    fileItem.innerHTML = `
-                        <ty-icon name="file" class="ty-text-success"></ty-icon>
-                        <div class="flex-1">
-                            <p class="ty-text font-medium">${file.name}</p>
-                            <p class="ty-text-- text-sm">${(file.size / 1024).toFixed(1)} KB</p>
-                        </div>
-                        <ty-button size="sm" flavor="danger">Remove</ty-button>
-                    `;
-                    uploadedContainer.appendChild(fileItem);
-                });
-            }, 500);
+    const timer = setInterval(() => {
+        progress = Math.min(100, progress + Math.random() * 20);
+        bar.style.width = progress + '%';
+        percent.textContent = Math.round(progress) + '%';
+        if (progress === 100) {
+            clearInterval(timer);
+            container.classList.add('hidden');
+            done.textContent = `Uploaded ${files.length} file${files.length === 1 ? '' : 's'}.`;
+            done.classList.remove('hidden');
         }
-        
-        progressBar.style.width = progress + '%';
-        progressPercent.textContent = Math.round(progress) + '%';
     }, 200);
-}
-
-// HTMX Debugging Toggle Function
-let htmxDebugEnabled = false;
-
-function toggleHTMXDebugging() {
-    const button = document.getElementById('debug-toggle');
-    const state = document.getElementById('debug-state');
-    
-    if (htmxDebugEnabled) {
-        // Disable debugging
-        htmx.logger = null;
-        htmxDebugEnabled = false;
-        button.textContent = 'Enable Debug Logging';
-        state.textContent = 'disabled';
-        console.log('🔇 HTMX debugging disabled');
-    } else {
-        // Enable debugging
-        htmx.logger = function(elt, event, data) {
-            if(console) {
-                console.log("🔍 HTMX Logger:", event, elt, data);
-            }
-        }
-        htmxDebugEnabled = true;
-        button.textContent = 'Disable Debug Logging';
-        state.textContent = 'enabled';
-        console.log('🔊 HTMX debugging enabled - all requests will be logged');
-    }
-}
-
-// Initialize debug state
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if debugging was enabled in localStorage
-    const savedDebugState = localStorage.getItem('htmx-debug-enabled');
-    if (savedDebugState === 'true') {
-        toggleHTMXDebugging();
-    }
-    
-    // Save debug state
-    window.addEventListener('beforeunload', function() {
-        localStorage.setItem('htmx-debug-enabled', htmxDebugEnabled.toString());
-    });
-    
-    // 🔧 PREVENT FORM RESET AFTER HTMX VALIDATION
-    // Add event listeners to prevent form reset while keeping validation
-    document.body.addEventListener('htmx:beforeRequest', function(event) {
-        console.log('🔄 HTMX Before Request:', event.detail);
-        
-        // If this is our validation form, prevent default form behavior
-        if (event.detail.elt.matches('form[hx-post="/api/form/validate"]')) {
-            console.log('🛡️ Preventing form submission default behavior');
-            
-            // Store form values before request
-            const formEl = event.detail.elt;
-            const formData = new FormData(formEl);
-            const originalValues = {};
-            
-            // Capture current form values from ty-input components
-            formEl.querySelectorAll('ty-input[name]').forEach(input => {
-                originalValues[input.getAttribute('name')] = input.value;
-            });
-            
-            // Store for restoration if needed
-            formEl.tyOriginalValues = originalValues;
-            console.log('💾 Stored form values:', originalValues);
-        }
-    });
-    
-    document.body.addEventListener('htmx:afterSwap', function(event) {
-        console.log('✅ HTMX After Swap:', event.detail);
-        
-        // If this was our validation form, ensure values are preserved
-        if (event.detail.elt.matches('#form-feedback')) {
-            const formEl = event.detail.elt.closest('form') || 
-                          document.querySelector('form[hx-post="/api/form/validate"]');
-            
-            if (formEl && formEl.tyOriginalValues) {
-                console.log('🔄 Restoring form values after validation...');
-                
-                // Small delay to ensure HTMX processing is complete
-                setTimeout(() => {
-                    Object.entries(formEl.tyOriginalValues).forEach(([name, value]) => {
-                        const input = formEl.querySelector(`ty-input[name="${name}"]`);
-                        if (input && value) {
-                            console.log(`🔧 Restoring ${name} = "${value}"`);
-                            input.value = value;
-                            input.setAttribute('value', value);
-                        }
-                    });
-                    
-                    console.log('✅ Form values restored successfully');
-                }, 50);
-            }
-        }
-    });
-    
-    // Additional safety net - prevent any form resets
-    document.body.addEventListener('reset', function(event) {
-        if (event.target.matches('form[hx-post="/api/form/validate"]')) {
-            console.log('🚫 Blocking form reset on validation form');
-            event.preventDefault();
-            return false;
-        }
-    });
 });
-
-// 🧪 ATTRIBUTE CHANGE PROPAGATION TEST FUNCTIONS
-function logToTestResults(message) {
-    const results = document.getElementById('test-results');
-    const timestamp = new Date().toLocaleTimeString();
-    results.innerHTML += `<br>[${timestamp}] ${message}`;
-    console.log(`🧪 [ATTR TEST] ${message}`);
-}
-
-function fillAllInputs() {
-    console.log('🧪 === FILL ALL INPUTS TEST ===');
-    logToTestResults('🟢 Starting Fill All Inputs test...');
-    
-    const inputs = document.querySelectorAll('form ty-input[name]');
-    console.log(`Found ${inputs.length} ty-input elements`);
-    
-    const testData = {
-        'name': 'John Doe',
-        'email': 'john.doe@example.com', 
-        'age': '28'
-    };
-    
-    inputs.forEach((input, index) => {
-        const name = input.getAttribute('name');
-        const testValue = testData[name] || `Test Value ${index + 1}`;
-        
-        console.log(`Setting ${name} via setAttribute: "${testValue}"`);
-        logToTestResults(`Setting ${name} = "${testValue}"`);
-        
-        // Test setAttribute (should trigger attributeChangedCallback)
-        input.setAttribute('value', testValue);
-    });
-    
-    console.log('🧪 Fill All Inputs test completed - check console for hook logs');
-}
-
-function clearAllInputs() {
-    console.log('🧪 === CLEAR ALL INPUTS TEST ===');
-    logToTestResults('🟡 Starting Clear All Inputs test...');
-    
-    const inputs = document.querySelectorAll('form ty-input[name]');
-    console.log(`Found ${inputs.length} ty-input elements`);
-    
-    inputs.forEach(input => {
-        const name = input.getAttribute('name');
-        console.log(`Clearing ${name} via removeAttribute`);
-        logToTestResults(`Clearing ${name}`);
-        
-        // Test removeAttribute (should trigger attributeChangedCallback)  
-        input.removeAttribute('value');
-    });
-    
-    console.log('🧪 Clear All Inputs test completed - check console for hook logs');
-}
-
-function setSpecificValues() {
-    console.log('🧪 === SET SPECIFIC VALUES TEST ===');
-    logToTestResults('🔵 Starting Set Specific Values test...');
-    
-    const nameInput = document.querySelector('ty-input[name="name"]');
-    const emailInput = document.querySelector('ty-input[name="email"]');
-    const ageInput = document.querySelector('ty-input[name="age"]');
-    
-    if (nameInput) {
-        console.log('Setting name to "Alice Smith"');
-        logToTestResults('name = "Alice Smith"');
-        nameInput.setAttribute('value', 'Alice Smith');
-    }
-    
-    if (emailInput) {
-        console.log('Setting email to "alice@test.com"');
-        logToTestResults('email = "alice@test.com"');
-        emailInput.setAttribute('value', 'alice@test.com');
-    }
-    
-    if (ageInput) {
-        console.log('Setting age to "32"');
-        logToTestResults('age = "32"');
-        ageInput.setAttribute('value', '32');
-    }
-    
-    console.log('🧪 Set Specific Values test completed - check console for hook logs');
-}
-
-function testPropertyVsAttribute() {
-    console.log('🧪 === PROPERTY VS ATTRIBUTE TEST ===');
-    logToTestResults('⚖️ Starting Property vs Attribute test...');
-    
-    const nameInput = document.querySelector('ty-input[name="name"]');
-    if (!nameInput) {
-        logToTestResults('❌ Name input not found');
-        return;
-    }
-    
-    console.log('=== Testing Property Assignment ===');
-    logToTestResults('Testing property assignment...');
-    nameInput.value = 'Property Set Value';
-    console.log('Set via property: nameInput.value = "Property Set Value"');
-    
-    setTimeout(() => {
-        console.log('=== Testing Attribute Assignment ===');
-        logToTestResults('Testing attribute assignment...');
-        nameInput.setAttribute('value', 'Attribute Set Value');
-        console.log('Set via attribute: nameInput.setAttribute("value", "Attribute Set Value")');
-        
-        setTimeout(() => {
-            console.log('=== Current State Check ===');
-            console.log(`Property value: "${nameInput.value}"`);
-            console.log(`Attribute value: "${nameInput.getAttribute('value')}"`);
-            logToTestResults(`Property: "${nameInput.value}", Attribute: "${nameInput.getAttribute('value')}"`);
-            
-            console.log('🧪 Property vs Attribute test completed - check console for hook logs');
-        }, 100);
-    }, 100);
-}
 </script>
 {% endblock %}

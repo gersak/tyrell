@@ -52,10 +52,10 @@ test.describe('ty-select — desktop popup', () => {
     const search = page.locator('#sel .dropdown-search-input')
     await expect(search).toBeVisible() // 9 options > SEARCH_AUTO_THRESHOLD(7)
     await search.fill('Item 3')
-    const visible = await page.locator('#sel ty-option:not([hidden])').count()
+    const visible = await page.locator('#sel ty-option:visible').count()
     expect(visible).toBe(1)
     await search.fill('')
-    const visibleAfterClear = await page.locator('#sel ty-option:not([hidden])').count()
+    const visibleAfterClear = await page.locator('#sel ty-option:visible').count()
     expect(visibleAfterClear).toBe(9)
   })
 
@@ -64,7 +64,7 @@ test.describe('ty-select — desktop popup', () => {
     await mount(page, `<ty-select id="sel" label="Items">${opts}</ty-select>`)
     await page.locator('#sel .select-stub').click()
     await page.locator('#sel .dropdown-search-input').fill('zzzznomatch')
-    const visible = await page.locator('#sel ty-option:not([hidden])').count()
+    const visible = await page.locator('#sel ty-option:visible').count()
     expect(visible).toBe(0)
     // options wrapper should be visually hidden (updateOptionsVisibility(false))
     const display = await page.locator('#sel .dropdown-options').evaluate((el) => getComputedStyle(el).display)
@@ -149,5 +149,17 @@ test.describe('ty-select — desktop popup', () => {
     await page.locator('#sel ty-option[value=a]').click()
     const formValidAfter = await page.locator('#f').evaluate((f: any) => f.checkValidity())
     expect(formValidAfter).toBe(true)
+  })
+
+  // A framework component's element around each option (Angular, Lit,
+  // Stencil): the select's ::slotted() rule reaches direct children only.
+  test('search hides options nested in a wrapper element', async ({ page }) => {
+    const opts = Array.from({ length: 9 }, (_, i) => `<ty-option value="v${i}">Item ${i}</ty-option>`).join('')
+    await mount(page, `<ty-select id="sel"><div class="group">${opts}</div></ty-select>`)
+    await page.locator('#sel .select-stub').click()
+    await page.locator('#sel .dropdown-search-input').fill('Item 3')
+    await expect(page.locator('#sel ty-option:visible')).toHaveCount(1)
+    await page.locator('#sel ty-option:visible').click()
+    expect(await page.locator('#sel').evaluate((el: any) => el.value)).toBe('v3')
   })
 })

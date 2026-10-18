@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
 import {
   TyTabs,
@@ -9,6 +9,7 @@ import {
   TyIcon,
   TyInput,
   type TabChangeDetail,
+  type TabLoadDetail,
 } from 'tyrell-react'
 
 interface ChangeLogEntry {
@@ -28,6 +29,29 @@ export default function TabsExample() {
 
   // Bottom-placement tabs (uncontrolled)
   const [bottomActive, setBottomActive] = useState('details')
+
+  // Lazy tabs: content per tab id, filled by onTabLoad
+  const [lazyActive, setLazyActive] = useState('summary')
+  const [lazyRows, setLazyRows] = useState<Record<string, string[]>>({})
+  const invoicesFailedOnce = useRef(false)
+
+  // Fires the first time an empty lazy tab is shown (never for the tab shown first).
+  // A failed load calls the tab's loadFailed(): it shows an error with a Retry button,
+  // and Retry fires onTabLoad again.
+  const loadTab = async (e: CustomEvent<TabLoadDetail>) => {
+    const tab = e.target as HTMLElement & { loadFailed: () => void }
+    const { id } = e.detail
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    if (id === 'invoices' && !invoicesFailedOnce.current) {
+      invoicesFailedOnce.current = true
+      tab.loadFailed()
+      return
+    }
+    setLazyRows((prev) => ({
+      ...prev,
+      [id]: [1, 2, 3].map((n) => `${id === 'reports' ? 'Report' : 'Invoice'} #${n} — loaded ${new Date().toLocaleTimeString()}`),
+    }))
+  }
 
   if (!mounted) {
     return (
@@ -59,9 +83,8 @@ export default function TabsExample() {
             Tabs
           </h1>
           <p className="ty-text-">
-            Verifies that <code className="ty-bg-neutral- px-1 rounded">TyTabs.onChange</code> fires
-            (TC6 wiring fix — was previously listening for <code className="ty-bg-neutral- px-1 rounded">change</code>
-            instead of <code className="ty-bg-neutral- px-1 rounded">ty-tab-change</code>).
+            Controlled tabs with <code className="ty-bg-neutral- px-1 rounded">onChange</code>, a bottom tab
+            strip, and lazy tabs that load their content the first time they&apos;re shown.
           </p>
         </header>
 
@@ -177,6 +200,42 @@ export default function TabsExample() {
               </div>
             </TyTab>
           </TyTabs>
+        </section>
+
+        {/* Section 4: Lazy tabs */}
+        <section className="ty-elevated rounded-xl p-6 space-y-4 border ty-border">
+          <h2 className="ty-text+ text-xl font-semibold">Lazy tabs</h2>
+          <p className="ty-text- text-sm">
+            A <code>lazy</code> tab with no content fires <code>onTabLoad</code>{' '}when it&apos;s shown and
+            displays a spinner until the content arrives. Invoices fails the first time: press Retry.
+          </p>
+
+          <TyTabs
+            active={lazyActive}
+            onChange={(e: CustomEvent<TabChangeDetail>) => setLazyActive(e.detail.activeId)}
+          >
+            <TyTab id="summary" label="Summary">
+              <div className="p-6 ty-text">Shown first, so it&apos;s rendered up front.</div>
+            </TyTab>
+            {(['reports', 'invoices'] as const).map((id) => (
+              <TyTab key={id} id={id} label={id === 'reports' ? 'Reports' : 'Invoices'} lazy onTabLoad={loadTab}>
+                {lazyRows[id] && (
+                  <ul className="p-6 space-y-2">
+                    {lazyRows[id].map((row) => (
+                      <li key={row} className="ty-text">{row}</li>
+                    ))}
+                  </ul>
+                )}
+              </TyTab>
+            ))}
+          </TyTabs>
+          <TyButton
+            appearance="ghost"
+            onClick={() => { setLazyRows({}); invoicesFailedOnce.current = false; setLazyActive('summary') }}
+          >
+            <TyIcon slot="start" name="refresh-cw" />
+            Reset
+          </TyButton>
         </section>
       </div>
     </AppLayout>
