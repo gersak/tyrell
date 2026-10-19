@@ -272,7 +272,7 @@ Rebrand by overriding `--ty-primary-hue`/`-chroma` alone; touch the others only 
 
 | Flavor   | Hue var                 | Chroma var                | Default (light) |
 |----------|-------------------------|---------------------------|------------------|
-| primary  | `--ty-primary-hue`      | `--ty-primary-chroma`     | `252°` / `0.08` |
+| primary  | `--ty-primary-hue`      | `--ty-primary-chroma`     | `231°` / `0.075` |
 | success  | `--ty-success-hue`      | `--ty-success-chroma`     | `145°` / `0.086` |
 | danger   | `--ty-danger-hue`       | `--ty-danger-chroma`      | `31°` / `0.134` |
 | warning  | `--ty-warning-hue`      | `--ty-warning-chroma`     | `76°` / `0.178` |
