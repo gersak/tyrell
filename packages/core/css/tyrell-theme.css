@@ -104,8 +104,8 @@
    * others only when a specific flavor needs its own tuning.
    * --------------------------------------------------------------*/
 
-  --ty-primary-hue: 231;
-  --ty-primary-chroma: 0.075; /* restrained default; the loud 0.2 read as "bollywood" */
+  --ty-primary-hue: 243;
+  --ty-primary-chroma: 0.105; /* restrained default; the loud 0.2 read as "bollywood" */
 
   /* Surface tint. 0 = monochrome surfaces (default, no primary leak).
    * Bump to ~0.005 (light) / ~0.012 (dark) to warm surfaces toward primary. */
@@ -232,7 +232,7 @@
    * light AND set its inverse (1 / factor, roughly) in `html.dark`.
    * --------------------------------------------------------------*/
 
-  --ty-primary-l-factor: 0.96;
+  --ty-primary-l-factor: 0.9;
   --ty-success-l-factor: 1;
   --ty-warning-l-factor: 1.3;
   --ty-danger-l-factor: 0.93;
@@ -1020,12 +1020,12 @@ html:root,
 @property --ty-primary-hue {
   syntax: "<number>";
   inherits: true;
-  initial-value: 231;
+  initial-value: 243;
 }
 @property --ty-primary-chroma {
   syntax: "<number>";
   inherits: true;
-  initial-value: 0.075;
+  initial-value: 0.105;
 }
 @property --ty-surface-chroma {
   syntax: "<number>";

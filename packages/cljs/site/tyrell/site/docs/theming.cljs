@@ -18,8 +18,8 @@
    ;; so first paint matches before CLJS boots. Chrome is the one exception
    ;; — it's pinned to the Tyrell identity orange, see styles.cljs. Demos
    ;; inside the chrome (.site-demo) are pinned to this map.
-   :primary-hue 231
-   :primary-chroma 0.075
+   :primary-hue 243
+   :primary-chroma 0.105
    ;; PER-FLAVOR HUES + CHROMA — every flavor is a standalone hue+chroma
    ;; seed, primary included; none derives from another. Defaults mirror
    ;; tyrell-theme.css's own :root literals. Neutral isn't tweakable here —
@@ -32,7 +32,7 @@
    :danger-chroma  0.134
    ;; PER-FLAVOR L-FACTOR — Tier 4. One multiplier shifts all 5 shades of
    ;; a flavor up/down without touching the shared curve.
-   :primary-l-factor 0.96
+   :primary-l-factor 0.9
    :success-l-factor 1
    :warning-l-factor 1.3
    :danger-l-factor  0.93
