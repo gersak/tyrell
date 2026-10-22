@@ -17,8 +17,8 @@ Open http://localhost:3020 and spawn counters. The module load log at the bottom
 
 | Package | Version |
 |---|---|
-| `dev.gersak/tyrell` (Clojars) | `1.0.0-RC17-SNAPSHOT` |
-| `tyrell-components` (npm) | `1.0.0-TC59` |
+| `dev.gersak/tyrell` (Clojars) | `1.0.0-RC17` |
+| `tyrell-components` (npm) | `1.0.0-RC17` |
 | `reagent` | `2.0.0-alpha2` |
 | `com.pitch/uix.core` / `uix.dom` | `1.0.1` |
 | `no.cjohansen/replicant` | `2025.06.21` |

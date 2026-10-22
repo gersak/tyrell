@@ -2,7 +2,7 @@
 
 A server-rendered Flask app using [Tyrell](https://github.com/gersak/tyrell) web components with HTMX. Every page is plain HTML from Jinja templates; HTMX swaps in server-rendered fragments; Tyrell supplies the form fields, selects, modals, calendar and icons.
 
-Tyrell `1.0.0-TC59` loads from jsDelivr (`templates/base.html`). The version is set in one place, `TYRELL_VERSION` in `app.py`.
+Tyrell `1.0.0-RC17` loads from jsDelivr (`templates/base.html`). The version is set in one place, `TYRELL_VERSION` in `app.py`.
 
 ## Run it
 

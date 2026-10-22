@@ -20,6 +20,6 @@
   "author": "Gersak",
   "license": "MIT",
   "dependencies": {
-    "tyrell-components": "1.0.0-TC59"
+    "tyrell-components": "1.0.0-RC17"
   }
 }

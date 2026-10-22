@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "mkdir -p public/css && cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css && cp node_modules/tyrell-components/css/tyrell-theme.css public/css/tyrell-theme.css",
     "dev": "shadow-cljs -A:dev watch app",
-    "build": "shadow-cljs release app",
+    "build": "shadow-cljs -A:dev release app",
     "clean": "shadow-cljs clean",
     "server": "shadow-cljs server"
   },
@@ -16,7 +16,7 @@
     "shadow-cljs": "^2.28.10"
   },
   "dependencies": {
-    "tyrell-components": "1.0.0-TC59",
-    "tyrell-react": "1.0.0-TC59"
+    "tyrell-components": "1.0.0-RC17",
+    "tyrell-react": "1.0.0-RC17"
   }
 }

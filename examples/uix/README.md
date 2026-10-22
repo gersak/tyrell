@@ -2,7 +2,7 @@
 
 A UIx app on the `tyrell-react` wrappers: a sidebar app with routing, buttons, native forms, the layout system, tooltips, a popup and modals.
 
-**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-TC59 (npm), `dev.gersak/tyrell` 1.0.0-RC17-SNAPSHOT (Clojars), UIx 1.0.1, React 18, shadow-cljs 3.4.6, Tailwind 4.
+**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-RC17 (npm), `dev.gersak/tyrell` 1.0.0-RC17 (Clojars), UIx 1.0.1, React 18, shadow-cljs 3.4.6, Tailwind 4.
 
 ## Run
 

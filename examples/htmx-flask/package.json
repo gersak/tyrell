@@ -18,6 +18,6 @@
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.0",
     "tailwindcss": "4.1",
-    "tyrell-components": "1.0.0-TC59"
+    "tyrell-components": "1.0.0-RC17"
   }
 }
