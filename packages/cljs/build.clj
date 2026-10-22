@@ -21,10 +21,9 @@
    :resource-dirs ["resources/tyrell"]
    :jar-file (format "target/tyrell-%s.jar" ty-version)})
 
-;; Icons ship as one jar per set, so dev.gersak/tyrell can depend on Lucide
-;; alone (~0.7 MB) instead of every set (~10 MB). dev.gersak/tyrell-icons is
-;; the umbrella: all sets as dependencies, plus the tyrell.icons.build
-;; extract tool. :files are paths under icons/.
+;; Icons ship as one jar per set; dev.gersak/tyrell depends on none of them.
+;; dev.gersak/tyrell-icons is the umbrella: all sets as dependencies, plus the
+;; tyrell.icons.build extract tool. :files are paths under icons/.
 (def icon-sets
   [{:artifact-id "tyrell-icons-lucide"
     :description "Lucide icons as Clojure defs, for Tyrell"
@@ -55,7 +54,9 @@
 
 (defn- create-pom [lib-config]
   (let [{:keys [group-id artifact-id version basis-alias src-dirs]} lib-config
-        basis (b/create-basis {:aliases [basis-alias]})
+        ;; :root nil: no tools.deps root deps, so Clojure itself isn't added
+        ;; to the pom. Users bring their own Clojure/ClojureScript.
+        basis (b/create-basis {:root nil :aliases [basis-alias]})
         lib-symbol (symbol (str group-id "/" artifact-id))
         scm-info {:url "https://github.com/gersak/tyrell"
                   :connection "scm:git:git://github.com/gersak/tyrell.git"

@@ -146,15 +146,17 @@ Pick the entry point for your stack:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell {:mvn/version "1.0.0-RC10"}}}  ; icons come transitively
+{:deps {dev.gersak/tyrell              {:mvn/version "1.0.0-RC10"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC10"}}}  ; icons: one jar per set
 ```
 
-That single dep brings:
+`dev.gersak/tyrell` brings:
 - Routing, i18n, layout, icon registry, shim — `tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`
 - The `tyrell.components` shim that side-effect-imports the npm package
-- 12,000+ tree-shakeable icons (`tyrell.lucide`, `tyrell.heroicons.*`, `tyrell.material.*`, `tyrell.fav6.*`)
 
 The npm `tyrell-components` package is declared in this artifact's `deps.cljs`, so shadow-cljs auto-installs it on first build.
+
+Icons are separate jars: `dev.gersak/tyrell-icons-lucide`, `-heroicons`, `-material`, `-fontawesome` (12,000+ tree-shakeable defs), or `dev.gersak/tyrell-icons` for all four.
 
 ### Pick your view layer
 

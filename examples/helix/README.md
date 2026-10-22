@@ -66,7 +66,7 @@ The same Tyrell wrapper, three render shapes:
 
 - `tyrell-components` (web components + CSS) is npm-installed and imported once with `(:require ["tyrell-components"])`. `postinstall` copies its CSS into `public/css`.
 - `tyrell-react` is the React wrapper layer, npm-installed alongside it.
-- `dev.gersak/tyrell` (Clojars) brings the CLJS side: icon registry, Lucide icons, router, i18n, layout.
+- `dev.gersak/tyrell` (Clojars) brings the CLJS side: icon registry, router, i18n, layout. Lucide icons come from `dev.gersak/tyrell-icons-lucide`.
 
 ## Where this fits
 

@@ -12,7 +12,8 @@ For shadow-cljs, CSS, and icon basics, see [CLOJURESCRIPT_GUIDE.md](CLOJURESCRIP
 
 ```clojure
 {:deps {lilactown/helix    {:mvn/version "0.2.0"}
-        dev.gersak/tyrell  {:mvn/version "1.0.0-RC6"}}}
+        dev.gersak/tyrell  {:mvn/version "1.0.0-RC6"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC6"}}}   ; tyrell.lucide
 ```
 
 `tyrell.react` is part of `dev.gersak/tyrell`; install React + the wrapper package via npm:

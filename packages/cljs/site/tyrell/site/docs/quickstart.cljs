@@ -77,7 +77,7 @@ registerIcons({ mail, send, 'action-down': chevronDown })")
                :code "(defn on-email [^js e]\n  (swap! state assoc :email (.. e -detail -value)))"}]}
      {:title "Icons" :sub "Require it, then register it."
       :guide ["Icons guide" :tyrell.site.docs/icons]
-      :desc "Lucide comes with dev.gersak/tyrell as plain defs; add dev.gersak/tyrell-icons for Heroicons, Material and Font Awesome. Closure keeps only the ones you require: a release build carries just those."
+      :desc "Each set is its own jar of plain defs: dev.gersak/tyrell-icons-lucide, -heroicons, -material, -fontawesome, or dev.gersak/tyrell-icons for all four. Closure keeps only the ones you require: a release build carries just those."
       :files [{:file "src/app/icons.cljs" :lang "clojure"
                :code "(ns app.icons\n  (:require [tyrell.icons :as icons]\n            [tyrell.lucide :as lucide]))\n\n;; the key is the name <ty-icon> uses: pick any\n(icons/register! {:mail        lucide/mail\n                  :action-down lucide/chevron-down})\n\n[:ty-icon {:name \"action-down\"}]"}]
       :note "Skip either step and you get a faint placeholder circle, with no error." :warn? true}

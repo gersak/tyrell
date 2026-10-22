@@ -44,7 +44,7 @@ Open http://localhost:3001. Production build: `npm run build`.
 - Every wrapper exists under a short name (`ty/Input`) and a `Ty` name (`ty/TyInput`).
 - Event data is on `(.-detail e)`.
 - `ty/Checkbox` is the tick only; wrap it in a `[:label …]` to name it.
-- Icons are registered once by name with `tyrell.icons/register!` (see `hello.core`). Lucide ships with `dev.gersak/tyrell`; Material comes from `dev.gersak/tyrell-icons-material`.
+- Icons are registered once by name with `tyrell.icons/register!` (see `hello.core`). Lucide comes from `dev.gersak/tyrell-icons-lucide`, Material from `dev.gersak/tyrell-icons-material`.
 
 ## Layout
 

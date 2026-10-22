@@ -558,13 +558,22 @@
 (defn close-search! []
   (swap! state assoc-in [:search :open] false))
 
+(defn- on-search-closed!
+  "The dialog hands focus back to whatever had it before, usually the sidebar
+  row of the page we just left; after a keyboard pick that row would keep its
+  focus ring. Escape keeps the normal focus return."
+  []
+  (when (get-in @state [:search :navigated?])
+    (some-> js/document .-activeElement .blur))
+  (swap! state update :search assoc :open false :navigated? false))
+
 (defn select-search-result!
   "Navigate to selected search result"
   [result]
   (if-let [stack (:stack result)]
     (do (quickstart/open! stack) (scroll-main-to-top!))
     (router/navigate! (:id result)))
-  (close-search!))
+  (swap! state update :search assoc :open false :navigated? true))
 
 (defn search-result-item
   "Render a single search result item"
@@ -602,7 +611,7 @@
         result-count (count all-results)]
     ;; Always render modal (must be in DOM), control visibility via :open attribute
     [:ty-modal {:open open
-                :on {:close close-search!}}
+                :on {:close on-search-closed!}}
      [:div.ty-floating.rounded-xl.shadow-lg.overflow-hidden.site-chrome
       {:data-ty-theme true
        :style {:width "min(520px, 90vw)"

@@ -15,7 +15,6 @@ CLJS users add **one Clojars dep** — `dev.gersak/tyrell` — and that brings e
 | Routing, i18n, layout, icon registry, shim | CLJS namespaces in the JAR (`tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`) |
 | Web Components — `<ty-button>`, `<ty-input>`, etc. (22 primitives) | npm `tyrell-components`, declared in this artifact's `deps.cljs` and **auto-installed** into your `package.json` by shadow-cljs |
 | `tyrell.components` shim | A side-effect-import wrapper around npm `tyrell-components`, so CLJS users only ever require `tyrell.*` namespaces |
-| Lucide icon defs, tree-shakeable | Transitive Clojars dep `dev.gersak/tyrell-icons-lucide`. Excludable if unwanted. Other sets: add `dev.gersak/tyrell-icons` |
 | React wrappers — `tyrell.react/Button`, `tyrell.react/Input`, ... | CLJS namespace re-exporting npm `tyrell-react`. Track A (React-based CLJS) only — npm package is **not** auto-pulled (opt-in) |
 
 Icons are separate Clojars artifacts, one per set: `dev.gersak/tyrell-icons-lucide` (`tyrell.lucide`), `-heroicons` (`tyrell.heroicons.*`), `-material` (`tyrell.material.*`) and `-fontawesome` (`tyrell.fav6.*`). `dev.gersak/tyrell-icons` pulls in all four. Each icon is an individual CLJS `def` — shadow-cljs `:advanced` removes unused ones automatically.
@@ -37,14 +36,13 @@ Icons are separate Clojars artifacts, one per set: `dev.gersak/tyrell-icons-luci
 That single dep brings:
 - The CLJS infrastructure (`tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`)
 - The `tyrell.components` shim namespace that side-effect-imports the npm package
-- Transitive `dev.gersak/tyrell-icons-lucide` — 1,849 tree-shakeable Lucide defs (add `dev.gersak/tyrell-icons` for every set)
 
 The npm `tyrell-components` package is declared in this artifact's `deps.cljs`, so shadow-cljs auto-installs it into your `package.json` on first build. No manual `npm install tyrell-components` needed.
 
-If you don't want the icons artifact:
+Icons are not included. Add the set jars you use:
 ```clojure
-{:deps {dev.gersak/tyrell {:mvn/version "..."
-                           :exclusions [dev.gersak/tyrell-icons-lucide]}}}
+{:deps {dev.gersak/tyrell              {:mvn/version "..."}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "..."}}}   ; tyrell.lucide
 ```
 
 ### 2. Load `tyrell.css`

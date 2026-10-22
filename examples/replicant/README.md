@@ -26,6 +26,6 @@ Release build: `npm run build` (output in `public/js`).
 | `tyrell-components` (npm) | `1.0.0-TC59` |
 | `no.cjohansen/replicant` | `2025.06.21` |
 
-`dev.gersak/tyrell` pulls in `tyrell-components` and the Lucide icon set (`dev.gersak/tyrell-icons-lucide`) on its own. The npm dependency here is pinned so `npm install` can copy the matching CSS.
+`dev.gersak/tyrell` pulls in `tyrell-components` on its own; Lucide comes from `dev.gersak/tyrell-icons-lucide`. The npm dependency here is pinned so `npm install` can copy the matching CSS.
 
 Ports: the app on 8030, the shadow-cljs server on 9641 (`:http` in `shadow-cljs.edn`), away from the defaults (8080, 9630) in case something else already holds them.

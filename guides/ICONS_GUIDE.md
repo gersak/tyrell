@@ -31,7 +31,7 @@ Every set is generated from its upstream source into flat files of SVG strings: 
 
 ## In Clojure
 
-Icons ship as one Clojars jar per set: `dev.gersak/tyrell-icons-lucide`, `-heroicons`, `-material` and `-fontawesome`. `dev.gersak/tyrell` brings Lucide. For the others add `dev.gersak/tyrell-icons` (every set) or just the set jar you need. There's no npm package for them. The files are `.cljc`, so the same defs work in ClojureScript and on the JVM.
+Icons ship as one Clojars jar per set: `dev.gersak/tyrell-icons-lucide`, `-heroicons`, `-material` and `-fontawesome`. `dev.gersak/tyrell` includes none of them: add the set jar you need, or `dev.gersak/tyrell-icons` for every set. There's no npm package for them. The files are `.cljc`, so the same defs work in ClojureScript and on the JVM.
 
 ```clojure
 (ns app.icons

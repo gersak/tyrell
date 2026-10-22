@@ -10,7 +10,8 @@ This guide focuses on what's specific to Reagent + Tyrell. For shadow-cljs, CSS,
 
 ```clojure
 {:deps {reagent/reagent     {:mvn/version "1.2.0"}
-        dev.gersak/tyrell   {:mvn/version "1.0.0-RC6"}}}
+        dev.gersak/tyrell   {:mvn/version "1.0.0-RC6"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC6"}}}   ; tyrell.lucide
 ```
 
 `tyrell.react` ships inside `dev.gersak/tyrell` and re-exports the npm wrappers. The npm package isn't auto-pulled — install it explicitly:
