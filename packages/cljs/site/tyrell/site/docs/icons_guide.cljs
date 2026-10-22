@@ -1,7 +1,8 @@
 (ns tyrell.site.docs.icons-guide
   "Getting started with icons: where each set ships, how to register them per
    stack, and how to keep unused icons out of a release."
-  (:require [tyrell.site.docs.common :refer [doc-page hero-shell page-section code-view code-tabs]]
+  (:require [tyrell.site.docs.common :refer [doc-page hero-shell page-section code-view code-tabs
+                                            example link-card]]
             [tyrell.site.versions :as v]))
 
 
@@ -78,6 +79,28 @@
           [:div.flex-1.min-w-0.rounded-xl.border.ty-border-.overflow-hidden.site-chrome
            {:replicant/key i :data-ty-theme "" :style surface}
            (code-view code lang {:compact? true})])])])
+
+   (page-section
+    {:title "Use it"
+     :sub "An icon takes the text color. Size and motion are attributes."}
+    (example
+     {:title "Size, color, motion"
+      :code "<ty-icon name=\"star\" size=\"xl\"></ty-icon>
+<ty-icon name=\"heart\" class=\"ty-text-danger\"></ty-icon>
+<ty-icon name=\"loader\" spin></ty-icon>
+<ty-icon name=\"settings\" spin tempo=\"slow\"></ty-icon>
+<ty-icon name=\"bell\" pulse tempo=\"fast\"></ty-icon>"}
+     ;; text-2xl: named sizes are em-based, so the row sets the base size
+     [:div.flex.flex-wrap.items-center.justify-center.gap-6.text-2xl.ty-text+
+      [:ty-icon {:name "star" :size "xl"}]
+      [:ty-icon.ty-text-danger {:name "heart"}]
+      [:ty-icon {:name "loader" :spin ""}]
+      [:ty-icon {:name "settings" :spin "" :tempo "slow"}]
+      [:ty-icon {:name "bell" :pulse "" :tempo "fast"}]])
+    (link-card {:icon "star"
+                :title "Want to know more?"
+                :sub "Every ty-icon attribute, a playground and the full API."
+                :to :tyrell.site.docs/icon}))
 
    (page-section
     {:title "HTML pages"

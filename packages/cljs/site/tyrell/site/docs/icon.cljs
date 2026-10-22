@@ -2,8 +2,7 @@
   "Documentation for ty-icon component"
   (:require [clojure.string :as str]
             [tyrell.site.docs.common :refer [component-page page-section playground
-                                             bento example api-section]]
-            [tyrell.router :as router]))
+                                             bento example api-section link-card]]))
 
 (def ^:private gallery
   ["home" "search" "mail" "calendar" "user" "settings" "heart" "star" "bell" "lock"
@@ -77,14 +76,10 @@
      :render render-playground
      :snippets snippets})
 
-   [:button.site-focus.flex.items-center.gap-4.w-full.rounded-2xl.border.ty-border-.px-6.py-4.text-left.cursor-pointer.hover:ty-border
-    {:style {:background "var(--ty-surface-content)"}
-     :on {:click #(router/navigate! :tyrell.site.docs/icons)}}
-    [:ty-icon.ty-text-primary {:name "book-open" :size "lg"}]
-    [:span.flex-1.flex.flex-col.gap-1
-     [:span.text-sm.font-semibold.ty-text++ "Setting up icons"]
-     [:span.text-sm.ty-text- "Icon sets, registration per stack, bundle size."]]
-    [:ty-icon.ty-text-- {:name "arrow-right" :size "sm"}]]
+   (link-card {:icon "book-open"
+               :title "Setting up icons"
+               :sub "Icon sets, registration per stack, bundle size."
+               :to :tyrell.site.docs/icons})
 
    (page-section
     {:title "Examples"}

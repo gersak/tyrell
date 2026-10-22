@@ -3,6 +3,7 @@
   (:require
    [clojure.string :as str]
    [tyrell.layout :as layout]
+   [tyrell.router :as router]
    [tyrell.site.state :refer [state]]))
 
 (defn keyed
@@ -455,6 +456,18 @@
        (code-tabs (snippets props))]])))
 
 ;; --- Examples ----------------------------------------------------------------
+
+(defn link-card
+  "Full-width card that navigates to another docs page."
+  [{:keys [icon title sub to]}]
+  [:button.site-focus.flex.items-center.gap-4.w-full.rounded-2xl.border.ty-border-.px-6.py-4.text-left.cursor-pointer.hover:ty-border
+   {:style {:background "var(--ty-surface-content)"}
+    :on {:click #(router/navigate! to)}}
+   [:ty-icon.ty-text-primary {:name icon :size "lg"}]
+   [:span.flex-1.flex.flex-col.gap-1
+    [:span.text-sm.font-semibold.ty-text++ title]
+    [:span.text-sm.ty-text- sub]]
+   [:ty-icon.ty-text-- {:name "arrow-right" :size "sm"}]])
 
 (defn bento
   "Grid for example cards; each card picks its width with :span (of 6).
