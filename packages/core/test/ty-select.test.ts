@@ -9,6 +9,10 @@ import { getActiveLocks } from '../lib/utils/scroll-lock.js';
 
 const tick = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+/** The option a closed single select shows in its trigger: the real node, slotted. */
+const shown = (el: any) =>
+  (el.shadowRoot.querySelector('slot[name="selected"]') as HTMLSlotElement).assignedElements()[0] as HTMLElement | undefined;
+
 describe('ty-select', () => {
   describe('single (default)', () => {
     it('picking an option sets scalar value, fires change, closes popup', async () => {
@@ -49,7 +53,8 @@ describe('ty-select', () => {
       await oneEvent(el, 'change');
 
       expect(el.value).to.equal('eywa');
-      expect(el.querySelector('ty-option[value="bobo]"]')?.hasAttribute('selected') ?? false).to.be.false;
+      expect((el.querySelector('ty-option[value="bobo"]') as any).checked).to.be.false;
+      expect((el.querySelector('ty-option[value="eywa"]') as any).checked).to.be.true;
     });
 
     it('submits a single FormData entry', async () => {
@@ -64,7 +69,7 @@ describe('ty-select', () => {
       expect(new FormData(form).getAll('robot')).to.deep.equal(['bobo']);
     });
 
-    it('projects the selected option into the stub as a clone (rich HTML intact)', async () => {
+    it('shows the picked option itself in the trigger (rich HTML, page CSS), nothing added', async () => {
       const el = (await fixture(html`
         <ty-select value="bobo" placeholder="Pick one">
           <ty-option value="bobo"><b>Bobo</b> Robot <span class="price">$50</span></ty-option>
@@ -73,26 +78,44 @@ describe('ty-select', () => {
       `)) as any;
       await tick();
 
-      // Clone in light DOM, slotted into the stub, marked + tick-stripped
-      const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-      expect(clone, 'display clone exists').to.exist;
-      expect(clone.getAttribute('value')).to.equal('bobo');
-      expect(clone.hasAttribute('selected')).to.be.false;
-      expect(clone.querySelector('.price')?.textContent, 'rich HTML survives').to.equal('$50');
+      const bobo = el.querySelector('ty-option[value="bobo"]');
+      expect(shown(el), 'the real option, slotted').to.equal(bobo);
+      expect(el.children.length, 'no node added').to.equal(2);
+      expect(bobo.inTrigger).to.be.true;
+      expect(bobo.shadowRoot.querySelector('.option-content').classList.contains('in-trigger')).to.be.true;
 
-      // Clone never counts as an option (would break counts/search/values)
-      expect(el.value).to.equal('bobo');
-
-      // Text placeholder is hidden while the clone displays
+      // Text placeholder is hidden while the option displays
       const text = el.shadowRoot.querySelector('.dropdown-placeholder') as HTMLElement;
       expect(text.hidden).to.be.true;
 
-      // Re-selection swaps the clone
       el.value = 'eywa';
       await tick();
-      const clone2 = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-      expect(clone2.getAttribute('value')).to.equal('eywa');
-      expect(el.querySelectorAll('[cloned]').length).to.equal(1);
+      expect(shown(el)).to.equal(el.querySelector('ty-option[value="eywa"]'));
+      expect(bobo.inTrigger).to.be.false;
+    });
+
+    it('open: the option goes back to the list, the trigger shows the placeholder', async () => {
+      const el = (await fixture(html`
+        <ty-select value="bobo" placeholder="Pick one">
+          <ty-option value="bobo"><b>Bobo</b></ty-option>
+          <ty-option value="eywa">EYWA</ty-option>
+        </ty-select>
+      `)) as any;
+      await tick();
+      (el.shadowRoot.querySelector('.select-stub') as HTMLElement).click();
+      await tick();
+
+      const bobo = el.querySelector('ty-option[value="bobo"]');
+      expect(shown(el)).to.be.undefined;
+      expect(bobo.assignedSlot?.id).to.equal('options-slot');
+      const text = el.shadowRoot.querySelector('.dropdown-placeholder') as HTMLElement;
+      expect(text.hidden).to.be.false;
+      expect(text.textContent).to.equal('Pick one');
+
+      setTimeout(() => (el.querySelector('ty-option[value="eywa"]') as HTMLElement).click());
+      await oneEvent(el, 'change');
+      await tick();
+      expect(shown(el), 'closed again: the new pick').to.equal(el.querySelector('ty-option[value="eywa"]'));
     });
   });
 
@@ -139,7 +162,8 @@ describe('ty-select', () => {
   });
 
   describe('external search — option swaps', () => {
-    it('selected display survives a naive consumer swap that wipes ALL ty-option (incl. the clone)', async () => {
+    it('a swap that drops the picked option: its value shows until the app adds it back', async () => {
+      // The app keeps the picked option in the list (hidden if it isn't a result)
       const el = (await fixture(html`
         <ty-select value="bobo" external-search>
           <ty-option value="bobo">Bobo Robot</ty-option>
@@ -147,42 +171,17 @@ describe('ty-select', () => {
         </ty-select>
       `)) as any;
       await tick();
-      expect(el.querySelector('[cloned][slot="selected"]'), 'clone shown initially').to.exist;
-
-      // The documented consumer pattern: replace ty-option children with
-      // server results — a naive sweep also removes the display clone.
-      el.querySelectorAll('ty-option').forEach((o: Element) => o.remove());
-      const opt = document.createElement('ty-option');
-      opt.setAttribute('value', 'xyz'); // results do NOT include the selection
-      opt.textContent = 'Unrelated Result';
-      el.appendChild(opt);
+      el.innerHTML = '<ty-option value="xyz">Unrelated Result</ty-option>';
       await tick();
 
-      const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-      expect(clone, 'clone restored after swap').to.exist;
-      expect(clone.getAttribute('value')).to.equal('bobo');
-      expect(clone.textContent).to.equal('Bobo Robot');
+      expect(shown(el)).to.be.undefined;
+      expect(el.value).to.equal('bobo');
+      expect((el.shadowRoot.querySelector('.dropdown-placeholder') as HTMLElement).textContent).to.equal('bobo');
 
-      const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
-      expect(stub.classList.contains('has-selection'), 'still shows as selected').to.be.true;
-    });
-
-    it('rebuilds the clone from a re-added matching option', async () => {
-      const el = (await fixture(html`
-        <ty-select value="bobo" external-search>
-          <ty-option value="bobo">Bobo Robot</ty-option>
-        </ty-select>
-      `)) as any;
+      el.insertAdjacentHTML('beforeend', '<ty-option value="bobo" hidden>Bobo Robot</ty-option>');
       await tick();
-      el.querySelectorAll('ty-option').forEach((o: Element) => o.remove());
-      const opt = document.createElement('ty-option');
-      opt.setAttribute('value', 'bobo');
-      opt.textContent = 'Bobo Robot (fresh)';
-      el.appendChild(opt);
-      await tick();
-      const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-      expect(clone).to.exist;
-      expect(clone.getAttribute('value')).to.equal('bobo');
+      expect(shown(el)?.textContent).to.equal('Bobo Robot');
+      expect(shown(el)!.getBoundingClientRect().width, 'hidden, yet shown in the trigger').to.be.above(0);
     });
   });
 
@@ -634,9 +633,7 @@ describe('ty-select allow-create', () => {
     await pressEnter();
 
     expect(el.getAttribute('value')).to.equal('a');
-    // Single-select creates a [cloned] display-clone ty-option on selection —
-    // exclude it, same as the component's own getTagElements() does.
-    expect(el.querySelectorAll('ty-option:not([cloned])').length, 'no duplicate minted').to.equal(1);
+    expect(el.querySelectorAll('ty-option').length, 'no duplicate minted').to.equal(1);
   });
 
   it('the create event is cancelable — preventDefault stops select from creating anything', async () => {
@@ -696,7 +693,7 @@ describe('ty-select allow-create', () => {
     await pressEnter();
 
     // Whichever got highlighted, it must be an EXISTING option, not a new "an" one.
-    expect(el.querySelectorAll('ty-option:not([cloned])').length).to.equal(2);
+    expect(el.querySelectorAll('ty-option').length).to.equal(2);
     expect(['a', 'b']).to.include(el.getAttribute('value'));
   });
 
@@ -834,58 +831,85 @@ describe('ty-select accessibility — keyboard focus + ARIA combobox pattern', (
     expect(stub.getAttribute('aria-expanded'), 'false again after picking (closes)').to.equal('false');
   });
 
-  it('every option gets role="option" even before any selection is made', async () => {
+  it('options are role=option; aria-selected lives in their internals, never in attributes', async () => {
+    // A server morph strips attributes the server didn't send; internals it can't reach
     const el = (await fixture(html`
-      <ty-select>
+      <ty-select value="b">
         <ty-option value="a">A</ty-option>
         <ty-option value="b">B</ty-option>
       </ty-select>
     `)) as any;
     await tick();
-    const options = Array.from(el.querySelectorAll('ty-option')) as HTMLElement[];
-    options.forEach((o) => {
-      expect(o.getAttribute('role')).to.equal('option');
-      expect(o.getAttribute('aria-selected'), `${o.getAttribute('value')} starts unselected`).to.equal('false');
-    });
-  });
+    const [a, b] = Array.from(el.querySelectorAll('ty-option')) as any[];
+    expect(a.getAttribute('role')).to.equal('option');
+    expect(a._internals.ariaSelected).to.equal('false');
+    expect(b._internals.ariaSelected).to.equal('true');
+    for (const o of [a, b]) {
+      expect(o.hasAttribute('aria-selected')).to.be.false;
+      expect(o.hasAttribute('selected')).to.be.false;
+    }
 
-  it('aria-selected tracks live selection state on the actual option elements', async () => {
-    const el = (await fixture(html`
-      <ty-select>
-        <ty-option value="a">A</ty-option>
-        <ty-option value="b">B</ty-option>
-      </ty-select>
-    `)) as any;
-    el.setAttribute('value', 'b');
+    el.value = 'a';
     await tick();
-
-    const a = el.querySelector('ty-option[value="a"]') as HTMLElement;
-    const b = el.querySelector('ty-option[value="b"]') as HTMLElement;
-    expect(a.getAttribute('aria-selected')).to.equal('false');
-    expect(b.getAttribute('aria-selected')).to.equal('true');
+    expect(a._internals.ariaSelected).to.equal('true');
+    expect(b._internals.ariaSelected).to.equal('false');
   });
 });
 
-describe('ty-select — declarative init resolves selection SYNCHRONOUSLY at connect', () => {
-  it('a sibling reading .value right after connect (its own synchronous connectedCallback) sees the real selection', async () => {
-    // This is what ty-selected-tags does: renderChips() in its OWN
-    // connectedCallback reads picker.value synchronously. If the select
-    // deferred state resolution to a frame, this would see "" instead of
-    // the real selection, with nothing to ever correct it afterward (no
-    // DOM mutation fires when the `selected` attribute was already present
-    // in the source markup).
+describe('ty-select — value is the only input', () => {
+  it('a sibling reading .value right after connect sees the selection', async () => {
+    // ty-selected-options renders in its own synchronous connectedCallback
     const host = document.createElement('div');
-    host.innerHTML = `<ty-select multiple>
-      <ty-option value="a" selected>Apple</ty-option>
-      <ty-option value="b" selected>Banana</ty-option>
+    host.innerHTML = `<ty-select multiple value="a,b">
+      <ty-option value="a">Apple</ty-option>
+      <ty-option value="b">Banana</ty-option>
       <ty-option value="c">Cherry</ty-option>
     </ty-select>`;
     document.body.appendChild(host);
     const el = host.querySelector('ty-select') as any;
-    // Deliberately NOT awaiting a frame — read immediately, like a sibling
-    // custom element's own synchronous connectedCallback would.
-    expect(el.value, 'value resolved before any frame/tick has passed').to.equal('a,b');
+    expect(el.value, 'no frame needed').to.equal('a,b');
     host.remove();
+  });
+
+  it('an option marked `selected` selects nothing: the select reads only `value`', async () => {
+    const form = (await fixture(html`
+      <form>
+        <ty-select name="auth">
+          <ty-option value="k8s">Kubernetes</ty-option>
+          <ty-option value="token" selected>Static token</ty-option>
+        </ty-select>
+      </form>
+    `)) as HTMLFormElement;
+    await tick();
+    const el = form.querySelector('ty-select') as any;
+    expect(el.value).to.equal('');
+    expect(new FormData(form).get('auth')).to.equal('');
+    expect((el.querySelector('ty-option[value="token"]') as any).checked, 'no check either').to.be.false;
+    expect(shown(el)).to.be.undefined;
+  });
+
+  it('markup landing via innerHTML after load shows the option from value', async () => {
+    const host = document.createElement('div');
+    host.innerHTML = `<ty-select name="auth" value="token">
+      <ty-option value="k8s">Kubernetes</ty-option>
+      <ty-option value="token">Static token</ty-option>
+    </ty-select>`;
+    document.body.appendChild(host);
+    await tick();
+    const el = host.querySelector('ty-select') as any;
+    expect(shown(el)?.textContent).to.equal('Static token');
+    host.remove();
+  });
+
+  it('a text-valued option can be the value', async () => {
+    const el = (await fixture(html`
+      <ty-select value="Apple">
+        <ty-option>Apple</ty-option>
+        <ty-option>Pear</ty-option>
+      </ty-select>
+    `)) as any;
+    await tick();
+    expect(shown(el)?.textContent).to.equal('Apple');
   });
 });
 
@@ -907,17 +931,13 @@ describe('ty-select — value is the selection, options are a view of it', () =>
   });
 
   it('single-select falls back to the raw value when no option ever exists to clone a label from', async () => {
-    // Placeholder was previously hidden purely because a value was
-    // selected, with nothing put in its place when no matching option had
-    // ever existed to build a display clone from — a blank field with a
-    // clear button implying a selection nothing on screen confirmed.
     const el = (await fixture(html`
       <ty-select name="robot" value="bobo" external-search></ty-select>
     `)) as any;
     await tick();
     const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
     const textEl = stub.querySelector('.dropdown-placeholder') as HTMLElement;
-    expect(el.querySelector(':scope > [cloned][slot="selected"]'), 'no clone could be built').to.not.exist;
+    expect(shown(el), 'no option to show').to.be.undefined;
     expect(textEl.hidden, 'placeholder text is shown, not left blank').to.equal(false);
     expect(textEl.textContent, 'falls back to the raw value').to.equal('bobo');
     expect(textEl.classList.contains('placeholder-shown'), 'not styled as an empty placeholder').to.equal(false);
@@ -935,117 +955,24 @@ describe('ty-select — value is the selection, options are a view of it', () =>
   });
 });
 
-describe('ty-select pre-selected option (selected attribute, no value attribute)', () => {
-  it('builds the trigger clone from an option that carries `selected`', async () => {
-    // Selection originating from the OPTION rather than the select's value:
-    // the list ticked it, .value reported it, but the trigger stayed blank.
-    const el = (await fixture(html`
-      <ty-select name="auth">
-        <ty-option value="k8s">Kubernetes</ty-option>
-        <ty-option value="token" selected>Static token</ty-option>
-      </ty-select>
-    `)) as any;
-    await tick();
-    expect(el.value).to.equal('token');
-    const clone = el.querySelector(':scope > [cloned][slot="selected"]') as HTMLElement;
-    expect(clone, 'display clone exists').to.exist;
-    expect(clone.textContent).to.equal('Static token');
-    const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
-    expect(stub.classList.contains('has-clone')).to.equal(true);
-  });
-
-  it('same, when the markup lands via innerHTML after load', async () => {
-    const host = document.createElement('div');
-    host.innerHTML = `<ty-select name="auth">
-      <ty-option value="k8s">Kubernetes</ty-option>
-      <ty-option value="token" selected>Static token</ty-option>
-    </ty-select>`;
-    document.body.appendChild(host);
-    await tick();
-    const el = host.querySelector('ty-select') as any;
-    const clone = el.querySelector(':scope > [cloned][slot="selected"]') as HTMLElement;
-    expect(clone?.textContent).to.equal('Static token');
-    host.remove();
-  });
-});
-
 describe('ty-select streaming-parse (SSR)', () => {
-  it('re-clones a blank display clone once the option finishes parsing', async () => {
-    // Parser order on a streamed page: the select's value attribute syncs
-    // while the selected option is still an empty shell, so the display
-    // clone is captured blank. When the parser appends the next sibling
-    // option, the child observer must notice the stale clone and re-clone
-    // from the now-complete option.
+  it('shows the option once the parser reaches it', async () => {
+    // The select connects with its value before its options exist
     const el = document.createElement('ty-select') as any;
-    el.setAttribute('name', 'auth');
     el.setAttribute('value', 'token');
-    const opt = document.createElement('ty-option');
-    opt.setAttribute('value', 'token');
-    opt.setAttribute('selected', '');
-    el.appendChild(opt); // no text yet — mid-parse shape
     document.body.appendChild(el);
     await tick();
+    expect(shown(el)).to.be.undefined;
 
-    // parser catches up: text lands, a sibling option follows
+    const opt = document.createElement('ty-option');
+    opt.setAttribute('value', 'token');
+    el.appendChild(opt);
     opt.textContent = 'Static token';
-    const opt2 = document.createElement('ty-option');
-    opt2.setAttribute('value', 'k8s');
-    opt2.textContent = 'Kubernetes';
-    el.appendChild(opt2);
     await tick();
 
-    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-    expect(clone, 'display clone exists').to.exist;
-    expect(clone.textContent, 'clone carries the option text').to.equal('Static token');
-    expect(el.querySelectorAll('[cloned]').length, 'exactly one clone').to.equal(1);
+    expect(shown(el)).to.equal(opt);
+    expect(el.children.length, 'nothing added').to.equal(1);
     el.remove();
-  });
-
-  it('re-clones a blank clone at parse end when the selected option is the LAST child', async () => {
-    // Same mid-parse shape, but NO sibling option follows — so the childList
-    // observer never fires and the staleness guard above never gets a chance.
-    // The component must re-sync on its own once parsing ends.
-    const rs = Object.getOwnPropertyDescriptor(document, 'readyState');
-    Object.defineProperty(document, 'readyState', { value: 'loading', configurable: true });
-    try {
-      const el = document.createElement('ty-select') as any;
-      el.setAttribute('value', 'token');
-      const opt = document.createElement('ty-option');
-      opt.setAttribute('value', 'token');
-      el.appendChild(opt); // empty shell, last child
-      document.body.appendChild(el);
-      await tick();
-      expect((el.querySelector('[cloned][slot="selected"]') as HTMLElement).textContent).to.equal('');
-
-      opt.textContent = 'Static token'; // parser finishes the option's text
-      await tick();
-      document.dispatchEvent(new Event('DOMContentLoaded')); // ...and the document
-      await tick();
-
-      const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-      expect(clone.textContent, 'clone re-synced at parse end').to.equal('Static token');
-      expect(el.querySelectorAll('[cloned]').length, 'exactly one clone').to.equal(1);
-      el.remove();
-    } finally {
-      if (rs) Object.defineProperty(document, 'readyState', rs);
-      else delete (document as any).readyState;
-    }
-  });
-
-  it('a server-prerendered display clone is adopted, not duplicated', async () => {
-    // The SSR workaround: page ships its own clone as FIRST child.
-    const el = (await fixture(html`
-      <ty-select name="auth" value="token">
-        <ty-option slot="selected" cloned="true" value="token">Static token</ty-option>
-        <ty-option value="token" selected>Static token</ty-option>
-        <ty-option value="k8s">Kubernetes</ty-option>
-      </ty-select>
-    `)) as any;
-    await tick();
-
-    expect(el.querySelectorAll('[cloned]').length).to.equal(1);
-    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-    expect(clone.textContent).to.equal('Static token');
   });
 });
 
@@ -1575,7 +1502,7 @@ describe('ty-select — options the author hid (hidden)', () => {
     input.value = query;
     input.dispatchEvent(new Event('input', { bubbles: true }));
   };
-  const opt = (el: any, v: string) => el.querySelector(`ty-option[value="${v}"]:not([cloned])`) as HTMLElement;
+  const opt = (el: any, v: string) => el.querySelector(`ty-option[value="${v}"]`) as HTMLElement;
 
   it('the keyboard skips a hidden option and Enter cannot pick it', async () => {
     const el = (await fixture(html`
@@ -1665,15 +1592,15 @@ describe('ty-select — options the author hid (hidden)', () => {
       </ty-select>
     `)) as any;
     await tick();
-    const clone = el.querySelector('ty-option[cloned]') as HTMLElement;
-    expect(clone.textContent).to.equal('Legacy plan');
-    expect(clone.hasAttribute('hidden')).to.equal(false);
-    expect(clone.getBoundingClientRect().width).to.be.above(0);
+    const legacy = el.querySelector('ty-option[value="b"]') as HTMLElement;
+    expect(shown(el)).to.equal(legacy);
+    expect(legacy.hasAttribute('hidden'), 'still not on offer').to.equal(true);
+    expect(legacy.getBoundingClientRect().width).to.be.above(0);
   });
 });
 
-describe('ty-select compact — single-select still renders a clone, not a badge', () => {
-  it('single + compact shows the display clone; badge/counter never appears', async () => {
+describe('ty-select compact — single-select shows the option, not a badge', () => {
+  it('single + compact shows the option; badge/counter never appears', async () => {
     const el = (await fixture(html`
       <ty-select compact value="bobo">
         <ty-option value="bobo"><b>Bobo</b></ty-option>
@@ -1683,11 +1610,10 @@ describe('ty-select compact — single-select still renders a clone, not a badge
     await tick();
     const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
     expect(stub.classList.contains('compact')).to.be.true;
-    expect(stub.classList.contains('has-clone')).to.be.true;
+    expect(stub.classList.contains('has-option')).to.be.true;
     const badge = stub.querySelector('.select-count') as HTMLElement;
     expect(badge.hidden, 'single-select never shows the count badge, compact or not').to.be.true;
-    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-    expect(clone.querySelector('b')?.textContent).to.equal('Bobo');
+    expect(shown(el)?.querySelector('b')?.textContent).to.equal('Bobo');
   });
 });
 
@@ -1733,7 +1659,7 @@ describe('ty-select custom trigger slot (slot="trigger")', () => {
 });
 
 describe('ty-select — mutating children while the popup interacts correctly', () => {
-  it('removing the selected option node outright (no external-search) still leaves the display clone in place', async () => {
+  it('removing the selected option node: the value stays and shows as text', async () => {
     const el = (await fixture(html`
       <ty-select value="bobo">
         <ty-option value="bobo">Bobo Robot</ty-option>
@@ -1741,15 +1667,12 @@ describe('ty-select — mutating children while the popup interacts correctly', 
       </ty-select>
     `)) as any;
     await tick();
-    expect(el.querySelector('[cloned][slot="selected"]')).to.exist;
-
     el.querySelector('ty-option[value="bobo"]')!.remove();
     await tick();
 
-    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-    expect(clone, 'clone survives even though the source option is gone and external-search was never set').to.exist;
-    expect(clone.getAttribute('value')).to.equal('bobo');
+    expect(shown(el)).to.be.undefined;
     expect(el.value, '.value is unaffected by option removal').to.equal('bobo');
+    expect((el.shadowRoot.querySelector('.dropdown-placeholder') as HTMLElement).textContent).to.equal('bobo');
   });
 
   it('an option appended while the popup is open is immediately clickable/selectable', async () => {
@@ -1767,7 +1690,7 @@ describe('ty-select — mutating children while the popup interacts correctly', 
     fresh.textContent = 'Z';
     el.appendChild(fresh);
     await tick();
-    expect(fresh.getAttribute('role'), 'new option gets role=option via the child observer').to.equal('option');
+    expect(fresh.getAttribute('role'), 'new option is an option').to.equal('option');
 
     setTimeout(() => fresh.click());
     const ev = (await oneEvent(el, 'change')) as CustomEvent;
@@ -2254,8 +2177,7 @@ describe('ty-select mobile mode', () => {
     await tick();
     const stub = el.shadowRoot.querySelector('.select-stub') as HTMLElement;
     expect(stub.classList.contains('has-selection')).to.be.true;
-    const clone = el.querySelector('[cloned][slot="selected"]') as HTMLElement;
-    expect(clone?.textContent).to.equal('Bobo Robot');
+    expect(shown(el)?.textContent).to.equal('Bobo Robot');
   });
 });
 

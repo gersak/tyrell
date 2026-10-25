@@ -1,8 +1,9 @@
 /**
  * TySelectedOptions - out-of-band dismissible <ty-tag> chips for a picker's selection.
- * Pairs with any element exposing a comma-joined `value` + bubbling `change`; labels
- * and flavors are read from the picker's matching option (`[value="..."]`). Custom chips
- * come from an optional <template> child, stamped onto cloned nodes (never innerHTML).
+ * Draws the picker's comma-joined `value`, matched to its options by value for
+ * labels and flavors (`[value="..."]`). Works with any element exposing `value`
+ * and a bubbling `change`. Custom chips come from an optional <template> child,
+ * stamped onto cloned nodes (never innerHTML).
  */
 
 /** Minimal shape of a picker this element can drive. */
@@ -30,6 +31,8 @@ export class TySelectedOptions extends HTMLElement {
   private _childObserver: MutationObserver | null = null
   private _pickerObserver: MutationObserver | null = null
   private _lastTemplate: HTMLTemplateElement | null = null
+  // Our children as of the last render: the template, then the chips.
+  private _rendered: Node[] = []
 
   // While the linked picker's popup is open, chips FREEZE: no re-render, no
   // hide, no style writes — whatever was on screen stays exactly as it is
@@ -54,37 +57,34 @@ export class TySelectedOptions extends HTMLElement {
     this.bind()
     this.renderChips()
 
-    // The picker's OWN declarative init (an option pre-marked `selected` in
-    // markup, no `value` attribute on the picker) has the identical parse
-    // -timing problem this component works around for its <template> child
-    // below: a real HTML parser upgrades the picker the moment its start tag
-    // is seen, before its <ty-option> children exist, so the picker may not
-    // have resolved anything yet when we read `.value` above. And unlike a
-    // real selection change, that resolution — once it finally happens on
-    // DOMContentLoaded (see the picker's own resolveDeclarativeSelection) —
-    // deliberately fires no `change` event and touches no attribute our
-    // `_pickerObserver` below would catch (the options' `selected` attribute
-    // was already correct from markup, so nothing toggles). Recheck once,
-    // same technique, same trigger.
+    // While the page is still parsing, a `for` picker further down doesn't
+    // exist yet, and the picker's options may not either. Look again once
+    // parsing is done.
     if (document.readyState === 'loading') {
       document.addEventListener(
         'DOMContentLoaded',
-        () => { if (this.isConnected) this.renderChips() },
+        () => {
+          if (!this.isConnected) return
+          this.bind()
+          this.renderChips()
+        },
         { once: true },
       )
     }
 
     // During HTML parsing we connect BEFORE our <template> child is parsed —
     // re-render when it arrives so server-rendered pages get templated chips.
-    // renderChips re-appends the SAME template node, so its own mutations
-    // don't change template() identity → no re-render loop.
+    // A server morph (Datastar, htmx/idiomorph) rewrites our children to the
+    // server's HTML, which has the template but no chips, and drops the
+    // display we set: put both back. Runs before paint, so the stripped chips
+    // never show. Our own render leaves exactly _rendered behind → no loop.
     this._childObserver = new MutationObserver(() => {
-      const template = this.template()
-      if (template !== this._lastTemplate) {
+      if (!this.style.display) this.style.display = 'contents'
+      if (this.template() !== this._lastTemplate || !this.intact()) {
         this.renderChips()
       }
     })
-    this._childObserver.observe(this, { childList: true })
+    this._childObserver.observe(this, { childList: true, attributes: true, attributeFilter: ['style'] })
   }
 
   disconnectedCallback(): void {
@@ -117,16 +117,22 @@ export class TySelectedOptions extends HTMLElement {
     this._picker?.addEventListener('open', this._onPickerOpen)
     this._picker?.addEventListener('close', this._onPickerClose)
 
-    // The picker stamps `selected` onto its options ASYNC after connect
-    // (rAF init) and on external option swaps — neither fires `change`.
-    // Watch the picker's subtree so initial values render as chips too.
+    // The picker's value attribute, and its options arriving, being renamed
+    // or re-flavored (a fetch, a server morph). ty-select reflects every
+    // value change to the attribute; `change` covers pickers that don't.
     if (this._picker) {
+      // Defined after us: its value means nothing until it upgrades
+      const name = this._picker.localName
+      if (name.includes('-') && !customElements.get(name)) {
+        customElements.whenDefined(name).then(() => { if (this.isConnected) this.renderChips() })
+      }
       this._pickerObserver = new MutationObserver(() => this.renderChips())
       this._pickerObserver.observe(this._picker, {
         childList: true,
         subtree: true,
+        characterData: true,
         attributes: true,
-        attributeFilter: ['selected'],
+        attributeFilter: ['value', 'label', 'flavor'],
       })
     }
   }
@@ -146,6 +152,12 @@ export class TySelectedOptions extends HTMLElement {
     return parseValues(this._picker?.value ?? '')
   }
 
+  /** Children are still exactly what the last render left. */
+  private intact(): boolean {
+    const kids = this.childNodes
+    return kids.length === this._rendered.length && this._rendered.every((n, i) => kids[i] === n)
+  }
+
   /** The optional chip template (direct child only). */
   private template(): HTMLTemplateElement | null {
     return this.querySelector(':scope > template')
@@ -155,9 +167,9 @@ export class TySelectedOptions extends HTMLElement {
    * Interpolation context for a value: value, label, flavor plus every
    * data-* attribute of the picker's matching option.
    */
-  /** The picker's option for a value (never its display clone). */
+  /** The picker's option for a value. */
   private option(value: string): HTMLElement | null {
-    return this._picker?.querySelector(`[value="${CSS.escape(value)}"]:not([cloned])`) as HTMLElement | null
+    return this._picker?.querySelector(`[value="${CSS.escape(value)}"]`) as HTMLElement | null
   }
 
   private context(value: string): Record<string, string> {
@@ -262,7 +274,8 @@ export class TySelectedOptions extends HTMLElement {
     this._lastTemplate = template
 
     if (!this._picker) {
-      this.replaceChildren(...(template ? [template] : []))
+      this._rendered = template ? [template] : []
+      this.replaceChildren(...this._rendered)
       return
     }
 
@@ -272,6 +285,7 @@ export class TySelectedOptions extends HTMLElement {
     for (const value of this.values()) {
       frag.appendChild(template ? this.stampTemplate(template, value) : this.defaultChip(value))
     }
+    this._rendered = Array.from(frag.childNodes)
     this.replaceChildren(frag)
   }
 

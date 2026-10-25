@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop.js';
 
 export interface TyTabProps extends React.HTMLAttributes<HTMLElement> {
   /** Required unique identifier */

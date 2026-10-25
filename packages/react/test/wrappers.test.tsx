@@ -64,6 +64,7 @@ describe(`React ${React.version} wrappers`, () => {
     ['TySelect', TySelect, 'required', 'required', 'ty-select'],
     ['TySelect', TySelect, 'readonly', 'readonly', 'ty-select'],
     ['TySelect', TySelect, 'externalSearch', 'external-search', 'ty-select'],
+    ['TySelect', TySelect, 'externalSelection', 'external-selection', 'ty-select'],
     ['TySelect', TySelect, 'allowCreate', 'allow-create', 'ty-select'],
     ['TyDatePicker', TyDatePicker, 'noClear', 'no-clear', 'ty-date-picker'],
     ['TyDatePicker', TyDatePicker, 'disabled', 'disabled', 'ty-date-picker'],
@@ -248,6 +249,7 @@ describe(`React ${React.version} wrappers`, () => {
     ['TyTooltip', <TyTooltip className="w" placement="top">tip</TyTooltip>, 'ty-tooltip', { placement: 'top' }],
     ['TyWizard', <TyWizard className="w" active="s1" />, 'ty-wizard', { active: 's1' }],
     ['TySelect value[]', <TySelect className="w" multiple value={['a', 'b']} />, 'ty-select', { value: 'a,b' }],
+    ['TySelect createTransform', <TySelect className="w" allowCreate createTransform="slug" />, 'ty-select', { 'create-transform': 'slug' }],
     ['TyDatePicker', <TyDatePicker className="w" label="When" withTime />, 'ty-date-picker', { label: 'When', 'with-time': '' }],
   ];
 

@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { AppLayout } from '../../../lib/app-layout'
 import {
-  TyTag,
   TyButton,
   TyIcon,
   TySelect,
@@ -156,9 +155,9 @@ export default function MultiselectExample() {
             style={{ minWidth: '320px' }}
           >
             {ALL_OPTIONS.map(opt => (
-              <TyTag key={opt.value} value={opt.value} size="sm">
+              <TyOption key={opt.value} value={opt.value}>
                 {opt.label}
-              </TyTag>
+              </TyOption>
             ))}
           </TySelect>
         </section>
@@ -196,9 +195,9 @@ export default function MultiselectExample() {
             style={{ minWidth: '320px' }}
           >
             {filteredOptions.map(opt => (
-              <TyTag key={opt.value} value={opt.value} size="sm">
+              <TyOption key={opt.value} value={opt.value}>
                 {opt.label}
-              </TyTag>
+              </TyOption>
             ))}
           </TySelect>
 
@@ -262,7 +261,7 @@ export default function MultiselectExample() {
           </div>
           {changeLog.length === 0 ? (
             <p className="ty-text- italic">
-              (No events — pick or remove tags in either multiselect.)
+              (No events — pick or remove options in either multiselect.)
             </p>
           ) : (
             <ul className="space-y-2">

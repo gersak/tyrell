@@ -398,11 +398,11 @@ export default function DataDashboardExample() {
               placeholder="All types"
               className="w-64"
             >
-              <TyTag value="signup" flavor="success" size="sm">Signups</TyTag>
-              <TyTag value="purchase" flavor="primary" size="sm">Purchases</TyTag>
-              <TyTag value="login" flavor="neutral" size="sm">Logins</TyTag>
-              <TyTag value="feature_use" flavor="neutral" size="sm">Features</TyTag>
-              <TyTag value="support" flavor="warning" size="sm">Support</TyTag>
+              <TyOption value="signup" flavor="success">Signups</TyOption>
+              <TyOption value="purchase" flavor="primary">Purchases</TyOption>
+              <TyOption value="login" flavor="neutral">Logins</TyOption>
+              <TyOption value="feature_use" flavor="neutral">Features</TyOption>
+              <TyOption value="support" flavor="warning">Support</TyOption>
             </TySelect>
           </div>
 

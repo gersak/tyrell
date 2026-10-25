@@ -1005,3 +1005,57 @@ describe('ty-input — properties set before the element upgrades', () => {
     expect(el.hasAttribute('required')).to.equal(false);
   });
 });
+
+describe('ty-input — moved in the DOM', () => {
+  async function mount() {
+    const form = await fixture(html`
+      <form><div id="a"><ty-input name="n" value="orig"></ty-input></div><div id="b"></div></form>
+    `) as HTMLFormElement;
+    const el = form.querySelector('ty-input') as TyInput;
+    await nextFrame();
+    return { form, el, inner: () => el.shadowRoot!.querySelector('input')! };
+  }
+
+  it('keeps the user\'s edit when moved', async () => {
+    const { form, el, inner } = await mount();
+    inner().focus();
+    inner().select();
+    await sendKeys({ type: 'edited' });
+    inner().blur();
+
+    form.querySelector('#b')!.appendChild(el);
+    await nextFrame();
+
+    expect(el.value).to.equal('edited');
+    expect(inner().value).to.equal('edited');
+    expect(new FormData(form).get('n')).to.equal('edited');
+  });
+
+  it('takes a value set while detached', async () => {
+    const { form, el, inner } = await mount();
+    el.remove();
+    el.value = 'later';
+    form.querySelector('#b')!.appendChild(el);
+    await nextFrame();
+
+    expect(inner().value).to.equal('later');
+    expect(new FormData(form).get('n')).to.equal('later');
+  });
+});
+
+describe('ty-input — form.reset() after the server changed the markup', () => {
+  it('goes back to the latest value attribute', async () => {
+    const form = (await fixture(html`<form><ty-input name="n" value="first"></ty-input></form>`)) as HTMLFormElement;
+    const el = form.querySelector('ty-input') as TyInput;
+    await nextFrame();
+    el.setAttribute('value', 'saved'); // a morph
+    const inner = el.shadowRoot!.querySelector('input')!;
+    inner.focus();
+    inner.select();
+    await sendKeys({ type: 'unsaved' });
+    inner.blur();
+    form.reset();
+    await nextFrame();
+    expect(el.value).to.equal('saved');
+  });
+});

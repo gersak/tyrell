@@ -150,12 +150,11 @@ The wrapper hands you the native `CustomEvent`:
 |---|---|
 | `ty/Input`, `ty/Textarea`, `ty/Switch`, `ty/DatePicker` | `(.. e -detail -value)` |
 | `ty/Checkbox` | `(.. e -detail -checked)` |
-| `ty/Dropdown` | `(.. e -detail -option -value)` (or `-value`) |
-| `ty/Multiselect` | `(.. e -detail -values)` → JS array |
+| `ty/Select` | `(.. e -detail -value)`; with `:multiple`, `(.. e -detail -values)` → JS array |
 | `ty/RadioGroup` | `(.. e -detail -value)` |
 | `ty/Tabs` | `(.. e -detail -tab)` |
 
-For `Multiselect`, convert the JS array:
+For `Select` with `:multiple`, convert the JS array:
 
 ```clojure
 :onChange (fn [^js e]
@@ -174,19 +173,20 @@ Children come after the props map. `:slot` tells the host component where to ren
     :onChange #(setQ (.. % -detail -value))}
    ($ ty/Icon {:slot "start" :name "search"}))
 
-($ ty/Dropdown
+($ ty/Select
    {:label    "Country"
     :value    country
-    :onChange #(setCountry (.. % -detail -option -value))}
+    :onChange #(setCountry (.. % -detail -value))}
    ($ ty/Option {:value "us"} "United States")
    ($ ty/Option {:value "de"} "Germany"))
 
-($ ty/Multiselect
+($ ty/Select
    {:label    "Skills"
+    :multiple true
     :value    (str/join "," skills)
     :onChange #(setSkills (vec (.. % -detail -values)))}
-   ($ ty/Tag {:value "clojure" :flavor "primary"} "Clojure")
-   ($ ty/Tag {:value "react"   :flavor "primary"} "React"))
+   ($ ty/Option {:value "clojure" :flavor "primary"} "Clojure")
+   ($ ty/Option {:value "react"   :flavor "primary"} "React"))
 ```
 
 `<>` from `helix.core` gives you a fragment when you need to return siblings without a wrapper:
@@ -265,11 +265,11 @@ Tyrell's form-associated components participate in `<form>` submission via `setF
           :error    (:email errors)
           :onChange #(update-field :email (.. % -detail -value))})
 
-      ($ ty/Dropdown
+      ($ ty/Select
          {:label    "Role"
           :name     "role"
           :value    (:role profile)
-          :onChange #(update-field :role (.. % -detail -option -value))}
+          :onChange #(update-field :role (.. % -detail -value))}
          ($ ty/Option {:value "developer"} "Developer")
          ($ ty/Option {:value "designer"}  "Designer"))
 
@@ -283,7 +283,7 @@ Tyrell's form-associated components participate in `<form>` submission via `setF
       ($ ty/Button {:type "submit" :flavor "primary"} "Submit"))))
 ```
 
-This is essentially the structure of [`examples/helix/src/hello/core.cljs`](../../examples/helix/src/hello/core.cljs) — clone the example to see the same pattern at full scale, including a Multiselect for skills, a DatePicker, a Tooltip, and the imperative-ref modal.
+This is essentially the structure of [`examples/helix/src/hello/core.cljs`](../../examples/helix/src/hello/core.cljs) — clone the example to see the same pattern at full scale, including a multiple Select for skills, a DatePicker, a Tooltip, and the imperative-ref modal.
 
 ## Subscribing to non-React state
 
@@ -383,8 +383,8 @@ Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }`.
 - **`:class` on `$ Component`** — same rule: `:className` is the React prop name. `d/*` macros translate `:class`, but `$` does not.
 - **`use-effect` deps are first, body is rest** — opposite of UIx. `(hooks/use-effect [n] body…)`. Easy to flip.
 - **`:auto-deps` is a literal keyword** — not a value the macro infers. Pass `:auto-deps` as the *first* argument to `use-effect` / `use-callback` / `use-memo` to let Helix derive the dep vector by static analysis. Use it when the deps are obvious; provide an explicit vector when they aren't.
-- **Don't pass CLJS data structures as wrapper props** unless you know the wrapper accepts them. `Multiselect`'s `:value` expects a comma string or JS array, not a CLJS vector.
-- **Children of `Dropdown` / `Multiselect`** must be `ty/Option` / `ty/Tag` (or raw `<ty-option>` / `<ty-tag>`) — not native HTML `<option>`s; they live in shadow DOM and never see plain options.
+- **Don't pass CLJS data structures as wrapper props** unless you know the wrapper accepts them. `Select`'s `:value` with `:multiple` expects a comma string or JS array, not a CLJS vector.
+- **Children of `Select`** must be `ty/Option` (or raw `<ty-option>`) — not native HTML `<option>`s or `ty/Tag`. The selection is the select's `:value`; `:selected` on an option does nothing without `:externalSelection`.
 - **Setter naming is just convention** — `setProfile` vs `set-profile`. The example uses camelCase to match the JS-React feel; both compile.
 
 ## See also

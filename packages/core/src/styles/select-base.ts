@@ -105,7 +105,6 @@ ${fieldSizeVars}
     scale var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1)),
     translate var(--ty-popup-duration, 180ms) var(--ty-popup-ease, cubic-bezier(0.34, 1.56, 0.64, 1));
 
-  transform: translate(var(--dropdown-offset-x, 0px), var(--dropdown-offset-y, 0px));
   top: -1000px;
   left: -1000px;
 }
@@ -372,23 +371,6 @@ ${fieldSizeVars}
   background: var(--ty-bg-danger-soft);
 }
 
-/* Hide stub chips when mobile dialog is open (let modal show them) */
-.dropdown-mode-mobile .dropdown-wrapper:has(.mobile-dialog[open]) .select-chips {
-  display: none;
-}
-
-/* When tags are present, reduce padding to make room */
-.select-stub.has-tags {
-  padding: 0.25rem 2.5rem 0.25rem 0.5rem;
-  width: 100%;
-}
-
-.select-stub.has-tags slot[name="selected"] {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem;
-}
-
 .dropdown-chevron {
   position: absolute;
   top: 50%;
@@ -410,14 +392,6 @@ ${fieldSizeVars}
   height: 100%;
 }
 
-
-.select-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  min-width: 0;
-}
 
 /* No flex-grow here — the placeholder only ever renders inside .select-stub,
    and select.ts sets flex: 1 1 0% on it. A bare flex-grow: 1 (implicit
@@ -491,32 +465,6 @@ ${fieldSizeVars}
   opacity: 1;
 }
 
-.dropdown-options ty-tag {
-  user-select: none;
-  transition: transform 0.1s ease;
-}
-
-.dropdown-options ty-tag:hover {
-  transform: scale(1.02);
-}
-
-.dropdown-options ty-tag:active {
-  transform: scale(0.98);
-}
-
-.dropdown-options ty-tag[selected] {
-  opacity: 0.5;
-}
-
-.select-chips ty-tag {
-  max-width: 150px;
-}
-
-@media (max-width: 640px) {
-  .select-chips ty-tag {
-    max-width: 100px;
-  }
-}
 
 
 .select-container {
@@ -962,37 +910,13 @@ ${fieldSizeVars}
   display: none;
 }
 
-.dropdown-mode-mobile .section-content ::slotted(ty-tag) {
-  cursor: pointer;
-  user-select: none;
-  transition: transform 0.1s ease;
-  margin: 2px 0;
-  /* Fade + scale entry — replays on each (re)insertion when a tag moves
-     between selected and available slots */
-  animation: ty-select-tag-enter 180ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (hover: hover) {
-  .dropdown-mode-mobile .section-content ::slotted(ty-tag:hover) {
-    transform: scale(1.02);
-  }
-}
-
-.dropdown-mode-mobile .section-content ::slotted(ty-tag:active) {
-  transform: scale(0.96);
-}
-
-.dropdown-mode-mobile .section-content ::slotted(ty-tag[hidden]) {
-  display: none !important;
-}
-
 @keyframes ty-select-tag-enter {
   from { opacity: 0; transform: scale(0.85); }
   to   { opacity: 1; transform: scale(1); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dropdown-mode-mobile .section-content ::slotted(ty-tag) {
+  .dropdown-mode-mobile .mobile-selected-chip {
     animation: none;
   }
 }

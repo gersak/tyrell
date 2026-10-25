@@ -1155,3 +1155,49 @@ describe('ty-calendar — value reads what ty-date-picker reads', () => {
     expect(picker.value).to.equal(new Date(2026, 2, 20).toISOString());
   });
 });
+
+describe('ty-calendar — moved in the DOM', () => {
+  const shown = (el: any) =>
+    el.shadowRoot.querySelector('ty-calendar-navigation').shadowRoot.textContent.replace(/\s+/g, '');
+  const day = (el: any, n: string) => {
+    const month = el.shadowRoot.querySelector('ty-calendar-month') as any;
+    return [...month.shadowRoot.querySelectorAll('.calendar-day-cell')]
+      .find((c: any) => !c.classList.contains('other-month') && c.textContent === n) as HTMLElement;
+  };
+
+  async function mount() {
+    const form = (await fixture(html`
+      <form><div id="a"><ty-calendar name="d" year="2025" month="6" day="3"></ty-calendar></div><div id="b"></div></form>
+    `)) as HTMLFormElement;
+    const el = form.querySelector('ty-calendar') as any;
+    await nextFrame();
+    return { form, el, move: async () => { form.querySelector('#b')!.appendChild(el); await nextFrame(); } };
+  }
+
+  it('stays on the month the user navigated to', async () => {
+    const { el, move } = await mount();
+    const nav = el.shadowRoot.querySelector('ty-calendar-navigation') as any;
+    (nav.shadowRoot.querySelector('.nav-month-next') as HTMLElement).click();
+    await nextFrame();
+    const navigated = shown(el);
+    expect(navigated).to.equal('July2025');
+
+    await move();
+
+    expect(shown(el)).to.equal(navigated);
+    expect(el.value).to.equal('2025-06-03');
+  });
+
+  it('form.reset() after a move still restores the markup date', async () => {
+    const { form, el, move } = await mount();
+    day(el, '20').click();
+    await nextFrame();
+    expect(el.value).to.equal('2025-06-20');
+
+    await move();
+    form.reset();
+    await nextFrame();
+
+    expect(el.value).to.equal('2025-06-03');
+  });
+});

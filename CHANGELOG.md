@@ -5,6 +5,36 @@ All notable changes to the Tyrell web components library will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed (breaking)
+
+- **`ty-select`: `value` is the only selection input.** `<ty-option selected>` no longer selects anything. The select keeps its `value` attribute on the current selection, so a server morph does what the server renders: a different `value` wins, the same one changes nothing, none means no selection. A server that re-renders a select renders `value="…"` with the current selection.
+  - Migration: move the selection from the options to the select: `<ty-select value="a,b">`.
+- **`ty-select` writes no selection state onto its options.** The check and `aria-selected` come from `option.checked`, a property the select sets, and the option's internals; `ty-option` keeps its own `role="option"`. CSS that targeted `ty-option[selected]` for the selected look no longer matches.
+- **`<ty-tag>` is no longer an option inside `ty-select`.** Use `<ty-option>`; rich content, `flavor` and `data-*` still reach `ty-selected-options` chips.
+- **`ty-select`'s trigger shows the picked option itself, not a copy.** A closed single select assigns the real `<ty-option>` to its trigger slot, so page CSS still styles it and nothing is added to the select's children. Open, the trigger shows the placeholder, single and multiple alike; the list shows the picks. `ty-option[cloned]` and `slot="selected"` copies are gone.
+- **`ty-select` `align` is gone.** `placement` does it: `align="end"` is `placement="bottom-end"` (it still flips when there's no room below). React: `TySelect` `align` prop removed.
+- **`external-search="false"` means off**, like every other boolean attribute. The attribute aliases behind it are gone.
+
+### Added
+
+- **`ty-select` `external-selection`:** the app holds the selection, for lists where hundreds of values can be picked. It marks the options it shows `selected`; a pick fires `change` with `{ value, selected }` for that option and changes nothing in the select, which submits nothing and holds no `value`. Pairs with `external-search`. React: `externalSelection`.
+
+### Fixed
+
+- **`TySelectedOptions` (React) hydrates cleanly.** The element draws its chips as its own children, which SSR hydration found unexpected, so React rebuilt the tree on the client. The wrapper now renders it on the client only: nothing on the server and while hydrating, right away in every other render.
+- **`tyrell-react` loads as native Node ESM.** Its relative imports had no `.js` extension, so a server that runs the package unbundled (Next.js Pages Router, Remix, Vite SSR) failed with `ERR_MODULE_NOT_FOUND`.
+- **`ty-select` works with React SSR hydration and Replicant.** Its trigger copy was an extra child: React reported a hydration mismatch and re-rendered the whole tree on the client, and Replicant removed the wrong option when the options changed.
+- **`ty-select` morphs cleanly.** Nothing the select wrote is left for a morph to strip: the selection, checks, ARIA, the trigger clone, a slotted trigger's sizing and the popup position all survive. Options renamed by a morph relabel the trigger and chips.
+- **`ty-select` `change` `detail.values` keep click order**, like `.value`; they were sorted.
+- **A `ty-select` whose value is a text-only option (`<ty-option>Apple</ty-option>`) no longer loops** rebuilding its trigger clone and freezes the tab.
+- **`form.reset()` goes back to the latest markup**, like a native control's `defaultValue`: a `value` the server morphed in or a framework rendered becomes what reset restores, not the one from the first page load. A field's own reflection of the user's edit doesn't count. All form fields. `ty-select` also restores its `value` after picks again.
+- **`ty-selected-options` relabels its chips when the options arrive after the value** (a fetch, a morph), follows a `value` set from code, and binds to a `for` picker further down a page that is still loading.
+- **`ty-selected-tags` keeps its chips through a server morph** (Datastar patch-elements, htmx/idiomorph). The server's HTML has no chips, since they're drawn in the browser, so a morph that reached the element removed them until the picker's next `change`. It now redraws them right away, before paint, with the same nodes, template and page CSS as before.
+- **`ty-input` keeps the user's edit when moved in the DOM.** Removing an edited field and putting it back (drag-to-reorder, moving it into a modal, a morph that reorders siblings) restored the original `value` attribute, and the form submitted the old value. Only the first connect reads the declared value now.
+- **`ty-calendar` stays on the month the user navigated to when moved in the DOM**, instead of jumping back to the `year`/`month` attributes. `form.reset()` after a move restores the markup date again, not the last picked one.
+
 ## [1.0.0-RC17] - 2026-10-22
 
 ### Added

@@ -127,7 +127,6 @@ See [BUILDING_WITH_TYCOMPONENT.md](../../../BUILDING_WITH_TYCOMPONENT.md) for de
 The `PropertyManager` class handles:
 - Type coercion (string/boolean/number/object/array)
 - Validation and constraints
-- Property aliases (extra attribute names mapped to a fixed value)
 - Change tracking and events
 
 ```typescript

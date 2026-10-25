@@ -369,20 +369,21 @@ Drop zone + file picker. Click to browse or drag-and-drop. Form-associated — s
 
 ### ty-select
 
-THE select control. Single select by default with a form-field look matching `ty-input`; `multiple` for multi-select.
+THE select control. Single select by default with a form-field look matching `ty-input`; `multiple` for multi-select. Built for lists up to about 20–30 options (the search row appears above 7). Longer or remote lists: `external-search`. Hundreds of picks: `external-selection`.
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `multiple` | boolean | `false` | Multi select (native `<select multiple>` semantics). Absent = single: picking replaces the selection and closes the popup |
 | `compact` | boolean | `false` | Content-hugging trigger for toolbars/filter bars instead of the full-width field. Single shows the selected label; multiple shows placeholder + count badge |
-| `value` | string | `''` | Selected value; comma-separated when multiple (arrays accepted from frameworks) |
+| `value` | string | `''` | The selection, and the only way to set it; comma-separated in pick order when multiple (arrays accepted from frameworks). The select keeps the attribute on the current selection. `<ty-option selected>` selects nothing |
 | `name` | string | - | Single submits one FormData entry; multiple submits repeated `name=` entries |
 | `label` | string | - | |
 | `placeholder` | string | `'Select...'` | Shown while empty; selection shows the option itself (single) or joined labels (multiple) |
 | `selected-label` | string | `'Selected'` | Mobile dialog only: heading of the pinned selection strip; the count is appended (`Selected (3)`) |
 | `available-label` | string | `'Available'` | Mobile dialog only: heading of the option list; counts what's still on offer (excludes selected, `hidden` and searched-out options) |
 | `not-searchable` | boolean | `false` | Drop the popup search row. A select is searchable by default; this is the single opt-out — bare presence attribute, like `disabled`. Can't override `external-search`/`allow-create`, where the input is the only way to type a query |
-| `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response |
+| `external-search` | boolean | `false` | Delegate filtering: emits debounced `search` events; replace the option children in response. Labels come from the options present, so the app keeps the picked ones in the list (`hidden` if they aren't results) |
+| `external-selection` | boolean | `false` | The app holds the selection — see below |
 | `allow-create` | boolean | `false` | Enter on unmatched search text mints a new `<ty-option>` and selects it. Exact match (value or label, case-insensitive) selects the existing option instead of duplicating. Single: replaces selection, closes. Multiple: appends, clears search, stays open (tags-input pattern). Fires the cancelable `create` event first — see below |
 | `create-transform` | string | `'none'` | `'slug'`: normalizes the **value** allow-create mints (lowercase, spaces → `_`, strips non-alphanumeric). The display label is always kept verbatim regardless |
 | `debounce` | number | `0` | Search event debounce (0-5000ms) |
@@ -390,22 +391,32 @@ THE select control. Single select by default with a form-field look matching `ty
 | `disabled` / `readonly` / `required` | boolean | `false` | |
 | `error` | string | `''` | Message under the field; `''` clears it. While it is set, the select looks the same as `ty-input` with an `error`. Validation also writes it (submit, `reportValidity()`, `checkValidity()`) and clears it once the select is valid |
 | `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
-| `placement` | string | - | Popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic. Takes precedence over `align` |
-| `align` | string | `'start'` | Horizontal popup anchor only: `'start'` (trigger's left edge), `'center'`, or `'end'` (trigger's right edge) — clamped into the viewport either way. Useful with `slot="trigger"` when the custom trigger sits near the right edge of its container. Prefer `placement` for new markup |
+| `placement` | string | - | Where the list opens: `bottom` / `top`, optionally `-start` / `-end` (`bottom-end`, …). Unset: below when it fits, else the side with more room, start-aligned. Flips rather than clips. `left-*`/`right-*` keep their alignment but leave the side automatic. See [Placement](#placement). Width: at least 320px or the trigger's; `--ty-select-popup-width` sets it |
 | `no-clear` | boolean | `false` | No built-in × clear button. Normally it sits in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
 
-**Children:** `<ty-option>` — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-options` templates.
+**Children:** `<ty-option>` only (`<ty-tag>` is not an option) — supports rich HTML content; a `label` attribute (native `<option label>` semantics) provides clean display text for summaries/chips; `data-*` attributes feed `ty-selected-options` templates.
 
-**Single-select display:** the selected option is **cloned into the trigger** (rich HTML intact — icons, prices, flags).
+**Trigger:** a closed single select shows the selected option itself (rich HTML and your page CSS intact — icons, prices, flags); nothing is added to its children, so React hydration and Replicant diffing see exactly what they rendered. A closed multiple select shows the labels, comma-joined (`compact`: placeholder + count); give rich options a `label` so this reads clean. Open, the trigger shows the placeholder; the list shows the picks.
 
 **Methods:** `clear()` — empties the entire selection and fires `change` (`action: 'clear'`); no-op if nothing is selected. It shows no validation message, so it's safe for resetting a form in code (the built-in × does show it). Works regardless of `no-clear`/skin, so `slot="trigger"` consumers can wire their own clear icon's click handler to it directly. `deselectValue(value)` — removes one value and fires `change` (`action: 'remove'`); used internally by `ty-selected-options` chip dismissal.
 
-**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `action` is `'set' | 'add' | 'remove' | 'clear' | 'create'` — `'clear'` from the clear button or `clear()`, `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
+**Slots:** `start` / `end` (adornments), `trigger` (replaces field/compact chrome entirely; behavior/form/ARIA stay), `loading` | **Events:** `change` -> `{ value, values, items: [{value,label,flavor}], action, item }` (`value` scalar for single, array for multiple; `values` in pick order; `action` is `'set' | 'add' | 'remove' | 'clear' | 'create'` — `'clear'` from the clear button or `clear()`, `'create'` when allow-create minted the option) | `search` -> `{ query, element }` | `open` / `close` | `create` -> `{ value, label }` — **cancelable**: mutate `detail.value` to change the id that gets created (e.g. slugify it yourself), or `preventDefault()` to create the option yourself (e.g. after a server round-trip)
 
-**Companion:** `<ty-selected-options for="id">` renders the selection as dismissible chips anywhere in the layout. Each chip is the option's own content (a rich option makes a rich chip); `label` on the option makes it plain text. Optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup. Also registered as **`ty-selected-tags`** — original tag name, kept working indefinitely.
+**Companion:** `<ty-selected-options for="id">` renders the selection as dismissible chips anywhere in the layout. Each chip is the option's own content (a rich option makes a rich chip); `label` on the option makes it plain text. Optional `<template>` child with `{value}` `{label}` `{flavor}` `{data-*}` placeholders for custom chip markup. It follows the select's `value` attribute, `change`, and options added or renamed (options that arrive after the value relabel the chips). It binds to its `for` select when it connects: if a swap replaces the select (htmx `outerHTML`, a remount), swap the chips with it, or morph instead, which keeps the same select. Not for `external-selection`. Also registered as **`ty-selected-tags`** — original tag name, kept working indefinitely.
 
-**Full keyboard + ARIA combobox pattern:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="combobox"` / `aria-haspopup="listbox"` / `aria-expanded` / `aria-controls` (the popup's `role="listbox"`, `aria-multiselectable` when `multiple`) / `aria-labelledby` (when `label` is set — the visible label text, programmatically associated, not just nearby). Each `<ty-option>` gets `role="option"` + a live `aria-selected`. `Enter`/`Space`/`ArrowDown` open the closed, focused field — not just a mouse click. With an `error` set, the combobox has `aria-invalid="true"` and `aria-describedby` pointing at the error line. `focus()` on a disabled select does nothing. The list's keys work inside `ty-popup` and `ty-modal`; Escape closes the list and returns focus to the select.
+**Server rendering / morph:** the select writes no selection state onto its options; the check and `aria-selected` come from `option.checked`, a property it sets. A server morph (Datastar `patch-elements`, htmx idiomorph) does what the server renders: a different `value` wins, the same one changes nothing, none means no selection. A server that re-renders a select renders `value="…"` with the current selection.
+
+**External selection:** with `external-selection` the app owns the selection, for hundreds or thousands of selected values or a remote list; usually paired with `external-search`. The app marks the options it shows `selected` (attribute, or the `option.selected` property). A pick fires `change` with `{ value, selected, action, item, values: [], items: [] }` — `value` is the picked option, `selected` its requested state, `action` `'add' | 'remove'` (`'set'` for single) — and changes nothing; the app re-renders the marks. `.value` is `''`, nothing is submitted to the form and `required` is not enforced, so the app submits and summarizes the selection itself.
+
+```html
+<ty-select multiple external-selection external-search>
+  <ty-option value="r1" selected>Rob Roy</ty-option>
+  <ty-option value="r2">Aerobot</ty-option>
+</ty-select>
+```
+
+**Full keyboard + ARIA combobox pattern:** the field is in the tab order (`tabindex="0"`; `-1` when `disabled`) and carries `role="combobox"` / `aria-haspopup="listbox"` / `aria-expanded` / `aria-controls` (the popup's `role="listbox"`, `aria-multiselectable` when `multiple`) / `aria-labelledby` (when `label` is set — the visible label text, programmatically associated, not just nearby). Each `<ty-option>` has `role="option"` (its own attribute) and a live `aria-selected` from its internals. `Enter`/`Space`/`ArrowDown` open the closed, focused field — not just a mouse click. With an `error` set, the combobox has `aria-invalid="true"` and `aria-describedby` pointing at the error line. `focus()` on a disabled select does nothing. The list's keys work inside `ty-popup` and `ty-modal`; Escape closes the list and returns focus to the select.
 
 **In a form, no JS needed:**
 
@@ -426,7 +437,7 @@ On Send, the browser's message for a native `<select>` appears under the field a
 
 ### ty-option
 
-Rich HTML option for `<ty-select>`. Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `selected`, `disabled`, `hidden` (not offered: left out of the list, the arrow keys and the search, but it can still be the value, like `<option hidden>`). The select sets `highlighted` and `filtered-out` (left out by the search) itself. Default slot for content; `data-*` attributes feed `ty-selected-options` chip templates.
+Rich HTML option for `<ty-select>`. Attrs: `value`, `label` (clean display text — native `<option label>` semantics), `disabled`, `hidden` (not offered: left out of the list, the arrow keys and the search, but it can still be the value, like `<option hidden>`), `selected` (the app's mark, read only with `external-selection`; otherwise the select's `value` decides). The `checked` property, set by the select, draws the check and `aria-selected`. The select sets `highlighted` and `filtered-out` (left out by the search) itself. Default slot for content; `data-*` attributes feed `ty-selected-options` chip templates.
 
 ---
 
@@ -657,7 +668,7 @@ For **top/bottom** the alignment runs horizontally (`-start` = left edges flush,
 </ty-button>
 ```
 
-**Auto-flip keeps your alignment.** When the requested side has no room, the fallback order exhausts that side, then flips to the *opposite* side with the alignment intact, and only then tries the perpendicular axis. So `left-start` becomes `right-start` — still top-aligned — long before it becomes `bottom`.
+**Auto-flip keeps your alignment.** When the requested position doesn't fit, the popup tries, in order: the *opposite* side with the same alignment, the other alignments on the requested side, the other alignments on the opposite side, then the two perpendicular sides. It takes the first that fits, else the one that overflows least. So `left-start` becomes `right-start` — still top-aligned — long before it becomes `bottom`.
 
 **Dropdowns are vertical-only.** `ty-select` and `ty-date-picker` open above or below their trigger, so they accept `bottom*` / `top*` directly; a `left-*` / `right-*` value keeps its alignment but leaves the side automatic. Both still flip rather than clip.
 
@@ -665,8 +676,6 @@ For **top/bottom** the alignment runs horizontally (`-start` = left edges flush,
 <ty-select placement="bottom-end">…</ty-select>
 <ty-date-picker placement="top-start"></ty-date-picker>
 ```
-
-`ty-select` also keeps its older `align` attribute (`start` | `center` | `end`) for horizontal anchoring alone; `placement` wins when both are set.
 
 ---
 
@@ -864,7 +873,7 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 |-----------|-------|--------|
 | `ty-input` | `input`, `change` | `{ value, formattedValue, rawValue, originalEvent }` |
 | `ty-checkbox` | `input`, `change` | `{ value, checked, formValue, originalEvent }` |
-| `ty-select` | `change` | `{ value (scalar / array when multiple), values, items, action, item }` |
+| `ty-select` | `change` | `{ value (scalar / array when multiple), values, items, action, item }`; with `external-selection` also `selected`, and `value` is the picked option |
 | `ty-select` | `search` | `{ query, element }` |
 | `ty-file-upload` | `change` | `{ value: File[], files: File[], names: string[] }` |
 | `ty-date-picker` | `change` | `{ value, localValue, milliseconds, formatted, source }` |

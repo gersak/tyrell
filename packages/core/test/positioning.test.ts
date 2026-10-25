@@ -183,8 +183,8 @@ describe('anchored popup integration', () => {
     expect(below || above, 'a direction class is set').to.be.true;
 
     const stubRect = stub.getBoundingClientRect();
-    const x = parseFloat(el.style.getPropertyValue('--dropdown-x'));
-    const y = parseFloat(el.style.getPropertyValue('--dropdown-y'));
+    const x = parseFloat(dialog.style.getPropertyValue('--dropdown-x'));
+    const y = parseFloat(dialog.style.getPropertyValue('--dropdown-y'));
     // wrap padding is 20, gap 8 (unified trigger→popup offset, 2026-08-19)
     expect(x).to.be.closeTo(Math.max(8, stubRect.left) - 20, 1);
     if (below) {
@@ -192,9 +192,9 @@ describe('anchored popup integration', () => {
     }
   });
 
-  it('ty-select align="end" anchors the dropdown to the trigger right edge', async () => {
+  it('ty-select placement="bottom-end" anchors the dropdown to the trigger right edge', async () => {
     const el = (await fixture(html`
-      <ty-select align="end">
+      <ty-select placement="bottom-end">
         <ty-option value="a">A</ty-option>
         <ty-option value="b">B</ty-option>
       </ty-select>
@@ -205,8 +205,9 @@ describe('anchored popup integration', () => {
     await nextFrame();
 
     const stubRect = stub.getBoundingClientRect();
-    const width = parseFloat(el.style.getPropertyValue('--dropdown-width'));
-    const x = parseFloat(el.style.getPropertyValue('--dropdown-x'));
+    const dialog = el.shadowRoot.querySelector('.dropdown-dialog') as HTMLDialogElement;
+    const width = parseFloat(dialog.style.getPropertyValue('--dropdown-width'));
+    const x = parseFloat(dialog.style.getPropertyValue('--dropdown-x'));
     // popupWidth is --dropdown-width minus the 20px wrap padding on each side
     const popupWidth = width - 40;
     const expectedRawX = Math.max(8, Math.min(stubRect.right - popupWidth, window.innerWidth - popupWidth - 8));

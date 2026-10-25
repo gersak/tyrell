@@ -121,24 +121,33 @@ export const selectStyles = `
   display: none;
 }
 
-/* Single-select display clone (slot="selected"): the selected ty-option
-   projected into the stub — its own :host([cloned]) styling strips the
-   list-row chrome; here it just takes the text's flex slot. */
+/* Single select, closed: the picked option itself is assigned to the
+   selected slot (select.ts assignSlots); it takes the text's flex slot. */
 .select-stub slot[name="selected"] {
   display: none;
 }
-.select-stub.has-clone slot[name="selected"] {
+.select-stub.has-option slot[name="selected"] {
   display: block;
   /* flex-basis 0, not auto — same reasoning as .dropdown-placeholder above:
      .select-stub is flex-wrap:wrap, and auto's hypothetical size is the
-     clone's full untruncated text width, which pushes .select-clear onto
+     option's full untruncated text width, which pushes .select-clear onto
      a second line. */
   flex: 1 1 0%;
   min-width: 0;
   overflow: hidden;
 }
-.select-stub.compact.has-clone slot[name="selected"] {
+.select-stub.compact.has-option slot[name="selected"] {
   flex: 0 1 auto;
+}
+.select-stub ::slotted(ty-option) {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  --ty-option-hidden-display: block;
+  /* Never the pointer's target: a click opens the select either way, and
+     WebKit leaves :hover stuck on the trigger when the hovered option moves
+     to the list on open */
+  pointer-events: none;
 }
 
 /* start/end slot content (icons etc.) — spacing comes from the stub's flex

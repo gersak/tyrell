@@ -281,6 +281,21 @@ Map your data to `<TyOption>` children:
 </TySelect>
 ```
 
+`value` is the only selection input; `<TyOption selected>` selects nothing, except with `externalSelection`.
+
+## App-held selection — `externalSelection`
+
+For hundreds of picks or a remote list, the app keeps the selection. Mark the picked options `selected`; a pick fires `onChange` with `{ value, selected }` (the option and its requested state) and changes nothing until you re-render. The select holds no `value`, submits nothing and doesn't enforce `required`, so show your own summary. Usually paired with `externalSearch`.
+
+```tsx
+<TySelect multiple externalSelection
+  onChange={(e) => toggle(e.detail.value, e.detail.selected)}>
+  {rows.map((r) => (
+    <TyOption key={r.id} value={r.id} selected={picked.has(r.id)}>{r.name}</TyOption>
+  ))}
+</TySelect>
+```
+
 ## Refs and Imperative API
 
 ### Modal

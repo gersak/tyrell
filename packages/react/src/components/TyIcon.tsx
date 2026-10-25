@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 export interface TyIconProps extends React.HTMLAttributes<HTMLElement> {
   /** Icon name from the icon registry (e.g., 'home', 'star', 'settings') */

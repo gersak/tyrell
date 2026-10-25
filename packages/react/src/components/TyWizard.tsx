@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
+import { hostProps } from '../utils/host-props.js';
 
 export interface TyWizardProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Wizard width (px or %) */

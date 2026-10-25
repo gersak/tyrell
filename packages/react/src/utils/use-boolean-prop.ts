@@ -1,5 +1,5 @@
 import { useEffect, RefObject } from 'react';
-import { needsPropertyBridge } from './react-version';
+import { needsPropertyBridge } from './react-version.js';
 
 /**
  * Coerce a value to a boolean using the same rules as the core property

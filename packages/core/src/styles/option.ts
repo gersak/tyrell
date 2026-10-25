@@ -3,10 +3,12 @@
 export const optionStyles = `
 /* Options the author hid and options a ty-select search left out, at any
    depth in the select (a framework component's element around each option
-   too). !important beats the select's mobile list display:block. */
+   too). !important beats the select's mobile list display:block. The
+   select's trigger sets the variable: a hidden option can still be the
+   value it shows. */
 :host([hidden]),
 :host([filtered-out]) {
-  display: none !important;
+  display: var(--ty-option-hidden-display, none) !important;
 }
 
 .option-content {
@@ -32,22 +34,10 @@ export const optionStyles = `
   border-radius: var(--ty-radius-md);
 }
 
-/* Cloned copy (projected into the select's trigger field): host defaults to
-   inline like any unstyled custom element, which ignores width/overflow —
-   force a block box so the parent's flex-basis:0 truncation (select.ts
-   .select-stub.has-clone slot[name="selected"]) actually clips it, and
-   collapse the content to a single ellipsized line instead of wrapping. */
-:host([cloned]) {
-  display: block;
-  min-width: 0;
-  overflow: hidden;
-}
-
-/* The clone sits in the select's TRIGGER, so its type follows the field size
-   ladder (styles/field-size.ts) rather than the dropdown list's own scale —
-   the --ty-field-* vars inherit from ty-select through the light DOM. The
-   fallbacks cover a ty-option rendered outside a select. */
-:host([cloned]) .option-content {
+/* Shown in the select's trigger (the select sets inTrigger): one ellipsized
+   line on the field size ladder (styles/field-size.ts), no row chrome. The
+   select sizes the host. */
+.option-content.in-trigger {
   display: block;
   padding: 0px;
   background: transparent;
@@ -91,8 +81,7 @@ export const optionStyles = `
   visibility: visible;
 }
 
-/* Never show the check on the copy cloned into the select's trigger field */
-:host([cloned]) .option-check {
+.option-content.in-trigger .option-check {
   display: none;
 }
 

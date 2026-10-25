@@ -66,6 +66,9 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    *  Firefox checks the host, not the validation anchor, on a blocked submit. */
   protected static delegatesFocus = false
 
+  /** 'manual': the component assigns its children to slots itself (ty-select). */
+  protected static slotAssignment: SlotAssignmentMode = 'named'
+
   /** A wrapping <label> delegates clicks to the host (see watchLabelForwards). */
   protected static labelClicks = false
   
@@ -94,7 +97,7 @@ export abstract class TyComponent<T = any> extends HTMLElement {
     
     // Setup shadow DOM (subclasses can override by checking if shadowRoot exists)
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: 'open', delegatesFocus: ctor.delegatesFocus })
+      this.attachShadow({ mode: 'open', delegatesFocus: ctor.delegatesFocus, slotAssignment: ctor.slotAssignment })
     }
 
     if (ctor.labelClicks) {
@@ -110,14 +113,8 @@ export abstract class TyComponent<T = any> extends HTMLElement {
    */
   static get observedAttributes(): string[] {
     const attrs: string[] = []
-    for (const [name, config] of Object.entries(this.properties)) {
+    for (const name of Object.keys(this.properties)) {
       attrs.push(name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase())
-      // Include alias names so attributeChangedCallback fires for them
-      if (config.aliases) {
-        for (const alias of Object.keys(config.aliases)) {
-          attrs.push(alias)
-        }
-      }
     }
     return attrs
   }
@@ -154,7 +151,19 @@ export abstract class TyComponent<T = any> extends HTMLElement {
 
     const attrName = this._toKebabCase(name)
 
-    if (config.type === 'boolean') {
+    this._reflecting = true
+    try {
+      this._writeAttribute(attrName, config.type, newValue)
+    } finally {
+      this._reflecting = false
+    }
+  }
+
+  /** Our own write of a property to its attribute is under way. */
+  private _reflecting = false
+
+  private _writeAttribute(attrName: string, type: string, newValue: any): void {
+    if (type === 'boolean') {
       if (newValue) {
         this.setAttribute(attrName, '')
       } else {
@@ -183,17 +192,20 @@ export abstract class TyComponent<T = any> extends HTMLElement {
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     if (oldValue === newValue) return
 
-    // Check if this is an alias (e.g., external-search)
-    let change = this.props.handleAlias(name, newValue)
+    // Properties may be registered with kebab-case (e.g., 'display-month')
+    // or camelCase. Try the attribute name as-is first, then camelCase.
+    const propName = this.props.hasConfig(name) ? name : this._toCamelCase(name)
 
-    if (!change) {
-      // Properties may be registered with kebab-case (e.g., 'display-month')
-      // or camelCase. Try the attribute name as-is first, then camelCase.
-      const camelName = this._toCamelCase(name)
-      const propName = this.props.hasConfig(name) ? name : camelName
-      change = this.props.updateProperty(propName, newValue, 'attribute')
+    // Markup changed by someone else (a server morph, a framework render) is
+    // the latest declared state: form.reset() goes back to it, like a native
+    // control's defaultValue. Our own reflection of an edit is not.
+    if (!this._reflecting && this._resetDefaults?.has(propName)) {
+      const config = this.props.getConfig(propName)!
+      this._resetDefaults.set(propName, newValue ?? (typeof config.default === 'function' ? config.default() : config.default) ?? null)
     }
-    
+
+    const change = this.props.updateProperty(propName, newValue, 'attribute')
+
     if (change) {
       this._handlePropertyChanges([change])
     }

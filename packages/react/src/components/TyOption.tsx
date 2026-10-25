@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
   value?: string;
@@ -16,7 +16,13 @@ export interface TyOptionProps extends React.HTMLAttributes<HTMLElement> {
   flavor?: 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 
   disabled?: boolean;
+
+  /**
+   * The app's selection mark, read only by a TySelect with `externalSelection`.
+   * Anywhere else it selects nothing: the TySelect's `value` is the selection.
+   */
   selected?: boolean;
+
   hidden?: boolean;
   children?: React.ReactNode;
 }

@@ -143,12 +143,15 @@ describe('ty-option', () => {
       expect(content.hasAttribute('disabled')).to.be.false;
     });
 
-    it('exposes no ARIA disabled semantics of its own (no role, no aria-disabled anywhere)', async () => {
+    it('reports disabled through its internals, not attributes', async () => {
       const el = (await fixture(html`<ty-option value="a" disabled>A</ty-option>`)) as any;
       const content = el.shadowRoot.querySelector('.option-content') as HTMLElement;
+      expect(el._internals.ariaDisabled).to.equal('true');
       expect(el.hasAttribute('aria-disabled')).to.be.false;
       expect(content.hasAttribute('aria-disabled')).to.be.false;
       expect(content.getAttribute('role')).to.equal(null);
+      el.disabled = false;
+      expect(el._internals.ariaDisabled).to.equal(null);
     });
 
     it('setting disabled to its current value is a no-op that does not clear the attribute', async () => {
@@ -158,27 +161,44 @@ describe('ty-option', () => {
     });
   });
 
-  describe('selected / highlighted flags compose independently', () => {
-    it('toggling selected does not disturb an already-set highlighted (and vice versa)', async () => {
+  describe("checked (set by the select) vs selected (the app's mark)", () => {
+    it('checked draws the check and aria-selected, never an attribute', async () => {
       const el = (await fixture(html`<ty-option value="a">A</ty-option>`)) as any;
       const content = el.shadowRoot.querySelector('.option-content') as HTMLElement;
+      expect(el.getAttribute('role')).to.equal('option');
+      el.removeAttribute('role'); // a morph
+      expect(el.getAttribute('role'), 'comes back').to.equal('option');
 
-      el.highlighted = true;
-      el.selected = true;
-      expect(content.hasAttribute('highlighted')).to.be.true;
+      el.checked = true;
       expect(content.hasAttribute('selected')).to.be.true;
+      expect(el._internals.ariaSelected).to.equal('true');
+      expect(el.hasAttribute('selected')).to.be.false;
+      expect(el.hasAttribute('checked')).to.be.false;
 
-      el.selected = false;
+      el.checked = false;
       expect(content.hasAttribute('selected')).to.be.false;
-      expect(content.hasAttribute('highlighted'), 'highlighted survives selected toggle').to.be.true;
+      expect(el._internals.ariaSelected).to.equal('false');
     });
 
-    it('disabled, selected and highlighted can all be true simultaneously', async () => {
-      const el = (await fixture(html`<ty-option value="a" disabled selected highlighted>A</ty-option>`)) as any;
+    it("selected is only the app's mark: reflected, but draws nothing", async () => {
+      const el = (await fixture(html`<ty-option value="a" selected>A</ty-option>`)) as any;
       const content = el.shadowRoot.querySelector('.option-content') as HTMLElement;
+      expect(el.selected).to.be.true;
+      expect(content.hasAttribute('selected')).to.be.false;
+      el.selected = false;
+      expect(el.hasAttribute('selected')).to.be.false;
+    });
+
+    it('checked does not disturb highlighted (and vice versa); all flags compose', async () => {
+      const el = (await fixture(html`<ty-option value="a" disabled highlighted>A</ty-option>`)) as any;
+      const content = el.shadowRoot.querySelector('.option-content') as HTMLElement;
+      el.checked = true;
       expect(content.hasAttribute('disabled')).to.be.true;
       expect(content.hasAttribute('selected')).to.be.true;
       expect(content.hasAttribute('highlighted')).to.be.true;
+
+      el.checked = false;
+      expect(content.hasAttribute('highlighted'), 'highlighted survives').to.be.true;
     });
   });
 
@@ -212,16 +232,17 @@ describe('ty-option', () => {
     });
 
     it('can be mutated after mount without triggering unrelated state changes', async () => {
-      const el = (await fixture(html`<ty-option value="a" data-icon="star" selected>A</ty-option>`)) as any;
+      const el = (await fixture(html`<ty-option value="a" data-icon="star">A</ty-option>`)) as any;
       const content = el.shadowRoot.querySelector('.option-content') as HTMLElement;
+      el.checked = true;
 
       el.setAttribute('data-icon', 'heart');
       el.dataset.newField = 'added';
 
       expect(el.dataset.icon).to.equal('heart');
       expect(el.dataset.newField).to.equal('added');
-      // data-* is not in observedAttributes — selected state must be untouched.
-      expect(el.selected).to.be.true;
+      // data-* is not in observedAttributes — checked state must be untouched.
+      expect(el.checked).to.be.true;
       expect(content.hasAttribute('selected')).to.be.true;
     });
   });
@@ -299,6 +320,19 @@ describe('ty-option — properties set before the element upgrades', () => {
 
     el.selected = false;
     expect(el.hasAttribute('selected'), 'later assignments reach the setter').to.equal(false);
+    el.remove();
+  });
+
+  it('checked set before the upgrade applies (a select may paint before ty-option is defined)', async () => {
+    const name = tag();
+    const el = document.createElement(name) as any;
+    el.checked = true;
+    document.body.append(el);
+    customElements.define(name, class extends TyOption {});
+    await nextFrame();
+    expect(hasOwn(el, 'checked')).to.equal(false);
+    expect(el.shadowRoot.querySelector('.option-content').hasAttribute('selected')).to.equal(true);
+    expect(el._internals.ariaSelected).to.equal('true');
     el.remove();
   });
 });

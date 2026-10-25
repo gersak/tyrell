@@ -146,20 +146,20 @@ Deref a reagent atom inside a component, and the component re-renders when it ch
  {:checked @subscribed?
   :onChange #(reset! subscribed? (.. % -detail -checked))}]
 
-[:> ty/Multiselect
- {:value (str/join "," @skills)
+[:> ty/Select
+ {:multiple true
+  :value (str/join "," @skills)
   :onChange (fn [^js e]
               (reset! skills (vec (.. e -detail -values))))}
- [:> ty/Tag {:value "clojure" :flavor "primary"} "Clojure"]
- [:> ty/Tag {:value "react"   :flavor "primary"} "React"]]
+ [:> ty/Option {:value "clojure" :flavor "primary"} "Clojure"]
+ [:> ty/Option {:value "react"   :flavor "primary"} "React"]]
 ```
 
 | Component | Access |
 |---|---|
 | `ty/Input`, `ty/Textarea`, `ty/Switch`, `ty/DatePicker` | `(.. e -detail -value)` |
 | `ty/Checkbox` | `(.. e -detail -checked)` |
-| `ty/Dropdown` | `(.. e -detail -option -value)` (or `-value`) |
-| `ty/Multiselect` | `(.. e -detail -values)` → JS array |
+| `ty/Select` | `(.. e -detail -value)`; with `:multiple`, `(.. e -detail -values)` → JS array |
 | `ty/RadioGroup` | `(.. e -detail -value)` |
 | `ty/Tabs` | `(.. e -detail -tab)` |
 
@@ -173,9 +173,9 @@ Pass children after the props map in the same hiccup vector. Use `:slot` on Tyre
   :onChange #(reset! q (.. % -detail -value))}
  [:> ty/Icon {:slot "start" :name "search"}]]
 
-[:> ty/Dropdown
+[:> ty/Select
  {:label "Country" :value @country
-  :onChange #(reset! country (.. % -detail -option -value))}
+  :onChange #(reset! country (.. % -detail -value))}
  [:> ty/Option {:value "us"} "United States"]
  [:> ty/Option {:value "de"} "Germany"]]
 ```
@@ -206,7 +206,7 @@ Storing the DOM node in an atom isn't reactive in the usual sense (you don't der
 
 ## Forms — `<form>` + Tyrell's form-association
 
-Every form-associated Tyrell component (`ty/Input`, `ty/Textarea`, `ty/Checkbox`, `ty/Switch`, `ty/RadioGroup`, `ty/Dropdown`, `ty/Multiselect`, `ty/DatePicker`) calls `setFormValue()` internally. A wrapping `<form>` with an `onSubmit` handler picks them up:
+Every form-associated Tyrell component (`ty/Input`, `ty/Textarea`, `ty/Checkbox`, `ty/Switch`, `ty/RadioGroup`, `ty/Select`, `ty/DatePicker`) calls `setFormValue()` internally. A wrapping `<form>` with an `onSubmit` handler picks them up:
 
 ```clojure
 (defn signup-form []
@@ -225,9 +225,9 @@ Every form-associated Tyrell component (`ty/Input`, `ty/Textarea`, `ty/Checkbox`
           {:label "Email" :name "email" :type "email" :required true
            :value email :error (:email errors)
            :onChange #(update-field :email (.. % -detail -value))}]
-         [:> ty/Dropdown
+         [:> ty/Select
           {:label "Role" :name "role" :value role
-           :onChange #(update-field :role (.. % -detail -option -value))}
+           :onChange #(update-field :role (.. % -detail -value))}
           [:> ty/Option {:value "developer"} "Developer"]
           [:> ty/Option {:value "designer"}  "Designer"]]
          [:label.flex.items-center.gap-2.cursor-pointer
@@ -359,13 +359,13 @@ Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }` 
     (let [a (r/atom 0)]
       (fn [{:keys [v]}] [:div v])))
   ```
-- **Don't pass CLJS persistent vectors as props** to `Multiselect`. Convert to a comma-string or JS array on the way in:
+- **Don't pass CLJS persistent vectors as props** to `Select` with `:multiple`. Convert to a comma-string or JS array on the way in:
   ```clojure
   :value (str/join "," @skills)
   ```
 - **`reagent.dom/render` is deprecated** in React 18 mode — use `reagent.dom.client`.
 - **`r/as-element`** is rarely needed. Only reach for it if a third-party React component asks for a React element directly (e.g. `Suspense`'s `:fallback`).
-- **Children of `Dropdown` / `Multiselect`** must be `ty/Option` / `ty/Tag` (or raw `[:ty-option …]` / `[:ty-tag …]`) — not native `<option>`s; the dropdown lives in shadow DOM and can't see them.
+- **Children of `Select`** must be `ty/Option` (or raw `[:ty-option …]`) — not native `<option>`s or `ty/Tag`. The selection is the select's `:value`; `:selected` on an option does nothing without `:external-selection`.
 
 ## See also
 

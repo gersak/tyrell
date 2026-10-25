@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { expect, nextFrame } from '@open-wc/testing';
 import '../../core/lib/index.js';
-import { TyModal, TyOption, TySelect } from '../src/components/index';
+import { TyModal, TyOption, TySelect, type TySelectEventDetail } from '../src/components/index';
 
 // ---------------------------------------------------------------------------
 // Harness (same as wrappers.test.tsx): render into a fresh root, flush
@@ -199,5 +199,185 @@ describe(`React ${React.version} TySelect`, () => {
     await nextFrame();
     expect(list.open, 'list closed').to.equal(false);
     expect(m.host.hasAttribute('open'), 'modal still open').to.equal(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Selection contract: `value` is the only selection input; the select draws
+// checks through option.checked and writes no attributes onto options.
+// externalSelection hands the selection to the app (TyOption `selected`).
+
+const checked = (el: Element) =>
+  Array.from(el.querySelectorAll('ty-option:not([cloned])'))
+    .filter((o: any) => o.checked)
+    .map((o) => o.getAttribute('value'));
+const click = (el: Element, value: string) =>
+  (el.querySelector(`ty-option[value="${value}"]`) as HTMLElement).click();
+
+describe(`React ${React.version} TySelect selection`, () => {
+  it('value is the selection; TyOption selected selects nothing; no attributes written onto options', async () => {
+    const m = await mount(
+      <TySelect multiple value={['b']}>
+        <TyOption value="a" selected>A</TyOption>
+        <TyOption value="b">B</TyOption>
+      </TySelect>,
+      'ty-select',
+    );
+    const el = m.host as any;
+    expect(el.value).to.equal('b');
+    expect(checked(el)).to.deep.equal(['b']);
+    expect(el.querySelector('ty-option[value="b"]').hasAttribute('selected'), 'no selected written').to.equal(false);
+  });
+
+  it('controlled value: picks keep click order, are reflected to the value attribute, and [] clears', async () => {
+    const seen: TySelectEventDetail[] = [];
+    let set: (v: string[]) => void = () => {};
+    function Roles({ initial }: { initial: string[] }) {
+      const [value, setValue] = useState(initial);
+      set = setValue;
+      return (
+        <TySelect multiple value={value} onChange={(e) => { seen.push(e.detail); setValue(e.detail.values); }}>
+          <TyOption value="a">A</TyOption>
+          <TyOption value="b">B</TyOption>
+        </TySelect>
+      );
+    }
+    const m = await mount(<Roles initial={['b']} />, 'ty-select');
+    const el = m.host as any;
+    click(el, 'a');
+    await nextFrame();
+    expect(seen[0].values).to.deep.equal(['b', 'a']);
+    expect(el.value).to.equal('b,a');
+    expect(el.getAttribute('value')).to.equal('b,a');
+    expect(checked(el)).to.deep.equal(['a', 'b']);
+
+    flushSync(() => set([]));
+    await nextFrame();
+    expect(el.isConnected).to.equal(true);
+    expect(el.value).to.equal('');
+    expect(checked(el)).to.deep.equal([]);
+  });
+
+  it('externalSelection: picks report { value, selected, action }, the app re-renders the marks, nothing is submitted', async () => {
+    const seen: TySelectEventDetail[] = [];
+    function Tags() {
+      const [marked, setMarked] = useState(() => new Set(['b']));
+      const onChange = (e: CustomEvent<TySelectEventDetail>) => {
+        const { value, selected } = e.detail;
+        seen.push(e.detail);
+        setMarked((prev) => {
+          const next = new Set(prev);
+          if (selected) next.add(value as string); else next.delete(value as string);
+          return next;
+        });
+      };
+      return (
+        <form>
+          <TySelect name="tags" multiple externalSelection onChange={onChange}>
+            {['a', 'b', 'c'].map((v) => <TyOption key={v} value={v} selected={marked.has(v)}>{v}</TyOption>)}
+          </TySelect>
+        </form>
+      );
+    }
+    const m = await mount(<Tags />, 'form');
+    const form = m.host as HTMLFormElement;
+    const el = form.querySelector('ty-select') as any;
+    expect(el.externalSelection).to.equal(true);
+    expect(checked(el)).to.deep.equal(['b']);
+    expect(el.value).to.equal('');
+    expect(new FormData(form).has('tags'), 'the app submits its own selection').to.equal(false);
+
+    click(el, 'a');
+    await nextFrame();
+    expect(seen[0]).to.include({ value: 'a', selected: true, action: 'add' });
+    expect(seen[0].values).to.deep.equal([]);
+    expect(checked(el)).to.deep.equal(['a', 'b']);
+
+    click(el, 'b');
+    await nextFrame();
+    expect(seen[1]).to.include({ value: 'b', selected: false, action: 'remove' });
+    expect(checked(el)).to.deep.equal(['a']);
+    expect(el.value).to.equal('');
+  });
+
+  it('createTransform="slug" reaches the element (no attribute alias in the way)', async () => {
+    const m = await mount(<TySelect allowCreate createTransform="slug" />, 'ty-select');
+    expect((m.host as any).createTransform).to.equal('slug');
+    expect((m.host as any).allowCreate).to.equal(true);
+  });
+});
+
+describe('TySelect — server rendering', () => {
+  it('hydrates a single select with a value: the trigger adds no child React has to match', async () => {
+    const { renderToString } = await import('react-dom/server.browser');
+    const { hydrateRoot } = await import('react-dom/client');
+    const tree = (
+      <form>
+        <TySelect name="robot" value="b">
+          <TyOption value="a">A</TyOption>
+          <TyOption value="b"><b>B</b></TyOption>
+        </TySelect>
+      </form>
+    );
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(tree); // elements upgrade here, before hydration
+    document.body.append(container);
+    const select = container.querySelector('ty-select')!;
+
+    const errors: unknown[] = [];
+    const root = hydrateRoot(container, tree, { onRecoverableError: (e) => errors.push(e) });
+    await nextFrame();
+    await nextFrame();
+
+    expect(errors, 'no hydration mismatch').to.deep.equal([]);
+    expect(container.querySelector('ty-select'), 'React kept the server element').to.equal(select);
+    expect((select as any).value).to.equal('b');
+    root.unmount();
+    container.remove();
+  });
+});
+
+describe('TySelectedOptions — server rendering', () => {
+  it('hydrates with chips: the server renders nothing there, the client draws them', async () => {
+    const { renderToString } = await import('react-dom/server.browser');
+    const { hydrateRoot } = await import('react-dom/client');
+    const { TySelectedOptions } = await import('../src/components/index');
+    const tree = (
+      <form>
+        <TySelect id="ssr-multi" multiple value={['a', 'b']}>
+          <TyOption value="a">A</TyOption>
+          <TyOption value="b">B</TyOption>
+        </TySelect>
+        <TySelectedOptions htmlFor="ssr-multi" />
+      </form>
+    );
+    const container = document.createElement('div');
+    container.innerHTML = renderToString(tree);
+    expect(container.querySelector('ty-selected-options'), 'not server-rendered').to.equal(null);
+    document.body.append(container);
+    const select = container.querySelector('ty-select')!;
+
+    const errors: unknown[] = [];
+    const root = hydrateRoot(container, tree, { onRecoverableError: (e) => errors.push(e) });
+    await nextFrame();
+    await nextFrame();
+
+    expect(errors, 'no hydration mismatch').to.deep.equal([]);
+    expect(container.querySelector('ty-select')).to.equal(select);
+    const chips = Array.from(container.querySelectorAll('ty-selected-options ty-tag')).map((t) => t.getAttribute('value'));
+    expect(chips).to.deep.equal(['a', 'b']);
+    root.unmount();
+    container.remove();
+  });
+
+  it('a client-only render shows the element in the first commit', async () => {
+    const { TySelectedOptions } = await import('../src/components/index');
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    flushSync(() => root.render(<TySelectedOptions htmlFor="nothing" />));
+    expect(container.querySelector('ty-selected-options')).to.not.equal(null);
+    root.unmount();
+    container.remove();
   });
 });

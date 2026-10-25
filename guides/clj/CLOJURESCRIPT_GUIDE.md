@@ -13,7 +13,7 @@ CLJS users add **one Clojars dep** — `dev.gersak/tyrell` — and that brings e
 | What you get | Where it comes from |
 |---|---|
 | Routing, i18n, layout, icon registry, shim | CLJS namespaces in the JAR (`tyrell.router`, `tyrell.i18n`, `tyrell.layout`, `tyrell.icons`, `tyrell.shim`) |
-| Web Components — `<ty-button>`, `<ty-input>`, etc. (22 primitives) | npm `tyrell-components`, declared in this artifact's `deps.cljs` and **auto-installed** into your `package.json` by shadow-cljs |
+| Web Components — `<ty-button>`, `<ty-input>`, etc. | npm `tyrell-components`, declared in this artifact's `deps.cljs` and **auto-installed** into your `package.json` by shadow-cljs |
 | `tyrell.components` shim | A side-effect-import wrapper around npm `tyrell-components`, so CLJS users only ever require `tyrell.*` namespaces |
 | React wrappers — `tyrell.react/Button`, `tyrell.react/Input`, ... | CLJS namespace re-exporting npm `tyrell-react`. Track A (React-based CLJS) only — npm package is **not** auto-pulled (opt-in) |
 

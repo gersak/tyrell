@@ -156,13 +156,12 @@ Tyrell's React wrappers attach `addEventListener` on the underlying custom eleme
 |---|---|
 | `ty/Input`, `ty/Textarea`, `ty/Switch`, `ty/DatePicker` | `(.. e -detail -value)` |
 | `ty/Checkbox` | `(.. e -detail -checked)` |
-| `ty/Dropdown` | `(.. e -detail -option -value)` (or `-value`) |
-| `ty/Multiselect` | `(.. e -detail -values)` → JS array |
+| `ty/Select` | `(.. e -detail -value)`; with `:multiple`, `(.. e -detail -values)` → JS array |
 | `ty/RadioGroup` | `(.. e -detail -value)` |
 | `ty/Tabs` | `(.. e -detail -tab)` |
 | `ty/Wizard` step nav | `(.. e -detail -step)` |
 
-For `Multiselect`, convert the JS array to a CLJS vector if you need it:
+For `Select` with `:multiple`, convert the JS array to a CLJS vector if you need it:
 
 ```clojure
 :on-change (fn [e]
@@ -181,21 +180,21 @@ Tyrell components accept slotted children — pass them as `$` children with a `
    ($ ty/Icon {:slot "start" :name "search"}))
 ```
 
-`Dropdown` and `Multiselect` take `Option`/`Tag` children directly:
+`Select` takes `Option` children directly:
 
 ```clojure
-($ ty/Dropdown
+($ ty/Select
    {:label "Country" :value country
-    :on-change #(set-country (.. % -detail -option -value))}
+    :on-change #(set-country (.. % -detail -value))}
    ($ ty/Option {:value "us"} "United States")
    ($ ty/Option {:value "de"} "Germany"))
 
-($ ty/Multiselect
-   {:label "Skills" :value (str/join "," skills)
+($ ty/Select
+   {:label "Skills" :multiple true :value (str/join "," skills)
     :on-change (fn [e]
                  (set-skills (vec (.. e -detail -values))))}
-   ($ ty/Tag {:value "clojure" :flavor "primary"} "Clojure")
-   ($ ty/Tag {:value "react"   :flavor "primary"} "React"))
+   ($ ty/Option {:value "clojure" :flavor "primary"} "Clojure")
+   ($ ty/Option {:value "react"   :flavor "primary"} "React"))
 ```
 
 ## Refs and imperative APIs — modals, popups
@@ -236,9 +235,9 @@ Tyrell components are form-associated, so a wrapping `<form>` element with a sub
           {:label "Email" :type "email" :required true
            :value (:email profile)
            :on-change #(update-field :email (.. % -detail -value))})
-       ($ ty/Dropdown
+       ($ ty/Select
           {:label "Role" :value (:role profile)
-           :on-change #(update-field :role (.. % -detail -option -value))}
+           :on-change #(update-field :role (.. % -detail -value))}
           ($ ty/Option {:value "developer"} "Developer")
           ($ ty/Option {:value "designer"} "Designer"))
        ($ :label.flex.items-center.gap-2.cursor-pointer
@@ -304,12 +303,12 @@ For shadow-cljs module setup, see [CODE_SPLITTING.md](CODE_SPLITTING.md).
 
 ## Common pitfalls
 
-- **Don't pass CLJS data structures as props** to wrapper components without conversion. `:value [:a :b]` will arrive as a CLJS persistent vector, which the underlying web component doesn't understand. Convert: `:value (clj->js skills)` or join into a string format the component expects (`Multiselect` accepts comma-separated `value="a,b"`).
+- **Don't pass CLJS data structures as props** to wrapper components without conversion. `:value [:a :b]` will arrive as a CLJS persistent vector, which the underlying web component doesn't understand. Convert: `:value (clj->js skills)` or join into a string format the component expects (`Select` with `:multiple` accepts comma-separated `value="a,b"`).
 - **`:variant` is not a valid prop** — Tyrell uses `:flavor` (mapped to the `flavor` attribute). The older example code may show `:variant`; that's outdated.
 - **Don't render `<ty-*>` directly without the wrapper** if you need React-style event handling. `($ :ty-input {:on-change h})` will not fire — React's synthetic event system doesn't bridge custom element events. Either use `ty/Input` (recommended), or attach `addEventListener` manually in `use-effect` on a ref.
 - **Boolean attributes**: pass them as `true`/`false`, not as strings. `($ ty/Modal {:open true})` works; `:open "true"` does not.
 - **Don't forget `defonce` on the root**. Re-creating it on every reload leaks state.
-- **Children of `Dropdown` / `Multiselect`** must be `ty/Option` / `ty/Tag` — not a plain `($ :option ...)` (browsers strip those before the dropdown sees them, since it lives in shadow DOM).
+- **Children of `Select`** must be `ty/Option` — not a plain `($ :option ...)` or `ty/Tag`. The selection is the select's `:value`; `:selected` on an option does nothing without `:external-selection`.
 
 ## See also
 

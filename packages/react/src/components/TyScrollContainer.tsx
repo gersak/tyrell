@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useImperativeHandle } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 /** Detail payload for nearstart / nearend events. */
 export interface TyScrollNearEdgeDetail {

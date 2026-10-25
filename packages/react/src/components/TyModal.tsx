@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useImperativeHandle } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop';
-import { needsPropertyBridge } from '../utils/react-version';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty, coerceBool } from '../utils/use-boolean-prop.js';
+import { needsPropertyBridge } from '../utils/react-version.js';
 
 export interface TyModalEventDetail {
   reason?: 'programmatic' | 'native' | 'backdrop' | 'escape' | 'close-button';

@@ -17,7 +17,7 @@ Tyrell ships through two channels — pick one based on your build setup, not bo
 <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@latest/dist/tyrell.js"></script>
 ```
 
-The CDN bundle (`dist/tyrell.js`) registers all 23 components and exposes the icon registry on `window.tyIcons`. Use this for HTMX, server-rendered apps, prototypes, multi-app domains where browser cache wins, or strict no-bundler workflows.
+The CDN bundle (`dist/tyrell.js`) registers every component and exposes the icon registry on `window.tyIcons`. Use this for HTMX, server-rendered apps, prototypes, multi-app domains where browser cache wins, or strict no-bundler workflows.
 
 ### NPM — tree-shakeable
 
@@ -242,7 +242,7 @@ Approximate sizes for the most common configurations:
 | Dropdown + option | ~15 KB |
 | Modal + popup + tooltip | ~20 KB |
 | Calendar + date-picker | ~25 KB |
-| All 23 components (full bundle) | ~150–200 KB |
+| All components (full bundle) | ~150–200 KB |
 | Per-icon SVG | 300–600 bytes |
 | All lucide icons (mistake) | ~600 KB |
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
-import { coerceBool } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { coerceBool } from '../utils/use-boolean-prop.js';
 
 export interface TyTabsProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Content area width (accepts px or %) */

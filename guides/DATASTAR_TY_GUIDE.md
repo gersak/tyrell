@@ -49,7 +49,7 @@ Both pin the CDN to `tyrell-components@tc` (the dist tag that follows the latest
 Use `data-bind` for form inputs — it handles wiring automatically:
 
 ```html
-<div data-signals="{name: '', email: '', country: '', tags: []}">
+<div data-signals="{name: '', email: '', country: '', tags: ''}">
 
   <ty-input data-bind="name" label="Name" placeholder="Your name"></ty-input>
 
@@ -60,15 +60,9 @@ Use `data-bind` for form inputs — it handles wiring automatically:
     <ty-option value="de">Germany</ty-option>
   </ty-select>
 
-  <!-- Multi-select: add `multiple` — children stay <ty-option>. The change
-       detail is { value, values, items, action, item }; `values` is always
-       the selected array. `data-bind` works against the comma-separated
-       `value` attribute, but it's usually clearer to bind manually: -->
-  <ty-select
-    multiple
-    label="Tags"
-    placeholder="Select tags..."
-    data-on:change="$tags = evt.detail.values">
+  <!-- Multi-select: add `multiple`. $tags holds the comma-joined value
+       ("frontend,ops"); evt.detail.values has it as an array. -->
+  <ty-select data-bind="tags" multiple label="Tags" placeholder="Select tags...">
     <ty-option value="frontend">Frontend</ty-option>
     <ty-option value="backend">Backend</ty-option>
     <ty-option value="ops">Ops</ty-option>
@@ -79,6 +73,29 @@ Use `data-bind` for form inputs — it handles wiring automatically:
   </ty-button>
 
 </div>
+```
+
+### ty-select and patch-elements
+
+The select's `value` is its selection; `<ty-option selected>` selects nothing. When a patch reaches a select, the server's `value` decides: a different one wins, the same one changes nothing, none clears the selection. So a server that patches a region containing a select renders `value="…"` with the current selection:
+
+```html
+<ty-select id="skills" multiple data-bind="skills" value="clj,rs">
+  <ty-option value="clj">Clojure</ty-option>
+  <ty-option value="rs">Rust</ty-option>
+</ty-select>
+```
+
+A patched `value` changes the select but not the `data-bind` signal: no `change` fires, as with a native input. To change a bound selection from the server, patch the signal (`datastar-patch-signals`).
+
+When the server keeps the selection (hundreds of values, a remote list), use `external-selection`: the server marks the options it sends `selected`, a pick fires `change` with `evt.detail.value` and `evt.detail.selected` and changes nothing, and the server patches the marked options back. The select holds no value and submits nothing.
+
+```html
+<ty-select id="robots" multiple external-selection external-search
+  data-on:search="@get('/robots?q=' + evt.detail.query)"
+  data-on:change="@post('/robots/pick?id=' + evt.detail.value + '&on=' + evt.detail.selected)">
+  <ty-option value="r1" selected>Rob Roy</ty-option>
+</ty-select>
 ```
 
 ## Slots

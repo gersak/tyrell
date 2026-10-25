@@ -117,6 +117,8 @@ export class TyCalendar extends HTMLElement {
   // this rather than whatever the year/month/day attributes currently say,
   // since the value setter overwrites those attributes on every user pick.
   private _initialValue: string = '';
+  // Markup is read once: a move in the DOM keeps the month the user is on
+  private _initialized = false;
 
   // Counts value sets: see `set value`
   private _valueSets = 0;
@@ -158,7 +160,10 @@ export class TyCalendar extends HTMLElement {
   }
 
   connectedCallback() {
-    this.initializeFromAttributes();
+    if (!this._initialized) {
+      this.initializeFromAttributes();
+      this._initialized = true;
+    }
 
     // After the markup value is captured for form.reset(): a property set
     // before upgrade is a property set, not the default

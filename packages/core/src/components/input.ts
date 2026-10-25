@@ -252,7 +252,9 @@ export class TyInput extends TyComponent<InputState> implements TyInputElement {
 
   /** TyComponent already handled pre-connection property capture. */
   protected onConnect(): void {
-    this.initializeShadowValue()
+    // First connect only. Typing lives in _shadowValue, not the `value`
+    // property, so re-reading it on a move would wipe the user's edit.
+    if (!this._rendered) this.initializeShadowValue()
 
     // NOTE: Event listeners are set up in render() after input element is created
     // setupEventListeners() will be called after initial render

@@ -86,7 +86,7 @@ import 'tyrell-components/input'
 - **ty-radio-group** / **ty-radio** - Radio group with arrow-key navigation
 
 **Selection**
-- **ty-select** - Single and multiple select with search, async options and create-on-the-fly
+- **ty-select** - Single and multiple select with search, async options, app-held selection and create-on-the-fly
 - **ty-option** - Option for `ty-select`
 - **ty-selected-options** - Selected values as dismissible tags, placed anywhere (alias `ty-selected-tags`)
 

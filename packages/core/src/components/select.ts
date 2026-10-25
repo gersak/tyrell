@@ -3,6 +3,14 @@
  * Cardinality follows native <select>: default single (scalar value, picking closes
  * the popup), `multiple` toggles options and submits repeated `name=` FormData entries.
  * Skins: default form field, `compact` content-hugging trigger, slot="trigger" custom.
+ *
+ * The selection is the `value` attribute/property, nothing else. Options are a
+ * plain list: the select draws their check through `option.checked`, a
+ * property, and never writes selection state onto them. A closed single select
+ * shows the picked option itself in its trigger (manual slot assignment), so
+ * nothing is added to the children a framework renders. `external-selection` hands
+ * the selection to the app: it marks the options it holds `selected`, the
+ * select reads those marks and reports picks as `change` events.
  */
 import type { Flavor, Size } from "../types/common.js";
 import { DEFAULT_SIZE } from "../types/common.js";
@@ -20,35 +28,15 @@ import {
   CustomScrollbar,
   isCustomScrollbarEnabled,
 } from "../utils/custom-scrollbar.js";
-
-// Element Hash Utility (for consistent scroll lock IDs)
-
-let elementIdCounter = 0;
-
-/** Element hashes; automatically garbage collects when the element is destroyed. */
-const elementIds = new WeakMap<object, number>();
-
-/** Consistent numeric hash for an element — same value across calls. */
-function getElementHash(element: object): number {
-  let id = elementIds.get(element);
-  if (id === undefined) {
-    id = ++elementIdCounter;
-    elementIds.set(element, id);
-  }
-  return id;
-}
-
-// SVG Icons
-
 import { REQUIRED_ICON_SVG } from "../utils/icons.js";
 import { nativeMessage } from "../utils/validity.js";
 
+/** Ids for labels, listboxes and the scroll lock. */
+let selectCount = 0;
+
 /**
- * Option count above which the popup grows a search row. Tied to the list's
- * own geometry rather than a taste call: .dropdown-options-wrapper caps at
- * 16rem, which is about seven rows — so this is exactly the point where the
- * list stops being scannable at a glance and starts scrolling. Below it you
- * can see every option already; above it you can't.
+ * Option count above which the popup grows a search row: .dropdown-options-wrapper
+ * caps at 16rem, about seven rows, so this is where the list starts scrolling.
  */
 const SEARCH_AUTO_THRESHOLD = 7;
 
@@ -70,17 +58,12 @@ function slugify(text: string): string {
     .replace(/^_|_$/g, "");
 }
 
-/**
- * Search (magnifier) icon SVG — popup search input adornment (from Lucide)
- */
+/** Search (magnifier) icon — popup search input adornment (from Lucide) */
 const SEARCH_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
 </svg>`;
 
-/**
- * Clear (X) icon SVG — .select-clear button, shown in the trigger's fallback
- * chrome (default/compact skins) when clearable and something is selected.
- */
+/** Clear (X) icon — the trigger's × button, mobile chips and close button */
 const CLEAR_ICON_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <line x1="18" y1="6" x2="6" y2="18"></line>
   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -97,7 +80,7 @@ interface SelectState {
   search: string;
   highlightedIndex: number;
   filteredTags: TagData[];
-  selectedValues: string[];
+  // Fixed when the shadow DOM is built (see build())
   mode: "desktop" | "mobile";
 }
 
@@ -126,6 +109,8 @@ interface SelectedItem {
 /**
  * Change event detail. `value` follows cardinality: scalar (or null) for
  * single select, array for multiple — `values` is always the array form.
+ * With external-selection, `value` is the picked option and `selected` its
+ * requested state; the select holds no selection, so `values`/`items` are empty.
  */
 interface ChangeEventDetail {
   value: string | string[] | null;
@@ -133,12 +118,36 @@ interface ChangeEventDetail {
   items: SelectedItem[];
   action: ChangeAction;
   item: string | null;
+  selected?: boolean;
+}
+
+/** An option as the select drives it (option.ts): `checked` draws the check, `inTrigger` the trigger look. */
+type OptionElement = HTMLElement & { checked?: boolean; inTrigger?: boolean };
+
+/** Assign only on a real change: every assign() is a layout change (WebKit re-checks hover late). */
+function assign(slot: HTMLSlotElement | null, nodes: (Element | Text)[]): void {
+  if (!slot) return;
+  const current = slot.assignedNodes();
+  if (current.length === nodes.length && nodes.every((n, i) => current[i] === n)) return;
+  slot.assign(...nodes);
+}
+
+/** Named slots a child can ask for with its `slot` attribute. */
+const NAMED_SLOTS = ["trigger", "start", "end", "loading"];
+
+/** external-selection: the app's `selected` mark, boolean-attribute rules ("false" is off). */
+function isMarked(el: HTMLElement): boolean {
+  const attr = el.getAttribute("selected");
+  return attr !== null && !/^(false|0)$/i.test(attr.trim());
 }
 
 /**
  * Ty Select Component
  */
 export class TySelect extends TyComponent<SelectState> {
+  // assignSlots() places every child
+  protected static slotAssignment: SlotAssignmentMode = "manual";
+
   // PROPERTY CONFIGURATION - Declarative property lifecycle
   protected static properties = {
     value: {
@@ -208,19 +217,25 @@ export class TySelect extends TyComponent<SelectState> {
       default: "",
     },
     // Built-in × clear button in the default/compact trigger, shown once
-    // something is selected. Automatically absent under slot="trigger" —
-    // it lives in the slot's fallback content, same mechanism that already
-    // hides the chevron there. no-clear turns it off, like ty-date-picker.
+    // something is selected. Absent under slot="trigger" (it lives in the
+    // slot's fallback content). no-clear turns it off, like ty-date-picker.
     noClear: {
       type: "boolean" as const,
       visual: true,
       default: false,
     },
+    // The app filters: typing fires `search`, the app swaps the options
     externalSearch: {
       type: "boolean" as const,
       visual: true,
       default: false,
-      aliases: { "external-search": true },
+    },
+    // The app holds the selection: it marks options `selected`, picks fire
+    // `change` with { value, selected } and change nothing here
+    externalSelection: {
+      type: "boolean" as const,
+      visual: true,
+      default: false,
     },
     // Enter on unmatched search text mints a new <ty-option> — forces the
     // search row on (same as external-search: the input IS the mechanism).
@@ -228,50 +243,28 @@ export class TySelect extends TyComponent<SelectState> {
       type: "boolean" as const,
       visual: true,
       default: false,
-      aliases: { "allow-create": true },
     },
-    // Opt-in normalizer for the value minted by allow-create (label/display
-    // text is always kept verbatim). 'none' (default): value === typed text.
-    // 'slug': lowercase, spaces → '_', strips anything else non-alphanumeric.
+    // Normalizer for the value minted by allow-create (the label keeps the
+    // typed text). 'none' (default): value === typed text. 'slug': see slugify.
     createTransform: {
       type: "string" as const,
       visual: false,
       default: "none",
-      aliases: { "create-transform": true },
       coerce: (v: any) => (v === "slug" ? "slug" : "none"),
     },
-    // The search row is automatic — it appears once the list is long enough
-    // to scroll (SEARCH_AUTO_THRESHOLD). `not-searchable` is the single
-    // opt-out, named as the deviation from the default like native
-    // `disabled`; bare presence means true per the standard boolean-attribute
-    // coercion. There is deliberately no positive `searchable` attribute:
-    // forcing the row on where the auto rule says it isn't needed was an
-    // option nobody could reason about from the markup.
-    // external-search/allow-create still pin it on — the input IS their
-    // mechanism, so not-searchable cannot turn it off.
+    // The search row appears once the list is long enough to scroll
+    // (SEARCH_AUTO_THRESHOLD); not-searchable turns it off. external-search
+    // and allow-create keep it on: the input is their mechanism.
     notSearchable: {
       type: "boolean" as const,
       visual: true,
       default: false,
     },
-    // Horizontal anchor for the popup: "start" (default) matches the
-    // trigger's left edge, "end" matches its right edge — either way
-    // clamped into the viewport. Useful with slot="trigger" custom
-    // triggers whose own position makes left-anchoring look wrong (e.g.
-    // an icon button at the right edge of a toolbar).
-    align: {
-      type: "string" as const,
-      visual: true,
-      default: "start",
-      validate: (v: any) => ["start", "center", "end"].includes(v),
-      coerce: (v: any) =>
-        v === "end" ? "end" : v === "center" ? "center" : "start",
-    },
     // Full placement, same vocabulary as ty-popup/ty-tooltip: a side plus an
     // optional cross-axis alignment ("bottom-end", "top-start", …). A dropdown
     // only lives above or below its trigger, so left/right degrade to auto-side
-    // with the alignment kept. Takes precedence over `align` when set; `align`
-    // stays supported on its own for back-compat.
+    // with the alignment kept. None: below when it fits, else the side with
+    // more room, start-aligned.
     placement: {
       type: "string" as const,
       visual: true,
@@ -290,6 +283,7 @@ export class TySelect extends TyComponent<SelectState> {
         return v;
       },
     },
+    // external-search: wait this long after typing before firing `search`
     debounce: {
       type: "number" as const,
       default: 0,
@@ -330,54 +324,23 @@ export class TySelect extends TyComponent<SelectState> {
     },
   };
 
-  // INTERNAL STATE
-  private _name: string = "";
-  private _multiple = false;
-  private _compact = false;
-  private _placeholder: string = "Select...";
-  private _label: string = "";
-  private _disabled = false;
-  private _readonly = false;
-  private _required = false;
-  private _clearable = true;
-  private _externalSearch = false;
-  private _allowCreate = false;
-  private _createTransform: "none" | "slug" = "none";
-  private _notSearchable = false;
-  private _loading = false;
-  private _scrollLockId: string | null = null;
-  private _size: Size = DEFAULT_SIZE;
-  private _availableLabel: string = "Available";
-  private _selectedLabel: string = "Selected";
-  private _noOptionsMessage: string = "No options available";
+  private readonly _uid = ++selectCount;
 
   private _state: SelectState = {
     open: false,
     search: "",
     highlightedIndex: -1,
     filteredTags: [],
-    selectedValues: [],
-    mode: "desktop", // Updated dynamically on render via syncMode()
+    mode: "desktop",
   };
 
-  private _stubClickHandler: ((e: Event) => void) | null = null;
-  private _tagClickHandler: ((e: Event) => void) | null = null;
-  private _searchInputHandler: ((e: Event) => void) | null = null;
-  private _blockSearchClick: ((e: Event) => void) | null = null;
+  private _scrollLockId: string | null = null;
   private _keyboardHandler: ((e: KeyboardEvent) => void) | null = null;
-
-  private _debounce: number = 0;
   private _searchDebounceTimer: number | null = null;
-
   private _optionsScrollbar: CustomScrollbar | null = null;
 
-  // MutationObserver for light-DOM children — re-syncs selected tags' visual
-  // state when consumers swap tag children (external-search refresh pattern).
+  // Options added, removed, renamed or (external-selection) re-marked: render again
   private _childObserver: MutationObserver | null = null;
-
-  // Last single-select display clone — survives external-search option swaps
-  // that remove the matching option (and often the clone itself) from the DOM.
-  private _selectedClone: HTMLElement | null = null;
 
   private _customFlavorSheet: CSSStyleSheet | null = null;
 
@@ -392,81 +355,38 @@ export class TySelect extends TyComponent<SelectState> {
     const shadow = this.shadowRoot!;
     ensureStyles(shadow, { css: selectBaseStyles, id: "ty-select-base" });
     ensureStyles(shadow, { css: selectStyles, id: "ty-select" });
-
-    // DON'T render here - wait for onConnect() to initialize values first
-    // This matches dropdown.ts pattern and prevents showing empty state
   }
 
-  /** TyComponent handles property capture automatically. */
+  /** TyComponent renders right after this on the first connect. */
   protected onConnect(): void {
-    // SAFETY: Close any open dialogs to prevent scroll locking
-    const shadow = this.shadowRoot!;
-    const dialogs = shadow.querySelectorAll("dialog");
-    dialogs.forEach((dialog) => {
-      if (dialog.open) {
-        console.warn("⚠️ Found open dialog on connect, closing it");
-        dialog.close();
+    // Options parsed after the select connected, renamed, re-marked, or our
+    // has-trigger stripped by a morph. Our own writes (option.checked,
+    // filtered-out) settle after one more pass.
+    this._childObserver = new MutationObserver((records) => {
+      if (records.some((r) => r.target !== this || r.type !== "attributes" || r.attributeName === "has-trigger")) {
+        this.render();
       }
     });
-
-    // Render FIRST to create DOM structure...
-    this.render();
-
-    // ...THEN resolve initial selection state. Synchronous, not deferred to
-    // a frame: `value` is the selection (see getSelectedValues()), and any
-    // consumer reading it — most directly ty-selected-tags, which renders
-    // its OWN connectedCallback synchronously right after this element's —
-    // must see the real answer immediately. A deferred frame here used to be
-    // invisible because the OLD `.value` getter re-scanned option[selected]
-    // attributes directly, which are present in the DOM from parse time
-    // regardless of when this element's own JS runs; state has no such
-    // freebie and must be populated in the same tick. Re-verified against
-    // the full unit + e2e suite with no deferral: nothing here actually
-    // depended on waiting a frame.
-    this.initializeState();
-    // Empty single selects still submit name= (see getFormValue)
-    this.updateFormValue();
-
-    // Observe light-DOM children — re-sync selected state when consumers swap
-    // tag children (external-search refresh). syncSelectedTags is idempotent
-    // (only acts on tags whose desired-vs-actual selected state differs), so
-    // spurious firings caused by our own re-slot work are no-ops.
-    this._childObserver = new MutationObserver(() => {
-      this.ensureOptionRoles();
-      if (this._state.selectedValues.length > 0) {
-        this.syncSelectedTags(this._state.selectedValues);
-      }
-      // Option count may have crossed the auto threshold
-      this.updateSearchVisibility();
-      // External-search consumers replace ALL ty-option children — often
-      // including our display clone. Rebuild the selection display (idempotent:
-      // a clone that already matches is left alone, so no observer loop).
-      this.updateSelectionDisplay();
-      // Mobile's "Available (N)" count and empty-state come from
-      // updateMobileSelectedState(), which internal search filtering already
-      // triggers — but external-search bypasses internal filtering entirely
-      // (handleSearchInput returns early for it), so this was the only place
-      // left that could catch a child-list change and it didn't. Without
-      // this, .mobile-available-section[data-empty="true"] slot { display:
-      // none } stays stuck hidden after a consumer replaces the options —
-      // the new options are correctly in the DOM, just invisible.
-      this.updateMobileSelectedState();
+    this._childObserver.observe(this, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["value", "label", "selected", "hidden", "filtered-out", "has-trigger"],
     });
-    this._childObserver.observe(this, { childList: true });
-    // MutationObserver only fires on FUTURE mutations — cover the initial
-    // set of options too (the common case: none selected yet at connect).
-    this.ensureOptionRoles();
 
     this._syncCustomFlavor();
 
-    // Keys while the list is open (handleKeyboard). Here, not in the
-    // build-once render paths, so a moved select gets it back. Capture: the
-    // open list is the topmost dialog, so its keys are ours before a ty-popup
-    // or ty-modal around it stops them.
+    // Keys while the list is open (handleKeyboard). Capture: the open list is
+    // the topmost dialog, so its keys are ours before a ty-popup or ty-modal
+    // around it stops them.
     if (!this._keyboardHandler) {
       this._keyboardHandler = this.handleKeyboard.bind(this);
       document.addEventListener("keydown", this._keyboardHandler, true);
     }
+
+    // Moved in the DOM: the options may have changed meanwhile
+    if (this._rendered) this.render();
   }
 
   /** Custom (non-built-in) flavors — see utils/flavor-sheet.ts. */
@@ -482,19 +402,7 @@ export class TySelect extends TyComponent<SelectState> {
   protected onDisconnect(): void {
     // Removed while open (e.g. along with the ty-modal around it): close
     // properly, or the scroll lock outlives the element.
-    if (this._state.open) {
-      if (this._state.mode === "mobile") this.closeMobileModal();
-      else this.closeDropdown();
-    }
-
-    // CRITICAL: Close all dialogs to prevent scroll locking
-    const shadow = this.shadowRoot!;
-    const dialogs = shadow.querySelectorAll("dialog");
-    dialogs.forEach((dialog) => {
-      if (dialog.open) {
-        dialog.close();
-      }
-    });
+    if (this._state.open) this.close();
 
     if (this._keyboardHandler) {
       document.removeEventListener("keydown", this._keyboardHandler, true);
@@ -508,123 +416,40 @@ export class TySelect extends TyComponent<SelectState> {
 
     this._destroyOptionsScrollbar();
 
-    if (this._childObserver) {
-      this._childObserver.disconnect();
-      this._childObserver = null;
-    }
+    this._childObserver?.disconnect();
+    this._childObserver = null;
   }
 
   /** Handle state synchronization BEFORE render. */
   protected onPropertiesChanged(changes: PropertyChange[]): void {
     for (const { name, newValue } of changes) {
       switch (name) {
-        case "value":
-          const selectedValues = this.parseValue(newValue);
-          this._state.selectedValues = selectedValues;
-
-          // CRITICAL: Only sync tags if we're connected and tags exist
-          // During initial property setup (before onConnect), tags don't exist yet
-          if (this.isConnected && this.shadowRoot) {
-            this.syncSelectedTags(selectedValues);
-            this.updateSelectionDisplay();
-            this.updateMobileSelectedState();
-          }
-          // (not-yet-connected: sync deferred to initializeState)
-          break;
-        case "name":
-          this._name = newValue || "";
-          break;
         case "flavor":
           this._syncCustomFlavor();
           break;
-        case "multiple":
-          this._multiple = newValue;
+        case "multiple": {
           // Dropping to single with a multi selection: keep only the first
-          if (!newValue && this._state.selectedValues.length > 1) {
-            this.updateComponentValue(
-              [this._state.selectedValues[0]],
-              false,
-              "set",
-              null,
-            );
+          const values = this.getSelectedValues();
+          if (!newValue && values.length > 1) {
+            this.updateComponentValue([values[0]]);
           }
           break;
-        case "compact":
-          this._compact = newValue;
-          break;
-        case "placeholder":
-          this._placeholder = newValue || "Select...";
-          if (this.isConnected && this.shadowRoot)
-            this.updateSelectionDisplay();
-          break;
-        case "label":
-          this._label = newValue || "";
-          break;
-        case "disabled":
-          this._disabled = newValue;
-          break;
-        case "readonly":
-          this._readonly = newValue;
-          break;
-        case "required":
-          this._required = newValue;
-          break;
-        case "noClear":
-          this._clearable = !newValue;
-          if (this.isConnected && this.shadowRoot) this.updateSelectionDisplay();
-          break;
-        case "externalSearch":
-          this._externalSearch = newValue;
-          break;
-        case "notSearchable":
-          this._notSearchable = newValue;
-          if (this.isConnected && this.shadowRoot)
-            this.updateSearchVisibility();
-          break;
-        case "allowCreate":
-          this._allowCreate = newValue;
-          if (this.isConnected && this.shadowRoot)
-            this.updateSearchVisibility();
-          break;
-        case "createTransform":
-          this._createTransform = newValue;
-          break;
-        case "size":
-          this._size = newValue;
-          break;
-        case "debounce":
-          this._debounce = newValue;
-          break;
-        case "available-label":
-          this._availableLabel = newValue || "Available";
-          break;
-        case "selected-label":
-          this._selectedLabel = newValue || "Selected";
-          break;
-        case "no-options-message":
-          this._noOptionsMessage = newValue || "No options available";
-          break;
-        case "loading":
-          this._loading = newValue;
-          this.applyLoadingState();
-          break;
+        }
       }
     }
   }
 
   /**
-   * Toggle the loading visual state on the open popup.
-   * Replaces the available-options area with a centered spinner; search input stays usable.
-   * Pulls the latest registered loader SVG on each call so registry changes
-   * take effect on the next loading toggle.
+   * Toggle the loading visual state on the open popup: a centered spinner in
+   * place of the options; the search input stays usable. Reads the loader
+   * registry each time, so a newly registered loader shows next time.
    */
   private applyLoadingState(): void {
-    const shadow = this.shadowRoot;
-    if (!shadow) return;
-    const svg = this._loading ? getLoaderSvg() : null;
-    shadow.querySelectorAll(".dropdown-options-wrapper").forEach((wrapper) => {
-      wrapper.classList.toggle("loading", this._loading);
-      if (this._loading) {
+    const loading: boolean = this.getProperty("loading");
+    const svg = loading ? getLoaderSvg() : null;
+    this.shadowRoot!.querySelectorAll(".dropdown-options-wrapper").forEach((wrapper) => {
+      wrapper.classList.toggle("loading", loading);
+      if (loading) {
         wrapper.setAttribute("aria-busy", "true");
         const spinner = wrapper.querySelector(".dropdown-loading-spinner");
         if (spinner && svg) spinner.innerHTML = svg;
@@ -636,24 +461,21 @@ export class TySelect extends TyComponent<SelectState> {
 
   /** Form value: a plain entry for single, FormData with repeated entries for multiple (HTMX standard). */
   protected getFormValue(): FormDataEntryValue | FormData | null {
-    const selectedValues = this._state.selectedValues;
+    const name = this.name;
+    // external-selection: the app holds the selection and submits it itself
+    if (!name || this.externalSelection) return null;
 
-    if (this._name && selectedValues.length > 0) {
-      // Single select submits one plain entry
-      if (!this._multiple) return selectedValues[0];
-
-      // Multiple submits repeated `name=` entries (HTMX standard)
-      const formData = new FormData();
-      selectedValues.forEach((value) => {
-        formData.append(this._name, value);
-      });
-      return formData;
+    const selectedValues = this.getSelectedValues();
+    if (!this.multiple) {
+      // Native fidelity: nothing chosen still submits name= (like a <select>
+      // on its empty placeholder option)
+      return selectedValues[0] ?? "";
     }
+    if (selectedValues.length === 0) return null;
 
-    // Native fidelity: a single select with nothing chosen submits name=
-    // (like a <select> on its empty placeholder option); multiple submits nothing.
-    if (this._name && !this._multiple) return "";
-    return null;
+    const formData = new FormData();
+    selectedValues.forEach((value) => formData.append(name, value));
+    return formData;
   }
 
   /**
@@ -662,7 +484,7 @@ export class TySelect extends TyComponent<SelectState> {
    * button) leaves it to the field.
    */
   focus(options?: FocusOptions): void {
-    if (this._disabled) return; // like a disabled <select>
+    if (this.disabled) return; // like a disabled <select>
     const trigger = this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null;
     if (trigger) {
       trigger.focus(options);
@@ -674,107 +496,24 @@ export class TySelect extends TyComponent<SelectState> {
     else super.focus(options);
   }
 
+  // SELECTION
+
   private parseValue(value: string | null): string[] {
-    // Defensive check: ensure value is actually a string before calling .trim()
-    if (!value || typeof value !== "string" || value.trim() === "") return [];
+    if (!value) return [];
     return value
       .split(",")
       .map((v) => v.trim())
       .filter((v) => v !== "");
   }
 
-  /** Initialize component state from the value property / pre-selected children. */
-  private initializeState(): void {
-    const initialValue = this.getProperty("value") || "";
-
-    if (initialValue) {
-      // Explicit value provided - sync tags directly
-      // DON'T use updateComponentValue() because the property is already set!
-      const selectedValues = this.parseValue(initialValue);
-
-      this._state.selectedValues = selectedValues;
-
-      this.syncSelectedTags(selectedValues);
-
-      this.updateSelectionDisplay();
-      this.updateMobileSelectedState();
-    } else {
-      this.resolveDeclarativeSelection();
-    }
+  /** The selection: the `value` property. external-selection holds none. */
+  private getSelectedValues(): string[] {
+    if (this.externalSelection) return [];
+    return this.parseValue(this.getProperty("value"));
   }
 
-  /**
-   * Declarative init: no `value` attribute, but markup pre-marked one or more
-   * options `selected` — native <select> semantics. This is the ONE place
-   * selection is read FROM the DOM rather than treated as a rendering of
-   * state (see getSelectedValues()): it seeds initial state, once. After
-   * this, `value` rules — flipping an option's `selected` property later
-   * does nothing, same as native.
-   *
-   * Called from initializeState() at connect AND from the child observer:
-   * a real HTML parser upgrades a custom element the moment its start tag is
-   * seen, BEFORE its children exist — `<ty-select>` connects with zero
-   * `<ty-option>` children when it's part of the page's own markup (as
-   * opposed to an already-built fragment attached via innerHTML/appendChild,
-   * where children exist at connect). Calling this only at connect would
-   * silently miss every option parsed after that instant, which is the
-   * common case for markup that is literally in the page's initial HTML.
-   *
-   * Safe to call repeatedly: no-ops once `value` has ever been explicitly
-   * set (attribute or property) or state is already non-empty — including
-   * after a real `.clear()`, which removes `selected` from every option via
-   * syncSelectedTags, so there is nothing left here to (re-)seed from.
-   */
-  private resolveDeclarativeSelection(): void {
-    if (this.getAttribute("value") || this._state.selectedValues.length > 0) {
-      return;
-    }
-    const preSelectedTags = this.getTagElements()
-      .filter((tag) => tag.hasAttribute("selected"))
-      .map((tag) => this.getTagData(tag).value);
-
-    if (preSelectedTags.length > 0) {
-      // updateComponentValue's change-guard compares against STATE (empty
-      // here), not the DOM, so it correctly sees this as a real change.
-      this.updateComponentValue(preSelectedTags, false);
-      return;
-    }
-
-    // Found nothing YET, and the document is still parsing: a real HTML
-    // parser upgrades a custom element the moment its start tag is seen —
-    // BEFORE its children exist — so `<ty-select>` that's part of the
-    // page's own markup can connect with zero `<ty-option>` children even
-    // though its full option list, `selected` attributes included, is
-    // right there a few tokens later in the same document. (Not a factor
-    // for an already-built fragment attached via innerHTML/appendChild,
-    // where children exist at connect — only for markup the browser's own
-    // parser is still working through.) Recheck once, when parsing is
-    // guaranteed complete, same technique as the streaming-parse guard in
-    // syncSelectedClone. Deliberately NOT re-run from the child observer:
-    // that would also fire for a LATER external-search swap, and could
-    // resurrect a selection the user had just deliberately cleared from a
-    // freshly-swapped-in option that happens to carry a stale `selected`
-    // attribute from server-rendered markup.
-    if (document.readyState === "loading") {
-      document.addEventListener(
-        "DOMContentLoaded",
-        () => { if (this.isConnected) this.resolveDeclarativeSelection(); },
-        { once: true },
-      );
-    }
-  }
-
-  // TAG MANAGEMENT METHODS
-
-  /**
-   * Get all option elements from the component (ty-option preferred, ty-tag accepted)
-   */
-  private getTagElements(): HTMLElement[] {
-    // :not([cloned]) — the single-select display clone (slot="selected")
-    // lives in our light DOM too and must never count as an option
-    return Array.from(
-      this.querySelectorAll("ty-option:not([cloned]), ty-tag:not([cloned])"),
-    ) as HTMLElement[];
+  private getTagElements(): OptionElement[] {
+    return Array.from(this.querySelectorAll<OptionElement>("ty-option"));
   }
 
   /**
@@ -789,84 +528,76 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private getTagData(element: HTMLElement): TagData {
+    // An upgraded ty-option knows its value ('' included); else the markup
+    const own = (element as any).value;
     const value =
-      (element as any).value ||
-      element.getAttribute("value") ||
-      element.textContent ||
-      "";
-    // Display label: explicit label attribute wins over textContent —
-    // native <option label> semantics; lets rich options declare clean text
+      typeof own === "string"
+        ? own
+        : element.getAttribute("value") ?? (element.textContent || "").trim();
+    // label attribute wins over textContent (native <option label>)
     const text =
       element.getAttribute("label") || element.textContent || "";
 
     return { value, text, element };
   }
 
-  /**
-   * Select an option - attribute only. The option stays in the list with
-   * selected styling; chips are rendered out-of-band (ty-selected-options).
-   */
-  private selectTag(tag: HTMLElement): void {
-    tag.setAttribute("selected", "");
+  private findOption(value: string): OptionElement | undefined {
+    return this.getTagElements().find((el) => this.getTagData(el).value === value);
+  }
+
+  /** Draw each option's check from the selection (or, external, the app's marks). */
+  private paintOptions(shown: OptionElement | null): void {
+    const external = this.externalSelection;
+    const selected = new Set(this.getSelectedValues());
+    for (const el of this.getTagElements()) {
+      el.checked = external
+        ? isMarked(el)
+        : selected.has(this.getTagData(el).value);
+      el.inTrigger = el === shown;
+    }
   }
 
   /**
-   * Deselect an option - attribute only.
+   * The option the trigger shows: single select, list closed, the picked
+   * option — if it is a direct child (only those can be slotted).
    */
-  private deselectTag(tag: HTMLElement): void {
-    tag.removeAttribute("selected");
+  private shownOption(): OptionElement | null {
+    if (this.multiple || this._state.open) return null;
+    const value = this.getSelectedValues()[0];
+    const option = value === undefined ? undefined : this.findOption(value);
+    return option && option.parentElement === this ? option : null;
   }
 
   /**
-   * Get the array of currently selected values.
-   *
-   * Reads STATE (`_state.selectedValues`), not the DOM: `value` is the
-   * selection, and an option's `selected` attribute is a rendering of it
-   * (written by syncSelectedTags below), never the other way round. This
-   * matters whenever options don't fully reflect the selection — external
-   * search legitimately has a selected value with no matching option
-   * present; a DOM scan would report empty and desync .value, `required`
-   * validation and the click-toggle logic from what's actually selected.
+   * Every child goes to the slot it asks for, the rest to the list — except
+   * the option the trigger shows. The real node: page CSS styles it, and the
+   * children a framework rendered stay exactly its own.
    */
-  private getSelectedValues(): string[] {
-    return [...this._state.selectedValues];
+  private assignSlots(shown: OptionElement | null): void {
+    const shadow = this.shadowRoot!;
+    const named = new Map<string, (Element | Text)[]>(NAMED_SLOTS.map((n) => [n, []]));
+    const list: (Element | Text)[] = [];
+    for (const node of Array.from(this.childNodes)) {
+      if (node === shown) continue;
+      if (node instanceof Element && named.has(node.slot)) named.get(node.slot)!.push(node);
+      else if (node instanceof Element || node instanceof Text) list.push(node);
+    }
+    for (const [name, nodes] of named) {
+      assign(shadow.querySelector<HTMLSlotElement>(`slot[name="${name}"]`), nodes);
+    }
+    assign(shadow.querySelector<HTMLSlotElement>('slot[name="selected"]'), shown ? [shown] : []);
+    assign(shadow.querySelector<HTMLSlotElement>("#options-slot"), list);
   }
 
-  private syncSelectedTags(selectedValues: string[]): void {
-    const selectedSet = new Set(selectedValues);
-    const tags = this.getTagElements();
-
-    tags.forEach((tag) => {
-      const tagValue = this.getTagData(tag).value;
-      const shouldBeSelected = selectedSet.has(tagValue);
-      const isSelected = tag.hasAttribute("selected");
-
-      if (shouldBeSelected && !isSelected) {
-        this.selectTag(tag);
-      } else if (!shouldBeSelected && isSelected) {
-        this.deselectTag(tag);
-      }
-      // ARIA listbox pattern: every option reports its live selected state,
-      // not just ones that changed this pass — cheap (idempotent setAttribute).
-      tag.setAttribute("aria-selected", String(shouldBeSelected));
-    });
+  /** What the trigger shows, and where every child is slotted. */
+  private syncTrigger(): void {
+    const shown = this.shownOption();
+    this.assignSlots(shown);
+    this.paintOptions(shown);
+    this.updateSelectionDisplay(shown);
   }
 
-  /**
-   * role="option" for every current option/tag — separate from
-   * syncSelectedTags (which only runs when the `value` property changes)
-   * so it also covers the "nothing selected yet, value never touched"
-   * startup case. Idempotent; cheap to call from the child MutationObserver
-   * on every light-DOM change.
-   */
-  private ensureOptionRoles(): void {
-    this.getTagElements().forEach((tag) => {
-      if (!tag.hasAttribute("role")) tag.setAttribute("role", "option");
-      if (!tag.hasAttribute("aria-selected")) tag.setAttribute("aria-selected", "false");
-    });
-  }
-
-  /** Central update function — synchronizes everything via TyComponent's property system. */
+  /** Set the selection; with `dispatchChange`, also fire `change` (a user action). */
   private updateComponentValue(
     newValues: string[],
     dispatchChange: boolean = false,
@@ -875,43 +606,30 @@ export class TySelect extends TyComponent<SelectState> {
     reveal: boolean = dispatchChange,
   ): void {
     const oldValues = this.getSelectedValues();
+    const sameSet =
+      [...newValues].sort().join("\u0000") === [...oldValues].sort().join("\u0000");
+    if (sameSet) return;
 
-    const valueStr = newValues.join(",");
+    // Renders (value is visual) and updates the form value
+    this.setProperty("value", newValues.join(","));
 
-    if (JSON.stringify(newValues.sort()) !== JSON.stringify(oldValues.sort())) {
-      // Use TyComponent's property system - this will trigger:
-      // 1. onPropertiesChanged() → syncs tags via syncSelectedTags()
-      // 2. onPropertiesChanged() → updates placeholder via updateSelectionDisplay()
-      // 3. updateFormValue() → automatic (formValue: true in config)
-      // 4. render() → automatic if visual properties changed
-      this.setProperty("value", valueStr);
-
-      // Explicit call, not just relying on render()'s cascade — `value` may
-      // not always be flagged as a "visual" property requiring a full
-      // re-render, and validity must update the moment selection changes.
-      this.updateValidity();
-
-      // Dispatch change event (with rich items for out-of-band chip rendering)
-      if (dispatchChange) {
-        this.dispatchChangeEvent({
-          // Scalar for single select, array for multiple
-          value: this._multiple ? [...newValues] : (newValues[0] ?? null),
-          values: newValues,
-          items: this.getSelectedItems(newValues),
-          action,
-          item,
-        });
-        // A user change, like a native select's :user-invalid: show the
-        // message now if it left the field invalid (including a
-        // setCustomValidity() the change handler just made).
-        if (reveal) this.revealValidity();
-      }
+    if (dispatchChange) {
+      this.dispatchChangeEvent({
+        // Scalar for single select, array for multiple
+        value: this.multiple ? [...newValues] : (newValues[0] ?? null),
+        values: newValues,
+        items: this.getSelectedItems(newValues),
+        action,
+        item,
+      });
+      // A user change, like a native select's :user-invalid: show the
+      // message now if it left the field invalid (including a
+      // setCustomValidity() the change handler just made).
+      if (reveal) this.revealValidity();
     }
   }
 
-  /**
-   * Build rich item info for values, read off the matching option elements
-   */
+  /** Rich item info for values, read off the matching options. */
   private getSelectedItems(values: string[]): SelectedItem[] {
     const byValue = new Map(
       this.getTagElements().map((el) => [this.getTagData(el).value, el]),
@@ -962,15 +680,7 @@ export class TySelect extends TyComponent<SelectState> {
       ? cssWidth
       : Math.max(stubRect.width, 320);
 
-    // `placement` wins when set; otherwise fall back to the older `align`-only
-    // API so existing markup keeps its behaviour.
-    const requested = this.getProperty("placement") as Placement | "";
-    const anchored = requested
-      ? placementToAnchored(requested)
-      : {
-        side: "auto" as const,
-        align: this.getProperty("align") as "start" | "center" | "end",
-      };
+    const anchored = placementToAnchored(this.getProperty("placement") as Placement | "");
 
     const pos = computeAnchoredPosition({
       anchorRect: stubRect,
@@ -982,31 +692,19 @@ export class TySelect extends TyComponent<SelectState> {
     });
     const positionBelow = pos.below;
 
-    // Shift by the dialog's transparent wrap (room for shadows)
+    // Shift by the dialog's transparent wrap (room for shadows). On the
+    // dialog, not the host: a morph would strip the host's inline style.
     const x = pos.x - wrapPadding;
     const y = (positionBelow ? pos.topY : pos.bottomY) - wrapPadding;
     const width = popupWidth + wrapPadding + wrapPadding;
 
-    this.style.setProperty("--dropdown-x", `${x}px`);
-    this.style.setProperty("--dropdown-y", `${y}px`);
-    this.style.setProperty("--dropdown-width", `${width}px`);
-    this.style.setProperty("--dropdown-offset-x", "0px");
-    this.style.setProperty("--dropdown-offset-y", "0px");
-    this.style.setProperty("--dropdown-padding", `${wrapPadding}px`);
+    dialog.style.setProperty("--dropdown-x", `${x}px`);
+    dialog.style.setProperty("--dropdown-y", `${y}px`);
+    dialog.style.setProperty("--dropdown-width", `${width}px`);
+    dialog.style.setProperty("--dropdown-padding", `${wrapPadding}px`);
 
-    if (positionBelow) {
-      dialog.classList.add("position-below");
-      dialog.classList.remove("position-above");
-    } else {
-      dialog.classList.add("position-above");
-      dialog.classList.remove("position-below");
-    }
-
-    // Optional: Store direction for debugging
-    this.style.setProperty(
-      "--dropdown-direction",
-      positionBelow ? "below" : "above",
-    );
+    dialog.classList.toggle("position-below", positionBelow);
+    dialog.classList.toggle("position-above", !positionBelow);
   }
 
   // CUSTOM SCROLLBAR FOR OPTIONS
@@ -1041,15 +739,38 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
+  /** Open the popup (desktop dropdown or mobile full-screen dialog). */
+  private open(): void {
+    if (this.disabled || this.readonly || this._state.open) return;
+    if (this._state.mode === "mobile") this.openMobileModal();
+    else this.openDropdown();
+  }
+
+  private close(): void {
+    if (this._state.mode === "mobile") this.closeMobileModal();
+    else this.closeDropdown();
+  }
+
   /**
-   * Open dropdown dialog (desktop mode)
-   *
-   * `<dialog>.showModal()` puts the dialog in the top layer with a backdrop, but
-   * does NOT prevent the page behind it from scrolling. We use the shared scroll
-   * lock utility (overflow:hidden on <html>) to keep wheel/touch scrolling from
-   * leaking through to the body — same behavior <ty-dropdown> and <ty-modal>
-   * implement.
+   * `<dialog>.showModal()` puts the popup in the top layer but does NOT stop
+   * the page behind it from scrolling: the shared scroll lock does.
    */
+  private lockPageScroll(): void {
+    this._scrollLockId = `select-${this.id || "anon"}-${this._uid}`;
+    lockScroll(this._scrollLockId);
+  }
+
+  private unlockPageScroll(): void {
+    if (this._scrollLockId) {
+      unlockScroll(this._scrollLockId);
+      this._scrollLockId = null;
+    }
+  }
+
+  private setExpanded(expanded: boolean): void {
+    this.shadowRoot!.querySelector(".select-stub")?.setAttribute("aria-expanded", String(expanded));
+  }
+
   private openDropdown(): void {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(
@@ -1057,31 +778,22 @@ export class TySelect extends TyComponent<SelectState> {
     ) as HTMLDialogElement;
     if (!dialog) return;
 
-    const stubEl = shadow.querySelector(".select-stub");
-    if (stubEl) stubEl.setAttribute("aria-expanded", "true");
+    this.setExpanded(true);
+    this.lockPageScroll();
 
-    // Lock body scroll while dropdown is open
-    const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
-    this._scrollLockId = lockId;
-    lockScroll(lockId);
+    // The picked option goes back to the list, the trigger shows the placeholder
+    this._state.open = true;
+    this.syncTrigger();
 
     dialog.showModal();
 
-    // Position BEFORE adding .open: calculatePosition reads layout
-    // (getBoundingClientRect), which commits the dialog's pre-open styles —
-    // without that flush the enter transition never runs, the dropdown just
-    // pops in. (This ordering is why the date-picker animated and select
-    // didn't.)
+    // Position BEFORE adding .open: calculatePosition reads layout, which
+    // commits the pre-open styles so the enter transition runs.
     this.calculatePosition();
     dialog.classList.add("open");
 
-    this._state.open = true;
-
-    const chevron = shadow.querySelector(".dropdown-chevron");
-    if (chevron) chevron.classList.add("open");
-
-    const searchChevron = shadow.querySelector(".dropdown-search-chevron");
-    if (searchChevron) searchChevron.classList.add("open");
+    shadow.querySelector(".dropdown-chevron")?.classList.add("open");
+    shadow.querySelector(".dropdown-search-chevron")?.classList.add("open");
 
     this._state.filteredTags = this.getOfferedTags();
     this._state.highlightedIndex = -1;
@@ -1091,7 +803,6 @@ export class TySelect extends TyComponent<SelectState> {
 
     this._setupOptionsScrollbar();
 
-    // Focus search input (when the search row is shown)
     const searchInput = shadow.querySelector(
       ".dropdown-search-input",
     ) as HTMLInputElement;
@@ -1099,7 +810,6 @@ export class TySelect extends TyComponent<SelectState> {
       setTimeout(() => searchInput.focus(), 100);
     }
 
-    // Lifecycle event (also fires empty search if external-search)
     this.fireOpenEvent();
   }
 
@@ -1111,119 +821,51 @@ export class TySelect extends TyComponent<SelectState> {
 
     if (!dialog) return;
 
-    const stubEl = shadow.querySelector(".select-stub");
-    if (stubEl) stubEl.setAttribute("aria-expanded", "false");
-
+    this.setExpanded(false);
     this._destroyOptionsScrollbar();
 
-    dialog.classList.remove("open");
-    dialog.classList.remove("position-above");
-    dialog.classList.remove("position-below");
+    dialog.classList.remove("open", "position-above", "position-below");
     dialog.close();
 
-    // Unlock body scroll (paired with the lock in openDropdown)
-    if (this._scrollLockId) {
-      unlockScroll(this._scrollLockId);
-      this._scrollLockId = null;
-    }
+    this.unlockPageScroll();
 
     this._state.open = false;
     this._state.highlightedIndex = -1;
+    this.syncTrigger();
 
-    const chevron = shadow.querySelector(".dropdown-chevron");
-    if (chevron) chevron.classList.remove("open");
+    shadow.querySelector(".dropdown-chevron")?.classList.remove("open");
+    shadow.querySelector(".dropdown-search-chevron")?.classList.remove("open");
 
-    const searchChevron = shadow.querySelector(".dropdown-search-chevron");
-    if (searchChevron) searchChevron.classList.remove("open");
+    this.resetSearch(".dropdown-search-input");
 
-    // Reset search and restore all tags
-    const hadQuery = this._state.search !== "";
-    this._state.search = "";
-    const searchInput = shadow.querySelector(
-      ".dropdown-search-input",
-    ) as HTMLInputElement;
-    if (searchInput) {
-      searchInput.value = "";
-    }
-
-    if (this._externalSearch) {
-      // External mode — notify consumer so it can reset its own filtered state.
-      // Bypass the debounce timer (which would delay the clear by `debounce` ms);
-      // close-time should be immediate so the consumer's filtered state syncs
-      // before the dropdown reopens. Only fire if there was actually a query.
-      if (hadQuery) {
-        if (this._searchDebounceTimer !== null) {
-          clearTimeout(this._searchDebounceTimer);
-          this._searchDebounceTimer = null;
-        }
-        this.fireSearchEvent("");
-      }
-    } else {
-      // Internal mode — restore visibility of all tags ourselves
-      const allTags = this.getTagElements().map((el) => this.getTagData(el));
-      this._state.filteredTags = this.getOfferedTags();
-      this.updateTagVisibility(allTags, allTags);
-      this.clearHighlights(allTags);
-    }
-
-    // Lifecycle event
     this.fireCloseEvent();
   }
 
-  /** Open mobile modal — <dialog> handles z-index natively. */
   private openMobileModal(): void {
     const shadow = this.shadowRoot!;
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
     if (!dialog) return;
 
-    const stubEl = shadow.querySelector(".select-stub");
-    if (stubEl) stubEl.setAttribute("aria-expanded", "true");
+    this.setExpanded(true);
+    this.lockPageScroll();
 
-    // Lock body scroll while mobile modal is open
-    const lockId = `select-${this.id || "anon"}-${getElementHash(this)}`;
-    this._scrollLockId = lockId;
-    lockScroll(lockId);
+    this._state.open = true;
+    this.syncTrigger();
 
-    // Show dialog using native API (handles z-index automatically).
     // getBoundingClientRect flush between showModal and .open lets the enter
-    // transition run (see openDropdown).
+    // transition run (see openDropdown). showModal() also focuses the search
+    // input (its `autofocus`), skipping it when hidden.
     dialog.showModal();
     dialog.getBoundingClientRect();
     dialog.classList.add("open");
 
-    this._state.open = true;
-
-    // Initialize options state. Also ensure nothing stays hidden from a
-    // previous search — mirrors openDropdown()'s updateOptionsVisibility(true)
-    // ("may have been hidden from previous search"), which openMobileModal()
-    // never had a mobile-appropriate equivalent for: desktop hides the whole
-    // options container (a single display:none toggle, harmless to reset
-    // unconditionally), mobile hides individual options via their
-    // `filtered-out` attribute (updateTagVisibility), so the reset has to
-    // happen here.
+    // Nothing stays filtered out from a previous search
     const tags = this.getTagElements().map((el) => this.getTagData(el));
     this._state.filteredTags = this.getOfferedTags();
     this.updateTagVisibility(tags, tags);
 
-    // Focus the search input: the `autofocus` attribute on
-    // .mobile-search-input (see render template) handles this — showModal()
-    // itself runs the spec'd "dialog focusing steps" on every call, which
-    // look for an autofocus descendant and focus it natively, skipping it
-    // automatically if it's hidden (search disabled) in favor of the next
-    // focusable element. A manual searchInput.focus() call here, AFTER
-    // showModal() already ran its own focusing steps in the same task, was
-    // racing that native behavior — document.activeElement ended up back on
-    // the host element, not the input, which is why typing did nothing:
-    // keystrokes weren't reaching the search box at all despite it visually
-    // looking focused (cursor showing from the browser's own caret paint,
-    // not actual DOM focus).
+    requestAnimationFrame(() => this.updateMobileSelectedState());
 
-    // Update state after slots are ready
-    requestAnimationFrame(() => {
-      this.updateMobileSelectedState();
-    });
-
-    // Lifecycle event (also fires empty search if external-search)
     this.fireOpenEvent();
   }
 
@@ -1232,34 +874,35 @@ export class TySelect extends TyComponent<SelectState> {
     const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
     if (!dialog) return;
 
-    const stubEl = shadow.querySelector(".select-stub");
-    if (stubEl) stubEl.setAttribute("aria-expanded", "false");
+    this.setExpanded(false);
 
     // Close immediately — ::backdrop doesn't support transitions
     dialog.classList.remove("open");
     dialog.close();
 
-    // Unlock body scroll (paired with the lock in openMobileModal)
-    if (this._scrollLockId) {
-      unlockScroll(this._scrollLockId);
-      this._scrollLockId = null;
-    }
+    this.unlockPageScroll();
 
     this._state.open = false;
     this._state.highlightedIndex = -1;
+    this.syncTrigger();
 
+    this.resetSearch(".mobile-search-input");
+
+    this.fireCloseEvent();
+  }
+
+  /**
+   * On close: empty the search box and show every option again. With
+   * external-search the app filters, so it gets an empty `search` instead
+   * (right away, not debounced: its list should be reset before a reopen).
+   */
+  private resetSearch(inputSelector: string): void {
     const hadQuery = this._state.search !== "";
     this._state.search = "";
-    const searchInput = shadow.querySelector(
-      ".mobile-search-input",
-    ) as HTMLInputElement;
-    if (searchInput) {
-      searchInput.value = "";
-    }
+    const searchInput = this.shadowRoot!.querySelector(inputSelector) as HTMLInputElement | null;
+    if (searchInput) searchInput.value = "";
 
-    if (this._externalSearch) {
-      // External mode — notify consumer that the search was cleared on close
-      // (bypass debounce, see desktop close path for rationale).
+    if (this.externalSearch) {
       if (hadQuery) {
         if (this._searchDebounceTimer !== null) {
           clearTimeout(this._searchDebounceTimer);
@@ -1267,14 +910,13 @@ export class TySelect extends TyComponent<SelectState> {
         }
         this.fireSearchEvent("");
       }
-    } else {
-      // Internal mode — unhide all tags ourselves
-      const allTags = this.getTagElements();
-      allTags.forEach((el) => el.removeAttribute("filtered-out"));
+      return;
     }
 
-    // Lifecycle event
-    this.fireCloseEvent();
+    const allTags = this.getTagElements().map((el) => this.getTagData(el));
+    this._state.filteredTags = this.getOfferedTags();
+    this.updateTagVisibility(allTags, allTags);
+    this.clearHighlights(allTags);
   }
 
   // EVENT HANDLERS
@@ -1282,12 +924,7 @@ export class TySelect extends TyComponent<SelectState> {
   private handleStubClick(e: Event): void {
     e.preventDefault();
     e.stopPropagation();
-
-    if (this._disabled || this._readonly) {
-      return;
-    }
-
-    this.openDropdown();
+    this.open();
   }
 
   /**
@@ -1298,7 +935,7 @@ export class TySelect extends TyComponent<SelectState> {
     e.preventDefault();
     e.stopPropagation();
 
-    if (this._disabled || this._readonly) {
+    if (this.disabled || this.readonly) {
       return;
     }
 
@@ -1308,25 +945,21 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Keyboard-open the (closed) stub. The stub is a plain div with
-   * tabindex="0", not a native <button> — Enter/Space don't turn into
-   * click events on their own the way they do for real form controls, and
-   * without this a keyboard-only user could Tab to the field but never
-   * open it. document-level handleKeyboard() only runs once already open
-   * (it early-returns on !this._state.open), so this is the other half.
+   * Keyboard-open the closed stub: it is a div with tabindex="0", so
+   * Enter/Space don't click it. handleKeyboard takes over once open.
    */
   private handleStubKeydown(e: KeyboardEvent): void {
-    if (this._disabled || this._readonly || this._state.open) return;
+    if (this.disabled || this.readonly || this._state.open) return;
     if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
       e.preventDefault();
-      this.openDropdown();
+      this.open();
     }
   }
 
   private handleTagClick(e: Event): void {
     const target = e.target as HTMLElement;
 
-    const tag = target.closest("ty-option, ty-tag") as HTMLElement | null;
+    const tag = target.closest("ty-option") as HTMLElement | null;
 
     if (!tag || tag.hasAttribute("disabled")) return;
 
@@ -1336,42 +969,44 @@ export class TySelect extends TyComponent<SelectState> {
     this.selectByTag(tag);
   }
 
-  /**
-   * Select/toggle a tag by element — the part of handleTagClick that has no
-   * dependency on a real DOM event, so keyboard/programmatic callers (Enter
-   * on a highlighted option, allow-create's exact-match dedup) can call it
-   * directly instead of faking an Event object just to satisfy
-   * preventDefault()/stopPropagation().
-   */
+  /** Pick an option: click, Enter on a highlighted one, allow-create's exact match. */
   private selectByTag(tag: HTMLElement): void {
     const tagValue = this.getTagData(tag).value;
-    const currentValues = this.getSelectedValues();
 
-    // Single select: picking replaces the selection and closes the popup
-    // (native <select> semantics — re-picking the same option just closes)
-    if (!this._multiple) {
-      this.updateComponentValue([tagValue], true, "set", tagValue);
-      if (this._state.mode === "mobile") {
-        this.closeMobileModal();
-      } else {
-        this.closeDropdown();
-      }
+    // The app holds the selection: report the pick, change nothing
+    if (this.externalSelection) {
+      const selected = !this.multiple || !isMarked(tag);
+      this.dispatchChangeEvent({
+        value: tagValue,
+        values: [],
+        items: [],
+        action: !this.multiple ? "set" : selected ? "add" : "remove",
+        item: tagValue,
+        selected,
+      });
+      if (!this.multiple) this.close();
       return;
     }
 
-    // Multiple: toggle — clicking a selected option deselects it. Reads
-    // `currentValues` (state), not the tag's own attribute: see
-    // getSelectedValues() for why the attribute isn't the source of truth.
+    // Single select: picking replaces the selection and closes the popup
+    // (native <select> semantics — re-picking the same option just closes)
+    if (!this.multiple) {
+      this.updateComponentValue([tagValue], true, "set", tagValue);
+      this.close();
+      return;
+    }
+
+    // Multiple: toggle — clicking a selected option deselects it
+    const currentValues = this.getSelectedValues();
     if (currentValues.includes(tagValue)) {
-      const newValues = currentValues.filter((v) => v !== tagValue);
-      this.updateComponentValue(newValues, true, "remove", tagValue);
-    } else {
       this.updateComponentValue(
-        [...currentValues, tagValue],
+        currentValues.filter((v) => v !== tagValue),
         true,
-        "add",
+        "remove",
         tagValue,
       );
+    } else {
+      this.updateComponentValue([...currentValues, tagValue], true, "add", tagValue);
     }
   }
 
@@ -1383,7 +1018,7 @@ export class TySelect extends TyComponent<SelectState> {
    * handling (select highlighted, or no-op) proceeds.
    */
   private tryCreateFromSearch(): boolean {
-    if (!this._allowCreate) return false;
+    if (!this.allowCreate) return false;
 
     const query = (this._state.search || "").trim();
     if (!query) return false;
@@ -1405,7 +1040,7 @@ export class TySelect extends TyComponent<SelectState> {
 
     const rawLabel = query;
     const defaultValue =
-      this._createTransform === "slug" ? slugify(rawLabel) : rawLabel;
+      this.createTransform === "slug" ? slugify(rawLabel) : rawLabel;
     if (!defaultValue) return true; // slugified to nothing — handled no-op
 
     const detail: CreateEventDetail = { value: defaultValue, label: rawLabel };
@@ -1424,19 +1059,20 @@ export class TySelect extends TyComponent<SelectState> {
     option.textContent = rawLabel;
     this.appendChild(option);
 
-    if (!this._multiple) {
-      this.updateComponentValue([finalValue], true, "create", finalValue);
-      if (this._state.mode === "mobile") {
-        this.closeMobileModal();
-      } else {
-        this.closeDropdown();
-      }
+    if (this.externalSelection) {
+      this.selectByTag(option);
+      if (this.multiple) this.clearSearchAfterCreate();
       return true;
     }
 
-    const currentValues = this.getSelectedValues();
+    if (!this.multiple) {
+      this.updateComponentValue([finalValue], true, "create", finalValue);
+      this.close();
+      return true;
+    }
+
     this.updateComponentValue(
-      [...currentValues, finalValue],
+      [...this.getSelectedValues(), finalValue],
       true,
       "create",
       finalValue,
@@ -1446,23 +1082,14 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Multiple + allow-create: clear the search box and re-show the full
-   * (now-longer) option list so the next tag can be typed immediately —
-   * the tags-input pattern.
+   * Multiple + allow-create: clear the search box and show the full (now
+   * longer) list, so the next tag can be typed right away.
    */
   private clearSearchAfterCreate(): void {
     this._state.search = "";
     this._state.highlightedIndex = -1;
-    const shadow = this.shadowRoot;
-    if (!shadow) return;
-    const desktopInput = shadow.querySelector(
-      ".dropdown-search-input",
-    ) as HTMLInputElement | null;
-    const mobileInput = shadow.querySelector(
-      ".mobile-search-input",
-    ) as HTMLInputElement | null;
-    if (desktopInput) desktopInput.value = "";
-    if (mobileInput) mobileInput.value = "";
+    const input = this.searchInput();
+    if (input) input.value = "";
 
     const allTags = this.getTagElements().map((el) => this.getTagData(el));
     this._state.filteredTags = this.getOfferedTags();
@@ -1470,32 +1097,28 @@ export class TySelect extends TyComponent<SelectState> {
     this.updateOptionsVisibility(true);
     this.clearHighlights(allTags);
     this.updateMobileSelectedState();
-    (desktopInput ?? mobileInput)?.focus();
+    input?.focus();
   }
 
-  private blockSearchClick(e: Event): void {
-    e.stopPropagation();
-    e.preventDefault();
+  private searchInput(): HTMLInputElement | null {
+    return this.shadowRoot!.querySelector(".dropdown-search-input, .mobile-search-input");
   }
 
   private handleSearchInput(e: Event): void {
     // Typing is a request to see results, so the list takes the space back
     // even if the selected strip was the one open.
     if (this._state.mode === "mobile") this.expandMobileSection("available");
-    const target = e.target as HTMLInputElement;
-    const query = target.value;
+    const query = (e.target as HTMLInputElement).value;
 
     this._state.search = query;
 
-    if (this._externalSearch) {
-      // External (remote) search: parent owns filtering — delegate via event.
-      // Tag visibility is left untouched; consumer is expected to update children.
+    if (this.externalSearch) {
+      // The app filters: it gets the query and swaps the options
       this.dispatchSearchEvent(query);
       return;
     }
 
-    // Internal search: filter ALL options locally — selected ones stay visible
-    // (with selected styling) so they can be toggled off while searching
+    // Filter locally — selected options stay listed so they can be toggled off
     const allTags = this.getOfferedTags();
     const filtered = this.filterTags(allTags, query);
 
@@ -1516,33 +1139,14 @@ export class TySelect extends TyComponent<SelectState> {
   private handleKeyboard(e: KeyboardEvent): void {
     if (!this._state.open) return;
 
-    const shadow = this.shadowRoot!;
-    const searchInput = shadow.querySelector(
-      ".dropdown-search-input",
-    ) as HTMLInputElement;
-    const target = e.target as HTMLElement;
-
-    // Only handle navigation keys when dropdown is open and either:
-    // 1. Event comes from search input, OR
-    // 2. Event comes from document but search input is not focused
-    const shouldHandle =
-      target === searchInput || document.activeElement !== searchInput;
-
-    if (!shouldHandle) return;
-
     const filteredTags = this._state.filteredTags;
-    const tagsCount = filteredTags.length;
-    const currentHighlightedIndex = this._state.highlightedIndex;
+    const highlighted = this._state.highlightedIndex;
 
     switch (e.key) {
       case "Escape":
         e.preventDefault();
         e.stopPropagation();
-        if (this._state.mode === "mobile") {
-          this.closeMobileModal();
-        } else {
-          this.closeDropdown();
-        }
+        this.close();
         // Back on the trigger, like a native select
         this.focus();
         break;
@@ -1552,51 +1156,34 @@ export class TySelect extends TyComponent<SelectState> {
         e.stopPropagation();
         // A highlighted (arrowed-to) option always wins — the user picked
         // it explicitly, so allow-create must not shadow it with a new one.
-        if (
-          currentHighlightedIndex >= 0 &&
-          currentHighlightedIndex < tagsCount
-        ) {
-          this.selectByTag(filteredTags[currentHighlightedIndex].element);
+        if (highlighted >= 0 && highlighted < filteredTags.length) {
+          this.selectByTag(filteredTags[highlighted].element);
         } else {
           this.tryCreateFromSearch();
         }
         break;
 
       case "ArrowUp":
+      case "ArrowDown": {
         e.preventDefault();
         e.stopPropagation();
-
-        const newIndexUp = this.nextEnabledTagIndex(
+        const next = this.nextEnabledTagIndex(
           filteredTags,
-          currentHighlightedIndex,
-          -1,
+          highlighted,
+          e.key === "ArrowDown" ? 1 : -1,
         );
-        this._state.highlightedIndex = newIndexUp;
-        this.highlightTag(filteredTags, newIndexUp);
+        this._state.highlightedIndex = next;
+        this.highlightTag(filteredTags, next);
         break;
-
-      case "ArrowDown":
-        e.preventDefault();
-        e.stopPropagation();
-
-        const newIndexDown = this.nextEnabledTagIndex(
-          filteredTags,
-          currentHighlightedIndex,
-          1,
-        );
-        this._state.highlightedIndex = newIndexDown;
-        this.highlightTag(filteredTags, newIndexDown);
-        break;
+      }
     }
   }
 
   /**
-   * Next tag index in `direction` (-1/1) that isn't disabled, wrapping
-   * around — mirrors handleTagClick's disabled check so keyboard nav can
-   * never land on/select what a click already refuses to. Nor on one out of
-   * sight: `tags` is the list as it was offered, and an option can get
-   * `hidden` while it's open (a server patch). Returns -1 if every tag is
-   * skipped (or there are none).
+   * Next tag index in `direction` (-1/1) that a click would accept, wrapping
+   * around: not disabled, and not out of sight (`tags` is the list as it was
+   * offered; an option can get `hidden` while open, by a server patch).
+   * -1 if there is none.
    */
   private nextEnabledTagIndex(
     tags: TagData[],
@@ -1646,8 +1233,7 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   private updateOptionsVisibility(hasOptions: boolean): void {
-    const shadow = this.shadowRoot!;
-    const options = shadow.querySelector(".dropdown-options") as HTMLElement;
+    const options = this.shadowRoot!.querySelector(".dropdown-options") as HTMLElement | null;
     if (options) {
       options.style.display = hasOptions ? "" : "none";
     }
@@ -1674,18 +1260,19 @@ export class TySelect extends TyComponent<SelectState> {
     }
   }
 
-  /** Dispatch the search event for external search handling, with optional debounce. */
+  /** external-search: fire `search`, after `debounce` ms when set. */
   private dispatchSearchEvent(query: string): void {
     if (this._searchDebounceTimer !== null) {
       clearTimeout(this._searchDebounceTimer);
       this._searchDebounceTimer = null;
     }
 
-    if (this._debounce > 0) {
+    const debounce: number = this.getProperty("debounce");
+    if (debounce > 0) {
       this._searchDebounceTimer = window.setTimeout(() => {
         this.fireSearchEvent(query);
         this._searchDebounceTimer = null;
-      }, this._debounce);
+      }, debounce);
     } else {
       this.fireSearchEvent(query);
     }
@@ -1705,34 +1292,29 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Dispatch lifecycle events for popup open/close.
-   * On open with external-search, also fire a `search` event with an empty
-   * query so consumers have a clean hook to reset/refetch the option list.
+   * Popup lifecycle events. They do NOT bubble, like native <dialog>
+   * open/close: a bubbling `close` from a select in a ty-modal would close
+   * the modal. On open, external-search also gets an empty `search`, a hook
+   * to reset or refetch the list.
    */
   private fireOpenEvent(): void {
     this.dispatchEvent(
-      // ponytail: popup lifecycle events do NOT bubble — same as native
-      // <dialog> open/close. A bubbling `close` from a select nested in a
-      // ty-modal lands on the modal's own `close` listener and closes it.
       new CustomEvent("open", {
         detail: { mode: this._state.mode, element: this },
       }),
     );
-    if (this._externalSearch) {
+    if (this.externalSearch) {
       this.fireSearchEvent("");
     }
   }
 
   private fireCloseEvent(): void {
     this.dispatchEvent(
-      // ponytail: non-bubbling, see fireOpenEvent()
       new CustomEvent("close", {
         detail: { mode: this._state.mode, element: this },
       }),
     );
   }
-
-  // CHANGE EVENT DISPATCHING
 
   private dispatchChangeEvent(detail: ChangeEventDetail): void {
     this.dispatchEvent(
@@ -1746,57 +1328,66 @@ export class TySelect extends TyComponent<SelectState> {
 
   // RENDERING
 
+  /** One sync of everything the state shows; idempotent. */
   protected render(): void {
-    // Sync mode on every render so rotation/resize is picked up
-    this._state.mode = isMobileTouch() ? "mobile" : "desktop";
+    if (!this.shadowRoot!.querySelector(".select-container")) this.build();
 
-    if (this._state.mode === "mobile") {
-      this.renderMobile();
-    } else {
-      this.renderDesktop();
-    }
-
+    this.syncTrigger();
+    if (this._state.open) this.refreshOpenList();
     this.updateSearchVisibility();
-
-    // Loading wrapper is rendered dynamically — re-apply each render
     this.applyLoadingState();
-
-    // The shadow DOM is built once; attributes toggled later are patched in.
     this.syncFieldChrome();
-
-    // Reflect constraint validation (required) to the owning <form>.
+    this.syncTriggerSlot();
+    this.updateMobileSelectedState();
+    this.updateFormValue();
     this.updateValidity();
   }
 
   /**
+   * The options changed while the list is open (a morph, an external-search
+   * swap): filter the new ones by the query (a morph also strips the marks
+   * of the old filter), and let the keyboard walk them, not the old ones.
+   */
+  private refreshOpenList(): void {
+    const offered = this.getOfferedTags();
+    const filtered = this.externalSearch ? offered : this.filterTags(offered, this._state.search);
+    if (!this.externalSearch) {
+      this.updateTagVisibility(filtered, this.getTagElements().map((el) => this.getTagData(el)));
+    }
+    const highlighted = this._state.filteredTags[this._state.highlightedIndex]?.element;
+    this._state.filteredTags = filtered;
+    this._state.highlightedIndex = filtered.findIndex((t) => t.element === highlighted);
+  }
+
+  /**
    * Patch label, required marker and disabled/compact state onto the
-   * already-built shadow DOM. renderDesktop/renderMobile only write markup on
-   * first render, so without this toggling `required`, `label`, `disabled` or
-   * `compact` after connect never showed up.
+   * already-built shadow DOM (build() writes the markup once).
    */
   private syncFieldChrome(): void {
-    const shadow = this.shadowRoot;
-    const container = shadow?.querySelector(".select-container");
-    if (!shadow || !container) return;
+    const shadow = this.shadowRoot!;
+    const container = shadow.querySelector(".select-container")!;
+    const labelText = this.label;
+    const required = this.required;
+    const disabled = this.disabled;
 
-    const labelId = `select-label-${getElementHash(this)}`;
+    const labelId = `select-label-${this._uid}`;
     let label = container.querySelector(":scope > .ty-field-label") as HTMLLabelElement | null;
-    if (this._label) {
+    if (labelText) {
       if (!label) {
         label = document.createElement("label");
         label.className = "ty-field-label";
         label.id = labelId;
         container.prepend(label);
       }
-      label.innerHTML = `${this._label}${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}`;
+      label.innerHTML = `${labelText}${required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}`;
     } else {
       label?.remove();
     }
 
     // Error line under the trigger (every skin, custom trigger included) —
     // same markup as ty-input's
-    const error: string = this.getProperty("error") || "";
-    const errorId = `select-error-${getElementHash(this)}`;
+    const error: string = this.error || "";
+    const errorId = `select-error-${this._uid}`;
     let errorLine = container.querySelector(":scope > .error-message");
     if (error) {
       if (!errorLine) {
@@ -1810,30 +1401,28 @@ export class TySelect extends TyComponent<SelectState> {
       errorLine?.remove();
     }
 
-    const stub = shadow.querySelector(".select-stub") as HTMLElement | null;
-    if (stub) {
-      stub.classList.toggle("disabled", this._disabled);
-      stub.classList.toggle("compact", this._compact);
-      stub.classList.toggle("error", !!error);
-      stub.tabIndex = this._disabled ? -1 : 0;
-      stub.toggleAttribute("disabled", this._disabled);
-      if (this._disabled) stub.setAttribute("aria-disabled", "true");
-      else stub.removeAttribute("aria-disabled");
-      if (this._label) stub.setAttribute("aria-labelledby", labelId);
-      else stub.removeAttribute("aria-labelledby");
-      // The combobox carries the invalid state and reads the line out
-      if (error) {
-        stub.setAttribute("aria-invalid", "true");
-        stub.setAttribute("aria-describedby", errorId);
-      } else {
-        stub.removeAttribute("aria-invalid");
-        stub.removeAttribute("aria-describedby");
-      }
+    const stub = shadow.querySelector(".select-stub") as HTMLElement;
+    stub.classList.toggle("disabled", disabled);
+    stub.classList.toggle("compact", this.compact);
+    stub.classList.toggle("error", !!error);
+    stub.tabIndex = disabled ? -1 : 0;
+    stub.toggleAttribute("disabled", disabled);
+    if (disabled) stub.setAttribute("aria-disabled", "true");
+    else stub.removeAttribute("aria-disabled");
+    if (labelText) stub.setAttribute("aria-labelledby", labelId);
+    else stub.removeAttribute("aria-labelledby");
+    // The combobox carries the invalid state and reads the line out
+    if (error) {
+      stub.setAttribute("aria-invalid", "true");
+      stub.setAttribute("aria-describedby", errorId);
+    } else {
+      stub.removeAttribute("aria-invalid");
+      stub.removeAttribute("aria-describedby");
     }
     this.syncTriggerAria();
     shadow
       .querySelectorAll<HTMLInputElement>(".dropdown-search-input, .mobile-search-input")
-      .forEach((input) => (input.disabled = this._disabled));
+      .forEach((input) => (input.disabled = disabled));
   }
 
   /**
@@ -1845,7 +1434,7 @@ export class TySelect extends TyComponent<SelectState> {
    * watch would feed itself.
    */
   private syncTriggerAria(): void {
-    const error: string = this.getProperty("error") || "";
+    const error: string = this.error || "";
     const trigger = error
       ? (this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null)
       : null;
@@ -1870,15 +1459,13 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Reflect constraint validation to the owning <form> via ElementInternals.
-   * Without this `required` is only cosmetic — form.checkValidity() (and a
-   * real submit) never actually blocks on an empty required select. Mirrors
-   * ty-input's updateValidity(): empty + required => valueMissing, with a
-   * native <select>'s message; disabled fields are barred from constraint
-   * validation.
+   * Reflect constraint validation to the owning <form> via ElementInternals:
+   * empty + required => valueMissing, with a native <select>'s message.
+   * Disabled fields, and external-selection (the app holds the selection),
+   * are barred from it.
    */
   private updateValidity(): void {
-    if (this.disabled) {
+    if (this.disabled || this.externalSelection) {
       this.applyValidity({});
       return;
     }
@@ -1886,7 +1473,7 @@ export class TySelect extends TyComponent<SelectState> {
       const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
       this.applyValidity(
         { valueMissing: true },
-        nativeMessage("select", { required: true, multiple: this._multiple }),
+        nativeMessage("select", { required: true, multiple: this.multiple }),
         stub ?? undefined,
       );
     } else {
@@ -1895,364 +1482,161 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * When a consumer slots their own trigger (slot="trigger"), strip the
-   * default field chrome so the trigger is styled entirely by the consumer.
+   * A slotted trigger (slot="trigger") replaces the field chrome. has-trigger
+   * on the host sizes it to the trigger (Blink can't parse :has() inside
+   * :host()); render() puts it back if a morph strips it.
    */
-  private setupTriggerSlot(): void {
+  private syncTriggerSlot(): void {
     const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".select-stub");
-    const slot = shadow.querySelector(
-      'slot[name="trigger"]',
-    ) as HTMLSlotElement | null;
-    if (!stub || !slot) return;
-    const sync = () => {
-      const hasTrigger = slot.assignedElements().length > 0;
-      stub.classList.toggle("custom-trigger", hasTrigger);
-      // Reflected for :host([has-trigger]) styling (content-hugging width).
-      // Blink does not parse :has() inside :host(), so detection lives here.
+    const slot = shadow.querySelector('slot[name="trigger"]') as HTMLSlotElement;
+    const hasTrigger = slot.assignedElements().length > 0;
+    shadow.querySelector(".select-stub")!.classList.toggle("custom-trigger", hasTrigger);
+    if (this.hasAttribute("has-trigger") !== hasTrigger) {
       this.toggleAttribute("has-trigger", hasTrigger);
-    };
-    slot.addEventListener("slotchange", () => {
-      sync();
+    }
+  }
+
+  /**
+   * Build the shadow DOM once. Mobile (touch, narrow) gets a full-screen
+   * dialog with a selected strip; desktop an anchored dropdown. The mode is
+   * fixed here: everything wired below belongs to one of them.
+   */
+  private build(): void {
+    const shadow = this.shadowRoot!;
+    const mobile = isMobileTouch();
+    this._state.mode = mobile ? "mobile" : "desktop";
+
+    const listboxId = `select-listbox-${this._uid}`;
+    const multiselectable = this.multiple ? 'aria-multiselectable="true"' : "";
+    const loadingHtml = `
+      <div class="dropdown-loading" aria-hidden="true">
+        <slot name="loading">
+          <span class="dropdown-loading-spinner"></span>
+          <span class="dropdown-loading-text">Searching…</span>
+        </slot>
+      </div>`;
+
+    const desktopPopup = `
+      <dialog class="dropdown-dialog">
+        <div class="dropdown-header">
+          <div class="dropdown-search-icon" aria-hidden="true">${SEARCH_ICON_SVG}</div>
+          <input class="dropdown-search-input" type="text" placeholder="Search..." />
+          <div class="dropdown-search-chevron">${CHEVRON_DOWN_SVG}</div>
+        </div>
+        <div class="dropdown-options-wrapper">
+          <div class="dropdown-options" id="${listboxId}" role="listbox" ${multiselectable}>
+            <slot id="options-slot"></slot>
+          </div>
+          ${loadingHtml}
+        </div>
+      </dialog>`;
+
+    const label = this.label;
+    const mobilePopup = `
+      <dialog class="mobile-dialog">
+        <div class="mobile-dialog-content">
+          <div class="mobile-search-header">
+            ${label ? `<span class="mobile-header-label">${label}</span>` : ""}
+            <div class="mobile-header-content">
+              <div class="dropdown-search-icon" aria-hidden="true">${SEARCH_ICON_SVG}</div>
+              <input class="mobile-search-input" type="text"
+                     placeholder="${label ? `Search ${label}...` : "Search..."}" autofocus />
+              <button class="mobile-close-button" type="button" aria-label="Close">${CLEAR_ICON_SVG}</button>
+            </div>
+          </div>
+          <div class="mobile-body" data-expanded="available">
+            <!-- Selected strip, pinned above the list; collapses when empty -->
+            <div class="mobile-selected-section" data-empty="true">
+              <button class="section-header" type="button" data-section="selected" aria-expanded="false">
+                <span class="section-title"></span>
+                ${CHEVRON_DOWN_SVG}
+              </button>
+              <div class="section-content mobile-selected-chips"></div>
+            </div>
+            <div class="mobile-available-section" data-empty="false">
+              <button class="section-header" type="button" data-section="available" aria-expanded="true">
+                <span class="section-title"></span>
+                ${CHEVRON_DOWN_SVG}
+              </button>
+              <div class="section-content dropdown-options-wrapper" id="${listboxId}" role="listbox" ${multiselectable}>
+                <slot id="options-slot"></slot>
+                <div class="empty-state">${this.getProperty("no-options-message")}</div>
+                ${loadingHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>`;
+
+    shadow.innerHTML = `
+      <div class="select-container dropdown-mode-${this._state.mode}">
+        <div class="dropdown-wrapper">
+          <div class="dropdown-stub select-stub"
+               role="combobox"
+               aria-haspopup="listbox"
+               aria-expanded="false"
+               aria-controls="${listboxId}"
+               tabindex="0">
+            <slot name="trigger">
+              <slot name="start"></slot>
+              <slot name="selected"></slot>
+              <span class="dropdown-placeholder"></span>
+              <span class="select-count" hidden></span>
+              <slot name="end"></slot>
+              <button class="select-clear" type="button" aria-label="Clear selection" hidden>
+                ${CLEAR_ICON_SVG}
+              </button>
+              <div class="dropdown-chevron">${CHEVRON_DOWN_SVG}</div>
+            </slot>
+          </div>
+          ${mobile ? mobilePopup : desktopPopup}
+        </div>
+      </div>
+    `;
+
+    const stub = shadow.querySelector(".select-stub")!;
+    stub.addEventListener("click", (e) => this.handleStubClick(e));
+    stub.addEventListener("keydown", (e) => this.handleStubKeydown(e as KeyboardEvent));
+    shadow.querySelector(".select-clear")!.addEventListener("click", (e) => this.handleClearClick(e));
+
+    shadow.querySelector('slot[name="trigger"]')!.addEventListener("slotchange", () => {
+      this.syncTriggerSlot();
       this.syncFieldChrome(); // error aria onto a newly slotted trigger
     });
-    sync();
-  }
 
-  private setupEventListeners(): void {
-    const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".select-stub");
-    const optionsSlot = shadow.querySelector("#options-slot");
-    const searchInput = shadow.querySelector(".dropdown-search-input");
+    shadow.querySelector("#options-slot")!.addEventListener("click", (e) => this.handleTagClick(e));
 
-    if (stub) {
-      this._stubClickHandler = this.handleStubClick.bind(this);
-      stub.addEventListener("click", this._stubClickHandler);
-      stub.addEventListener("keydown", this.handleStubKeydown.bind(this) as EventListener);
-    }
+    const searchInput = this.searchInput()!;
+    searchInput.addEventListener("input", (e) => this.handleSearchInput(e));
 
-    const clearBtn = shadow.querySelector(".select-clear");
-    clearBtn?.addEventListener("click", this.handleClearClick.bind(this));
-
-    this.setupTriggerSlot();
-
-    if (optionsSlot) {
-      this._tagClickHandler = this.handleTagClick.bind(this);
-      optionsSlot.addEventListener("click", this._tagClickHandler);
-    }
-
-    if (searchInput) {
-      this._searchInputHandler = this.handleSearchInput.bind(this);
-      this._blockSearchClick = this.blockSearchClick.bind(this);
-
-      searchInput.addEventListener("input", this._searchInputHandler);
-      searchInput.addEventListener("click", this._blockSearchClick);
-    }
-
-    const dialog = shadow.querySelector(
-      ".dropdown-dialog",
-    ) as HTMLDialogElement;
-    if (dialog) {
-      dialog.addEventListener("click", (e) => {
-        // Only close if clicking directly on the dialog (backdrop), not its children
-        if (e.target === dialog) {
-          this.closeDropdown();
-        }
-      });
-      // A close request handleKeyboard didn't get (Escape whose keydown
-      // someone else stopped, a back gesture): close our way, not natively.
-      dialog.addEventListener("cancel", (e) => {
-        e.preventDefault();
-        this.closeDropdown();
-        this.focus();
-      });
-      this.syncOnOutsideClose(dialog, () => this.closeDropdown());
-    }
-  }
-
-  private buildStubClasses(): string {
-    const classes: string[] = [];
-    if (this._disabled) classes.push("disabled");
-    if (this._compact) classes.push("compact");
-    return classes.join(" ");
-  }
-
-  private renderDesktop(): void {
-    const shadow = this.shadowRoot!;
-
-    // Only set innerHTML and setup listeners if container doesn't exist
-    if (!shadow.querySelector(".select-container")) {
-      const stubClasses = this.buildStubClasses();
-      const listboxId = `select-listbox-${getElementHash(this)}`;
-      const labelId = `select-label-${getElementHash(this)}`;
-
-      const labelHtml = this._label
-        ? `
-        <label class="ty-field-label" id="${labelId}">
-          ${this._label}
-          ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}
-        </label>
-      `
-        : "";
-
-      const searchPlaceholder = "Search...";
-
-      shadow.innerHTML = `
-        <div class="select-container dropdown-mode-desktop">
-          ${labelHtml}
-          <div class="dropdown-wrapper">
-            <div class="dropdown-stub select-stub ${stubClasses}"
-                 role="combobox"
-                 aria-haspopup="listbox"
-                 aria-expanded="false"
-                 aria-controls="${listboxId}"
-                 ${this._label ? `aria-labelledby="${labelId}"` : ""}
-                 tabindex="${this._disabled ? "-1" : "0"}"
-                 ${this._disabled ? 'disabled aria-disabled="true"' : ""}>
-              <slot name="trigger">
-                <slot name="start"></slot>
-                <slot name="selected"></slot>
-                <span class="dropdown-placeholder">${this._placeholder}</span>
-                <span class="select-count" hidden></span>
-                <slot name="end"></slot>
-                <button class="select-clear" type="button" aria-label="Clear selection" hidden>
-                  ${CLEAR_ICON_SVG}
-                </button>
-                <div class="dropdown-chevron">
-                  ${CHEVRON_DOWN_SVG}
-                </div>
-              </slot>
-            </div>
-            <dialog class="dropdown-dialog">
-              <div class="dropdown-header">
-                <div class="dropdown-search-icon" aria-hidden="true">
-                  ${SEARCH_ICON_SVG}
-                </div>
-                <input
-                  class="dropdown-search-input"
-                  type="text"
-                  placeholder="${searchPlaceholder}"
-                  ${this._disabled ? "disabled" : ""}
-                />
-                <div class="dropdown-search-chevron">
-                  ${CHEVRON_DOWN_SVG}
-                </div>
-              </div>
-              <div class="dropdown-options-wrapper">
-                <div class="dropdown-options" id="${listboxId}" role="listbox" ${this._multiple ? 'aria-multiselectable="true"' : ""}>
-                  <slot id="options-slot"></slot>
-                </div>
-                <div class="dropdown-loading" aria-hidden="true">
-                  <slot name="loading">
-                    <span class="dropdown-loading-spinner"></span>
-                    <span class="dropdown-loading-text">Searching…</span>
-                  </slot>
-                </div>
-              </div>
-            </dialog>
-          </div>
-        </div>
-      `;
-
-      // Setup event listeners ONCE
-      this.setupEventListeners();
-
-      // Don't initialize here - will be done in connectedCallback
-      // after properties are set and children are available
-    }
-
-    // Always update placeholder visibility on re-render
-    this.updateSelectionDisplay();
-  }
-
-  private renderMobile(): void {
-    const shadow = this.shadowRoot!;
-
-    // Only set innerHTML and setup listeners if container doesn't exist
-    if (!shadow.querySelector(".select-container")) {
-      const stubClasses = this.buildStubClasses();
-      const listboxId = `select-listbox-${getElementHash(this)}`;
-      const labelId = `select-label-${getElementHash(this)}`;
-
-      const labelHtml = this._label
-        ? `
-        <label class="ty-field-label" id="${labelId}">
-          ${this._label}
-          ${this._required ? `<span class="required-icon">${REQUIRED_ICON_SVG}</span>` : ""}
-        </label>
-      `
-        : "";
-
-      const closeButtonSvg = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>`;
-
-      // Search placeholder: "Search <label>..." or just "Search..."
-      const searchPlaceholder = this._label
-        ? `Search ${this._label}...`
-        : "Search...";
-
-      // Search is always available — only the mode (internal vs external) varies.
-      const searchHeaderHtml = `
-        <div class="mobile-search-header">
-          ${this._label ? `<span class="mobile-header-label">${this._label}</span>` : ""}
-          <div class="mobile-header-content">
-            <div class="dropdown-search-icon" aria-hidden="true">
-              ${SEARCH_ICON_SVG}
-            </div>
-            <input
-              class="mobile-search-input"
-              type="text"
-              placeholder="${searchPlaceholder}"
-              autofocus
-              ${this._disabled ? "disabled" : ""}
-            />
-            <button class="mobile-close-button" type="button" aria-label="Close">
-              ${closeButtonSvg}
-            </button>
-          </div>
-        </div>
-      `;
-
-      shadow.innerHTML = `
-        <div class="select-container dropdown-mode-mobile">
-          ${labelHtml}
-          <div class="dropdown-wrapper">
-            <div class="dropdown-stub select-stub ${stubClasses}"
-                 role="combobox"
-                 aria-haspopup="listbox"
-                 aria-expanded="false"
-                 aria-controls="${listboxId}"
-                 ${this._label ? `aria-labelledby="${labelId}"` : ""}
-                 tabindex="${this._disabled ? "-1" : "0"}"
-                 ${this._disabled ? 'disabled aria-disabled="true"' : ""}>
-              <slot name="trigger">
-                <slot name="start"></slot>
-                <slot name="selected"></slot>
-                <span class="dropdown-placeholder">${this._placeholder}</span>
-                <span class="select-count" hidden></span>
-                <slot name="end"></slot>
-                <button class="select-clear" type="button" aria-label="Clear selection" hidden>
-                  ${CLEAR_ICON_SVG}
-                </button>
-                <div class="dropdown-chevron">
-                  ${CHEVRON_DOWN_SVG}
-                </div>
-              </slot>
-            </div>
-
-            <dialog class="mobile-dialog">
-              <div class="mobile-dialog-content">
-
-                <!-- HEADER (matches dropdown.ts) -->
-                ${searchHeaderHtml}
-
-                <!-- BODY: options list with toggleable selected state -->
-                <div class="mobile-body" data-expanded="available">
-
-                  <!-- SELECTED STRIP (pinned above the list, collapses when empty) -->
-                  <div class="mobile-selected-section" data-empty="true">
-                    <button class="section-header" type="button" data-section="selected" aria-expanded="false">
-                      <span class="section-title">${this._selectedLabel} <span class="section-count">(0)</span></span>
-                      ${CHEVRON_DOWN_SVG}
-                    </button>
-                    <div class="section-content mobile-selected-chips"></div>
-                  </div>
-
-                  <!-- AVAILABLE LIST (always visible, takes remaining space) -->
-                  <div class="mobile-available-section" data-empty="false">
-                    <button class="section-header" type="button" data-section="available" aria-expanded="true">
-                      <span class="section-title">${this._availableLabel} <span class="section-count"></span></span>
-                      ${CHEVRON_DOWN_SVG}
-                    </button>
-                    <div class="section-content dropdown-options-wrapper" id="${listboxId}" role="listbox" ${this._multiple ? 'aria-multiselectable="true"' : ""}>
-                      <slot id="options-slot"></slot>
-                      <div class="empty-state">${this._noOptionsMessage}</div>
-                      <div class="dropdown-loading" aria-hidden="true">
-                        <slot name="loading">
-                          <span class="dropdown-loading-spinner"></span>
-                          <span class="dropdown-loading-text">Searching…</span>
-                        </slot>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </dialog>
-          </div>
-        </div>
-      `;
-
-      // Setup event listeners ONCE
-      this.setupMobileEventListeners();
-    }
-
-    // Always update placeholder visibility
-    this.updateSelectionDisplay();
-  }
-
-  private setupMobileEventListeners(): void {
-    // handleKeyboard (wired in onConnect) serves mobile too: it branches on
-    // `_state.mode` wherever mobile needs different behavior (selectByTag,
-    // tryCreateFromSearch).
-    const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".select-stub");
-    const optionsSlot = shadow.querySelector("#options-slot");
-    const searchInput = shadow.querySelector(".mobile-search-input");
-    const closeButton = shadow.querySelector(".mobile-close-button");
-    const dialog = shadow.querySelector(".mobile-dialog") as HTMLDialogElement;
-
-    if (stub) {
-      stub.addEventListener("click", (e) => this.handleMobileStubClick(e));
-      stub.addEventListener("keydown", (e) => this.handleMobileStubKeydown(e as KeyboardEvent));
-    }
-
-    const clearBtn = shadow.querySelector(".select-clear");
-    clearBtn?.addEventListener("click", this.handleClearClick.bind(this));
-
-    this.setupTriggerSlot();
-
-    if (optionsSlot) {
-      optionsSlot.addEventListener("click", (e) =>
-        this.handleMobileTagClick(e),
-      );
-    }
-
-    if (searchInput) {
-      searchInput.addEventListener("input", (e) => this.handleSearchInput(e));
-    }
-
-    shadow.querySelectorAll(".mobile-body .section-header").forEach((header) => {
-      header.addEventListener("click", () =>
-        this.expandMobileSection(
-          (header as HTMLElement).dataset.section === "selected" ? "selected" : "available",
-        ),
-      );
+    const dialog = shadow.querySelector("dialog")!;
+    // A click on the backdrop (the dialog itself, not its content) closes
+    dialog.addEventListener("click", (e) => {
+      if (e.target === dialog) this.close();
     });
+    // A close request handleKeyboard didn't get (Escape whose keydown
+    // someone else stopped, a back gesture): close our way, not natively.
+    dialog.addEventListener("cancel", (e) => {
+      e.preventDefault();
+      this.close();
+      this.focus();
+    });
+    this.syncOnOutsideClose(dialog);
 
-    if (closeButton) {
-      closeButton.addEventListener("click", () => this.closeMobileModal());
-    }
-
-    // Backdrop click to close (native dialog behavior)
-    if (dialog) {
-      dialog.addEventListener("click", (e) => {
-        // Only close if clicking directly on the dialog element (backdrop)
-        // Not if clicking on its children (dialog-content)
-        if (e.target === dialog) {
-          this.closeMobileModal();
-        }
+    if (mobile) {
+      shadow.querySelectorAll(".mobile-body .section-header").forEach((header) => {
+        header.addEventListener("click", () =>
+          this.expandMobileSection(
+            (header as HTMLElement).dataset.section === "selected" ? "selected" : "available",
+          ),
+        );
       });
-
-      // Also handle Escape key via cancel event
-      dialog.addEventListener("cancel", (e) => {
-        e.preventDefault(); // Prevent default to handle it our way
-        this.closeMobileModal();
-        this.focus();
+      shadow.querySelector(".mobile-close-button")!.addEventListener("click", () => this.close());
+    } else {
+      searchInput.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
       });
-      this.syncOnOutsideClose(dialog, () => this.closeMobileModal());
     }
   }
 
@@ -2265,36 +1649,10 @@ export class TySelect extends TyComponent<SelectState> {
    * close() calls land here with the state already closed, and a dialog
    * reopened since then is open again: both are no-ops.
    */
-  private syncOnOutsideClose(dialog: HTMLDialogElement, close: () => void): void {
+  private syncOnOutsideClose(dialog: HTMLDialogElement): void {
     new MutationObserver(() => {
-      if (this._state.open && !dialog.open) close();
+      if (this._state.open && !dialog.open) this.close();
     }).observe(dialog, { attributes: true, attributeFilter: ["open"] });
-  }
-
-  private handleMobileStubClick(e: Event): void {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (this._disabled || this._readonly) {
-      return;
-    }
-
-    this.openMobileModal();
-  }
-
-  /** Keyboard-open the (closed) mobile stub — see handleStubKeydown for why this is needed. */
-  private handleMobileStubKeydown(e: KeyboardEvent): void {
-    if (this._disabled || this._readonly || this._state.open) return;
-    if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
-      e.preventDefault();
-      this.openMobileModal();
-    }
-  }
-
-  private handleMobileTagClick(e: Event): void {
-    // Use the same tag click handler as desktop
-    // It already handles mobile mode for auto-close
-    this.handleTagClick(e);
   }
 
   private updateMobileSelectedState(): void {
@@ -2305,26 +1663,21 @@ export class TySelect extends TyComponent<SelectState> {
     const availableSection = shadow.querySelector(".mobile-available-section");
 
     if (availableSection) {
-      // Count what's actually still on offer: options hidden (by the author
-      // or by search filtering) don't count, and neither do ones already in
-      // the strip above — "Selected (11)" next to "Available (40)" out of 40
-      // total reads like 51 options exist.
-      const visibleAvailable = this.getOfferedTags().filter(
-        ({ element }) => !element.hasAttribute("filtered-out") && !element.hasAttribute("selected"),
-      ).length;
-
-      availableSection.setAttribute(
-        "data-empty",
-        String(visibleAvailable === 0),
+      // The list shows every option on offer (selected ones too, to untick
+      // them); the count leaves out the ones already in the strip above.
+      const selected = new Set(this.getSelectedValues());
+      const shown = this.getOfferedTags().filter(
+        ({ element }) => !element.hasAttribute("filtered-out"),
       );
+      const visibleAvailable = shown.filter(({ value }) => !selected.has(value)).length;
 
-      this.setMobileSectionTitle(availableSection, this._availableLabel, visibleAvailable);
+      availableSection.setAttribute("data-empty", String(shown.length === 0));
+
+      this.setMobileSectionTitle(availableSection, this.getProperty("available-label"), visibleAvailable);
     }
   }
 
-  /** "Label (n)" with the count in its own muted span — same shape for both
-      sections, and re-reads the label so selected-label/available-label
-      changes after first render show up. */
+  /** "Label (n)" with the count in its own muted span. */
   private setMobileSectionTitle(section: Element, label: string, n: number): void {
     const title = section.querySelector(".section-title");
     if (!title) return;
@@ -2335,21 +1688,17 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Hand the dialog's spare vertical space to one section or the other. Only
-   * one can own it: on a phone there isn't enough height for two scrollable
-   * lists to both be usefully tall, so tapping a header trades the space
-   * rather than splitting it. Selecting from the list hands it back to
-   * "available" — you're still picking, so that's the list you want open.
+   * Hand the dialog's spare height to one section: a phone has no room for
+   * two usefully tall lists. Selecting from the list hands it back to
+   * "available".
    */
   private expandMobileSection(section: "selected" | "available"): void {
     const shadow = this.shadowRoot;
     const body = shadow?.querySelector(".mobile-body") as HTMLElement | null;
     if (!body) return;
 
-    // Nothing selected means nothing to expand into — the strip is a 36px
-    // header at that point, so the request is a no-op rather than a jump to
-    // an empty panel.
-    if (section === "selected" && this._state.selectedValues.length === 0) return;
+    // Nothing selected: the strip is just its header, nothing to expand into
+    if (section === "selected" && this.getSelectedValues().length === 0) return;
 
     body.dataset.expanded = section;
     shadow!.querySelectorAll(".mobile-body .section-header").forEach((header) => {
@@ -2361,8 +1710,7 @@ export class TySelect extends TyComponent<SelectState> {
   /**
    * The selected values as dismissible chips, pinned above the available
    * list so a long list can never scroll the current selection out of sight.
-   * Rebuilt wholesale: the strip is small, and diffing it would have to
-   * track chip identity for the sake of a handful of nodes.
+   * Rebuilt wholesale: the strip is small.
    */
   private renderMobileSelectedChips(): void {
     const shadow = this.shadowRoot!;
@@ -2370,30 +1718,23 @@ export class TySelect extends TyComponent<SelectState> {
     const host = shadow.querySelector(".mobile-selected-chips");
     if (!section || !host) return;
 
-    const selected = this._state.selectedValues;
+    const selected = this.getSelectedValues();
     section.setAttribute("data-empty", String(selected.length === 0));
 
-    this.setMobileSectionTitle(section, this._selectedLabel, selected.length);
+    this.setMobileSectionTitle(section, this.getProperty("selected-label"), selected.length);
 
     // Last chip dismissed while the strip had the space — give it back.
     if (selected.length === 0) this.expandMobileSection("available");
 
-    const labelFor = (value: string): string => {
-      const option = this.getTagElements().find(
-        (tag) => this.getTagData(tag).value === value,
-      );
-      return option ? this.getTagData(option).text : value;
-    };
-
     host.textContent = "";
-    for (const value of selected) {
+    for (const { value, label } of this.getSelectedItems(selected)) {
       const chip = document.createElement("button");
       chip.type = "button";
       chip.className = "mobile-selected-chip";
       chip.dataset.value = value;
-      chip.setAttribute("aria-label", `Remove ${labelFor(value)}`);
+      chip.setAttribute("aria-label", `Remove ${label}`);
       chip.innerHTML = `<span class="chip-label"></span>${CLEAR_ICON_SVG}`;
-      (chip.querySelector(".chip-label") as HTMLElement).textContent = labelFor(value);
+      (chip.querySelector(".chip-label") as HTMLElement).textContent = label;
       chip.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -2410,181 +1751,60 @@ export class TySelect extends TyComponent<SelectState> {
    * more options than fit without scrolling.
    */
   private shouldShowSearch(): boolean {
-    if (this._externalSearch) return true;
-    if (this._allowCreate) return true;
-    if (this._notSearchable) return false;
+    if (this.externalSearch || this.allowCreate) return true;
+    if (this.notSearchable) return false;
     return this.getTagElements().length > SEARCH_AUTO_THRESHOLD;
   }
 
-  /**
-   * Toggle the search row (desktop header / mobile input) per shouldShowSearch.
-   */
+  /** Toggle the search row (desktop header / mobile input) per shouldShowSearch. */
   private updateSearchVisibility(): void {
-    const shadow = this.shadowRoot;
-    if (!shadow) return;
+    const shadow = this.shadowRoot!;
     const show = this.shouldShowSearch();
-    const header = shadow.querySelector(
-      ".dropdown-header",
-    ) as HTMLElement | null;
+    const header = shadow.querySelector(".dropdown-header") as HTMLElement | null;
     if (header) header.hidden = !show;
     // Mobile keeps its header (label + close button); only the input+icon hide
-    const mobileInput = shadow.querySelector(
-      ".mobile-search-input",
-    ) as HTMLElement | null;
-    if (mobileInput) mobileInput.hidden = !show;
-    const mobileIcon = shadow.querySelector(
-      ".mobile-header-content .dropdown-search-icon",
-    ) as HTMLElement | null;
-    if (mobileIcon) mobileIcon.hidden = !show;
+    shadow
+      .querySelectorAll<HTMLElement>(".mobile-search-input, .mobile-header-content .dropdown-search-icon")
+      .forEach((el) => (el.hidden = !show));
   }
 
   /**
-   * Selection summary appropriate to cardinality × skin:
-   * - single (field or compact): the selected OPTION itself — cloned into
-   *   slot="selected" so rich HTML options display intact (dropdown parity);
-   *   placeholder when empty
-   * - multiple + field: joined labels (ellipsis via CSS), or placeholder
+   * The trigger, list closed:
+   * - single: the picked option itself (`shown`), else its label, else the placeholder
+   * - multiple + field: the labels, comma-joined (ellipsis via CSS)
    * - multiple + compact: placeholder + count badge
+   * Open, the list shows what is picked: the trigger shows the placeholder.
    */
-  private updateSelectionDisplay(): void {
-    const shadow = this.shadowRoot!;
-    const stub = shadow.querySelector(".select-stub");
-    if (!stub) return;
+  private updateSelectionDisplay(shown: OptionElement | null): void {
+    const stub = this.shadowRoot!.querySelector(".select-stub")!;
 
-    // Selection comes from STATE, not from scanning option elements —
-    // external search replaces the option children, and the selection must
-    // survive even when the current results don't include the selected value.
-    const values = this._state.selectedValues;
+    const values = this.getSelectedValues();
     const count = values.length;
     stub.classList.toggle("has-selection", count > 0);
-    stub.classList.toggle("compact", this._compact);
+    stub.classList.toggle("has-option", shown !== null);
 
-    const badge = stub.querySelector(".select-count") as HTMLElement | null;
-    if (badge) {
-      badge.textContent = String(count);
-      badge.hidden = count === 0 || !this._multiple || !this._compact;
-    }
+    const badge = stub.querySelector(".select-count") as HTMLElement;
+    badge.textContent = String(count);
+    badge.hidden = count === 0 || !this.multiple || !this.compact;
 
-    const clearBtn = stub.querySelector(".select-clear") as HTMLElement | null;
-    if (clearBtn) {
-      clearBtn.hidden = !(count > 0 && this._clearable && !this._disabled && !this._readonly);
-    }
+    const clearBtn = stub.querySelector(".select-clear") as HTMLElement;
+    clearBtn.hidden = !(count > 0 && !this.noClear && !this.disabled && !this.readonly);
 
-    // Single select: project the selected option into the stub as a clone
-    // (rich HTML content survives — same mechanism as ty-dropdown).
-    const wantClone = !this._multiple && count > 0 ? values[0] : null;
-    this.syncSelectedClone(wantClone);
-    // Reflects the OUTCOME (did a clone actually get built or restored?),
-    // not the intent — a value can be selected with no option ever having
-    // existed to clone from (external search: a preset value before any
-    // result has loaded). Basing this on intent alone hid the placeholder
-    // AND had nothing to show in its place: a blank field with a clear
-    // button that implied a selection nothing on screen confirmed.
-    const hasClone = this._selectedClone !== null;
-    stub.classList.toggle("has-clone", hasClone);
-
-    const textEl = stub.querySelector(
-      ".dropdown-placeholder",
-    ) as HTMLElement | null;
-    if (textEl) {
-      // The clone replaces the text display entirely in single mode
-      textEl.hidden = hasClone;
-      const showLabels = count > 0 && this._multiple && !this._compact;
-      if (showLabels) {
-        textEl.textContent = this.getSelectedItems(values)
-          .map((i) => i.label)
-          .join(", ");
-        textEl.classList.remove("placeholder-shown");
-      } else if (wantClone !== null) {
-        // Single-select wanted a clone but couldn't produce one. Fall back
-        // to the raw value — still true, unlike the placeholder text, and
-        // still visibly "something is selected" without inventing a label.
-        textEl.textContent = values.join(", ");
-        textEl.classList.remove("placeholder-shown");
-      } else {
-        textEl.textContent = this._placeholder;
-        textEl.classList.add("placeholder-shown");
-      }
-    }
+    const textEl = stub.querySelector(".dropdown-placeholder") as HTMLElement;
+    textEl.hidden = shown !== null;
+    const text =
+      this._state.open || count === 0 || (this.multiple && this.compact)
+        ? null
+        : this.getSelectedItems(values).map((i) => i.label).join(", ");
+    textEl.textContent = text ?? this.placeholder;
+    textEl.classList.toggle("placeholder-shown", text === null);
   }
 
-  /**
-   * Keep exactly one display clone (slot="selected", marked `cloned`) in our
-   * light DOM matching the given value — or none. The clone never counts as
-   * an option (getTagElements filters [cloned]) and ty-option's own
-   * :host([cloned]) styling strips its list-row chrome.
-   */
-  private syncSelectedClone(value: string | null): void {
-    const existing = this.querySelector(
-      ':scope > [cloned][slot="selected"]',
-    ) as HTMLElement | null;
-    if (existing?.getAttribute("value") === value) {
-      // Streaming-parse guard: when the `value` attribute syncs DURING HTML
-      // parsing, the selected option's children may not exist yet, so the
-      // clone captures an empty shell and the trigger renders blank forever
-      // (the early-return below would keep it — "value matches, all good").
-      // An empty clone whose source option HAS children is that artifact:
-      // fall through and re-clone from the now-complete option.
-      const stale =
-        value !== null &&
-        existing.childNodes.length === 0 &&
-        (this.getTagElements().find(
-          (el) => this.getTagData(el).value === value,
-        )?.childNodes.length ?? 0) > 0;
-      if (!stale) {
-        this._selectedClone = existing;
-        return; // already right
-      }
-    }
-
-    existing?.remove();
-    if (value === null) {
-      this._selectedClone = null;
-      return;
-    }
-
-    const option = this.getTagElements().find(
-      (el) => this.getTagData(el).value === value,
-    );
-    if (option) {
-      const clone = option.cloneNode(true) as HTMLElement;
-      clone.removeAttribute("selected"); // no tick/selected styling in the stub
-      // A hidden option isn't on offer, but as the value it still shows
-      clone.removeAttribute("hidden");
-      clone.removeAttribute("filtered-out");
-      clone.setAttribute("slot", "selected");
-      clone.setAttribute("cloned", "true");
-      this.appendChild(clone);
-      this._selectedClone = clone;
-      // Captured mid-parse (the option has no children yet — see the
-      // staleness guard above)? The guard only runs when something calls back
-      // in here, and the child observer is childList-only on the select: a
-      // text node landing INSIDE the option never fires it. So if this option
-      // is the LAST child, nothing would ever re-sync and the trigger stays
-      // blank. Re-run once when the parser is done. No-op after load.
-      if (option.childNodes.length === 0 && document.readyState === "loading") {
-        document.addEventListener(
-          "DOMContentLoaded",
-          () => { if (this.isConnected) this.updateSelectionDisplay(); },
-          { once: true },
-        );
-      }
-    } else if (this._selectedClone?.getAttribute("value") === value) {
-      // The option list no longer contains the selection (external search
-      // swapped the children — possibly wiping our clone with them). Restore
-      // the saved display clone so the selection stays visible.
-      const restored = this._selectedClone.cloneNode(true) as HTMLElement;
-      this.appendChild(restored);
-      this._selectedClone = restored;
-    }
-  }
-
-  // PUBLIC API - Getters/Setters
+  // PUBLIC API
 
   /**
-   * Deselect a value programmatically WITH a change event.
-   * Used by out-of-band chip displays (ty-selected-options) so dismissing a chip
-   * fires change like any in-popup interaction (HTMX hx-trigger="change" etc.).
+   * Deselect a value WITH a change event, like a pick in the popup (HTMX
+   * hx-trigger="change" etc.). Used by ty-selected-options chips.
    */
   deselectValue(value: string): void {
     const current = this.getSelectedValues();
@@ -2598,19 +1818,15 @@ export class TySelect extends TyComponent<SelectState> {
   }
 
   /**
-   * Clear the entire selection programmatically WITH a change event
-   * (action: 'clear'). No-op if nothing is selected. Exists so slot="trigger"
-   * consumers (custom chrome, built-in clear UI hidden by design) can wire
-   * their own clear icon's click handler to it. Shows no validation
-   * message (a code reset after a save shouldn't flag the field); the
-   * built-in × does.
+   * Clear the selection WITH a change event (action: 'clear'), for a custom
+   * trigger's own clear control. Shows no validation message (a code reset
+   * after a save shouldn't flag the field); the built-in × does.
    */
   clear(): void {
     this.updateComponentValue([], true, "clear", null, false);
   }
 
   get value(): string {
-    // State is the source of truth — see getSelectedValues().
     return this.getSelectedValues().join(",");
   }
 
@@ -2722,6 +1938,30 @@ export class TySelect extends TyComponent<SelectState> {
     this.setProperty("externalSearch", value);
   }
 
+  get externalSelection(): boolean {
+    return this.getProperty("externalSelection");
+  }
+
+  set externalSelection(value: boolean) {
+    this.setProperty("externalSelection", value);
+  }
+
+  get allowCreate(): boolean {
+    return this.getProperty("allowCreate");
+  }
+
+  set allowCreate(value: boolean) {
+    this.setProperty("allowCreate", value);
+  }
+
+  get createTransform(): "none" | "slug" {
+    return this.getProperty("createTransform");
+  }
+
+  set createTransform(value: "none" | "slug") {
+    this.setProperty("createTransform", value);
+  }
+
   get debounce(): number {
     return this.getProperty("debounce");
   }
@@ -2737,14 +1977,6 @@ export class TySelect extends TyComponent<SelectState> {
 
   set size(value: Size) {
     this.setProperty("size", value);
-  }
-
-  get align(): "start" | "center" | "end" {
-    return this.getProperty("align") as "start" | "center" | "end";
-  }
-
-  set align(value: "start" | "center" | "end") {
-    this.setProperty("align", value);
   }
 
   get placement(): Placement | "" {

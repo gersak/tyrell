@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
@@ -68,15 +69,17 @@ var (
 func membersTab(filter []string) string {
 	var skills strings.Builder
 	for _, s := range []string{"frontend", "backend", "design", "devops", "mobile", "qa", "pm"} {
-		fmt.Fprintf(&skills, `<ty-tag value="%s" flavor="primary">%s</ty-tag>`, s, skillLabel(s))
+		fmt.Fprintf(&skills, `<ty-option value="%s" flavor="primary">%s</ty-option>`, s, skillLabel(s))
 	}
 	return membersTabOpen + `
         <div class="p-6 flex flex-col gap-5">
           <div class="flex items-center gap-2 ty-text+ font-semibold">` + tyIcon("users", `size="sm"`) + ` Team</div>
           <!-- compact multiselect + ty-selected-options: the picks show as
-               dismissible chips (each chip is the option itself) -->
+               dismissible chips (label and flavor from the option). The server
+               renders this tab, so value= carries the current filter. -->
           <div class="flex flex-wrap items-center gap-2">
             <ty-select id="skill-filter" multiple compact
+              value="` + html.EscapeString(strings.Join(filter, ",")) + `"
               placeholder="Filter by skill"
               data-bind="skillFilter"
               data-on:change="@get('/api/members')">` + skills.String() + `</ty-select>

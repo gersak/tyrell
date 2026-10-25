@@ -152,7 +152,7 @@ Replicant warns when style keys are strings or symbols and refuses to recognize 
   :id "skills"
   :label "Skills"
   :placeholder "Add skills"
-  :value (vec selected-skills)
+  :value (clojure.string/join "," selected-skills)   ; the selection: a comma-joined string
   :on {:change (fn [^js e] (on-skills-change (vec (-> e .-detail .-values))))}}
  [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]
  [:ty-option {:value "javascript" :flavor "warning"} "JavaScript"]]
@@ -287,7 +287,7 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 | `ty-textarea` | `input` (every keystroke) | `value`, `originalEvent` |
 | `ty-textarea` | `change` (on blur) | `value`, `originalEvent` |
 | `ty-checkbox` | `change` | `value`, `checked`, `formValue`, `originalEvent` |
-| `ty-select` | `change` | `value` (scalar, or array when `multiple`), `values` (JS array), `items`, `action` (`"add"`/`"remove"`/`"clear"`/`"set"`), `item` |
+| `ty-select` | `change` | `value` (scalar, or array when `multiple`), `values` (JS array, pick order), `items`, `action` (`"add"`/`"remove"`/`"clear"`/`"set"`/`"create"`), `item`; with `external-selection`, `value` is the picked option and `selected` its requested state |
 | `ty-select` | `search` | `query`, `element` |
 | `ty-file-upload` | `change` | `value` (File[]), `files` (File[]), `names` (string[]) |
 | `ty-calendar` | `change` | `year`, `month`, `day`, `action`, `source`, `dayContext` |
@@ -326,8 +326,8 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
  {:label "Country"
   :on {:change (fn [^js e]
                  (let [^js detail (.-detail e)]
-                   ;; (.-value detail) => "us"
-                   ;; (.-text detail)  => "United States"
+                   ;; (.-value detail)                => "us"
+                   ;; (-> detail .-items (aget 0) .-label) => "United States"
                    (on-country-change (.-value detail))))}}
  [:ty-option {:value "us"} "United States"]
  [:ty-option {:value "de"} "Germany"]]
@@ -339,10 +339,10 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
   :on {:change (fn [^js e]
                  (let [^js detail (.-detail e)
                        values (vec (.-values detail))   ; JS array -> CLJ vector
-                       action (.-action detail)]        ; "add", "remove", "clear", "set"
+                       action (.-action detail)]        ; "add", "remove", "clear", "set", "create"
                    (on-tags-change values)))}}
- [:ty-tag {:value "a"} "Alpha"]
- [:ty-tag {:value "b"} "Beta"]]
+ [:ty-option {:value "a"} "Alpha"]
+ [:ty-option {:value "b"} "Beta"]]
 
 ;; ty-checkbox — checked is boolean
 [:ty-checkbox
@@ -465,7 +465,7 @@ Key points:
 
 ### Select with Rich Content
 
-Single select clones the selected option into the field, so rich HTML displays intact.
+A closed single select shows the selected option itself in the field, so rich HTML displays intact, and it adds no child of its own for Replicant to trip over.
 
 ```clojure
 [:ty-select
@@ -498,7 +498,7 @@ dismissible chips render out-of-band wherever you put them:
   :id "skills-select"
   :label "Select Skills"
   :placeholder "Add skills"
-  :value (vec selected-skills)
+  :value (clojure.string/join "," selected-skills)
   :on {:change (fn [^js e] (on-skills-change (vec (-> e .-detail .-values))))}}
 
  [:ty-option {:value "clojure" :flavor "primary"} "Clojure"]

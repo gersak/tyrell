@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 export interface TyFileUploadProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange'> {
   /** Form field name — used as the FormData key */

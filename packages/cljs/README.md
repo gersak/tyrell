@@ -4,7 +4,7 @@
 
 **ClojureScript application infrastructure + framework-agnostic UI components — one Clojars dep.**
 
-This is not a component wrapper. The components (`<ty-button>`, `<ty-select>`, `<ty-modal>`, … 22 primitives) are web components that work identically in Replicant, Reagent, UIx, Helix, or vanilla CLJS — no adapter layer, no React requirement. What this package *adds on top* is the ClojureScript substrate most apps end up hand-rolling:
+This is not a component wrapper. The components (`<ty-button>`, `<ty-select>`, `<ty-modal>`, …) are web components that work identically in Replicant, Reagent, UIx, Helix, or vanilla CLJS — no adapter layer, no React requirement. What this package *adds on top* is the ClojureScript substrate most apps end up hand-rolling:
 
 | You get | Namespace |
 |---|---|
@@ -81,7 +81,7 @@ Web components are plain hiccup — attributes are strings, events carry data in
               :onChange (fn [e] (reset! email (.. e -detail -value)))})
 ```
 
-Full component API (all 22 primitives, every attribute/event): [guides/TY_GUIDE.md](../../guides/TY_GUIDE.md). Framework specifics: [Replicant](../../guides/clj/REPLICANT_TY_GUIDE.md) · [Reagent/re-frame](../../guides/clj/REAGENT_TY_GUIDE.md) · [UIx](../../guides/clj/UIX_TY_GUIDE.md) · [Helix](../../guides/clj/HELIX_TY_GUIDE.md) · [vanilla CLJS](../../guides/clj/CLOJURESCRIPT_GUIDE.md).
+Full component API (every component, attribute and event): [guides/TY_GUIDE.md](../../guides/TY_GUIDE.md). Framework specifics: [Replicant](../../guides/clj/REPLICANT_TY_GUIDE.md) · [Reagent/re-frame](../../guides/clj/REAGENT_TY_GUIDE.md) · [UIx](../../guides/clj/UIX_TY_GUIDE.md) · [Helix](../../guides/clj/HELIX_TY_GUIDE.md) · [vanilla CLJS](../../guides/clj/CLOJURESCRIPT_GUIDE.md).
 
 ## Routing — `tyrell.router`
 

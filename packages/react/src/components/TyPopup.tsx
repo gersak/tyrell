@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import { hostProps } from '../utils/host-props.js';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 type Placement =
   | 'top-start' | 'top' | 'top-end'

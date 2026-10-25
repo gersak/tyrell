@@ -29,24 +29,15 @@ const head = (lib) => `<!doctype html><html><head><meta charset="utf-8">
 <small>value="token" · selected option is the LAST child · ${PAUSE_MS}ms pause inside it</small></p>
 <ty-select name="auth" value="token" label="Auth method" style="max-width:320px">
   <ty-option value="k8s">Kubernetes</ty-option>
-  <ty-option value="token" selected>`
+  <ty-option value="token">`
 
 const tail = `Static token</ty-option>
 </ty-select>
 <p id="r"><small>waiting…</small></p>
 
-<hr style="margin:24px 0;border:0;border-top:1px solid #ddd">
-<p><b>Case 2 — the modal one.</b><br>
-<small>no <code>value</code> on the select; the option carries <code>selected</code>. No streaming involved.</small></p>
-<ty-select id="s2" name="auth2" label="Auth method" style="max-width:320px">
-  <ty-option value="k8s">Kubernetes</ty-option>
-  <ty-option value="token" selected>Static token</ty-option>
-</ty-select>
-<p id="r2"><small>waiting…</small></p>
-
 <script>
   const report = (sel, out, why) => {
-    const c = document.querySelector(sel + ' > [cloned][slot="selected"]')
+    const c = document.querySelector(sel).shadowRoot?.querySelector('slot[name="selected"]')?.assignedElements()[0]
     const t = (c && c.textContent.trim()) || ''
     document.getElementById(out).innerHTML = t
       ? '<b style="color:#2a7">trigger shows: “' + t + '”</b>'
@@ -54,7 +45,6 @@ const tail = `Static token</ty-option>
   }
   window.addEventListener('DOMContentLoaded', () => setTimeout(() => {
     report('ty-select[name="auth"]', 'r', 'clone captured before the option had text')
-    report('#s2', 'r2', 'value never set from the selected attribute — list is ticked, field is not')
   }, 300))
 </script>
 </body></html>`
@@ -63,7 +53,7 @@ const index = `<!doctype html><html><head><meta charset="utf-8"><title>ty-select
 <style>body{margin:0;font-family:system-ui}h1{font-size:16px;padding:12px 16px;margin:0;border-bottom:1px solid #ddd}
 .row{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 45px)}iframe{border:0;width:100%;height:100%}
 .row>div:first-child{border-right:1px solid #ddd}</style></head><body>
-<h1>ty-select blank trigger — case 1: streamed document (${PAUSE_MS}ms gap inside the last option) · case 2: option carries <code>selected</code>, no <code>value</code> on the select</h1>
+<h1>ty-select blank trigger — streamed document (${PAUSE_MS}ms gap inside the last option)</h1>
 <div class="row"><div><iframe src="/case?lib=cdn"></iframe></div><div><iframe src="/case?lib=local"></iframe></div></div>
 </body></html>`
 

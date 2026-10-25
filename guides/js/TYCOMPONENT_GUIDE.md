@@ -50,7 +50,6 @@ TyComponent._handlePropertyChanges()
    - Handles type coercion (string/boolean/number/object/array)
    - Validates property values
    - Tracks property changes
-   - Manages property aliases
 
 2. **TyComponent** (`/base/ty-component.ts`)
    - Base class for all components
@@ -162,14 +161,11 @@ export class TySelect extends TyComponent<SelectState> {
       default: false
     },
     
-    // Boolean property with alias support
+    // camelCase property ↔ kebab-case attribute: <ty-select external-search>
     externalSearch: {
       type: 'boolean' as const,
       visual: true,
-      default: false,
-      aliases: {
-        'external-search': true  // <ty-select external-search>
-      }
+      default: false
     },
     
     // String property with validation
@@ -213,7 +209,6 @@ export class TySelect extends TyComponent<SelectState> {
 | `default` | `any` | Default value when property is undefined |
 | `validate` | `(value: any) => boolean` | Custom validation function |
 | `coerce` | `(value: any) => any` | Custom coercion/transformation function |
-| `aliases` | `Record<string, any>` | Extra attribute names mapped to a fixed value (e.g., `{'compact': true}`) |
 
 ### Step 3: Create Property Accessors (Simple!)
 
@@ -612,8 +607,7 @@ export class TySelect extends TyComponent<SelectState> {
     externalSearch: {
       type: 'boolean' as const,
       visual: true,
-      default: false,
-      aliases: { 'external-search': true }
+      default: false
     },
     size: {
       type: 'string' as const,
@@ -783,9 +777,13 @@ console.assert(select.disabled === true)
 select.removeAttribute('disabled')
 console.assert(select.disabled === false)
 
-// Alias
+// kebab-case attribute → camelCase property
 select.setAttribute('external-search', '')
 console.assert(select.externalSearch === true)
+
+// "false" is off, like every boolean attribute here
+select.setAttribute('external-search', 'false')
+console.assert(select.externalSearch === false)
 ```
 
 ### Form Integration

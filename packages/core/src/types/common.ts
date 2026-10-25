@@ -135,8 +135,10 @@ export interface TyTagElement extends TyBaseElement {
 export interface TyOptionElement extends Omit<HTMLElement, 'hidden'> {
   /** Option value */
   value?: string
-  /** Selected state */
+  /** The app's mark, read by ty-select only in `external-selection` mode */
   selected?: boolean
+  /** Set by the parent ty-select: draws the check and aria-selected */
+  checked?: boolean
   /** Disabled state */
   disabled?: boolean
   /** Highlighted state (keyboard navigation) */

@@ -1,6 +1,15 @@
 /**
  * TyOption Web Component - rich HTML alternative to native <option>.
  * Property-attribute synchronization keeps it compatible with frameworks.
+ *
+ * Two kinds of selection state, never mixed:
+ * - `selected` (attribute/property) is the APP's mark. Only ty-select's
+ *   `external-selection` mode reads it; otherwise the select's `value` rules.
+ * - `checked` (property only) is what the parent ty-select decided: it draws
+ *   the check and aria-selected. Never written to an attribute, so a server
+ *   morph has nothing of ours to strip.
+ * role="option" is an attribute (audit tools like axe don't read
+ * ElementInternals); it never changes, and comes back if a morph strips it.
  */
 
 import type { TyOptionElement } from '../types/common.js'
@@ -20,9 +29,12 @@ const CHECK_SVG = `
 export class TyOption extends HTMLElement implements TyOptionElement {
   private _value: string | undefined = undefined
   private _selected = false
+  private _checked = false
+  private _inTrigger = false
   private _disabled = false
   private _highlighted = false
   private _hidden = false
+  private _internals: ElementInternals
 
   constructor() {
     super()
@@ -30,15 +42,20 @@ export class TyOption extends HTMLElement implements TyOptionElement {
     const shadow = this.attachShadow({ mode: 'open' })
     ensureStyles(shadow, { css: optionStyles, id: 'ty-option' })
 
+    // Selection state lives in internals, not in attributes a morph could strip
+    this._internals = this.attachInternals()
+    this._internals.ariaSelected = 'false'
+
     this.render()
   }
 
   static get observedAttributes(): string[] {
-    return ['value', 'disabled', 'selected', 'highlighted', 'hidden']
+    return ['value', 'disabled', 'selected', 'highlighted', 'hidden', 'role']
   }
 
   connectedCallback(): void {
     upgradeProperties(this)
+    if (!this.hasAttribute('role')) this.setAttribute('role', 'option')
     this.render()
   }
 
@@ -51,7 +68,8 @@ export class TyOption extends HTMLElement implements TyOptionElement {
         this._value = newValue || undefined
         break
       case 'selected':
-        this._selected = newValue !== null
+        // Boolean-attribute rules of the library: "false" and "0" are off
+        this._selected = newValue !== null && !/^(false|0)$/i.test(newValue.trim())
         break
       case 'disabled':
         this._disabled = newValue !== null
@@ -62,6 +80,9 @@ export class TyOption extends HTMLElement implements TyOptionElement {
       case 'hidden':
         this._hidden = newValue !== null
         break
+      case 'role':
+        if (newValue === null && this.isConnected) this.setAttribute('role', 'option')
+        return
     }
 
     this.render()
@@ -74,16 +95,16 @@ export class TyOption extends HTMLElement implements TyOptionElement {
   private getOptionValue(): string {
     // Explicit priority: property > attribute > textContent
     // This correctly handles empty strings
-    
+
     if (this._value !== undefined) {
       return this._value
     }
-    
+
     const attrValue = this.getAttribute('value')
     if (attrValue !== null) {
       return attrValue
     }
-    
+
     return this.textContent?.trim() || ''
   }
 
@@ -105,6 +126,7 @@ export class TyOption extends HTMLElement implements TyOptionElement {
     }
   }
 
+  /** The app's mark, read by ty-select only in `external-selection` mode. */
   get selected(): boolean {
     return this._selected
   }
@@ -118,6 +140,32 @@ export class TyOption extends HTMLElement implements TyOptionElement {
       } else {
         this.removeAttribute('selected')
       }
+    }
+  }
+
+  /** Set by the parent ty-select: draws the check and aria-selected. */
+  get checked(): boolean {
+    return this._checked
+  }
+
+  set checked(value: boolean) {
+    value = coerceBoolean(value)
+    if (this._checked !== value) {
+      this._checked = value
+      this._internals.ariaSelected = String(value)
+      this.render()
+    }
+  }
+
+  /** Set by the parent ty-select while this option is shown in its trigger. */
+  get inTrigger(): boolean {
+    return this._inTrigger
+  }
+
+  set inTrigger(value: boolean) {
+    value = coerceBoolean(value)
+    if (this._inTrigger !== value) {
+      this._inTrigger = value
       this.render()
     }
   }
@@ -184,31 +232,15 @@ export class TyOption extends HTMLElement implements TyOptionElement {
       shadow.innerHTML = `<div class="option-content"><slot></slot>${CHECK_SVG}</div>`
     }
 
+    this._internals.ariaDisabled = this._disabled ? 'true' : null
+
     const content = shadow.querySelector('.option-content')
     if (content) {
-      if (this._disabled) {
-        content.setAttribute('disabled', '')
-      } else {
-        content.removeAttribute('disabled')
-      }
-
-      if (this._selected) {
-        content.setAttribute('selected', '')
-      } else {
-        content.removeAttribute('selected')
-      }
-
-      if (this._highlighted) {
-        content.setAttribute('highlighted', '')
-      } else {
-        content.removeAttribute('highlighted')
-      }
-
-      if (this._hidden) {
-        content.setAttribute('hidden', '')
-      } else {
-        content.removeAttribute('hidden')
-      }
+      content.toggleAttribute('disabled', this._disabled)
+      content.toggleAttribute('selected', this._checked)
+      content.toggleAttribute('highlighted', this._highlighted)
+      content.toggleAttribute('hidden', this._hidden)
+      content.classList.toggle('in-trigger', this._inTrigger)
     }
   }
 }

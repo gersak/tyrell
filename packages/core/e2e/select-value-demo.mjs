@@ -39,10 +39,10 @@ const page = `<!doctype html><html><head><meta charset="utf-8">
   <div class="row">
     <div class="col">
       <small class="label">ty-select (shared)</small>
-      <ty-select id="a-sel" multiple label="Flavors">
+      <ty-select id="a-sel" multiple value="c,s" label="Flavors">
         <ty-option value="v">Vanilla</ty-option>
-        <ty-option value="c" selected>Chocolate</ty-option>
-        <ty-option value="s" selected>Strawberry</ty-option>
+        <ty-option value="c">Chocolate</ty-option>
+        <ty-option value="s">Strawberry</ty-option>
       </ty-select>
     </div>
     <div class="col">
@@ -59,12 +59,12 @@ const page = `<!doctype html><html><head><meta charset="utf-8">
 
 <section>
   <h2>B - chips are correct on the VERY FIRST paint (the regression this rewrite caused, now fixed)</h2>
-  <p class="sub">Multiple select, two options pre-marked selected in markup, NO value attribute. ty-selected-tags reads picker.value in its own synchronous connectedCallback.</p>
+  <p class="sub">Multiple select, value="p,m". ty-selected-tags reads picker.value in its own synchronous connectedCallback.</p>
   <div class="row">
     <div class="col">
-      <ty-select id="b-sel" multiple label="Toppings">
-        <ty-option value="p" selected>Pepperoni</ty-option>
-        <ty-option value="m" selected>Mushroom</ty-option>
+      <ty-select id="b-sel" multiple value="p,m" label="Toppings">
+        <ty-option value="p">Pepperoni</ty-option>
+        <ty-option value="m">Mushroom</ty-option>
         <ty-option value="o">Olives</ty-option>
       </ty-select>
     </div>
@@ -83,8 +83,8 @@ const page = `<!doctype html><html><head><meta charset="utf-8">
 </section>
 
 <section>
-  <h2>D - pre-selected OPTION, no value attribute on the select</h2>
-  <p class="sub">List shows the tick - does the trigger field show it too?</p>
+  <h2>D - option <code>selected</code> is ignored, no value attribute on the select</h2>
+  <p class="sub">The value is the only input: nothing is selected, the trigger shows the placeholder.</p>
   <ty-select id="d-sel" label="Auth method">
     <ty-option value="k8s">Kubernetes</ty-option>
     <ty-option value="token" selected>Static token</ty-option>
@@ -120,9 +120,9 @@ window.addEventListener('DOMContentLoaded', () => setTimeout(() => {
     '.value="' + cValue + '" - required valid=' + cValid + ' - FormData="' + cFormData + '" (zero options ever appended)')
 
   const dSel = document.getElementById('d-sel')
-  const dClone = dSel.querySelector(':scope > [cloned][slot="selected"]')
+  const dClone = dSel.shadowRoot.querySelector('slot[name="selected"]').assignedElements()[0]
   const dText = dClone ? dClone.textContent.trim() : ''
-  verdict('v-d', dSel.value === 'token' && dText === 'Static token',
+  verdict('v-d', dSel.value === '' && dText === '',
     '.value="' + dSel.value + '" - trigger shows "' + dText + '"')
 }, 250))
 </script>

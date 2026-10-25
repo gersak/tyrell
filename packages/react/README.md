@@ -131,14 +131,13 @@ function SearchBox() {
 ### Selection Components (Select, Calendar, etc.)
 
 ```tsx
+import { useState } from 'react';
 import { TySelect, TyOption } from 'tyrell-react';
 
 function CountrySelector() {
+  const [country, setCountry] = useState('ca');
   return (
-    <TySelect
-      // onChange fires when selection changes
-      onChange={(e) => console.log('Selected:', e.detail.value)}
-    >
+    <TySelect value={country} onChange={(e) => setCountry(e.detail.value as string)}>
       <TyOption value="us">United States</TyOption>
       <TyOption value="ca">Canada</TyOption>
     </TySelect>
@@ -146,9 +145,21 @@ function CountrySelector() {
 }
 ```
 
-Add `multiple` for multi-select; `e.detail.values` is then always the selected array.
+`value` is the selection; `TyOption selected` does not select. With `multiple`, pass an array (or a comma-joined string); `e.detail.values` is the selected array in pick order. TySelect is meant for lists up to 20-30 options (a search row appears above 7). For long or remote lists, use `externalSearch` and replace the options in `onSearch`.
 
-For selection components, `onChange` fires when the selection changes (as expected).
+When the selection is too large to keep in `value` (hundreds of values), set `externalSelection` and mark the selected options yourself:
+
+```tsx
+<TySelect multiple externalSearch externalSelection
+  onSearch={(e) => search(e.detail.query)}
+  onChange={(e) => toggle(e.detail.value as string, e.detail.selected!)}>
+  {results.map((r) => (
+    <TyOption key={r.id} value={r.id} selected={chosen.has(r.id)}>{r.name}</TyOption>
+  ))}
+</TySelect>
+```
+
+A pick fires `onChange` with `{ value, selected, action }` and changes nothing until you re-render the marks. `value` stays `''`, nothing is submitted with the form, `required` is not enforced, and `TySelectedOptions` does not apply: show your own summary.
 
 ## 💡 Usage Examples
 

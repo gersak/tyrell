@@ -590,7 +590,7 @@
     :icon "tag"
     :view tag-docs/view
     :name "Tag"
-    :description "Pills and chips with click and dismiss handlers. Semantic flavors, sizes, selected state, keyboard accessible (Enter/Backspace)."
+    :description "Pills and chips with click and dismiss handlers. Semantic flavors, sizes, keyboard accessible (Enter/Backspace)."
     :tags ["label" "badge" "chip" "category"]
     :preview tag-preview}
    {:id :tyrell.site.docs/tooltip

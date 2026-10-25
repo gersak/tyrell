@@ -4,9 +4,9 @@ import { mount } from './helpers'
 test.describe('ty-selected-tags — edge cases', () => {
   test('for="id" links to a select elsewhere in the DOM and renders chips for its selected values', async ({ page }) => {
     await mount(page, `
-      <ty-select id="sel" multiple>
-        <ty-option value="a" selected>Apple</ty-option>
-        <ty-option value="b" selected>Banana</ty-option>
+      <ty-select id="sel" multiple value="a,b">
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b">Banana</ty-option>
         <ty-option value="c">Cherry</ty-option>
       </ty-select>
       <div style="height:40px">spacer</div>
@@ -20,8 +20,8 @@ test.describe('ty-selected-tags — edge cases', () => {
   test('chips freeze while open (never hidden) and refresh with the final selection on close (INVARIANTS.md §1/§2)', async ({ page }) => {
     await mount(page, `
       <div style="width:400px">
-        <ty-select id="sel" multiple>
-          <ty-option value="a" selected>Apple</ty-option>
+        <ty-select id="sel" multiple value="a">
+          <ty-option value="a">Apple</ty-option>
           <ty-option value="b">Banana</ty-option>
           <ty-option value="c">Cherry</ty-option>
         </ty-select>
@@ -57,9 +57,9 @@ test.describe('ty-selected-tags — edge cases', () => {
   test('slot="trigger" select hugs its trigger so chips fit beside it on the same row', async ({ page }) => {
     await mount(page, `
       <div style="width:600px;display:flex;align-items:center;gap:8px">
-        <ty-select id="sel" multiple>
+        <ty-select id="sel" multiple value="a">
           <button slot="trigger">Robots</button>
-          <ty-option value="a" selected>Apple</ty-option>
+          <ty-option value="a">Apple</ty-option>
         </ty-select>
         <ty-selected-tags id="tags" for="sel"></ty-selected-tags>
       </div>
@@ -77,8 +77,8 @@ test.describe('ty-selected-tags — edge cases', () => {
 
   test('previous-sibling fallback: no for="" needed when adjacent to the select', async ({ page }) => {
     await mount(page, `
-      <ty-select id="sel" multiple>
-        <ty-option value="a" selected>Apple</ty-option>
+      <ty-select id="sel" multiple value="a">
+        <ty-option value="a">Apple</ty-option>
       </ty-select>
       <ty-selected-tags id="tags"></ty-selected-tags>
     `)
@@ -88,9 +88,9 @@ test.describe('ty-selected-tags — edge cases', () => {
 
   test('dismissing a chip removes it from the linked select value', async ({ page }) => {
     await mount(page, `
-      <ty-select id="sel" multiple>
-        <ty-option value="a" selected>Apple</ty-option>
-        <ty-option value="b" selected>Banana</ty-option>
+      <ty-select id="sel" multiple value="a,b">
+        <ty-option value="a">Apple</ty-option>
+        <ty-option value="b">Banana</ty-option>
       </ty-select>
       <ty-selected-tags id="tags" for="sel"></ty-selected-tags>
     `)
@@ -106,8 +106,8 @@ test.describe('ty-selected-tags — edge cases', () => {
 
   test('custom <template> child renders interpolated placeholders', async ({ page }) => {
     await mount(page, `
-      <ty-select id="sel" multiple>
-        <ty-option value="a" selected data-flag="🇺🇸">America</ty-option>
+      <ty-select id="sel" multiple value="a">
+        <ty-option value="a" data-flag="🇺🇸">America</ty-option>
       </ty-select>
       <ty-selected-tags id="tags" for="sel">
         <template>

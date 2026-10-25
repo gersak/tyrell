@@ -744,10 +744,10 @@ Beyond that, **no optical correction is applied, and none is needed**. Inter is 
 
 ### Text arriving from the light DOM
 
-`ty-select` renders its selected value by cloning the chosen `ty-option` into the trigger with `slot="selected"`. That clone lives in the **light DOM**, so it does not inherit the stub's shadow styles — it has to pick up the ladder explicitly:
+A closed single `ty-select` shows the chosen `ty-option` itself in its trigger (the select assigns it to its `selected` slot and sets the option's `inTrigger`). The option is **light DOM**, so it does not inherit the stub's shadow styles — it picks up the ladder explicitly:
 
 ```css
-:host([cloned]) .option-content {
+.option-content.in-trigger {
   font-size: var(--ty-field-font, var(--ty-font-sm));
   line-height: var(--ty-field-leading, var(--ty-leading-sm));
   letter-spacing: var(--ty-field-tracking, var(--ty-tracking-sm));

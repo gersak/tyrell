@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { hostProps } from '../utils/host-props';
-import { needsPropertyBridge } from '../utils/react-version';
-import { useBooleanProperty } from '../utils/use-boolean-prop';
+import React, { useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
+import { hostProps } from '../utils/host-props.js';
+import { needsPropertyBridge } from '../utils/react-version.js';
+import { useBooleanProperty } from '../utils/use-boolean-prop.js';
 
 type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;
@@ -18,22 +18,28 @@ export interface TySelectItem {
 }
 
 export interface TySelectEventDetail {
-  /** Scalar for single select, array when `multiple` */
+  /** Scalar for single select, array when `multiple`. With `externalSelection`: the picked option's value. */
   value: string | string[] | null;
-  /** Always the array form of the selection */
+  /** Always the array form of the selection, in pick order. Empty with `externalSelection`. */
   values: string[];
-  /** Rich info per selected value — enough to render chips out-of-band */
+  /** Rich info per selected value — enough to render chips out-of-band. Empty with `externalSelection`. */
   items: TySelectItem[];
   /** Action that triggered the change */
   action: 'add' | 'remove' | 'clear' | 'set' | 'create';
   /** The specific value that changed */
   item: string | null;
+  /** `externalSelection` only: the state the user asked for the picked option */
+  selected?: boolean;
 }
 
 export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, 'onChange' | 'style'> {
   style?: import('./TyInput').TyInputCSSProperties;
 
-  /** Selected value(s) — string, comma-separated string, or array */
+  /**
+   * The selection — string, comma-separated string, or array. The only
+   * selection input: TyOption `selected` doesn't select. Ignored with
+   * `externalSelection`.
+   */
   value?: string | string[];
 
   /** Multi select (native <select multiple> semantics). Default: single. */
@@ -84,6 +90,15 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
    */
   externalSearch?: boolean;
 
+  /**
+   * The app holds the selection (hundreds of selected values, remote lists):
+   * mark the selected options with TyOption `selected`. A pick fires onChange
+   * with `{ value, selected, action }` and changes nothing; re-render the
+   * marks. `value` stays '', nothing is submitted, `required` isn't enforced.
+   * Usually paired with externalSearch. TySelectedOptions doesn't apply.
+   */
+  externalSelection?: boolean;
+
   /** Debounce for the search event in ms (0-5000) */
   debounce?: number;
 
@@ -109,10 +124,7 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
    *  (styles/field-size.ts). Defaults to 'sm'. */
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-  /** Horizontal popup anchor: "start" (default, trigger's left edge), "center", or "end" (trigger's right edge) — clamped into the viewport either way. Useful with a custom slot="trigger" element. Ignored when `placement` is set. */
-  align?: 'start' | 'center' | 'end';
-
-  /** Full placement, same vocabulary as ty-popup/ty-tooltip: a side plus an optional cross-axis alignment (e.g. "bottom-end"). Takes precedence over `align` when set. */
+  /** Where the list opens: "bottom" or "top", plus an optional "-start"/"-end" alignment (e.g. "bottom-end"); same vocabulary as ty-popup/ty-tooltip. Flips rather than clips. Unset: below when it fits, else the side with more room, start-aligned. */
   placement?: Placement;
 
   /** No built-in x clear button (it shows once something is selected; never with slot="trigger" — use the ref's clear() there). */
@@ -136,7 +148,7 @@ export interface TySelectProps extends Omit<React.HTMLAttributes<HTMLElement>, '
    */
   onCreate?: (event: CustomEvent<{ value: string; label: string }>) => void;
 
-  /** TyOption children (plus optional slot="trigger" / slot="start" / slot="end" elements) */
+  /** TyOption children (plus optional slot="trigger" / slot="start" / slot="end" elements). TyTag is not an option. */
   children?: React.ReactNode;
 }
 
@@ -161,12 +173,12 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     required,
     notSearchable,
     externalSearch,
+    externalSelection,
     debounce,
     allowCreate,
     createTransform,
     loading,
     size,
-    align,
     placement,
     noClear,
     flavor,
@@ -243,6 +255,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     const isRequired = useBooleanProperty(elementRef, 'required', required);
     const isLoading = useBooleanProperty(elementRef, 'loading', loading);
     const isExternalSearch = useBooleanProperty(elementRef, 'externalSearch', externalSearch);
+    const isExternalSelection = useBooleanProperty(elementRef, 'externalSelection', externalSelection);
     const isAllowCreate = useBooleanProperty(elementRef, 'allowCreate', allowCreate);
     const isNoClear = useBooleanProperty(elementRef, 'noClear', noClear);
 
@@ -262,6 +275,7 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     if (isRequired) webComponentProps.required = '';
     if (isLoading) webComponentProps.loading = '';
     if (isExternalSearch) webComponentProps['external-search'] = '';
+    if (isExternalSelection) webComponentProps['external-selection'] = '';
     if (isAllowCreate) webComponentProps['allow-create'] = '';
 
     if (placeholder) webComponentProps.placeholder = placeholder;
@@ -271,7 +285,6 @@ export const TySelect = React.forwardRef<TySelectElement, TySelectProps>(
     if (noOptionsMessage) webComponentProps['no-options-message'] = noOptionsMessage;
     if (name) webComponentProps.name = name;
     if (size) webComponentProps.size = size;
-    if (align) webComponentProps.align = align;
     if (placement) webComponentProps.placement = placement;
     if (isNoClear) webComponentProps['no-clear'] = '';
     if (flavor) webComponentProps.flavor = flavor;
@@ -296,16 +309,25 @@ export interface TySelectedTagsProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
 
+const noSubscribe = () => () => {};
+
 const selectedChipsComponent = (tag: 'ty-selected-options' | 'ty-selected-tags') =>
   React.forwardRef<HTMLElement, TySelectedTagsProps>(({ htmlFor, children, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
+    // The element draws its chips as its own children, which hydration would
+    // find unexpected: render it on the client only. false on the server and
+    // while hydrating; true in every other client render, so a client-only
+    // app renders it right away.
+    const onClient = useSyncExternalStore(noSubscribe, () => true, () => false);
 
     useEffect(() => {
       if (ref && elementRef.current) {
         if (typeof ref === 'function') ref(elementRef.current);
         else ref.current = elementRef.current;
       }
-    }, [ref]);
+    }, [ref, onClient]);
+
+    if (!onClient) return null;
 
     const webComponentProps: Record<string, any> = { ...hostProps(props), ref: elementRef };
     if (htmlFor) webComponentProps.for = htmlFor;
@@ -313,7 +335,7 @@ const selectedChipsComponent = (tag: 'ty-selected-options' | 'ty-selected-tags')
     return React.createElement(tag, webComponentProps, children);
   });
 
-/** React wrapper for the ty-selected-options web component. */
+/** React wrapper for the ty-selected-options web component: chips for a TySelect's `value` (not for `externalSelection`). */
 export const TySelectedOptions = selectedChipsComponent('ty-selected-options');
 TySelectedOptions.displayName = 'TySelectedOptions';
 

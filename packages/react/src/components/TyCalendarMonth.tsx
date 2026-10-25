@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { hostProps } from '../utils/host-props';
+import { hostProps } from '../utils/host-props.js';
 
 type BuiltinFlavor = 'primary' | 'success' | 'danger' | 'warning' | 'neutral';
 type ShadedFlavor = BuiltinFlavor | `${BuiltinFlavor}+` | `${BuiltinFlavor}-`;

@@ -9,7 +9,6 @@ import {
   TyTextarea,
   TySelect,
   TyOption,
-  TyTag,
   TyModal,
   TyDatePicker,
   type TyModalRef,
@@ -29,7 +28,7 @@ import {
  *   1. Click "Open project modal".
  *   2. Inside the modal, click the priority Dropdown — pick an option. Modal
  *      should STAY OPEN. Event log below the page records each open/close.
- *   3. Click the assignees Multiselect — pick tags, click outside the popup,
+ *   3. Click the assignees Multiselect — pick options, click outside the popup,
  *      press ESC inside the search input. Modal stays open through all of it.
  *   4. Click the deadline DatePicker, navigate, pick a date. Modal stays open.
  *   5. Pressing ESC while no popup is open closes the modal (correct).
@@ -215,12 +214,12 @@ export default function ModalPopupsTest() {
                   setAssignees(e.detail.values)
                 }}
               >
-                <TyTag value="ada"     size="sm" flavor="primary">Ada Lovelace</TyTag>
-                <TyTag value="linus"   size="sm" flavor="primary">Linus Torvalds</TyTag>
-                <TyTag value="grace"   size="sm" flavor="primary">Grace Hopper</TyTag>
-                <TyTag value="rich"    size="sm" flavor="primary">Rich Hickey</TyTag>
-                <TyTag value="alan"    size="sm" flavor="primary">Alan Kay</TyTag>
-                <TyTag value="barbara" size="sm" flavor="primary">Barbara Liskov</TyTag>
+                <TyOption value="ada" flavor="primary">Ada Lovelace</TyOption>
+                <TyOption value="linus" flavor="primary">Linus Torvalds</TyOption>
+                <TyOption value="grace" flavor="primary">Grace Hopper</TyOption>
+                <TyOption value="rich" flavor="primary">Rich Hickey</TyOption>
+                <TyOption value="alan" flavor="primary">Alan Kay</TyOption>
+                <TyOption value="barbara" flavor="primary">Barbara Liskov</TyOption>
               </TySelect>
             </div>
 
@@ -235,11 +234,11 @@ export default function ModalPopupsTest() {
                   setTags(e.detail.values)
                 }}
               >
-                <TyTag value="frontend" size="sm" flavor="success" >frontend</TyTag>
-                <TyTag value="backend"  size="sm" flavor="warning" >backend</TyTag>
-                <TyTag value="design"   size="sm" flavor="neutral">design</TyTag>
-                <TyTag value="infra"    size="sm" flavor="neutral" >infra</TyTag>
-                <TyTag value="research" size="sm" flavor="primary" >research</TyTag>
+                <TyOption value="frontend" flavor="success">frontend</TyOption>
+                <TyOption value="backend" flavor="warning">backend</TyOption>
+                <TyOption value="design" flavor="neutral">design</TyOption>
+                <TyOption value="infra" flavor="neutral">infra</TyOption>
+                <TyOption value="research" flavor="primary">research</TyOption>
               </TySelect>
             </div>
 

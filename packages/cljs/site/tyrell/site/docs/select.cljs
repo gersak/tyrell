@@ -59,6 +59,11 @@
 (defn- doc-state [k] (get-in @state/state [:select-doc k]))
 (defn- set-doc! [k v] (swap! state/state assoc-in [:select-doc k] v))
 
+(defn- picked-robots
+  "external-selection demo: the app's picks."
+  []
+  (or (doc-state :picked) #{"Rob Roy" "Aerobot"}))
+
 (defn- fake-search!
   "Stand-in for fetch(): 450ms later, the matching robots become options."
   [query]
@@ -117,6 +122,52 @@ sel.addEventListener('search', async (e) => {
   data-on:search=\"@get('/robots?q=' + evt.detail.query)\">
 </ty-select>"]])
 
+(def ^:private selection-snippets
+  "external-selection: the app holds the picks, one tab per stack."
+  [["html" "HTML" "html"
+    "<ty-select id=\"robots\" multiple external-selection>
+  <ty-option value=\"rob-roy\" selected>Rob Roy</ty-option>
+  <ty-option value=\"aerobot\">Aerobot</ty-option>
+</ty-select>
+
+<script>
+  const sel = document.getElementById('robots');
+  sel.addEventListener('change', (e) => {
+    const { value, selected } = e.detail;
+    sel.querySelector(`ty-option[value=\"${value}\"]`).selected = selected;
+  });
+</script>"]
+   ["react" "React" "javascript"
+    "import { TySelect, TyOption } from 'tyrell-react'
+
+<TySelect multiple externalSelection
+  onChange={(e) => toggle(e.detail.value, e.detail.selected)}>
+  {rows.map((r) => (
+    <TyOption key={r.id} value={r.id} selected={picked.has(r.id)}>{r.name}</TyOption>
+  ))}
+</TySelect>"]
+   ["reagent" "Reagent" "clojure"
+    "(:require [tyrell.react :as ty])
+
+[:> ty/Select {:multiple true :external-selection true
+               :on-change #(toggle! (.. % -detail -value) (.. % -detail -selected))}
+ (for [{:keys [id name]} @rows]
+   ^{:key id} [:> ty/Option {:value id :selected (contains? @picked id)} name])]"]
+   ["replicant" "Replicant" "clojure"
+    "[:ty-select {:multiple \"\" :external-selection \"\"
+             :on {:change #(toggle! (.. % -detail -value) (.. % -detail -selected))}}
+ (for [{:keys [id name]} rows]
+   [:ty-option (cond-> {:replicant/key id :value id}
+                 (picked id) (assoc :selected \"\"))
+    name])]"]
+   ["datastar" "Datastar" "html"
+    "<!-- the server keeps the picks and patches the marked options back in -->
+<ty-select id=\"robots\" multiple external-selection
+  data-on:change=\"@post('/robots/pick?id=' + evt.detail.value + '&on=' + evt.detail.selected)\">
+  <ty-option value=\"rob-roy\" selected>Rob Roy</ty-option>
+  <ty-option value=\"aerobot\">Aerobot</ty-option>
+</ty-select>"]])
+
 (def ^:private api-snippets
   "JavaScript API card, one tab per stack."
   [["html" "HTML" "javascript"
@@ -154,8 +205,8 @@ sel.addEventListener('open', () => track('select-open'));"]
                   :open #(track! \"select-open\")}}
  …]"]
    ["datastar" "Datastar" "html"
-    "<ty-select data-signals:lang=\"'de'\" data-attr:value=\"$lang\"
-  data-on:change=\"$lang = evt.detail.value\"
+    "<!-- multiple: $lang holds \"clj,rs\" -->
+<ty-select data-signals:lang=\"'de'\" data-bind=\"lang\"
   data-on:open=\"@post('/track/select-open')\">
   …
 </ty-select>"]])
@@ -297,9 +348,10 @@ sel.addEventListener('open', () => track('select-open'));"]
      (example
       {:title "Options from your API"
        :span 3
-       :description [:span [:code "external-search"] " stops local filtering and fires a debounced "
-                     [:code "search"] ". Set " [:code "loading"] ", fetch, swap the options. Try "
-                     [:code "rob"] "."]
+       :description [:span "ty-select is built for lists up to 20–30 options. Longer or remote lists: "
+                     [:code "external-search"] " stops local filtering and fires a debounced "
+                     [:code "search"] ". Set " [:code "loading"] ", fetch, swap the options. Labels come from the options present: keep the picked ones in the list, "
+                     [:code "hidden"] " if they aren't results. Try " [:code "rob"] "."]
        :tabs search-snippets}
       (let [results (doc-state :results)]
         [:ty-select (cond-> {:label "Robot" :external-search "" :debounce "250" :placeholder "Type to search…"
@@ -307,6 +359,22 @@ sel.addEventListener('open', () => track('select-open'));"]
                       (doc-state :loading) (assoc :loading ""))
          (for [r (or results (take 4 robots))]
            [:ty-option {:replicant/key r :value r} r])]))
+
+     (example
+      {:title "Selection in your app"
+       :span 3
+       :description [:span [:code "external-selection"] " is for hundreds of picks, usually with "
+                     [:code "external-search"] ". Mark the options you show " [:code "selected"]
+                     "; a pick fires " [:code "change"] " with " [:code "{value, selected}"]
+                     " and changes nothing until you re-mark. Nothing is submitted; show your own summary (here, the placeholder)."]
+       :tabs selection-snippets}
+      (let [picked (picked-robots)]
+        [:ty-select {:label "Robots" :multiple "" :external-selection ""
+                     :placeholder (str (count picked) " selected")
+                     :on {:change #(let [d (.-detail %)]
+                                     (set-doc! :picked ((if (.-selected d) conj disj) (picked-robots) (.-value d))))}}
+         (for [r robots]
+           [:ty-option (cond-> {:replicant/key r :value r} (picked r) (assoc :selected "")) r])]))
 
      (example
       {:title "Create on the fly"
@@ -352,6 +420,22 @@ sel.addEventListener('open', () => track('select-open'));"]
                    :selected-label "In basket" :available-label "Fruit"}
        (for [f ["Apple" "Banana" "Cherry" "Fig" "Grape" "Kiwi" "Lemon" "Mango" "Pear" "Plum"]]
          [:ty-option {:replicant/key f :value (str/lower-case f)} f])])
+
+     (example
+      {:title "Server rendering"
+       :span 3
+       :description [:span "The selection is the " [:code "value"] " attribute; "
+                     [:code "<ty-option selected>"] " selects nothing. The select keeps the attribute on the current selection, so a server morph (Datastar, htmx idiomorph) does what the server renders: a different "
+                     [:code "value"] " wins, the same one changes nothing, none clears it. Render "
+                     [:code "value"] " with the current selection."]
+       :code "<!-- the server's HTML for a patch -->
+<ty-select name=\"langs\" multiple
+  value=\"clj,rs\">
+  <ty-option value=\"clj\">Clojure</ty-option>
+  <ty-option value=\"ts\">TypeScript</ty-option>
+  <ty-option value=\"rs\">Rust</ty-option>
+</ty-select>"}
+      nil)
 
      (example
       {:title "Rich options"
@@ -453,9 +537,10 @@ sel.addEventListener('open', () => track('select-open'));"]
     {:properties (into [["clear()" "() => void" "Clears the selection and fires change (action clear). Shows no validation message, so it's safe for resetting a form in code; the built-in × does show it."]]
                        validation-properties)
      :attributes ["Value"
-                  ["value" "string" "\"\"" "Selected value. With multiple: comma-separated, or an array from frameworks."]
+                  ["value" "string" "\"\"" "The selection, and the only way to set it. With multiple: comma-separated in pick order, or an array from frameworks. The select keeps the attribute on the current selection."]
                   ["name" "string" "Form field name. Multiple submits one entry per value."]
                   ["multiple" "boolean" "false" "Toggle options, popup stays open."]
+                  ["external-selection" "boolean" "false" "Your app holds the selection: it marks options selected, a pick fires change and changes nothing. No value, nothing submitted, required not enforced."]
                   "Field"
                   ["label" "string" "Label above the field."]
                   ["placeholder" "string" "\"Select...\"" "Shown while nothing is selected."]
@@ -475,20 +560,21 @@ sel.addEventListener('open', () => track('select-open'));"]
                   ["allow-create" "boolean" "false" "Enter on unmatched text adds an option and fires create."]
                   ["create-transform" "string" "\"none\"" "none, or slug to normalize created values."]
                   "Popup"
-                  ["placement" "string" "bottom, bottom-start, bottom-end, top, top-start, top-end. Flips when there's no room."]
-                  ["align" "string" "\"start\"" "start, center or end. placement wins when both are set."]
+                  ["placement" "string" "bottom, bottom-start, bottom-end, top, top-start, top-end. Unset: below when it fits, else the side with more room, start-aligned. Flips rather than clips."]
                   ["selected-label" "string" "\"Selected\"" "Mobile dialog: heading of the pinned selection strip. Count is appended."]
                   ["available-label" "string" "\"Available\"" "Mobile dialog: heading of the option list. Count is appended."]
                   ["no-options-message" "string" "\"No options available\"" "Shown when nothing matches the search."]
                   "ty-option"
                   ["value" "string" "What the select takes when this option is picked."]
+                  ["selected" "boolean" "false" "Your app's mark, read only with external-selection. Otherwise the select's value decides."]
                   ["label" "string" "Plain text for chips and the multiple field instead of the option's content."]
                   ["disabled" "boolean" "false" "Shown, not selectable."]
                   ["hidden" "boolean" "false" "Not offered: left out of the list, the arrow keys and the search. Can still be the value, like <option hidden>."]
                   ["flavor" "string" "Tag color for this option in ty-selected-options."]
                   "ty-selected-options"
-                  ["for" "string" "id of the select to mirror. Each chip is a dismissible ty-tag holding the option's own content (plain text with label); a <template> child replaces it."]]
-     :events [["change" "{value, values, items, action, item}" "Selection changed. action: set, add, remove, clear or create."]
+                  ["for" "string" "id of the select to mirror. Each chip is a dismissible ty-tag holding the option's own content (plain text with label); a <template> child replaces it. Not for external-selection."]]
+     :events [["change" "{value, values, items, action, item}" "Selection changed. action: set, add, remove, clear or create. values keep pick order."]
+              ["change (external-selection)" "{value, selected, action, item}" "A pick: value is the option, selected its requested state, action add, remove or set. values and items are empty."]
               ["search" "{query}" "Typing in the search row (external-search). Debounced."]
               ["create" "{value, label}" "allow-create minted an option. Cancelable."]
               ["open / close" "{mode, element}" "Popup lifecycle."]]
