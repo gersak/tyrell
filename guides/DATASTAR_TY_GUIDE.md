@@ -221,6 +221,8 @@ data: mode innerHTML
 data: elements <div id="dashboard"><h2>Updated!</h2></div>
 ```
 
+Field errors follow the patch too: a patched field renders its `error="…"`, and a patch that renders it without `error` clears the message. With `data-attr:error="$errors.email"` the signal owns it instead.
+
 ### Patch Signals (Update State)
 
 ```

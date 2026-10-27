@@ -176,10 +176,7 @@ export default function ContactFormExample() {
               </section>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t ty-border-">
-                {/* No type prop: ty-button already submits its form (validation included).
-                    TyButton type="submit" in tyrell-react TC57 also fires a synthetic
-                    submit event that skips validation and doubles onSubmit. */}
-                <TyButton flavor="primary" size="lg" loading={isSubmitting}>
+                <TyButton type="submit" flavor="primary" size="lg" loading={isSubmitting}>
                   <TyIcon slot="start" name="send" />
                   {isSubmitting ? 'Sending…' : 'Send message'}
                 </TyButton>

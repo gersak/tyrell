@@ -18,11 +18,10 @@ describe('ty-tag', () => {
     await ev;
   });
 
-  it('reflects dismissible and selected', async () => {
-    const el = (await fixture(html`<ty-tag dismissible selected></ty-tag>`)) as any;
+  it('reflects dismissible', async () => {
+    const el = (await fixture(html`<ty-tag dismissible></ty-tag>`)) as any;
     await nextFrame();
     expect(el.dismissible).to.equal(true);
-    expect(el.selected).to.equal(true);
   });
 });
 

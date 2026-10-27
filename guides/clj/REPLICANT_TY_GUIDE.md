@@ -30,8 +30,8 @@ For offline dev, fetch the files once and serve them from your `public/`:
 
 ```bash
 # Pin a version
-curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell.css
-curl -o public/css/tyrell-theme.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC6/css/tyrell-theme.css
+curl -o public/css/tyrell.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell.css
+curl -o public/css/tyrell-theme.css https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell-theme.css
 
 # Or copy from the version shadow-cljs already installed (after first build)
 cp node_modules/tyrell-components/css/tyrell.css public/css/tyrell.css

@@ -70,7 +70,6 @@ describe(`React ${React.version} wrappers`, () => {
     ['TyDatePicker', TyDatePicker, 'disabled', 'disabled', 'ty-date-picker'],
     ['TyTag', TyTag, 'noPill', 'no-pill', 'ty-tag'],
     ['TyTag', TyTag, 'dismissible', 'dismissible', 'ty-tag'],
-    ['TyTag', TyTag, 'selected', 'selected', 'ty-tag'],
     ['TyScrollContainer', TyScrollContainer, 'noShadow', 'no-shadow', 'ty-scroll-container'],
     ['TyScrollContainer', TyScrollContainer, 'hideScrollbar', 'hide-scrollbar', 'ty-scroll-container'],
     ['TyTab', TyTab, 'lazy', 'lazy', 'ty-tab', { id: 't1', label: 'One' }],

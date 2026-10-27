@@ -77,13 +77,9 @@ export const tagStyles = `
   /* 6px instead of full pill */
 }
 
-/* Tags with value attribute but NOT selected should be clickable */
-:host([value]:not([selected])) .tag-container:not([aria-disabled="true"]) {
+/* Tags with a value are clickable */
+:host([value]) .tag-container:not([aria-disabled="true"]) {
   cursor: pointer;
-}
-
-:host([selected]) .tag-container:not([aria-disabled="true"]) {
-  cursor: initial;
 }
 
 .tag-container[tabindex]:not([aria-disabled="true"]):hover {

@@ -20,7 +20,6 @@ export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'sty
   clickable?: boolean;
   dismissible?: boolean;
   disabled?: boolean;
-  selected?: boolean;
   value?: string;
   style?: TyTagCSSProperties;
   // click is a composed CustomEvent from the web component — React's onClick picks it up
@@ -30,7 +29,7 @@ export interface TyTagProps extends Omit<React.HTMLAttributes<HTMLElement>, 'sty
 }
 
 export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
-  ({ children, onClick, onTagDismiss, noPill, clickable, dismissible, disabled, selected, ...props }, ref) => {
+  ({ children, onClick, onTagDismiss, noPill, clickable, dismissible, disabled, ...props }, ref) => {
     const elementRef = useRef<HTMLElement>(null);
 
     const handleDismiss = useCallback((event: CustomEvent) => {
@@ -64,7 +63,6 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
     const isClickable = useBooleanProperty(elementRef, 'clickable', clickable);
     const isDismissible = useBooleanProperty(elementRef, 'dismissible', dismissible);
     const isDisabled = useBooleanProperty(elementRef, 'disabled', disabled);
-    const isSelected = useBooleanProperty(elementRef, 'selected', selected);
 
     return React.createElement(
       'ty-tag',
@@ -77,7 +75,6 @@ export const TyTag = React.forwardRef<HTMLElement, TyTagProps>(
         ...(isClickable && { clickable: "" }),
         ...(isDismissible && { dismissible: "" }),
         ...(isDisabled && { disabled: "" }),
-        ...(isSelected && { selected: "" }),
         ref: elementRef,
       },
       children

@@ -56,7 +56,7 @@
              [(v "border") :color "Default border."]
              [(v "border-soft") :color "Subtle border. Resting inputs."]
              [(v "border-faint") :color "Barely there."]]]
-     [:rows (for [f (butlast flavors)] [(v (str "border-" f)) :color (str (str/capitalize f) " border (ty-border-" f ").")])]
+     [:rows (for [f flavors] [(v (str "border-" f)) :color (str (str/capitalize f) " border (ty-border-" f ").")])]
      [:rows [[(v "border-width") :value "Default border width."]
              [(v "divide-color") :color "Divider lines (ty-divide-*). Follows the surface it's on."]
              [(v "divide-width") :value "Divider width."]

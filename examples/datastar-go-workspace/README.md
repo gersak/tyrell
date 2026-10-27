@@ -5,7 +5,7 @@ support-ticket demo doesn't cover**, so you can sanity-check the latest TC
 build end-to-end.
 
 > Sibling to `../datastar-go/`. Standard library only, single `main.go`.
-> Uses **tyrell-components `1.0.0-RC17`** (pinned on jsDelivr) and **Datastar `v1.0.0-RC.8`**.
+> Uses **tyrell-components `1.0.0-RC18`** (pinned on jsDelivr) and **Datastar `v1.0.0-RC.8`**.
 
 ## What it shows
 
@@ -36,7 +36,7 @@ If `../datastar-go/` is already running on `:8080`, both can coexist.
 ## Patterns worth noting
 
 - **Pinned version.** `dist/tyrell.js`, `css/tyrell.css`, and `css/tyrell-theme.css` are pulled from
-  `tyrell-components@1.0.0-RC17` on jsDelivr. Pinned rather than `@tc` (which moves with
+  `tyrell-components@1.0.0-RC18` on jsDelivr. Pinned rather than `@tc` (which moves with
   every test build) so the page always loads what it was written against.
 - **Lazy tabs.** An empty `<ty-tab lazy>` fires `ty-tab-load` when first shown. The
   server answers with the same `<ty-tab>` plus content (`patch-elements`, morphed by

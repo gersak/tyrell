@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-RC18] - 2026-10-27
+
 ### Changed (breaking)
 
 - **`ty-select`: `value` is the only selection input.** `<ty-option selected>` no longer selects anything. The select keeps its `value` attribute on the current selection, so a server morph does what the server renders: a different `value` wins, the same one changes nothing, none means no selection. A server that re-renders a select renders `value="…"` with the current selection.
@@ -14,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ty-select` writes no selection state onto its options.** The check and `aria-selected` come from `option.checked`, a property the select sets, and the option's internals; `ty-option` keeps its own `role="option"`. CSS that targeted `ty-option[selected]` for the selected look no longer matches.
 - **`<ty-tag>` is no longer an option inside `ty-select`.** Use `<ty-option>`; rich content, `flavor` and `data-*` still reach `ty-selected-options` chips.
 - **`ty-select`'s trigger shows the picked option itself, not a copy.** A closed single select assigns the real `<ty-option>` to its trigger slot, so page CSS still styles it and nothing is added to the select's children. Open, the trigger shows the placeholder, single and multiple alike; the list shows the picks. `ty-option[cloned]` and `slot="selected"` copies are gone.
+- **`ty-tag` `selected` is gone** (attribute, property, React prop). It marked tags picked as select options; nothing has read it since tags stopped being options, and it had no look. For a toggle chip use your own class or `flavor`.
 - **`ty-select` `align` is gone.** `placement` does it: `align="end"` is `placement="bottom-end"` (it still flips when there's no room below). React: `TySelect` `align` prop removed.
 - **`external-search="false"` means off**, like every other boolean attribute. The attribute aliases behind it are gone.
 
@@ -23,10 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`css/*.css` ships minified.** The documented `css/tyrell.css` + `css/tyrell-theme.css` were the commented sources, 21.8 KB gzipped together; now 6.7 KB. Same rules and paths. The sources moved to `src/css/`.
 - **`TySelectedOptions` (React) hydrates cleanly.** The element draws its chips as its own children, which SSR hydration found unexpected, so React rebuilt the tree on the client. The wrapper now renders it on the client only: nothing on the server and while hydrating, right away in every other render.
 - **`tyrell-react` loads as native Node ESM.** Its relative imports had no `.js` extension, so a server that runs the package unbundled (Next.js Pages Router, Remix, Vite SSR) failed with `ERR_MODULE_NOT_FOUND`.
 - **`ty-select` works with React SSR hydration and Replicant.** Its trigger copy was an extra child: React reported a hydration mismatch and re-rendered the whole tree on the client, and Replicant removed the wrong option when the options changed.
-- **`ty-select` morphs cleanly.** Nothing the select wrote is left for a morph to strip: the selection, checks, ARIA, the trigger clone, a slotted trigger's sizing and the popup position all survive. Options renamed by a morph relabel the trigger and chips.
+- **`ty-select` morphs cleanly.** Nothing the select wrote is left for a morph to strip: the selection, checks, ARIA, a slotted trigger's sizing and the popup position all survive. Options renamed by a morph relabel the trigger and chips.
 - **`ty-select` `change` `detail.values` keep click order**, like `.value`; they were sorted.
 - **A `ty-select` whose value is a text-only option (`<ty-option>Apple</ty-option>`) no longer loops** rebuilding its trigger clone and freezes the tab.
 - **`form.reset()` goes back to the latest markup**, like a native control's `defaultValue`: a `value` the server morphed in or a framework rendered becomes what reset restores, not the one from the first page load. A field's own reflection of the user's edit doesn't count. All form fields. `ty-select` also restores its `value` after picks again.

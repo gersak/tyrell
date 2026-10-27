@@ -119,8 +119,6 @@ export interface TyTagElement extends TyBaseElement {
   value?: string
   /** Tag size */
   size?: Size
-  /** Selected state */
-  selected?: boolean
   /** Square corners instead of the default pill */
   noPill?: boolean
   /** Clickable state */

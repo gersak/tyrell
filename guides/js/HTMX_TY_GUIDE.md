@@ -187,7 +187,7 @@ Server returns on 422:
           hx-swap-oob="true"></ty-input>
 ```
 
-The OOB swap replaces the input with one carrying the error message. Tyrell renders the error text and the danger colors automatically.
+The OOB swap replaces the input with one carrying the error message. Tyrell renders the error text and the danger colors automatically. The server owns `error`: the next response that renders the input without it clears the message.
 
 ## Common pitfalls
 

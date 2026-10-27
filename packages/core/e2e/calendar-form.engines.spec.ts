@@ -348,14 +348,17 @@ test.describe('ty-calendar — focus from a dialog, a label or autofocus lands o
   // The container is focused first, then ty-date-picker blurs it: Tab still
   // starts before the navigation (with the day focused it started after it)
   test('ty-date-picker opened from the keyboard: Tab goes to the navigation first', async ({ page, browserName }) => {
-    test.skip(browserName === 'webkit', 'WebKit leaves buttons out of the tab order')
+    // WebKit leaves buttons out of Tab (macOS full keyboard access); Alt+Tab
+    // reaches them, with a stop on the <dialog> itself first
+    const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab'
     await mount(page, `<input id="before"><ty-date-picker id="d" value="2026-03-15"></ty-date-picker>`)
     test.skip(await page.locator('#d .native-date-input').count() > 0, 'touch devices get the native input')
     await page.focus('#before')
-    await page.keyboard.press('Tab')
+    await page.keyboard.press(tab)
     await page.keyboard.press('Enter')
     await page.waitForTimeout(300)
-    await page.keyboard.press('Tab')
+    await page.keyboard.press(tab)
+    if (browserName === 'webkit') await page.keyboard.press(tab)
     expect(await focusedLabel(page)).toBe('Choose month and year')
   })
 })

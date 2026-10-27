@@ -1,6 +1,6 @@
 {
   "name": "tyrell-components",
-  "version": "1.0.0-TC60",
+  "version": "1.0.0-RC18",
   "description": "Tyrell Components - Framework-agnostic web components with semantic design system",
   "type": "module",
   "sideEffects": [
@@ -155,10 +155,11 @@
   "scripts": {
     "dev": "vite",
     "generate:version": "node scripts/generate-version.js",
-    "build:lib": "npm run generate:version && tsc --project tsconfig.lib.json && tsc --project tsconfig.lib.dts.json && node scripts/strip-lib-comments.mjs",
-    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && esbuild css/tyrell.css css/tyrell-theme.css css/tyrell-colors-static.css --minify --outdir=dist",
-    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && esbuild css/tyrell.css css/tyrell-theme.css css/tyrell-colors-static.css --minify --outdir=dist",
-    "build:dev:watch": "vite build --config vite.config.dev.ts --watch",
+    "build:lib": "npm run generate:version && npm run build:css && tsc --project tsconfig.lib.json && tsc --project tsconfig.lib.dts.json && node scripts/strip-lib-comments.mjs",
+    "build:css": "node scripts/build-css.mjs",
+    "build:cdn": "npm run generate:version && vite build --config vite.config.cdn.ts && npm run build:css",
+    "build:dev": "npm run generate:version && vite build --config vite.config.dev.ts && npm run build:css",
+    "build:dev:watch": "node scripts/build-css.mjs --watch & vite build --config vite.config.dev.ts --watch",
     "build": "npm run build:lib && npm run build:cdn",
     "prepublishOnly": "npm run build",
     "preview": "vite preview",

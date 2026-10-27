@@ -92,13 +92,14 @@ test('no-backdrop: a modal — no dim, no zoom, the page inert', async ({ page }
 })
 
 test('no-backdrop: Tab stays inside the modal', async ({ page, browserName }) => {
-  test.skip(browserName === 'webkit', 'WebKit Tab skips buttons by default (macOS full keyboard access)')
+  // WebKit leaves buttons out of Tab (macOS full keyboard access); Alt+Tab reaches them
+  const tab = browserName === 'webkit' ? 'Alt+Tab' : 'Tab'
   await mount(page, SHELL(MODAL('no-backdrop')))
   await open(page)
   await page.locator('#in1').focus()
   const outside: string[] = []
   for (let i = 0; i < 8; i++) {
-    await page.keyboard.press('Tab')
+    await page.keyboard.press(tab)
     const id = await page.evaluate(() => document.activeElement?.id || document.activeElement?.tagName)
     if (id === 'behind' || id === 'after') outside.push(id)
   }
