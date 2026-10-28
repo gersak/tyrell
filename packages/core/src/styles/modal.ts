@@ -122,6 +122,68 @@ export const modalStyles = `
   backdrop-filter: none;
 }
 
+/* sheet: full screen on phones, sliding up from the bottom. Opt-in, and only
+   below 768px (the select's mobile line); wider screens keep the centered dialog. The panel is forced to
+   fill the sheet (!important beats its own width, inline style included),
+   since a sheet that leaves page showing around the panel isn't one. */
+@media (max-width: 768px) {
+  .ty-modal-dialog[data-sheet] {
+    inset: 0;
+    transform: none;
+    width: 100%;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+    background: var(--ty-surface-floating);
+    box-sizing: border-box;
+  }
+
+  .ty-modal-dialog[data-sheet][open] {
+    animation-name: ty-modal-sheet-enter;
+  }
+
+  .ty-modal-dialog[data-sheet] .modal-content {
+    height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ty-modal-dialog[data-sheet] ::slotted(*) {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* On the panel, not out on the backdrop */
+  .ty-modal-dialog[data-sheet] .close-button {
+    top: calc(env(safe-area-inset-top) + 8px);
+    right: calc(env(safe-area-inset-right) + 8px);
+    color: var(--ty-text-soft);
+  }
+
+  .ty-modal-dialog[data-sheet] .close-button:hover,
+  .ty-modal-dialog[data-sheet] .close-button:focus:hover,
+  .ty-modal-dialog[data-sheet] .close-button:active:hover {
+    color: var(--ty-text);
+  }
+}
+
+@keyframes ty-modal-sheet-enter {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
 /* Minimal container - no styling imposed on user content */
 .modal-content {
   color: var(--ty-text);
@@ -134,6 +196,14 @@ export const modalStyles = `
 
   to {
     opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ty-modal-dialog[open],
+  .ty-modal-dialog[data-sheet][open],
+  .ty-modal-dialog::backdrop {
+    animation: none;
   }
 }
 `;

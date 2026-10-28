@@ -2,7 +2,7 @@
 
 Compact demo: ClojureScript + [Helix](https://github.com/lilactown/helix) + the `tyrell-react` wrappers over Tyrell web components.
 
-**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-RC18 (npm), `dev.gersak/tyrell` 1.0.0-RC18 (Clojars), Helix 0.2.0, React 18.
+**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-RC19 (npm), `dev.gersak/tyrell` 1.0.0-RC19 (Clojars), Helix 0.2.0, React 18.
 
 Helix gives you JSX-style macros (`($ Component …)`) over the same `tyrell-react` package that Reagent, re-frame and UIx use.
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-RC19] - 2026-10-28
+
+### Added
+
+- **`ty-modal` `sheet`.** Below 768px the modal is full screen and slides up from the bottom; the panel fills it whatever width it sets itself, and the close button sits on it. Wider screens keep the centered dialog. React: `<TyModal sheet>`.
+- **`ty-modal::part(dialog)`.** The `<dialog>` can be styled from outside: size, position, padding.
+
+### Fixed
+
+- **`ty-modal` respects `prefers-reduced-motion`:** no zoom-in, slide-up or backdrop fade.
+
 ## [1.0.0-RC18] - 2026-10-27
 
 ### Changed (breaking)

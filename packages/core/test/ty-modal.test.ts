@@ -64,6 +64,22 @@ describe('ty-modal', () => {
     still.hide({ force: true });
   });
 
+  it('sheet (and the property) marks the dialog; "false" is off', async () => {
+    const el = (await fixture(html`<ty-modal sheet><p>Hi</p></ty-modal>`)) as any;
+    const dialog = () => el.shadowRoot.querySelector('dialog') as HTMLDialogElement;
+    expect(el.sheet).to.equal(true);
+    expect(dialog().hasAttribute('data-sheet')).to.equal(true);
+
+    el.sheet = false;
+    expect(el.hasAttribute('sheet')).to.equal(false);
+    expect(dialog().hasAttribute('data-sheet')).to.equal(false);
+
+    el.setAttribute('sheet', 'false');
+    expect(el.sheet).to.equal(false);
+    expect(dialog().hasAttribute('data-sheet')).to.equal(false);
+    expect(dialog().getAttribute('part'), 'styleable as ::part(dialog)').to.equal('dialog');
+  });
+
   // no-backdrop is a modal without the dim: in the top layer like any other,
   // a transparent ::backdrop, and it never zooms the page.
   it('no-backdrop is a modal: top layer, transparent backdrop, no zoom', async () => {

@@ -31,7 +31,7 @@ app.config['COMPRESS_LEVEL'] = 6
 app.config['COMPRESS_MIN_SIZE'] = 500
 
 # tyrell-components version loaded from jsDelivr (base.html)
-TYRELL_VERSION = "1.0.0-RC18"
+TYRELL_VERSION = "1.0.0-RC19"
 
 # Month names for calendar functionality - FIXES month_names UndefinedError
 MONTH_NAMES = [

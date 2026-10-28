@@ -290,9 +290,9 @@ const indexHTMLTemplate = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tyrell + Datastar — Support Ticket</title>
 
-  <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/dist/tyrell.js"></script>
-  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell.css">
-  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell-theme.css">
+  <script type="module" src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/dist/tyrell.js"></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/css/tyrell.css">
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/css/tyrell-theme.css">
   <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-RC.8/bundles/datastar.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 

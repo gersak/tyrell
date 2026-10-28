@@ -3,5 +3,5 @@
         org.clojure/clojurescript {:mvn/version "1.11.121"}
         no.cjohansen/replicant {:mvn/version "2025.06.21"}
         thheller/shadow-cljs {:mvn/version "2.28.19"}
-        dev.gersak/tyrell {:mvn/version "1.0.0-RC18"}
-        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC18"}}}
+        dev.gersak/tyrell {:mvn/version "1.0.0-RC19"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC19"}}}

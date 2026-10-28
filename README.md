@@ -53,9 +53,9 @@ Always loads the latest version:
 Pin to a specific version (recommended for production):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/css/tyrell-theme.css">
-<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC18/dist/tyrell.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/css/tyrell-theme.css">
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC19/dist/tyrell.js"></script>
 ```
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
@@ -146,8 +146,8 @@ Pick the entry point for your stack:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell              {:mvn/version "1.0.0-RC18"}
-        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC18"}}}  ; icons: one jar per set
+{:deps {dev.gersak/tyrell              {:mvn/version "1.0.0-RC19"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC19"}}}  ; icons: one jar per set
 ```
 
 `dev.gersak/tyrell` brings:

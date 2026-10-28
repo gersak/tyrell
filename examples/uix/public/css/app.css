@@ -9,7 +9,6 @@
       "Courier New", monospace;
     --color-black: #000;
     --spacing: 0.25rem;
-    --container-md: 28rem;
     --container-2xl: 42rem;
     --container-4xl: 56rem;
     --container-6xl: 72rem;
@@ -213,9 +212,6 @@
   .z-50 {
     z-index: 50;
   }
-  .col-span-full {
-    grid-column: 1 / -1;
-  }
   .container {
     width: 100%;
     @media (width >= 40rem) {
@@ -266,9 +262,6 @@
   }
   .grid {
     display: grid;
-  }
-  .hidden {
-    display: none;
   }
   .inline-block {
     display: inline-block;
@@ -342,9 +335,6 @@
   .max-w-6xl {
     max-width: var(--container-6xl);
   }
-  .max-w-md {
-    max-width: var(--container-md);
-  }
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
@@ -379,9 +369,6 @@
   }
   .grid-cols-4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .grid-rows-\[64px_1fr\] {
-    grid-template-rows: 64px 1fr;
   }
   .flex-col {
     flex-direction: column;
@@ -725,11 +712,6 @@
   .lg\:grid-cols-3 {
     @media (width >= 64rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-  .lg\:grid-cols-\[280px_1fr\] {
-    @media (width >= 64rem) {
-      grid-template-columns: 280px 1fr;
     }
   }
 }

@@ -4,7 +4,7 @@ A self-contained Go server demonstrating how Tyrell web components compose natur
 
 **No external Go dependencies** — standard library only. No build step for the server.
 
-Uses **tyrell-components `1.0.0-RC18`** (pinned on jsDelivr, so the page is reproducible) and **Datastar `v1.0.0-RC.8`**.
+Uses **tyrell-components `1.0.0-RC19`** (pinned on jsDelivr, so the page is reproducible) and **Datastar `v1.0.0-RC.8`**.
 
 ## What it shows
 

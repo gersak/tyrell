@@ -56,6 +56,7 @@ describe(`React ${React.version} wrappers`, () => {
   const cases: Case[] = [
     ['TyModal', TyModal, 'noBackdrop', 'no-backdrop', 'ty-modal'],
     ['TyModal', TyModal, 'noZoom', 'no-zoom', 'ty-modal'],
+    ['TyModal', TyModal, 'sheet', 'sheet', 'ty-modal'],
     ['TyModal', TyModal, 'preventEscape', 'prevent-escape', 'ty-modal'],
     ['TyModal', TyModal, 'preventOutsideClick', 'prevent-outside-click', 'ty-modal'],
     ['TySelect', TySelect, 'noClear', 'no-clear', 'ty-select'],

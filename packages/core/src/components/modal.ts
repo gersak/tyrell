@@ -162,6 +162,8 @@ function ensureInternalDialog(shadowRoot: ShadowRoot): HTMLDialogElement {
     const slot = document.createElement('slot');
     
     dialog.className = 'ty-modal-dialog';
+    // Styleable from outside: ty-modal::part(dialog)
+    dialog.setAttribute('part', 'dialog');
     
     closeButton.className = 'close-button';
     closeButton.type = 'button';
@@ -464,6 +466,7 @@ function render(el: TyModal): void {
   } else {
     dialog.removeAttribute('data-backdrop');
   }
+  dialog.toggleAttribute('data-sheet', parseBoolAttr(el, 'sheet'));
 
   // Accessible name: <dialog> has an implicit role="dialog" for free, but
   // nothing gives it a NAME unless the consumer's own slotted heading
@@ -640,7 +643,7 @@ export class TyModal extends HTMLElement {
   hide?: (opts?: { force?: boolean }) => void;
   
   static get observedAttributes() {
-    return ['open', 'no-backdrop', 'no-zoom', 'prevent-outside-click', 'prevent-escape', 'label'];
+    return ['open', 'no-backdrop', 'no-zoom', 'sheet', 'prevent-outside-click', 'prevent-escape', 'label'];
   }
 
   // Property mirrors for the boolean attributes. Frameworks that
@@ -653,6 +656,12 @@ export class TyModal extends HTMLElement {
   get noBackdrop(): boolean { return parseBoolAttr(this, 'no-backdrop'); }
   set noBackdrop(v: boolean) {
     coerceBoolean(v) ? this.setAttribute('no-backdrop', '') : this.removeAttribute('no-backdrop');
+  }
+
+  /** Full screen on phones (below 768px), sliding up from the bottom. */
+  get sheet(): boolean { return parseBoolAttr(this, 'sheet'); }
+  set sheet(v: boolean) {
+    coerceBoolean(v) ? this.setAttribute('sheet', '') : this.removeAttribute('sheet');
   }
 
   get noZoom(): boolean { return parseBoolAttr(this, 'no-zoom'); }

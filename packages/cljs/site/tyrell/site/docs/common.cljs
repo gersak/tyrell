@@ -565,12 +565,13 @@
 
 (defn api-section
   "API section: attributes full width, then events / slots / keyboard / CSS
-   variables side by side. :properties is for JS-only members (functions,
-   objects) that have no attribute. Row format as in api-list."
-  [{:keys [attributes properties events slots keyboard css-vars]}]
+   variables / CSS parts side by side. :properties is for JS-only members
+   (functions, objects) that have no attribute. Row format as in api-list."
+  [{:keys [attributes properties events slots keyboard css-vars parts]}]
   (let [n #(count (remove string? %))
         sub (->> [[attributes "attribute" "attributes"] [properties "property" "properties"]
-                  [events "event" "events"] [slots "slot" "slots"] [css-vars "variable" "variables"]]
+                  [events "event" "events"] [slots "slot" "slots"] [css-vars "variable" "variables"]
+                  [parts "part" "parts"]]
                  (keep (fn [[rows one many]]
                          (when (seq rows)
                            (let [c (n rows)] (str c " " (if (= 1 c) one many))))))
@@ -584,4 +585,5 @@
        (when (seq events) (api-list {:title "Events" :rows events :stacked? true}))
        (when (seq slots) (api-list {:title "Slots" :rows slots :stacked? true}))
        (when (seq keyboard) (api-list {:title "Keyboard" :rows keyboard :stacked? true}))
-       (when (seq css-vars) (api-list {:title "CSS variables" :rows css-vars :stacked? true}))]])))
+       (when (seq css-vars) (api-list {:title "CSS variables" :rows css-vars :stacked? true}))
+       (when (seq parts) (api-list {:title "CSS parts" :rows parts :stacked? true}))]])))

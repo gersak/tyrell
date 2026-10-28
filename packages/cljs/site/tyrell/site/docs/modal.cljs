@@ -38,11 +38,12 @@
 (defn- actions [& buttons]
   (into [:div.flex.justify-end.gap-2.pt-2] buttons))
 
-(defn- snippets [{:keys [backdrop outside escape zoom]}]
+(defn- snippets [{:keys [backdrop outside escape zoom sheet]}]
   (let [attrs (str (when-not backdrop " no-backdrop")
                    (when-not outside " prevent-outside-click")
                    (when-not escape " prevent-escape")
-                   (when-not zoom " no-zoom"))]
+                   (when-not zoom " no-zoom")
+                   (when sheet " sheet"))]
     [["html" "HTML" "html"
       (str "<ty-button onclick=\"invite.show()\">Invite</ty-button>\n\n"
            "<ty-modal id=\"invite\" label=\"Invite people\"" attrs ">\n"
@@ -52,18 +53,18 @@
       (str "import { TyModal } from 'tyrell-react'\n\n"
            "<TyModal open={open} label=\"Invite people\""
            (when-not backdrop " noBackdrop") (when-not outside " preventOutsideClick")
-           (when-not escape " preventEscape") (when-not zoom " noZoom")
+           (when-not escape " preventEscape") (when-not zoom " noZoom") (when sheet " sheet")
            "\n  onClose={() => setOpen(false)}>\n  <div className=\"panel\">…</div>\n</TyModal>")]
      ["reagent" "Reagent" "clojure"
       (str "(:require [tyrell.react :as ty])\n\n"
            "[:> ty/Modal {:open @open? :label \"Invite people\""
            (when-not backdrop " :no-backdrop true") (when-not outside " :prevent-outside-click true")
-           (when-not escape " :prevent-escape true") (when-not zoom " :no-zoom true")
+           (when-not escape " :prevent-escape true") (when-not zoom " :no-zoom true") (when sheet " :sheet true")
            "\n              :on-close #(reset! open? false)}\n [:div.panel …]]")]
      ["replicant" "Replicant" "clojure"
       (str "[:ty-modal {:open (when open? \"\") :label \"Invite people\""
            (when-not backdrop " :no-backdrop \"\"") (when-not outside " :prevent-outside-click \"\"")
-           (when-not escape " :prevent-escape \"\"") (when-not zoom " :no-zoom \"\"")
+           (when-not escape " :prevent-escape \"\"") (when-not zoom " :no-zoom \"\"") (when sheet " :sheet \"\"")
            "\n            :on {:close #(set-open! false)}}\n [:div.panel …]]")]
      ["datastar" "Datastar" "html"
       (str "<ty-button data-signals:invite-open=\"false\"\n  data-on:click=\"$inviteOpen = true\">Invite</ty-button>\n\n"
@@ -72,7 +73,7 @@
            "  <div class=\"panel\">\n    …\n"
            "    <ty-button data-on:click=\"$inviteOpen = false\">Cancel</ty-button>\n  </div>\n</ty-modal>")]]))
 
-(defn- render-playground [{:keys [backdrop outside escape zoom]}]
+(defn- render-playground [{:keys [backdrop outside escape zoom sheet]}]
   [:div.flex.flex-col.items-center.gap-3
    [:ty-button {:flavor "primary" :size "md" :on {:click #(open! :play)}}
     [:ty-icon {:slot "start" :name "user-plus"}] "Invite people"]
@@ -81,7 +82,8 @@
                   (not backdrop) (assoc :no-backdrop "")
                   (not outside) (assoc :prevent-outside-click "")
                   (not escape) (assoc :prevent-escape "")
-                  (not zoom) (assoc :no-zoom ""))
+                  (not zoom) (assoc :no-zoom "")
+                  sheet (assoc :sheet ""))
           (panel (title "Invite people" "They'll get an email with a link to this workspace.")
                  [:ty-input {:label "Email" :type "email" :placeholder "name@company.com"}]
                  (actions [:ty-button {:appearance "ghost" :size "md" :on {:click #(hide! :play)}} "Cancel"]
@@ -254,12 +256,13 @@ modal.current.hide({ force: true })    // skips beforeclose"]
 
    (playground
     {:id :modal
-     :defaults {:backdrop true :outside true :escape true :zoom true}
+     :defaults {:backdrop true :outside true :escape true :zoom true :sheet false}
      :controls [{:key :backdrop :switch? true}
                 {:key :outside :switch? true}
                 {:key :escape :switch? true}
-                {:key :zoom :switch? true}]
-     :sub "Open it, then close it every way you can. outside = backdrop click closes; zoom = the page behind scales down."
+                {:key :zoom :switch? true}
+                {:key :sheet :switch? true}]
+     :sub "Open it, then close it every way you can. outside = backdrop click closes; zoom = the page behind scales down; sheet = full screen on a phone."
      :render render-playground
      :snippets snippets})
 
@@ -374,7 +377,9 @@ modal.current.hide({ force: true })    // skips beforeclose"]
                   ["prevent-escape" "boolean" "false" "Escape doesn't close."]
                   "Backdrop"
                   ["no-backdrop" "boolean" "false" "No dim and no zoom. Still a modal: the page behind isn't usable, a click outside closes it."]
-                  ["no-zoom" "boolean" "false" "The page behind stays still instead of scaling down slightly."]]
+                  ["no-zoom" "boolean" "false" "The page behind stays still instead of scaling down slightly."]
+                  "Phones"
+                  ["sheet" "boolean" "false" "Below 768px: full screen, sliding up from the bottom. The panel fills it, whatever width it sets itself."]]
      :properties [["show()" "() => void" "Open."]
                   ["hide(opts?)" "({force?}) => void" "Close. Fires beforeclose unless force is true."]]
      :events [["open" "{}" "Opened. Doesn't bubble: listen on the element."]
@@ -384,4 +389,5 @@ modal.current.hide({ force: true })    // skips beforeclose"]
                 ["Tab" "Cycles inside the dialog; the page behind is inert."]]
      :css-vars [["--ty-modal-backdrop" "Backdrop color."]
                 ["--ty-modal-backdrop-blur" "Backdrop blur."]
-                ["--ty-modal-duration" "Enter animation length."]]})))
+                ["--ty-modal-duration" "Enter animation length."]]
+     :parts [["dialog" "The <dialog> itself: size, position, padding. ty-modal::part(dialog) { … }"]]})))

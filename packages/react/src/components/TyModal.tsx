@@ -28,6 +28,9 @@ export interface TyModalProps extends React.HTMLAttributes<HTMLElement> {
   /** The page behind no longer scales down while open (renders `no-zoom`) */
   noZoom?: boolean;
 
+  /** Full screen on phones (below 768px), sliding up from the bottom (renders `sheet`) */
+  sheet?: boolean;
+
   /** Backdrop clicks no longer close the modal (also hides the built-in ✕) */
   preventOutsideClick?: boolean;
 
@@ -73,6 +76,7 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     open,
     noBackdrop,
     noZoom,
+    sheet,
     preventOutsideClick,
     preventEscape,
     label,
@@ -165,9 +169,10 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
       };
       setIf('noBackdrop', noBackdrop);
       setIf('noZoom', noZoom);
+      setIf('sheet', sheet);
       setIf('preventOutsideClick', preventOutsideClick);
       setIf('preventEscape', preventEscape);
-    }, [noBackdrop, noZoom, preventOutsideClick, preventEscape]);
+    }, [noBackdrop, noZoom, sheet, preventOutsideClick, preventEscape]);
 
     const webComponentProps: Record<string, any> = {
       ...hostProps(props),
@@ -181,6 +186,9 @@ export const TyModal = React.forwardRef<TyModalRef, TyModalProps>(
     }
     if (noZoom !== undefined && coerceBool(noZoom)) {
       webComponentProps['no-zoom'] = '';
+    }
+    if (sheet !== undefined && coerceBool(sheet)) {
+      webComponentProps.sheet = '';
     }
     // Presence booleans: render the bare attribute only when true
     if (preventOutsideClick !== undefined && coerceBool(preventOutsideClick)) {
