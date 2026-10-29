@@ -162,6 +162,7 @@ Deref a reagent atom inside a component, and the component re-renders when it ch
 | `ty/Select` | `(.. e -detail -value)`; with `:multiple`, `(.. e -detail -values)` → JS array |
 | `ty/RadioGroup` | `(.. e -detail -value)` |
 | `ty/Tabs` | `(.. e -detail -tab)` |
+| `ty/Sortable` | `(.. e -detail -value)` → `{key, group, source, from, to, order}` |
 
 ## Composition — children with slots
 
@@ -340,6 +341,38 @@ Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM
 ```
 
 Event detail: `{ activeId, activeIndex, previousId, previousIndex, direction }` via `onChange` — or listen on the element directly for `ty-wizard-step-change`.
+
+## Reorderable lists (ty-sortable)
+
+`ty/Sortable` never moves its children. A drop (or a keyboard move) calls `:onChange` (`ty-sortable-change`) on the destination list, and the list holds the result on screen until Reagent renders the items in the new order. Give each item a `:key` and a `:data-key` (or `:id`):
+
+```clojure
+(defonce board   (r/atom {"todo" ["a" "b"] "done" ["c"]}))
+(defonce saving? (r/atom false))
+
+(defn on-move [^js e]
+  (let [value (.. e -detail -value)]
+    (reset! saving? true)
+    (-> (save value)
+        (.then #(swap! board merge (js->clj (.-order value))))  ; new key order per touched list
+        (.finally #(reset! saving? false)))))                  ; order unchanged: snaps back
+
+(defn column [id label]
+  [:> ty/Sortable {:id id :group "board" :label label
+                   :aria-busy (when @saving? "true")
+                   :onChange on-move}
+   (for [k (get @board id)]
+     ^{:key k}
+     [:div {:data-key k}
+      [:button {:type "button" :data-handle "" :aria-label (str "Move " k)}
+       [:> ty/Icon {:name "grip-vertical"}]]
+      k])])
+```
+
+- `order` is the new key order of each list the move touched, by list id, so one `merge` renders both lists. For fractional ranking, save a rank between `(.. value -to -prev)` and `(.. value -to -next)` instead.
+- `:aria-busy` while saving makes a refused save snap back as soon as it clears. Without it, call `(.settle (.. e -detail -toContainer) "rejected")`, or `(.preventDefault e)` to reject at once.
+- On touch, a `:data-handle` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- Props: `:group`, `:axis`, `:handle`, `:accepts`, `:disabled`, `:keyAttr`, `:holdTimeout`, `:label`, `:canDrop`, `:labels`, and `:onStart` / `:onCancel` / `:onSettle`.
 
 ---
 

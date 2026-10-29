@@ -45,6 +45,7 @@ export default defineConfig(({ mode }) => ({
         'components/icon': resolve(__dirname, 'src/components/icon.ts'),
         'components/tabs': resolve(__dirname, 'src/components/tabs.ts'),
         'components/tab': resolve(__dirname, 'src/components/tab.ts'),
+        'components/sortable': resolve(__dirname, 'src/components/sortable.ts'),
         
         // Utils for tree-shakeable imports
         'utils/icon-registry': resolve(__dirname, 'src/utils/icon-registry.ts'),

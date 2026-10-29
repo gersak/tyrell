@@ -586,6 +586,55 @@ Attrs: `max-height`, `no-shadow`, `hide-scrollbar`, `custom-scrollbar`, `overflo
 
 ---
 
+## Reorderable lists (ty-sortable)
+
+`ty-sortable` never moves its children. A drop (or a keyboard move) fires `ty-sortable-change` on the destination list, and the list holds the result on screen until Vue renders the items in the new order. Key each item with `:key` and `:data-key` (or `id`):
+
+```vue
+<script setup>
+import { ref } from 'vue'
+const cols = ref({ todo: ['a', 'b'], done: ['c'] })
+const saving = ref(false)
+
+async function onMove(e) {
+  const { value } = e.detail
+  saving.value = true
+  try {
+    await save(value)
+    Object.assign(cols.value, value.order)  // new key order per touched list
+  } finally {
+    saving.value = false                    // order unchanged: the item snaps back
+  }
+}
+</script>
+
+<template>
+  <ty-sortable
+    v-for="(label, id) in { todo: 'To do', done: 'Done' }"
+    :key="id"
+    :id="id"
+    group="board"
+    :label="label"
+    :aria-busy="saving ? 'true' : null"
+    @ty-sortable-change="onMove"
+  >
+    <div v-for="k in cols[id]" :key="k" :data-key="k">
+      <button type="button" data-handle :aria-label="`Move ${k}`">
+        <ty-icon name="grip-vertical" />
+      </button>
+      {{ k }}
+    </div>
+  </ty-sortable>
+</template>
+```
+
+- `$event.detail.value` is `{ key, group, source, from, to, order }`. `order` is the new key order of each list the move touched, by list id. For fractional ranking, save a rank between `value.to.prev` and `value.to.next` instead.
+- `aria-busy` while saving makes a refused save snap back as soon as it clears. Without it, call `e.currentTarget.settle('rejected')` (read `currentTarget` before the first `await`), or `e.preventDefault()` to reject at once.
+- On touch, a `data-handle` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- Attrs: `group`, `axis`, `handle`, `accepts`, `disabled`, `key-attr`, `hold-timeout`, `label`. Item attrs: `data-locked`, `data-no-drag`, `data-sortable-ignore`. Set `canDrop` and `labels` with `:prop`; `ref.value.move('a', { to: 'done', index: 0 })` moves without a pointer.
+
+---
+
 ## TypeScript
 
 Augment Vue's JSX intrinsic elements once:

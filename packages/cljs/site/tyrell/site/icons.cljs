@@ -81,6 +81,8 @@
   :square-stack lucide/square-stack
   :list lucide/list
   :list-ordered lucide/list-ordered
+  :arrow-down-up lucide/arrow-down-up
+  :grip-vertical lucide/grip-vertical
   :message-square lucide/message-square
   :hand lucide/hand
   :tag lucide/tag
@@ -145,6 +147,7 @@
   :arrow-left lucide/arrow-left
   :arrow-right lucide/arrow-right
   :arrow-up lucide/arrow-up
+  :arrow-down lucide/arrow-down
   :bell lucide/bell
   :wifi-off lucide/wifi-off
   :database lucide/database

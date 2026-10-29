@@ -189,6 +189,39 @@ Server returns on 422:
 
 The OOB swap replaces the input with one carrying the error message. Tyrell renders the error text and the danger colors automatically. The server owns `error`: the next response that renders the input without it clears the message.
 
+## Reorderable lists (ty-sortable)
+
+`ty-sortable` never moves its children. A drop (or a keyboard move) fires `ty-sortable-change` on the destination list; post `event.detail.value` and let the server render the lists in the new order. Until the swap lands, the item stays where it was dropped. Use the idiomorph extension so the swap moves the existing item nodes:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/idiomorph@0.7.4/dist/idiomorph-ext.min.js"></script>
+
+<div id="board" hx-ext="morph">
+  <ty-sortable id="todo" group="board" label="To do"
+    hx-post="/board/move"
+    hx-trigger="ty-sortable-change"
+    hx-vals='js:{move: JSON.stringify(event.detail.value)}'
+    hx-target="#board"
+    hx-swap="morph:innerHTML">
+    <div id="card-12">
+      <button type="button" data-handle aria-label="Move Fix login">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
+      </button>
+      Fix login
+    </div>
+  </ty-sortable>
+  <ty-sortable id="done" group="board" label="Done" hx-post="/board/move" …>…</ty-sortable>
+</div>
+```
+
+The server parses `move`, saves it and returns both `<ty-sortable>` lists, with the same attributes, in the stored order.
+
+- **Key every item** with `id` (or `data-key`). The key is what `value` reports and what idiomorph uses to move the node.
+- **`value`** is `{ key, group, source, from, to, order }`. `order` is the new key order of each list the move touched, by list id. For fractional ranking, store a rank between `value.to.prev` and `value.to.next` instead.
+- **Refusing a move:** htmx puts `htmx-request` on the list while the request runs, and ty reads it like `aria-busy="true"`. If the response renders the old order (or the request fails and nothing is swapped), the item snaps back when the request ends. Put `hx-post` on each list, not on a wrapper, so the class lands on the list.
+- **Touch:** a `[data-handle]` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- `group` lets lists trade items, `accepts="[data-kind=bug]"` limits what a list takes, `data-locked` pins an item. Full API: [TY_GUIDE.md](../TY_GUIDE.md#ty-sortable).
+
 ## Common pitfalls
 
 - **Don't put HTMX attributes on the `<ty-option>` / `<ty-tab>` / `<ty-step>` children** — they're internal slots, not interactive. Put them on `<ty-select>` / `<ty-tabs>` / `<ty-wizard>` and use `hx-trigger="change"` (`hx-trigger="ty-tab-change"` for tabs). The exception is a lazy `<ty-tab>`, which loads itself:

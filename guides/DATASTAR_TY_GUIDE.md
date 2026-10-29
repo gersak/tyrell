@@ -527,6 +527,42 @@ When `patch-elements` targets `#transaction-list`, the scroll container maintain
 
 ---
 
+## Reorderable lists (ty-sortable)
+
+`ty-sortable` never moves its children. A drop (or a keyboard move) fires `ty-sortable-change` on the destination list; post `evt.detail.value` and let the server patch the lists in the new order. Until the patch lands, the item stays where it was dropped.
+
+```html
+<ty-sortable id="todo" group="board" label="To do"
+  data-signals:move="null"
+  data-indicator:_saving
+  data-attr:aria-busy="$_saving ? 'true' : 'false'"
+  data-on:ty-sortable-change="$move = evt.detail.value; @post('/board/move')">
+  <div id="card-12">
+    <button type="button" data-handle aria-label="Move Fix login">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">…</svg>
+    </button>
+    Fix login
+  </div>
+</ty-sortable>
+<ty-sortable id="done" group="board" label="Done" …>…</ty-sortable>
+```
+
+The server reads `move` from the signals, saves it and patches every list in `move.order` (each `<ty-sortable>` is matched by its `id`):
+
+```
+event: datastar-patch-elements
+data: elements <ty-sortable id="todo" group="board" label="To do" …><div id="card-7">…</div></ty-sortable>
+data: elements <ty-sortable id="done" group="board" label="Done" …><div id="card-12">…</div><div id="card-3">…</div></ty-sortable>
+```
+
+- **Key every item** with `id` (or `data-key`). The key is what `value` reports, and without an `id` Datastar's morph matches items by position.
+- **`value`** is `{ key, group, source, from, to, order }`. `order` is the new key order of each list the move touched, by list id. For fractional ranking, store a rank between `value.to.prev` and `value.to.next` instead.
+- **Refusing a move:** keep `aria-busy` on the list while the request runs (`data-indicator` above). If the response doesn't change the order, or patches nothing, the item snaps back when the request ends. With no busy signal and no patch, the hold gives up after `hold-timeout` (5000 ms).
+- **Touch:** a `[data-handle]` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- `group` lets lists trade items, `accepts="[data-kind=bug]"` limits what a list takes, `data-locked` pins an item. Full API: [TY_GUIDE.md](TY_GUIDE.md#ty-sortable).
+
+---
+
 ## Icons
 
 Put the SVG inside the tag. The server already has it, so there's no registry and no boot script, and it survives SSE patches like any markup:

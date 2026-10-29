@@ -705,6 +705,51 @@ to read, and the scrollable default with its `…` menu is the right tool:
 </TyWizard>
 ```
 
+## Reorderable lists (ty-sortable)
+
+`TySortable` never moves its children. A drop (or a keyboard move) calls `onChange` (`ty-sortable-change`) on the destination list, and the list holds the result on screen until you re-render the items in the new order. Give each item a stable `key` and a `data-key` (or `id`):
+
+```tsx
+import { useState } from 'react'
+import { TySortable, TyIcon, type TySortableChangeDetail } from 'tyrell-react'
+
+function Board() {
+  const [cols, setCols] = useState<Record<string, string[]>>({ todo: ['a', 'b'], done: ['c'] })
+  const [saving, setSaving] = useState(false)
+
+  const onChange = async (e: CustomEvent<TySortableChangeDetail>) => {
+    const { value } = e.detail
+    setSaving(true)
+    try {
+      await save(value)
+      setCols((c) => ({ ...c, ...value.order }))  // new key order per touched list
+    } finally {
+      setSaving(false)                           // order unchanged: the item snaps back
+    }
+  }
+
+  const column = (id: string, label: string) => (
+    <TySortable id={id} group="board" label={label} aria-busy={saving || undefined} onChange={onChange}>
+      {cols[id].map((k) => (
+        <div key={k} data-key={k}>
+          <button type="button" data-handle aria-label={`Move ${k}`}>
+            <TyIcon name="grip-vertical" />
+          </button>
+          {k}
+        </div>
+      ))}
+    </TySortable>
+  )
+
+  return <>{column('todo', 'To do')}{column('done', 'Done')}</>
+}
+```
+
+- `value` is `{ key, group, source, from, to, order }`. `order` is the new key order of each list the move touched, by list id. For fractional ranking, save a rank between `value.to.prev` and `value.to.next` instead.
+- `aria-busy` while saving makes a refused save snap back as soon as it clears. Without it, call `settle('rejected')` on the element (`e.currentTarget`, read before the first `await`), or `e.preventDefault()` to reject at once. To update optimistically, call `setCols` before saving.
+- On touch, a `data-handle` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- `onStart`, `onCancel` and `onSettle` map the other events. `canDrop` and `labels` are set as properties; the ref's `move('a', { to: 'done', index: 0 })` moves without a pointer. Full prop list: [tyrell-react README](../../packages/react/README.md#sortable-lists).
+
 ## Icons
 
 Register once, from the same client-side entry that imports `tyrell-components` (in Next.js, a `'use client'` module):
@@ -935,3 +980,4 @@ export function TyLoader({ children }: { children: React.ReactNode }) {
 | `TyTooltip` | -- | -- | -- |
 | `TyScrollContainer` | -- | -- | `scrollToTop()` / `scrollToBottom()` / `updateShadows()` |
 | `TyWizard` | `active` | -- | -- |
+| `TySortable` | -- (render children in `detail.value.order`) | `onChange` / `onStart` / `onCancel` / `onSettle` | `move()` / `settle()` |

@@ -28,6 +28,7 @@ export { TyCalendar } from './components/calendar.js'
 export { TyDatePicker } from './components/date-picker.js'
 export { TyResizeObserver } from './components/resize-observer.js'
 export { TyScrollContainer } from './components/scroll-container.js'
+export { TySortable } from './components/sortable.js'
 export { CustomScrollbar, isCustomScrollbarEnabled } from './utils/custom-scrollbar.js'
 export type { CustomScrollbarOptions } from './utils/custom-scrollbar.js'
 
@@ -56,6 +57,15 @@ export type { TooltipFlavor, TooltipAttributes } from './components/tooltip.js'
 export type { PopupAttributes } from './components/popup.js'
 export type { ModalAttributes, ModalCloseDetail } from './components/modal.js'
 export type { TabsAttributes, TabChangeDetail } from './components/tabs.js'
+export type {
+  TySortablePos,
+  TySortableValue,
+  TySortableChangeDetail,
+  TySortableCancelReason,
+  TySortableOutcome,
+  TySortableDropContext,
+  TySortableStrings
+} from './components/sortable.js'
 export type { TabAttributes, TabLoadDetail } from './components/tab.js'
 export type { WizardAttributes, WizardStepChangeDetail } from './components/wizard.js'
 export type { StepAttributes, StepStatus } from './components/step.js'

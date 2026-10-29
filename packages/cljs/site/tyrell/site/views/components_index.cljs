@@ -36,6 +36,7 @@
    {:title "Layout primitives"
     :ids [:tyrell.site.docs/tabs
           :tyrell.site.docs/wizard
+          :tyrell.site.docs/sortable
           :tyrell.site.docs/scroll-container
           :tyrell.site.docs/resize-observer]}
    {:title "Visual"

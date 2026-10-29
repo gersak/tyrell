@@ -105,6 +105,7 @@ import 'tyrell-components/input'
 - **ty-wizard** / **ty-step** - Multi-step flow
 - **ty-scroll-container** - Scroll area with edge shadows and scroll anchoring
 - **ty-resize-observer** - Publishes an element's size for layout code
+- **ty-sortable** - Drag-and-drop and keyboard reordering, within a list or across a group
 
 **Visual**
 - **ty-icon** - Icon from the registry (Lucide, Heroicons, Material, Font Awesome)

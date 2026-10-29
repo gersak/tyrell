@@ -72,6 +72,10 @@
       "types": "./lib/components/tab.d.ts",
       "import": "./lib/components/tab.js"
     },
+    "./sortable": {
+      "types": "./lib/components/sortable.d.ts",
+      "import": "./lib/components/sortable.js"
+    },
     "./calendar": {
       "types": "./lib/components/calendar.d.ts",
       "import": "./lib/components/calendar.js"

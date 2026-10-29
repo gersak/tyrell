@@ -17,6 +17,7 @@
    [tyrell.site.docs.radio :as radio-docs]
    [tyrell.site.docs.resize-observer :as resize-observer-docs]
    [tyrell.site.docs.scroll-container :as scroll-container-docs]
+   [tyrell.site.docs.sortable :as sortable-docs]
    [tyrell.site.docs.switch :as switch-docs]
    [tyrell.site.docs.tabs :as tabs-docs]
    [tyrell.site.docs.tag :as tag-docs]
@@ -319,6 +320,19 @@
     [:div.pb-2.ty-text- "Settings"]]
    [:div.pt-3.text-xs.ty-text--.italic "Tab content here…"]])
 
+(def ^:private sortable-preview
+  [:div.flex.flex-col.gap-2
+   {:style {:width "240px"}}
+   (for [[i label lifted?] [[0 "Design review" false] [1 "Fix login redirect" true] [2 "Update changelog" false]]]
+     [:div.flex.items-center.gap-2.rounded-md.border.ty-border-.ty-elevated.px-2.text-xs.ty-text
+      {:replicant/key i
+       :class ["py-1.5"]
+       :style (when lifted? {:transform "translate(10px, -2px) rotate(-1.5deg)"
+                             :box-shadow "0 8px 16px rgba(0,0,0,0.12)"})}
+      [:ty-icon.ty-text-- {:name "grip-vertical"
+                           :size "xs"}]
+      label])])
+
 (def ^:private wizard-preview
   [:div.flex.items-center.gap-1
    {:style {:width "260px"}}
@@ -567,6 +581,15 @@
     :tags ["scroll" "overflow" "container" "shadow"]
     :span [2 1]
     :preview scroll-container-preview}
+   {:id :tyrell.site.docs/sortable
+    :segment "sortable"
+    :icon "arrow-down-up"
+    :view sortable-docs/view
+    :name "Sortable"
+    :description "Reorder a list or move items between lists by mouse, touch, keyboard or `move()`. Controlled: fires `ty-sortable-change`, your app renders the order, and the result holds until it does."
+    :tags ["drag" "drop" "reorder" "sort" "kanban" "list"]
+    :span [2 1]
+    :preview sortable-preview}
    {:id :tyrell.site.docs/tabs
     :segment "tabs"
     :icon "panel-top"

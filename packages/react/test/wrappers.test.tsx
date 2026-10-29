@@ -6,9 +6,10 @@ import '../../core/lib/index.js';
 import {
   TyButton, TyCalendar, TyCalendarMonth, TyCalendarNavigation, TyCheckbox, TyCopy,
   TyDatePicker, TyFileUpload, TyIcon, TyInput, TyModal, TyOption, TyPopup, TyRadio,
-  TyRadioGroup, TyResizeObserver, TyScrollContainer, TySelect, TyStep, TySwitch, TyTab,
+  TyRadioGroup, TyResizeObserver, TyScrollContainer, TySelect, TySortable, TyStep, TySwitch, TyTab,
   TyTabs, TyTag, TyTextarea, TyTooltip, TyWizard,
 } from '../src/components/index';
+import type { TySortableElement, TySortableChangeDetail } from '../src/components/index';
 
 // ---------------------------------------------------------------------------
 // Harness: render into a fresh root, flush synchronously, give effects and
@@ -100,6 +101,7 @@ describe(`React ${React.version} wrappers`, () => {
     ['TyTooltip', TyTooltip, 'disabled', 'disabled', 'ty-tooltip'],
     ['TyCalendar', TyCalendar, 'hideNavigation', 'hide-navigation', 'ty-calendar'],
     ['TyCalendar', TyCalendar, 'required', 'required', 'ty-calendar'],
+    ['TySortable', TySortable, 'disabled', 'disabled', 'ty-sortable'],
   ];
 
   for (const [name, Comp, prop, attr, tag, extra] of cases) {
@@ -221,6 +223,10 @@ describe(`React ${React.version} wrappers`, () => {
     ['TyScrollContainer onNearEnd', (fn) => <TyScrollContainer onNearEnd={fn} />, 'ty-scroll-container', 'nearend'],
     ['TyPopup onOpen', (fn) => <TyPopup onOpen={fn} />, 'ty-popup', 'open'],
     ['TyModal onBeforeClose', (fn) => <TyModal onBeforeClose={fn} />, 'ty-modal', 'beforeclose'],
+    ['TySortable onChange', (fn) => <TySortable onChange={fn} />, 'ty-sortable', 'ty-sortable-change'],
+    ['TySortable onStart', (fn) => <TySortable onStart={fn} />, 'ty-sortable', 'ty-sortable-start'],
+    ['TySortable onCancel', (fn) => <TySortable onCancel={fn} />, 'ty-sortable', 'ty-sortable-cancel'],
+    ['TySortable onSettle', (fn) => <TySortable onSettle={fn} />, 'ty-sortable', 'ty-sortable-settle'],
   ];
 
   for (const [name, make, tag, event] of eventCases) {
@@ -251,6 +257,8 @@ describe(`React ${React.version} wrappers`, () => {
     ['TySelect value[]', <TySelect className="w" multiple value={['a', 'b']} />, 'ty-select', { value: 'a,b' }],
     ['TySelect createTransform', <TySelect className="w" allowCreate createTransform="slug" />, 'ty-select', { 'create-transform': 'slug' }],
     ['TyDatePicker', <TyDatePicker className="w" label="When" withTime />, 'ty-date-picker', { label: 'When', 'with-time': '' }],
+    ['TySortable', <TySortable className="w" group="board" axis="horizontal" handle=".grip" accepts=".card" keyAttr="data-id" holdTimeout={500} label="To do" />, 'ty-sortable',
+      { group: 'board', axis: 'horizontal', handle: '.grip', accepts: '.card', 'key-attr': 'data-id', 'hold-timeout': '500', label: 'To do' }],
   ];
 
   for (const [name, node, tag, attrs] of renders) {
@@ -261,6 +269,75 @@ describe(`React ${React.version} wrappers`, () => {
       for (const [k, v] of Object.entries(attrs)) expect(m.host.getAttribute(k), k).to.equal(v);
     });
   }
+});
+
+describe(`React ${React.version} TySortable`, () => {
+  afterEach(() => {
+    // Holds are page-wide: end any a test left open.
+    (document.createElement('ty-sortable') as TySortableElement).settle('rejected');
+  });
+
+  it('canDrop and labels reach the element as properties', async () => {
+    const canDrop = () => false;
+    const labels = { pending: 'Saving' };
+    const m = await mount(<TySortable canDrop={canDrop} labels={labels} />, 'ty-sortable');
+    const el = m.host as TySortableElement;
+    expect(el.canDrop).to.equal(canDrop);
+    expect(el.labels).to.equal(labels);
+    await m.rerender(<TySortable />);
+    expect(el.canDrop).to.equal(null);
+    expect(el.labels).to.deep.equal({});
+  });
+
+  it('a nested list\'s events do not reach the outer onChange', async () => {
+    const outer: unknown[] = [];
+    const inner: unknown[] = [];
+    const m = await mount(
+      <TySortable id="outer" onChange={(e) => outer.push(e.detail)}>
+        <div data-key="a">
+          <TySortable id="inner" onChange={(e) => inner.push(e.detail)} />
+        </div>
+      </TySortable>,
+      '#inner',
+    );
+    m.host.dispatchEvent(new CustomEvent('ty-sortable-change', { detail: { value: 'x' }, bubbles: true }));
+    expect(inner).to.have.length(1);
+    expect(outer).to.have.length(0);
+  });
+
+  function Board({ api }: { api: React.MutableRefObject<TySortableElement | null> }) {
+    const [keys, setKeys] = React.useState(['1', '2', '3']);
+    return (
+      <TySortable ref={api} id="list" style={{ display: 'block' }}
+        onChange={(e: CustomEvent<TySortableChangeDetail>) => setKeys(e.detail.value.order.list as string[])}>
+        {keys.map((k) => <div key={k} data-key={k} style={{ height: '20px' }}>{k}</div>)}
+      </TySortable>
+    );
+  }
+
+  it('ref reaches move(); rendering the new order from onChange settles it accepted', async () => {
+    const api = { current: null } as React.MutableRefObject<TySortableElement | null>;
+    const m = await mount(<Board api={api} />, 'ty-sortable');
+    expect(api.current).to.equal(m.host);
+    const outcome = await api.current!.move('1', { index: 2 });
+    expect(outcome).to.equal('accepted');
+    expect(Array.from(m.host.children).map((c) => c.getAttribute('data-key'))).to.deep.equal(['2', '3', '1']);
+  });
+
+  it('settle("rejected") from the ref ends a pending move', async () => {
+    const m = await mount(
+      <TySortable id="held" style={{ display: 'block' }} onChange={() => {}}>
+        <div data-key="1" style={{ height: '20px' }}>1</div>
+        <div data-key="2" style={{ height: '20px' }}>2</div>
+      </TySortable>,
+      'ty-sortable',
+    );
+    const el = m.host as TySortableElement;
+    const pending = el.move('1', { index: 1 });
+    await nextFrame();
+    el.settle('rejected');
+    expect(await pending).to.equal('rejected');
+  });
 });
 
 describe(`React ${React.version} TyCalendar value`, () => {

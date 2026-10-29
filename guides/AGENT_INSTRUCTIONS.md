@@ -35,7 +35,7 @@ This project uses [Tyrell](https://github.com/gersak/tyrell) for UI components â
 ty-button, ty-input, ty-textarea, ty-checkbox, ty-switch, ty-radio-group / ty-radio,
 ty-select / ty-option / ty-selected-options, ty-copy, ty-file-upload,
 ty-date-picker, ty-calendar / ty-calendar-month, ty-modal, ty-popup, ty-tooltip,
-ty-tabs / ty-tab, ty-wizard / ty-step, ty-icon, ty-resize-observer, ty-scroll-container.
+ty-tabs / ty-tab, ty-wizard / ty-step, ty-icon, ty-resize-observer, ty-scroll-container, ty-sortable.
 
 ### Docs (raw markdown â€” fetch when needed)
 - **Start here**: https://raw.githubusercontent.com/gersak/tyrell/master/guides/AI_GUIDE.md

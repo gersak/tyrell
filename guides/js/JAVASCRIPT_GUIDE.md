@@ -80,7 +80,7 @@ dropdown       option         multiselect    tag
 modal          popup          tooltip
 calendar       calendar-month calendar-navigation  date-picker
 tabs           tab            wizard
-icon           copy           file-upload
+icon           copy           file-upload    sortable
 ```
 
 Subpath imports compose with `import('...')` for code splitting:
@@ -166,6 +166,45 @@ Three things to remember:
    await customElements.whenDefined('ty-modal')
    document.querySelector('ty-modal').show()
    ```
+
+## Reorderable lists (ty-sortable)
+
+`ty-sortable` never moves its children. A drop (or a keyboard move) fires `ty-sortable-change` on the destination list, and the list holds the result on screen until your code puts the items in the new order. Key each item with `data-key` (or `id`):
+
+```html
+<ty-sortable id="todo" group="board" label="To do">
+  <div data-key="a">
+    <button type="button" data-handle aria-label="Move Design review">
+      <ty-icon name="grip-vertical"></ty-icon>
+    </button>
+    Design review
+  </div>
+</ty-sortable>
+<ty-sortable id="done" group="board" label="Done"></ty-sortable>
+
+<script>
+  document.addEventListener('ty-sortable-change', async (e) => {
+    const { value, fromContainer, toContainer } = e.detail
+    const lists = [fromContainer, toContainer]
+    lists.forEach((l) => l.setAttribute('aria-busy', 'true'))
+    try {
+      await save(value)
+      // value.order: the new key order of each touched list, by list id
+      for (const [id, keys] of Object.entries(value.order)) {
+        const list = document.getElementById(id)
+        list.replaceChildren(...keys.map((k) => document.querySelector(`[data-key="${k}"]`)))
+      }
+    } finally {
+      lists.forEach((l) => l.removeAttribute('aria-busy'))  // order unchanged: the item snaps back
+    }
+  })
+</script>
+```
+
+- `value` is `{ key, group, source, from, to, order }`; `from` / `to` are `{ list, index, prev, next }`. For fractional ranking, save a rank between `value.to.prev` and `value.to.next` instead of the whole order.
+- `aria-busy="true"` while saving makes a refused save snap back as soon as it is removed. Without it, call `toContainer.settle('rejected')`, or `e.preventDefault()` to reject at once. With no busy signal and no render, the hold ends after `hold-timeout` (5000 ms).
+- On touch, a `[data-handle]` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- `list.move('a', { to: 'done', index: 0 })` moves without a pointer and resolves `'accepted'`, `'rejected'`, `'reconciled'` or `'unknown'`. Full API: [TY_GUIDE.md](../TY_GUIDE.md#ty-sortable).
 
 ## Bundler notes
 

@@ -96,6 +96,7 @@ Every component is wrapped:
 | `TyStep` | Individual wizard step |
 | `TyResizeObserver` | Element size observer |
 | `TyScrollContainer` | Scroll wrapper with edge shadows |
+| `TySortable` | Drag-and-drop and keyboard reordering, within a list or across a group |
 | `TyCopy` | Copy-to-clipboard field |
 
 ## ⚡ Event Handling (React Convention)
@@ -250,6 +251,46 @@ function CalendarExample() {
   );
 }
 ```
+
+### Sortable Lists
+
+`TySortable` never moves its children. A drop (or a keyboard move) fires `onChange`, and the list holds the result on screen until you re-render the items in the new order. Give each item a stable `key` and a `data-key` (or `id`).
+
+```tsx
+import { useState } from 'react';
+import { TySortable, type TySortableElement } from 'tyrell-react';
+
+function Board() {
+  const [cols, setCols] = useState<Record<string, string[]>>({ todo: ['a', 'b'], done: ['c'] });
+
+  const column = (id: string, label: string) => (
+    <TySortable id={id} group="board" label={label}
+      onChange={async (e) => {
+        const list = e.currentTarget as TySortableElement;  // read before await
+        const { value } = e.detail;
+        try {
+          await save(value);
+          setCols((c) => ({ ...c, ...value.order }));        // value.order: new key order per touched list
+        } catch {
+          list.settle('rejected');                           // nothing re-rendered: animate back
+        }
+      }}>
+      {cols[id].map((k) => <div key={k} data-key={k}>{k}</div>)}
+    </TySortable>
+  );
+
+  return <>{column('todo', 'To do')}{column('done', 'Done')}</>;
+}
+```
+
+To update optimistically, call `setCols` before saving; the re-render ends the hold right away.
+
+- `onChange` (`ty-sortable-change`) fires on the destination list with `{ value: { key, group, source, from, to, order }, item, fromContainer, toContainer }`. Call `e.preventDefault()` to reject the move at once.
+- `onStart`, `onCancel` and `onSettle` map `ty-sortable-start`, `ty-sortable-cancel` and `ty-sortable-settle`. Each handler only sees its own list's events, not a nested list's.
+- The hold ends when the items re-render (accepted), when `aria-busy` is cleared with nothing re-rendered (rejected), after `holdTimeout` ms, or when you call `settle('accepted' | 'rejected')` on the element.
+- `canDrop={(ctx) => boolean}` vetoes a slot; `labels` overrides the screen-reader announcements. Both are set as properties.
+- Props: `group`, `axis` (`'vertical'` | `'horizontal'`), `handle` (default `[data-handle]`), `accepts`, `disabled`, `keyAttr`, `holdTimeout`, `label`. Item attributes: `data-locked`, `data-no-drag`, `data-sortable-ignore`.
+- The ref is the element: `ref.current.move('a', { to: 'done', index: 0 })` moves without a pointer and resolves with the outcome.
 
 ## 🪟 Surfaces
 

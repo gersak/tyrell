@@ -176,6 +176,7 @@ protected static properties = {
 | `ty-wizard` / `ty-step` | Wizard | Step rail, controlled |
 | `ty-scroll-container` | Scroll area | Edge shadows, scroll anchoring |
 | `ty-resize-observer` | Size publisher | Element size for layout code |
+| `ty-sortable` | Reorderable list | Pointer, touch, keyboard, `move()`; lists in a `group` trade items |
 | `ty-icon` | Icon | Registry: Lucide, Heroicons, Material, Font Awesome |
 
 ### Example: TyButton

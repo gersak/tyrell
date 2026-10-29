@@ -30,6 +30,7 @@ When a Tyrell component exists, use it. Do not improvise HTML.
 | Icons | `<ty-icon>` | `<svg>`, `<img>`, icon fonts |
 | Copy button | `<ty-copy>` | Custom copy buttons |
 | Scrollable area | `<ty-scroll-container>` | `overflow-auto` + manual indicators |
+| Reorderable list | `<ty-sortable>` | Drag-and-drop libraries, custom drag code |
 | Field label | `label` attribute on component | `<label>` element |
 | Error message | `error` attribute on component | `<span class="text-red-500">` |
 | Debounced input | `debounce` attribute | Manual `setTimeout`/debounce |
@@ -729,6 +730,47 @@ Attrs: `id` (required), `debounce`. Query: `window.tyResizeObserver.getSize(id)`
 
 ---
 
+### ty-sortable
+
+Reorders its element children, or moves them into another `ty-sortable` with the same `group`, by pointer, keyboard or `move()`. It never moves the nodes itself: a drop fires `ty-sortable-change` on the destination list, your code renders the new order, and the result holds on screen until it does.
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `group` | string | - | Lists with the same group trade items. Each needs an `id` |
+| `axis` | string | `"vertical"` | `vertical` or `horizontal` |
+| `handle` | selector | `"[data-handle]"` | If an item contains a match, drags start only there |
+| `accepts` | selector | - | Items from other lists must match it to drop here |
+| `disabled` | boolean | `false` | No drags from or into this list |
+| `key-attr` | string | - | Attribute holding the item key, checked before `data-key` and `id` |
+| `hold-timeout` | number | `5000` | ms to hold a result with no render and no busy signal |
+| `label` | string | - | List name in announcements (falls back to `aria-label`, then `id`) |
+| `preview` | string | `"line"` | `line`: a drop line marks the slot. `shift`: the other items move aside while dragging (the list under the pointer decides) |
+| `flash` | boolean | `false` | Outline the item briefly where it lands |
+| `aria-busy` | `"true"` | - | A save is in flight: the hold waits for it (htmx's `htmx-request` class counts too) |
+
+**Items:** `data-key` / `id` (the key in `value`), `data-locked` (can't be dragged), `data-sortable-ignore` (not an item: headers, empty states), `data-no-drag` (pressing inside never starts a drag).
+
+**Methods:** `move(itemOrKey, { to, index, before, after })` → `Promise<'accepted' | 'rejected' | 'reconciled' | 'unknown'>`; `settle('accepted' | 'rejected')` ends the hold now. **Properties:** `canDrop` (`({ item, key, from, to, index }) => boolean`, `false` blocks the slot), `labels` (announcement overrides), `items`, `keyOf(item)`.
+
+**Events:** `ty-sortable-change` → `{ value: { key, group, source, from, to, order }, item, fromContainer, toContainer }`. `from` / `to` are `{ list, index, prev, next }`; `order` is the new key order of each touched list, by id.
+
+```html
+<ty-sortable id="tasks" label="Tasks">
+  <div data-key="a">
+    <button type="button" data-handle aria-label="Move Design review">
+      <ty-icon name="grip-vertical"></ty-icon>
+    </button>
+    Design review
+  </div>
+</ty-sortable>
+```
+
+**Styling:** `--ty-sortable-indicator-color`, `--ty-sortable-blocked-color`, `--ty-sortable-indicator-size`, `--ty-sortable-source-opacity`, `--ty-sortable-source-outline`, `--ty-sortable-ghost-shadow`, `--ty-sortable-ghost-scale`, `--ty-sortable-ghost-rotate`, `--ty-sortable-flash-color`, `--ty-sortable-duration`. The dragged copy carries `data-ty-sortable-ghost` for page CSS.
+
+Apply `value.order` (or save a rank between `value.to.prev` and `value.to.next`). Set `aria-busy="true"` on the list while saving: if it clears and the order didn't change, the item snaps back. On touch, a handle drags at once and leaves the row to scroll; without one, press and hold 250 ms.
+
+---
+
 ## Icon System
 
 ```clojure
@@ -881,6 +923,8 @@ import { findBestPosition, autoUpdate, placementPreferences } from 'tyrell-compo
 | `ty-tabs` | `ty-tab-change` | `{ activeId, activeIndex, previousId, previousIndex }` |
 | `ty-tab` | `ty-tab-load` | `{ id, index }` (lazy tab shown with no content; doesn't bubble) |
 | `ty-wizard` | `ty-wizard-step-change` | `{ activeId, activeIndex, previousId, previousIndex, direction }` |
+| `ty-sortable` | `ty-sortable-change` | `{ value: { key, group, source, from, to, order }, item, fromContainer, toContainer }` (on the destination list; bubbles; `preventDefault()` rejects) |
+| `ty-sortable` | `ty-sortable-start`, `ty-sortable-cancel`, `ty-sortable-settle` | `{ value, item }`, `{ value, item, reason }`, `{ value, outcome }` (don't bubble) |
 | `ty-modal` | `close` | `{ reason, returnValue? }` |
 | `ty-tag` | `dismiss` | -- |
 | `ty-button` | `click` | `{ originalEvent }` (cancelable: `preventDefault()` cancels submit/reset) |

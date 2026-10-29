@@ -301,6 +301,7 @@ Every Tyrell component emits standard DOM `CustomEvent`s. The payload is always 
 | `ty-tag` | `dismiss` | `value` |
 | `ty-button` | `click` | `originalEvent` |
 | `ty-copy` | `copy` | `value` |
+| `ty-sortable` | `ty-sortable-change` | `value` (`key`, `group`, `source`, `from`, `to`, `order`), `item`, `fromContainer`, `toContainer` (on the destination list; `preventDefault()` rejects) |
 
 ### Reading Event Detail Per Component
 
@@ -590,3 +591,33 @@ dismissible chips render out-of-band wherever you put them:
 **Events:**
 - `ty-tab-change` - Fires when the shown tab changes (not for the initial tab)
   - Detail: `{activeId, activeIndex, previousId, previousIndex}`
+
+---
+
+## Reorderable lists (ty-sortable)
+
+`ty-sortable` never moves its children. A drop (or a keyboard move) fires `ty-sortable-change` on the destination list, and the list holds the result on screen until Replicant renders the items in the new order. Give each item `:replicant/key` (so Replicant moves the node) and `:data-key` (or `:id`):
+
+```clojure
+(defn move! [^js e]
+  (let [value (.. e -detail -value)]
+    (swap! store assoc :saving? true)
+    (-> (save value)
+        (.then #(swap! store update :board merge (js->clj (.-order value))))
+        (.finally #(swap! store assoc :saving? false)))))
+
+(defn column [{:keys [board saving?]} id label]
+  [:ty-sortable {:id id :group "board" :label label
+                 :aria-busy (when saving? "true")
+                 :on {:ty-sortable-change move!}}
+   (for [k (get board id)]
+     [:div {:replicant/key k :data-key k}
+      [:button {:type "button" :data-handle "" :aria-label (str "Move " k)}
+       [:ty-icon {:name "grip-vertical"}]]
+      k])])
+```
+
+- `value` is `{key, group, source, from, to, order}`. `order` is the new key order of each list the move touched, by list id, so one `merge` renders both lists. For fractional ranking, save a rank between `(.. value -to -prev)` and `(.. value -to -next)` instead.
+- `:aria-busy` while saving makes a refused save snap back as soon as it clears (the order didn't change). Without it, call `(.settle (.. e -detail -toContainer) "rejected")`, or `(.preventDefault e)` to reject at once.
+- On touch, a `:data-handle` drags at once and leaves the rest of the row to scroll; give it a 44px target. Without a handle the whole item drags after a 250 ms press.
+- Attributes: `group`, `axis`, `handle` (default `[data-handle]`), `accepts`, `disabled`, `key-attr`, `hold-timeout`, `label`. Items: `data-locked`, `data-no-drag`, `data-sortable-ignore`. `(.move el "a" #js {:to "done" :index 0})` moves without a pointer.

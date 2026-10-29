@@ -102,6 +102,13 @@ export type { TyResizeObserverProps } from './TyResizeObserver.js';
 export { TyScrollContainer } from './TyScrollContainer.js';
 export type { TyScrollContainerProps, TyScrollContainerRef } from './TyScrollContainer.js';
 
+export { TySortable } from './TySortable.js';
+export type {
+  TySortableProps, TySortableElement, TySortableValue, TySortablePos, TySortableChangeDetail,
+  TySortableDragValue, TySortableStartDetail, TySortableCancelDetail, TySortableCancelReason, TySortableSettleDetail,
+  TySortableOutcome, TySortableDropContext, TySortableStrings, TySortableMoveOptions,
+} from './TySortable.js';
+
 export { TyButton as Button } from './TyButton.js';
 export { TyTag as Tag } from './TyTag.js';
 export { TyInput as Input } from './TyInput.js';
@@ -127,6 +134,7 @@ export { TyWizard as Wizard } from './TyWizard.js';
 export { TyStep as Step } from './TyStep.js';
 export { TyResizeObserver as ResizeObserver } from './TyResizeObserver.js';
 export { TyScrollContainer as ScrollContainer } from './TyScrollContainer.js';
+export { TySortable as Sortable } from './TySortable.js';
 export { TySelect as Select, TySelectedOptions as SelectedOptions } from './TySelect.js';
 
 export type { TyButtonProps as ButtonProps } from './TyButton.js';
@@ -178,3 +186,5 @@ export type { TyStepProps as StepProps } from './TyStep.js';
 export type { TyResizeObserverProps as ResizeObserverProps } from './TyResizeObserver.js';
 
 export type { TyScrollContainerProps as ScrollContainerProps, TyScrollContainerRef as ScrollContainerRef } from './TyScrollContainer.js';
+
+export type { TySortableProps as SortableProps, TySortableElement as SortableElement, TySortableChangeDetail as SortableChangeDetail } from './TySortable.js';

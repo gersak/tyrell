@@ -234,6 +234,7 @@ Use `tyrell.shim` to turn any ClojureScript render function into a Web Component
 | `ty-copy` | Click-to-copy with visual feedback |
 | `ty-scroll-container` | Scrollable area with fade indicators |
 | `ty-resize-observer` | Self-observing element with debounce |
+| `ty-sortable` | Drag-and-drop and keyboard reordering, within a list or across a group |
 
 **[See all components in action →](https://gersak.github.io/tyrell)**
 
