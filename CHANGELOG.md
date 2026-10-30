@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-RC20] - 2026-10-30
+
 ### Added
 
 - **`ty-sortable`:** reorder a list, or move items between lists of the same `group`, by mouse, touch, keyboard or `move()`. It never moves its children: a drop fires `ty-sortable-change` (`{ value: { key, group, source, from, to, order }, item, fromContainer, toContainer }`) on the destination list, and the result holds on screen until the app, framework or server renders the new order. `aria-busy="true"` (or htmx's `htmx-request`) on the list makes a save that ends without a new order snap back. Items are keyed by `data-key` or `id`. React: `TySortable`. Subpath: `tyrell-components/sortable`.
+  - While dragging, the other items move aside; `drop-line` marks the slot with a line instead. The dragged copy lifts (`--ty-sortable-ghost-scale`, `--ty-sortable-ghost-rotate`, `--ty-sortable-ghost-shadow`) and carries `data-ty-sortable-ghost` for page CSS; the source spot dims (`--ty-sortable-source-opacity`, `--ty-sortable-source-outline`). On release everything glides into the rendered layout. `flash` outlines the item where it lands.
 
 ## [1.0.0-RC19] - 2026-10-28
 

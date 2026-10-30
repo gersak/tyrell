@@ -22,8 +22,8 @@ Release build: `npm run build` (output in `public/js`).
 
 | Package | Version |
 |---|---|
-| `dev.gersak/tyrell` (Clojars) | `1.0.0-RC19` |
-| `tyrell-components` (npm) | `1.0.0-RC19` |
+| `dev.gersak/tyrell` (Clojars) | `1.0.0-RC20` |
+| `tyrell-components` (npm) | `1.0.0-RC20` |
 | `no.cjohansen/replicant` | `2025.06.21` |
 
 `dev.gersak/tyrell` pulls in `tyrell-components` on its own; Lucide comes from `dev.gersak/tyrell-icons-lucide`. The npm dependency here is pinned so `npm install` can copy the matching CSS.

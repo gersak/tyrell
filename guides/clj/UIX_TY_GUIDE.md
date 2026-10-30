@@ -11,8 +11,8 @@ This guide covers what's specific to UIx + Tyrell. For framework-agnostic CLJS s
 ```clojure
 {:deps {com.pitch/uix.core   {:mvn/version "1.4.4"}
         com.pitch/uix.dom    {:mvn/version "1.4.4"}
-        dev.gersak/tyrell    {:mvn/version "1.0.0-RC19"}
-        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC19"}}}   ; tyrell.lucide
+        dev.gersak/tyrell    {:mvn/version "1.0.0-RC20"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC20"}}}   ; tyrell.lucide
 ```
 
 `tyrell.react` is part of `dev.gersak/tyrell`, but the npm wrapper package isn't auto-pulled. Install it explicitly the same way you install React itself:

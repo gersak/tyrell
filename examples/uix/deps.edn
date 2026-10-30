@@ -3,8 +3,8 @@
         com.pitch/uix.core  {:mvn/version "1.0.1"}
         com.pitch/uix.dom   {:mvn/version "1.0.1"}
         ;; tyrell.icons, router, layout (and the tyrell-components npm pin)
-        dev.gersak/tyrell   {:mvn/version "1.0.0-RC19"}
+        dev.gersak/tyrell   {:mvn/version "1.0.0-RC20"}
         ;; tyrell.lucide
-        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC19"}}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC20"}}
  ;; Keep in step with the shadow-cljs npm package (package.json)
  :aliases {:dev {:extra-deps {thheller/shadow-cljs {:mvn/version "3.4.6"}}}}}

@@ -7,8 +7,8 @@
    [deps-deploy.deps-deploy :as deploy]
    [tyrell.template :as template]))
 
-(def ty-version "1.0.0-RC19")
-(def ty-icons-version "1.0.0-RC19")
+(def ty-version "1.0.0-RC20")
+(def ty-icons-version "1.0.0-RC20")
 (def class-dir "target/classes")
 
 ;; Library configurations
