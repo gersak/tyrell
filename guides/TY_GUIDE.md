@@ -744,7 +744,7 @@ Reorders its element children, or moves them into another `ty-sortable` with the
 | `key-attr` | string | - | Attribute holding the item key, checked before `data-key` and `id` |
 | `hold-timeout` | number | `5000` | ms to hold a result with no render and no busy signal |
 | `label` | string | - | List name in announcements (falls back to `aria-label`, then `id`) |
-| `preview` | string | `"line"` | `line`: a drop line marks the slot. `shift`: the other items move aside while dragging (the list under the pointer decides) |
+| `drop-line` | boolean | `false` | A drop line marks the slot and nothing moves. Without it the other items move aside while dragging. The list under the pointer decides |
 | `flash` | boolean | `false` | Outline the item briefly where it lands |
 | `aria-busy` | `"true"` | - | A save is in flight: the hold waits for it (htmx's `htmx-request` class counts too) |
 

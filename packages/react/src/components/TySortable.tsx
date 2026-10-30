@@ -129,8 +129,8 @@ export interface TySortableProps extends Omit<React.HTMLAttributes<HTMLElement>,
   /** List name used in screen-reader announcements */
   label?: string;
 
-  /** 'line' (default) marks the slot with a line; 'shift' moves siblings aside while dragging */
-  preview?: 'line' | 'shift';
+  /** Mark the slot with a drop line instead of moving siblings aside */
+  dropLine?: boolean;
 
   /** Briefly outline an item where it lands */
   flash?: boolean;
@@ -168,7 +168,7 @@ export const TySortable = React.forwardRef<TySortableElement, TySortableProps>(
     keyAttr,
     holdTimeout,
     label,
-    preview,
+    dropLine,
     flash,
     canDrop,
     labels,
@@ -235,7 +235,7 @@ export const TySortable = React.forwardRef<TySortableElement, TySortableProps>(
     if (keyAttr) webComponentProps['key-attr'] = keyAttr;
     if (holdTimeout != null) webComponentProps['hold-timeout'] = String(holdTimeout);
     if (label) webComponentProps.label = label;
-    if (preview) webComponentProps.preview = preview;
+    if (dropLine) webComponentProps['drop-line'] = true;
     if (flash) webComponentProps.flash = true;
     // `true`, not '': React 19 assigns the property, and the element's setter
     // reads '' as false (as a native element's does).

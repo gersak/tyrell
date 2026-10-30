@@ -114,8 +114,8 @@ test.describe('ty-sortable touch', () => {
     expect(await page.evaluate(() => (window as any).clicks)).toBe(1)
   })
 
-  test('preview="shift" on touch: siblings move aside under the finger, the drop lands', async ({ page }) => {
-    await mount(page, list(['1', '2', '3'], true).replace('<ty-sortable id="a"', '<ty-sortable id="a" preview="shift"'))
+  test('shift on touch: siblings move aside under the finger, the drop lands', async ({ page }) => {
+    await mount(page, list(['1', '2', '3'], true))
     await recordChanges(page)
     const cdp = await page.context().newCDPSession(page)
     const from = await center(page, '[data-key="1"] [data-handle]')

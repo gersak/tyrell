@@ -234,8 +234,8 @@ test.describe('ty-sortable engines', () => {
     await expect.poll(async () => (await layerState(page)).count).toBe(0)
   })
 
-  test('preview="shift" and the lift: siblings move aside, the ghost scales, all cleaned up after', async ({ page }) => {
-    await mount(page, list('a', ['1', '2', '3'], { attrs: 'preview="shift"' }))
+  test('shift and the lift: siblings move aside, the ghost scales, all cleaned up after', async ({ page }) => {
+    await mount(page, list('a', ['1', '2', '3']))
     await instrument(page)
     await page.evaluate(() => {
       const a = document.getElementById('a')!

@@ -96,7 +96,7 @@ export interface TySortableAttributes {
   'key-attr'?: string
   'hold-timeout'?: number
   label?: string
-  preview?: 'line' | 'shift'
+  'drop-line'?: boolean
   flash?: boolean
 }
 
@@ -205,6 +205,8 @@ interface Session {
   /** The busy signal is htmx's htmx-request class. */
   htmx: boolean
   holdStart: number
+  /** Where shifted children were last painted, by key: the landing glides from there. */
+  painted: Map<string, DOMRect>
   timer: number
   focus: Element | null
   resolve: ((outcome: TySortableOutcome) => void) | null
@@ -529,12 +531,12 @@ export class TySortable extends HTMLElement {
     this.toggleAttribute('disabled', !!v && String(v) !== 'false')
   }
 
-  /** 'line' (default): a drop line marks the slot. 'shift': siblings move aside while dragging. */
-  get preview(): 'line' | 'shift' {
-    return this.getAttribute('preview') === 'shift' ? 'shift' : 'line'
+  /** A drop line marks the slot and nothing moves. Off: siblings move aside while dragging. */
+  get dropLine(): boolean {
+    return this.hasAttribute('drop-line')
   }
-  set preview(v: 'line' | 'shift') {
-    this.setAttribute('preview', v === 'shift' ? 'shift' : 'line')
+  set dropLine(v: boolean) {
+    this.toggleAttribute('drop-line', !!v && String(v) !== 'false')
   }
 
   /** Outline the item briefly where it lands. */
@@ -944,6 +946,7 @@ function newSession(mode: Session['mode'], source: TySortable, item: HTMLElement
     busy: false,
     htmx: false,
     holdStart: 0,
+    painted: new Map(),
     timer: 0,
     focus: null,
     resolve: null,
@@ -1412,7 +1415,7 @@ function gapOrigin(s: Session, t: TySortable): { x: number; y: number } {
 
 /** The list under the pointer decides (the source, when over none). */
 function shiftPreview(s: Session): boolean {
-  return (s.target ?? s.source).getAttribute('preview') === 'shift'
+  return !(s.target ?? s.source).hasAttribute('drop-line')
 }
 
 function paintIndicator(s: Session): void {
@@ -1529,7 +1532,7 @@ function cancelShifts(s: Session): void {
 }
 
 /**
- * preview="shift": children make room while dragging. Pointer drags hide
+ * The shift preview (without drop-line): children make room while dragging. Pointer drags hide
  * the item (the ghost is it) and close its gap; keyboard drags keep it in
  * place, dimmed and focused, and show a copy in the target's gap.
  */
@@ -1537,7 +1540,7 @@ function previewShifts(s: Session): void {
   if (s.phase !== 'dragging') return
   const ms = Math.min(duration(s.source), 200)
   if (!shiftPreview(s)) {
-    // Over a list without the preview: undo what a previous list did.
+    // Over a drop-line list: undo what a previous list did.
     if (s.shifts.size) applyShifts(s, new Map(), ms)
     markSource(s, 'dim')
     return
@@ -1860,6 +1863,15 @@ function commit(): boolean {
     setState(c, 'pending', true)
   }
   holdVisual(s)
+  // A render replaces the layout before we can look again: measure now, and
+  // every frame of the hold while the shifts animate.
+  notePainted(s)
+  const track = () => {
+    if (session !== s || s.phase !== 'holding') return
+    notePainted(s)
+    requestAnimationFrame(track)
+  }
+  requestAnimationFrame(track)
 
   // Observe before dispatching: a synchronous renderer (vanilla, Replicant)
   // changes the DOM inside the handler.
@@ -2039,6 +2051,15 @@ function evaluateHold(trigger: 'mutation' | 'idle' | 'settle'): void {
  * Still holding, but some lists have rendered: their layout is real now, so
  * the offsets predicted for them go (the others keep theirs).
  */
+function notePainted(s: Session): void {
+  s.painted.clear()
+  for (const el of s.shifts.keys()) {
+    const list = el.parentElement instanceof TySortable ? el.parentElement : null
+    const k = list?.keyOf(el)
+    if (k && k !== s.key && el.isConnected) s.painted.set(k, el.getBoundingClientRect())
+  }
+}
+
 function dropRenderedShifts(s: Session): void {
   const before = s.snapshot!
   for (const c of holdLists(s)) {
@@ -2048,6 +2069,8 @@ function dropRenderedShifts(s: Session): void {
       if (el.parentElement !== c) continue
       sh.anim.cancel()
       s.shifts.delete(el)
+      const k = c.keyOf(el)
+      if (k) s.painted.delete(k)
     }
   }
 }
@@ -2087,14 +2110,10 @@ function release(outcome: TySortableOutcome): void {
     flyBack(s, back, () => teardown(s))
   } else {
     const ghostRect = s.ghost?.getBoundingClientRect() ?? null
-    // Where every shifted child is on screen now, by key: after the render
-    // the same keys glide from there instead of jumping.
-    const seen = new Map<string, DOMRect>()
-    for (const el of s.shifts.keys()) {
-      const list = el.parentElement instanceof TySortable ? el.parentElement : null
-      const k = list?.keyOf(el)
-      if (k && k !== s.key && el.isConnected) seen.set(k, el.getBoundingClientRect())
-    }
+    // Where every shifted child was last painted: after the render the same
+    // keys glide from there instead of jumping. (Measuring now would add the
+    // stale shift to the new layout.)
+    const seen = s.painted
     teardown(s)
     const now = findNow()
     const ms = duration(target)

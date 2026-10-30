@@ -521,8 +521,9 @@ describe('ty-sortable', () => {
       return !!ind && ind.style.display === 'block';
     };
 
-    it('preview="shift": siblings make room, the placeholder moves, no line', async () => {
-      const board = await mount(list('a', ['1', '2', '3'], 'preview="shift"'));
+    it('shift is the default: siblings make room, the placeholder moves, no line', async () => {
+      const board = await mount(list('a', ['1', '2', '3']));
+      expect((board.querySelector('#a') as TySortable).dropLine).to.be.false;
       const a = board.querySelector('#a') as TySortable;
       const [x, y] = center(a.children[2]);
       await hold(a.children[0], [x, y + 15]);
@@ -533,8 +534,8 @@ describe('ty-sortable', () => {
       await sendMouse({ type: 'up' });
     });
 
-    it('preview="shift" across lists: the source closes the gap, the target opens one', async () => {
-      const board = await mount(list('a', ['1', '2'], 'preview="shift"') + list('b', ['3', '4'], 'preview="shift"'));
+    it('shift across lists: the source closes the gap, the target opens one', async () => {
+      const board = await mount(list('a', ['1', '2']) + list('b', ['3', '4']));
       const a = board.querySelector('#a')!;
       const b = board.querySelector('#b')!;
       const [x, y] = center(b.children[0]);
@@ -547,7 +548,7 @@ describe('ty-sortable', () => {
     });
 
     it('a cancelled shift drag puts everything back', async () => {
-      const board = await mount(list('a', ['1', '2', '3'], 'preview="shift"'));
+      const board = await mount(list('a', ['1', '2', '3']));
       const a = board.querySelector('#a')!;
       const [x, y] = center(a.children[2]);
       await hold(a.children[0], [x, y + 15]);
@@ -561,8 +562,18 @@ describe('ty-sortable', () => {
       expect(layer()).to.not.exist;
     });
 
-    it('nothing is left shifted after an accepted hold (line preview)', async () => {
-      const board = await mount(list('a', ['1', '2', '3']));
+    it('drop-line: a drop line, nothing shifts', async () => {
+      const board = await mount(list('a', ['1', '2', '3'], 'drop-line'));
+      const a = board.querySelector('#a') as TySortable;
+      const [x, y] = center(a.children[2]);
+      await hold(a.children[0], [x, y + 15]);
+      expect(indicatorShown()).to.be.true;
+      for (const el of Array.from(a.children)) expect(ty(el)).to.equal(0);
+      await sendMouse({ type: 'up' });
+    });
+
+    it('nothing is left shifted after an accepted hold (drop-line)', async () => {
+      const board = await mount(list('a', ['1', '2', '3'], 'drop-line'));
       const a = board.querySelector('#a') as TySortable;
       a.addEventListener('ty-sortable-change', (e) => apply(board, (e as CustomEvent).detail.value));
       const [x, y] = center(a.children[2]);
@@ -606,8 +617,8 @@ describe('ty-sortable', () => {
       expect(outline).to.be.true;
     });
 
-    it('keyboard with preview="shift": the placeholder follows the arrows, no line', async () => {
-      const board = await mount(`<ty-sortable id="a" preview="shift" style="display:block; width:200px; --ty-sortable-duration:0ms">
+    it('keyboard with: the placeholder follows the arrows, no line', async () => {
+      const board = await mount(`<ty-sortable id="a" style="display:block; width:200px; --ty-sortable-duration:0ms">
         <div data-key="1" tabindex="0" style="${CARD}">one</div>
         <div data-key="2" tabindex="0" style="${CARD}">two</div>
         <div data-key="3" tabindex="0" style="${CARD}">three</div>
@@ -624,7 +635,7 @@ describe('ty-sortable', () => {
     });
 
     it('the second item moving one slot shifts its neighbour by one item plus the gap', async () => {
-      const board = await mount(list('a', ['1', '2', '3', '4'], 'preview="shift"'));
+      const board = await mount(list('a', ['1', '2', '3', '4']));
       const a = board.querySelector('#a')!;
       const [x, y] = center(a.children[2]);
       await hold(a.children[1], [x, y + 15]);
@@ -636,7 +647,7 @@ describe('ty-sortable', () => {
     });
 
     it("an item's own transform survives being shifted", async () => {
-      const board = await mount(list('a', ['1', '2', '3'], 'preview="shift"'));
+      const board = await mount(list('a', ['1', '2', '3']));
       const a = board.querySelector('#a')!;
       (a.children[1] as HTMLElement).style.transform = 'rotate(2deg)';
       const [x, y] = center(a.children[2]);
@@ -648,8 +659,8 @@ describe('ty-sortable', () => {
     });
 
     it('an ignored footer moves down with the cards when a gap opens above it', async () => {
-      const board = await mount(list('a', ['1']) .replace('<ty-sortable id="a"', '<ty-sortable id="a" preview="shift"')
-        + list('b', ['3']).replace('<ty-sortable id="b"', '<ty-sortable id="b" preview="shift"').replace('</ty-sortable>', '<button data-sortable-ignore style="height:30px">add</button></ty-sortable>'));
+      const board = await mount(list('a', ['1']) .replace('<ty-sortable id="a"', '<ty-sortable id="a"')
+        + list('b', ['3']).replace('<ty-sortable id="b"', '<ty-sortable id="b"').replace('</ty-sortable>', '<button data-sortable-ignore style="height:30px">add</button></ty-sortable>'));
       const a = board.querySelector('#a')!;
       const b = board.querySelector('#b')!;
       const [x, y] = center(b.children[0]);
@@ -659,8 +670,8 @@ describe('ty-sortable', () => {
       await sendMouse({ type: 'up' });
     });
 
-    it('moving on to a list without the preview closes the gaps again', async () => {
-      const board = await mount(list('a', ['1', '2'], 'preview="shift"') + list('b', ['3', '4'], 'preview="shift"') + list('c', ['5']));
+    it('moving on to a drop-line list closes the gaps again', async () => {
+      const board = await mount(list('a', ['1', '2']) + list('b', ['3', '4']) + list('c', ['5'], 'drop-line'));
       const a = board.querySelector('#a')!;
       const b = board.querySelector('#b')!;
       const c = board.querySelector('#c')!;
@@ -679,9 +690,9 @@ describe('ty-sortable', () => {
       await sendMouse({ type: 'up' });
     });
 
-    it('keyboard across lists with preview="shift": the focused item stays visible, a copy fills the gap', async () => {
+    it('keyboard across lists with: the focused item stays visible, a copy fills the gap', async () => {
       const board = await mount(
-        list('a', ['1', '2'], 'preview="shift"').replace('<div data-key="1"', '<div data-key="1" tabindex="0"') + list('b', ['3'], 'preview="shift"'),
+        list('a', ['1', '2']).replace('<div data-key="1"', '<div data-key="1" tabindex="0"') + list('b', ['3']),
       );
       const a = board.querySelector('#a')!;
       const b = board.querySelector('#b')!;
@@ -699,8 +710,31 @@ describe('ty-sortable', () => {
       await sendKeys({ press: 'Escape' });
     });
 
+    it('with motion and a microtask render, cards that made room stay put as it lands', async () => {
+      const motion = (m: string) => m.replace('--ty-sortable-duration: 0ms', '--ty-sortable-duration: 200ms');
+      const board = await mount(motion(list('a', ['1', '2', '3'])) + motion(list('b', ['4', '5'])));
+      const a = board.querySelector('#a')!;
+      const b = board.querySelector('#b')!;
+      const top1 = a.children[0].getBoundingClientRect().top;
+      b.addEventListener('ty-sortable-change', (e) => queueMicrotask(() => apply(board, (e as CustomEvent).detail.value)));
+      const [x, y] = center(b.children[0]);
+      await hold(a.children[0], [x, y + 15]);
+      await aTimeout(250);
+      // Card 2 closed the gap: it shows where card 1 was.
+      expect(Math.abs(a.children[1].getBoundingClientRect().top - top1)).to.be.lessThan(2);
+      const settled = new Promise((r) => b.addEventListener('ty-sortable-settle', r, { once: true }));
+      await sendMouse({ type: 'up' });
+      await settled;
+      expect(keys(a)).to.deep.equal(['2', '3']);
+      // Rendered there now: no jump up by a card and glide back.
+      for (let i = 0; i < 3; i++) {
+        expect(Math.abs(a.children[0].getBoundingClientRect().top - top1)).to.be.lessThan(2);
+        await nextFrame();
+      }
+    });
+
     it('a morph replacing shifted cards mid-drag re-shifts the new nodes', async () => {
-      const board = await mount(list('a', ['1', '2', '3'], 'preview="shift"'));
+      const board = await mount(list('a', ['1', '2', '3']));
       const a = board.querySelector('#a')!;
       const [x, y] = center(a.children[2]);
       await hold(a.children[0], [x, y + 15]);

@@ -135,14 +135,14 @@
 
 (def ^:private board-snippets
   [["html" "HTML" "html"
-    (str "<ty-sortable id=\"todo\" group=\"board\" label=\"To do\" preview=\"shift\" flash>…</ty-sortable>
-<ty-sortable id=\"doing\" group=\"board\" label=\"Doing\" preview=\"shift\" flash>…</ty-sortable>
-<ty-sortable id=\"done\" group=\"board\" label=\"Done\" preview=\"shift\" flash>…</ty-sortable>
+    (str "<ty-sortable id=\"todo\" group=\"board\" label=\"To do\" flash>…</ty-sortable>
+<ty-sortable id=\"doing\" group=\"board\" label=\"Doing\" flash>…</ty-sortable>
+<ty-sortable id=\"done\" group=\"board\" label=\"Done\" flash>…</ty-sortable>
 
 " render-js)]
    ["replicant" "Replicant" "clojure"
     "(defn column [id label]
-  [:ty-sortable {:id id :group \"board\" :label label :preview \"shift\" :flash true
+  [:ty-sortable {:id id :group \"board\" :label label :flash true
                  :on {:ty-sortable-change
                       #(swap! board merge (js->clj (.. % -detail -value -order)))}}
    (for [k (get @board id)]
@@ -154,11 +154,11 @@
  (column \"done\" \"Done\")]"]])
 
 (def ^:private accepts-code
-  "<ty-sortable id=\"inbox\" group=\"triage\">
+  "<ty-sortable id=\"inbox\" group=\"triage\" drop-line>
   <div data-key=\"i1\" data-kind=\"bug\">…</div>
   <div data-key=\"i2\" data-kind=\"feature\">…</div>
 </ty-sortable>
-<ty-sortable id=\"bugs\" group=\"triage\" accepts=\"[data-kind=bug]\"></ty-sortable>
+<ty-sortable id=\"bugs\" group=\"triage\" drop-line accepts=\"[data-kind=bug]\"></ty-sortable>
 
 <script>
   // Rules a selector can't express: false blocks that slot.
@@ -254,24 +254,24 @@ await todo.move('m1', { to: 'done', before: 'm4' });
        :description [:span "Lists with the same " [:code "group"] " trade items. "
                      [:code "value.order"] " holds both the source and the destination, so one merge renders both. "
                      "With the keyboard, ← → switch columns. "
-                     [:code "preview=\"shift\""] " moves the cards aside while you drag; "
                      [:code "flash"] " outlines the card where it lands."]
        :tabs board-snippets}
       (columns "11rem"
-               (column :board "doc-board-todo" "To do" {:group "board" :preview "shift" :flash true})
-               (column :board "doc-board-doing" "Doing" {:group "board" :preview "shift" :flash true})
-               (column :board "doc-board-done" "Done" {:group "board" :preview "shift" :flash true})))
+               (column :board "doc-board-todo" "To do" {:group "board" :flash true})
+               (column :board "doc-board-doing" "Doing" {:group "board" :flash true})
+               (column :board "doc-board-done" "Done" {:group "board" :flash true})))
 
      (example
       {:title "Accepts"
        :description [:span "Bugs only takes items matching " [:code "accepts=\"[data-kind=bug]\""]
-                     ". A blocked drop shows red and snaps back."]
+                     ". A blocked drop shows red and snaps back. These lists set "
+                     [:code "drop-line"] ": a line marks the slot and the cards stay put."]
        :code accepts-code}
       (let [item (fn [k] (card k [:ty-tag.ml-auto {:size "xs" :flavor (if (= "bug" (kinds k)) "danger-" "primary-")} (kinds k)]))
             kind-of (fn [k] (assoc-in (item k) [1 :data-kind] (kinds k)))]
         (columns "12rem"
-                 (column :accepts "doc-acc-inbox" "Inbox" {:group "triage"} kind-of)
-                 (column :accepts "doc-acc-bugs" "Bugs only" {:group "triage" :accepts "[data-kind=bug]"} kind-of))))))
+                 (column :accepts "doc-acc-inbox" "Inbox" {:group "triage" :drop-line true} kind-of)
+                 (column :accepts "doc-acc-bugs" "Bugs only" {:group "triage" :drop-line true :accepts "[data-kind=bug]"} kind-of))))))
 
    (page-section
     {:title "Server rendering"
@@ -300,7 +300,7 @@ await todo.move('m1', { to: 'done', before: 'm4' });
                     "Without one, press and hold 250ms; moving earlier scrolls the page. ty sets "
                     [:code "touch-action: none"] " on handles, including a custom " [:code "handle"] " selector."]
       :code touch-code}
-     [:div.w-full (sortable :touch "doc-sort-touch" {:label "Tasks" :preview "shift"} plain-card)]))
+     [:div.w-full (sortable :touch "doc-sort-touch" {:label "Tasks"} plain-card)]))
 
    (api-section
     {:attributes ["ty-sortable"
@@ -312,7 +312,7 @@ await todo.move('m1', { to: 'done', before: 'm4' });
                   ["key-attr" "string" "Attribute holding the item key, checked before data-key and id."]
                   ["hold-timeout" "number" "5000" "ms to hold a result with no render and no busy signal."]
                   ["label" "string" "List name in announcements. Falls back to aria-label, then id."]
-                  ["preview" "string" "\"line\"" "line: a drop line marks the slot. shift: the other items move aside while dragging (the native feel on phones). The list under the pointer decides: set it on every list of a group."]
+                  ["drop-line" "boolean" "false" "A line marks the slot and nothing moves. Without it the other items move aside while dragging. The list under the pointer decides: set it on every list of a group."]
                   ["flash" "boolean" "false" "Outline the item briefly where it lands."]
                   ["aria-busy" "\"true\"" "A request is in flight: the hold waits for it, up to 30s."]
                   "Items"
