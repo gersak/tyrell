@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-rc.21] - 2026-11-11
+
 ### Added
 
 - **Agent docs ship in the npm packages.** `tyrell-components` and `tyrell-react` include `AGENTS.md` (the rules card from `guides/AGENT_INSTRUCTIONS.md`, stamped with the version), `guides/` and `CHANGELOG.md`, so an installed or CDN-served version carries the docs that match it. A project loads it from `CLAUDE.md` with `@node_modules/tyrell-components/AGENTS.md`.
