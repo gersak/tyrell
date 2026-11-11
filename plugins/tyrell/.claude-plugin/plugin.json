@@ -1,0 +1,10 @@
+{
+  "name": "tyrell",
+  "version": "0.1.0",
+  "description": "Puts the Tyrell rules card for the project's version into context at session start, and checks the UI files changed in each turn for hand-rolled controls, raw colors and removed Tyrell API.",
+  "author": { "name": "Gersak" },
+  "homepage": "https://github.com/gersak/tyrell",
+  "repository": "https://github.com/gersak/tyrell",
+  "license": "MIT",
+  "keywords": ["tyrell", "web-components", "design-system", "ui"]
+}

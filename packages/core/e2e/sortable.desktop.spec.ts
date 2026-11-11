@@ -217,4 +217,62 @@ test.describe('ty-sortable desktop', () => {
     await page.mouse.up()
     expect((await ofType(page, 'ty-sortable-change')).map((e) => e.toContainer)).toEqual(['b'])
   })
+
+  test('pen: the item needs a long-press, a handle drags at once, press-and-hold right-click is suppressed', async ({ page }) => {
+    const row = (k: string, handle: boolean) => `<div data-key="${k}" style="${CARD}">${handle ? '<button type="button" data-handle style="width:32px;height:32px">=</button>' : ''}<span>${k}</span></div>`
+    await mount(page, `
+      <ty-sortable id="a" style="display:block;width:240px;--ty-sortable-duration:0ms">${['1', '2', '3'].map((k) => row(k, false)).join('')}</ty-sortable>
+      <ty-sortable id="b" style="display:block;width:240px;margin-top:24px;--ty-sortable-duration:0ms">${['4', '5', '6'].map((k) => row(k, true)).join('')}</ty-sortable>`)
+    await instrument(page)
+    const cdp = await page.context().newCDPSession(page)
+    const pen = (type: 'mousePressed' | 'mouseMoved' | 'mouseReleased', p: { x: number; y: number }) =>
+      cdp.send('Input.dispatchMouseEvent', { type, x: p.x, y: p.y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, pointerType: 'pen' })
+    const penDrag = async (from: { x: number; y: number }, to: { x: number; y: number }, holdMs: number, during?: () => Promise<void>) => {
+      await pen('mousePressed', from)
+      if (holdMs) await page.waitForTimeout(holdMs)
+      for (let i = 1; i <= 8; i++) {
+        await pen('mouseMoved', { x: from.x, y: Math.round(from.y + ((to.y - from.y) * i) / 8) })
+        await page.waitForTimeout(16)
+      }
+      if (during) await during()
+      await pen('mouseReleased', to)
+      await page.waitForTimeout(50)
+    }
+    expect(await page.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(true)
+
+    // 1) Item, no hold: a pen stroke, not a drag.
+    let from = await center(page, '[data-key="1"]')
+    let to = await center(page, '[data-key="3"]')
+    await penDrag(from, { x: to.x, y: to.y + 12 }, 0)
+    expect(await ofType(page, 'ty-sortable-change')).toEqual([])
+
+    // 2) Item, held: picked up. Windows fires contextmenu on press-and-hold; it's cancelled.
+    await penDrag(from, { x: to.x, y: to.y + 12 }, 400, async () => {
+      const prevented = await page.evaluate(() => {
+        const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+        document.querySelector('[data-key="2"]')!.dispatchEvent(e)
+        return e.defaultPrevented
+      })
+      expect(prevented).toBe(true)
+    })
+    let changes = await ofType(page, 'ty-sortable-change')
+    expect(changes.length).toBe(1)
+    expect(changes[0].value.to.index).toBe(2)
+
+    // 3) Handle: drags at once.
+    from = await center(page, '[data-key="4"] [data-handle]')
+    to = await center(page, '[data-key="6"]')
+    await penDrag(from, { x: from.x, y: to.y + 12 }, 0)
+    changes = await ofType(page, 'ty-sortable-change')
+    expect(changes.length).toBe(2)
+    expect(changes[1].value.key).toBe('4')
+
+    // After the drag the right-click works again.
+    const after = await page.evaluate(() => {
+      const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+      document.body.dispatchEvent(e)
+      return e.defaultPrevented
+    })
+    expect(after).toBe(false)
+  })
 })

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Agent docs ship in the npm packages.** `tyrell-components` and `tyrell-react` include `AGENTS.md` (the rules card from `guides/AGENT_INSTRUCTIONS.md`, stamped with the version), `guides/` and `CHANGELOG.md`, so an installed or CDN-served version carries the docs that match it. A project loads it from `CLAUDE.md` with `@node_modules/tyrell-components/AGENTS.md`.
+- **Claude Code plugin** (`/plugin marketplace add gersak/tyrell`, then `/plugin install tyrell@tyrell`). At session start it finds Tyrell (npm, shadow-cljs, a `package.json`/`deps.edn` entry or a CDN pin) and loads the rules card for that version, saying when a newer release is out; at the end of each turn it checks the changed UI files for hand-rolled controls, raw and Tailwind colors and removed API, and hands the findings back to Claude.
+- **`npm run check:agent-docs`** (also in `npm test` and before every pack): fails when the rules card disagrees with the source — size ladders, the pairings it recommends, defaults, flavors, the select's search threshold, every `ty-*`/`--ty-*` name.
+
+### Changed
+
+- **`ty-tag` without `size` draws the `sm` rung (24px).** It reported `sm` but drew the 28px `md` box, so `<ty-tag>` and `<ty-tag size="sm">` differed. Set `size="md"` for the old 28px look.
+
+### Fixed
+
+- **`ty-tag` hugs its content.** The host had no `display` rule, so a tag stretched to full width in block flow, flex columns and grid cells. It is now `inline-flex` with `width: fit-content`; an outer width (`w-full`) still stretches it.
+- **Guides:** llms.txt and TY_GUIDE described fields as three sizes with an `md` default (they are `xs`–`xl`, 28–44px, default `sm`), llms.txt told theming to set the hue/chroma dials instead of `--ty-primary-seed`, TY_GUIDE still listed the removed `ty-tag` `selected`, and CSS_GUIDE built buttons and badges from `ty-bg-*` divs.
+- **`ty-sortable`:** a touch long-press in the first 100ms after page load was ignored. A list replaced mid-drag or mid-hold (htmx `outerHTML`, a morph) keeps the `canDrop` and `labels` set on the old one from JS.
+
 ## [1.0.0-RC20] - 2026-10-30
 
 ### Added

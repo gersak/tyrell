@@ -101,14 +101,16 @@ Every component — buttons, inputs, dropdowns, calendars, focus rings, scrollba
 
 ## Using with AI coding agents
 
-Tyrell is documented for AI agents from day one. Two artifacts make it work:
+Every release ships a rules card, `AGENTS.md` (source: [guides/AGENT_INSTRUCTIONS.md](guides/AGENT_INSTRUCTIONS.md)): use the Tyrell component for every control, how to port a prototype, size pairings, tags, surfaces, dropdown triggers, theming. It sits next to the guides and CHANGELOG for that exact version, and its facts are checked against the source before every release.
 
-- **[Agent instructions snippet](guides/AGENT_INSTRUCTIONS.md)** — drop into your project's `CLAUDE.md`, `.cursorrules`, `.windsurfrules`, `.github/copilot-instructions.md`, or whichever instruction file your agent reads. The snippet teaches the agent the rules (colors come from Tyrell, events live on `event.detail`, icons need registration, etc.) and points at the doc index.
-- **[`llms.txt`](https://gersak.github.io/tyrell/llms.txt)** — machine-readable index of every guide, served as raw markdown. Tell your agent to fetch it once and it has a navigable map of the entire documentation set. Per the [llmstxt.org](https://llmstxt.org) convention.
+The agent has to have the card in context *before* it writes UI. Telling it to "read the docs at this URL" doesn't do that reliably: it may skip the big guides, and web fetch tools hand back summaries.
 
-For agents with web fetch (Claude Code's `WebFetch`, Cursor's `@web`, ChatGPT browsing), pointing them at `https://gersak.github.io/tyrell/llms.txt` at session start is enough. For agents without it, paste the snippet into the instruction file and the agent learns the rules without any network calls.
+- **Claude Code, every project at once:** `/plugin marketplace add gersak/tyrell`, then `/plugin install tyrell@tyrell`. It finds Tyrell (npm, shadow-cljs, a CDN pin), loads the card for that version, and checks each turn's UI changes for hand-rolled controls and raw colors. See [plugins/tyrell](plugins/tyrell/README.md).
+- **Claude Code, one project:** add `@node_modules/tyrell-components/AGENTS.md` to its `CLAUDE.md`.
+- **Codex, Cursor, Copilot, Windsurf, Cline:** point their instruction file at `node_modules/tyrell-components/AGENTS.md`, or copy the card in (and refresh it when you upgrade).
+- **No `node_modules`** (CDN script tag, server-rendered Clojure/Go/Python): `curl -o TYRELL.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md` and import that file.
 
-The treasure-map entry point for AI navigation is **[guides/AI_GUIDE.md](guides/AI_GUIDE.md)** — two routing tables that get an agent to the right framework guide in one hop.
+For agents that browse, [`llms.txt`](https://gersak.github.io/tyrell/llms.txt) indexes every guide as raw markdown.
 
 ---
 

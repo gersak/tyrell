@@ -14,15 +14,15 @@ Tyrell classes handle colors. Use Tailwind for everything else (spacing, layout,
 <div class="ty-input">          <!-- Form controls background -->
 ```
 
-**Backgrounds** are for small UI elements — buttons, tags, badges, toasts, alerts, status indicators:
+**Backgrounds** are for small accents inside a surface — alert and callout boxes, a highlighted row, a status dot. Buttons, tags and badges are components (`ty-button`, `ty-tag`), never `div`s with a background class:
 
 ```html
-<div class="ty-bg-primary">     <!-- Button, badge -->
-<div class="ty-bg-success-">    <!-- Success toast -->
+<div class="ty-bg-warning-">    <!-- Callout -->
+<div class="ty-bg-success-">    <!-- Success alert -->
 <div class="ty-bg-danger">      <!-- Error indicator -->
 ```
 
-Do not use `ty-bg-*` for cards or panels. Do not use `ty-elevated` for a badge.
+Do not use `ty-bg-*` for cards or panels, or to fake a button or a badge. Do not use `ty-elevated` for a badge.
 
 ### Surface Borders & Dividers
 
@@ -759,6 +759,8 @@ The custom properties reach it by inheriting from `ty-select` down the light-DOM
 ### Buttons and tags
 
 **Buttons** run a 4px ladder — `xs` 24 / `sm` 28 / `md` 32 / `lg` 36 / `xl` 40 — deliberately one rung below the field ladder, sharing its top three steps. `ty-button` and `ty-tag` also default to `sm`, so the pairing below is unchanged by the default.
+
+**Tags** run one rung below the buttons — `xs` 20 / `sm` 24 / `md` 28 / `lg` 32 / `xl` 36 — so a tag beside a button or field matches by height: tag `lg` = button `md` = field `sm` (32), tag `xl` = button `lg` = field `md` (36).
 
 | Placement | Rule | Example |
 |---|---|---|

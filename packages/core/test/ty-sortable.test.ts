@@ -298,6 +298,35 @@ describe('ty-sortable', () => {
       await aTimeout(400);
       expect(settles).to.deep.equal(['accepted']);
     });
+    it('a replaced host keeps canDrop and labels set from JS', async () => {
+      const board = await mount(list('a', ['1', '2']) + list('b', ['3']));
+      const a = board.querySelector('#a')!;
+      const b = board.querySelector('#b') as TySortable;
+      b.canDrop = () => false;
+      b.labels = { blocked: 'nope' };
+      const changes = recordChanges(board);
+      const cancels: string[] = [];
+      board.addEventListener('ty-sortable-cancel', (e) => cancels.push((e as CustomEvent).detail.reason), true);
+      const [sx, sy] = center(a.children[0]);
+      const [x, y] = center(b.children[0]);
+      await sendMouse({ type: 'move', position: [sx, sy] });
+      await sendMouse({ type: 'down' });
+      for (let i = 1; i <= 5; i++) {
+        await sendMouse({ type: 'move', position: [Math.round(sx + ((x - sx) * i) / 5), Math.round(sy + ((y + 15 - sy) * i) / 5)] });
+        await nextFrame();
+      }
+      b.outerHTML = list('b', ['3']);
+      const fresh = board.querySelector('#b') as TySortable;
+      await frames(2);
+      await sendMouse({ type: 'move', position: [x, y + 12] });
+      await frames(2);
+      expect(fresh.canDrop).to.be.a('function');
+      expect(fresh.labels.blocked).to.equal('nope');
+      await sendMouse({ type: 'up' });
+      expect(changes).to.deep.equal([]);
+      expect(cancels).to.deep.equal(['blocked']);
+    });
+
     it('a morph to the new order is accepted (Datastar / idiomorph)', async () => {
       const board = await mount(list('a', ['1', '2']) + list('b', ['3']));
       const a = board.querySelector('#a')!;

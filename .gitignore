@@ -50,3 +50,8 @@ packages/core/blob-report/
 tyrell-drafts/
 *.pen
 *.pen.*
+
+# Agent docs copied into packages at pack time (packages/core/scripts/pack-agent-docs.mjs)
+packages/*/AGENTS.md
+packages/*/guides/
+packages/*/CHANGELOG.md

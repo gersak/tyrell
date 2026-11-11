@@ -18,6 +18,22 @@ where features land first and which can run several versions and weeks ahead of
 for `@tc` when you want the newest components; check
 [CHANGELOG.md](../../CHANGELOG.md) for what is only on the TC line so far.
 
+## AI coding agents
+
+Every version ships `AGENTS.md`: the rules agents get wrong without it (use the component, size pairs, tags, surfaces, dropdown triggers, theming), next to the guides and CHANGELOG for that exact version.
+
+- **Claude Code, zero setup:** the plugin finds Tyrell in any project (npm, shadow-cljs, CDN pin) and loads the card for that version, plus a lint of each turn's UI changes: `/plugin marketplace add gersak/tyrell`, then `/plugin install tyrell@tyrell`.
+- **Claude Code, per project:** add this line to the project's `CLAUDE.md`:
+  ```
+  @node_modules/tyrell-components/AGENTS.md
+  ```
+- **Other agents** (Codex, Cursor, Copilot, Windsurf, Cline): point their instruction file at `node_modules/tyrell-components/AGENTS.md`, or copy it in.
+- **No `node_modules`** (CDN script tag, server-rendered Clojure/Go/Python): download the copy for your pinned version, import that, and refresh it when you bump the pin:
+  ```bash
+  curl -o TYRELL.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md
+  ```
+- ClojureScript: shadow-cljs installs `tyrell-components` from `dev.gersak/tyrell`, so the first line works there too.
+
 ## Usage
 
 ### Import All Components

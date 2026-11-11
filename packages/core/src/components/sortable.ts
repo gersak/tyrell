@@ -225,7 +225,7 @@ let keyHandledAt = 0
 let droppedBy: KeyboardEvent | null = null
 
 /** A touch that stops a momentum scroll isn't a long-press. */
-let lastScrollAt = 0
+let lastScrollAt = -Infinity
 document.addEventListener('scroll', () => { lastScrollAt = performance.now() }, { capture: true, passive: true })
 
 /** Roots that already have the light-DOM rules. */
@@ -322,7 +322,13 @@ function members(group: string | null, self: TySortable): TySortable[] {
 function resolveContainer(c: TySortable, id: string | null, group: string | null): TySortable | null {
   if (c.isConnected) return c
   if (!id) return null
-  return [...instances].find((i) => i.isConnected && i.id === id && i.group === group) ?? null
+  const next = [...instances].find((i) => i.isConnected && i.id === id && i.group === group) ?? null
+  // Properties set from JS don't come with the new markup: carry them over.
+  if (next) {
+    next.canDrop ??= c.canDrop
+    if (!Object.keys(next.labels).length) next.labels = c.labels
+  }
+  return next
 }
 
 function handleOf(c: TySortable, item: Element): HTMLElement | null {

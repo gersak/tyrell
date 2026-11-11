@@ -349,25 +349,16 @@ Event detail: `{ year, month, day, action, source }`. Form value is ISO `YYYY-MM
 
 ## Tabs and wizard
 
-Svelte 5 can't use `onty-tab-change` syntax for hyphenated event names. Use `bind:this` and add the listener in `onMount`:
+Svelte 5 binds hyphenated event names as attributes: `onty-tab-change`, `onty-wizard-step-change`.
 
 ### ty-tabs
 
 ```svelte
 <script>
-  import { onMount } from 'svelte'
-
   let activeTab = $state('overview')
-  let tabsEl
-
-  onMount(() => {
-    tabsEl.addEventListener('ty-tab-change', (e) => {
-      activeTab = e.detail.activeId
-    })
-  })
 </script>
 
-<ty-tabs bind:this={tabsEl} height="300px" active={activeTab}>
+<ty-tabs height="300px" active={activeTab} onty-tab-change={(e) => activeTab = e.detail.activeId}>
   <ty-tab id="overview" label="Overview">
     <div class="p-4">Overview content</div>
   </ty-tab>
@@ -401,11 +392,8 @@ Event detail: `{ activeId, activeIndex, previousId, previousIndex }`.
 
 ```svelte
 <script>
-  import { onMount } from 'svelte'
-
   let step = $state('info')
   let completed = $state([])
-  let wizardEl
 
   function advance(nextId) {
     completed = [...completed, step]
@@ -414,10 +402,10 @@ Event detail: `{ activeId, activeIndex, previousId, previousIndex }`.
 </script>
 
 <ty-wizard
-  bind:this={wizardEl}
   height="400px"
   active={step}
   completed={completed.join(',')}
+  onty-wizard-step-change={(e) => step = e.detail.activeId}
 >
   <ty-step id="info" label="Info">
     <div class="p-6">

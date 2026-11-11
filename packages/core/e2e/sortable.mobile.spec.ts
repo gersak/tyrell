@@ -28,10 +28,15 @@ async function touch(cdp: CDPSession, type: 'touchStart' | 'touchMove' | 'touchE
   })
 }
 
-/** Finger down, optional hold, move in steps, lift. */
-async function touchDrag(page: Page, cdp: CDPSession, from: { x: number; y: number }, to: { x: number; y: number }, holdMs: number) {
+/**
+ * Finger down, optional hold, move in steps, lift. `pickup`: after the hold,
+ * wait for the long-press to land (a loaded machine fires its timer late, and
+ * moving first would scroll instead).
+ */
+async function touchDrag(page: Page, cdp: CDPSession, from: { x: number; y: number }, to: { x: number; y: number }, holdMs: number, pickup = false) {
   await touch(cdp, 'touchStart', from.x, from.y)
   if (holdMs) await page.waitForTimeout(holdMs)
+  if (pickup) await page.waitForFunction(() => document.querySelector('ty-sortable')!.matches(':state(dragging)'), null, { timeout: 3000 })
   const steps = 8
   for (let i = 1; i <= steps; i++) {
     await touch(cdp, 'touchMove', Math.round(from.x + ((to.x - from.x) * i) / steps), Math.round(from.y + ((to.y - from.y) * i) / steps))
@@ -57,7 +62,7 @@ test.describe('ty-sortable touch', () => {
     const cdp = await page.context().newCDPSession(page)
     const from = await center(page, '[data-key="1"]')
     const to = await center(page, '[data-key="3"]')
-    await touchDrag(page, cdp, from, { x: to.x, y: to.y + 15 }, 400)
+    await touchDrag(page, cdp, from, { x: to.x, y: to.y + 15 }, 400, true)
     const v = await changes(page)
     expect(v.length).toBe(1)
     expect(v[0].to.index).toBe(2)
@@ -132,6 +137,64 @@ test.describe('ty-sortable touch', () => {
     })
     expect(shifted).toBeLessThan(-20)
     await touch(cdp, 'touchEnd', from.x, to.y + 15)
+    const v = await changes(page)
+    expect(v.length).toBe(1)
+    expect(v[0].to.index).toBe(2)
+  })
+
+  test('in a ty-modal sheet: a handle drag auto-scrolls the sheet, not the page, and the drop lands', async ({ page }) => {
+    const keys = Array.from({ length: 20 }, (_, i) => `s${i}`)
+    const row = (k: string) => `<div data-key="${k}" style="${CARD}"><button type="button" data-handle style="width:44px;height:44px">=</button><span>${k}</span></div>`
+    await mount(page, `<div style="height:3000px">page</div>
+      <ty-modal id="m" sheet>
+        <div style="padding:16px">
+          <ty-sortable id="a" style="display:block;--ty-sortable-duration:0ms">${keys.map(row).join('')}</ty-sortable>
+        </div>
+      </ty-modal>`)
+    await recordChanges(page)
+    await page.evaluate(() => {
+      document.addEventListener('ty-sortable-change', (e: any) => {
+        const c = document.getElementById('a')!
+        for (const k of e.detail.value.order.a) c.appendChild(c.querySelector(`[data-key="${k}"]`)!)
+      })
+      document.getElementById('m')!.setAttribute('open', '')
+    })
+    await page.waitForTimeout(600) // slide-up animation
+    const sheetScroll = () => page.evaluate(() => document.getElementById('m')!.shadowRoot!.querySelector('.modal-content')!.scrollTop)
+    expect(await sheetScroll()).toBe(0)
+
+    const cdp = await page.context().newCDPSession(page)
+    const from = await center(page, '[data-key="s0"] [data-handle]')
+    const vh = await page.evaluate(() => innerHeight)
+    const edge = { x: from.x, y: vh - 6 }
+    await touch(cdp, 'touchStart', from.x, from.y)
+    for (let i = 1; i <= 8; i++) {
+      await touch(cdp, 'touchMove', from.x, Math.round(from.y + ((edge.y - from.y) * i) / 8))
+      await page.waitForTimeout(16)
+    }
+    await page.waitForTimeout(1200)
+    expect(await sheetScroll()).toBeGreaterThan(100)
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
+    // Back up over the cards (the sheet's bottom padding is below the list) and drop.
+    const drop = { x: edge.x, y: vh - 120 }
+    await touch(cdp, 'touchMove', drop.x, drop.y)
+    await page.waitForTimeout(50)
+    await touch(cdp, 'touchEnd', drop.x, drop.y)
+    const v = await changes(page)
+    expect(v.length).toBe(1)
+    expect(v[0].to.index).toBeGreaterThan(8)
+    expect(await page.evaluate(() => document.getElementById('m')!.hasAttribute('open'))).toBe(true)
+  })
+
+  test('in a ty-modal sheet: long-press reorders without handles', async ({ page }) => {
+    await mount(page, `<ty-modal id="m" sheet><div style="padding:16px">${list(['1', '2', '3']).replace('<div style="height:2000px"></div>', '')}</div></ty-modal>`)
+    await recordChanges(page)
+    await page.evaluate(() => document.getElementById('m')!.setAttribute('open', ''))
+    await page.waitForTimeout(600)
+    const cdp = await page.context().newCDPSession(page)
+    const from = await center(page, '[data-key="1"]')
+    const to = await center(page, '[data-key="3"]')
+    await touchDrag(page, cdp, from, { x: to.x, y: to.y + 15 }, 400, true)
     const v = await changes(page)
     expect(v.length).toBe(1)
     expect(v[0].to.index).toBe(2)

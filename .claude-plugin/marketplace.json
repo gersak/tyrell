@@ -1,0 +1,14 @@
+{
+  "name": "tyrell",
+  "description": "Claude Code plugins for the Tyrell web components library.",
+  "owner": {
+    "name": "Gersak"
+  },
+  "plugins": [
+    {
+      "name": "tyrell",
+      "source": "./plugins/tyrell",
+      "description": "Tyrell for Claude Code: the rules card for the project's Tyrell version at session start, and a lint of the UI files changed in each turn."
+    }
+  ]
+}

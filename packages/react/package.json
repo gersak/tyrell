@@ -9,13 +9,18 @@
     "dist/**/*",
     "src/**/*",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "AGENTS.md",
+    "guides/**/*",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "generate:version": "node scripts/generate-version.js",
     "build": "npm run generate:version && tsc",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build",
+    "prepack": "node ../core/scripts/pack-agent-docs.mjs",
+    "postpack": "node ../core/scripts/pack-agent-docs.mjs --clean",
     "test": "wtr && REACT=18 wtr"
   },
   "peerDependencies": {

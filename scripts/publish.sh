@@ -2,9 +2,13 @@
 # publish.sh — publish TC (test candidate) or RC (release candidate)
 #
 # Usage:
-#   ./scripts/publish.sh tc        # publish next TC, e.g. 1.0.0-TC4
-#   ./scripts/publish.sh rc        # publish next RC, e.g. 1.0.0-RC8
+#   ./scripts/publish.sh tc        # publish next TC, e.g. 1.0.0-tc.62
+#   ./scripts/publish.sh rc        # publish next RC, e.g. 1.0.0-rc.21
 #   ./scripts/publish.sh tc --dry  # show what would happen, publish nothing
+#
+# Versions are lowercase and dotted (1.0.0-rc.21) so semver compares the
+# number numerically; the old 1.0.0-TC9 style sorted TC9 above TC61.
+# Numbering continues from the highest published number in either style.
 
 set -euo pipefail
 
@@ -53,11 +57,12 @@ const { execSync } = require('child_process');
 try {
   const raw = execSync('npm view $NPM_PACKAGE versions --json 2>/dev/null').toString().trim();
   const versions = JSON.parse(raw);
-  const prefix = '$BASE_VERSION-$TYPE_UPPER';
+  // 1.0.0-TC61 (old) and 1.0.0-tc.62 (new) both count
+  const re = new RegExp('^' + '$BASE_VERSION'.replace(/\./g, '\\\\.') + '-$TYPE\\\\.?(\\\\d+)$', 'i');
   const nums = versions
-    .filter(v => v.startsWith(prefix))
-    .map(v => parseInt(v.slice(prefix.length), 10))
-    .filter(n => Number.isFinite(n));
+    .map(v => (v.match(re) || [])[1])
+    .filter(Boolean)
+    .map(Number);
   console.log(nums.length > 0 ? Math.max(...nums) : 0);
 } catch(e) {
   console.log(0);
@@ -65,12 +70,12 @@ try {
 ")
 
 NEXT_NUM=$(( LAST_NUM + 1 ))
-NEW_VERSION="$BASE_VERSION-$TYPE_UPPER$NEXT_NUM"
+NEW_VERSION="$BASE_VERSION-$TYPE.$NEXT_NUM"
 
 if [[ "$LAST_NUM" -eq 0 ]]; then
   info "Last $TYPE_UPPER   : (none published)"
 else
-  info "Last $TYPE_UPPER   : $BASE_VERSION-$TYPE_UPPER$LAST_NUM"
+  info "Last $TYPE_UPPER   : number $LAST_NUM"
 fi
 info "New version  : $NEW_VERSION"
 info "NPM tag      : $NPM_TAG"
@@ -112,26 +117,20 @@ fs.writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
 "
 success "packages/react/package.json"
 
-# build.clj — replace all occurrences of the old version string
-OLD_VERSION=$(node -p "
-const { execSync } = require('child_process');
-const raw = execSync('npm view $NPM_PACKAGE versions --json 2>/dev/null').toString().trim();
-const versions = JSON.parse(raw);
-const prefix = '$BASE_VERSION-$TYPE_UPPER';
-const nums = versions
-  .filter(v => v.startsWith(prefix))
-  .map(v => parseInt(v.slice(prefix.length), 10))
-  .filter(n => Number.isFinite(n));
-const last = nums.length > 0 ? Math.max(...nums) : null;
-// Also check the current value in build.clj
+# build.clj (both defs) and the jar's deps.cljs npm pin — shadow-cljs installs
+# that exact tyrell-components (and its AGENTS.md) for ClojureScript users.
+# Node instead of sed -i, which differs between GNU and BSD/macOS.
+node -e "
 const fs = require('fs');
-const clj = fs.readFileSync('$CLJS_DIR/build.clj', 'utf8');
-const m = clj.match(/\"\d+\.\d+\.\d+-[A-Z]+\d+\"/g);
-console.log(m ? m[0].replace(/\"/g, '') : '');
-")
-
-sed -i "s/\"$OLD_VERSION\"/\"$NEW_VERSION\"/g" "$CLJS_DIR/build.clj"
-success "packages/cljs/build.clj  ($OLD_VERSION → $NEW_VERSION)"
+const re = /\"\d+\.\d+\.\d+-[A-Za-z]+\.?\d+\"/g;
+for (const f of ['$CLJS_DIR/build.clj', '$CLJS_DIR/resources/tyrell/deps.cljs']) {
+  const src = fs.readFileSync(f, 'utf8');
+  const old = (src.match(re) || [''])[0].replace(/\"/g, '');
+  fs.writeFileSync(f, src.replace(re, '\"$NEW_VERSION\"'));
+  console.log('  ' + f.replace('$REPO_ROOT/', '') + '  (' + old + ' → $NEW_VERSION)');
+}
+"
+success "packages/cljs/build.clj + resources/tyrell/deps.cljs"
 
 # ── publish tyrell-components (core) ─────────────────────────────────────────
 

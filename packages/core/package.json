@@ -140,7 +140,10 @@
     "css/**/*",
     "dist/**/*",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "AGENTS.md",
+    "guides/**/*",
+    "CHANGELOG.md"
   ],
   "keywords": [
     "web-components",
@@ -166,9 +169,12 @@
     "build:dev:watch": "node scripts/build-css.mjs --watch & vite build --config vite.config.dev.ts --watch",
     "build": "npm run build:lib && npm run build:cdn",
     "prepublishOnly": "npm run build",
+    "prepack": "node scripts/pack-agent-docs.mjs",
+    "postpack": "node scripts/pack-agent-docs.mjs --clean",
     "preview": "vite preview",
-    "test": "npm run build:lib && wtr",
+    "test": "node scripts/check-agent-docs.mjs && npm run build:lib && wtr",
     "test:watch": "wtr --watch",
+    "check:agent-docs": "node scripts/check-agent-docs.mjs",
     "test:e2e": "npm run build:cdn && playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

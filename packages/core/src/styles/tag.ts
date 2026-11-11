@@ -35,6 +35,16 @@ const tagFlavor = (f: string) => `
 `
 
 export const tagStyles = `
+/* Hug the content in every context: inline-flex keeps block flow from
+   stretching the pill, and a non-auto width stops flex columns and grid cells
+   from stretching it (stretch only applies to auto-sized items). An outer
+   width (e.g. w-full) still wins over :host. */
+:host {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+}
+
 /* filtered-out: left out by a ty-select search (as an option) */
 :host([hidden]),
 :host([filtered-out]) {
@@ -56,12 +66,14 @@ export const tagStyles = `
   user-select: none;
   box-sizing: border-box;
 
-  /* Default MD size — anchor at 28px, even +4 steps for other sizes */
-  padding: 0 0.625rem;                            /* 0 10px */
-  font-size: var(--ty-font-xs);                   /* 14px */
-  line-height: var(--ty-leading-xs);              /* 21px */
-  letter-spacing: var(--ty-tracking-xs);          /* -0.013em */
-  min-height: 28px;
+  /* The base block is the sm rung (DEFAULT_SIZE): a tag left at its default
+     never gets a size attribute, so [size="sm"] could not match it. 24px,
+     then even +4 steps for the other sizes. */
+  padding: 0 var(--ty-spacing-2);                 /* 0 8px */
+  font-size: var(--ty-font-xs);                   /* 12px */
+  line-height: var(--ty-leading-xs);
+  letter-spacing: var(--ty-tracking-xs);
+  min-height: 24px;
 
   transition: var(--ty-transition-all);
 
@@ -130,9 +142,10 @@ export const tagStyles = `
   transition: var(--ty-transition-all);
   opacity: 0.7;
   flex-shrink: 0;
-  width: var(--ty-spacing-4);
-  /* 16px */
-  height: var(--ty-spacing-4);
+  /* sm rung, like the container */
+  width: var(--ty-spacing-3);
+  height: var(--ty-spacing-3);
+  margin-left: var(--ty-spacing-2);
 }
 
 .tag-dismiss:hover {
@@ -159,21 +172,18 @@ export const tagStyles = `
   margin-left: var(--ty-spacing-2);
 }
 
-:host([size="sm"]) .tag-container {
-  padding: 0 var(--ty-spacing-2);                 /* 0 8px */
-  font-size: var(--ty-font-xs);                   /* 12px */
-  line-height: var(--ty-leading-xs);
-  letter-spacing: var(--ty-tracking-xs);
-  min-height: 24px;
+/* sm is the base block above — no explicit [size="sm"] selector needed */
+
+:host([size="md"]) .tag-container {
+  padding: 0 0.625rem;                            /* 0 10px */
+  min-height: 28px;
 }
 
-:host([size="sm"]) .tag-dismiss {
-  width: var(--ty-spacing-3);
-  height: var(--ty-spacing-3);
-  margin-left: var(--ty-spacing-2);
+:host([size="md"]) .tag-dismiss {
+  width: var(--ty-spacing-4);
+  height: var(--ty-spacing-4);
+  margin-left: 0;
 }
-
-/* MD is the default — no explicit [size="md"] selector needed */
 
 :host([size="lg"]) .tag-container {
   padding: 0 var(--ty-spacing-3);                 /* 0 12px */

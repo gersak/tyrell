@@ -253,7 +253,7 @@ the rung; use `--ty-button-height` to go smaller.
 | `minlength` / `maxlength` | number | | Character limits (text types) → `tooShort` / `tooLong`; typing stops at `maxlength` |
 | `min` / `max` | number | | Numeric bounds for `number`, `currency`, `percent`, `compact` → `rangeUnderflow` / `rangeOverflow` |
 | `too-short-message` / `too-long-message` | string | | Wording for the length messages; `{minlength}` `{maxlength}` `{length}` are filled in. Without it, too-short is the browser's own (localized) for typed text, like every other message |
-| `size` | string | `'md'` | `sm` \| `md` \| `lg` (legacy `xs`/`xl` coerce to `sm`/`lg`) — see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — 28/32/36/40/44px, shared by every field. In a row with a button: field `md` + button `lg` (36). See [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the border + focus ring; per-instance override via `--input-accent` / `--input-accent-bold` / `--input-ring`. |
 | `currency` | string | `'USD'` | ISO 4217 code (for `type="currency"`) |
 | `locale` | string | `'en-US'` | Locale for numeric formatting |
@@ -306,7 +306,7 @@ Just the box: no label text, no error line. Wrap it in a `<label>`, so the whole
 | `required` | boolean | `false` | |
 | `minlength` / `maxlength` | number | - | Character limits → `tooShort` / `tooLong`; typing stops at `maxlength`. An empty value only fails `required` |
 | `too-short-message` / `too-long-message` | string | - | Wording for the length messages; `{minlength}` `{maxlength}` `{length}` are filled in. Defaults: "Use at least {minlength} characters (now {length})" / "Use at most {maxlength} characters (now {length})". After the user types, too-short is the browser's own unless `too-short-message` is set |
-| `size` | string | `'md'` | |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — text size and padding follow the field ladder |
 | `rows` | string | `'3'` | |
 | `resize` | string | `'none'` | `none` \| `both` \| `horizontal` \| `vertical` |
 | `min-height` | string | - | |
@@ -391,7 +391,7 @@ THE select control. Single select by default with a form-field look matching `ty
 | `loading` | boolean | `false` | Spinner in the options area (external search in flight) |
 | `disabled` / `readonly` / `required` | boolean | `false` | |
 | `error` | string | `''` | Message under the field; `''` clears it. While it is set, the select looks the same as `ty-input` with an `error`. Validation also writes it (submit, `reportValidity()`, `checkValidity()`) and clears it once the select is valid |
-| `size` | string | `'md'` | `sm` \| `md` \| `lg` — shares the field height ladder with `ty-input`/`ty-date-picker` (legacy `xs`/`xl` coerce to `sm`/`lg`); see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — the field ladder shared with `ty-input`/`ty-date-picker`, 28/32/36/40/44px; see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `placement` | string | - | Where the list opens: `bottom` / `top`, optionally `-start` / `-end` (`bottom-end`, …). Unset: below when it fits, else the side with more room, start-aligned. Flips rather than clips. `left-*`/`right-*` keep their alignment but leave the side automatic. See [Placement](#placement). Width: at least 320px or the trigger's; `--ty-select-popup-width` sets it |
 | `no-clear` | boolean | `false` | No built-in × clear button. Normally it sits in the default/compact trigger, shown once something is selected. Not shown with `slot="trigger"` (lives in the slot's fallback content, same mechanism that already hides the chevron there) — call the `clear()` method instead. Suppressed while `disabled`/`readonly`. |
 | `flavor` | string | `'neutral'` | Built-ins, `+`/`-` shades, or a custom flavor from `--ty-color-X` tokens. Colors the field border + hover, and adds a focus ring while the dropdown is open; per-instance override via `--select-accent` / `--select-accent-bold` / `--select-ring`. |
@@ -449,15 +449,16 @@ The pill/**chip** component (Material's "chip" == Tyrell's tag).
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `flavor` | string | `'neutral'` | Built-ins plus `+`/`-` shades, same as ty-button. Custom flavor `X` themes from `--ty-bg-X` / `--ty-color-X` / `--ty-border-X` tokens; `ty-tag[flavor="X"] { --tag-bg: ...; --tag-color: ...; --tag-border-color: ...; }` still overrides. |
-| `size` | string | `'md'` | |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — 20/24/28/32/36px. Beside a button or field, match heights: tag `lg` = button `md` = field `sm` (32), tag `xl` = button `lg` = field `md` (36) |
 | `value` | string | - | |
-| `selected` | boolean | `false` | |
 | `no-pill` | boolean | `false` | Square corners instead of fully rounded |
 | `clickable` | boolean | `false` | |
 | `dismissible` | boolean | `false` | |
 | `disabled` | boolean | `false` | |
 
 **Slots:** `start`, (default), `end` | **Events:** `click`, `dismiss`
+
+**Layout:** a tag hugs its content in block flow, flex columns and grid cells. Give it a width (`w-full`) to stretch it.
 
 ---
 
@@ -559,7 +560,7 @@ Attrs: `value` (sets selection *and* the displayed month; reflects to `year`/`mo
 | `disabled` | boolean | `false` | |
 | `required` | boolean | `false` | |
 | `locale` | string | `'en-US'` | |
-| `size` | string | `'md'` | |
+| `size` | string | `'sm'` | `xs` \| `sm` \| `md` \| `lg` \| `xl` — the field ladder, 28/32/36/40/44px; see [CSS_GUIDE.md → Component Sizing](./CSS_GUIDE.md#component-sizing) |
 | `placement` | string | - | Calendar popup side + cross-axis alignment — `bottom-start`, `top-end`, … See [Placement](#placement). Vertical-only: `left-*`/`right-*` keep their alignment but leave the side automatic |
 | `no-clear` | boolean | `false` | No built-in × clear button. Normally it shows in the stub once a date is selected, except while `disabled`. |
 | `flavor` | string | `'default'` | Built-ins, `+`/`-` shades, or a custom flavor. Colors the stub border + focus ring (override via `--date-picker-accent` / `--date-picker-accent-bold` / `--date-picker-ring`) and the popup calendar's selected/today day (forwarded to the nested `ty-calendar`). |

@@ -34,20 +34,20 @@ Treasure map. Find your context, follow the link.
 | CLJS web component shim | [clj/COMPONENT_GUIDE.md](clj/COMPONENT_GUIDE.md) |
 | Lazy loading with shadow-cljs | [clj/CODE_SPLITTING.md](clj/CODE_SPLITTING.md) |
 
-## Non-negotiable rules
+## Rules
 
-1. **Tyrell for colors, Tailwind for everything else.** Never `bg-blue-500` — use `ty-bg-primary`. Never `text-gray-900` — use `ty-text` / `ty-text+` / `ty-text++`.
-2. **Event payload lives on `event.detail`.** Always `event.detail.value`, never `event.value`.
-3. **Properties vs attributes.** Booleans, arrays, objects → JS property. Strings → attribute. In React: just props. In Vue: `:prop`. In Svelte: `prop:`.
-4. **Icons: two paths.** `<ty-icon name="check">` is a runtime registry lookup — register first with `registerIcons({ check, ... })` (a bundler can't connect a string to the export). Or slot the SVG directly: `<ty-icon><svg>…</svg></ty-icon>` — no registration, ideal for server-rendered apps (HTMX, Datastar, Phoenix, Rails).
-5. **`customElements.define` needs a browser.** In SSR frameworks (Next.js, Nuxt, SvelteKit, Astro), import `tyrell-components` only in client boundaries.
+Read [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md) before writing markup: use the Tyrell component for every control, size pairs, tags, surfaces, dropdown triggers, theming, events, icons, SSR. It ships in every npm version as `AGENTS.md`; prefer `node_modules/tyrell-components/AGENTS.md`, which matches the installed version.
 
 ## For agents working in a *consumer* project
 
-If the user is using Tyrell in their own project (not editing Tyrell itself), drop this snippet into their `CLAUDE.md`:
+If the user is using Tyrell in their own project (not editing Tyrell itself), add this line to their `CLAUDE.md`:
 
-→ [AGENT_INSTRUCTIONS.md](AGENT_INSTRUCTIONS.md)
+```
+@node_modules/tyrell-components/AGENTS.md
+```
+
+Other agents and CDN-only projects: `packages/core/README.md` → "AI coding agents".
 
 ## For agents working *on* Tyrell itself
 
-Read the repo's `CLAUDE.md` and `PUBLISHING.md`. Do not edit generated files (`packages/core/lib/`, `packages/core/dist/`, `packages/core/src/icons/*.ts`).
+Read the repo's `CLAUDE.md` if present; releases go through `scripts/publish.sh`. Do not edit generated files (`packages/core/lib/`, `packages/core/dist/`, `packages/core/src/icons/*.ts`).
