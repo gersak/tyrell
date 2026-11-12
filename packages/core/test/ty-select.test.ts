@@ -5,6 +5,7 @@ import '../lib/components/input.js';
 import '../lib/components/option.js';
 import '../lib/components/popup.js';
 import '../lib/components/button.js';
+import '../lib/components/tag.js';
 import { getActiveLocks } from '../lib/utils/scroll-lock.js';
 
 const tick = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -3157,5 +3158,90 @@ describe('ty-select keys reach the open list wherever it lives', () => {
     el.focus();
     expect(el.shadowRoot.activeElement).to.equal(null);
     expect(document.activeElement).to.not.equal(el);
+  });
+});
+
+describe('ty-select slot="trigger" focus', () => {
+  const stub = (el: any) => el.shadowRoot.querySelector('.select-stub') as HTMLElement;
+
+  it('a focusable trigger is the only tab stop and carries the popup state', async () => {
+    const el = (await fixture(html`
+      <ty-select value="a"><ty-button slot="trigger">Sort</ty-button>
+        <ty-option value="a">A</ty-option><ty-option value="b">B</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const trigger = el.querySelector('ty-button') as any;
+    // ARIA sits on what takes focus: ty-button's inner <button>, not its host
+    const inner = trigger.shadowRoot.querySelector('button') as HTMLElement;
+    expect(stub(el).tabIndex).to.equal(-1);
+    expect(stub(el).getAttribute('role')).to.equal('none');
+    expect(inner.getAttribute('aria-haspopup')).to.equal('listbox');
+    expect(inner.getAttribute('aria-expanded')).to.equal('false');
+
+    el.focus();
+    expect(trigger.shadowRoot.activeElement).to.equal(inner);
+
+    el.open();
+    await tick();
+    expect(inner.getAttribute('aria-expanded')).to.equal('true');
+    el.close();
+    await tick();
+    expect(inner.getAttribute('aria-expanded')).to.equal('false');
+  });
+
+  it('names a focusable trigger after the label and what it shows', async () => {
+    const el = (await fixture(html`
+      <ty-select label="Sort" value="a"><button slot="trigger">Newest</button>
+        <ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    const btn = el.querySelector('button') as HTMLElement;
+    expect(btn.getAttribute('aria-label')).to.equal('Sort: Newest');
+    btn.textContent = 'Oldest';
+    await tick();
+    expect(btn.getAttribute('aria-label')).to.equal('Sort: Oldest');
+  });
+
+  it("keeps an author's own aria-label on the trigger", async () => {
+    const el = (await fixture(html`
+      <ty-select label="Sort"><button slot="trigger" aria-label="Sort order">Newest</button>
+        <ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(el.querySelector('button').getAttribute('aria-label')).to.equal('Sort order');
+  });
+
+  it('a trigger that cannot take focus leaves the stub as the tab stop', async () => {
+    const el = (await fixture(html`
+      <ty-select value="a"><ty-tag slot="trigger" flavor="success">Active</ty-tag>
+        <ty-option value="a">A</ty-option><ty-option value="b">B</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(stub(el).tabIndex).to.equal(0);
+    expect(stub(el).getAttribute('role')).to.equal('combobox');
+    expect(stub(el).getAttribute('aria-label')).to.equal('Active');
+    expect(el.querySelector('ty-tag').hasAttribute('aria-haspopup')).to.equal(false);
+    el.focus();
+    expect(el.shadowRoot.activeElement).to.equal(stub(el));
+  });
+
+  it('a clickable ty-tag trigger takes focus itself', async () => {
+    const el = (await fixture(html`
+      <ty-select value="a"><ty-tag slot="trigger" clickable>Active</ty-tag>
+        <ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(stub(el).tabIndex).to.equal(-1);
+    el.focus();
+    const tag = el.querySelector('ty-tag') as any;
+    expect(tag.shadowRoot.activeElement?.classList.contains('tag-container')).to.equal(true);
+  });
+
+  it('a disabled select takes no tab stop, trigger or not', async () => {
+    const el = (await fixture(html`
+      <ty-select disabled><ty-tag slot="trigger">Active</ty-tag><ty-option value="a">A</ty-option></ty-select>
+    `)) as any;
+    await tick();
+    expect(stub(el).tabIndex).to.equal(-1);
   });
 });

@@ -20,7 +20,8 @@
    [tyrell.site.views.sandbox-toggles :as sandbox-toggles]
    [tyrell.site.views.sandbox-modal :as sandbox-modal]
    [tyrell.site.views.sandbox-modal-tabs :as sandbox-modal-tabs]
-   [tyrell.site.views.sandbox-select-mobile :as sandbox-select-mobile]))
+   [tyrell.site.views.sandbox-select-mobile :as sandbox-select-mobile]
+   [tyrell.site.views.sandbox-select-trigger :as sandbox-select-trigger]))
 
 ;; Configuration for GitHub Pages deployment
 ;; These are replaced at build time via closure-defines
@@ -65,6 +66,11 @@
     :segment "internal/modal-tabs"
     :name "Tabs Marker-in-Modal Snap Verify (hidden)"
     :view sandbox-modal-tabs/view}
+
+   {:id ::sandbox-select-trigger
+    :segment "internal/select-trigger"
+    :name "Select Custom-Trigger Focus/ARIA Verify (hidden)"
+    :view sandbox-select-trigger/view}
 
    {:id ::sandbox-select-mobile
     :segment "internal/select-mobile"

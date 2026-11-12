@@ -27,7 +27,7 @@ Every version ships `AGENTS.md`: the rules agents get wrong without it (use the 
   ```
   @node_modules/tyrell-components/AGENTS.md
   ```
-- **Other agents** (Codex, Cursor, Copilot, Windsurf, Cline): point their instruction file at `node_modules/tyrell-components/AGENTS.md`, or copy it in.
+- **Any agent** (Codex, Cursor, Copilot, Claude Code…): `npx tyrell-components agents` writes the card for the installed version into the project's `AGENTS.md` between markers and makes `CLAUDE.md` import it. Re-run after upgrading; `--check` fails CI when the block is stale. With a CDN pin and no `node_modules`: `npx tyrell-components@<version> agents`.
 - **No `node_modules`** (CDN script tag, server-rendered Clojure/Go/Python): download the copy for your pinned version, import that, and refresh it when you bump the pin:
   ```bash
   curl -o TYRELL.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`ty-select` with `slot="trigger"`: one tab stop, always visible.** The select's own stub stayed a tab stop next to a focusable trigger, so a `ty-button` trigger took two Tab presses and the first one showed nothing. Now a trigger that can take focus (`ty-button`, a link, a `clickable` `ty-tag`) is the only tab stop, and the element that actually takes focus (inside `ty-button`, its `<button>`; before, the host got the ARIA and screen readers never read it) carries `aria-haspopup`, a live `aria-expanded`, the `aria-invalid` state and, with `label`, the name "Label: value"; a trigger that can't (a plain `ty-tag`) leaves the stub as the tab stop, which now draws a focus ring. `focus()` and Escape land on the same element.
+
+### Added
+
+- **`npx tyrell-components agents`:** writes the rules card of the installed version into the project's `AGENTS.md` between `BEGIN/END:tyrell-agent-rules` markers, so every agent that reads AGENTS.md gets it, and adds `@AGENTS.md` to `CLAUDE.md` for Claude Code. A re-run replaces only the block; `--check` exits 1 when it is missing or for another version.
+
 ## [1.0.0-rc.21] - 2026-11-11
 
 ### Added

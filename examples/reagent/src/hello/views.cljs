@@ -64,7 +64,7 @@
                   "code" "palette" "users" "bar-chart" "briefcase"
                   "sun" "moon" "click" "refresh-cw" "loader"
                   "alert-circle" "x" "grid"]]
-           ^{:key n} (icon-tile n))]]])))
+           ^{:key n} [icon-tile n])]]])))
 
 ;; =============================================================================
 ;; Forms

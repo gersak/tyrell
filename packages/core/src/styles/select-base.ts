@@ -337,6 +337,13 @@ ${fieldSizeVars}
   border-color: transparent;
   box-shadow: none;
 }
+/* The stub only takes focus when the trigger can't (a plain ty-tag, a span):
+   then it is the tab stop, and a keyboard user must see it. */
+.select-stub.custom-trigger:focus-visible {
+  outline: 2px solid var(--select-accent-bold, var(--ty-input-border-focus, var(--ty-color-primary, currentColor)));
+  outline-offset: 2px;
+  border-radius: var(--ty-radius-md);
+}
 
 /* Error line + state — same as ty-input's. A custom trigger keeps its own
    look; only the line shows under it. contain: inline-size — compact and

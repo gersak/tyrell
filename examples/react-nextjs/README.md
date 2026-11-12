@@ -1,6 +1,6 @@
 # Tyrell + React + Next.js example
 
-A Next.js 16 (App Router) app using `tyrell-components` and `tyrell-react` **1.0.0-RC20**, with Tailwind for layout.
+A Next.js 16 (App Router) app using `tyrell-components` and `tyrell-react` **1.0.0-rc.21**, with Tailwind for layout.
 
 ## Run it
 

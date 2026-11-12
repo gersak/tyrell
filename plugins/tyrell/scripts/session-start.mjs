@@ -18,8 +18,9 @@ try {
     pruneSessions()
 
     // A project that already imports the card into CLAUDE.md doesn't need a second copy.
-    const imported = ['CLAUDE.md', '.claude/CLAUDE.md', 'CLAUDE.local.md']
-      .some((f) => /tyrell-(components|react)\/AGENTS\.md/.test(readText(join(root, f)) || ''))
+    // ...or carries the block `npx tyrell-components agents` writes into AGENTS.md.
+    const imported = ['CLAUDE.md', '.claude/CLAUDE.md', 'CLAUDE.local.md', 'AGENTS.md']
+      .some((f) => /tyrell-(components|react)\/AGENTS\.md|BEGIN:tyrell-agent-rules/.test(readText(join(root, f)) || ''))
     const tags = await distTags()
     const card = imported ? null : await getCard(found, tags)
 

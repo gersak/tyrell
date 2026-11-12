@@ -53,9 +53,9 @@ Always loads the latest version:
 Pin to a specific version (recommended for production):
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC20/css/tyrell.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC20/css/tyrell-theme.css">
-<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-RC20/dist/tyrell.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.21/css/tyrell.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.21/css/tyrell-theme.css">
+<script src="https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.21/dist/tyrell.js"></script>
 ```
 
 Browse all available versions on [NPM](https://www.npmjs.com/package/tyrell-components?activeTab=versions) or [jsdelivr](https://www.jsdelivr.com/package/npm/tyrell-components).
@@ -107,7 +107,7 @@ The agent has to have the card in context *before* it writes UI. Telling it to "
 
 - **Claude Code, every project at once:** `/plugin marketplace add gersak/tyrell`, then `/plugin install tyrell@tyrell`. It finds Tyrell (npm, shadow-cljs, a CDN pin), loads the card for that version, and checks each turn's UI changes for hand-rolled controls and raw colors. See [plugins/tyrell](plugins/tyrell/README.md).
 - **Claude Code, one project:** add `@node_modules/tyrell-components/AGENTS.md` to its `CLAUDE.md`.
-- **Codex, Cursor, Copilot, Windsurf, Cline:** point their instruction file at `node_modules/tyrell-components/AGENTS.md`, or copy the card in (and refresh it when you upgrade).
+- **Any agent, one command:** `npx tyrell-components agents` writes the card for the installed version into `AGENTS.md` (read by Codex, Cursor, Copilot and others) and makes `CLAUDE.md` import it. Re-run after upgrading; `--check` fails CI when it's stale.
 - **No `node_modules`** (CDN script tag, server-rendered Clojure/Go/Python): `curl -o TYRELL.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md` and import that file.
 
 For agents that browse, [`llms.txt`](https://gersak.github.io/tyrell/llms.txt) indexes every guide as raw markdown.
@@ -148,8 +148,8 @@ Pick the entry point for your stack:
 Add to `deps.edn`:
 
 ```clojure
-{:deps {dev.gersak/tyrell              {:mvn/version "1.0.0-RC20"}
-        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-RC20"}}}  ; icons: one jar per set
+{:deps {dev.gersak/tyrell              {:mvn/version "1.0.0-rc.21"}
+        dev.gersak/tyrell-icons-lucide {:mvn/version "1.0.0-rc.21"}}}  ; icons: one jar per set
 ```
 
 `dev.gersak/tyrell` brings:

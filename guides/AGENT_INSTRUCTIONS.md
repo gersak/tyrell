@@ -76,7 +76,7 @@ Below 640px fields drop `lg` to 36 and `xl` to 40 (below 480px `xl` to 36). Butt
 - Options are `ty-option` (not `<option>` or `ty-tag`). The selection is the select's `value`; `<ty-option selected>` selects nothing, so server-rendered HTML carries `value="…"`.
 - **Up to 7 options: give it a trigger** (`slot="trigger"`). The search row only appears above 7 options, so a short list doesn't need a form field. In toolbars and filter bars, `compact` is the plain alternative.
 - More options, or typed search: the default field. `external-search` for remote lists, `allow-create` for a tags input.
-- A slotted trigger keeps the value, form submit, ARIA, keyboard and the error line. The select takes the click and the keys, so don't add `clickable` to a trigger tag. You render the trigger: show the current value in it and update it on `change`. No × button; call `clear()`.
+- A slotted trigger keeps the value, form submit, ARIA, keyboard and the error line. A trigger that takes focus (`ty-button`, `clickable` tag) is the tab stop; else the select is. You render the trigger: show the current value in it and update it on `change`. No × button; call `clear()`.
 - The list is at least 320px wide, or as wide as the trigger; `--ty-select-popup-width` sets it.
 - **Status picker:** the trigger is a `ty-tag` in the current option's flavor, with a chevron.
 

@@ -430,6 +430,8 @@ THE select control. Single select by default with a form-field look matching `ty
 
 On Send, the browser's message for a native `<select>` appears under the field and the trigger takes focus. A user change that leaves it empty shows the message at once; setting the value in code does not.
 
+**Focus with a custom trigger:** one tab stop. A trigger that can take focus (a `ty-button`, a link, a `clickable` `ty-tag`) is it. The element that actually takes focus (inside `ty-button`, its `<button>`) gets `aria-haspopup="listbox"`, a live `aria-expanded`, `role="button"` if it has no role, and, with `label`, the name "Label: what the trigger shows" (an `aria-label` you set wins); one that can't (a plain `ty-tag`, a `<span>`) leaves the tab stop to the select, which draws the focus ring around it. Enter, Space and ↓ open the list either way; Escape returns focus to the trigger.
+
 **Error line under a custom trigger:** compact and `slot="trigger"` selects show the error line under the trigger. It wraps at a readable width (about 20em), can extend past a narrow trigger, and doesn't widen the host; under a slotted trigger it starts at the trigger's left edge. A slotted trigger keeps its own look (no danger border) and gets `aria-invalid="true"` plus `aria-description` holding the message, both removed when the error clears. Focus from validation lands on the slotted trigger; when the trigger can't take focus (a `<span>`), on the select's own field.
 
 **Custom colors:** uses the shared `--ty-input-*` variable family — override per select with `--ty-input-bg`, `--ty-input-border`, `--ty-input-border-focus`, `--ty-input-shadow-focus`, etc. See [CSS_GUIDE.md → Per-Component Color Overrides](./CSS_GUIDE.md#per-component-color-overrides).

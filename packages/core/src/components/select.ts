@@ -40,6 +40,20 @@ let selectCount = 0;
  */
 const SEARCH_AUTO_THRESHOLD = 7;
 
+const TABBABLE =
+  'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Where a slotted trigger takes focus: itself when it is tabbable, else the
+ * first tabbable inside it (ty-button's <button>, a clickable ty-tag's chip).
+ * null when it can't take focus (a <span>, a plain ty-tag): the stub then
+ * stays the tab stop and draws the focus ring around it.
+ */
+function triggerFocusTarget(trigger: HTMLElement): HTMLElement | null {
+  if (trigger.matches(TABBABLE)) return trigger;
+  return (trigger.shadowRoot?.querySelector(TABBABLE) ?? trigger.querySelector(TABBABLE)) as HTMLElement | null;
+}
+
 const CHEVRON_DOWN_SVG = `<svg viewBox="0 0 20 20" fill="currentColor">
   <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
 </svg>`;
@@ -348,6 +362,8 @@ export class TySelect extends TyComponent<SelectState> {
   // it there (see syncTriggerAria).
   private _ariaTrigger: HTMLElement | null = null;
   private _ariaObserver: MutationObserver | null = null;
+  // Re-names a slotted trigger when its text changes (see syncTriggerName).
+  private _triggerTextObserver: MutationObserver | null = null;
 
   constructor() {
     super(); // TyComponent handles attachInternals() and attachShadow()
@@ -485,11 +501,12 @@ export class TySelect extends TyComponent<SelectState> {
    */
   focus(options?: FocusOptions): void {
     if (this.disabled) return; // like a disabled <select>
-    const trigger = this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null;
-    if (trigger) {
-      trigger.focus(options);
-      const active = (trigger.getRootNode() as Document | ShadowRoot).activeElement;
-      if (active && trigger.contains(active)) return;
+    const trigger = this.slottedTrigger();
+    const target = trigger && triggerFocusTarget(trigger);
+    if (target) {
+      target.focus(options);
+      const root = target.getRootNode() as Document | ShadowRoot;
+      if (root.activeElement === target) return;
     }
     const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
     if (stub) stub.focus(options);
@@ -769,6 +786,8 @@ export class TySelect extends TyComponent<SelectState> {
 
   private setExpanded(expanded: boolean): void {
     this.shadowRoot!.querySelector(".select-stub")?.setAttribute("aria-expanded", String(expanded));
+    // A focusable trigger is the control, so it carries the popup state
+    this.triggerAriaTarget()?.setAttribute("aria-expanded", String(expanded));
   }
 
   private openDropdown(): void {
@@ -1405,12 +1424,13 @@ export class TySelect extends TyComponent<SelectState> {
     stub.classList.toggle("disabled", disabled);
     stub.classList.toggle("compact", this.compact);
     stub.classList.toggle("error", !!error);
-    stub.tabIndex = disabled ? -1 : 0;
+    stub.tabIndex = disabled || this.triggerTakesFocus() ? -1 : 0;
     stub.toggleAttribute("disabled", disabled);
     if (disabled) stub.setAttribute("aria-disabled", "true");
     else stub.removeAttribute("aria-disabled");
-    if (labelText) stub.setAttribute("aria-labelledby", labelId);
+    if (labelText && !this.triggerTakesFocus()) stub.setAttribute("aria-labelledby", labelId);
     else stub.removeAttribute("aria-labelledby");
+    this.syncTriggerName();
     // The combobox carries the invalid state and reads the line out
     if (error) {
       stub.setAttribute("aria-invalid", "true");
@@ -1435,9 +1455,7 @@ export class TySelect extends TyComponent<SelectState> {
    */
   private syncTriggerAria(): void {
     const error: string = this.error || "";
-    const trigger = error
-      ? (this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null)
-      : null;
+    const trigger = error ? (this.triggerAriaTarget() ?? this.slottedTrigger()) : null;
     if (this._ariaTrigger && this._ariaTrigger !== trigger) {
       this._ariaTrigger.removeAttribute("aria-invalid");
       this._ariaTrigger.removeAttribute("aria-description");
@@ -1490,9 +1508,88 @@ export class TySelect extends TyComponent<SelectState> {
     const shadow = this.shadowRoot!;
     const slot = shadow.querySelector('slot[name="trigger"]') as HTMLSlotElement;
     const hasTrigger = slot.assignedElements().length > 0;
-    shadow.querySelector(".select-stub")!.classList.toggle("custom-trigger", hasTrigger);
+    const stub = shadow.querySelector(".select-stub") as HTMLElement;
+    stub.classList.toggle("custom-trigger", hasTrigger);
     if (this.hasAttribute("has-trigger") !== hasTrigger) {
       this.toggleAttribute("has-trigger", hasTrigger);
+    }
+
+    // One tab stop: a trigger that takes focus (ty-button, a link, a clickable
+    // ty-tag) is it, and the stub steps out; one that can't leaves the stub.
+    const trigger = this.slottedTrigger();
+    const target = this.triggerAriaTarget();
+    stub.tabIndex = this.disabled || target ? -1 : 0;
+    if (target) {
+      // ARIA goes on what takes focus (inside ty-button, its <button>), or
+      // assistive tech never reads it. The stub steps out of the tree.
+      target.setAttribute("aria-haspopup", "listbox");
+      target.setAttribute("aria-expanded", String(this._state.open));
+      if (!target.matches("button, a[href], input, select, textarea") && !target.hasAttribute("role")) {
+        target.setAttribute("role", "button");
+      }
+      stub.setAttribute("role", "none");
+      for (const a of ["aria-haspopup", "aria-expanded", "aria-controls", "aria-labelledby"]) stub.removeAttribute(a);
+    } else if (stub.getAttribute("role") !== "combobox") {
+      stub.setAttribute("role", "combobox");
+      stub.setAttribute("aria-haspopup", "listbox");
+      stub.setAttribute("aria-expanded", String(this._state.open));
+      stub.setAttribute("aria-controls", `select-listbox-${this._uid}`);
+    }
+    this._triggerTextObserver?.disconnect();
+    if (trigger) {
+      this._triggerTextObserver ??= new MutationObserver(() => this.syncTriggerName());
+      this._triggerTextObserver.observe(trigger, { childList: true, characterData: true, subtree: true });
+    }
+    this.syncTriggerName();
+    // A trigger that is an undefined custom element has no shadow root yet:
+    // decide again once it upgrades and renders.
+    if (trigger && trigger.localName.includes("-") && !customElements.get(trigger.localName)) {
+      customElements.whenDefined(trigger.localName).then(() => requestAnimationFrame(() => this.syncTriggerSlot()));
+    }
+  }
+
+  private slottedTrigger(): HTMLElement | null {
+    return this.querySelector(':scope > [slot="trigger"]') as HTMLElement | null;
+  }
+
+  private triggerTakesFocus(): boolean {
+    return !!this.triggerAriaTarget();
+  }
+
+  /** The element a slotted trigger takes focus on, which is where its ARIA must go; null if it can't. */
+  private triggerAriaTarget(): HTMLElement | null {
+    const trigger = this.slottedTrigger();
+    return trigger ? triggerFocusTarget(trigger) : null;
+  }
+
+  /**
+   * Name the control after the select's label and what the trigger shows:
+   * "Sort: Newest". An aria-label the author put there wins. A trigger that
+   * can't take focus leaves the stub as the control: without a label it is
+   * named after the trigger's text.
+   */
+  private syncTriggerName(): void {
+    const trigger = this.slottedTrigger();
+    const stub = this.shadowRoot?.querySelector(".select-stub") as HTMLElement | null;
+    if (!stub) return;
+    const text = (trigger?.textContent || "").replace(/\s+/g, " ").trim();
+    const label = this.label ? String(this.label) : "";
+    const target = this.triggerAriaTarget();
+    if (!target) {
+      if (trigger && !label && text) stub.setAttribute("aria-label", text);
+      else stub.removeAttribute("aria-label");
+      return;
+    }
+    stub.removeAttribute("aria-label");
+    const owned = target.hasAttribute("data-ty-select-name");
+    if (target.hasAttribute("aria-label") && !owned) return;
+    if (label) {
+      const name = text ? `${label}: ${text}` : label;
+      if (target.getAttribute("aria-label") !== name) target.setAttribute("aria-label", name);
+      target.setAttribute("data-ty-select-name", "");
+    } else if (owned) {
+      target.removeAttribute("aria-label");
+      target.removeAttribute("data-ty-select-name");
     }
   }
 

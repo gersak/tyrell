@@ -11,6 +11,9 @@
   "main": "./lib/index.js",
   "module": "./lib/index.js",
   "types": "./lib/index.d.ts",
+  "bin": {
+    "tyrell-components": "bin/tyrell.mjs"
+  },
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",
@@ -143,7 +146,8 @@
     "LICENSE",
     "AGENTS.md",
     "guides/**/*",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "bin/**/*"
   ],
   "keywords": [
     "web-components",
