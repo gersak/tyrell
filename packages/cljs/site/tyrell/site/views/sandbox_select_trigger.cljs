@@ -14,7 +14,7 @@
    label and what the trigger shows, with haspopup=listbox and a live
    aria-expanded.")
 
-(def ^:private rc21 "https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0-rc.21")
+(def ^:private rc21 (str "https://cdn.jsdelivr.net/npm/tyrell-components@1.0.0" "-rc.21")) ; split so publish.sh's version bump skips it
 
 (def ^:private body
   "<button id='start'>start here</button>

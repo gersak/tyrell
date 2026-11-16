@@ -3,10 +3,10 @@
 #
 # Usage:
 #   ./scripts/publish.sh tc        # publish next TC, e.g. 1.0.0-tc.62
-#   ./scripts/publish.sh rc        # publish next RC, e.g. 1.0.0-rc.21
+#   ./scripts/publish.sh rc        # publish next RC, e.g. 1.0.0-rc.22
 #   ./scripts/publish.sh tc --dry  # show what would happen, publish nothing
 #
-# Versions are lowercase and dotted (1.0.0-rc.21) so semver compares the
+# Versions are lowercase and dotted (1.0.0-rc.22) so semver compares the
 # number numerically; the old 1.0.0-TC9 style sorted TC9 above TC61.
 # Numbering continues from the highest published number in either style.
 

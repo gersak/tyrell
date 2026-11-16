@@ -2,7 +2,7 @@
 
 A small Reagent app on the Tyrell React wrappers: routing, a sidebar, theme switching, a native form and a modal.
 
-**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-rc.21 (npm), `dev.gersak/tyrell` 1.0.0-rc.21 (Clojars), Reagent 2.0.0-alpha2, React 18.
+**Versions:** `tyrell-components` / `tyrell-react` 1.0.0-rc.22 (npm), `dev.gersak/tyrell` 1.0.0-rc.22 (Clojars), Reagent 2.0.0-alpha2, React 18.
 
 ## Run
 
