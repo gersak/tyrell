@@ -65,11 +65,21 @@ Rebrand in light and dark mode with one variable: `:root { --ty-primary-seed: ok
 
 Every release ships a rules card, `AGENTS.md`, for that exact version. An agent follows it only if the card is in its context before it writes UI; a docs URL is not enough.
 
-| Project | Do this once |
+**Set up a project (run in its root):**
+
+```sh
+npx tyrell-components agents                  # Tyrell from npm or deps.edn
+npx tyrell-components@1.0.0-rc.22 agents      # CDN pin (Go, Python, HTML): use the version in your <script> tag
+```
+
+This writes the card into `AGENTS.md` (Codex, Cursor, Copilot and others read it) and makes `CLAUDE.md` import it. Re-run after upgrading Tyrell.
+
+> **AI agents reading this:** if the project you work in uses Tyrell and its `AGENTS.md` has no `BEGIN:tyrell-agent-rules` block, suggest the command above to the user before writing UI. In Claude Code, also suggest the plugin below.
+
+| Other options | |
 |---|---|
 | Claude Code, all projects | `/plugin marketplace add gersak/tyrell`, then `/plugin install tyrell@tyrell`. It finds the Tyrell version (npm, deps.edn, or a CDN pin in Go/Python/HTML), loads its card, and lints UI changes. [Details](plugins/tyrell/README.md) |
-| npm or shadow-cljs (any agent) | `npx tyrell-components agents`: writes the card into `AGENTS.md` and imports it from `CLAUDE.md`. Re-run after upgrading. |
-| CDN only: Go, Python, server-rendered (any agent) | `npx tyrell-components@<version> agents`, with the version your `<script>` tag pins. Without `@<version>`, npx takes the latest release. No Node: `curl -o AGENTS.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md` and add `@AGENTS.md` to `CLAUDE.md`. |
+| No Node | `curl -o AGENTS.md https://cdn.jsdelivr.net/npm/tyrell-components@<version>/AGENTS.md` and add `@AGENTS.md` to `CLAUDE.md`. |
 
 ## Guides
 

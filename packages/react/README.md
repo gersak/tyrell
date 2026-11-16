@@ -40,7 +40,7 @@ npm install tyrell-react
 
 That's it! No build complexity, no bundler configuration.
 
-**AI coding agents:** this package ships `AGENTS.md` with Tyrell's rules for the installed version. In Claude Code, add `@node_modules/tyrell-react/AGENTS.md` to your project's `CLAUDE.md`.
+**AI coding agents:** this package ships `AGENTS.md` with Tyrell's rules for the installed version. Run `npx tyrell-components agents` in the project root: it writes them into `AGENTS.md` for any agent and makes `CLAUDE.md` import it. Re-run after upgrading.
 
 ## 🚀 Quick Start
 
